@@ -1,0 +1,136 @@
+2026-10-10T05:46:16.0877293Z ##[endgroup]
+2026-10-10T05:46:16.0913602Z [command]/usr/bin/git log -1 --format=%H
+2026-10-10T05:46:16.0935112Z 88fa1606c5b50daf1cb50686d743fe26e041b441
+2026-10-10T05:46:18.8177359Z Baseline: 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19, the newest concept2cure-v2 commit whose Semgrep run passed (run 37735466781).
+2026-10-10T05:46:18.8847550Z Findings this commit adds over 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19:
+2026-10-10T05:48:48.4715169Z Warning: 3 timeout error(s) in shared/schema.ts when running the following rules:
+2026-10-10T05:48:48.4716251Z [javascript.express.security.audit.express-ssrf.express-ssrf, javascript.express.security.audit.xss.direct-response-
+2026-10-10T05:48:48.4717308Z write.direct-response-write, typescript.react.security.audit.react-unsanitized-method.react-unsanitized-method]
+2026-10-10T05:48:48.4718324Z Semgrep stopped running rules on shared/schema.ts after 3 timeout error(s). See `--timeout-threshold` for more info.
+2026-10-10T05:48:49.3137589Z   Current version has 66 findings.
+2026-10-10T05:48:55.0283557Z                    
+2026-10-10T05:48:55.0284308Z ┌─────────────────┐
+2026-10-10T05:48:55.0284748Z │ 7 Code Findings │
+2026-10-10T05:48:55.0285142Z └─────────────────┘
+2026-10-10T05:48:55.0285524Z                                                          
+2026-10-10T05:48:55.0286058Z     docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs
+2026-10-10T05:48:55.0287044Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-10T05:48:55.0287779Z           ❰❰ Blocking ❱❱
+2026-10-10T05:48:55.0288397Z           RegExp() called with a `name` function argument, this might allow an attacker to cause a Regular    
+2026-10-10T05:48:55.0289315Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-10T05:48:55.0290277Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-10T05:48:55.0291229Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-10T05:48:55.0292309Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-10T05:48:55.0293152Z           ReDoS.                                                                                              
+2026-10-10T05:48:55.0293814Z           Details: https://sg.run/gr65                                                                        
+2026-10-10T05:48:55.0294432Z                                                                                                               
+2026-10-10T05:48:55.0295448Z            97┆ await page.locator('button', { hasText: new RegExp('^' + name + '$') }).first().click();
+2026-10-10T05:48:55.0296341Z                                                                                
+2026-10-10T05:48:55.0297045Z     server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts
+2026-10-10T05:48:55.0298035Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-10T05:48:55.0298762Z           ❰❰ Blocking ❱❱
+2026-10-10T05:48:55.0299381Z           RegExp() called with a `c` function argument, this might allow an attacker to cause a Regular       
+2026-10-10T05:48:55.0300252Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-10T05:48:55.0301335Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-10T05:48:55.0302412Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-10T05:48:55.0303344Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-10T05:48:55.0304189Z           ReDoS.                                                                                              
+2026-10-10T05:48:55.0304859Z           Details: https://sg.run/gr65                                                                        
+2026-10-10T05:48:55.0305553Z                                                                                                               
+2026-10-10T05:48:55.0306362Z           112┆ if (c.message && !result.met) expect(result.message).toMatch(new RegExp(c.message));
+2026-10-10T05:48:55.0307027Z                                                                          
+2026-10-10T05:48:55.0307638Z     server/services/__tests__/fixtures/artifact-signed-target-harness.cjs
+2026-10-10T05:48:55.0308540Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-10T05:48:55.0309317Z           ❰❰ Blocking ❱❱
+2026-10-10T05:48:55.0309883Z           RegExp() called with a `c` function argument, this might allow an attacker to cause a Regular       
+2026-10-10T05:48:55.0310892Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-10T05:48:55.0311808Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-10T05:48:55.0312807Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-10T05:48:55.0313791Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-10T05:48:55.0314593Z           ReDoS.                                                                                              
+2026-10-10T05:48:55.0315272Z           Details: https://sg.run/gr65                                                                        
+2026-10-10T05:48:55.0315914Z                                                                                                               
+2026-10-10T05:48:55.0316789Z           101┆ assert(error,'unsafe act was accepted');if(c.expectedError)assert.match(error.message,new
+2026-10-10T05:48:55.0317658Z                RegExp(c.expectedError));else assert.equal(error.code,'ARTIFACT_CHANGED');               
+2026-10-10T05:48:55.0318321Z                                                                                    
+2026-10-10T05:48:55.0318970Z     server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts
+2026-10-10T05:48:55.0320149Z     ❯❱ javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
+2026-10-10T05:48:55.0320990Z           ❰❰ Blocking ❱❱
+2026-10-10T05:48:55.0321600Z           Detected possible user input going into a `path.join` or `path.resolve` function. This could   
+2026-10-10T05:48:55.0322682Z           possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files
+2026-10-10T05:48:55.0323753Z           stored in the file system. Instead, be sure to sanitize or validate user input first.          
+2026-10-10T05:48:55.0324561Z           Details: https://sg.run/OPqk                                                                   
+2026-10-10T05:48:55.0325220Z                                                                                                          
+2026-10-10T05:48:55.0325948Z            67┆ product_name: 'P', output_dir: path.join(work, 'p27-out'), leaves,
+2026-10-10T05:48:55.0326514Z                                                                    
+2026-10-10T05:48:55.0327186Z     server/services/clinical-regulatory-evidence/dataset-profile.ts
+2026-10-10T05:48:55.0328088Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-10T05:48:55.0328792Z           ❰❰ Blocking ❱❱
+2026-10-10T05:48:55.0329396Z           RegExp() called with a `tag` function argument, this might allow an attacker to cause a Regular     
+2026-10-10T05:48:55.0330312Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-10T05:48:55.0331182Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-10T05:48:55.0332247Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-10T05:48:55.0333198Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-10T05:48:55.0334106Z           ReDoS.                                                                                              
+2026-10-10T05:48:55.0334824Z           Details: https://sg.run/gr65                                                                        
+2026-10-10T05:48:55.0335461Z                                                                                                               
+2026-10-10T05:48:55.0336277Z           140┆ const re = new RegExp(`<${tag}\\b([^>]*?)(/>|>([\\s\\S]*?)</${tag}>)`, 'g');
+2026-10-10T05:48:55.0336872Z                                                                          
+2026-10-10T05:48:55.0337463Z     server/services/part11/__tests__/one-signing-authority-policy.test.ts
+2026-10-10T05:48:55.0338395Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-10T05:48:55.0339104Z           ❰❰ Blocking ❱❱
+2026-10-10T05:48:55.0339714Z           RegExp() called with a `name` function argument, this might allow an attacker to cause a Regular    
+2026-10-10T05:48:55.0340632Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-10T05:48:55.0341591Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-10T05:48:55.0342671Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-10T05:48:55.0343608Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-10T05:48:55.0344441Z           ReDoS.                                                                                              
+2026-10-10T05:48:55.0345100Z           Details: https://sg.run/gr65                                                                        
+2026-10-10T05:48:55.0345714Z                                                                                                               
+2026-10-10T05:48:55.0346573Z            96┆ RETIRED_WRAPPERS.filter((name) => new                                                    
+2026-10-10T05:48:55.0347376Z                RegExp(`\\bfunction\\s+${name}\\s*\\(|\\b(?:const|let)\\s+${name}\\s*=`).test(code)).map(
+2026-10-10T05:48:55.0348004Z                                                                  
+2026-10-10T05:48:55.0348539Z     server/services/tasking/__tests__/task-project.pglite.test.ts
+2026-10-10T05:48:55.0349666Z     ❯❱ javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
+2026-10-10T05:48:55.0350578Z           ❰❰ Blocking ❱❱
+2026-10-10T05:48:55.0351177Z           Detected possible user input going into a `path.join` or `path.resolve` function. This could   
+2026-10-10T05:48:55.0352205Z           possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files
+2026-10-10T05:48:55.0353072Z           stored in the file system. Instead, be sure to sanitize or validate user input first.          
+2026-10-10T05:48:55.0353932Z           Details: https://sg.run/OPqk                                                                   
+2026-10-10T05:48:55.0354561Z                                                                                                          
+2026-10-10T05:48:55.0355250Z            38┆ const read = (rel: string) => readFileSync(join(ROOT, rel), 'utf8');
+2026-10-10T05:48:55.0355641Z 
+2026-10-10T05:48:55.2342926Z                 
+2026-10-10T05:48:55.2343363Z                 
+2026-10-10T05:48:55.2344091Z ┌──────────────┐
+2026-10-10T05:48:55.2344320Z │ Scan Summary │
+2026-10-10T05:48:55.2344568Z └──────────────┘
+2026-10-10T05:48:55.2344859Z ✅ Scan completed successfully.
+2026-10-10T05:48:55.2345193Z  • Findings: 7 (7 blocking)
+2026-10-10T05:48:55.2345452Z  • Rules run: 492
+2026-10-10T05:48:55.2345688Z  • Targets scanned: 2994
+2026-10-10T05:48:55.2345951Z  • Parsed lines: ~100.0%
+2026-10-10T05:48:55.2346223Z  • Scan skipped: 
+2026-10-10T05:48:55.2346489Z    ◦ Files larger than  files 1.0 MB: 7
+2026-10-10T05:48:55.2346839Z    ◦ Files matching .semgrepignore patterns: 100
+2026-10-10T05:48:55.2347211Z  • Scan was limited to files changed since baseline commit.
+2026-10-10T05:48:55.2347673Z  • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+2026-10-10T05:48:55.2348067Z Ran 492 rules on 2994 files: 7 findings.
+2026-10-10T05:48:55.5953911Z ##[error]Semgrep found what 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19 did not have (listed above). Fix it, or mark a reviewed false positive inline with 'nosemgrep: <rule-id>' and the reason.
+2026-10-10T05:48:55.5966733Z ##[error]Process completed with exit code 1.
+2026-10-10T05:57:38.0114892Z                 
+2026-10-10T05:57:38.0115586Z ┌──────────────┐
+2026-10-10T05:57:38.0116069Z │ Scan Summary │
+2026-10-10T05:57:38.0116481Z └──────────────┘
+2026-10-10T05:57:38.0116991Z ✅ Scan completed successfully.
+2026-10-10T05:57:38.0117374Z  • Findings: 687 (687 blocking)
+2026-10-10T05:57:38.0117666Z  • Rules run: 647
+2026-10-10T05:57:38.0117951Z  • Targets scanned: 21170
+2026-10-10T05:57:38.0118242Z  • Parsed lines: ~99.9%
+2026-10-10T05:57:38.0118554Z  • Scan skipped: 
+2026-10-10T05:57:38.0118849Z    ◦ Files larger than  files 1.0 MB: 81
+2026-10-10T05:57:38.0119199Z    ◦ Files matching .semgrepignore patterns: 978
+2026-10-10T05:57:38.0119583Z  • Scan was limited to files tracked by git
+2026-10-10T05:57:38.0120100Z  • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+2026-10-10T05:57:38.0120906Z Ran 647 rules on 21170 files: 687 findings.
+2026-10-10T05:57:38.0967741Z 

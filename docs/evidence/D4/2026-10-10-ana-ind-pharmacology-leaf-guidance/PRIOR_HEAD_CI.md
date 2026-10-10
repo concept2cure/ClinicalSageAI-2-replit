@@ -1,6 +1,6 @@
-# Current canonical-head verification — 2026-10-10
+# Prior-head verification — 2026-10-10
 
-Read-only GitHub connector inspection. Repository: concept2cure/ClinicalSageAI-2-replit; canonical branch: concept2cure-v2. Current remote HEAD verified as `26b187705e0f6cc38ed4c2ec4ceee8eb149ba596`. All six push workflows for this SHA completed; the release remains blocked.
+Read-only GitHub connector inspection. Repository: concept2cure/ClinicalSageAI-2-replit; canonical branch: concept2cure-v2. At initial capture, remote HEAD was verified as `26b187705e0f6cc38ed4c2ec4ceee8eb149ba596`. All six push workflows for this prior SHA completed; their failed gates did not clear the release. These results do not verify the later pharmacology implementation or a documentation follow-up; see `POST_PUSH_VERIFICATION.md` for the fresh implementation results.
 
 | Workflow/job | Run / job | Observed result |
 | --- | --- | --- |

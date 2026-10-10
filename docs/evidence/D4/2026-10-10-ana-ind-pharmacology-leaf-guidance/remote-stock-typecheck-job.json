@@ -1,0 +1,128 @@
+{
+  "observedAt": "2026-10-10T05:55:15.408Z",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "run": {
+    "id": 38028595017,
+    "name": "C2C Agent \u2014 Validate & Audit",
+    "head_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+    "head_branch": "concept2cure-v2",
+    "event": "push",
+    "run_attempt": 1,
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595017",
+    "created_at": "2026-10-10T05:45:35Z",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "job": {
+    "id": 114144600104,
+    "name": "typecheck",
+    "status": "completed",
+    "conclusion": "success",
+    "run_id": 38028595017,
+    "logs_url": null,
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1
+      },
+      {
+        "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2
+      },
+      {
+        "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3
+      },
+      {
+        "name": "Run npm ci",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4
+      },
+      {
+        "name": "TypeScript type check (baseline-gated)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5
+      },
+      {
+        "name": "ESLint",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6
+      },
+      {
+        "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11
+      },
+      {
+        "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 12
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13
+      }
+    ]
+  },
+  "observations": {
+    "compiler_path": "ordinary stock TypeScript CLI",
+    "compiler_command": "tsc --noEmit",
+    "baseline": 0,
+    "errors": 0,
+    "tsc_exit_code": 0,
+    "matches_baseline": true,
+    "started_message_at": "2026-10-10T05:46:40.2513809Z",
+    "completed_message_at": "2026-10-10T05:49:45.0530947Z",
+    "eslint_command": "npm run lint || true",
+    "eslint_is_enforced_gate": false
+  },
+  "evidence_file": "remote-stock-typecheck-excerpts.txt",
+  "evidence_scope": "Selected original lines in original order; the full job includes separate advisory ESLint output not reproduced here.",
+  "full_decoded_log": {
+    "encoding": "UTF-8",
+    "sha256": "64e89239f880a782a0e8f85b07d9b9db03ae65455cd4d1ab6662c9b9191d6f09",
+    "bytes": 1327769,
+    "line_count": 10099
+  },
+  "retained_original_line_numbers": [
+    93,
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    166,
+    167,
+    168,
+    169,
+    170,
+    171,
+    245,
+    246,
+    247,
+    248,
+    249,
+    255,
+    256,
+    257,
+    258,
+    259,
+    260,
+    261,
+    262
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "implementation_commit": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+  "local_checked_commit": "017d90a5fe09720f30b96380cdfc4423ac97e70c",
+  "preserved_health_bot_commit": "96cea301fd1d98d80f40cb76653858137da33a9c",
+  "scope": "All tracked entries outside docs/; complete mode/type/blob/path listing in Git order.",
+  "non_documentation_entries": 10847,
+  "non_documentation_git_object_listing_sha256": "ee2df0dbe8ec441be73d5ed7288808df6bef264663307693f4894d69851defad",
+  "checked_implementation_and_preserved_health_bot_listings_identical": true,
+  "working_tree_non_documentation_diff_from_implementation": [],
+  "method": "git ls-tree -rz --full-tree <commit>; discard docs/ paths; join remaining entries with NUL including terminal NUL; SHA256. Candidate receipt must preserve these entries."
+}

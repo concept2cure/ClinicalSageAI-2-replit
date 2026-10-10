@@ -90,8 +90,8 @@ bounded content batch is the ten pharmacokinetic written-summary leaves.
 No UI, production classification logic, dependencies, database schema, workflow,
 security suppression, waiver, approval policy or test baseline is changed.
 This receipt does not establish complete IND capability or release clearance.
-Execution results and exact-commit publication verification are appended only
-after their respective checks complete.
+Execution results and exact-commit publication verification are recorded below
+and in the separate post-push receipt.
 
 ## Completed local checks before publication
 
@@ -109,11 +109,6 @@ Node `v22.23.3`, npm `11.9.0`, unchanged engine enforcement.
 Raw receipts: [regression-green.txt](./regression-green.txt),
 [build-green.txt](./build-green.txt), [changed-lint.txt](./changed-lint.txt),
 [backlog-reproduction.txt](./backlog-reproduction.txt).
-
-The complete canonical pre-push hook and full-program zero-baseline TypeScript
-gate must complete before publication. This paragraph claims neither a pending
-check's success nor remote verification.
-
 
 ## Complete canonical pre-push verification
 
@@ -134,8 +129,10 @@ Raw evidence: [pre-push-green.txt](./pre-push-green.txt),
 [pre-push-completion.json](./pre-push-completion.json), and
 [checked-source-identity.json](./checked-source-identity.json).
 Only documentation is added after that check; all seven changed source/test
-files remain byte-identical to the checked commit. Publication must preserve
-that identity. Exact remote results belong in a separate post-push receipt.
+files remain byte-identical to the checked commit. The published implementation
+is `88fa1606c5b50daf1cb50686d743fe26e041b441`, checked tree
+`f96f37cb70e1dfbe4ca87938d4b0556d6fd6a845`. Exact remote results are recorded in
+[POST_PUSH_VERIFICATION.md](./POST_PUSH_VERIFICATION.md).
 
 [PRIOR_HEAD_CI.md](./PRIOR_HEAD_CI.md) records completed results on the previous
 remote head `26b18770`, including the repaired dependency gate and Tier 5 pass

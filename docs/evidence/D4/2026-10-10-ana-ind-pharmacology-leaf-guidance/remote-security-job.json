@@ -1,0 +1,304 @@
+{
+  "observedAt": "2026-10-10T05:50:54.604Z",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "run": {
+    "id": 38028595001,
+    "name": "CI",
+    "head_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+    "head_branch": "concept2cure-v2",
+    "event": "push",
+    "run_attempt": 1,
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001",
+    "created_at": "2026-10-10T05:45:35Z"
+  },
+  "job": {
+    "id": 114144600174,
+    "name": "Security Scan",
+    "status": "completed",
+    "conclusion": "success",
+    "run_id": 38028595001,
+    "logs_url": null,
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1
+      },
+      {
+        "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2
+      },
+      {
+        "name": "Setup Node.js",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3
+      },
+      {
+        "name": "Install dependencies",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4
+      },
+      {
+        "name": "Generate SBOM (CycloneDX)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5
+      },
+      {
+        "name": "Upload SBOM artifact",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6
+      },
+      {
+        "name": "Run lockfile audit and dependency-risk ledger gate",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7
+      },
+      {
+        "name": "Prove dependency-risk gate fail-closed behavior",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8
+      },
+      {
+        "name": "Prove PPTX image parser is unreachable",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9
+      },
+      {
+        "name": "Upload exact npm audit evidence",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10
+      },
+      {
+        "name": "Trivy exceptions are attached, owned and dated (with selftests)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11
+      },
+      {
+        "name": "Trivy filesystem scan (deps + secrets)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 12
+      },
+      {
+        "name": "Trivy config scan (Dockerfile/IaC)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13
+      },
+      {
+        "name": "Post Trivy config scan (Dockerfile/IaC)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 23
+      },
+      {
+        "name": "Post Trivy filesystem scan (deps + secrets)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 24
+      },
+      {
+        "name": "Post Setup Node.js",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 25
+      },
+      {
+        "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 26
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 27
+      }
+    ]
+  },
+  "observations": {
+    "gate_status": "PASS",
+    "critical_high_advisory_occurrences": 3,
+    "occurrences": [
+      {
+        "advisory": "GHSA-VFJ7-8CJW-P6XM",
+        "package": "braces",
+        "severity": "high",
+        "decision": "unreachable"
+      },
+      {
+        "advisory": "GHSA-5P2G-FCMC-QVQQ",
+        "package": "image-size",
+        "severity": "high",
+        "decision": "unreachable"
+      },
+      {
+        "advisory": "GHSA-W3RX-R6R6-PGPR",
+        "package": "image-size",
+        "severity": "high",
+        "decision": "unreachable"
+      }
+    ],
+    "handlebars_in_complete_gate_occurrence_list": false,
+    "scanner": "npm audit 10.9.9",
+    "node": "v22.23.3",
+    "lockfile_sha256": "529a8e5889cf500959484df70c561d27746437aa3a4c7d043cd70a5c551e3961",
+    "dependency_tests": {
+      "tests": 36,
+      "pass": 36,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "gate_reported_at": "2026-10-10T05:46:41.6800765Z",
+    "tests_summary_at": "2026-10-10T05:46:43.3990129Z"
+  },
+  "artifacts": [
+    {
+      "id": 11660539493,
+      "name": "npm-audit-lockfile-evidence",
+      "size_in_bytes": 6455,
+      "digest": "sha256:df55289ce8206e72bb8867222f3df9e7658ded7011d182a687998c1dbc3a8214",
+      "expired": false,
+      "workflow_run": {
+        "id": 38028595001,
+        "repository_id": 1096040843,
+        "head_repository_id": 1096040843,
+        "head_branch": "concept2cure-v2",
+        "head_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441"
+      }
+    },
+    {
+      "id": 11660359711,
+      "name": "sbom-cyclonedx",
+      "size_in_bytes": 207541,
+      "digest": "sha256:d29c6d31fccae6988cf63cc8932648bc0ba7ee53f57924bce9f5d4f5172a9420",
+      "expired": false,
+      "workflow_run": {
+        "id": 38028595001,
+        "repository_id": 1096040843,
+        "head_repository_id": 1096040843,
+        "head_branch": "concept2cure-v2",
+        "head_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441"
+      }
+    }
+  ],
+  "evidence_file": "remote-security-scan-excerpts.txt",
+  "evidence_scope": "Selected original lines in original order; omitted log lines are not claimed to be reproduced.",
+  "full_decoded_log": {
+    "encoding": "UTF-8",
+    "sha256": "69e5583b80de1b14026ab9dc86a0709c0ed152e11bdfd97fd08f554dff7d59eb",
+    "bytes": 103326,
+    "line_count": 1132
+  },
+  "coverage_caveats": [
+    "Trivy suppresses development/testing dependencies and reports existing ignored/suppressed findings.",
+    "Secret scanning logs a 14 MB file-size warning; this warning alone does not say the file was skipped.",
+    "Python site-packages were not available for license detection.",
+    "Terraform variable values were not available; evaluation may be incomplete.",
+    "Helm rendering failed for charts/concept2cure-app and charts/trialsage-cer because declared postgresql and redis dependencies were absent."
+  ],
+  "retained_original_line_numbers": [
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    169,
+    170,
+    171,
+    172,
+    173,
+    228,
+    229,
+    230,
+    231,
+    260,
+    261,
+    262,
+    263,
+    265,
+    266,
+    267,
+    268,
+    275,
+    276,
+    277,
+    278,
+    279,
+    280,
+    281,
+    282,
+    482,
+    483,
+    484,
+    485,
+    488,
+    489,
+    490,
+    491,
+    494,
+    495,
+    496,
+    497,
+    500,
+    501,
+    502,
+    503,
+    506,
+    507,
+    508,
+    509,
+    510,
+    511,
+    512,
+    513,
+    514,
+    515,
+    516,
+    544,
+    545,
+    546,
+    547,
+    548,
+    549,
+    550,
+    792,
+    793,
+    794,
+    795,
+    796,
+    797,
+    798,
+    799,
+    800,
+    801,
+    802,
+    1026,
+    1027,
+    1028,
+    1029,
+    1030,
+    1031,
+    1039,
+    1040,
+    1041,
+    1042,
+    1043
+  ]
+}

@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-10-10T05:59:56.450Z",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "subject": {
+    "implementation_commit": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+    "checked_tree": "f96f37cb70e1dfbe4ca87938d4b0556d6fd6a845"
+  },
+  "run": {
+    "id": 38028595000,
+    "name": "Semgrep",
+    "head_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "failure",
+    "run_attempt": 1,
+    "run_started_at": "2026-10-10T05:45:35Z",
+    "updated_at": "2026-10-10T05:57:52Z",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595000"
+  },
+  "job": {
+    "id": 114144600069,
+    "name": "Analyze (Semgrep)",
+    "status": "completed",
+    "conclusion": "failure",
+    "run_id": 38028595000,
+    "logs_url": null,
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1
+      },
+      {
+        "name": "Initialize containers",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2
+      },
+      {
+        "name": "Checkout repository",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3
+      },
+      {
+        "name": "Resolve the baseline (the newest trunk commit whose Semgrep run passed)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4
+      },
+      {
+        "name": "Blocking scan \u2014 nothing the baseline commit did not already have",
+        "status": "completed",
+        "conclusion": "failure",
+        "number": 5
+      },
+      {
+        "name": "Full scan for the Security tab",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6
+      },
+      {
+        "name": "Upload Semgrep SARIF to code scanning",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7
+      },
+      {
+        "name": "Upload SARIF artifact",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8
+      },
+      {
+        "name": "Post Upload Semgrep SARIF to code scanning",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 14
+      },
+      {
+        "name": "Post Checkout repository",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 15
+      },
+      {
+        "name": "Stop containers",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 16
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 17
+      }
+    ],
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595000/job/114144600069"
+  },
+  "blocking_step": {
+    "name": "Blocking scan \u2014 nothing the baseline commit did not already have",
+    "status": "completed",
+    "conclusion": "failure",
+    "number": 5
+  },
+  "advisory_step": {
+    "name": "Full scan for the Security tab",
+    "status": "completed",
+    "conclusion": "success",
+    "number": 6
+  },
+  "baseline": {
+    "commit": "661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19",
+    "passing_run_id": 37735466781
+  },
+  "fresh_finding_count": 7,
+  "fresh_findings": [
+    {
+      "path": "docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs",
+      "rule_id": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "line": 97
+    },
+    {
+      "path": "server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts",
+      "rule_id": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "line": 112
+    },
+    {
+      "path": "server/services/__tests__/fixtures/artifact-signed-target-harness.cjs",
+      "rule_id": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "line": 101
+    },
+    {
+      "path": "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+      "rule_id": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "line": 67
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/dataset-profile.ts",
+      "rule_id": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "line": 140
+    },
+    {
+      "path": "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+      "rule_id": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "line": 96
+    },
+    {
+      "path": "server/services/tasking/__tests__/task-project.pglite.test.ts",
+      "rule_id": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "line": 38
+    }
+  ],
+  "blocking_scan": {
+    "exit_code": 1,
+    "findings": 7,
+    "rules_run": 492,
+    "targets_scanned": 2994,
+    "reported_current_version_findings_before_baseline_filter": 66,
+    "parsed_lines": "~100.0%",
+    "skipped_large_files": 7,
+    "semgrepignore_skipped_files": 100,
+    "rule_timeouts_reported_in_shared_schema": 3
+  },
+  "full_advisory_scan": {
+    "step_conclusion": "success",
+    "findings": 687,
+    "rules_run": 647,
+    "targets_scanned": 21170,
+    "parsed_lines": "~99.9%",
+    "skipped_large_files": 81,
+    "semgrepignore_skipped_files": 978
+  },
+  "changed_source_or_test_files_in_fresh_findings": [],
+  "blocking_findings_matching_any_implementation_changed_path": [],
+  "checked_changed_source_test_fixture_paths": [
+    "server/services/ana/__tests__/in-text-references.test.ts",
+    "server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts",
+    "server/services/ana/in-text-references.ts",
+    "server/services/ind/ctd/authoring-guidance.ts",
+    "server/services/ind/ctd/ich-m4-headings.ts",
+    "tests/regulatory/fixtures/ind-pharmacology/preexisting-records.json",
+    "tests/regulatory/requirements-resolver.test.ts"
+  ],
+  "changed_path_comparison_api": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/compare/26b187705e0f6cc38ed4c2ec4ceee8eb149ba596...88fa1606c5b50daf1cb50686d743fe26e041b441",
+  "raw_log_evidence": {
+    "available": true,
+    "job_log_api": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/jobs/114144600069/logs",
+    "full_fetched_text_sha256": "2de4929d0066acbc137f410b9c7f1aa7f29c19bcdbdcd4d4523a2fe571b3b727",
+    "excerpt_file": "remote-semgrep-excerpts.txt",
+    "excerpt_source_line_ranges_1_based_inclusive": [
+      [
+        280,
+        282
+      ],
+      [
+        324,
+        324
+      ],
+      [
+        371,
+        371
+      ],
+      [
+        389,
+        393
+      ],
+      [
+        806,
+        915
+      ],
+      [
+        949,
+        964
+      ]
+    ],
+    "excerpt_method": "Concatenate listed original log line ranges in source order, preserving ANSI and timestamps; no content replacement.",
+    "excerpt_sha256": "a64b86c5208763eeae33b34cb3f66f68168c3bb6320f4acf2071226264dfb534",
+    "excerpt_bytes": 14599
+  },
+  "artifacts": [
+    {
+      "id": 11661590806,
+      "name": "semgrep-sarif",
+      "size_in_bytes": 250802,
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11661590806",
+      "archive_download_url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11661590806/zip",
+      "expired": false,
+      "created_at": "2026-10-10T05:57:49Z",
+      "expires_at": "2027-01-08T05:45:35Z",
+      "updated_at": "2026-10-10T05:57:49Z",
+      "digest": "sha256:105c7fc95fc7d541c49dfe9d42897c68a68a6e5827303ff1bb98cee96a68ec0c",
+      "workflow_run": {
+        "id": 38028595000,
+        "repository_id": 1096040843,
+        "head_repository_id": 1096040843,
+        "head_branch": "concept2cure-v2",
+        "head_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441"
+      },
+      "downloaded_archive_sha256": "105c7fc95fc7d541c49dfe9d42897c68a68a6e5827303ff1bb98cee96a68ec0c",
+      "archive_entries": [
+        "semgrep.sarif"
+      ],
+      "sarif_sha256": "c8671e9dbe09ff3e0cbade9556e8690101d561db2775aad840a2640ae1341e21",
+      "sarif_bytes": 2852410
+    }
+  ],
+  "full_sarif_review": {
+    "total_result_entries": 728,
+    "in_source_suppressed_entries": 41,
+    "unsuppressed_entries": 687,
+    "findings_in_checked_changed_source_test_fixture_paths": []
+  },
+  "limitations": [
+    "Every listed delta location is derived from this fresh exact-implementation job log, not from a historical run.",
+    "None of the seven blocking locations belongs to the implementation's changed-file set; the seven changed source/test/fixture paths also have no result in the fresh full SARIF, including its suppressed entries.",
+    "The seven delta locations coincide with the prior-head list, but their fresh verification is independently bound here.",
+    "The scan reports skipped files and three rule timeouts in shared/schema.ts; this is not exhaustive clean-security certification.",
+    "The full advisory scan completed successfully while reporting 687 unsuppressed findings; it does not override the blocking scan's failure.",
+    "No suppression or waiver was added by this evidence collection; scientific qualification, initial-IND applicability and overall release clearance remain open."
+  ]
+}
