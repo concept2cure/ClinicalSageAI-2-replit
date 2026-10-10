@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+  "subject_tree_sha": "f96f37cb70e1dfbe4ca87938d4b0556d6fd6a845",
+  "api_snapshot_at": "2026-10-10T06:17:57.117Z",
+  "files": [
+    {
+      "path": "REMAINING_CI.md",
+      "bytes": 5769,
+      "sha256": "23945ccb3c269896fdabb05ca34a5c1e85a534d0fe65d44bed9af1bbc29450e6"
+    },
+    {
+      "path": "remaining-ci-88fa-metadata.json",
+      "bytes": 27920,
+      "sha256": "2118cd618b55a73c47372eddbd212fa7b444dd03af8b2469c2b1c59721c0abf2"
+    },
+    {
+      "path": "remaining-ci-88fa-lint-excerpts.txt",
+      "bytes": 16860,
+      "sha256": "6515f837c71b0f694e7c1d27430b490cfaa5af2c45b080fbd774e75372e1d595"
+    },
+    {
+      "path": "remaining-ci-88fa-ana-readiness-excerpts.txt",
+      "bytes": 1589,
+      "sha256": "f797aef942d287533bd7542fdf09caee67cfc63adf96f755550fecab6e0bb2a2"
+    },
+    {
+      "path": "remaining-ci-88fa-purge-excerpts.txt",
+      "bytes": 1875,
+      "sha256": "8e2be609ebeb92a03b6053b6415f7c1edec204b4d93bbcd6657f44621c716d9f"
+    }
+  ]
+}

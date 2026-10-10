@@ -134,10 +134,14 @@ async function profileWorkbook(bytes: Buffer, fileName: string, mimeType: string
   return { format, tables, tableCount, profiledBy: 'dataset-profile v1' };
 }
 
-/** Attribute values of every element of one name, by a narrow pattern (define.xml is regular). */
-function elements(xml: string, tag: string): Array<{ attrs: Record<string, string>; body: string }> {
+type DefineElement = 'ItemGroupDef' | 'ItemRef';
+
+/** Attribute values and body for the two define.xml element names this profiler reads. */
+function elements(xml: string, tag: DefineElement): Array<{ attrs: Record<string, string>; body: string }> {
   const out: Array<{ attrs: Record<string, string>; body: string }> = [];
-  const re = new RegExp(`<${tag}\\b([^>]*?)(/>|>([\\s\\S]*?)</${tag}>)`, 'g');
+  const re = tag === 'ItemGroupDef'
+    ? /<ItemGroupDef\b([^>]*?)(\/>|>([\s\S]*?)<\/ItemGroupDef>)/g
+    : /<ItemRef\b([^>]*?)(\/>|>([\s\S]*?)<\/ItemRef>)/g;
   for (const m of xml.matchAll(re)) {
     const attrs: Record<string, string> = {};
     for (const a of m[1].matchAll(/([\w:]+)="([^"]*)"/g)) attrs[a[1]] = a[2];

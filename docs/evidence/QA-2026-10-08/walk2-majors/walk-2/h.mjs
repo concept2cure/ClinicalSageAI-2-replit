@@ -94,7 +94,7 @@ export async function wsText(page) {
   return k >= 0 ? t.slice(k + 'Cross-region\nDispatch'.length) : t;
 }
 export async function scTab(page, name) {
-  await page.locator('button', { hasText: new RegExp('^' + name + '$') }).first().click();
+  await page.getByRole('tab', { name, exact: true }).first().click();
   await settle(page, 2500);
 }
 // Walk-2 throwaway accounts (own self-serve organization).

@@ -98,7 +98,7 @@ async function runCase(tree,c){
    if(input.status==='locked'){assert.equal(result.snapshot.contentHash,hash(head.content));assert.equal(result.snapshot.versionId,3);assert.equal(result.snapshot.approvedVersionId,3);}
    const reads=trace.filter(t=>t.kind==='select');assert.equal(reads[0]?.lock,'update');assert.equal(reads[1]?.lock,'share');assert.equal(reads[0]?.table,'concept2cure_artifacts');
   }else{
-   assert(error,'unsafe act was accepted');if(c.expectedError)assert.match(error.message,new RegExp(c.expectedError));else assert.equal(error.code,'ARTIFACT_CHANGED');
+   assert(error,'unsafe act was accepted');if(c.expectedError)assert(error.message.includes(c.expectedError),'expected refusal detail: '+c.expectedError);else assert.equal(error.code,'ARTIFACT_CHANGED');
    assert.equal(snap(),before,'refusal must preserve all committed tables');
    if(!c.failure)assert.equal(trace.filter(t=>['insert','update','ledger'].includes(t.kind)).length,0,'target/quorum refusal is before writes');
   }

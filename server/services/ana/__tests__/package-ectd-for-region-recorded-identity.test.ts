@@ -53,21 +53,23 @@ async function run(input: Record<string, unknown>) {
   };
 }
 
-async function coverLeaf(): Promise<{ work: string; leaves: unknown[] }> {
+async function coverLeaf() {
   const work = anaScratchDir(CTX.organizationId, 'submissions');
-  await fs.mkdir(work, { recursive: true });
   const cover = path.join(work, 'p27-cover.pdf');
+  const output = path.join(work, 'p27-out');
+  await fs.mkdir(work, { recursive: true });
   await fs.writeFile(cover, pdf('cover'));
-  return { work, leaves: [{ ctd_section: '1.2', operation: 'new', source_path: cover, file_name: 'cover.pdf', title: 'Cover' }] };
+  // Each fixture owns its paths; model input cannot choose a scratch directory.
+  const modelInput = (extra: Record<string, unknown> = {}) => ({
+    region: 'fda', program_id: PROGRAM, sequence: '0000', submission_type: 'original', application_type: 'ind',
+    product_name: 'P', output_dir: output,
+    leaves: [{ ctd_section: '1.2', operation: 'new', source_path: cover, file_name: 'cover.pdf', title: 'Cover' }],
+    // What a model used to send: none of these identity fields may reach the package.
+    application_id: 'MODEL-999999', sponsor_id: 'MODEL-DUNS', sponsor_name: 'Model Invented Sponsor',
+    ...extra,
+  });
+  return { cover, output, modelInput };
 }
-
-/** What a model used to send, identity fields included: none of them may reach the package. */
-const modelInput = (work: string, leaves: unknown[], extra: Record<string, unknown> = {}) => ({
-  region: 'fda', program_id: PROGRAM, sequence: '0000', submission_type: 'original', application_type: 'ind',
-  product_name: 'P', output_dir: path.join(work, 'p27-out'), leaves,
-  application_id: 'MODEL-999999', sponsor_id: 'MODEL-DUNS', sponsor_name: 'Model Invented Sponsor',
-  ...extra,
-});
 
 beforeEach(() => {
   readRecordedPackageIdentity.mockReset();
@@ -89,9 +91,9 @@ describe('package_ectd_for_region — identity from the record (P-27)', () => {
     readRecordedPackageIdentity.mockResolvedValue({
       programId: PROGRAM, applicationNumber: '123456', applicantName: 'Concept2Cure Therapeutics',
     });
-    const { work, leaves } = await coverLeaf();
+    const { cover, output, modelInput } = await coverLeaf();
     try {
-      const out = await run(modelInput(work, leaves));
+      const out = await run(modelInput());
       expect(out.error).toBeUndefined();
       expect(readRecordedPackageIdentity).toHaveBeenCalledWith(expect.anything(), 1, PROGRAM);
       expect(out.applicationNumber).toBe('123456');
@@ -105,8 +107,8 @@ describe('package_ectd_for_region — identity from the record (P-27)', () => {
       expect(xml).not.toContain('Model Invented Sponsor');
       expect(xml).not.toContain('MODEL-DUNS');
     } finally {
-      await fs.rm(path.join(work, 'p27-out'), { recursive: true, force: true });
-      await fs.rm(path.join(work, 'p27-cover.pdf'), { force: true });
+      await fs.rm(output, { recursive: true, force: true });
+      await fs.rm(cover, { force: true });
     }
   });
 
@@ -114,41 +116,41 @@ describe('package_ectd_for_region — identity from the record (P-27)', () => {
     readRecordedPackageIdentity.mockResolvedValue({
       programId: PROGRAM, applicationNumber: null, applicantName: 'Concept2Cure Therapeutics',
     });
-    const { work, leaves } = await coverLeaf();
+    const { cover, output, modelInput } = await coverLeaf();
     try {
-      const out = await run(modelInput(work, leaves));
+      const out = await run(modelInput());
       expect(out.ok).toBeUndefined();
       expect(out.code).toBe('PACKAGE_IDENTITY_MISSING');
       expect(out.missing).toEqual(['applicationNumber']);
       expect(out.error).toMatch(/application number/);
       expect(out.error).toMatch(/Nothing was built/);
-      await expect(fs.readdir(path.join(work, 'p27-out'))).rejects.toThrow();
+      await expect(fs.readdir(output)).rejects.toThrow();
     } finally {
-      await fs.rm(path.join(work, 'p27-cover.pdf'), { force: true });
+      await fs.rm(cover, { force: true });
     }
   });
 
   it('refuses by name when the organisation records no usable applicant name', async () => {
     readRecordedPackageIdentity.mockResolvedValue({ programId: PROGRAM, applicationNumber: '123456', applicantName: null });
-    const { work, leaves } = await coverLeaf();
+    const { cover, modelInput } = await coverLeaf();
     try {
-      const out = await run(modelInput(work, leaves));
+      const out = await run(modelInput());
       expect(out.code).toBe('PACKAGE_IDENTITY_MISSING');
       expect(out.missing).toEqual(['applicantName']);
     } finally {
-      await fs.rm(path.join(work, 'p27-cover.pdf'), { force: true });
+      await fs.rm(cover, { force: true });
     }
   });
 
   it('refuses a call that names no project, even with model-supplied identity, and reads nothing', async () => {
-    const { work, leaves } = await coverLeaf();
+    const { cover, modelInput } = await coverLeaf();
     try {
-      const out = await run(modelInput(work, leaves, { program_id: undefined }));
+      const out = await run(modelInput({ program_id: undefined }));
       expect(out.code).toBe('PACKAGE_IDENTITY_MISSING');
       expect(out.error).toMatch(/program_id/);
       expect(readRecordedPackageIdentity).not.toHaveBeenCalled();
     } finally {
-      await fs.rm(path.join(work, 'p27-cover.pdf'), { force: true });
+      await fs.rm(cover, { force: true });
     }
   });
 });

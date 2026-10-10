@@ -109,7 +109,7 @@ describe('canonical review-quorum integrity', () => {
     } else {
       const result = await invoke();
       expect(result.met).toBe(c.met);
-      if (c.message && !result.met) expect(result.message).toMatch(new RegExp(c.message));
+      if (c.message && !result.met) expect(result.message).toContain(c.message);
     }
     expect(await snapshot()).toEqual(before);
   });

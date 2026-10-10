@@ -1,0 +1,83 @@
+{
+  "capturedAtUTC": "2026-10-10T06:30:53.774593+00:00",
+  "checkedLocalCommit": "43d8dc57ee15a88983d869b34876dead792a4413",
+  "checkedLocalTree": "37021e1d86ea44be494a5b1fa55025aa0e1e268a",
+  "remoteBase": "2c9a4a5fefc639d6d5ccf3dda139f3d64d6b2115",
+  "canonicalHook": {
+    "command": [
+      "sh",
+      ".husky/pre-push",
+      "origin",
+      "https://github.com/concept2cure/ClinicalSageAI-2-replit.git"
+    ],
+    "exitCode": 0,
+    "startedAtUTC": "2026-10-10T06:13:25.908722+00:00",
+    "completedAtUTC": "2026-10-10T06:30:40.891138+00:00",
+    "seconds": 1034.98,
+    "environment": {
+      "TYPECHECK_HEAP_MB": "6144",
+      "TYPECHECK_FILES_PER_PROCESS": "1000",
+      "Node": "22.23.3",
+      "npm": "11.9.0"
+    },
+    "rawLogSha256": "325d374e375e9574e8ab818f6b9ca6abe09882fc0d976a5ce8874eeb5cca62f4",
+    "rawLogBytes": 21724
+  },
+  "sourceProjection": {
+    "excludedPrefix": "docs/evidence/D9/2026-10-10-semgrep-blocker-repair/",
+    "sha256": "5925330f0da570db3de291e435a9822a00f6e807f753296792cf48e4f6c80970",
+    "trackedEntries": 23151,
+    "meaning": "Every tracked entry outside the new D9 evidence folder, including the executable QA helper under older evidence, must remain byte-identical in the final publication candidate."
+  },
+  "sources": [
+    {
+      "path": "docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs",
+      "sha256": "53f878bd9d07af8ae4a5854c9d47b5e80ec63686d5e46d9b3821b7a485f14fd2",
+      "gitBlob": "f6c4b83f17451e25ea80740ef6282a3a841150d6",
+      "bytes": 6041
+    },
+    {
+      "path": "server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts",
+      "sha256": "1215519a5226ff45796399f415e04fe1c5bff9a7e78e8a415d6ca92ef717c83b",
+      "gitBlob": "df446e7ee4f9f56a675a9b0aed4e2cde7b1e52e6",
+      "bytes": 8678
+    },
+    {
+      "path": "server/services/__tests__/fixtures/artifact-signed-target-harness.cjs",
+      "sha256": "e91eab64e498594bd7de03bfbf9f9d3dcd6dd0dbbcc7e0b5f139de4eb8100dd1",
+      "gitBlob": "08e63d722e6a5eab84b145fa9930aac84267772e",
+      "bytes": 14639
+    },
+    {
+      "path": "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+      "sha256": "ff5e653eda87d1f275d1bfdd0b0022166f32ab5cf690bd88133feb735ddd5440",
+      "gitBlob": "cbaeb73eacee11ed0a8feab7647a534b3d50ae64",
+      "bytes": 7786
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts",
+      "sha256": "968444b46b5c50dfeb8322c9cbbcf890e483d6a74bfaa39e126cab7f90b3e2a9",
+      "gitBlob": "56faac87c9f4fd9b8aa753c34ea3fd102b4fb29d",
+      "bytes": 6071
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/dataset-profile.ts",
+      "sha256": "01d3ff0dd7e22c448707d891ba6ce3447681772c93d80898159b3eb9c662a7d8",
+      "gitBlob": "2e104953b9ab140aca6b84b6a10db6def08509ca",
+      "bytes": 8836
+    },
+    {
+      "path": "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+      "sha256": "0cca11c11902b5ba5ab0eb2ba47108f89239e68ad28d7f77484d4c0515dc5677",
+      "gitBlob": "9c7ff0272e76e8d0c8da9621eec1af1d4b489573",
+      "bytes": 6806
+    },
+    {
+      "path": "server/services/tasking/__tests__/task-project.pglite.test.ts",
+      "sha256": "f4e8c6ae3b9f6d205380d978d6e83d35c5248ef9b998fdbfde20d9bf59a69b4f",
+      "gitBlob": "979001c9a40efe37f4e5cfd20dcb1cb50bea1d31",
+      "bytes": 10778
+    }
+  ],
+  "scope": "Final publication may add only D9 documentation after this completed gate; all checked source bytes remain identical. Exact published SHA/tree and fresh remote results belong in the later post-push receipt."
+}

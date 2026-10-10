@@ -1,0 +1,769 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "completed_remote_job_inspection_of_prior_implementation",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "subject": {
+    "sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+    "tree_sha": "f96f37cb70e1dfbe4ca87938d4b0556d6fd6a845",
+    "head_commit_timestamp": "2026-10-10T05:45:27Z"
+  },
+  "snapshot": {
+    "captured_at": "2026-10-10T06:17:57.117Z",
+    "workflow_id": 38028595001,
+    "workflow_name": "CI",
+    "run_attempt": 1,
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001",
+    "status": "in_progress",
+    "conclusion": null,
+    "created_at": "2026-10-10T05:45:35Z",
+    "run_started_at": "2026-10-10T05:45:35Z",
+    "updated_at": "2026-10-10T06:08:21Z"
+  },
+  "jobs": [
+    {
+      "id": 114144600022,
+      "name": "Secret scan (full history)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114144600022"
+    },
+    {
+      "id": 114144600131,
+      "name": "Lint",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114144600131",
+      "steps": [
+        {
+          "name": "Proof tier \u2014 schema contracts + golden journeys + export contracts",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 33
+        },
+        {
+          "name": "No hand-rolled error-envelope reads",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 51
+        },
+        {
+          "name": "Guardrails \u2014 every in-scope AnA tool reads from its register entry (with selftest)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 58
+        },
+        {
+          "name": "Guardrails \u2014 tenant-isolation in raw SQL (no regressions)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 74
+        },
+        {
+          "name": "Guardrails \u2014 requestDb (RLS) adoption (no regressions)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 84
+        },
+        {
+          "name": "Run TypeScript check (no regression vs baseline)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 127
+        },
+        {
+          "name": "Run beta-slice TypeScript check",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 128
+        }
+      ]
+    },
+    {
+      "id": 114144600174,
+      "name": "Security Scan",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114144600174"
+    },
+    {
+      "id": 114144600266,
+      "name": "Security Contract Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114144600266"
+    },
+    {
+      "id": 114144601109,
+      "name": "Nightly Governance Strict",
+      "status": "completed",
+      "conclusion": "skipped",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114144601109"
+    },
+    {
+      "id": 114148413823,
+      "name": "Integration Tests",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114148413823"
+    },
+    {
+      "id": 114148413827,
+      "name": "AnA Readiness Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114148413827",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Setup Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run AnA readiness suite",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Setup Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ]
+    },
+    {
+      "id": 114148413847,
+      "name": "AIOS Audit Assets",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114148413847"
+    },
+    {
+      "id": 114148413856,
+      "name": "Test",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114148413856"
+    },
+    {
+      "id": 114148413863,
+      "name": "Production Boot Smoke (RLS on, non-superuser role)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114148413863"
+    },
+    {
+      "id": 114148413883,
+      "name": "Coverage (ratchet)",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114148413883"
+    },
+    {
+      "id": 114148413897,
+      "name": "Blank DB Provisioning + Deploy Migration",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114148413897",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Setup Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install Postgres client",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Assert the database really is blank",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Deploy migration must REFUSE an unprovisioned database",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Provision from scratch",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Deploy migration succeeds on the provisioned database",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "RLS coverage after the FIRST deploy (a new database is isolated before any re-run)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "RLS coverage \u2014 every org-keyed table carries the tenant policy",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "RLS parent-scope delegates exist (the coverage gate depends on them)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Verify the readiness contract independently",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post-deploy invariants hold on the real deployed database",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Server SQL resolves against the LIVE provisioned schema (ratchet)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Guardrails \u2014 what a tenant purge cannot reach (ratchet)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 18
+        },
+        {
+          "name": "Post Setup Node.js",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 35
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 36
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 37
+        }
+      ]
+    },
+    {
+      "id": 114148413910,
+      "name": "Production Image Boot (built image, empty database, sign-in)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38028595001/job/114148413910"
+    }
+  ],
+  "logs": [
+    {
+      "key": "lint",
+      "job_id": 114144600131,
+      "raw_path": "/tmp/c2c-fresh-88fa-lint-114144600131.log",
+      "raw_sha256": "eac9f6a8a61250c56a8fa7de782d9d74e4dfa99c1fa59f1272873c8dc5c7d786",
+      "excerpt_file": "remaining-ci-88fa-lint-excerpts.txt",
+      "ranges": [
+        {
+          "start": 172,
+          "end": 173,
+          "purpose": "Checked-out source identity",
+          "excerpt_start_line": 1,
+          "excerpt_end_line": 2,
+          "sha256": "a0ab962bbc1a56904480d5bff1d156881ca46bc506555a6c80c2ee8edd2f7315"
+        },
+        {
+          "start": 1682,
+          "end": 1688,
+          "purpose": "Proof-tier command",
+          "excerpt_start_line": 3,
+          "excerpt_end_line": 9,
+          "sha256": "a8292bf7e5f3c53a5cdbb021ef50925b4a05b707d69fbaffc643be4a7da94092"
+        },
+        {
+          "start": 9044,
+          "end": 9069,
+          "purpose": "Proof-tier duplicate-column error and summary",
+          "excerpt_start_line": 10,
+          "excerpt_end_line": 35,
+          "sha256": "cb55e2539fba872a2a2b8c8f094e4d2e9d7e469298524518055352c311e0f0b0"
+        },
+        {
+          "start": 9421,
+          "end": 9446,
+          "purpose": "Error-envelope guardrail failure",
+          "excerpt_start_line": 36,
+          "excerpt_end_line": 61,
+          "sha256": "ef1ccbcd16a1bb9224b1ea896d514beced9331f762621cf35f2dd8550d921f9d"
+        },
+        {
+          "start": 9960,
+          "end": 9998,
+          "purpose": "Step-presentation selftest failures",
+          "excerpt_start_line": 62,
+          "excerpt_end_line": 100,
+          "sha256": "673311923e37dd16d4feb94c729d47e681608801f070104ca3cbeca95cd13f8d"
+        },
+        {
+          "start": 10154,
+          "end": 10193,
+          "purpose": "Tenant SQL isolation ratchet",
+          "excerpt_start_line": 101,
+          "excerpt_end_line": 140,
+          "sha256": "857fd8c4dcbe5d6953ccfc8088a515a2742185f6c065237b87eec0786a71e09a"
+        },
+        {
+          "start": 10294,
+          "end": 10309,
+          "purpose": "requestDb adoption ratchet",
+          "excerpt_start_line": 141,
+          "excerpt_end_line": 156,
+          "sha256": "8c64058882a399d6f4f3d16a10db7461acd6aa11a9e25a0c488918e2dd342759"
+        },
+        {
+          "start": 22638,
+          "end": 22656,
+          "purpose": "Both successful TypeScript check commands",
+          "excerpt_start_line": 157,
+          "excerpt_end_line": 175,
+          "sha256": "e1be8c2912a6bec3bba38f2d7ad80545481c88e0aa37b1deac4dea8244546fb7"
+        }
+      ],
+      "fetch": {
+        "job_id": 114144600131,
+        "started_at": "2026-10-10T06:18:45.869Z",
+        "completed_at": "2026-10-10T06:18:47.012Z",
+        "same_raw_text_as_prior": true,
+        "characters": 2570251
+      },
+      "range_convention": "1-based inclusive original raw decoded job-log lines; selected ranges concatenated in listed order, no inserted labels or ANSI/timestamp changes",
+      "raw_bytes": 2578461,
+      "raw_line_count": 22672,
+      "excerpt_sha256": "6515f837c71b0f694e7c1d27430b490cfaa5af2c45b080fbd774e75372e1d595",
+      "excerpt_bytes": 16860
+    },
+    {
+      "key": "ana-readiness",
+      "job_id": 114148413827,
+      "raw_path": "/tmp/c2c-fresh-88fa-ana-readiness-114148413827.log",
+      "raw_sha256": "73eb3be140812f3a474dbf6969befc97b0946c7645fa713a7eba46ccb36894d3",
+      "excerpt_file": "remaining-ci-88fa-ana-readiness-excerpts.txt",
+      "ranges": [
+        {
+          "start": 165,
+          "end": 166,
+          "purpose": "Checked-out source identity",
+          "excerpt_start_line": 1,
+          "excerpt_end_line": 2,
+          "sha256": "e42ebf58ebcfed6dfe57b4185751125f5b1bd7bbb8c506fae70808294fa7138d"
+        },
+        {
+          "start": 233,
+          "end": 246,
+          "purpose": "AnA readiness command and exact suite files",
+          "excerpt_start_line": 3,
+          "excerpt_end_line": 16,
+          "sha256": "e1c88074d07916c35276e09f3be37a2ca5a2166cba6ddac3f3d424b953eabdfa"
+        },
+        {
+          "start": 2202,
+          "end": 2205,
+          "purpose": "4 passing files / 303 passing tests",
+          "excerpt_start_line": 17,
+          "excerpt_end_line": 20,
+          "sha256": "ddae5a8354722c2dcb60da17339b817d3dc2e8aed7eb4f0c42e6efc6ca788c2d"
+        }
+      ],
+      "fetch": {
+        "job_id": 114148413827,
+        "started_at": "2026-10-10T06:18:45.869Z",
+        "completed_at": "2026-10-10T06:18:46.638Z",
+        "same_raw_text_as_prior": true,
+        "characters": 216024
+      },
+      "range_convention": "1-based inclusive original raw decoded job-log lines; selected ranges concatenated in listed order, no inserted labels or ANSI/timestamp changes",
+      "raw_bytes": 216778,
+      "raw_line_count": 2225,
+      "excerpt_sha256": "f797aef942d287533bd7542fdf09caee67cfc63adf96f755550fecab6e0bb2a2",
+      "excerpt_bytes": 1589
+    },
+    {
+      "key": "purge",
+      "job_id": 114148413897,
+      "raw_path": "/tmp/c2c-fresh-88fa-blank-db-114148413897.log",
+      "raw_sha256": "bf8aabdf980d8ba20dd3242d2a04d4df8f7908d5334cb3b9923b229df66dd1a4",
+      "excerpt_file": "remaining-ci-88fa-purge-excerpts.txt",
+      "ranges": [
+        {
+          "start": 280,
+          "end": 281,
+          "purpose": "Checked-out source identity",
+          "excerpt_start_line": 1,
+          "excerpt_end_line": 2,
+          "sha256": "79a3216d4f8944c74837caf1f9218171c12a09417ba54ca2f5bdd2c5235d80ee"
+        },
+        {
+          "start": 1131,
+          "end": 1131,
+          "purpose": "stats_computation_runs migration applied",
+          "excerpt_start_line": 3,
+          "excerpt_end_line": 3,
+          "sha256": "bb81ae26f147756ac41f6df9c6798fe133ace263bc706379bb966a1910d9a377"
+        },
+        {
+          "start": 1484,
+          "end": 1503,
+          "purpose": "Live catalog purge-coverage failure and retained-evidence limits",
+          "excerpt_start_line": 4,
+          "excerpt_end_line": 23,
+          "sha256": "c86fc9a36868e0190a9a35194831ca2735dbbf339bed6ffb8d9d743694d54a90"
+        }
+      ],
+      "fetch": {
+        "job_id": 114148413897,
+        "started_at": "2026-10-10T06:18:45.869Z",
+        "completed_at": "2026-10-10T06:18:47.109Z",
+        "same_raw_text_as_prior": true,
+        "characters": 921204
+      },
+      "range_convention": "1-based inclusive original raw decoded job-log lines; selected ranges concatenated in listed order, no inserted labels or ANSI/timestamp changes",
+      "raw_bytes": 923595,
+      "raw_line_count": 10521,
+      "excerpt_sha256": "8e2be609ebeb92a03b6053b6415f7c1edec204b4d93bbcd6657f44621c716d9f",
+      "excerpt_bytes": 1875
+    }
+  ],
+  "failed_gates": [
+    {
+      "job_id": 114144600131,
+      "step_number": 33,
+      "command": "npm run test:proof-tier",
+      "cause": "PGlite CREATE TABLE fixture declares sponsor_address and ind_type twice; SQL error 42701 names sponsor_address.",
+      "paths": [
+        "tests/schema-contract/biopharma-programs-router-columns.contract.test.ts"
+      ],
+      "line_ranges": [
+        [
+          77,
+          78
+        ],
+        [
+          93,
+          94
+        ]
+      ],
+      "test_summary": {
+        "files_failed": 1,
+        "files_passed": 120,
+        "tests_passed": 1366,
+        "tests_skipped": 6
+      },
+      "next_action": "Remove the duplicate fixture declaration pair while preserving one declaration of each column and the existing Drizzle column-parity contract; rerun the focused contract and proof tier."
+    },
+    {
+      "job_id": 114144600131,
+      "step_number": 51,
+      "command": "npm run ci:error-envelope",
+      "cause": "One new hand-rolled API error-envelope read, classified typeof-error-string.",
+      "reported_path": "concept2cure/components/ana/anaTurnTimeline.ts:214",
+      "paths": [
+        "client/src/concept2cure/components/ana/anaTurnTimeline.ts"
+      ],
+      "line_ranges": [
+        [
+          214,
+          214
+        ]
+      ],
+      "next_action": "Use the canonical serverMessage reader with the existing domain fallback; verify forbidden-poll enum/message and sanitization behavior. This receipt makes no UI change."
+    },
+    {
+      "job_id": 114144600131,
+      "step_number": 58,
+      "command": "npm run ci:step-presentation:selftest && npm run ci:step-presentation",
+      "cause": "review_sop_requirements has no present block. It also contaminates exact-one-finding deletion and model-source controls, so selftest reports 17/20; the second && command is not reached.",
+      "paths": [
+        "server/services/ana/tool-authorization.register.json",
+        "scripts/ci/check-step-presentation.selftest.mjs",
+        "server/services/ana/bla-biologics-tool-defs.ts"
+      ],
+      "line_ranges_by_path": {
+        "server/services/ana/tool-authorization.register.json": [
+          [
+            5971,
+            5975
+          ]
+        ],
+        "scripts/ci/check-step-presentation.selftest.mjs": [
+          [
+            61,
+            74
+          ],
+          [
+            97,
+            104
+          ]
+        ],
+        "server/services/ana/bla-biologics-tool-defs.ts": [
+          [
+            236,
+            240
+          ]
+        ]
+      },
+      "next_action": "Add truthful presentation metadata for the existing deterministic SOP wording review after verifying the handler/source classification. Keep the missing-entry and model-reachability negative controls unchanged; require 20/20 selftests and the real presentation gate."
+    },
+    {
+      "job_id": 114144600131,
+      "step_number": 74,
+      "command": "npm run ci:tenant-isolation:no-regression",
+      "cause": "One new raw-SQL candidate fingerprint above baseline; the embedding candidateFilter fragment queries vault.document_chunks without an org/tenant/workspace token in that same fragment.",
+      "paths": [
+        "server/services/vault/document-chunking-backfill.service.ts"
+      ],
+      "line_ranges": [
+        [
+          97,
+          106
+        ]
+      ],
+      "fingerprint": "server/services/vault/document-chunking-backfill.service.ts#db0501f26bbf:document_chunks",
+      "next_action": "Trace outer-query and RLS ownership, then preserve or establish tenant scope in the child lookup with a cross-tenant regression control. The static candidate alone does not establish exploitability; do not raise the baseline or add an unsupported safety marker."
+    },
+    {
+      "job_id": 114144600131,
+      "step_number": 84,
+      "command": "node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression",
+      "cause": "Two newly counted tenant-facing route files use the shared pool above baseline 228.",
+      "paths": [
+        "server/routes/ana-ri/runs.ts",
+        "server/routes/submissions.ts"
+      ],
+      "observed_counts": {
+        "db_route_files": 271,
+        "requestDb_files": 43,
+        "shared_pool_files": 229,
+        "jwt_boundary_auto_scoped": 227,
+        "explicit_pre_tenant_scope": 2,
+        "unclassified": 0,
+        "new_above_baseline": 2,
+        "baseline": 228
+      },
+      "next_action": "Migrate the two routes to requestDb(req) while preserving transactional and tenant/project ownership behavior; add meaningful tenant controls and rerun the ratchet. This adoption finding does not by itself prove a data exposure."
+    },
+    {
+      "job_id": 114148413897,
+      "step_number": 18,
+      "command": "npm run ci:purge-coverage",
+      "cause": "Fresh provisioned public catalog contains org-keyed stats_computation_runs that the tenant purge cannot reach.",
+      "paths": [
+        "migrations/20261008f_stats_computation_runs.sql",
+        "server/services/tenant/tenant-offboarding.ts"
+      ],
+      "line_ranges_by_path": {
+        "migrations/20261008f_stats_computation_runs.sql": [
+          [
+            23,
+            30
+          ]
+        ],
+        "server/services/tenant/tenant-offboarding.ts": [
+          [
+            900,
+            920
+          ]
+        ]
+      },
+      "next_action": "Add an FK-safe tenant erasure route or a verified cascade for stats_computation_runs; prove cross-tenant isolation and retained immutable audit evidence, then rerun the live blank-DB purge gate.",
+      "limits": "Gate measures public.* only. vault.document_chunks and vault.documents are outside its catalog scope; document_data_dispositions is intentionally retained immutable evidence under POLICY-DR-007."
+    }
+  ],
+  "confirmed_passes": {
+    "ana_readiness": {
+      "job_id": 114148413827,
+      "step_number": 5,
+      "files_passed": 4,
+      "tests_passed": 303,
+      "suite_files": [
+        "tests/routes/ana-ri-health.test.ts",
+        "tests/routes/ana-gap-analysis.test.ts",
+        "tests/resolution/ana-orchestrator.test.ts",
+        "server/services/__tests__/ana-ri.test.ts"
+      ]
+    },
+    "typescript": {
+      "job_id": 114144600131,
+      "steps": [
+        127,
+        128
+      ],
+      "full_program_error_count": 0,
+      "full_program_tsc_exit": 0
+    }
+  },
+  "limitations": [
+    "These GitHub results belong to 88fa1606c5b50daf1cb50686d743fe26e041b441, not the later D9 scanner-repair candidate or a documentation commit.",
+    "The workflow is still in progress at the recorded snapshot. Integration Tests, Test and Coverage have no completed outcome here; no workflow was rerun or suppressed.",
+    "Five completed Lint-step failures and one completed purge-step failure already prevent release clearance. A passing AnA readiness suite or compiler does not override them.",
+    "Source pins are extracted read-only from the subject commit. This inspection invokes no live model, local database, runtime tests or source changes.",
+    "Scientific source qualification, governance seal admission, initial IND applicability and overall IND/release clearance are not demonstrated by these results.",
+    "The frozen 15-file local scanner receipt is separate. Future authoritative CI must run against the published scanner-repair implementation."
+  ],
+  "source_pins": [
+    {
+      "path": "client/src/concept2cure/components/ana/anaTurnTimeline.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "2e3a1430cb87e020b94f3864853d3e446f714c65",
+      "sha256": "a00a44aa4f9af4ea57e76f76703ec37626267080e6a324c4da75dcefe361d53a",
+      "bytes": 16124
+    },
+    {
+      "path": "migrations/20261008f_stats_computation_runs.sql",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "9956ed6415e04d05d44b231bd4c1211a3176de72",
+      "sha256": "0972952bdcd46401fdca091ff26be7d8eace3e4bf678600e9531282c4e5827d9",
+      "bytes": 4302
+    },
+    {
+      "path": "scripts/ci/check-step-presentation.selftest.mjs",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "2f4485709628b9de81e8041e9003463a1cd04555",
+      "sha256": "a207cee9243af25241dda1779adacb0042809218e6cd7d8070e6d496c48dd4d0",
+      "bytes": 11142
+    },
+    {
+      "path": "server/routes/ana-ri/runs.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "90998bcf6d5301358f168635e153c1f2fbf02fb5",
+      "sha256": "06e1a90fef69d4f935f3ec2bcdbfd3707cbba98c8b4504fced732b9172134b3f",
+      "bytes": 16408
+    },
+    {
+      "path": "server/routes/submissions.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "122701d8e789c89e82f0b2499d9f88c0e35a3cce",
+      "sha256": "11b493707e10b84ee0f0e81f4d990b4bb97733292332c03a743af89e2d75f1b8",
+      "bytes": 100223
+    },
+    {
+      "path": "server/services/ana/bla-biologics-tool-defs.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "a02a226737d49dbf040c3b2a281fa6cc94c84a2c",
+      "sha256": "338fa098f9438131f700d7b60bbed728b4ca901c9f20efc0597665a072c489b8",
+      "bytes": 50418
+    },
+    {
+      "path": "server/services/ana/tool-authorization.register.json",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "5869c8cb976e65d1dd46b7243dafe7bd4303562a",
+      "sha256": "84fa056a533232dd2906e42600e0ac0cd8622dde6b6dceec5f9eb11cf010560e",
+      "bytes": 177630
+    },
+    {
+      "path": "server/services/tenant/tenant-offboarding.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "5ca4439f56e0d3d7c250da9ef852704e33f8cafb",
+      "sha256": "31bd6eee856e3b07f0442affcd414a04b7bbca4b5ff4e6d617678066d44d6dac",
+      "bytes": 49414
+    },
+    {
+      "path": "server/services/vault/document-chunking-backfill.service.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "485c447c9ae4c1e146f4c5b16d31f329ad7c79bc",
+      "sha256": "58523ff36fc376f5b5d2dec9c517c49684099b47d2122070d7c3f70a705a187d",
+      "bytes": 10686
+    },
+    {
+      "path": "tests/schema-contract/biopharma-programs-router-columns.contract.test.ts",
+      "subject_sha": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "git_blob_sha": "944eaea62656aa9c734d2f98c47808b0c7c62d14",
+      "sha256": "16018088f943beb68fe89d7f8ac6e7654c4b4018c47858c67a46365c086fbb93",
+      "bytes": 10852
+    }
+  ]
+}

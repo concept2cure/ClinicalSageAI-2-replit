@@ -1,0 +1,28 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/324dc668b968/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > profiles an SDTM AE listing: columns, types, rows, standard and domain 142ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > keeps no cell value: no subject id or term appears in the profile 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > profiles a TSV, and a table with no CDISC signature as no standard 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > reads the datasets a define.xml describes 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > profiles paired and self-closing define elements without accepting longer element names 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > profiles every invocation from the beginning without retaining matching state 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > counts every define dataset while retaining only the existing table limit 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > profileDataset > declines what it does not read: a PDF, or an XML that is not a define.xml 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > detectCdisc > recognises ADaM BDS and ADSL by their required variables 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts > detectCdisc > names no domain it cannot see in the variables 0ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  02:05:03
+   Duration  497ms (transform 89ms, setup 67ms, import 40ms, tests 154ms, environment 0ms)
+

@@ -21,7 +21,6 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { readFileSync } from 'fs';
-import { join } from 'path';
 import { C2C_MIGRATION_FILES, UUID_TENANT_ISOLATION_NONPUBLIC } from '../../../../scripts/db/migration-set.mjs';
 import { extractTableDdl } from '../../../../tests/golden-journeys/harness';
 import type { RequestDb } from '../../../db/requestDb';
@@ -34,10 +33,17 @@ vi.mock('../../../db', () => ({
   pool: {},
 }));
 
-const ROOT = join(__dirname, '..', '..', '..', '..');
-const read = (rel: string) => readFileSync(join(ROOT, rel), 'utf8');
 const FILE = 'migrations/20261008d_unified_tasks_authoring_review_project.sql';
 const ANCHOR = 'migrations/20260814_projects_regulatory_program_anchor.sql';
+// This fixture reads five known migrations, never an arbitrary relative path.
+const SQL_SOURCES = {
+  [FILE]: new URL('../../../../migrations/20261008d_unified_tasks_authoring_review_project.sql', import.meta.url),
+  [ANCHOR]: new URL('../../../../migrations/20260814_projects_regulatory_program_anchor.sql', import.meta.url),
+  'migrations/20260524_program_workbench_schema.sql': new URL('../../../../migrations/20260524_program_workbench_schema.sql', import.meta.url),
+  'db/migrations/20260727_unified_tasks_mdx_metadata.sql': new URL('../../../../db/migrations/20260727_unified_tasks_mdx_metadata.sql', import.meta.url),
+  'db/migrations/20260807_unified_tasks_soft_delete.sql': new URL('../../../../db/migrations/20260807_unified_tasks_soft_delete.sql', import.meta.url),
+} as const;
+const read = (rel: keyof typeof SQL_SOURCES) => readFileSync(SQL_SOURCES[rel], 'utf8');
 
 const PROGRAM = '8a11b987-ac2d-4748-9e9c-5dc40c082662'; // TOLV
 const UNANCHORED = '40000000-0000-4000-8000-000000000002';

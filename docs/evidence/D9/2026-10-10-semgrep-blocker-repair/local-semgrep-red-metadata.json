@@ -1,0 +1,107 @@
+{
+  "started_at": "2026-10-10T06:07:05.725966+00:00",
+  "completed_at": "2026-10-10T06:07:19.628527+00:00",
+  "cwd": "/tmp/c2c-semgrep-base-2c9a4a5f",
+  "command": [
+    "/tmp/c2c-semgrep-1.177.0/bin/semgrep",
+    "scan",
+    "--config=/tmp/c2c-semgrep-configs-2026-10-10/p-default.yaml",
+    "--config=/tmp/c2c-semgrep-configs-2026-10-10/p-ci.yaml",
+    "--metrics=off",
+    "--disable-version-check",
+    "--error",
+    "--no-rewrite-rule-ids",
+    "--json-output=/workspace/scratch/324dc668b968/concept2cure-v2/docs/evidence/D9/2026-10-10-semgrep-blocker-repair/local-semgrep-red.json",
+    "docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs",
+    "server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts",
+    "server/services/__tests__/fixtures/artifact-signed-target-harness.cjs",
+    "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+    "server/services/clinical-regulatory-evidence/dataset-profile.ts",
+    "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+    "server/services/tasking/__tests__/task-project.pglite.test.ts"
+  ],
+  "exit_code": 1,
+  "source_manifest": {
+    "captured_at": "2026-10-10T06:06:26.215564+00:00",
+    "repository": "/workspace/scratch/324dc668b968/concept2cure-v2",
+    "base_commit": "2c9a4a5fefc639d6d5ccf3dda139f3d64d6b2115",
+    "fixture_root": "/tmp/c2c-semgrep-base-2c9a4a5f",
+    "source_identity_bridge": {
+      "exact_red_subject": "88fa1606c5b50daf1cb50686d743fe26e041b441",
+      "semgrep_run": 38028595000,
+      "job": 114144600069,
+      "all_seven_target_blobs_identical": true
+    },
+    "sources": [
+      {
+        "path": "docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs",
+        "base_git_blob": "b116764f098c21503ae552a6b00601d4deb5455d",
+        "fresh_red_88fa_git_blob": "b116764f098c21503ae552a6b00601d4deb5455d",
+        "sha256": "b46238525f9e69c3093ded030ecefbac801afded88933aaaf84dd26ac7779374",
+        "bytes": 6062,
+        "fixture_path": "/tmp/c2c-semgrep-base-2c9a4a5f/docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs"
+      },
+      {
+        "path": "server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts",
+        "base_git_blob": "7c975f92654af36f669b93cab61d2cfa1c5c308f",
+        "fresh_red_88fa_git_blob": "7c975f92654af36f669b93cab61d2cfa1c5c308f",
+        "sha256": "7ffbdffa9ae06df07240af0db301e8b5bbee944eb273134a0e8091fe60918f09",
+        "bytes": 8688,
+        "fixture_path": "/tmp/c2c-semgrep-base-2c9a4a5f/server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts"
+      },
+      {
+        "path": "server/services/__tests__/fixtures/artifact-signed-target-harness.cjs",
+        "base_git_blob": "b2f0029f2466d0efa910531db7f491150c3bf73c",
+        "fresh_red_88fa_git_blob": "b2f0029f2466d0efa910531db7f491150c3bf73c",
+        "sha256": "52fdceadd4f45eb1f456e17ec44ba62f7fd22d71dc8d3a73d66f53ec30217bea",
+        "bytes": 14603,
+        "fixture_path": "/tmp/c2c-semgrep-base-2c9a4a5f/server/services/__tests__/fixtures/artifact-signed-target-harness.cjs"
+      },
+      {
+        "path": "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+        "base_git_blob": "342d050bd62ae5fb49f9009bf9aeced8d088adc4",
+        "fresh_red_88fa_git_blob": "342d050bd62ae5fb49f9009bf9aeced8d088adc4",
+        "sha256": "46715c863c8e6e4ae5ff2c047e4a33f1abef1ef4b4a223679da8a711c2cc1586",
+        "bytes": 7902,
+        "fixture_path": "/tmp/c2c-semgrep-base-2c9a4a5f/server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts"
+      },
+      {
+        "path": "server/services/clinical-regulatory-evidence/dataset-profile.ts",
+        "base_git_blob": "ece3c904399146d6fa0dcf5c1d856de23178bb8d",
+        "fresh_red_88fa_git_blob": "ece3c904399146d6fa0dcf5c1d856de23178bb8d",
+        "sha256": "a32300ac80f62377151b5d5ae82a68a47e21bac9a24c1ebe09475b70535936d5",
+        "bytes": 8707,
+        "fixture_path": "/tmp/c2c-semgrep-base-2c9a4a5f/server/services/clinical-regulatory-evidence/dataset-profile.ts"
+      },
+      {
+        "path": "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+        "base_git_blob": "21a98ea797a9c2970c5cf45086a222822cf7f3c9",
+        "fresh_red_88fa_git_blob": "21a98ea797a9c2970c5cf45086a222822cf7f3c9",
+        "sha256": "b420931b7d7a7359afc9f31a2c1abd0463f037ce03d7bceba08ba329e8854470",
+        "bytes": 5714,
+        "fixture_path": "/tmp/c2c-semgrep-base-2c9a4a5f/server/services/part11/__tests__/one-signing-authority-policy.test.ts"
+      },
+      {
+        "path": "server/services/tasking/__tests__/task-project.pglite.test.ts",
+        "base_git_blob": "cb88f43dc22f50c56ac344422f89b4b231fabad3",
+        "fresh_red_88fa_git_blob": "cb88f43dc22f50c56ac344422f89b4b231fabad3",
+        "sha256": "5e7b19342e5b36a5cd19e7c3d2fae0d766f5f46620303409077ab0a2e237f1ae",
+        "bytes": 10052,
+        "fixture_path": "/tmp/c2c-semgrep-base-2c9a4a5f/server/services/tasking/__tests__/task-project.pglite.test.ts"
+      }
+    ]
+  },
+  "log_sha256": "f0b024b532b3b5950f1b713a45302abbf55e8c71ca8ed7e4d92b1bfc13280e8a",
+  "result_json_sha256": "7dc6ec2103de8d563630426fd676ebde28b2a728e5da3e0308716c08c82085ed",
+  "config_pins": [
+    {
+      "pack": "p/default",
+      "sha256": "a0eb4b83d2d9adc52492caaf12b458498b8845e66aea6730e4d5b0d76330313d"
+    },
+    {
+      "pack": "p/ci",
+      "sha256": "5af630531431137f01a1db909594a36876e02b2c78d361f2b6ab1c097ca4f148"
+    }
+  ],
+  "cli_version": "1.177.0"
+}

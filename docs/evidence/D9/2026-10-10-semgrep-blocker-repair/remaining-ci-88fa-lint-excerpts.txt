@@ -1,0 +1,175 @@
+2026-10-10T05:45:54.4164754Z [command]/usr/bin/git log -1 --format=%H
+2026-10-10T05:45:54.4187564Z 88fa1606c5b50daf1cb50686d743fe26e041b441
+2026-10-10T05:47:38.0341524Z ##[group]Run npm run test:proof-tier
+2026-10-10T05:47:38.0341867Z [36;1mnpm run test:proof-tier[0m
+2026-10-10T05:47:38.0403138Z shell: /usr/bin/bash -e {0}
+2026-10-10T05:47:38.0403406Z ##[endgroup]
+2026-10-10T05:47:38.1396462Z 
+2026-10-10T05:47:38.1397157Z > concept2cure-riai@1.0.0 test:proof-tier
+2026-10-10T05:47:38.1398474Z > vitest run --config vitest.config.ts tests/schema-contract tests/golden-journeys tests/export-contract
+2026-10-10T05:58:10.5030854Z [31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+2026-10-10T05:58:10.5031199Z 
+2026-10-10T05:58:10.5034536Z [41m[1m FAIL [22m[49m tests/schema-contract/biopharma-programs-router-columns.contract.test.ts[2m [ tests/schema-contract/biopharma-programs-router-columns.contract.test.ts ][22m
+2026-10-10T05:58:10.5041944Z [31m[1merror[22m: column "sponsor_address" specified more than once[39m
+2026-10-10T05:58:10.5044748Z [90m [2m❯[22m pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:[2m423:39[22m[39m
+2026-10-10T05:58:10.5046233Z [90m [2m❯[22m pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:[2m208:8[22m[39m
+2026-10-10T05:58:10.5047652Z [90m [2m❯[22m pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:[2m99:38[22m[39m
+2026-10-10T05:58:10.5049030Z [90m [2m❯[22m O.qe node_modules/@electric-sql/pglite/src/pglite.ts:[2m753:25[22m[39m
+2026-10-10T05:58:10.5050295Z [90m [2m❯[22m node_modules/@electric-sql/pglite/src/pglite.ts:[2m706:13[22m[39m
+2026-10-10T05:58:10.5051533Z [90m [2m❯[22m null.<anonymous> wasm:/wasm/0267bdc2:[2m1:5922082[22m[39m
+2026-10-10T05:58:10.5052623Z [90m [2m❯[22m null.<anonymous> wasm:/wasm/0267bdc2:[2m1:2616592[22m[39m
+2026-10-10T05:58:10.5053970Z [90m [2m❯[22m null.<anonymous> wasm:/wasm/0267bdc2:[2m1:2649078[22m[39m
+2026-10-10T05:58:10.5055024Z [90m [2m❯[22m null.<anonymous> wasm:/wasm/0267bdc2:[2m1:2649682[22m[39m
+2026-10-10T05:58:10.5055987Z [90m [2m❯[22m null.<anonymous> wasm:/wasm/0267bdc2:[2m1:5570415[22m[39m
+2026-10-10T05:58:10.5056298Z 
+2026-10-10T05:58:10.5056557Z [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22m[39m
+2026-10-10T05:58:10.5081877Z [31m[1mSerialized Error:[22m[39m [90m{ length: 113, severity: 'ERROR', code: '42701', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'tablecmds.c', routine: 'MergeAttributes', query: '\n  CREATE TABLE regulatory_programs (\n    id uuid PRIMARY KEY,\n    organization_id integer NOT NULL,\n    name text NOT NULL,\n    code varchar(50) NOT NULL,\n    description text,\n    program_type text NOT NULL,\n    product_type text NOT NULL,\n    device_class text,\n    regulatory_path text,\n    primary_agency text NOT NULL,\n    target_agencies json,\n    product_name text NOT NULL,\n    product_code varchar(50),\n    indication text,\n    application_number text,\n    -- Form FDA 1571\'s sponsor address and IND type, on the program (aac603a1b,\n    -- migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql).\n    sponsor_address text,\n    ind_type text,\n    intended_use text,\n    predicate_devices json,\n    -- The device-level eSTAR administrative facts (WO-8 Phase 3). They live on\n    -- the program because they describe the device, and the official FDA eSTAR\n    -- reads them through estar-administrative-data. Listed here because this\n    -- fixture is pinned to the Drizzle definition column-for-column below.\n    common_name text,\n    classification_name text,\n    regulation_number text,\n    associated_product_codes text,\n    indications_for_use_citation text,\n    equivalent_devices json,\n    -- The sponsor address and the IND type Form FDA 1571 carries\n    -- (20261008b_regulatory_programs_sponsor_address_ind_type.sql).\n    sponsor_address text,\n    ind_type text,\n    status text NOT NULL,\n    phase text,\n    priority text,\n    target_submission_date timestamp,\n    actual_submission_date timestamp,\n    approval_date timestamp,\n    progress_percent integer,\n    completed_milestones integer,\n    total_milestones integer,\n    lead_user_id integer,\n    team_members json,\n    settings json,\n    metadata json,\n    tags json,\n    created_by text,\n    updated_by text,\n    deleted_at timestamp,\n    created_at timestamp NOT NULL,\n    updated_at timestamp NOT NULL\n  )', params: undefined, queryOptions: undefined }[39m
+2026-10-10T05:58:10.5092773Z [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+2026-10-10T05:58:10.5093316Z 
+2026-10-10T05:58:10.5093353Z 
+2026-10-10T05:58:10.5093882Z [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m120 passed[39m[22m[90m (121)[39m
+2026-10-10T05:58:10.5098750Z [2m      Tests [22m [1m[32m1366 passed[39m[22m[2m | [22m[33m6 skipped[39m[90m (1372)[39m
+2026-10-10T05:58:10.5099663Z [2m   Start at [22m 05:47:38
+2026-10-10T05:58:10.5102412Z [2m   Duration [22m 631.91s[2m (transform 6.59s, setup 1.61s, import 32.93s, tests 582.24s, environment 14ms)[22m
+2026-10-10T05:58:10.5104698Z 
+2026-10-10T05:58:10.5867645Z ##[error]Process completed with exit code 1.
+2026-10-10T05:58:28.7528199Z ##[group]Run npm run ci:error-envelope
+2026-10-10T05:58:28.7528533Z [36;1mnpm run ci:error-envelope[0m
+2026-10-10T05:58:28.7589471Z shell: /usr/bin/bash -e {0}
+2026-10-10T05:58:28.7589731Z ##[endgroup]
+2026-10-10T05:58:28.8630221Z 
+2026-10-10T05:58:28.8630788Z > concept2cure-riai@1.0.0 ci:error-envelope
+2026-10-10T05:58:28.8631338Z > node scripts/ci/check-error-envelope-reads.mjs
+2026-10-10T05:58:28.8631628Z 
+2026-10-10T05:58:29.1719228Z 
+2026-10-10T05:58:29.1720346Z [ci:error-envelope] FAIL — 1 new hand-rolled error-envelope read(s):
+2026-10-10T05:58:29.1720779Z 
+2026-10-10T05:58:29.1721884Z   concept2cure/components/ana/anaTurnTimeline.ts:214  [typeof-error-string]
+2026-10-10T05:58:29.1722624Z 
+2026-10-10T05:58:29.1723319Z   Read the envelope through the single canonical reader instead:
+2026-10-10T05:58:29.1724294Z     import { serverMessage } from '@/lib/queryClient';
+2026-10-10T05:58:29.1725112Z     const msg = serverMessage(body) ?? '<your own domain fallback>';
+2026-10-10T05:58:29.1725547Z 
+2026-10-10T05:58:29.1725858Z   Reading `error` first renders the enum token (PENDING_STORE, FORBIDDEN)
+2026-10-10T05:58:29.1726542Z   as user copy, and bypasses the filter that keeps SQL, relation names,
+2026-10-10T05:58:29.1727066Z   routes and env vars off the screen.
+2026-10-10T05:58:29.1727307Z 
+2026-10-10T05:58:29.1727696Z   If the match is a false positive — an `.error` that is not an API
+2026-10-10T05:58:29.1728415Z   envelope — add it to the baseline with --write-baseline and say why in
+2026-10-10T05:58:29.1728908Z   the commit message.
+2026-10-10T05:58:29.1729083Z 
+2026-10-10T05:58:29.1836976Z ##[error]Process completed with exit code 1.
+2026-10-10T05:59:01.4019361Z ##[group]Run npm run ci:step-presentation:selftest && npm run ci:step-presentation
+2026-10-10T05:59:01.4019973Z [36;1mnpm run ci:step-presentation:selftest && npm run ci:step-presentation[0m
+2026-10-10T05:59:01.4080774Z shell: /usr/bin/bash -e {0}
+2026-10-10T05:59:01.4081032Z ##[endgroup]
+2026-10-10T05:59:01.5099776Z 
+2026-10-10T05:59:01.5100559Z > concept2cure-riai@1.0.0 ci:step-presentation:selftest
+2026-10-10T05:59:01.5101525Z > node scripts/ci/check-step-presentation.selftest.mjs
+2026-10-10T05:59:01.5101990Z 
+2026-10-10T05:59:02.8061544Z FAIL  1. the real tree passes (CLI exit 0)
+2026-10-10T05:59:02.8062651Z         ci:step-presentation FAILED — 1 finding(s):
+2026-10-10T05:59:03.3873400Z FAIL  2a. deleting the present entry of search_project_documents fails MISSING, naming it
+2026-10-10T05:59:03.3875017Z         MISSING review_sop_requirements: no `present` block: its steps would read "Ran a step"; MISSING search_project_documents: no `present` block: its steps would read "Ran a step"
+2026-10-10T05:59:03.7885941Z PASS  2b. the CLI exits 1 on the same deletion
+2026-10-10T05:59:03.7887812Z         ci:step-presentation FAILED — 2 finding(s): |   MISSING  review_sop_requirements: no `present` block: its steps would read "Ran a step"
+2026-10-10T05:59:04.0889205Z FAIL  3. source 'engine' on convene_drafting_council (its handler calls a model) fails ENGINE
+2026-10-10T05:59:04.0891112Z         its handler can reach a model: server/services/ana/agentic-workflow-tools.ts → import('../multi-agent-council.js') → server/services/multi-agent-council.ts → server/services/ai-gateway/gateway.ts
+2026-10-10T05:59:04.0918978Z PASS  4. engine on double_calls_model fails ENGINE
+2026-10-10T05:59:04.0920553Z         its handler can reach a model: server/services/ana/fixture-tools.ts → getGateway from '../ai-gateway/gateway' → server/services/ai-gateway/gateway.ts
+2026-10-10T05:59:04.0921556Z PASS  4. engine on double_model_via_helper fails ENGINE
+2026-10-10T05:59:04.0922856Z         its handler can reach a model: server/services/ana/fixture-tools.ts → helperThatCallsModel() → getGateway from '../ai-gateway/gateway' → server/services/ai-gateway/gateway.ts
+2026-10-10T05:59:04.0924335Z PASS  4. engine on double_model_via_dynamic_import fails ENGINE
+2026-10-10T05:59:04.0925523Z         its handler can reach a model: server/services/ana/fixture-tools.ts → import('./drafter.js') → server/services/ana/drafter.ts → server/services/ai-gateway/gateway.ts
+2026-10-10T05:59:04.0926327Z PASS  4. control: engine on double_pure passes
+2026-10-10T05:59:04.4860873Z PASS  4. the CLI exits 1 on the doubles tree
+2026-10-10T05:59:04.4900149Z PASS  5. VERB fires on bad_verb
+2026-10-10T05:59:04.4900701Z PASS  5. SOURCE fires on bad_source
+2026-10-10T05:59:04.4901243Z PASS  5. PREVIEW fires on bad_preview
+2026-10-10T05:59:04.4901672Z PASS  5. OBJECT fires on tool_like_object
+2026-10-10T05:59:04.4902017Z PASS  5. OBJECT fires on empty_object
+2026-10-10T05:59:04.4902357Z PASS  5. REFUSAL fires on handler_refusal
+2026-10-10T05:59:04.4902710Z PASS  5. ENGINE fires on engine_writes
+2026-10-10T05:59:04.4903406Z PASS  5. ENGINE fires on engine_no_handler
+2026-10-10T05:59:04.4904063Z PASS  5. control: a well-formed entry has no finding
+2026-10-10T05:59:04.4915024Z PASS  6. an unreadable or empty verb table throws, never passes every verb
+2026-10-10T05:59:04.4941061Z PASS  6. an empty in-scope list throws, never passes
+2026-10-10T05:59:04.4941524Z 
+2026-10-10T05:59:04.4942250Z ci:step-presentation:selftest — 17/20 cases behaved.
+2026-10-10T05:59:04.4944542Z FAILED: 1. the real tree passes (CLI exit 0); 2a. deleting the present entry of search_project_documents fails MISSING, naming it; 3. source 'engine' on convene_drafting_council (its handler calls a model) fails ENGINE
+2026-10-10T05:59:04.5163615Z ##[error]Process completed with exit code 1.
+2026-10-10T05:59:15.2720405Z ##[group]Run npm run ci:tenant-isolation:no-regression
+2026-10-10T05:59:15.2720812Z [36;1mnpm run ci:tenant-isolation:no-regression[0m
+2026-10-10T05:59:15.2781465Z shell: /usr/bin/bash -e {0}
+2026-10-10T05:59:15.2781716Z ##[endgroup]
+2026-10-10T05:59:15.3815491Z 
+2026-10-10T05:59:15.3816350Z > concept2cure-riai@1.0.0 ci:tenant-isolation:no-regression
+2026-10-10T05:59:15.3817448Z > node scripts/ci/check-tenant-isolation.mjs --strict-no-regression
+2026-10-10T05:59:15.3818037Z 
+2026-10-10T05:59:16.8050853Z [ci:tenant-isolation] WARN — 8 candidate violation(s) (35 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit):
+2026-10-10T05:59:16.8052202Z 
+2026-10-10T05:59:16.8052467Z   server/routes/module-access-requests.ts  (1)
+2026-10-10T05:59:16.8053299Z     L290  tables=[]
+2026-10-10T05:59:16.8053802Z       `${SELECT_REQUEST}
+2026-10-10T05:59:16.8054002Z 
+2026-10-10T05:59:16.8054246Z   server/services/deep-research-orchestrator.ts  (1)
+2026-10-10T05:59:16.8055202Z     L419  tables=[deep_research_jobs]
+2026-10-10T05:59:16.8055773Z       `SELECT id, uuid, organization_id, project_id, user_id, status, query, progress,
+2026-10-10T05:59:16.8056180Z 
+2026-10-10T05:59:16.8056973Z   server/services/kernel-adaptive-policy.ts  (1)
+2026-10-10T05:59:16.8057564Z     L85  tables=[]
+2026-10-10T05:59:16.8058284Z       `SELECT strategy, AVG(quality_score)::float AS avg_quality, COUNT(*)::int AS samples
+2026-10-10T05:59:16.8058980Z 
+2026-10-10T05:59:16.8059297Z   server/services/kernel-observability.ts  (4)
+2026-10-10T05:59:16.8059812Z     L53  tables=[]
+2026-10-10T05:59:16.8060049Z       `SELECT
+2026-10-10T05:59:16.8060274Z     L63  tables=[]
+2026-10-10T05:59:16.8060510Z       `SELECT
+2026-10-10T05:59:16.8060729Z     L72  tables=[]
+2026-10-10T05:59:16.8060955Z       `SELECT
+2026-10-10T05:59:16.8061246Z     … 1 more
+2026-10-10T05:59:16.8061378Z 
+2026-10-10T05:59:16.8061666Z   server/services/vault/document-chunking-backfill.service.ts  (1)
+2026-10-10T05:59:16.8062176Z     L102  tables=[document_chunks]
+2026-10-10T05:59:16.8062701Z       ? [`(c.chunk_status = 'chunked'${retryFailed ? '' : ' AND c.chunk_error IS NULL'}
+2026-10-10T05:59:16.8063326Z 
+2026-10-10T05:59:16.8066418Z Total: 8 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+2026-10-10T05:59:16.8068284Z [ci:tenant-isolation] FAIL — 1 NEW finding(s) above baseline of 8:
+2026-10-10T05:59:16.8068915Z   server/services/vault/document-chunking-backfill.service.ts#db0501f26bbf:document_chunks
+2026-10-10T05:59:16.8069944Z [ci:tenant-isolation] 1 previously-flagged finding(s) resolved — consider re-running with --write-baseline to ratchet down.
+2026-10-10T05:59:16.8209886Z ##[error]Process completed with exit code 1.
+2026-10-10T05:59:19.6368090Z ##[group]Run node scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression
+2026-10-10T05:59:19.6368747Z [36;1mnode scripts/ci/audit-requestdb-coverage.mjs --strict-no-regression[0m
+2026-10-10T05:59:19.6430534Z shell: /usr/bin/bash -e {0}
+2026-10-10T05:59:19.6430796Z ##[endgroup]
+2026-10-10T05:59:19.7425441Z [ci:requestdb-coverage] RLS request-scoped DB adoption
+2026-10-10T05:59:19.7427152Z   route files touching the DB : 271
+2026-10-10T05:59:19.7427716Z   using requestDb(req)        : 43
+2026-10-10T05:59:19.7428185Z   still on the shared pool    : 229 (migration backlog)
+2026-10-10T05:59:19.7429136Z     JWT boundary auto-scoped  : 227
+2026-10-10T05:59:19.7429764Z     explicit pre-tenant scope : 2
+2026-10-10T05:59:19.7430209Z     unclassified              : 0
+2026-10-10T05:59:19.7435307Z [ci:requestdb-coverage] 1 route(s) migrated off the shared pool — re-run with --write-baseline to ratchet the backlog down.
+2026-10-10T05:59:19.7437698Z [ci:requestdb-coverage] FAIL — 2 NEW route(s) on the shared pool above baseline of 228. New tenant-facing routes must use requestDb(req):
+2026-10-10T05:59:19.7438961Z   server/routes/ana-ri/runs.ts
+2026-10-10T05:59:19.7439652Z   server/routes/submissions.ts
+2026-10-10T05:59:19.7480612Z ##[error]Process completed with exit code 1.
+2026-10-10T06:04:47.6168428Z ##[group]Run npm run ci:typecheck:no-regression
+2026-10-10T06:04:47.6168804Z [36;1mnpm run ci:typecheck:no-regression[0m
+2026-10-10T06:04:47.6230591Z shell: /usr/bin/bash -e {0}
+2026-10-10T06:04:47.6230853Z ##[endgroup]
+2026-10-10T06:04:47.7270916Z 
+2026-10-10T06:04:47.7271482Z > concept2cure-riai@1.0.0 ci:typecheck:no-regression
+2026-10-10T06:04:47.7272069Z > node scripts/ci/typecheck-no-regression.mjs
+2026-10-10T06:04:47.7272341Z 
+2026-10-10T06:04:47.7612268Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-10T06:08:11.6279064Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-10T06:08:11.6280709Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.
+2026-10-10T06:08:11.6426594Z ##[group]Run npm run beta:typecheck
+2026-10-10T06:08:11.6426934Z [36;1mnpm run beta:typecheck[0m
+2026-10-10T06:08:11.6503360Z shell: /usr/bin/bash -e {0}
+2026-10-10T06:08:11.6503687Z ##[endgroup]
+2026-10-10T06:08:11.7623529Z 
+2026-10-10T06:08:11.7626749Z > concept2cure-riai@1.0.0 beta:typecheck
+2026-10-10T06:08:11.7627956Z > NODE_OPTIONS="--max-old-space-size=4096" tsc --noEmit -p tsconfig.beta-slice.json
+2026-10-10T06:08:11.7628477Z 

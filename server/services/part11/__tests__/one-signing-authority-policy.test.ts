@@ -65,7 +65,15 @@ const PREDICATE_CALLERS: Record<string, { count: number; reason: string }> = {
   },
 };
 
-const RETIRED_WRAPPERS = ['signingAuthorityRefusal', 'refusedWithoutSigningAuthority', 'assertSigningAuthority'];
+const RETIRED_WRAPPERS = [
+  { name: 'signingAuthorityRefusal', declaration: /\bfunction\s+signingAuthorityRefusal\s*\(|\b(?:const|let)\s+signingAuthorityRefusal\s*=/ },
+  { name: 'refusedWithoutSigningAuthority', declaration: /\bfunction\s+refusedWithoutSigningAuthority\s*\(|\b(?:const|let)\s+refusedWithoutSigningAuthority\s*=/ },
+  { name: 'assertSigningAuthority', declaration: /\bfunction\s+assertSigningAuthority\s*\(|\b(?:const|let)\s+assertSigningAuthority\s*=/ },
+];
+
+function retiredWrapperNames(code: string): string[] {
+  return RETIRED_WRAPPERS.filter(({ declaration }) => declaration.test(code)).map(({ name }) => name);
+}
 
 function serverSources(): Array<{ file: string; code: string }> {
   const out = execSync("git ls-files --cached --others --exclude-standard 'server/**/*.ts' 'server/*.ts'", {
@@ -93,11 +101,25 @@ describe('one signing-authority policy (P-27)', () => {
 
   it('defines no local signing-authority wrapper by a retired name', () => {
     const defined = sources.flatMap(({ file, code }) =>
-      RETIRED_WRAPPERS.filter((name) => new RegExp(`\\bfunction\\s+${name}\\s*\\(|\\b(?:const|let)\\s+${name}\\s*=`).test(code)).map(
+      retiredWrapperNames(code).map(
         (name) => `${file}: ${name}`,
       ),
     );
     expect(defined, 'a local copy of the signing-authority policy').toEqual([]);
+  });
+
+  it('detects function, const and let declarations for every retired wrapper', () => {
+    for (const { name } of RETIRED_WRAPPERS) {
+      expect(retiredWrapperNames(`function\n${name} \t() {}`)).toEqual([name]);
+      expect(retiredWrapperNames(`const\n${name} \t= () => true;`)).toEqual([name]);
+      expect(retiredWrapperNames(`let\n${name} \t= () => true;`)).toEqual([name]);
+    }
+  });
+
+  it('does not confuse calls or longer identifiers with retired declarations', () => {
+    for (const { name } of RETIRED_WRAPPERS) {
+      expect(retiredWrapperNames(`${name}(); function prefix${name}() {} const ${name}Suffix = () => true;`)).toEqual([]);
+    }
   });
 
   it('calls the policy predicate directly only where the answer is displayed or judges another person', () => {

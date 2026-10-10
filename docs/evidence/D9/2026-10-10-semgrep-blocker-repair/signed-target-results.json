@@ -1,0 +1,4755 @@
+{
+  "node": "v22.23.3",
+  "typescript": "5.6.3",
+  "scope": "Full production signed act and quorum modules; SQLite transaction/predicate execution with explicit ORM/schema/identity/audit doubles. Row locks recorded, not executed. Not PostgreSQL, PGlite, RLS, HTTP, or reauthentication qualification.",
+  "sourceTree": "/workspace/scratch/324dc668b968/concept2cure-v2",
+  "sourceSha256": "ced6f28015834905043e4d0270e8c40591067703bc7e051298606c8ae0a2b458",
+  "passed": 111,
+  "failed": 0,
+  "skipped": 0,
+  "results": [
+    {
+      "name": "approved: unchanged owned target binds one exact stored version",
+      "passed": true,
+      "result": {
+        "allowed": true,
+        "error": null,
+        "rollbackUnchanged": null,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:36.509Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "review",
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_signatures",
+            "sql": "INSERT INTO concept2cure_signatures (organization_id,signature_id,artifact_id,artifact_version_id,signature_type,signature_purpose,signature_meaning,signer_id,signer_name,signer_email,signer_role,authentication_method,authentication_timestamp,second_factor_verified,signature_hash,signature_manifest,ip_address,device_info,status,signed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              7,
+              "sig_1791612456512_c024b99e0ee3",
+              101,
+              401,
+              "approval",
+              "approval_attestation",
+              "approval",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "password+totp",
+              "2026-10-10T06:07:36.512Z",
+              1,
+              "5dec736f31f03888b380d7a49755d2e054f0a5c320da5006b8a1a72881ff9c00",
+              "{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"approval\",\"printedName\":\"Qualified Reviewer\",\"attestationText\":\"I approve the reviewed document.\",\"reason\":\"Reviewed\",\"previousStatus\":\"review\",\"newStatus\":\"approved\",\"contentHash\":\"025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e\",\"actionId\":\"a1\",\"auditId\":\"u1\",\"auditSha256Chain\":\"fixture-chain-not-hmac\"}",
+              null,
+              null,
+              "active",
+              "2026-10-10T06:07:36.512Z"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: missing stored version is recorded from the checked head",
+      "passed": true,
+      "result": {
+        "allowed": true,
+        "error": null,
+        "rollbackUnchanged": null,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:36.559Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "review",
+              3
+            ]
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_artifact_versions",
+            "sql": "INSERT OR IGNORE INTO concept2cure_artifact_versions (artifact_id,organization_id,version,content,content_hash,change_description,created_by_id) VALUES (?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              101,
+              7,
+              3,
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "Recorded when this version was signed: it had no stored version row.",
+              300
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_signatures",
+            "sql": "INSERT INTO concept2cure_signatures (organization_id,signature_id,artifact_id,artifact_version_id,signature_type,signature_purpose,signature_meaning,signer_id,signer_name,signer_email,signer_role,authentication_method,authentication_timestamp,second_factor_verified,signature_hash,signature_manifest,ip_address,device_info,status,signed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              7,
+              "sig_1791612456561_87ed1e88d4e5",
+              101,
+              1,
+              "approval",
+              "approval_attestation",
+              "approval",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "password+totp",
+              "2026-10-10T06:07:36.561Z",
+              1,
+              "4a132a63c34a7d1953b29d0b42d05d14b354938607d2a5f33ead47953a74fbed",
+              "{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"approval\",\"printedName\":\"Qualified Reviewer\",\"attestationText\":\"I approve the reviewed document.\",\"reason\":\"Reviewed\",\"previousStatus\":\"review\",\"newStatus\":\"approved\",\"contentHash\":\"025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e\",\"actionId\":\"a1\",\"auditId\":\"u1\",\"auditSha256Chain\":\"fixture-chain-not-hmac\"}",
+              null,
+              null,
+              "active",
+              "2026-10-10T06:07:36.561Z"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: absent optional head hash still binds exact text",
+      "passed": true,
+      "result": {
+        "allowed": true,
+        "error": null,
+        "rollbackUnchanged": null,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" IS NULL) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:36.605Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "review",
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_signatures",
+            "sql": "INSERT INTO concept2cure_signatures (organization_id,signature_id,artifact_id,artifact_version_id,signature_type,signature_purpose,signature_meaning,signer_id,signer_name,signer_email,signer_role,authentication_method,authentication_timestamp,second_factor_verified,signature_hash,signature_manifest,ip_address,device_info,status,signed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              7,
+              "sig_1791612456606_1c6626980c88",
+              101,
+              401,
+              "approval",
+              "approval_attestation",
+              "approval",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "password+totp",
+              "2026-10-10T06:07:36.606Z",
+              1,
+              "9c698c813c0652bc955650c23cbb3438e9bce308acf28409430a6e8c8bf67e07",
+              "{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"approval\",\"printedName\":\"Qualified Reviewer\",\"attestationText\":\"I approve the reviewed document.\",\"reason\":\"Reviewed\",\"previousStatus\":\"review\",\"newStatus\":\"approved\",\"contentHash\":\"025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e\",\"actionId\":\"a1\",\"auditId\":\"u1\",\"auditSha256Chain\":\"fixture-chain-not-hmac\"}",
+              null,
+              null,
+              "active",
+              "2026-10-10T06:07:36.606Z"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current head organizationId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current head projectId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current head artifactId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current head version drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current head content drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current head contentHash drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current head title drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current head ctdSection drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current head templateId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current head createdById drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current head updatedAt drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current head publishedVersionId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: removed head refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: cached target cannot point at another tenant",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "approved: corrupt hash in both snapshots is not proof",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: removed stored version refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current stored version id drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current stored version artifactId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current stored version organizationId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current stored version version drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current stored version content drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: current stored version contentHash drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: cached version id mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: cached version artifactId mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: cached version organizationId mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: cached version version mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: cached version content mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: cached version contentHash mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: newly appeared version requires a fresh signing attempt",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: inconsistent stored text and hash refuse even when cache agrees",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: supplied status update cannot inject content",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "approved: supplied status update cannot change tenant",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "approved: supplied status update cannot change status",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "approved: headRead failure leaves no committed changes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture headRead unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "approved: versionRead failure leaves no committed changes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture versionRead unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: statusWrite failure leaves no committed changes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture statusWrite unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: identity failure leaves no committed changes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture identity unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:37.637Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "review",
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: ledger failure leaves no committed changes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture ledger unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:37.655Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "review",
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: signature failure leaves no committed changes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture signature unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:37.684Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "review",
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: unchanged owned target binds one exact stored version",
+      "passed": true,
+      "result": {
+        "allowed": true,
+        "error": null,
+        "rollbackUnchanged": null,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,locked_at = ?,locked_by_id = ?,published_version_id = ?,published_at = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" = ?) RETURNING *",
+            "params": [
+              "locked",
+              "2026-10-10T06:07:37.703Z",
+              "2026-10-10T06:07:37.703Z",
+              777,
+              3,
+              "2026-10-10T06:07:37.703Z",
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "approved",
+              3,
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_signatures",
+            "sql": "INSERT INTO concept2cure_signatures (organization_id,signature_id,artifact_id,artifact_version_id,signature_type,signature_purpose,signature_meaning,signer_id,signer_name,signer_email,signer_role,authentication_method,authentication_timestamp,second_factor_verified,signature_hash,signature_manifest,ip_address,device_info,status,signed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              7,
+              "sig_1791612457704_fe0d7eda1a77",
+              101,
+              401,
+              "publish",
+              "publish_attestation",
+              "release",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "password+totp",
+              "2026-10-10T06:07:37.704Z",
+              1,
+              "8ef30dc0db06a84b05fbde0528f9c110569c3638e2b41b625c123bb05465a0c6",
+              "{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"release\",\"printedName\":\"Qualified Reviewer\",\"attestationText\":\"I approve the reviewed document.\",\"reason\":\"Reviewed\",\"previousStatus\":\"approved\",\"newStatus\":\"locked\",\"contentHash\":\"025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e\",\"actionId\":\"a1\",\"auditId\":\"u1\",\"auditSha256Chain\":\"fixture-chain-not-hmac\"}",
+              null,
+              null,
+              "active",
+              "2026-10-10T06:07:37.704Z"
+            ]
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_submission_snapshots",
+            "sql": "INSERT INTO concept2cure_submission_snapshots (snapshot_id,artifact_id,organization_id,version_id,approved_version_id,published_version_id,content_hash,title,ctd_section,template_id,action_type,actor_id,actor_name,actor_email,actor_role,attestation_text,signature_meaning,metadata) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              "snap_1791612457704_49d619e80b75",
+              101,
+              7,
+              3,
+              3,
+              3,
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "Clinical overview",
+              "2.5",
+              "clinical-template",
+              "publish",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "I approve the reviewed document.",
+              "release",
+              "{\"previousStatus\":\"approved\",\"newStatus\":\"locked\",\"reason\":\"Reviewed\",\"signatureId\":\"sig_1791612457704_fe0d7eda1a77\"}"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: missing stored version is recorded from the checked head",
+      "passed": true,
+      "result": {
+        "allowed": true,
+        "error": null,
+        "rollbackUnchanged": null,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,locked_at = ?,locked_by_id = ?,published_version_id = ?,published_at = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" = ?) RETURNING *",
+            "params": [
+              "locked",
+              "2026-10-10T06:07:37.732Z",
+              "2026-10-10T06:07:37.732Z",
+              777,
+              3,
+              "2026-10-10T06:07:37.732Z",
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "approved",
+              3,
+              3
+            ]
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_artifact_versions",
+            "sql": "INSERT OR IGNORE INTO concept2cure_artifact_versions (artifact_id,organization_id,version,content,content_hash,change_description,created_by_id) VALUES (?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              101,
+              7,
+              3,
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "Recorded when this version was signed: it had no stored version row.",
+              300
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_signatures",
+            "sql": "INSERT INTO concept2cure_signatures (organization_id,signature_id,artifact_id,artifact_version_id,signature_type,signature_purpose,signature_meaning,signer_id,signer_name,signer_email,signer_role,authentication_method,authentication_timestamp,second_factor_verified,signature_hash,signature_manifest,ip_address,device_info,status,signed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              7,
+              "sig_1791612457733_f0750e579fa6",
+              101,
+              1,
+              "publish",
+              "publish_attestation",
+              "release",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "password+totp",
+              "2026-10-10T06:07:37.733Z",
+              1,
+              "80302bfc068a0c665ac7f297c0abd17c201c14375fea26db1a6a5fe9dde5cb81",
+              "{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"release\",\"printedName\":\"Qualified Reviewer\",\"attestationText\":\"I approve the reviewed document.\",\"reason\":\"Reviewed\",\"previousStatus\":\"approved\",\"newStatus\":\"locked\",\"contentHash\":\"025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e\",\"actionId\":\"a1\",\"auditId\":\"u1\",\"auditSha256Chain\":\"fixture-chain-not-hmac\"}",
+              null,
+              null,
+              "active",
+              "2026-10-10T06:07:37.733Z"
+            ]
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_submission_snapshots",
+            "sql": "INSERT INTO concept2cure_submission_snapshots (snapshot_id,artifact_id,organization_id,version_id,approved_version_id,published_version_id,content_hash,title,ctd_section,template_id,action_type,actor_id,actor_name,actor_email,actor_role,attestation_text,signature_meaning,metadata) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              "snap_1791612457733_cdc18743ad47",
+              101,
+              7,
+              3,
+              3,
+              3,
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "Clinical overview",
+              "2.5",
+              "clinical-template",
+              "publish",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "I approve the reviewed document.",
+              "release",
+              "{\"previousStatus\":\"approved\",\"newStatus\":\"locked\",\"reason\":\"Reviewed\",\"signatureId\":\"sig_1791612457733_f0750e579fa6\"}"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: absent optional head hash still binds exact text",
+      "passed": true,
+      "result": {
+        "allowed": true,
+        "error": null,
+        "rollbackUnchanged": null,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,locked_at = ?,locked_by_id = ?,published_version_id = ?,published_at = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" IS NULL) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" = ?) RETURNING *",
+            "params": [
+              "locked",
+              "2026-10-10T06:07:37.751Z",
+              "2026-10-10T06:07:37.751Z",
+              777,
+              3,
+              "2026-10-10T06:07:37.751Z",
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "approved",
+              3,
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_signatures",
+            "sql": "INSERT INTO concept2cure_signatures (organization_id,signature_id,artifact_id,artifact_version_id,signature_type,signature_purpose,signature_meaning,signer_id,signer_name,signer_email,signer_role,authentication_method,authentication_timestamp,second_factor_verified,signature_hash,signature_manifest,ip_address,device_info,status,signed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              7,
+              "sig_1791612457752_f1b622837014",
+              101,
+              401,
+              "publish",
+              "publish_attestation",
+              "release",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "password+totp",
+              "2026-10-10T06:07:37.752Z",
+              1,
+              "0e18d4bb1fae68bc9438ef157310f27ec077b8067c6844bde3d97b502903a83f",
+              "{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"release\",\"printedName\":\"Qualified Reviewer\",\"attestationText\":\"I approve the reviewed document.\",\"reason\":\"Reviewed\",\"previousStatus\":\"approved\",\"newStatus\":\"locked\",\"contentHash\":\"025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e\",\"actionId\":\"a1\",\"auditId\":\"u1\",\"auditSha256Chain\":\"fixture-chain-not-hmac\"}",
+              null,
+              null,
+              "active",
+              "2026-10-10T06:07:37.752Z"
+            ]
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_submission_snapshots",
+            "sql": "INSERT INTO concept2cure_submission_snapshots (snapshot_id,artifact_id,organization_id,version_id,approved_version_id,published_version_id,content_hash,title,ctd_section,template_id,action_type,actor_id,actor_name,actor_email,actor_role,attestation_text,signature_meaning,metadata) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              "snap_1791612457752_21d7b0c8f486",
+              101,
+              7,
+              3,
+              3,
+              3,
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "Clinical overview",
+              "2.5",
+              "clinical-template",
+              "publish",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "I approve the reviewed document.",
+              "release",
+              "{\"previousStatus\":\"approved\",\"newStatus\":\"locked\",\"reason\":\"Reviewed\",\"signatureId\":\"sig_1791612457752_f1b622837014\"}"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current head organizationId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current head projectId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current head artifactId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current head version drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current head content drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current head contentHash drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current head title drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current head ctdSection drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current head templateId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current head createdById drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current head updatedAt drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current head publishedVersionId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: removed head refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: cached target cannot point at another tenant",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "locked: corrupt hash in both snapshots is not proof",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: removed stored version refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current stored version id drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current stored version artifactId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current stored version organizationId drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current stored version version drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current stored version content drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: current stored version contentHash drift refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: cached version id mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: cached version artifactId mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: cached version organizationId mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: cached version version mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: cached version content mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: cached version contentHash mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: newly appeared version requires a fresh signing attempt",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: inconsistent stored text and hash refuse even when cache agrees",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: supplied status update cannot inject content",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "locked: supplied status update cannot change tenant",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "locked: supplied status update cannot change status",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "locked: headRead failure leaves no committed changes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture headRead unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "locked: versionRead failure leaves no committed changes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture versionRead unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: statusWrite failure leaves no committed changes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture statusWrite unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: identity failure leaves no committed changes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture identity unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,locked_at = ?,locked_by_id = ?,published_version_id = ?,published_at = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" = ?) RETURNING *",
+            "params": [
+              "locked",
+              "2026-10-10T06:07:38.435Z",
+              "2026-10-10T06:07:38.435Z",
+              777,
+              3,
+              "2026-10-10T06:07:38.435Z",
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "approved",
+              3,
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: ledger failure leaves no committed changes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture ledger unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,locked_at = ?,locked_by_id = ?,published_version_id = ?,published_at = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" = ?) RETURNING *",
+            "params": [
+              "locked",
+              "2026-10-10T06:07:38.482Z",
+              "2026-10-10T06:07:38.482Z",
+              777,
+              3,
+              "2026-10-10T06:07:38.482Z",
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "approved",
+              3,
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: signature failure leaves no committed changes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture signature unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,locked_at = ?,locked_by_id = ?,published_version_id = ?,published_at = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" = ?) RETURNING *",
+            "params": [
+              "locked",
+              "2026-10-10T06:07:38.508Z",
+              "2026-10-10T06:07:38.508Z",
+              777,
+              3,
+              "2026-10-10T06:07:38.508Z",
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "approved",
+              3,
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: quorum removed decision after preflight refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "Cannot approve: each active reviewer must have exactly one recorded decision. Route this document for review again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: quorum nonapproval after preflight refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "Cannot approve: 1 reviewer(s) did not approve (decisions: reject) Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: quorum stale decision after preflight refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "Cannot approve: 1 reviewer decision(s) were recorded against version 2; the artifact is now version 3. Route it for review again so reviewers decide on what would be approved. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: quorum reviewer mismatch refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "Cannot approve: review decisions do not match their assigned reviewers. Route this document for review again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: quorum pending assignment refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "Cannot approve: 1 of 1 reviewers have not yet submitted their decision Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: new pending round after preflight refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "Cannot approve: 1 of 1 reviewers have not yet submitted their decision Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: no-assignment policy remains ordinary approval",
+      "passed": true,
+      "result": {
+        "allowed": true,
+        "error": null,
+        "rollbackUnchanged": null,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:38.629Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "review",
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_signatures",
+            "sql": "INSERT INTO concept2cure_signatures (organization_id,signature_id,artifact_id,artifact_version_id,signature_type,signature_purpose,signature_meaning,signer_id,signer_name,signer_email,signer_role,authentication_method,authentication_timestamp,second_factor_verified,signature_hash,signature_manifest,ip_address,device_info,status,signed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              7,
+              "sig_1791612458630_29ed96505b96",
+              101,
+              401,
+              "approval",
+              "approval_attestation",
+              "approval",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "password+totp",
+              "2026-10-10T06:07:38.630Z",
+              1,
+              "e6d324b5e23d4951134e8063104191e06d8c6f22198ec9d200da17a8ccacb41a",
+              "{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"approval\",\"printedName\":\"Qualified Reviewer\",\"attestationText\":\"I approve the reviewed document.\",\"reason\":\"Reviewed\",\"previousStatus\":\"review\",\"newStatus\":\"approved\",\"contentHash\":\"025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e\",\"actionId\":\"a1\",\"auditId\":\"u1\",\"auditSha256Chain\":\"fixture-chain-not-hmac\"}",
+              null,
+              null,
+              "active",
+              "2026-10-10T06:07:38.630Z"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: decisions read failure refuses before status write",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture decisionsRead unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: assignments read failure refuses before status write",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture assignmentsRead unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: version insertion failure rolls status back",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture versionWrite unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:38.677Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "review",
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: snapshot failure rolls status, ledger and signature back",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "fixture snapshot unavailable"
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,locked_at = ?,locked_by_id = ?,published_version_id = ?,published_at = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" = ?) RETURNING *",
+            "params": [
+              "locked",
+              "2026-10-10T06:07:38.700Z",
+              "2026-10-10T06:07:38.700Z",
+              777,
+              3,
+              "2026-10-10T06:07:38.700Z",
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "approved",
+              3,
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_signatures",
+            "sql": "INSERT INTO concept2cure_signatures (organization_id,signature_id,artifact_id,artifact_version_id,signature_type,signature_purpose,signature_meaning,signer_id,signer_name,signer_email,signer_role,authentication_method,authentication_timestamp,second_factor_verified,signature_hash,signature_manifest,ip_address,device_info,status,signed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              7,
+              "sig_1791612458701_c01100404fe3",
+              101,
+              401,
+              "publish",
+              "publish_attestation",
+              "release",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "password+totp",
+              "2026-10-10T06:07:38.701Z",
+              1,
+              "2ba5ece678b66b7378c754127c4ab645d353ec4e7b73041607fd814c8fff3953",
+              "{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"release\",\"printedName\":\"Qualified Reviewer\",\"attestationText\":\"I approve the reviewed document.\",\"reason\":\"Reviewed\",\"previousStatus\":\"approved\",\"newStatus\":\"locked\",\"contentHash\":\"025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e\",\"actionId\":\"a1\",\"auditId\":\"u1\",\"auditSha256Chain\":\"fixture-chain-not-hmac\"}",
+              null,
+              null,
+              "active",
+              "2026-10-10T06:07:38.701Z"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: old approved version cannot cover current head",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "locked: approval revoked after preflight refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: wrong starting state refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "approved: invalid actor refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "approved: invalid project refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "approved: null update payload refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "approved: invalid updatedAt value refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "approved: incorrect approved version in update refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "locked: incorrect publishing actor refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": []
+      }
+    },
+    {
+      "name": "approved: missing signature return rolls back all writes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "The signature record could not be confirmed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:38.867Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "review",
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_signatures",
+            "sql": "INSERT INTO concept2cure_signatures (organization_id,signature_id,artifact_id,artifact_version_id,signature_type,signature_purpose,signature_meaning,signer_id,signer_name,signer_email,signer_role,authentication_method,authentication_timestamp,second_factor_verified,signature_hash,signature_manifest,ip_address,device_info,status,signed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              7,
+              "sig_1791612458867_3a577da4ac53",
+              101,
+              401,
+              "approval",
+              "approval_attestation",
+              "approval",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "password+totp",
+              "2026-10-10T06:07:38.867Z",
+              1,
+              "f5675a4721bb88bd3412e66cdafc0b42a6cc5c8d35f82f916efd50eff4f9c5aa",
+              "{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"approval\",\"printedName\":\"Qualified Reviewer\",\"attestationText\":\"I approve the reviewed document.\",\"reason\":\"Reviewed\",\"previousStatus\":\"review\",\"newStatus\":\"approved\",\"contentHash\":\"025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e\",\"actionId\":\"a1\",\"auditId\":\"u1\",\"auditSha256Chain\":\"fixture-chain-not-hmac\"}",
+              null,
+              null,
+              "active",
+              "2026-10-10T06:07:38.867Z"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: missing signature return rolls back all writes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "The signature record could not be confirmed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,locked_at = ?,locked_by_id = ?,published_version_id = ?,published_at = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" = ?) RETURNING *",
+            "params": [
+              "locked",
+              "2026-10-10T06:07:38.882Z",
+              "2026-10-10T06:07:38.882Z",
+              777,
+              3,
+              "2026-10-10T06:07:38.882Z",
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "approved",
+              3,
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_signatures",
+            "sql": "INSERT INTO concept2cure_signatures (organization_id,signature_id,artifact_id,artifact_version_id,signature_type,signature_purpose,signature_meaning,signer_id,signer_name,signer_email,signer_role,authentication_method,authentication_timestamp,second_factor_verified,signature_hash,signature_manifest,ip_address,device_info,status,signed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              7,
+              "sig_1791612458882_779038268872",
+              101,
+              401,
+              "publish",
+              "publish_attestation",
+              "release",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "password+totp",
+              "2026-10-10T06:07:38.882Z",
+              1,
+              "2622c716b730dbb4ac1a5b79a3f2036ad5f8e24285523e487a3f2a5f367c5ebd",
+              "{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"release\",\"printedName\":\"Qualified Reviewer\",\"attestationText\":\"I approve the reviewed document.\",\"reason\":\"Reviewed\",\"previousStatus\":\"approved\",\"newStatus\":\"locked\",\"contentHash\":\"025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e\",\"actionId\":\"a1\",\"auditId\":\"u1\",\"auditSha256Chain\":\"fixture-chain-not-hmac\"}",
+              null,
+              null,
+              "active",
+              "2026-10-10T06:07:38.882Z"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "locked: missing snapshot return rolls back all writes",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "Error",
+          "message": "The release snapshot record could not be confirmed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,locked_at = ?,locked_by_id = ?,published_version_id = ?,published_at = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" = ?) RETURNING *",
+            "params": [
+              "locked",
+              "2026-10-10T06:07:38.901Z",
+              "2026-10-10T06:07:38.901Z",
+              777,
+              3,
+              "2026-10-10T06:07:38.901Z",
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "approved",
+              3,
+              3
+            ]
+          },
+          {
+            "kind": "identity"
+          },
+          {
+            "kind": "ledger"
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_signatures",
+            "sql": "INSERT INTO concept2cure_signatures (organization_id,signature_id,artifact_id,artifact_version_id,signature_type,signature_purpose,signature_meaning,signer_id,signer_name,signer_email,signer_role,authentication_method,authentication_timestamp,second_factor_verified,signature_hash,signature_manifest,ip_address,device_info,status,signed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              7,
+              "sig_1791612458902_cdce74171ce1",
+              101,
+              401,
+              "publish",
+              "publish_attestation",
+              "release",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "password+totp",
+              "2026-10-10T06:07:38.902Z",
+              1,
+              "4f78b3c466061edcbc5f06964feebc9a6f790e74377987aaa9b84272d6d09eb4",
+              "{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"release\",\"printedName\":\"Qualified Reviewer\",\"attestationText\":\"I approve the reviewed document.\",\"reason\":\"Reviewed\",\"previousStatus\":\"approved\",\"newStatus\":\"locked\",\"contentHash\":\"025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e\",\"actionId\":\"a1\",\"auditId\":\"u1\",\"auditSha256Chain\":\"fixture-chain-not-hmac\"}",
+              null,
+              null,
+              "active",
+              "2026-10-10T06:07:38.902Z"
+            ]
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_submission_snapshots",
+            "sql": "INSERT INTO concept2cure_submission_snapshots (snapshot_id,artifact_id,organization_id,version_id,approved_version_id,published_version_id,content_hash,title,ctd_section,template_id,action_type,actor_id,actor_name,actor_email,actor_role,attestation_text,signature_meaning,metadata) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              "snap_1791612458902_25d79b99fa7d",
+              101,
+              7,
+              3,
+              3,
+              3,
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "Clinical overview",
+              "2.5",
+              "clinical-template",
+              "publish",
+              777,
+              "Qualified Reviewer",
+              "reviewer@example.test",
+              "admin",
+              "I approve the reviewed document.",
+              "release",
+              "{\"previousStatus\":\"approved\",\"newStatus\":\"locked\",\"reason\":\"Reviewed\",\"signatureId\":\"sig_1791612458902_cdce74171ce1\"}"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: inserted version content altered by trigger refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:38.918Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "review",
+              3
+            ]
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_artifact_versions",
+            "sql": "INSERT OR IGNORE INTO concept2cure_artifact_versions (artifact_id,organization_id,version,content,content_hash,change_description,created_by_id) VALUES (?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              101,
+              7,
+              3,
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "Recorded when this version was signed: it had no stored version row.",
+              300
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: inserted version contentHash altered by trigger refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:38.937Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "review",
+              3
+            ]
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_artifact_versions",
+            "sql": "INSERT OR IGNORE INTO concept2cure_artifact_versions (artifact_id,organization_id,version,content,content_hash,change_description,created_by_id) VALUES (?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              101,
+              7,
+              3,
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "Recorded when this version was signed: it had no stored version row.",
+              300
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: inserted version organizationId altered by trigger refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:38.952Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "review",
+              3
+            ]
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_artifact_versions",
+            "sql": "INSERT OR IGNORE INTO concept2cure_artifact_versions (artifact_id,organization_id,version,content,content_hash,change_description,created_by_id) VALUES (?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              101,
+              7,
+              3,
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "Recorded when this version was signed: it had no stored version row.",
+              300
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "approved: inserted version version altered by trigger refuses",
+      "passed": true,
+      "result": {
+        "allowed": false,
+        "error": {
+          "name": "ArtifactActConflictError",
+          "code": "ARTIFACT_CHANGED",
+          "message": "The document changed while it was being signed. Reload it and sign again. Nothing was signed."
+        },
+        "rollbackUnchanged": true,
+        "trace": [
+          {
+            "kind": "select",
+            "table": "concept2cure_artifacts",
+            "lock": "update",
+            "sql": "SELECT * FROM concept2cure_artifacts WHERE (\"id\" = ?) AND (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) LIMIT 2",
+            "params": [
+              101,
+              "artifact_owned",
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "select",
+            "table": "concept2cure_artifact_versions",
+            "lock": "share",
+            "sql": "SELECT * FROM concept2cure_artifact_versions WHERE (\"artifact_id\" = ?) AND (\"organization_id\" = ?) AND (\"version\" = ?) LIMIT 2",
+            "params": [
+              101,
+              7,
+              3
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments\n       WHERE artifact_id = $1 AND organization_id = $2\n       ORDER BY review_round DESC",
+            "params": [
+              101,
+              7
+            ]
+          },
+          {
+            "kind": "query",
+            "sql": "SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions\n       WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3",
+            "params": [
+              101,
+              2,
+              7
+            ]
+          },
+          {
+            "kind": "update",
+            "table": "concept2cure_artifacts",
+            "sql": "UPDATE concept2cure_artifacts SET status = ?,updated_at = ?,approved_version_id = ? WHERE (\"id\" = ?) AND (\"organization_id\" = ?) AND (\"project_id\" = ?) AND (\"artifact_id\" = ?) AND (\"content\" = ?) AND (\"content_hash\" = ?) AND (\"status\" = ?) AND (\"version\" = ?) AND (\"approved_version_id\" IS NULL) RETURNING *",
+            "params": [
+              "approved",
+              "2026-10-10T06:07:38.970Z",
+              3,
+              101,
+              7,
+              3,
+              "artifact_owned",
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "review",
+              3
+            ]
+          },
+          {
+            "kind": "insert",
+            "table": "concept2cure_artifact_versions",
+            "sql": "INSERT OR IGNORE INTO concept2cure_artifact_versions (artifact_id,organization_id,version,content,content_hash,change_description,created_by_id) VALUES (?,?,?,?,?,?,?) RETURNING *",
+            "params": [
+              101,
+              7,
+              3,
+              "Evidence — αβγ\nDose is 2 mg; not 20 mg.",
+              "025445d879574d2398a961f550e32c51f9aeaa746cd296891990410867bf797e",
+              "Recorded when this version was signed: it had no stored version row.",
+              300
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
