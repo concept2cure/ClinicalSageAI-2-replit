@@ -343,7 +343,7 @@ describe('ConversationThread — AnA\u2019s answers go into the open document (2
     expect(insert.disabled).toBe(true);
     const reason = document.getElementById(insert.getAttribute('aria-describedby') ?? '');
     expect(reason?.textContent).toBe(
-      'Written by claude-sonnet-5, which is not approved for regulatory drafting. Ask again with Thorough effort to have an approved model write it.',
+      'This answer was written by claude-sonnet-5, which is not approved for regulatory drafting, so the answer can’t be inserted.',
     );
     insert.click();
     await new Promise((r) => setTimeout(r, 50));
@@ -360,7 +360,7 @@ describe('ConversationThread — AnA\u2019s answers go into the open document (2
     const insert = (await screen.findByRole('button', { name: 'Insert into 2.5.1 as tracked suggestion' }, { timeout: 4000 })) as HTMLButtonElement;
     expect(insert.disabled).toBe(true);
     expect(document.getElementById(insert.getAttribute('aria-describedby') ?? '')?.textContent).toMatch(
-      /^This answer’s record does not say which model wrote it\./,
+      /^The model that wrote this answer can’t be checked, so the answer can’t be inserted\./,
     );
   });
 });

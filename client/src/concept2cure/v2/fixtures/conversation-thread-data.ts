@@ -52,6 +52,8 @@ export interface CtTurn {
    * (anaInsertGate.ts, round 11). Absent when the server said nothing.
    */
   turnRecord?: AnaTurnRecordStatus;
+  /** The answer did not finish (anaInsertGate.ts answerUnfinished): it cannot go into a document (round 13). */
+  unfinished?: boolean;
   links?: CtLink[];
   /**
    * The context layers the platform added to the prompt this turn (names

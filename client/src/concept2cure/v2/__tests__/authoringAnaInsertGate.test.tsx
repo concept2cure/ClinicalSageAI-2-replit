@@ -5,6 +5,11 @@
  * reasoning round 11, GRD-missed, 2026-10-05). A refused offer is shown
  * DISABLED with its reason as visible text the control is described by
  * (GE-P-3), never hidden: the person sees why, and what to do.
+ *
+ * Round 13 (round 11's UI review): the reason names no control the pane does
+ * not have, reads at the contrast the repo's own "why" text uses, an answer
+ * that did not finish is refused, a pasted suggestion keeps the turn it came
+ * from, and the toast names the section the text went into.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -29,11 +34,11 @@ const ANSWER = 'The drug substance is a humanised IgG1 monoclonal antibody.';
 const OPUS = { provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'pending' };
 const SONNET = { provider: 'anthropic', model: 'claude-sonnet-5', qualified: false, approvedForHighRisk: false, pq: 'pending' };
 
-function anaStream(turnRecord: unknown): ReadableStream<Uint8Array> {
+function anaStream(turnRecord: unknown, done: Record<string, unknown> = {}): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
   const events = [
     { type: 'text', content: ANSWER },
-    { type: 'done', latencyMs: 300 },
+    { type: 'done', latencyMs: 300, ...done },
     { type: 'post_done', cleanedResponse: ANSWER, ...(turnRecord ? { turnRecord } : {}) },
   ];
   return new ReadableStream({
@@ -80,8 +85,8 @@ afterEach(() => {
 });
 
 /** Ask in the pane, with the answer filed under `turnRecord`; the pane's insert offer for it. */
-async function answeredWith(turnRecord: unknown): Promise<{ pane: HTMLElement; insert: HTMLButtonElement }> {
-  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, body: anaStream(turnRecord) })));
+async function answeredWith(turnRecord: unknown, done?: Record<string, unknown>): Promise<{ pane: HTMLElement; insert: HTMLButtonElement }> {
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, body: anaStream(turnRecord, done) })));
   render(<DocumentAuthoring {...props()} />);
   await screen.findAllByText('General Information');
   const composer = await screen.findByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
@@ -105,16 +110,25 @@ describe('the pane’s insert follows the governed-write rule', () => {
     const { insert } = await answeredWith({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy: [SONNET] });
     await waitFor(() => expect(insert.disabled).toBe(true));
     expect(describedBy(insert)).toBe(
-      'Written by claude-sonnet-5, which is not approved for regulatory drafting. Ask again with Thorough effort to have an approved model write it.',
+      'This answer was written by claude-sonnet-5, which is not approved for regulatory drafting, so the answer can’t be inserted.',
     );
+    // The repo's own colour for the only text that says why (text-300), at 12px.
+    const reason = document.getElementById(insert.getAttribute('aria-describedby') ?? '') as HTMLElement;
+    expect([reason.style.color, reason.style.fontSize]).toEqual(['var(--text-300)', '12px']);
     fireEvent.click(insert);
     expect(anaSuggestion()).toBeNull();
+  });
+
+  it('an answer cut off before it finished: disabled, whoever wrote it', async () => {
+    const { insert } = await answeredWith({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy: [OPUS] }, { stoppedReason: 'answer_cut_off' });
+    await waitFor(() => expect(insert.disabled).toBe(true));
+    expect(describedBy(insert)).toBe('This answer did not finish, so it can’t be inserted. Ask again to get a new answer.');
   });
 
   it('an answer whose models the record does not give: disabled, failing closed', async () => {
     const { insert } = await answeredWith({ status: 'recorded', id: 'rec-1', sha256: SHA });
     await waitFor(() => expect(insert.disabled).toBe(true));
-    expect(describedBy(insert)).toMatch(/^This answer’s record does not say which model wrote it\./);
+    expect(describedBy(insert)).toBe('The model that wrote this answer can’t be checked, so the answer can’t be inserted. Ask again to get a new answer.');
   });
 
   it('an answer every model of which may write governed content is inserted, naming its turn (negative control)', async () => {
@@ -128,6 +142,8 @@ describe('the pane’s insert follows the governed-write rule', () => {
       return el;
     });
     expect(ins.getAttribute('data-source-record')).toBe('rec-1');
+    // The toast names the section the text went into: the pane offers every past answer to the section open now.
+    expect(await screen.findByText('Inserted into 3.2.S.1 as tracked suggestions — review each edit in the editor, then save.')).toBeTruthy();
   });
 
   it('a paste of the suggestion it admitted keeps AnA’s name; one from a turn it did not admit is the person’s', async () => {
@@ -148,6 +164,6 @@ describe('the pane’s insert follows the governed-write rule', () => {
       el.getAttribute('data-source-record'),
     ]);
     expect(marks).toContainEqual(['Copied from her answer.', 'ana', 'rec-1']);
-    expect(marks).toContainEqual(['From another turn.', 'author@test.co', null]);
+    expect(marks).toContainEqual(['From another turn.', 'author@test.co', 'rec-other']);
   });
 });

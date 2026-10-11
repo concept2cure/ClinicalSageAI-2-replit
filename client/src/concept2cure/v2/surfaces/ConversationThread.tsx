@@ -6,7 +6,7 @@ import { AnaActionChips } from '../AnaActionChips';
 import { LiveDriveSwitch } from '../LiveDriveSwitch';
 import { RunPolicySwitch } from '../RunPolicySwitch';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
-import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal } from '../editor/anaInsertGate';
+import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal, answerUnfinished } from '../editor/anaInsertGate';
 import { useChatUpload, readyAttachmentLabel, composeTurn, type SentAttachment } from '../../hooks/useChatUpload';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import { SignoffList } from '../SignoffList';
@@ -74,6 +74,7 @@ function toTurn(m: AnaChatMessage): CtTurn {
     settled: !m.streaming,
     sourceRecord: m.turnRecord?.status === 'recorded' ? m.turnRecord.id : undefined,
     turnRecord: m.turnRecord,
+    unfinished: answerUnfinished(m) || undefined,
     contextUsed: contextUsed.length ? contextUsed : undefined,
     evidence: m.evidence,
     /* Present while the turn is in flight — the phase line IS the waiting
@@ -187,14 +188,15 @@ interface InsertTarget {
  * a draft that is already there.
  */
 function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: InsertTarget }) {
+  // One id per offer, above the early returns (round 13: every turn without a record id shared one).
+  const refusalId = `ct-insert-refusal-${React.useId()}`;
   if (!target?.bridge.editable || !turn.settled || !turn.answer?.trim()) return null;
   if (turn.authoringDoc?.docId === target.bridge.docId) return null;
   const { bridge, open, reopen, fireToast } = target;
   /* The governed-write rule (anaInsertGate.ts, round 11): an answer a model it
      does not admit wrote is not offered as an insert. The offer stays, disabled,
      with the reason beside it (GE-P-3); the bridge checks again. */
-  const refusal = anaInsertRefusal(turn.turnRecord);
-  const refusalId = `ct-insert-refusal-${turn.turnRecord?.status === 'recorded' ? turn.turnRecord.id : 'turn'}`;
+  const refusal = anaInsertRefusal(turn.turnRecord, turn.unfinished);
   const insert = () => {
     if (refusal) return;
     /* A suggestion lands only where the person can see it: a closed editor is
@@ -205,6 +207,7 @@ function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: Insert
       turn.answer ?? '',
       { id: ANA_SUGGESTION_AUTHOR_ID, name: 'AnA (AI draft)', ...(turn.sourceRecord ? { sourceRecord: turn.sourceRecord } : {}) },
       turn.turnRecord,
+      turn.unfinished,
     );
     fireToast(ok
       ? `Inserted into ${bridge.sectionCode} as tracked suggestions — review each edit in the editor, then save.`
@@ -228,7 +231,7 @@ function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: Insert
         </span>
       </button>
       {refusal && (
-        <span id={refusalId} style={{ flexBasis: '100%', fontSize: 11.5, color: 'var(--text-400)' }}>
+        <span id={refusalId} style={{ flexBasis: '100%', fontSize: 12, color: 'var(--text-300)' }}>
           {refusal}
         </span>
       )}
