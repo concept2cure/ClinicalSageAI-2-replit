@@ -1,0 +1,216 @@
+=== step tests ===
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > records Principles + Annex 1 in force in the EU from 2025-07-23 10ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > records Annex 2 as upcoming in the EU until 2027-01-15, then in force 9ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > keeps the ICH Step 4 facts, and their notes say Step 4 is not regional effect 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > leaves "supersedes E6(R2)" on the ICH fact only 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > resolves an EU "ICH E6(R3) Annex 2" citation to the EU fact and says it is not yet in effect 6ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > does not call a current EU Annex 2 citation stale against a date still to come 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > resolves an EU "ICH E6(R3)" citation to the EU Principles fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > dates an EU E6(R2) citation as superseded on the EU date 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > still answers a citation with no jurisdiction from the ICH Step 4 facts 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > records EMA eCTD v4.0 as optional for new centralised MAAs since 2025-12-22 10ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > identifies an EU "eCTD v4.0" citation as the EMA fact, not FDA or PMDA 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > records EU M1 v3.1.1 with validation criteria v8.2 as mandatory since 2025-12-01 13ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > derives the EU eCTD datasheet format from the dated facts 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > cites EU M1 v3.1.1 by fact id where filing types used to cite v3.0 4ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > identifies an "EU M1 v3.1.1" citation although "M1" reads as an ICH code 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded, undated, and never promoted > holds no effective date until the Official Journal fixes one 3ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded, undated, and never promoted > is never promoted to in force, whatever the date 7ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded, undated, and never promoted > stays on the change radar after any draft date — an undated change never predates a document 14ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded, undated, and never promoted > is the one statement of the package in AnA's EU prompt 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > every fact carries a date or the explicit not-fixed marker > has an ISO effective date unless it is marked not fixed 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report an EU CTA submittable through the medicines dossier gateway 7ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > names the channel it cannot transmit to, rather than reporting a bare gap 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report a centralised-procedure filing submittable through CESP 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > routes every centralised EMA eCTD filing to the eSubmission Gateway, not CESP 22ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > keeps national, MRP and DCP filings on CESP — the positive control 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > is the one channel function: CTIS is a portal, an EMA device filing goes to EUDAMED 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > lists the unconnected centralised filings in the integration backlog 3ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > counts the portal-only channel in the report rather than hiding it in submittable 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > an EMA filing outside the centralised procedure is not sent to the eSubmission Gateway > does not claim the centralised procedure or the eSubmission Gateway for an EMA IRIS filing 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > an EMA filing outside the centralised procedure is not sent to the eSubmission Gateway > fails closed for an EMA filing whose channel is not modelled — never the CESP region default 4ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > declares IRIS, not eCTD, on orphan designation, PIP, scientific advice and PRIME 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > routes every entry the registry declares IRIS to EMA IRIS, and no other entry 3ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > never reports an IRIS filing submittable, and keeps the centralised MAA on the eSubmission Gateway 0ms
+ Test Files  2 passed (2)
+      Tests  33 passed (33)
+
+=== importer tests (70 files) ===
+client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx
+client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx
+client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts
+client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts
+client/src/i18n/__tests__/locale-integrity.test.ts
+server/__tests__/routes/anaCortexCompatibility.test.ts
+server/mcp/__tests__/mcp-tenant-tool-policy.test.ts
+server/services/__tests__/ana-doctrine-guard.test.ts
+server/services/__tests__/ana-personality-core.test.ts
+server/services/__tests__/ana-proactive-foresight.test.ts
+server/services/__tests__/ana-ri.test.ts
+server/services/__tests__/ana-role-expansion.test.ts
+server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts
+server/services/ai-gateway/__tests__/server-tool-placement.test.ts
+server/services/ana-advisory/__tests__/submission-plan-advisor.test.ts
+server/services/ana-ri/__tests__/ich-guideline-corpus.test.ts
+server/services/ana/__tests__/cmc-knowledge-registration.test.ts
+server/services/ana/__tests__/generate-citation-honest.test.ts
+server/services/ana/__tests__/kb-lookup-tools.test.ts
+server/services/ana/__tests__/regulatory-currency-tools.test.ts
+server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+server/services/ana/__tests__/server-tool-steps.test.ts
+server/services/ana/__tests__/tool-selection-routing.test.ts
+server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts
+server/services/global-markets/__tests__/market-registry.test.ts
+server/services/learning/__tests__/learning.test.ts
+server/services/market-specs/__tests__/estar-advisory-formatting.test.ts
+server/services/market-specs/__tests__/market-formatting-validator.test.ts
+server/services/market-specs/__tests__/market-formatting-verdict.test.ts
+server/services/market-specs/__tests__/market-submission-specs.test.ts
+server/services/mdx-submission-planner/__tests__/planner.test.ts
+server/services/medical-device/__tests__/pathway-decisions.test.ts
+server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts
+server/services/protocol-development/__tests__/protocol-rule-pack.test.ts
+server/services/protocol-deviations/__tests__/deviation-trends.test.ts
+server/services/rbm/__tests__/rbm-engine.test.ts
+server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts
+server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts
+server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts
+server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts
+server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+server/services/report-os/regional/__tests__/regional.test.ts
+server/services/study-design/__tests__/ctq-derivation.test.ts
+server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts
+server/services/submission-service/__tests__/gateway-selection.test.ts
+shared/regulatory/__tests__/filing-catalog-corrections.test.ts
+shared/regulatory/__tests__/filing-catalog-unification.test.ts
+tests/client/portalTypes.test.ts
+tests/knowledge-routes.test.ts
+tests/regulatory/channel-and-format-prose.test.ts
+tests/regulatory/client-segments.test.ts
+tests/regulatory/ctd-guidance-correctness.test.ts
+tests/regulatory/dated-facts-agree-with-currency-registry.test.ts
+tests/regulatory/filingTaxonomy.test.ts
+tests/regulatory/globalDocumentRegistry.test.ts
+tests/regulatory/legacySubmissionTypeMapper.test.ts
+tests/regulatory/projectBootstrapFromRegistry.test.ts
+tests/regulatory/readinessEvaluator.test.ts
+tests/regulatory/region-profiles.test.ts
+tests/regulatory/registryCoverage.test.ts
+tests/regulatory/submissionTypeBridge.test.ts
+tests/regulatory/submittabilityCoverage.test.ts
+tests/regulatory/validation-profile.test.ts
+tests/regulatory/workspace-config-overlays.test.ts
+tests/routes/concept2cure-project-bootstrap.test.ts
+tests/routes/concept2cure-regulatory-catalog.test.ts
+tests/services/answer-check-r2.test.ts
+tests/services/answer-grounding-regulatory.test.ts
+tests/services/regulatory/submission-resolver.test.ts
+ ✓ server/services/protocol-deviations/__tests__/deviation-trends.test.ts > DEV-CATEGORY-SPIKE — latest full month vs the three months before it > fires at ≥ 3 and ≥ 2 × the prior mean, with its evidence 1ms
+ ✓ server/services/protocol-deviations/__tests__/deviation-trends.test.ts > DEV-CATEGORY-SPIKE — latest full month vs the three months before it > the 2 × mean rule, exact at the boundary: mean 2 → 3 does not fire, 4 does 1ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > scoreRisk / bandFromScore > computes likelihood × impact and clamps 1..5 15ms
+ Test Files  70 passed (70)
+      Tests  1687 passed (1687)
+
+=== Fix round 1 (2026-10-05): eu-pharma-package stored as 'proposed' (founder decision 25) ===
+Run: npx vitest run server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > records Principles + Annex 1 in force in the EU from 2025-07-23 6ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > records Annex 2 as upcoming in the EU until 2027-01-15, then in force 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > keeps the ICH Step 4 facts, and their notes say Step 4 is not regional effect 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > leaves "supersedes E6(R2)" on the ICH fact only 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > resolves an EU "ICH E6(R3) Annex 2" citation to the EU fact and says it is not yet in effect 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > does not call a current EU Annex 2 citation stale against a date still to come 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > resolves an EU "ICH E6(R3)" citation to the EU Principles fact 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > dates an EU E6(R2) citation as superseded on the EU date 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > still answers a citation with no jurisdiction from the ICH Step 4 facts 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > records EMA eCTD v4.0 as optional for new centralised MAAs since 2025-12-22 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > identifies an EU "eCTD v4.0" citation as the EMA fact, not FDA or PMDA 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > records EU M1 v3.1.1 with validation criteria v8.2 as mandatory since 2025-12-01 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > derives the EU eCTD datasheet format from the dated facts 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > cites EU M1 v3.1.1 by fact id where filing types used to cite v3.0 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > identifies an "EU M1 v3.1.1" citation although "M1" reads as an ICH code 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > is stored as a proposal with no effective date 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > is never promoted to in force, whatever the date 5ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > a citation of it is reported as proposed, not current, and never as adopted 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > stays on the change radar after any draft date — an undated change never predates a document 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > is the one statement of the package in AnA's EU prompt 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > every fact carries a date or the explicit not-fixed marker > has an ISO effective date unless it is marked not fixed 1ms
+ Test Files  1 passed (1)
+      Tests  21 passed (21)
+
+Run: npx vitest run <73 files: the 70 importers from round 0, plus every test importing regulatory-currency, regulatoryCurrencyTools or locale-overlays, plus the portal test>
+client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx
+client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx
+client/src/concept2cure/v2/__tests__/protocolDevIndustryProjections.test.ts
+client/src/concept2cure/v2/__tests__/wizardFilingType.test.ts
+client/src/i18n/__tests__/locale-integrity.test.ts
+server/__tests__/routes/anaCortexCompatibility.test.ts
+server/mcp/__tests__/mcp-tenant-tool-policy.test.ts
+server/routes/__tests__/mdx-ldt.legal-status.test.ts
+server/services/__tests__/ana-doctrine-guard.test.ts
+server/services/__tests__/ana-personality-core.test.ts
+server/services/__tests__/ana-proactive-foresight.test.ts
+server/services/__tests__/ana-ri.test.ts
+server/services/__tests__/ana-role-expansion.test.ts
+server/services/__tests__/cross-jurisdictional-intelligence.jp.test.ts
+server/services/ai-gateway/__tests__/gateway-citations.test.ts
+server/services/ai-gateway/__tests__/server-tool-placement.test.ts
+server/services/ana-advisory/__tests__/submission-plan-advisor.test.ts
+server/services/ana-ri/__tests__/ich-guideline-corpus.test.ts
+server/services/ana/__tests__/cmc-knowledge-registration.test.ts
+server/services/ana/__tests__/generate-citation-honest.test.ts
+server/services/ana/__tests__/kb-lookup-tools.test.ts
+server/services/ana/__tests__/regulatory-currency-tools.test.ts
+server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+server/services/ana/__tests__/server-tool-steps.test.ts
+server/services/ana/__tests__/server-tools-gating.test.ts
+server/services/ana/__tests__/tool-selection-routing.test.ts
+server/services/ectd/__tests__/dispatch-readiness.jp-v4.test.ts
+server/services/global-markets/__tests__/market-registry.test.ts
+server/services/learning/__tests__/learning.test.ts
+server/services/market-specs/__tests__/estar-advisory-formatting.test.ts
+server/services/market-specs/__tests__/market-formatting-validator.test.ts
+server/services/market-specs/__tests__/market-formatting-verdict.test.ts
+server/services/market-specs/__tests__/market-submission-specs.test.ts
+server/services/mdx-submission-planner/__tests__/planner.test.ts
+server/services/medical-device/__tests__/pathway-decisions.test.ts
+server/services/pathway-engines/estar/__tests__/estar-version-currency.test.ts
+server/services/protocol-development/__tests__/protocol-rule-pack.test.ts
+server/services/protocol-deviations/__tests__/deviation-trends.test.ts
+server/services/rbm/__tests__/rbm-engine.test.ts
+server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts
+server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts
+server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts
+server/services/regulatory/__tests__/qmsr-crosswalk.test.ts
+server/services/regulatory/__tests__/readinessEvaluator.unmodelled-artifacts.test.ts
+server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+server/services/report-os/regional/__tests__/regional.test.ts
+server/services/study-design/__tests__/ctq-derivation.test.ts
+server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts
+server/services/submission-service/__tests__/gateway-selection.test.ts
+shared/regulatory/__tests__/filing-catalog-corrections.test.ts
+shared/regulatory/__tests__/filing-catalog-unification.test.ts
+tests/client/portalTypes.test.ts
+tests/knowledge-routes.test.ts
+tests/regulatory/channel-and-format-prose.test.ts
+tests/regulatory/client-segments.test.ts
+tests/regulatory/ctd-guidance-correctness.test.ts
+tests/regulatory/dated-facts-agree-with-currency-registry.test.ts
+tests/regulatory/filingTaxonomy.test.ts
+tests/regulatory/globalDocumentRegistry.test.ts
+tests/regulatory/legacySubmissionTypeMapper.test.ts
+tests/regulatory/projectBootstrapFromRegistry.test.ts
+tests/regulatory/readinessEvaluator.test.ts
+tests/regulatory/region-profiles.test.ts
+tests/regulatory/registryCoverage.test.ts
+tests/regulatory/submissionTypeBridge.test.ts
+tests/regulatory/submittabilityCoverage.test.ts
+tests/regulatory/validation-profile.test.ts
+tests/regulatory/workspace-config-overlays.test.ts
+tests/routes/concept2cure-project-bootstrap.test.ts
+tests/routes/concept2cure-regulatory-catalog.test.ts
+tests/services/answer-check-r2.test.ts
+tests/services/answer-grounding-regulatory.test.ts
+tests/services/regulatory/submission-resolver.test.ts
+ Test Files  73 passed (73)
+      Tests  1713 passed (1713)
