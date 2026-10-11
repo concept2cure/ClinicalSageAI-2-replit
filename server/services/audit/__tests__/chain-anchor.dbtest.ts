@@ -419,7 +419,16 @@ describe('the archive ledger excuses only what the archive door could have remov
       [dormant],
     );
     expect(Number(archived.rows[0].n)).toBe(3);
-    const verdict = await withClient((c) => verifyAuditChainAnchor(c, store));
+    // This scenario verifies after the archive. PostgreSQL keeps microseconds;
+    // an immediately sampled JS clock can still precede its ledger timestamp.
+    // Supply the fixture clock explicitly; production keeps its independent
+    // clock and strict future-ledger refusal.
+    const verification = await pool.query<{ verified_at: Date }>(
+      `SELECT date_trunc('milliseconds', max(archived_at)) + interval '1 millisecond' AS verified_at
+         FROM public.audit_log_archives`,
+    );
+    expect(verification.rows[0].verified_at).toBeInstanceOf(Date);
+    const verdict = await withClient((c) => verifyAuditChainAnchor(c, store, verification.rows[0].verified_at));
     expect(verdict).toMatchObject({
       status: 'unverifiable',
       breaks: [],

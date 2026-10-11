@@ -27,6 +27,24 @@ import { createBriefingBookFlow } from './briefing-book.js';
 import { createStabilityStudyFlow } from './stability-study.js';
 import { createProjectSetupFlow } from './project-setup.js';
 
+const US_APPLICATION_FLOWS: ReadonlySet<FlowCategory> = new Set([
+  'ind_submission',
+  'nda_submission',
+  'bla_submission',
+]);
+
+function normalizeDocumentName(value: string): string {
+  return value.toLowerCase().trim().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
+}
+
+/** These native application names have no corresponding regional interview here. */
+function hasExplicitNonUsSubmission(value?: string | null): boolean {
+  if (!value) return false;
+  return /(?:^|[^a-z0-9])(?:eu|eea|europe|european|ema|ctis|ca|canada|canadian|health canada|jp|japan|japanese|pmda|maa|nds|snds|jnda|ctn)(?=$|[^a-z0-9])/.test(
+    normalizeDocumentName(value),
+  );
+}
+
 const FLOW_REGISTRY: Record<string, FlowFactory> = {
   protocol_development: () => createProtocolDevelopmentFlow(),
   csr_report: () => createCsrReportFlow(),
@@ -56,6 +74,9 @@ export function getFlowDefinition(
 ): FlowDefinition | null {
   const factory = FLOW_REGISTRY[category];
   if (!factory) return null;
+  if (US_APPLICATION_FLOWS.has(category) && hasExplicitNonUsSubmission(ctx.submissionType)) {
+    return null;
+  }
 
   const definition = factory(ctx);
 
@@ -85,14 +106,10 @@ export function getAvailableFlows(ctx: FlowEngineContext): Array<{
     estimatedMinutes?: number;
   }> = [];
 
-  for (const [category, factory] of Object.entries(FLOW_REGISTRY)) {
+  for (const category of Object.keys(FLOW_REGISTRY)) {
     try {
-      const definition = factory(ctx);
-      if (
-        definition.clientTypes.length === 0 ||
-        !ctx.clientType ||
-        definition.clientTypes.includes(ctx.clientType)
-      ) {
+      const definition = getFlowDefinition(category as FlowCategory, ctx);
+      if (definition) {
         available.push({
           category: category as FlowCategory,
           name: definition.name,
@@ -113,7 +130,7 @@ export function getAvailableFlows(ctx: FlowEngineContext): Array<{
  * Handles common aliases and variations.
  */
 export function resolveFlowCategory(documentType: string): FlowCategory | null {
-  const normalized = documentType.toLowerCase().trim();
+  const normalized = normalizeDocumentName(documentType);
 
   const ALIASES: Record<string, FlowCategory> = {
     // Protocol Development
@@ -133,11 +150,9 @@ export function resolveFlowCategory(documentType: string): FlowCategory | null {
     'nda': 'nda_submission',
     'nda submission': 'nda_submission',
     'new drug application': 'nda_submission',
-    'marketing application': 'nda_submission',
     // BLA Submission
     'bla': 'bla_submission',
     'biologics license': 'bla_submission',
-    'biologic': 'bla_submission',
     'bla submission': 'bla_submission',
     // SOP Development
     'sop': 'sop_development',
@@ -194,13 +209,16 @@ export function resolveFlowCategory(documentType: string): FlowCategory | null {
     'setup': 'project_setup',
   };
 
-  // Exact match
-  if (ALIASES[normalized]) return ALIASES[normalized];
+  // Match whole tokens, considering the specific document family before short
+  // application acronyms (e.g. "safety narrative for IND" is a narrative).
+  const match = ALIASES[normalized] ?? Object.entries(ALIASES)
+    .sort(([left], [right]) => right.length - left.length)
+    .find(([alias]) => {
+      const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`(?:^|[^a-z0-9])${escaped}(?=$|[^a-z0-9])`).test(normalized);
+    })?.[1];
 
-  // Substring match
-  for (const [alias, category] of Object.entries(ALIASES)) {
-    if (normalized.includes(alias)) return category;
-  }
-
-  return null;
+  if (!match) return null;
+  if (US_APPLICATION_FLOWS.has(match) && hasExplicitNonUsSubmission(normalized)) return null;
+  return match;
 }

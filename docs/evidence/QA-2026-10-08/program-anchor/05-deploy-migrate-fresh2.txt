@@ -1,0 +1,49 @@
+# deploy-migrate.mjs on concept2cure-ri_qa_fresh2 (CI-shaped database, migrated with HEAD's set before this change)
+# Runs 1 and 2: DATABASE_URL=<fresh2> ADMIN_URL=<postgres>, as the lead specified. Run 3: the same plus APP_DATABASE_URL (runtime role app_service identifiable) — see 'grant ceiling' below.
+# State before run 1 (read-only): 8 live programs in orgs 24, 25, 91001, 91002 (left by earlier DB-tier runs), all 8 unanchored, and none of those orgs had a workspace.
+
+--- run 1: exit 0
+      [NOTICE] program anchor backfill: 0 project row(s) linked on an unambiguous same-org exact code/name match; every ambiguous or unmatched project left NULL
+  ✓ applied: migrations/20260923_organization_default_client_workspace.sql
+  ✓ applied: migrations/20261001b_projects_one_anchor_per_program.sql
+      [NOTICE] P-19: 8 program(s) given their project record
+  ✓ applied: migrations/20261008_program_project_anchor_backfill.sql
+  • single-role posture: no runtime role distinct from the owner (postgres) is identifiable (RUNTIME_DB_ROLE / APP_SERVICE_DB_PASSWORD / APP_DATABASE_URL / DATABASE_URL). Nothing to grant.
+  • grants not refreshed: the runtime is the owner (postgres); single-role posture
+✅ Schema migration complete — safe to roll services.
+
+--- run 2: exit 0
+      [NOTICE] program anchor backfill: 0 project row(s) linked on an unambiguous same-org exact code/name match; every ambiguous or unmatched project left NULL
+  ✓ applied: migrations/20260923_organization_default_client_workspace.sql
+  ✓ applied: migrations/20261001b_projects_one_anchor_per_program.sql
+      [NOTICE] P-19: 0 program(s) given their project record
+  ✓ applied: migrations/20261008_program_project_anchor_backfill.sql
+  • single-role posture: no runtime role distinct from the owner (postgres) is identifiable (RUNTIME_DB_ROLE / APP_SERVICE_DB_PASSWORD / APP_DATABASE_URL / DATABASE_URL). Nothing to grant.
+  • grants not refreshed: the runtime is the owner (postgres); single-role posture
+✅ Schema migration complete — safe to roll services.
+
+--- run 3: exit 0
+      [NOTICE] program anchor backfill: 0 project row(s) linked on an unambiguous same-org exact code/name match; every ambiguous or unmatched project left NULL
+  ✓ applied: migrations/20260923_organization_default_client_workspace.sql
+  ✓ applied: migrations/20261001b_projects_one_anchor_per_program.sql
+      [NOTICE] P-19: 6 program(s) given their project record
+  ✓ applied: migrations/20261008_program_project_anchor_backfill.sql
+  • runtime role app_service identified from APP_DATABASE_URL (owner is postgres)
+  • refreshing grants for existing runtime role app_service (not minted here; no password needed)
+  ✓ UPDATE, DELETE, TRUNCATE withheld on 32/32 append-only store(s) present: audit.tamper_proof_log, public.audit_logs, public.audit_log_archives, public.audit_events, public.electronic_signatures, public.ana_turn_records, public.ana_record_blobs, public.aut
+  ✓ runtime role app_service refreshed (identified from APP_DATABASE_URL)
+✅ Schema migration complete — safe to roll services.
+
+# Run 3 anchored 6 programs that DB-tier tests had inserted directly between run 2 and run 3: a program created outside the application is anchored by the next deploy, which is why the file stays in the set.
+
+# Grant ceiling: the first full DB-tier run after runs 1-2 failed 3 cases in append-only-store-grants / turn-record-purge-door (app_service held UPDATE on regulatory_harmonization.export_job_audit_log). Runs 1-2 had no runtime role to refresh ('single-role posture ... Nothing to grant'), so step 4/5 never re-applied the ceiling after the replay. Run 3 with APP_DATABASE_URL withheld it on 32/32 stores, and the same files then passed (08-db-tier.txt). Not related to 20261008, which grants nothing.
+
+# After run 2 (read-only, measured 2026-10-08 ~05:57Z, before any further DB-tier run):
+ organization_id | programs | unanchored | crossing_org
+           24    |    1     |     0      |      0
+           25    |    1     |     0      |      0
+        91001    |    3     |     0      |      0
+        91002    |    3     |     0      |      0
+ anchor_rows 8 = programs 8 (one anchor per program).
+# A count taken after run 3 is not shown: DB-tier tests running against fresh2 at the time insert programs
+# directly (not through intake), so the figure moves until the next deploy anchors them, as run 3 did for 6.

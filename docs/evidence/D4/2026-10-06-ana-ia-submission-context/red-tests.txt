@@ -1,0 +1,258 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: Which intended use should this cover? 9ms
+   → expected { sectionCode: '2.5', …(6) } to be null
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: I cannot verify efficacy without the study results. 3ms
+   → expected { sectionCode: '2.5', …(6) } to be null
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > preserves an explicit proposal and its scope 5ms
+   → expected "vi.fn()" to be called with arguments: [ 'thread-1', 'assistant', …(3) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "thread-1",
+-   "assistant",
+-   StringContaining "The supplied study results are summarized here.",
++   "user",
++   "Rewrite this section for Japan.",
+    "fixture/fixture",
+-   50,
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "thread-1",
+    "assistant",
+-   StringContaining "The supplied study results are summarized here.",
++   "The proposed text follows.",
+    "fixture/fixture",
+    50,
+  ]
+
+
+Number of calls: 2
+
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps streamed questions in the answer channel without a proposal 2ms
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered permits clarification without inventing a rewrite or gap source 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming permits clarification without inventing a rewrite or gap source 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered retains the ending of a long clarification answer and declares the omitted middle 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming retains the ending of a long clarification answer and declares the omitted middle 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > keeps the same correction in the gateway conversation turns 1ms
+   → expected undefined to be defined
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > preserves an explicitly emitted rewrite and persists its body in history 1ms
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > retains a long user correction in streaming model input 1ms
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > a bare text fallback is an answer, never an inferred proposal 1ms
+   → expected { sectionCode: '2.5', …(6) } to be null
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: Which intended use should this cover?
+AssertionError: expected { sectionCode: '2.5', …(6) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "proposalContentHash": "hash",
+  "proposalExpiresAt": "2026-10-07T00:00:00.000Z",
+  "proposalId": "proposal-1",
+  "proposedContent": "Which intended use should this cover?",
+  "rationale": "",
+  "sectionCode": "2.5",
+  "targetAgency": null,
+}
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:49:64
+     47|   it.each(['Which intended use should this cover?', 'I cannot verify e…
+     48|     reply(answer); const result = await handleSubmissionChat(request);
+     49|     expect(result.answer).toBe(answer); expect(result.rewrite).toBeNul…
+       |                                                                ^
+     50|     expect(h.save).toHaveBeenCalledWith('thread-1', 'assistant', answe…
+     51|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: I cannot verify efficacy without the study results.
+AssertionError: expected { sectionCode: '2.5', …(6) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "proposalContentHash": "hash",
+  "proposalExpiresAt": "2026-10-07T00:00:00.000Z",
+  "proposalId": "proposal-1",
+  "proposedContent": "I cannot verify efficacy without the study results.",
+  "rationale": "",
+  "sectionCode": "2.5",
+  "targetAgency": null,
+}
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:49:64
+     47|   it.each(['Which intended use should this cover?', 'I cannot verify e…
+     48|     reply(answer); const result = await handleSubmissionChat(request);
+     49|     expect(result.answer).toBe(answer); expect(result.rewrite).toBeNul…
+       |                                                                ^
+     50|     expect(h.save).toHaveBeenCalledWith('thread-1', 'assistant', answe…
+     51|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > preserves an explicit proposal and its scope
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'thread-1', 'assistant', …(3) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    "thread-1",
+-   "assistant",
+-   StringContaining "The supplied study results are summarized here.",
++   "user",
++   "Rewrite this section for Japan.",
+    "fixture/fixture",
+-   50,
+  ]
+
+  2nd vi.fn() call:
+
+  [
+    "thread-1",
+    "assistant",
+-   StringContaining "The supplied study results are summarized here.",
++   "The proposed text follows.",
+    "fixture/fixture",
+    50,
+  ]
+
+
+Number of calls: 2
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:56:20
+     54|     const result = await handleSubmissionChat(request);
+     55|     expect(result.rewrite?.proposalId).toBe('proposal-1');
+     56|     expect(h.save).toHaveBeenCalledWith('thread-1', 'assistant', expec…
+       |                    ^
+     57|     expect(h.persist).toHaveBeenCalledWith(expect.objectContaining({ o…
+     58|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered permits clarification without inventing a rewrite or gap source
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming permits clarification without inventing a rewrite or gap source
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:71:67
+     69|   it.each(builders)('%s permits clarification without inventing a rewr…
+     70|     const prompt = build(artifact, [artifact], [], { intent: 'rewrite'…
+     71|     expect(prompt.includes('No retrieved passages is not proof')).toBe…
+       |                                                                   ^
+     72|     expect(prompt.includes('Do not invent a gap citation')).toBe(true);
+     73|     expect(prompt.includes('ask the decisive question in the answer'))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered retains the ending of a long clarification answer and declares the omitted middle
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming retains the ending of a long clarification answer and declares the omitted middle
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:79:41
+     77|     const correction = 'Correction: Japan, not the United States; inte…
+     78|     const prompt = build(artifact, [artifact], [], { history: [{ role:…
+     79|     expect(prompt.includes(correction)).toBe(true);
+       |                                         ^
+     80|     expect(prompt.includes('[Middle of this turn omitted')).toBe(true);
+     81|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > keeps the same correction in the gateway conversation turns
+AssertionError: expected undefined to be defined
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:87:122
+     85|     reply('Which specimen should this assay use?'); await handleSubmis…
+     86|     const messages = h.route.mock.calls[0][0].messages;
+     87|     expect(messages.find((m: { role: string; content: string }) => m.r…
+       |                                                                                                                          ^
+     88|   });
+     89| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > retains a long user correction in streaming model input
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:104:147
+    102|     h.history = [{ role: 'user', content: 'x'.repeat(2500) + correctio…
+    103|     streamed('Which population?'); await handleSubmissionChatStream(re…
+    104|     expect(h.route.mock.calls[0][0].messages.some((m: { role: string; …
+       |                                                                                                                                                   ^
+    105|   });
+    106|   it('a bare text fallback is an answer, never an inferred proposal', …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > a bare text fallback is an answer, never an inferred proposal
+AssertionError: expected { sectionCode: '2.5', …(6) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "proposalContentHash": "hash",
+  "proposalExpiresAt": "2026-10-07T00:00:00.000Z",
+  "proposalId": "proposal-1",
+  "proposedContent": "Please provide the intended use.",
+  "rationale": "",
+  "sectionCode": "2.5",
+  "targetAgency": null,
+}
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:109:92
+    107|     h.route.mockResolvedValue({ content: 'Please provide the intended …
+    108|     const result = await handleSubmissionChat(request);
+    109|     expect(result.answer).toBe('Please provide the intended use.'); ex…
+       |                                                                                            ^
+    110|   });
+    111| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 2 passed (12)
+   Start at  10:06:10
+   Duration  518ms (transform 174ms, setup 99ms, import 115ms, tests 29ms, environment 0ms)
+

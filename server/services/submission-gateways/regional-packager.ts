@@ -202,7 +202,7 @@ export function leafPackagePath(
   }
   // Module 2-5 → shared folders; href relative to index.xml at the root.
   // Study-report leaves (studyId set) go under a per-study subfolder so each
-  // study owns its folder + its own stf.xml (FDA STF convention).
+  // study owns its folder + its own stf-<study-id>.xml (ICH STF convention).
   const studySub = leaf.studyId ? `/${studyFolderSlug(leaf.studyId)}` : '';
   const relPath = `m${section.charAt(0)}/${slug}${studySub}/${leaf.fileName}`;
   return { relPath, href: relPath, backboneDir: '' };
@@ -823,8 +823,7 @@ ${regional ? regionalBackboneReference(regional) : ''}${moduleBlocks}
 }
 
 /**
- * Give every leaf its backbone ID, once per carrying backbone, after every leaf
- * (content, withdrawals, generated study tagging files) is known. The builders
+ * Give every leaf its backbone ID, once per carrying backbone. The builders
  * render the ID from the ref and the leaf manifest records the same value, so a
  * later sequence's modified-file names exactly the ID this backbone carries.
  *
@@ -832,9 +831,19 @@ ${regional ? regionalBackboneReference(regional) : ''}${moduleBlocks}
  * the result, so no later sequence could name a leaf, and modified-file carried
  * the file's path instead of the ID. A Module 1 leaf is carried by the regional
  * backbone; every other leaf by index.xml.
+ *
+ * `assigners` carries the per-backbone ID sets across calls. The packager
+ * assigns the input leaves' IDs before it writes the Study Tagging Files (each
+ * STF points at index.xml leaf IDs) and the STF leaves' IDs after, with the
+ * same sets, so the IDs are the ones a single pass would give and an STF leaf
+ * can never take an ID already used.
  */
-function assignBackboneIds(leaves: EctdLeaf[], refByLeaf: Map<EctdLeaf, LeafRef>, regionalBackbone: string): void {
-  const assigners = new Map<string, ReturnType<typeof createLeafIdAssigner>>();
+function assignBackboneIds(
+  leaves: EctdLeaf[],
+  refByLeaf: Map<EctdLeaf, LeafRef>,
+  regionalBackbone: string,
+  assigners: Map<string, ReturnType<typeof createLeafIdAssigner>> = new Map(),
+): void {
   for (const leaf of leaves) {
     const ref = refByLeaf.get(leaf);
     if (!ref || ref.id) continue;
@@ -1063,11 +1072,20 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     return ref;
   };
 
-  /* PASS 1.5 — Study Tagging Files (FDA STF v2.6.1, audit gap G5). For each
+  /* Backbone IDs for the input leaves first: each Study Tagging File points at
+     its study's leaves by their index.xml ID. The STF leaves get theirs from
+     the same per-backbone sets once they exist (assignBackboneIds). */
+  const backboneIdAssigners = new Map<string, ReturnType<typeof createLeafIdAssigner>>();
+  assignBackboneIds(input.leaves, refByLeaf, backboneFileByRegion[region], backboneIdAssigners);
+
+  /* PASS 1.5 — Study Tagging Files (ICH STF v2.6.1, audit gap G5). For each
      M4/M5 study (leaves carrying studyId + stfFileTag) generate a per-study
-     stf.xml that tags the study's leaves, place it in the study's folder,
-     reference it in index.xml, and checksum it. Graceful no-op when there are
-     no study leaves. */
+     stf-<study-id>.xml that tags the study's leaves by their index.xml leaf ID,
+     place it in the study's folder, reference it in index.xml, and checksum it.
+     Graceful no-op when there are no study leaves.
+     2026-10-05 (g-stf-name-tags-and-shape): every STF was written as 'stf.xml'
+     and pointed at the PDFs relative to the study folder; the name and the
+     doc-content -> index.xml#ID shape now come from stf-generator.ts. */
   const stfSyntheticLeaves: EctdLeaf[] = [];
   let stfSummary: { studies: number; leaves: number; untagged: number } | undefined;
   {
@@ -1086,14 +1104,23 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       for (const [studyId, entries] of byStudy) {
         const folder = commonDir(entries.map((e) => e.relPath));
         studyFolder.set(studyId, folder);
+        // index.xml is at the sequence root: one '../' per folder level.
+        const indexRelPath = `${'../'.repeat(folder.split('/').filter(Boolean).length)}index.xml`;
         for (const e of entries) {
+          if (!e.ref.id || e.ref.backbone !== 'index.xml') {
+            throw new Error(
+              `regional-packager: study leaf "${e.leaf.fileName}" (section ${e.leaf.ctdSection}) has no index.xml leaf ID for its Study Tagging File to point at.`,
+            );
+          }
           stfLeaves.push({
             studyId,
             fileTag: e.leaf.stfFileTag!,
             ctdSection: e.leaf.ctdSection,
-            href: e.relPath.slice(folder.length + 1), // relative to the study folder
+            href: e.relPath,
             title: e.leaf.title,
             operation: e.leaf.operation,
+            indexLeafId: e.ref.id,
+            indexRelPath,
           });
         }
       }
@@ -1101,15 +1128,15 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       stfSummary = stfResult.summary;
       for (const file of stfResult.files) {
         const folder = studyFolder.get(file.studyId)!;
-        const relPath = `${folder}/stf.xml`;
+        const relPath = `${folder}/${file.fileName}`;
         const bytes = Buffer.from(file.xml, 'utf8');
         const md5 = createHash('md5').update(bytes).digest('hex');
         const section = byStudy.get(file.studyId)![0].leaf.ctdSection;
         const synthetic: EctdLeaf = {
           ctdSection: section, operation: 'new', sourcePath: '',
-          fileName: 'stf.xml', title: `Study Tagging File — ${file.studyId}`,
+          fileName: file.fileName, title: `Study Tagging File — ${file.studyId}`,
         };
-        // A study tagging file lives under m5 and is referenced from index.xml
+        // A study tagging file lives under m4/m5 and is referenced from index.xml
         // at the root, so its href is already root-relative.
         const ref: LeafRef = { href: relPath, md5, backboneDir: '' };
         refByLeaf.set(synthetic, ref);
@@ -1119,7 +1146,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     }
   }
 
-  assignBackboneIds([...input.leaves, ...stfSyntheticLeaves], refByLeaf, backboneFileByRegion[region]);
+  assignBackboneIds(stfSyntheticLeaves, refByLeaf, backboneFileByRegion[region], backboneIdAssigners);
 
   const backboneByRegion: Record<Region, () => string> = {
     fda:  () => buildFdaBackbone(normalizedInput, resolve),
@@ -1151,7 +1178,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     checksums.push({ relPath: p.relPath, md5: p.ref.md5 });
   }
   // Module 2–5 leaves for index.xml, including the generated STF files so each
-  // stf.xml is a referenced leaf in the backbone (not an orphan file).
+  // Each stf-<study-id>.xml is a referenced leaf in the backbone (not an orphan file).
   const m2to5 = [
     ...input.leaves.filter((l) => !isModule1Section(l.ctdSection)),
     ...stfSyntheticLeaves,

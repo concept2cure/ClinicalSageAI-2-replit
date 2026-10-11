@@ -145,6 +145,56 @@ export async function deriveOrgSegments(organizationId: number): Promise<ReportS
   return orderSegments(set);
 }
 
+/**
+ * The segment(s) of the program a `projects` row is anchored to
+ * (`projects.regulatory_program_id` → `regulatory_programs.product_type`), or
+ * null when the project has no anchored program with a recorded product type.
+ *
+ * A report runs over ONE program, so the types offered for it, and the types
+ * it may run, follow THAT program's product type — not the organisation's
+ * union, which offered a 510(k) equivalence matrix for a biologic IND because
+ * the same organisation also holds device programs (QA 2026-10-08, j8).
+ *
+ * A database without the anchor column (42703) has no anchor: null. Any other
+ * failure throws — a run is not let past an applicability check that could not
+ * be made.
+ */
+export async function deriveProjectSegments(
+  organizationId: number,
+  projectId: number,
+): Promise<ReportSegment[] | null> {
+  if (!Number.isSafeInteger(projectId) || projectId <= 0) return null;
+  try {
+    const { rows } = await getPool().query<{ product_type: string | null }>(
+      `SELECT rp.product_type
+         FROM projects p
+         JOIN regulatory_programs rp
+           ON rp.id = p.regulatory_program_id AND rp.organization_id = p.organization_id
+        WHERE p.id = $1 AND p.organization_id = $2
+        LIMIT 1`,
+      [projectId, organizationId],
+    );
+    const segments = productTypesToSegments(rows.map((r) => r.product_type ?? ''));
+    return segments.length > 0 ? segments : null;
+  } catch (err) {
+    if ((err as { code?: string } | null)?.code === '42703') return null;
+    throw err;
+  }
+}
+
+/**
+ * The segments a report over `projectId` is offered and checked against: the
+ * project's own program's, else (a project with no anchored program) the
+ * organisation's derived union.
+ */
+export async function deriveScopeSegments(
+  organizationId: number,
+  projectId: number | null,
+): Promise<ReportSegment[]> {
+  const own = projectId == null ? null : await deriveProjectSegments(organizationId, projectId);
+  return own ?? deriveOrgSegments(organizationId);
+}
+
 /** A report-type row as seen by the filter — only the fields it reads. */
 export interface SegmentFilterableType {
   allowedClientSegments?: string[] | null;

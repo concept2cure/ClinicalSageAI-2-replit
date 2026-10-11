@@ -21,12 +21,14 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { InsightsCanvas } from '../surfaces/Insights';
+// The catalog the overview answers with (the canvas holds no copy of its own).
+import { CANVAS_REPORT_TYPES } from './_insights-catalog-fixture';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
 const ok = (obj: unknown) => ({ ok: true, status: 200, json: async () => obj }) as unknown as Response;
 const overview = (segment: string) => ({
   data: {
-    organizationId: 1, tier: 'enterprise', segments: [segment],
+    organizationId: 1, tier: 'enterprise', segments: [segment], reportTypes: CANVAS_REPORT_TYPES,
     leadProgram: {
       projectId: 12, code: 'ABC-101', label: 'ABC-101', filing: null, indication: null,
       readiness: 64, scope: 'project', scopeId: '12', agency: null, pdufa: null, criticalBlockerCount: 1,

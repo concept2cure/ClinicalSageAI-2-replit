@@ -1,0 +1,22 @@
+# Every golden journey and tests/lineage, RLS_ENFORCE=off
+# Trimmed from the full run: passing test lines are counted per file below, not listed.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ Test Files  12 passed (12)
+      Tests  37 passed (37)
+   Start at  13:07:35
+   Duration  95.02s (transform 14.56s, setup 280ms, import 19.91s, tests 72.05s, environment 1ms)
+
+## Per file (passed / failed / skipped)
+   1 / 0 / 0  tests/golden-journeys/drug-nda-ectd.journey.test.ts
+   1 / 0 / 0  tests/golden-journeys/device-510k-estar.journey.test.ts
+   1 / 0 / 0  tests/golden-journeys/cer-eu-mdr.journey.test.ts
+   1 / 0 / 0  tests/golden-journeys/ind-authoring.journey.test.ts
+   1 / 0 / 0  tests/golden-journeys/haq-correction.journey.test.ts
+   1 / 0 / 0  tests/golden-journeys/submission-release-signature.journey.test.ts
+  15 / 0 / 0  tests/lineage/founder-path-lineage.pglite.test.ts
+   1 / 0 / 0  tests/golden-journeys/submission-export-validation.journey.test.ts
+   1 / 0 / 0  tests/golden-journeys/submission-export-package.journey.test.ts
+   1 / 0 / 0  tests/golden-journeys/marketing-application.journey.test.ts
+   3 / 0 / 0  tests/golden-journeys/__tests__/journey-recorder-expect-blocked.test.ts
+  10 / 0 / 0  tests/golden-journeys/__tests__/journey-schema-gaps.test.ts

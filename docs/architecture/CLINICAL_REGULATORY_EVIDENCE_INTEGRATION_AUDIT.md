@@ -108,12 +108,15 @@ CSR     → adaptCsrReport  evidence-spine        5 AnA tools    ── WIRED, r
   wired on real spine data.
 
 **Human-testing readiness**
-- [x] **Seed demo CRE evidence.** `scripts/cre/seed-demo-evidence.ts` (`npm run cre:seed-demo -- --org <id>`):
-  a `[DEMO]` CRL (3 findings + verified outcome), a `[DEMO]` CSR + canonical study, and a
-  governed design lesson — all tenant-private and labelled, never the shared corpus. Also runs
-  `projectOrgCsrReports` to fold the tenant's own CSRs in. Idempotent; `--verify` prints counts.
+- [x] ~~**Seed demo CRE evidence.**~~ **Removed 2026-10-08.** `scripts/cre/seed-demo-evidence.ts`
+  wrote fictional `[DEMO]` CRL, CSR and design-lesson rows into a tenant's own evidence
+  tables, against the standing rule that no fixture data enters a governed path. The
+  replacements are real paths. `npm run cre:atoms -- --org <id>` runs the same
+  `projectOrgCsrReports` projection over the tenant's own CSRs. A platform admin
+  ingests a real CRL through `POST /api/clinical-regulatory-evidence/crl`. The
+  walkthrough below now uses both.
 - [x] **Human-test walkthrough.** `CLINICAL_REGULATORY_EVIDENCE_HUMAN_TEST.md` — apply schema →
-  flag on (server env + client `?crl-graph=1`) → seed → exercise the 6 AnA tools and the v2
+  flag on (server env + client `?crl-graph=1`) → real evidence (the tenant's CSRs projected; a real CRL ingested) → exercise the 6 AnA tools and the v2
   surfaces, with the honest-empty panels named explicitly.
 
 The spine itself needs no rework — this was connective tissue plus two schema/enum corrections.
@@ -123,8 +126,9 @@ The spine itself needs no rework — this was connective tissue plus two schema/
 ## 4. Status — remediation complete
 
 P0 (ingress + embedding), P1 (egress correctness + flag), **P2** (provenance envelope,
-runtime prediction guard, facade design-evidence/trace/stress reads), and the demo seed +
-human-test walkthrough are **all done and landed on `concept2cure-v2`**. The module is
+runtime prediction guard, facade design-evidence/trace/stress reads), and the
+human-test walkthrough are **all done and landed on `concept2cure-v2`** (the demo seed that once
+sat beside them was removed on 2026-10-08; see above). The module is
 exercisable end-to-end on a fresh tenant and every gap the audit found is closed or
 explicitly, defensibly deferred.
 
@@ -136,6 +140,5 @@ sequenced after the embedding backfill rather than rushed. **Two honest data-mod
 named where they surface:** the design-node store (`c2c_protocol_dev`) carries no clean
 indication, so `getDesignEvidence`'s indication-scoped arrays stay honest-empty (endpoint-scoped
 precedent + stress scenarios are populated); and the shared-corpus CRL library is best filled by
-the platform-admin `POST /crl` path with real letters (the demo seed stays tenant-private by
-design). The spine itself needed no rework — this was connective tissue plus schema/enum
+the platform-admin `POST /crl` path with real letters. The spine itself needed no rework — this was connective tissue plus schema/enum
 corrections.

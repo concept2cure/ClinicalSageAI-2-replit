@@ -1,0 +1,1 @@
+TM-001: 82 requirements — pass 0, partial 0, fail 0, open 0, uncovered 82; 0 OQ steps → docs/evidence/D4/2026-10-06-ana-completion/traceability/TM-001-TRACEABILITY-MATRIX.md

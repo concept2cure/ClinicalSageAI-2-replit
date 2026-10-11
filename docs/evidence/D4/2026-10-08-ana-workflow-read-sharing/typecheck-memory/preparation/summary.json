@@ -1,0 +1,32 @@
+[
+  {
+    "version": "5.6.3",
+    "mode": "seed",
+    "rootCount": 7093,
+    "sourceCount": 12152,
+    "skippedDuringNativeInvalidation": 42,
+    "pendingBefore": 82,
+    "pendingAfter": 82,
+    "checkedCount": 0,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 5405,
+    "heapMb": 5159,
+    "gcEvents": [],
+    "diagnostics": []
+  },
+  {
+    "version": "5.6.3",
+    "mode": "batch",
+    "rootCount": 7093,
+    "sourceCount": 12152,
+    "skippedDuringNativeInvalidation": 0,
+    "pendingBefore": 82,
+    "pendingAfter": 0,
+    "checkedCount": 82,
+    "cachedDiagnosticFileCount": 0,
+    "rssMb": 5997,
+    "heapMb": 5703,
+    "gcEvents": [],
+    "diagnostics": []
+  }
+]

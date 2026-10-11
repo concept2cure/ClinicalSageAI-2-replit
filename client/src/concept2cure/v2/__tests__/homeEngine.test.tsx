@@ -11,7 +11,7 @@
  * The fix binds the pill to the preference the send already reads. These tests
  * pin the three halves of that: Home renders the mode it is given, Home reports
  * a choice to its host rather than keeping it, and V2App hands Home the same
- * `prefs.anaMode` pair it hands the rail. Without props (tests, other hosts)
+ * `prefs.anaMode` pair it hands the conversation's composer. Without props (tests, other hosts)
  * Home still works on local state. The carriage block also pins the rest of
  * the path the pill's claim depends on: Home seeds `conversation-thread`, the
  * registry keeps that screen conversation-owning, and V2App mounts it on the
@@ -155,10 +155,10 @@ describe('Home — the engine pill is the engine the turn runs on', () => {
     expect(pill().textContent).toContain(QUICK.label);
   });
 
-  it('sends the question to the conversation screen, not the rail', () => {
+  it('sends the question to the conversation screen, not through onAsk', () => {
     // The first link of the chain the carriage block below pins: Home's
     // question is seeded into `conversation-thread`, which V2App mounts on the
-    // shell chat. `onAsk` would push it into the rail instead.
+    // shell chat. `onAsk` is the work screens' ask path, not Home's.
     const props = baseProps();
     render(<Home {...props} mode={DEEP.id} setMode={vi.fn()} />);
     const input = document.querySelector('.landing-input') as HTMLTextAreaElement;
@@ -178,8 +178,8 @@ describe('V2App hands Home the preference the shell chat sends — carriage', ()
   // A test that passes props in directly proves Home can be bound; only the
   // host proves it IS. The shell chat's effort is effortForMode(prefs.anaMode),
   // so this is the pair that makes the pill true. The match is LAZY and
-  // bounded to the one JSX element, so it cannot borrow AnaRail's identical
-  // pair further down the file. Proven by removing either prop: red.
+  // bounded to the one JSX element, so it cannot borrow an identical pair from
+  // another element further down the file. Proven by removing either prop: red.
   const v2app = fs.readFileSync(path.join(REPO_ROOT, 'client/src/concept2cure/v2/V2App.tsx'), 'utf8');
   const views = fs.readFileSync(path.join(REPO_ROOT, 'client/src/concept2cure/v2/surfaceViews.ts'), 'utf8');
 

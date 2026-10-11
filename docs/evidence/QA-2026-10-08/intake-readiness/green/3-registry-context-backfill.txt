@@ -1,0 +1,33 @@
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > 20261008c on the applier > runs after the P-19 anchor backfill (whose rows it completes) and before the tenant sweeps 2ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > 20261008c on the applier > drops nothing 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the QA programs get the context the digest needs > a wizard-created IND records the registry entry the person chose 3ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the QA programs get the context the digest needs > seeded programs record the entry their filing type and agency fix 3ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > ind/FDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > IND/FDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > MAA/EMA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > JNDA/PMDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > 510K/FDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > ind/FDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > nda/FDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > bla/FDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > anda/FDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > dmf/FDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > 510k/FDA 3ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > de_novo/FDA 5ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > pma/FDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > ide/FDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > hde/FDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > maa/EMA 5ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > cta/EMA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > jnda/PMDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > ind/MFDS 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > CER/EMA 5ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > mdr/EMA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > the SQL and intake’s rule agree, pair by pair > device/FDA 1ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > what it leaves alone > a program that names no entry gets none 15ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > what it leaves alone > a recorded context is kept; other keys survive 2ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > what it leaves alone > a soft-deleted program and another organisation’s row are not touched 10ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > what it leaves alone > names how many records it completed, by count only 0ms
+ ✓ tests/schema-contract/projects-registry-context-backfill.pglite.test.ts > Rule 1: replayed on every deploy > a second deploy changes nothing 32ms
+ Test Files  1 passed (1)
+      Tests  31 passed (31)

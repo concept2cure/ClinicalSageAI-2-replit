@@ -30,7 +30,7 @@ import {
   refuseArtifactTransition,
   refuseSignedArtifactAct,
 } from '../../services/artifact-approval-act';
-import { ArtifactActConflictError, commitSignedArtifactAct } from '../../services/artifact-signed-act';
+import { ArtifactActConflictError, ArtifactActContractError, commitSignedArtifactAct } from '../../services/artifact-signed-act';
 import { SignerNotAttributableError } from '../../services/part11/resolve-signer-identity';
 import { interceptArtifactChange, interceptFeedback } from '../../services/intelligence/rim-interceptors.js';
 import { actorLabel, resolveActorNames } from '../../services/tenant/actor-names';
@@ -58,6 +58,8 @@ import {
 } from './shared';
 import { authorizedProjectId, loadProjectArtifact } from './artifact-project-scope';
 import { verifyReauth } from './actions';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
+import { isSigningAuthorized } from '../../services/part11/signing-authority';
 import { clientIpKey } from '../../utils/client-ip';
 
 const logger = createScopedLogger('concept2cure-artifacts');
@@ -2403,7 +2405,9 @@ router.get('/user/permissions', async (req: Request, res: Response) => {
     const userRole = (req.userRole || 'user').toLowerCase();
     const allowedTransitions = allowedArtifactTransitions(userRole);
     const canRollback = ROLLBACK_ROLES.includes(userRole);
-    const canSign = ['admin', 'approver', 'reviewer'].includes(userRole);
+    // What the client offers, from the signing policy itself rather than a copy
+    // of its role list (P-27): approve and lock refuse through checkSigningAuthority.
+    const canSign = isSigningAuthorized(userRole);
     const canExport = ['admin', 'approver', 'reviewer', 'author', 'user'].includes(userRole);
 
     return sendSuccess(res, {
@@ -2577,7 +2581,11 @@ router.put(
         existingMetadata.harness && typeof existingMetadata.harness === 'object'
           ? (existingMetadata.harness as Record<string, unknown>)
           : {};
-      updateData.metadata = {
+      /* The harness block this status change republishes. It is passed to the
+         signed act as its own `metadata` input, NOT on `updateData`: that set is
+         validated against the canonical approval/lock columns, and an extra key
+         there made every approve and lock answer 409 (2026-10-11). */
+      const statusMetadata = {
         ...existingMetadata,
         harness: {
           ...existingHarness,
@@ -2649,6 +2657,15 @@ router.put(
       });
 
       if (actMeaning) {
+        // §11.10(g), before the password: approve and lock write a signature, so
+        // the signer's role on the MEMBERSHIP row must carry signing authority
+        // under the platform's one policy. The status table above reads the
+        // session's role (req.userRole) and decides who may move an artifact;
+        // it never decided who may sign. QA 2026-10-08 (j6 sweep).
+        const authority = await checkSigningAuthority(userId, organizationId);
+        if (authority) {
+          return sendError(res, authority.status, authority.message, undefined, authority.code);
+        }
         const reauth = await verifyReauth(userId, req.body?.reauth);
         if (!reauth.ok) {
           return sendError(
@@ -2677,6 +2694,7 @@ router.put(
               status: status as 'approved' | 'locked',
               previousStatus,
               updateData,
+              metadata: statusMetadata,
               organizationId,
               userId,
               userRole,
@@ -2696,11 +2714,33 @@ router.put(
           .catch((err: unknown) => {
             // A stale read and an unnamed signer are answered as such; anything
             // else is the 500 below. Nothing was written in any of them.
-            if (err instanceof ArtifactActConflictError || err instanceof SignerNotAttributableError) {
+            if (
+              err instanceof ArtifactActConflictError ||
+              err instanceof ArtifactActContractError ||
+              err instanceof SignerNotAttributableError
+            ) {
               return err;
             }
             throw err;
           });
+        if (signed instanceof ArtifactActContractError) {
+          /* Ours, not the signer's: the detail stays in the log (this router
+             forwards its results to a tenant client — ci:server-error-leaks)
+             and the answer never claims the document changed. */
+          logger.error('status route handed the signed act a non-canonical column set', {
+            artifactId: artifact.artifactId,
+            previousStatus,
+            status,
+            detail: signed.detail,
+          });
+          return sendError(
+            res,
+            500,
+            'This document could not be signed because of a problem on our side. Nothing was signed, and the problem has been logged.',
+            undefined,
+            signed.code,
+          );
+        }
         if (signed instanceof ArtifactActConflictError) {
           return sendError(res, 409, signed.message, undefined, signed.code);
         }

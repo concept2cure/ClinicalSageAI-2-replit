@@ -1,0 +1,123 @@
+{
+  "records": [
+    {
+      "steps": [
+        {
+          "row": "Searched the Vault",
+          "preview": "stability",
+          "detail": "Searched for: stability\nFound: 8 documents\nTook: 1.3s"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "row": "Listed the Vault documents",
+          "preview": null,
+          "detail": "Found: 34 documents\nTook: 37 ms"
+        },
+        {
+          "row": "Read Vorelinib-Stability-Protocol-STB-0042",
+          "preview": null,
+          "detail": "Document: Vorelinib-Stability-Protocol-STB-0042\nCharacters read: 206 of 206\nTook: 19 ms"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "row": "Reasoned through the question",
+          "preview": null,
+          "detail": "Working out which screen this needs.Working out which screen this needs."
+        },
+        {
+          "row": "Validated the eCTD package",
+          "preview": null,
+          "detail": "Took: 2 ms"
+        }
+      ]
+    },
+    {
+      "steps": [
+        {
+          "row": "Drafted several sections at once",
+          "preview": null,
+          "detail": "Took: 164 ms\nModel: a model wrote part of this result"
+        }
+      ]
+    }
+  ],
+  "overflow": {
+    "scrollWidth": 429,
+    "clientWidth": 390,
+    "widest": [
+      {
+        "tag": "div",
+        "cls": "ct-head-r",
+        "right": 510
+      },
+      {
+        "tag": "button",
+        "cls": "ct-head-open",
+        "right": 410
+      },
+      {
+        "tag": "button",
+        "cls": "ana-step-chip",
+        "right": 510
+      },
+      {
+        "tag": "span",
+        "cls": "ana-step-chip-ic",
+        "right": 442
+      },
+      {
+        "tag": "svg",
+        "cls": "[object SVGAnimatedString]",
+        "right": 442
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 440
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 440
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 434
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 437
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 437
+      },
+      {
+        "tag": "span",
+        "cls": "sr-only",
+        "right": 429
+      },
+      {
+        "tag": "span",
+        "cls": "ana-activity-obj",
+        "right": 400
+      }
+    ],
+    "activityWide": [
+      {
+        "tag": "span",
+        "cls": "ana-activity-obj",
+        "right": 400
+      }
+    ]
+  }
+}

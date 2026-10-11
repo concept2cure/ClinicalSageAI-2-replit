@@ -1,0 +1,75 @@
+{
+  "kind": "local PGlite descriptive timing only",
+  "same_tenant_audit_rows": 800,
+  "foreign_audit_rows": 800,
+  "index": "audit_logs(table_name,record_id), matching existing deployed identity index; no new production index",
+  "observations": [
+    {
+      "label": "atom",
+      "table": "lumen_data_atoms",
+      "original40697292": {
+        "rows": 203,
+        "milliseconds": [
+          2.29,
+          1.88,
+          2.12
+        ],
+        "median_ms": 2.12
+      },
+      "integrated_pending": {
+        "rows": 203,
+        "milliseconds": [
+          299.18,
+          312.32,
+          318.16
+        ],
+        "median_ms": 312.32
+      }
+    },
+    {
+      "label": "rag",
+      "table": "rag_documents",
+      "original40697292": {
+        "rows": 201,
+        "milliseconds": [
+          2.58,
+          2.59,
+          2.92
+        ],
+        "median_ms": 2.59
+      },
+      "integrated_pending": {
+        "rows": 201,
+        "milliseconds": [
+          118.13,
+          98.95,
+          110.12
+        ],
+        "median_ms": 110.12
+      }
+    },
+    {
+      "label": "artifact",
+      "table": "concept2cure_artifacts",
+      "original40697292": {
+        "rows": 201,
+        "milliseconds": [
+          2.31,
+          3.51,
+          3.4
+        ],
+        "median_ms": 3.4
+      },
+      "integrated_pending": {
+        "rows": 201,
+        "milliseconds": [
+          92.64,
+          98.01,
+          84.47
+        ],
+        "median_ms": 92.64
+      }
+    }
+  ],
+  "limits": "No latency threshold, planner equivalence, production load, RLS, or independent connection qualification is claimed."
+}

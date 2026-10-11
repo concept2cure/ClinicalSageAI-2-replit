@@ -11,6 +11,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LazyRequestDbClient } from '../lazyRequestDbClient';
+import { CLEAR_SESSION_SCOPE_SQL, RESET_ENFORCEMENT_SQL } from '../../db/sessionScope';
 
 type FakePoolClient = {
   query: ReturnType<typeof vi.fn>;
@@ -90,11 +91,12 @@ describe('LazyRequestDbClient', () => {
     await lazy.query('SELECT 1');
     await lazy.release();
 
-    // Three SET-config queries to clear the RLS session vars, then release.
-    const clearCalls = pool.__client.query.mock.calls.filter((args: unknown[]) =>
-      typeof args[0] === 'string' && (args[0] as string).includes("set_config('app."),
-    );
-    expect(clearCalls).toHaveLength(3);
+    // The tenant variables and the isolation switches are cleared, and
+    // enforcement is reset to its startup value, before the release
+    // (server/db/sessionScope.ts; proven on PostgreSQL by
+    // tests/db/isolation-switch-does-not-outlive-request.dbtest.ts).
+    const sql = pool.__client.query.mock.calls.map((args: unknown[]) => args[0]);
+    expect(sql.slice(-2)).toEqual([CLEAR_SESSION_SCOPE_SQL, RESET_ENFORCEMENT_SQL]);
     expect(pool.__client.release).toHaveBeenCalledTimes(1);
     expect(pool.__client.release).toHaveBeenCalledWith(undefined);
   });

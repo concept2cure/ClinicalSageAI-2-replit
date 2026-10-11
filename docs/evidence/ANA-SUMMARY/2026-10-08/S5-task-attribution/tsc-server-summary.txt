@@ -1,0 +1,5 @@
+now: 19 errors; HEAD sources: 19 errors
+diff now vs HEAD sources (empty = S5 adds none):
+diff now vs planted (the plant must appear):
+13a14
+> server/services/ana/turn-timeline-emitter.ts(245,14): error TS2322: Type 'string' is not assignable to type 'number'.

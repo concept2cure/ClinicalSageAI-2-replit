@@ -1,0 +1,130 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > no C2C_CONVO at all (a first visit, or AnA’s own navigation here): AnA's running turn is kept, and on screen 114ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > { id: "new" } with no seed: AnA's running turn is kept, and on screen 36ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > "Open full thread" with an empty box: AnA's running turn is kept, and on screen 31ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an unseeded ask to draft: AnA's running turn is kept, and on screen 34ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an idle conversation is kept too — arriving is not a request to start over 25ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an empty conversation in progress is titled as the new conversation it is 30ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > a question sent here while AnA is still answering > neither aborts her nor vanishes: it waits in the composer, and the person is told 30ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > a question sent here while AnA is still answering > when she is idle, the question starts its new conversation and is sent 25ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > another conversation, asked for by id > is not loaded over a turn that is still running — the person is told to open it again 33ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > another conversation, asked for by id > once loaded, is the conversation in progress — the next arrival does not load it again 51ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > New conversation resets the shell’s chat 176ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > can replace a pending history read with a new conversation and keeps the draft 58ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > is not offered mid-turn — a reset would abort AnA where she stands 53ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > keeps the reply draft while history is loading 48ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > keeps the reply draft while history is failed 50ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > shows the failed history with retry for that same thread and an explicit new conversation control 53ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > sends run_policy from the options
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > a send's own policy wins for that turn
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > is absent when nothing chose one, so the turn is today’s
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > sends run_policy from the options 42ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > a send's own policy wins for that turn 29ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > is absent when nothing chose one, so the turn is today’s 29ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > paused with reason manual becomes runHold with the next steps; resumed clears it
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a person's pause is a person's, with nothing next
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > paused with reason manual becomes runHold with the next steps; resumed clears it 107ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a person's pause is a person's, with nothing next 80ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a steer that replaced the held step says which step
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > hold_expired ends the run on the client too, and says what did not run 105ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a finished turn leaves the run as it was (no stop to clear)
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a steer that replaced the held step says which step 53ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a finished turn leaves the run as it was (no stop to clear) 53ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > budget_exhausted
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > approval_timeout
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > budget_exhausted 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > approval_timeout 54ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > hold_expired
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > hold_unavailable
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > hold_expired 53ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > hold_unavailable 52ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > ignores an unknown policy and a malformed step list
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > knows the policy of the turn in flight — what it sent, not the preference now
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > Manual's unavailable warning is said once — by the turn's stopped note, not again in its warnings
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > ignores an unknown policy and a malformed step list 53ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a reopened thread > restores the policy and the steps a stop left unrun 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > knows the policy of the turn in flight — what it sent, not the preference now 27ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > Manual's unavailable warning is said once — by the turn's stopped note, not again in its warnings 53ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > a reopened thread shows the steps a steer replaced (from the stored holds) 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > keeps every phase in order, times the steps, and closes on post_done 97ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > records a stopped turn as stopped in the phase it was cut short 82ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > holds a steer as pending from acceptance until the server confirms it landed 84ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > drops a steer the run never reached when the run ends 57ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > reopening a conversation restores the work record > maps the persisted tool trace and steers back onto the turn 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > reopening a conversation restores the work record > hydrates nothing from a turn that has no trace 0ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > clears the previous transcript on switch and blocks a failed selection until retry succeeds
+[useAnaChat] loadThread non-ok: 503
+[useAnaChat] loadThread failed: loadThread 503
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > allows an explicit new conversation after a failed history read
+[useAnaChat] loadThread failed: Offline
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps the latest selected thread when an older response arrives last 23ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps loading and refuses send while the newer history is still pending 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > refuses a same-tick send and ignores a superseded response still reading its body 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > ignores an obsolete load failure without surfacing an error on the newer selection 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > reset cancels pending history so it cannot replace a newly asked conversation 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > unmount cancels a history read and ignores its late result 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > clears the previous transcript on switch and blocks a failed selection until retry succeeds 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > allows an explicit new conversation after a failed history read 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > times out a request that never receives response headers and releases the composer 20ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > bounds a stalled server cancellation so Stop and a replacement demo can finish 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > a delayed cancellation for an ended turn never aborts a replacement demo 6ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a follow-up in the same conversation carries the turns before it
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a follow-up in the same conversation carries the turns before it
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a new conversation started and asked in one tick carries none of the last one
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a new conversation started and asked in one tick carries none of the last one
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a conversation loaded and asked in one tick carries its own turns, not the one it replaced
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a conversation loaded and asked in one tick carries its own turns, not the one it replaced
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a follow-up in the same conversation carries the turns before it 22ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a new conversation started and asked in one tick carries none of the last one 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a conversation loaded and asked in one tick carries its own turns, not the one it replaced 5ms
+
+ Test Files  6 passed (6)
+      Tests  53 passed (53)
+   Start at  21:51:05
+   Duration  8.81s (transform 1.62s, setup 489ms, import 2.63s, tests 2.15s, environment 2.72s)
+

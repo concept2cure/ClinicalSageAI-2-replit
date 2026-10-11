@@ -113,10 +113,12 @@ export const EXPORT_EXCLUDED_TABLES: readonly string[] = Object.freeze([
  * be listed here or in EXPORT_COLUMNS_NOT_SECRET.
  */
 export const EXPORT_WITHHELD_COLUMNS: Readonly<Record<string, Readonly<Record<string, string>>>> = Object.freeze({
+  c2c_mailbox_connections: { token_reference: 'a mailbox token or credential-store reference' },
   connector_credentials: { credentials: 'connector credentials' },
   document_sessions: { session_token: 'a session token' },
   gate_approvals: { verification_token: 'a one-time verification token' },
   integration_tokens: { access_token: 'an OAuth access token', refresh_token: 'an OAuth refresh token' },
+  licenses: { access_token: 'a license access token' },
   mcp_oauth_refresh_tokens: { token_hash: 'the hash a refresh token is checked against' },
   organization_gateway_accounts: { credentials_ciphertext: 'agency gateway credentials, encrypted under a platform key' },
   scim_tenants: { token_hash: 'the hash a SCIM bearer token is checked against' },
@@ -130,11 +132,13 @@ export const EXPORT_WITHHELD_COLUMNS: Readonly<Record<string, Readonly<Record<st
  * list fails it, so this is a decision record, not a convenience.
  */
 export const EXPORT_COLUMNS_NOT_SECRET: Readonly<Record<string, Readonly<Record<string, string>>>> = Object.freeze({
+  audit_events: { hmac_seal: "the row's integrity seal; it proves the row, it does not unlock anything" },
   audit_logs: { hmac_seal: "the row's integrity seal; it proves the row, it does not unlock anything" },
   authoring_tokens: { token_key: 'a citation token in authored content' },
   client_security_settings: { password_policy_settings: 'the password POLICY (length, expiry), no password' },
   ind_investigators: { credentials: 'professional credentials such as MD, PhD' },
   organization_gateway_accounts: { credential_fields: 'the NAMES of the credential fields held, not their values' },
+  stab_exports: { tokens: 'recorded P.8 authoring fields, such as study identity, conditions and result summary' },
   submission_gateway_credentials: { credential_kind: 'the kind of credential, a label' },
 });
 

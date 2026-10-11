@@ -1,0 +1,18 @@
+{
+  "phase": "red",
+  "command": [
+    "/root/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/ana/__tests__/run-control-tenant-scope.test.ts",
+    "--config",
+    "vitest.config.ts"
+  ],
+  "cwd": "/workspace/scratch/bd36ee581acd/concept2cure",
+  "head": "0b8a8c3dfd6166286e085de59e13b1217cb17dee",
+  "sourceBlob": "2567b41d4b096daf53b30b9e7c6fb1860bee7376",
+  "testBlob": "d6fb2fbdeefdf7f894ceda6fe7e1fb8b64ac984e",
+  "conditions": "Unchanged production source; nine new exported-service cases; deferred fake pool with actual tenant ALS; no native PostgreSQL or provider calls.",
+  "exitCode": 1,
+  "elapsedSeconds": 1.121
+}

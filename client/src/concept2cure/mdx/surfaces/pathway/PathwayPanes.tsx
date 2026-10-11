@@ -19,7 +19,7 @@ import {
   auditChipMeta,
   unclassifiedFilterCaveat,
 } from '../../data/pathwayTabs';
-import { useVaultUpload } from '../../../v2/useVaultUpload';
+import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../../../v2/useVaultUpload';
 import { EmptyState, ErrorState } from '../../../v2/dataConnect';
 import { useSectionVersions } from '../../hooks/useSectionVersions';
 import { DossierStore, useSection } from '../../store/dossierStore';
@@ -1053,6 +1053,7 @@ function DDAttachmentsTab({ attachments, onAttach }: { attachments: DossierAttac
         <input
           ref={inputRef}
           type="file"
+          accept={VAULT_UPLOAD_ACCEPT}
           multiple
           style={{ display: 'none' }}
           onChange={(e) => { if (e.target.files) onAttach(e.target.files); e.target.value = ''; }}

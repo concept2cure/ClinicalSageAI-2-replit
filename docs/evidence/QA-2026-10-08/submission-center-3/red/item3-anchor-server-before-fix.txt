@@ -1,0 +1,31 @@
+ ✓ server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > a manager anchors it, with the reason on a chained audit row; the project’s documents are then placed 57ms
+ ✓ server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > the project’s lead may anchor it; a member who does not lead the project may not, and nothing changes 20ms
+ ✓ server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > another organization’s project is not found, and nothing changes 5ms
+ ✓ server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > another organization’s submission is not found 4ms
+ ✓ server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > a submission that has a project keeps it 14ms
+ ✓ server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > a submission that already files another project’s document is not anchored to this one 19ms
+ ✓ server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > the unanchored-placement refusal names the control that anchors the submission > says where: Submission Center, “Anchor to a project” 6ms
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > a submission is anchored only to a project of its own filing type > an IND is not anchored to a 510(k) device programme: 409 APPLICATION_TYPE_MISMATCH, and nothing changes 21ms
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > a submission is anchored only to a project of its own filing type > an IND is not anchored to an NDA programme: 409 APPLICATION_TYPE_MISMATCH, and nothing changes 12ms
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > a submission is anchored only to a project of its own filing type > an IND is not anchored to a programme whose type resolves to no filing: 409 APPLICATION_TYPE_MISMATCH, and nothing changes 12ms
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > a submission is anchored only to a project of its own filing type > the type is checked even for someone who could not anchor at all: the refusal says what is wrong with the choice 8ms
+   → expected SubmissionError: Only the project’s lead … { code: '…' } to match object { code: 'APPLICATION_TYPE_MISMATCH' }
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > a submission is anchored only to a project of its own filing type > the candidates offered are this organization’s live projects of the same filing type, and the rest are counted, never named 2ms
+ × server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > a submission is anchored only to a project of its own filing type > another organization’s submission has no candidates: it is not found 2ms
+ ✓ server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > refuses with no reason, and anchors nothing 32ms
+ ✓ server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > refuses a project id that is not a uuid, and anchors nothing 7ms
+ ✓ server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > passes the trimmed reason and the membership row’s role to the service 7ms
+ ✓ server/routes/__tests__/submissions-program-anchor.test.ts > the anchor route > answers a refusal with its status and the server’s words 4ms
+ × server/routes/__tests__/submissions-program-anchor.test.ts > the anchor candidates route > answers the projects of the submission’s filing type, from the service 11ms
+ ✓ server/routes/__tests__/submissions-program-anchor.test.ts > the anchor candidates route > answers a refusal with its status 4ms
+ × server/routes/__tests__/submissions-program-anchor.test.ts > the anchor candidates route > a type mismatch on the anchor itself is a 409 in the server’s words 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+AssertionError: expected 500 to be 409 // Object.is equality
+AssertionError: expected { id: 8, title: 'Legacy IND', …(12) } to be an instance of SubmissionError
+AssertionError: expected { id: 9, title: 'Legacy IND', …(12) } to be an instance of SubmissionError
+AssertionError: expected { id: 10, title: 'Legacy IND', …(12) } to be an instance of SubmissionError
+AssertionError: expected SubmissionError: Only the project’s lead … { code: '…' } to match object { code: 'APPLICATION_TYPE_MISMATCH' }
+TypeError: listAnchorCandidates is not a function
+TypeError: listAnchorCandidates is not a function
+      Tests  8 failed | 12 passed (20)

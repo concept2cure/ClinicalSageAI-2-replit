@@ -68,7 +68,21 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, url: string, body?: any) => {
     if (url === '/api/statistical-defensibility/assess') {
-      return ok({ overallScore: 78, overallRating: 'Moderate', reviewerRiskLevel: 'Medium', criticalIssues: ['No multiplicity adjustment for the key secondary'], majorIssues: [], recommendations: ['Pre-specify the estimand per ICH E9(R1)'] });
+      return ok({
+        status: 'assessed',
+        engine: 'deterministic',
+        sampleSize: 152,
+        power: 0.8,
+        judgment: {
+          overallVerdict: 'marginal',
+          overallRisk: 'moderate',
+          actionRecommendation: 'proceed_with_conditions',
+          dimensions: [
+            { name: 'Estimand Clarity', verdict: 'marginal', score: 55, rationale: 'No estimand framework specified.', flags: ['ICH E9(R1)'] },
+          ],
+          escalationReasons: [],
+        },
+      });
     }
     if (url === '/api/biostat/assurance') return ok({ assurance: 0.72, powerAtPriorMean: 0.9, nPerArm: body.nPerArm });
     return ok({});
@@ -85,21 +99,41 @@ function selectCalculator(title: string) {
 }
 
 describe('BiostatWorkbench — real statistical engine', () => {
-  it('runs a reviewer-risk defensibility assessment and renders the server result', async () => {
+  // 2026-10-05: the assessment is the deterministic judgment engine's, not a
+  // model's score. The form sends the engine's inputs; the card renders its verdict.
+  it('sends the engine its inputs and renders the deterministic verdict', async () => {
     render(<BiostatWorkbench {...props()} />);
     fill(/^Indication$/, 'NSCLC');
-    fill(/^Study design$/, 'randomized double-blind');
-    fill(/^Primary endpoint$/, 'PFS');
+    fill(/^Effect size/, '0.5');
     fireEvent.click(screen.getByRole('button', { name: /Assess defensibility/ }));
 
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => c[1] === '/api/statistical-defensibility/assess');
       expect(call).toBeTruthy();
-      expect(call![2]).toMatchObject({ indication: 'NSCLC', studyDesign: 'randomized double-blind', primaryEndpoint: 'PFS' });
+      expect(call![2]).toMatchObject({
+        indication: 'NSCLC', endpointType: 'continuous', studyType: 'superiority',
+        effectSize: 0.5, alpha: 0.05, powerTarget: 0.8, attritionRate: 0.1,
+      });
     });
-    expect(await screen.findByText('78')).toBeTruthy();
-    expect(screen.getByText(/No multiplicity adjustment/)).toBeTruthy();
-    expect(screen.getByText(/Pre-specify the estimand/)).toBeTruthy();
+    expect(await screen.findByText('152')).toBeTruthy();
+    expect(screen.getAllByText('marginal').length).toBeGreaterThan(0);
+    expect(screen.getByText(/No estimand framework specified/)).toBeTruthy();
+  });
+
+  it('shows the engine’s own sentence when it cannot judge the design, and no verdict', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/statistical-defensibility/assess') {
+        throw Object.assign(new Error('No verdict was formed. Missing or invalid: effectSize.'), {
+          name: 'ApiRequestError',
+          status: 422,
+        });
+      }
+      return ok({});
+    });
+    render(<BiostatWorkbench {...props()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Assess defensibility/ }));
+    expect(await screen.findByText(/Missing or invalid: effectSize/)).toBeTruthy();
+    expect(screen.queryByText('Verdict')).toBeNull();
   });
 
   it('computes assurance from the real design-stats endpoint and renders only the response', async () => {
@@ -503,6 +537,73 @@ describe('BP-W2-4 — a computed result files into a governed section, stamp int
     const doc = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/docs');
     expect(doc, 'no document create was attempted').toBeTruthy();
     expect(doc![2]).toMatchObject({ client_program_id: PROGRAM });
+  });
+
+});
+
+describe('D4 — structured scientific result fidelity in Authoring', () => {
+  const FULL_HASH = 'a'.repeat(64);
+
+  it('files every displayed result table, later-row columns and all rows with the full stamp', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/biostat/assurance') {
+        return ok({
+          assurance: 0.72,
+          ocTable: Array.from({ length: 65 }, (_, i) => ({
+            drift: i,
+            power: i === 0 ? 0.0250000000000123 : i / 100,
+            ...(i === 1 ? { stoppedEarly: false, note: '<script>not markup</script>', interval: { lower: null, upper: 3.14 } } : {}),
+          })),
+          provenance: { engine: 'c2c-stats', engineVersion: '1.0.0', method: 'assurance', inputsSha256: FULL_HASH, reproducible: true },
+        });
+      }
+      if (url === '/api/authoring/docs') return { ok: true, status: 200, json: async () => ({ document: { id: 'doc-grid' } }) } as Response;
+      if (url === '/api/authoring/sections') return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-grid' } }) } as Response;
+      return ok({});
+    });
+
+    render(<BiostatWorkbench {...props()} />);
+    fill(/Prior mean effect/, '0.4');
+    fill(/^Prior SD/, '0.15');
+    fill(/^n per arm/, '120');
+    fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
+    expect(await screen.findByText('Oc Table')).toBeTruthy();
+    expect(screen.getByText(/Showing 60 of 65 rows/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Insert into document/ }));
+
+    await waitFor(() => {
+      const section = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections');
+      expect(section).toBeTruthy();
+      const content: string = section![2].content;
+      for (const expected of ['Oc Table', 'Drift', 'Power', 'Stopped Early', '0.0250000000000123', '<td>64</td><td>0.64</td>', '&lt;script&gt;not markup&lt;/script&gt;', '{"lower":null,"upper":3.14}', `inputs ${FULL_HASH}`]) {
+        expect(content).toContain(expected);
+      }
+      expect(content).not.toContain('<script>');
+      expect(apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/docs')![2]).toMatchObject({ client_program_id: PROGRAM, module: 'M5' });
+    });
+    expect(screen.getByRole('columnheader', { name: 'Stopped Early' })).toBeTruthy();
+    expect(screen.getByText('0.0250000000000123')).toBeTruthy();
+  });
+
+  it('can file a table-only result with heterogeneous and null rows', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/biostat/assurance') return ok({ grid: [{ drift: 0 }, null, { power: 0.987654321012345 }], provenance: { inputsSha256: FULL_HASH } });
+      if (url === '/api/authoring/docs') return { ok: true, status: 200, json: async () => ({ document: { id: 'doc-table' } }) } as Response;
+      if (url === '/api/authoring/sections') return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-table' } }) } as Response;
+      return ok({});
+    });
+    render(<BiostatWorkbench {...props()} />);
+    fill(/Prior mean effect/, '0.4'); fill(/^Prior SD/, '0.15'); fill(/^n per arm/, '120');
+    fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Insert into document/ }));
+    await waitFor(() => {
+      const section = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections');
+      expect(section).toBeTruthy();
+      expect(section![2].content).toContain('<th>Drift</th><th>Power</th>');
+      expect(section![2].content).toContain('0.987654321012345');
+      expect(section![2].content).toContain('<tr><td>—</td><td>—</td></tr>');
+      expect(section![2].content).toContain(FULL_HASH);
+    });
   });
 });
 

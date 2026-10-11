@@ -1,0 +1,44 @@
+{
+  "base": "bd886f5d3a766ba35179f98ecb053f61420f69f6",
+  "requested_files": [
+    "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts",
+    "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts"
+  ],
+  "actual_files": [
+    "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts",
+    "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts"
+  ],
+  "missing_files": [],
+  "unexpected_files": [],
+  "total_tests": 35,
+  "passed_tests": 35,
+  "failed_tests": 0,
+  "pending_tests": 0,
+  "todo_tests": 0,
+  "actual_assertion_statuses": {
+    "passed": 35
+  },
+  "source_blobs": {
+    "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts": "859143c949be71107c9ee341f593928c31f5cc69",
+    "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts": "509e40619ffd2d981d3d7711fd9c6ac862ac6bbb"
+  },
+  "files": [
+    {
+      "path": "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts",
+      "tests": 7,
+      "statuses": {
+        "passed": 7
+      }
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts",
+      "tests": 28,
+      "statuses": {
+        "passed": 28
+      }
+    }
+  ],
+  "success": true,
+  "process_exit": 0,
+  "vitest_duration_seconds": 10.38
+}

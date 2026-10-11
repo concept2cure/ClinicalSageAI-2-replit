@@ -12,6 +12,8 @@
  */
 
 import type { GatewayServerToolUse } from '../ai-gateway/types.js';
+import { stepLabel, unknownStepLabel, type StepFact, type StepTense, type StepVerb } from '@shared/ana/step-verbs';
+import { cleanStepText, stepMessage } from './step-presentation.js';
 
 /** How many consulted sources the trace lists before it stops enumerating. */
 export const MAX_LISTED_SOURCES = 8;
@@ -20,15 +22,6 @@ function asString(v: unknown): string | undefined {
   return typeof v === 'string' && v.trim() ? v.trim() : undefined;
 }
 
-/**
- * The trace label for a server-tool step.
- *
- * Written in the same register as AnA's own tool rows ("Searching the document
- * for …"), so a web search reads as one more step she took rather than as an
- * interruption from somewhere else. Falls back to a plain description rather
- * than inventing a query it does not have — a label that named a search term
- * nobody searched for would be a fabricated record.
- */
 /**
  * A server-run step's own id as the stream's pairing field, when the API
  * reported one. The client pairs each tool_result with its call by
@@ -41,17 +34,54 @@ export function serverToolStepIdField(step: GatewayServerToolUse): { toolUseId?:
   return typeof step.id === 'string' && step.id ? { toolUseId: step.id } : {};
 }
 
-export function describeServerToolStep(step: GatewayServerToolUse): string {
-  const input = step.input ?? {};
-  if (step.name === 'web_search') {
-    const query = asString((input as any).query);
-    return query ? `Searching the web for "${query}"` : 'Searching the web';
-  }
-  if (step.name === 'web_fetch') {
-    const url = asString((input as any).url);
-    return url ? `Reading ${url}` : 'Reading a web page';
-  }
-  return `Running ${step.name}`;
+/**
+ * How each server-run step reads, from the same closed verb table as AnA's own
+ * tools (shared/ana/step-verbs.ts), with source `web`. The query a search used
+ * is its preview, never part of the label; a step with no query has no
+ * preview rather than an invented one — a label that named a search term
+ * nobody searched for would be a fabricated record. A server tool this module
+ * does not know reads "Running a step", never its name.
+ */
+const SERVER_STEPS: Readonly<Record<string, { verb: StepVerb; object: string; preview: 'query' | 'url' }>> = {
+  web_search: { verb: 'search', object: 'the web', preview: 'query' },
+  web_fetch: { verb: 'read', object: 'a web page', preview: 'url' },
+};
+
+/** The trace label for a server-tool step, in the tense asked for. */
+export function describeServerToolStep(step: GatewayServerToolUse, tense: StepTense = 'doing'): string {
+  const known = SERVER_STEPS[step.name];
+  return known ? stepLabel(known.verb, known.object, tense) : unknownStepLabel(tense);
+}
+
+/**
+ * What the stream's `tool_use` and `tool_result` frames say about a server-run
+ * step. Both are written once the step is over, so the result reads in the
+ * done form when it succeeded. No model generation of ours ran for it, but the
+ * work was the provider's: `usedModel` is unknown (null).
+ */
+export function serverToolStepFields(step: GatewayServerToolUse) {
+  const known = SERVER_STEPS[step.name];
+  const raw = known ? (step.input as Record<string, unknown> | undefined)?.[known.preview] : undefined;
+  const preview = cleanStepText(raw);
+  const facts: StepFact[] = preview && known?.preview === 'query' ? [{ name: 'Searched for', value: preview }] : [];
+  const summary = summariseServerToolResult(step);
+  const found = summary.ok ? summary.sources.length + summary.omitted : null;
+  const finishedFacts: StepFact[] =
+    found === null ? facts : [...facts, { name: 'Found', value: `${found} ${found === 1 ? 'source' : 'sources'}` }];
+  const base = { source: 'web' as const, preview };
+  const doing = describeServerToolStep(step, 'doing');
+  // The one status sentence (step-presentation.ts stepMessage), not one of this module's own.
+  const message = step.isError ? stepMessage('error', false, undefined, doing) : null;
+  return {
+    announced: { ...base, label: doing, facts },
+    finished: {
+      ...base,
+      label: step.isError ? doing : describeServerToolStep(step, 'done'),
+      facts: finishedFacts,
+      usedModel: null,
+      ...(message ? { message } : {}),
+    },
+  };
 }
 
 /** One consulted source, as the trace shows it. */

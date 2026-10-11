@@ -28,6 +28,7 @@ import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../component
 import type { AnaPlanStep, AnaProgressPhase, AnaRunHold } from '../components/ana/useAnaChat.types';
 import { MAX_INTERJECTION_CHARS, type AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { PAUSE_WORDS } from '@shared/ana/run-policy';
+import { unknownStepLabel, type StepFact } from '@shared/ana/step-verbs';
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { currentStep, formatElapsed, formatStepDuration } from '../components/ana/anaProgress';
 import type { AgentActivityView } from './useAgentActivity';
@@ -36,7 +37,7 @@ import { clip, formatClock, SENDING_PLACEHOLDER, type UsedRow } from './anaWorkM
 /** The one status glyph: check / warning triangle / dot. Shared with AnaActivity. */
 export function statusGlyph(status: AnaToolCall['status']): React.ReactElement {
   if (status === 'success') return I.check;
-  if (status === 'error') return I.alertTriangle;
+  if (status === 'error' || status === 'unconfirmed') return I.alertTriangle;
   return I.dot;
 }
 
@@ -117,12 +118,26 @@ function planState(s: AnaPlanStep, live: boolean): RailState {
   return 'pending';
 }
 
+/** A step's facts as its chevron opens them: "Found: 12 matches", one per line. */
+export function StepFactList({ facts }: { facts: StepFact[] }) {
+  return (
+    <>
+      {facts.map((f) => (
+        <div className="ana-activity-kv" key={f.name}>
+          {f.name}: {f.value}
+        </div>
+      ))}
+    </>
+  );
+}
+
 /** The step in flight, under the item it belongs to. */
 function CurrentTool({ step }: { step: AnaToolCall | null }) {
   if (!step) return null;
   return (
     <span className="ana-rail-sub">
-      <span aria-hidden="true">{I.arrowRight}</span> {step.label || step.name}
+      {/* The server's label; never the tool's name (step-verbs.ts). */}
+      <span aria-hidden="true">{I.arrowRight}</span> {step.label || unknownStepLabel('doing')}
     </span>
   );
 }
@@ -310,10 +325,24 @@ export interface RunControlStripProps {
 }
 
 /**
- * Mid-run control: the one strip, rendered by the rail (Shell.tsx AnaRail) and
- * above the conversation screen's composer (ConversationThread), which the
- * rail is not drawn beside. Moved here from the rail (row 74, S4) so a Manual
- * hold can be answered wherever AnA is waiting.
+ * A live turn's one alert line (AnA detach DT2, §5.1): this reader's network,
+ * a stale owner, a Stop not yet confirmed, or a refusal. Said beside the rows,
+ * which stay; the words are anaWorkModel's `liveAlertLine`.
+ */
+export function LiveAlert({ text }: { text: string }) {
+  return (
+    <p className="ana-activity-unrecorded" role="status">
+      <span className="ana-activity-glyph" aria-hidden="true">{I.alertTriangle}</span>
+      <span>{text}</span>
+    </p>
+  );
+}
+
+/**
+ * Mid-run control: the one strip, rendered above the conversation screen's
+ * composer (ConversationThread). Moved here from the right rail (row 74, S4),
+ * which is deleted (ana-2a), so a Manual hold can be answered wherever AnA is
+ * waiting.
  *
  * The three actions have three different scopes, and the copy says which is
  * which rather than one blanket promise:
@@ -357,7 +386,7 @@ export function RunControlStrip({ streaming, runStatus, runHold, runPolicy, onPa
  * Manual turn is working — that a steer sent now takes the place of her next
  * step (the server's early steer, filed `superseded`). Nothing otherwise.
  */
-function steerHelpFor(manual: boolean, runPolicy: AnaRunPolicy | null | undefined, runStatus: RunControlStatus): string | null {
+export function steerHelpFor(manual: boolean, runPolicy: AnaRunPolicy | null | undefined, runStatus: RunControlStatus): string | null {
   if (manual) return 'The step shown will not run.';
   return runPolicy === 'manual' && runStatus === 'running'
     ? 'Under Manual, a steer sent now replaces her next step unless that step needs your approval; a replaced step does not run.'

@@ -154,7 +154,7 @@ jobs:
         # expects the failure, then the safe forms and the baseline semantics.
         # Each was mutation-checked against copies of its gate (2026-10-01,
         # docs/evidence/D6/2026-10-01-gate-selftests/).
-        run: npm run ci:audit-route-mounts:selftest && npm run ci:audit-logs-fixture:selftest && npm run ci:tenant-isolation-justifications:selftest && npm run ci:committed-secrets:selftest && npm run ci:gateway-bypass:selftest && npm run ci:no-dev-auth-in-prod:selftest && npm run ci:org-path-param-guards:selftest && npm run ci:password-hygiene:selftest && npm run ci:purge-coverage:selftest && npm run ci:regulated-delete-audit:selftest && npm run ci:rls-allowlist-sync:selftest && npm run ci:route-ownership-matrix:selftest && npm run ci:server-error-leaks:selftest && npm run ci:session-scoped-rls-bypass:selftest && npm run ci:tenant-blind-models:selftest && npm run ci:tenant-column-types:selftest && npm run ci:tenant-entry-points:selftest && npm run ci:tenant-isolation:selftest && npm run ci:tenant-resolvers:selftest
+        run: npm run ci:audit-route-mounts:selftest && npm run ci:audit-logs-fixture:selftest && npm run ci:tenant-isolation-justifications:selftest && npm run ci:committed-secrets:selftest && npm run ci:gateway-bypass:selftest && npm run ci:no-dev-auth-in-prod:selftest && npm run ci:org-path-param-guards:selftest && npm run ci:password-hygiene:selftest && npm run ci:purge-coverage:selftest && npm run ci:regulated-delete-audit:selftest && npm run ci:rls-allowlist-sync:selftest && npm run ci:route-ownership-matrix:selftest && npm run ci:server-error-leaks:selftest && npm run ci:session-scoped-rls-bypass:selftest && npm run ci:sql-interpolation:selftest && npm run ci:tenant-blind-models:selftest && npm run ci:tenant-column-types:selftest && npm run ci:tenant-entry-points:selftest && npm run ci:tenant-isolation:selftest && npm run ci:tenant-resolvers:selftest
 
       - name: Guardrails — no jsonb operator on a json column
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -569,6 +569,7 @@ jobs:
           npm run ci:reasoning-tier-ga-readiness
           npm run ci:reasoning-tier-uat-evidence
           npm run ci:session-scoped-rls-bypass
+          npm run ci:sql-interpolation
           npm run ci:tenant-resolvers
 
       - name: Security gates that ran only in the pre-push hook
@@ -599,6 +600,15 @@ jobs:
       - name: Guardrails — no API route or table name in user-visible copy
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:internals-in-copy
+
+      - name: Guardrails — every in-scope AnA tool reads from its register entry (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # ANA-SUMMARY S3: a step's label, tense and source come from the tool's
+        # `present` block (closed verb and source tables, shared/ana/step-verbs.ts),
+        # never from its name; an `engine` claim is refused when the handler can
+        # reach a model. The selftest runs first, so a gate that can no longer
+        # fail is caught before its clean result is believed.
+        run: npm run ci:step-presentation:selftest && npm run ci:step-presentation
 
       - name: Guardrails — no clearance copy chosen by an empty collection
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -1215,6 +1225,14 @@ jobs:
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
+      - name: Upload core test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: test-results
+          path: test-results/
+          if-no-files-found: warn
+
   coverage:
     name: Coverage (ratchet)
     runs-on: ubuntu-latest
@@ -1289,7 +1307,7 @@ jobs:
         # the enforcement lives in the ratchet step below, which is the thing
         # this job is allowed to fail on. json-summary is what the ratchet reads.
         continue-on-error: true
-        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --coverage --coverage.reporter=json-summary --coverage.reporter=text-summary --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
+        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --reporter=verbose --reporter=json --outputFile=test-results/vitest-coverage.json --coverage --coverage.reporter=json-summary --coverage.reporter=text-summary --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
         env:
           CI: true
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
@@ -1307,7 +1325,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverage-report
-          path: coverage/
+          path: |
+            coverage/
+            test-results/
           if-no-files-found: ignore
 
   security-tests:
@@ -1342,6 +1362,9 @@ jobs:
         run: npm run test:security
         env:
           CI: true
+
+      - name: MCP SDK OAuth credentials stay bound to their issuer
+        run: npm run test:mcp-sdk-issuer
 
   ana-readiness-tests:
     name: AnA Readiness Tests
@@ -1428,6 +1451,7 @@ jobs:
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
       - name: Smoke — apply RLS rollout migrations (0019/0020/0021)
+        id: integration_prerequisites
         # These migrations target the production schema. The smoke runs
         # against a SEPARATE fresh DB (not the one the GCC migrations
         # mutated above) so it tests "SQL parses + executes cleanly on
@@ -1450,24 +1474,9 @@ jobs:
           DATABASE_URL_ADMIN: postgresql://postgres@localhost:5432/postgres
           DATABASE_URL_SMOKE: postgresql://postgres@localhost:5432/concept2cure-ri_rls_smoke
 
-      - name: Run integration tests
-        # vitest tests read DATABASE_URL via server/db/runtime.ts (per
-        # server/db/getDatabaseUrl.ts the env-var fallback order is
-        # DATABASE_URL → NEON_DATABASE_URL → DATABASE_NEON_NEW_SECRET).
-        # The job had only TEST_DATABASE_URL set, so the pool couldn't
-        # connect and ~100 server-side test files failed with
-        # "Database connection not available." Mirror the value to
-        # DATABASE_URL so the runtime actually sees it.
-        run: npm test
-        env:
-          CI: true
-          RUN_INTEGRATION_TESTS: 'true'
-          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
-          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
-
       # ── The step that actually uses the database this job provisions ────────
       #
-      # Everything above runs under tests/setup.ts, which mocks `pg` process-
+      # The broad npm test suite below uses tests/setup.ts, which mocks `pg` process-
       # wide. That mock is right for unit tests and wrong here: it meant this
       # job — a real PostgreSQL service, real migrations applied to it — never
       # opened a socket from a test. `new Pool().query(...)` answered
@@ -1493,9 +1502,9 @@ jobs:
       # workflow-approval-tables with `42P01 relation "unified_documents" does
       # not exist` — 18 assertions never ran.
       #
-      # Nobody had seen it: this step only executes when the step above it
-      # passes, and that one had been failing. The moment it went green, these
-      # two surfaced.
+      # Originally this step followed the broad suite and ran only after it
+      # passed; its failures were invisible until that suite went green. Run
+      # this separate database lane first so its verdict and report are early.
       #
       # The right database for a suite whose whole premise is "the real deployed
       # shape" is one built the way a deployment builds it. install-fresh cannot
@@ -1518,7 +1527,12 @@ jobs:
           APP_SERVICE_DB_PASSWORD: ci-dbtest-app-service-password
 
       - name: Run real-database tests (unmocked pg, RLS_ENFORCE=on)
-        run: npm run test:db
+        # Preserve this execution separately before the long broad suite,
+        # including failures: its complete
+        # combined job log can be too large for diagnostic retrieval.
+        run: |
+          mkdir -p test-results-db
+          npm run test:db -- --reporter=verbose --reporter=json --outputFile.json=test-results-db/vitest.json
         env:
           CI: true
           NODE_ENV: test
@@ -1526,6 +1540,40 @@ jobs:
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
           APP_DATABASE_URL: postgresql://app_service:ci-dbtest-app-service-password@localhost:5432/concept2cure-ri_dbtest
+
+      - name: Upload real-database test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: real-database-test-results
+          path: test-results-db/
+          if-no-files-found: warn
+
+      - name: Run integration tests
+        # Independent verdict: run after native failure only when the shared
+        # setup succeeded, and keep the job failed if either suite failed.
+        if: "!cancelled() && steps.integration_prerequisites.conclusion == 'success'"
+        # vitest tests read DATABASE_URL via server/db/runtime.ts (per
+        # server/db/getDatabaseUrl.ts the env-var fallback order is
+        # DATABASE_URL → NEON_DATABASE_URL → DATABASE_NEON_NEW_SECRET).
+        # The job had only TEST_DATABASE_URL set, so the pool couldn't
+        # connect and ~100 server-side test files failed with
+        # "Database connection not available." Mirror the value to
+        # DATABASE_URL so the runtime actually sees it.
+        run: npm test
+        env:
+          CI: true
+          RUN_INTEGRATION_TESTS: 'true'
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: integration-tests-results
+          path: test-results/
+          if-no-files-found: warn
 
   # ── Blank-database provisioning + deploy-migration proof ──────────────────
   #

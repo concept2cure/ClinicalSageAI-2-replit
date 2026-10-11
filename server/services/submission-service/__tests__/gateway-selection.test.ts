@@ -23,7 +23,11 @@ const { gatewayCalls, rows } = vi.hoisted(() => ({
   gatewayCalls: [] as unknown[][],
   rows: {
     sequence: { id: 1, submissionId: 1, region: 'eu', sequenceNumber: '0000', status: 'dispatched', dispatchStatus: 'pending', type: 'original', organizationId: 7 },
-    submission: { id: 1, clientType: 'pharma', applicationType: 'maa', organizationId: 7 },
+    submission: { id: 1, clientType: 'pharma', applicationType: 'maa', organizationId: 7, programId: 'p-1' } as Record<string, unknown>,
+    // What the record names (package-identity.ts, QA 2026-10-08 j6): the
+    // project's application number and the organisation's name. A transmit is
+    // refused by name without them, so routing is tested with both recorded.
+    applicationNumber: 'EMEA-H-C-000000',
   },
 }));
 
@@ -52,7 +56,11 @@ vi.mock('../../../db', () => {
     return { rows: [] };
   };
   const pool = {
-    query: async () => ({ rowCount: 0, rows: [] }),
+    query: async (text: string) => {
+      if (/FROM organizations/.test(text)) return { rowCount: 1, rows: [{ name: 'Concept2Cure Therapeutics' }] };
+      if (/FROM regulatory_programs/.test(text)) return { rowCount: 1, rows: [{ application_number: rows.applicationNumber }] };
+      return { rowCount: 0, rows: [] };
+    },
     connect: async () => { throw new Error('not expected'); },
   };
   return { db: { select, execute }, pool };
@@ -143,10 +151,16 @@ describe('selectGateway', () => {
   });
 });
 
+// The application numbers below are in the agency's dash form. Since P-23
+// (2026-10-08) transmit holds a typed number to the identifier rule the eCTD
+// export and the package spine already apply (REGULATORY_IDENTIFIER_PATTERN:
+// slashes are path separators, so EMEA/H/C/… is recorded as EMEA-H-C-…), and a
+// slash form is refused before routing. These cases are about routing.
 describe('transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved', () => {
   beforeEach(() => {
     gatewayCalls.length = 0;
-    rows.submission = { id: 1, clientType: 'pharma', applicationType: 'maa', organizationId: 7 };
+    rows.submission = { id: 1, clientType: 'pharma', applicationType: 'maa', organizationId: 7, programId: 'p-1' };
+    rows.applicationNumber = 'EMEA-H-C-000000';
   });
 
   it('throws VALIDATION naming the eSubmission Gateway; getGateway is never called', async () => {
@@ -155,7 +169,7 @@ describe('transmitSequence — an e-signed EU MAA sequence is refused before any
       ctx: { organizationId: 7, userId: 11 },
       signatureActionId: 'sig-1',
       environment: 'staging',
-      applicationId: 'EMEA/H/C/000000',
+      applicationId: 'EMEA-H-C-000000',
     } as any).then(() => null, (e) => e);
     expect(err).not.toBeNull();
     expect((err as { code?: string }).code).toBe('VALIDATION');
@@ -164,13 +178,14 @@ describe('transmitSequence — an e-signed EU MAA sequence is refused before any
   });
 
   it('positive control: a DCP submission is routed on to ema:cesp', async () => {
-    rows.submission = { id: 1, clientType: 'pharma', applicationType: 'EU_GENERIC_DCP', organizationId: 7 };
+    rows.submission = { id: 1, clientType: 'pharma', applicationType: 'EU_GENERIC_DCP', organizationId: 7, programId: 'p-1' };
+    rows.applicationNumber = 'NL-H-0000-001-DC';
     await transmitSequence({
       sequenceId: 1,
       ctx: { organizationId: 7, userId: 11 },
       signatureActionId: 'sig-1',
       environment: 'staging',
-      applicationId: 'NL/H/0000/001/DC',
+      applicationId: 'NL-H-0000-001-DC',
     } as any).then(() => null, (e) => e);
     expect(gatewayCalls).toEqual([['ema', 'cesp']]);
   });

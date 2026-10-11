@@ -13,6 +13,13 @@
  */
 
 import { SUBMISSION_FORMATS } from './global-ri/electronic-submission-format.js';
+import { basisLabel } from '../../shared/regulatory/regulatory-basis.js';
+import {
+  sopRequirementsFor,
+  type SopProductDomain,
+  type SopTopic,
+  type SopTopicRequirements,
+} from '../../shared/regulatory/sop-requirements.js';
 
 export type SopRegion = 'FDA' | 'EMA' | 'PMDA';
 
@@ -27,7 +34,12 @@ export type SopProcessType =
   | 'training'
   | 'supplier_qualification'
   | 'internal_audit'
+  | 'complaint_handling'
+  | 'management_review'
   | 'generic';
+
+/** 2026-10-08 (D2): the product the procedure governs. A device's quality system is the QMSR / ISO 13485, not 21 CFR 211. */
+export type SopProductType = SopProductDomain;
 
 export interface SopInput {
   /** SOP title, e.g. "Change Control for Manufacturing Processes". */
@@ -47,6 +59,8 @@ export interface SopInput {
   ownerRole?: string;
   /** Extra scope sentence supplied by the client. */
   scopeNote?: string;
+  /** The product the procedure governs (drug, biologic, device). Unstated, drug is assumed and the SOP says so. */
+  productType?: SopProductType;
 }
 
 export interface SopSection {
@@ -62,6 +76,7 @@ export interface SopResult {
   effectiveDate: string;
   regions: SopRegion[];
   processType: SopProcessType;
+  productType: SopProductType;
   sections: SopSection[];
   references: string[];
   markdown: string;
@@ -74,7 +89,7 @@ const REGION_REFERENCES: Record<SopRegion, string[]> = {
   FDA: [
     '21 CFR Part 11 — Electronic Records; Electronic Signatures',
     '21 CFR Part 210/211 — Current Good Manufacturing Practice',
-    'FDA Guidance for Industry — Quality Systems Approach to Pharmaceutical CGMP',
+    'FDA Guidance for Industry — Quality Systems Approach to Pharmaceutical CGMP Regulations (2006)',
   ],
   EMA: [
     'EudraLex Volume 4 — EU Guidelines for Good Manufacturing Practice',
@@ -200,6 +215,20 @@ const PROCEDURES: Record<SopProcessType, string[]> = {
     'Require CAPA for findings; verify corrective actions before closure.',
     'Feed audit results into management review.',
   ],
+  complaint_handling: [
+    'Receive and record each complaint, written or oral, with the date received and the product and lot or device identifier concerned.',
+    'Evaluate whether the information is a complaint and whether it must be reported to the regulatory authority, and start the reporting clock.',
+    'Investigate, or record why no investigation is needed and who decided.',
+    'Handle the product concerned and decide whether a correction or corrective action is needed.',
+    'Reply to the complainant where appropriate and close the record after Quality review.',
+    'Trend complaints into management review.',
+  ],
+  management_review: [
+    'Schedule the review at the defined interval and assemble the inputs.',
+    'Review each input: complaints and feedback, regulatory reporting, audits and inspections, process and product monitoring, CAPA, changes, previous actions and new regulatory requirements.',
+    'Decide the outputs: improvements, changes needed for regulatory requirements, and resource needs.',
+    'Record the review, its decisions and owners; track the actions to closure.',
+  ],
   generic: [
     'Define the trigger and inputs that start this procedure.',
     'Describe the step-by-step actions and the responsible role for each.',
@@ -220,6 +249,8 @@ const PROCESS_LABELS: Record<SopProcessType, string> = {
   training: 'Training',
   supplier_qualification: 'Supplier Qualification',
   internal_audit: 'Internal Audit',
+  complaint_handling: 'Complaint Handling',
+  management_review: 'Management Review',
   generic: 'Procedure',
 };
 
@@ -235,19 +266,91 @@ function defaultDocId(processType: SopProcessType): string {
     training: 'SOP-QA-TRN-001',
     supplier_qualification: 'SOP-QA-SUP-001',
     internal_audit: 'SOP-QA-AUD-001',
+    complaint_handling: 'SOP-QA-CMP-001',
+    management_review: 'SOP-QA-MR-001',
   };
   return map[processType] ?? 'SOP-001';
 }
 
-function buildReferences(regions: SopRegion[], processType: SopProcessType): string[] {
+/** The quality-system topic a process maps to in the SOP requirements record, if any. */
+const TOPIC_OF: Partial<Record<SopProcessType, SopTopic>> = {
+  capa: 'capa',
+  deviation_management: 'deviation',
+  complaint_handling: 'complaint_handling',
+  document_control: 'document_control',
+  training: 'training',
+  supplier_qualification: 'supplier_qualification',
+  internal_audit: 'internal_audit',
+  management_review: 'management_review',
+  change_control: 'change_control',
+};
+
+/** The quality-system framework a device SOP answers to in each region (replaces drug CGMP for devices). */
+const DEVICE_REGION_REFERENCES: Record<SopRegion, string[]> = {
+  FDA: ['21 CFR Part 11 — Electronic Records; Electronic Signatures', '21 CFR Part 820 — Quality Management System Regulation (QMSR), incorporating ISO 13485:2016'],
+  EMA: ['Regulation (EU) 2017/745 (MDR) Article 10(9) — manufacturer’s quality management system', 'EN ISO 13485:2016 — Medical devices — Quality management systems'],
+  PMDA: ['MHLW Ministerial Ordinance No. 169 — QMS Ordinance for medical devices and IVDs', 'Act on Securing Quality, Efficacy and Safety of Products including Pharmaceuticals (PMD Act)'],
+};
+
+function buildReferences(
+  regions: SopRegion[],
+  processType: SopProcessType,
+  productType: SopProductType,
+  requirements: SopTopicRequirements | null,
+): string[] {
   const refs: string[] = [];
+  /* 2026-10-08 (D2): the clauses the procedure answers to, by product, first —
+     a device SOP cited drug CGMP (21 CFR 210/211) and never the QMSR. */
+  if (requirements && regions.includes('FDA')) refs.push(...requirements.governing.map(basisLabel));
   for (const region of regions) {
-    refs.push(...REGION_REFERENCES[region]);
+    refs.push(...(productType === 'device' ? DEVICE_REGION_REFERENCES[region] : REGION_REFERENCES[region]));
+    if (productType === 'biologic' && region === 'FDA') refs.push('21 CFR Parts 600–680 — Biologics');
     const procRegion = PROCESS_REFERENCES[processType]?.[region];
-    if (procRegion) refs.push(...procRegion);
+    if (procRegion && !(productType === 'device' && /314\.70|601\.12/.test(procRegion.join(' ')))) refs.push(...procRegion);
   }
   // De-duplicate while preserving order.
   return [...new Set(refs)];
+}
+
+/** The SOP section that names, per requirement, the clause it answers and that clause's basis. */
+function requirementsSection(req: SopTopicRequirements): string {
+  const lines = req.elements.map((e) => `- ${e.requirement} — ${basisLabel(e.basis)}`);
+  const notes = req.notes.map((n) => `- Note: ${n}`);
+  return [
+    `This procedure is written to address the following requirements for ${req.title.toLowerCase()} (${req.domain}). The procedure owner confirms each against the current regulation before approval.`,
+    ...lines,
+    ...notes,
+  ].join('\n');
+}
+
+/** The product (drug unless stated), the clauses its topic answers to, and the references, as of the effective date. */
+function resolveClauses(input: SopInput, processType: SopProcessType, regions: SopRegion[], asOf: string) {
+  const productType: SopProductType = input.productType ?? 'drug';
+  const topic = TOPIC_OF[processType];
+  const requirements = topic ? sopRequirementsFor(topic, productType, asOf) : null;
+  return { productType, requirements, references: buildReferences(regions, processType, productType, requirements) };
+}
+
+/** The SOP's header block. An unstated product type is named as assumed, never presented as given. */
+function sopHeader(h: {
+  title: string;
+  documentId: string;
+  effectiveDate: string;
+  regionList: string;
+  productType: SopProductType;
+  stated: boolean;
+}): string {
+  const assumed = h.stated
+    ? ''
+    : ' (assumed: the product type was not given; state drug, biologic or device to cite the right quality system)';
+  return (
+    `# ${h.title}\n\n` +
+    `**Document ID:** ${h.documentId}  \n` +
+    `**Version:** 1.0  \n` +
+    `**Effective date:** ${h.effectiveDate}  \n` +
+    `**Applicable regions:** ${h.regionList}  \n` +
+    `**Product type:** ${h.productType}${assumed}\n`
+  );
 }
 
 export function generateSop(input: SopInput): SopResult {
@@ -257,7 +360,7 @@ export function generateSop(input: SopInput): SopResult {
   const effectiveDate = input.effectiveDate ?? new Date().toISOString().slice(0, 10);
   const org = input.organization ?? 'the organization';
   const ownerRole = input.ownerRole ?? 'Head of Quality';
-  const references = buildReferences(regions, processType);
+  const { productType, requirements, references } = resolveClauses(input, processType, regions, effectiveDate);
 
   const regionList = regions.join(', ');
   const filingClause = input.filingType ? ` for ${input.filingType} filings` : '';
@@ -304,6 +407,9 @@ export function generateSop(input: SopInput): SopResult {
       title: 'Procedure',
       content: procedureBody,
     },
+    ...(requirements
+      ? [{ number: '5a', title: 'Requirements this procedure addresses', content: requirementsSection(requirements) }]
+      : []),
     {
       number: '6',
       title: 'Records',
@@ -327,12 +433,7 @@ export function generateSop(input: SopInput): SopResult {
     },
   ];
 
-  const header =
-    `# ${input.title}\n\n` +
-    `**Document ID:** ${documentId}  \n` +
-    `**Version:** 1.0  \n` +
-    `**Effective date:** ${effectiveDate}  \n` +
-    `**Applicable regions:** ${regionList}\n`;
+  const header = sopHeader({ title: input.title, documentId, effectiveDate, regionList, productType, stated: !!input.productType });
 
   const markdown =
     header +
@@ -346,6 +447,7 @@ export function generateSop(input: SopInput): SopResult {
     effectiveDate,
     regions,
     processType,
+    productType,
     sections,
     references,
     markdown,
@@ -353,6 +455,7 @@ export function generateSop(input: SopInput): SopResult {
       'SOP follows the canonical GxP section skeleton (Purpose, Scope, Responsibilities, Definitions, Procedure, Records, References, Revision history, Approval).',
       'Procedure steps are a starter workflow for the selected process type; the client tailors them.',
       'References are assembled per selected region(s) (FDA / EMA / PMDA) plus the process-specific regulations.',
+      'For a quality-system process, the clauses the procedure answers to come from shared/regulatory/sop-requirements.ts, by product type, each labelled with its basis (regulator text, recall, or platform convention).',
     ],
   };
 }

@@ -1,0 +1,15 @@
+Source commit: fdd507a91c6b7c7976c78eae4fa9755f87326782
+Workflow run: 37676477898
+Job: 112981179868 (Lint), completed success
+Command: npm run test:ci-scripts
+Actual remote Node guard controls: 214 passed; zero failures, cancelled,
+skipped or todo. Physical Vitest suites/cases are separate evidence.
+
+2026-10-07T19:58:13.0535075Z # tests 214
+2026-10-07T19:58:13.0535408Z # suites 0
+2026-10-07T19:58:13.0535724Z # pass 214
+2026-10-07T19:58:13.0535927Z # fail 0
+2026-10-07T19:58:13.0536115Z # cancelled 0
+2026-10-07T19:58:13.0536325Z # skipped 0
+2026-10-07T19:58:13.0536506Z # todo 0
+2026-10-07T19:58:13.0536717Z # duration_ms 3484.99853

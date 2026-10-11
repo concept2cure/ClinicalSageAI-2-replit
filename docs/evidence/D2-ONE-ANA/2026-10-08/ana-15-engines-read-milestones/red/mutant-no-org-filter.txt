@@ -1,0 +1,120 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > scores a linked project and lists its overdue milestone as a critical gap 25ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > scores a project with no linked program: no milestones, not an error 8ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > milestones feed the gap list only: the figure is the same with or without them 17ms
+ × server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > reads nothing for another organization, or for a soft-deleted program 20ms
+   → expected [ { id: 'gap-ms-0', …(5) } ] to deeply equal []
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > turns the linked program’s overdue and due-soon milestones into recommendations 9ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > a project with no linked program yields no milestone recommendations, and no failure 7ms
+ × server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > reads nothing for another organization, or for a soft-deleted program 16ms
+   → expected [ { …(13) }, { …(13) } ] to deeply equal []
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > without a twin assessment, quality, consistency and compliance are null (they were 65, 70, 80) 7ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > an empty project scores 0, not 46 from the placeholders 7ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > the overall score covers only what was measured: document completeness 8ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > the trend is unknown with no recorded scores, not stable with a delta of 0 21ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > a twin assessment supplies what it recorded; a column it left empty stays null 16ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > another organization reads no twin assessment for a program it does not own 7ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > with all four dimensions measured the overall score is the original weighted formula 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > reads nothing for another organization, or for a soft-deleted program
+AssertionError: expected [ { id: 'gap-ms-0', …(5) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "description": "Milestone \"Pre-IND meeting package\" is overdue",
++     "estimatedEffortHours": null,
++     "id": "gap-ms-0",
++     "module": "milestones",
++     "remediation": "Prioritize completion of \"Pre-IND meeting package\"",
++     "severity": "critical",
++   },
++ ]
+
+ ❯ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts:178:41
+    176|   it('reads nothing for another organization, or for a soft-deleted pr…
+    177|     const foreign = await computeReadinessScore({ organizationId: OTHE…
+    178|     expect(milestoneGaps(foreign.gaps)).toEqual([]);
+       |                                         ^
+    179|     const retired = await computeReadinessScore({ organizationId: ORG,…
+    180|     expect(milestoneGaps(retired.gaps)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > reads nothing for another organization, or for a soft-deleted program
+AssertionError: expected [ { …(13) }, { …(13) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "confidence": null,
++     "createdAt": "2026-10-08T07:39:08.373Z",
++     "evidence": [
++       {
++         "relevance": 1,
++         "sourceId": "5d366265-59fb-4016-acf0-9f3c4f34e386",
++         "sourceTitle": "Pre-IND meeting package",
++         "sourceType": "document_state",
++       },
++     ],
++     "reason": "Milestone \"Pre-IND meeting package\" is overdue (40% complete)",
++     "recommendationId": "d85316bb-6d35-4ce3-84c7-57659783217c",
++     "requiresApproval": false,
++     "severity": "critical",
++     "sourceType": "rules_based",
++     "status": "active",
++     "suggestedAction": "Prioritize completion of: Pre-IND meeting package",
++     "targetObjectId": "5d366265-59fb-4016-acf0-9f3c4f34e386",
++     "targetObjectType": "milestone",
++     "type": "readiness_blocker",
++   },
++   {
++     "confidence": null,
++     "createdAt": "2026-10-08T07:39:08.373Z",
++     "evidence": [
++       {
++         "relevance": 1,
++         "sourceId": "ce9be5a3-b769-40e6-853b-d91b4aa1b168",
++         "sourceTitle": "CMC section draft",
++         "sourceType": "document_state",
++       },
++     ],
++     "reason": "Milestone \"CMC section draft\" due within 14 days (10% complete)",
++     "recommendationId": "71d501fb-481a-41fa-864a-7af8d6720740",
++     "requiresApproval": false,
++     "severity": "high",
++     "sourceType": "rules_based",
++     "status": "active",
++     "suggestedAction": "Prioritize completion of: CMC section draft",
++     "targetObjectId": "ce9be5a3-b769-40e6-853b-d91b4aa1b168",
++     "targetObjectType": "milestone",
++     "type": "readiness_blocker",
++   },
++ ]
+
+ ❯ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts:207:87
+    205|     const foreign = await generateRecommendations({ organizationId: OT…
+    206|     const retired = await generateRecommendations({ organizationId: OR…
+    207|     expect(foreign.recommendations.filter((r) => r.targetObjectType ==…
+       |                                                                                       ^
+    208|     expect(retired.recommendations.filter((r) => r.targetObjectType ==…
+    209|     expect(warn.mock.calls.filter(([msg]) => String(msg).includes('Gen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  07:39:00
+   Duration  7.84s (transform 1.77s, setup 150ms, import 2.83s, tests 4.28s, environment 0ms)
+

@@ -32,6 +32,7 @@ import {
 } from '@shared/rule-pack-provenance';
 
 import { useLiveData } from './dataConnect';
+import { filingSectionKey } from '@shared/regulatory/filing-section-key';
 
 /** One row of `GET /api/c2c/documents/:id/outline`. */
 export interface FilingOutlineRow {
@@ -221,13 +222,21 @@ export function useFilingOutline(projectId: string | null): FilingOutlineState {
  * `code` is nullable TEXT. A null must never match anything — collapsing null
  * onto a real section key would open the wrong section's text under a node,
  * which is the one failure mode worse than showing nothing.
+ *
+ * QA 2026-10-08, walk 2 (j4): given the outline's keys, a node the outline
+ * does not subdivide also opens the document's first section that belongs to
+ * it — 2.5 opens 2.5.1 of the Clinical Overview — by the same rule the server
+ * files that section's text into the node (shared/regulatory/filing-section-key.ts).
  */
 export function findSectionForNode<T extends { code?: string | null }>(
   sections: readonly T[],
   sectionKey: string,
+  outlineKeys?: ReadonlyArray<string>,
 ): T | null {
   if (!sectionKey) return null;
-  return sections.find((s) => typeof s.code === 'string' && s.code === sectionKey) ?? null;
+  const own = sections.find((s) => typeof s.code === 'string' && s.code === sectionKey);
+  if (own || !outlineKeys) return own ?? null;
+  return sections.find((s) => filingSectionKey(outlineKeys, s.code) === sectionKey) ?? null;
 }
 
 /**

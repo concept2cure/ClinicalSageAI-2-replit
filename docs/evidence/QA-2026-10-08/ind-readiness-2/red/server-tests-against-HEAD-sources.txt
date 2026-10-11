@@ -1,0 +1,156 @@
+ × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist: the forms heading counts only the forms an IND requires > an approved Form 356h placed at 1.1 does not satisfy m1.1, and is not listed as the forms section
+   → expected [ …(50) ] to deep equally contain ObjectContaining{…}
+ × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist: the forms heading counts only the forms an IND requires > m1.1 is complete when the IND's own forms are, whatever else sits at the heading
+   → expected true to be false // Object.is equality
+ × server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with its project record gets a governed artifact registered against that record
+   → {"governed":false,"audited":true,"artifactId":null,"formId":"FDA_1571","projectId":null,"programId":"b48b8e50-3906-4a19-a097-6cd5d56fc117","ready":false,"missingRequired":["sponsor_address","ind_type"],"sponsorMustComplete":["ind_type","phase_of_study"],"contentHash":"6ac86cdca581ece9b7b38c09ebd07c9fe58a737db35285b1d4e82501be4c2f86","artifact_registry":"unplaced — this program has no anchored project row, and the governed artifact registry (concept2cure_artifacts) requires one; the built field map is audit-logged with its content hash"}: expected 200 to be 201 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report accepts an onset stated as "unknown" and prints it; a blank onset is refused
+   → {"error":{"code":"VALIDATION","message":"The IND safety report cannot be assembled until these are stated: onset date. Nothing is assumed for a field left blank."}}: expected 400 to be 200 // Object.is equality
+ × server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > with expectedness not recorded the verdict is NOT_DETERMINED, and file / draft refuse with that name (422), never NOT_REPORTABLE
+   → expected 'NOT_REPORTABLE' to be 'NOT_DETERMINED' // Object.is equality
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /sequence/:id/dispatch-gate/snapshot → 201 then GET /snapshots → 200
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST /submission/:id/cross-references → 201
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/cross-references/:id/file-loa → 201 files the m1.4.1 leaf and authorizes it
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/file-loa → 400 without a 4-digit sequenceNumber
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > POST /submission/:id/safety-reports → 201 drafts a tracked report
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > POST /submission/:id/annual-reports → 201 drafts a tracked report with a due date
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > POST /submission/:id/amendments → 201 drafts a tracked amendment
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > with NO gateway configured, transmit → 503 (NOT transmitted) and the row stays prepared
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a simulated receipt handed back by the transport is never recorded as transmitted (503)
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a transport failure → 502 (NOT transmitted) and the row stays prepared
+stderr | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a transport failure → 502 (NOT transmitted) and the row stays prepared
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > prepare → transmit (real gateway receipt) → acknowledge lifecycle (ready case)
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > prepare → transmit (real gateway receipt) → acknowledge lifecycle (ready case)
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > rejects transmit when the ICSR is not transmit-ready (422 with the gaps); transport never called
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > an AR acknowledgment marks a TRANSMITTED report rejected with errors
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > an AR acknowledgment marks a TRANSMITTED report rejected with errors
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses to transmit a report that is no longer prepared (409): no second send of the same message
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses to transmit a report that is no longer prepared (409): no second send of the same message
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a study report with no study registration number is prepared but not transmit-ready
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement for a report that was never transmitted (409), and the row is unchanged
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged"
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged"
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement that names a different message number (422)
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement that names a different message number (422)
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > Validated is reached only through a validation with no errors (finding 2) > an original IND missing a section the regulation requires is not Validated, and the refusal names it
+   → expected undefined to be 'VALIDATION_FAILED' // Object.is equality
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22) > Validated records the sequence and counts the document as not yet approved
+   → Sequence 0000 was not marked Validated: its validation found 1 error. 2.5: Leaf "Clinical Overview" (2.5) points at coauthor_documents 25, which is draft. Only approved documents are transmitted, so freeze, dispatch and transmit refuse this sequence until the document is approved.
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22) > the freeze and dispatch prechecks refuse it by name, before any signature
+   → Sequence 0000 was not marked Validated: its validation found 1 error. 2.5: Leaf "Clinical Overview" (2.5) points at coauthor_documents 33, which is draft. Only approved documents are transmitted, so freeze, dispatch and transmit refuse this sequence until the document is approved.
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22) > transmit refuses a dispatched sequence that still carries it
+   → expected 'Dispatch gate blocks transmit: 1 open…' to match /^Dispatch gate blocks transmit: .*1 l…/
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a stored Validated stage is checked against the current validation (finding 20) > a sequence stored as Validated with no verdict, whose validation finds errors, does not hold — and says why
+   → expected undefined to match object { holds: false, …(2) }
+ × server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a stored Validated stage is checked against the current validation (finding 20) > a sequence Validated through the validation holds
+   → expected undefined to deeply equal { holds: true, verdictRecorded: true }
+ × server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > a Vault version with no approved lifecycle record is a DOCUMENT_NOT_APPROVED warning beside its section, and blocks every release verdict
+   → expected 'error' to be 'warning' // Object.is equality
+ × server/services/ectd/__tests__/dispatch-readiness.test.ts > required sections, decided per sequence > a section the regulation requires in this sequence is an ERROR when no leaf carries it, citing the record
+   → expected [] to deeply equal [ '1.1', '1.14.4.1', '1.20' ]
+ × server/services/ectd/__tests__/dispatch-readiness.test.ts > required sections, decided per sequence > a regulation-required section is satisfied by a sub-section, and is not reported again from the profile list
+   → expected [ 'warning 1.20', 'warning 1.3' ] to deeply equal [ 'error 1.20', 'warning 1.3' ]
+ × server/services/ectd/__tests__/dispatch-readiness.test.ts > P-22: approval gates the release, not the technical validation > a resolved leaf whose document is not approved is a DOCUMENT_NOT_APPROVED warning that blocks the release, naming the leaf and its section
+   → expected 'error' to be 'warning' // Object.is equality
+ × server/services/ectd/__tests__/dispatch-readiness.test.ts > P-22: approval gates the release, not the technical validation > only a not-yet-approved document is a release blocker; ordinary warnings are not
+   → expected undefined to be +0 // Object.is equality
+ × server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20: with expectedness not recorded there is no verdict > expectedness not recorded: the verdict is NOT_DETERMINED — never NOT_REPORTABLE — with no clock and no inferred expectedness
+   → expected 'NOT_REPORTABLE' to be 'NOT_DETERMINED' // Object.is equality
+ × server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20: with expectedness not recorded there is no verdict > expectedness not recorded is NOT_DETERMINED whatever else was stated — never NOT_REPORTABLE (P-20)
+   → {"causality":"unrelated"}: expected 'NOT_REPORTABLE' to be 'NOT_DETERMINED' // Object.is equality
+ × server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20: with expectedness not recorded there is no verdict > a not-determined verdict produces no report to file and says so in the document
+   → expected 'IND Safety Report (not individually r…' to contain 'IND Safety Report (not determined: ex…'
+ × server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an onset date stated explicitly as unknown is accepted and printed as unknown
+   → expected [ 'onset date' ] to deeply equal []
+ × server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > a blank onset date is refused and the refusal says it may be stated as unknown
+   → expected 'The IND safety report cannot be assem…' to contain 'onset date (a date, or stated as unkn…'
+ × server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an onset stated both as a date and as unknown is refused, not resolved for the person
+   → expected undefined to be 'VALIDATION' // Object.is equality
+ × server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > clears when every leaf's document is approved
+   → evaluateReleaseApprovalGate is not a function
+ × server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > blocks freeze, dispatch and transmit while any document is not yet approved, and says it is not an error
+   → evaluateReleaseApprovalGate is not a function
+ × server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > blocks on a count it could not determine — unknown is not zero
+   → evaluateReleaseApprovalGate is not a function
+ × server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original FDA IND is held to the record's IND requirements, as errors
+   → expected undefined to deeply equal ArrayContaining{…}
+ × server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original NDA is held to the marketing requirements, not the IND's
+   → expected [] to deeply equal ArrayContaining{…}
+ × server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is not held to the application's requirements (no "1.20 missing" on an amendment)
+   → expected [ Array(9) ] to deeply equal []
+ × server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > is null for any stage but Validated
+   → validatedStageOf is not a function
+ × server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > holds when the validation finds no error, and says whether a verdict was recorded
+   → validatedStageOf is not a function
+ × server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > does not hold when the validation now finds errors, and says what to do
+   → validatedStageOf is not a function
+ × server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > an undetermined count does not hold — unknown is not zero
+   → validatedStageOf is not a function
+ × server/services/ind-lifecycle/__tests__/ind-amendment-placement.test.ts > planIndAmendment — a category or change kind nobody stated is refused > names an unstated category and change kind, and plans nothing
+   → expected '' to match /^IND_AMENDMENT_UNSTATED: /
+ × server/services/ind-lifecycle/__tests__/ind-amendment-placement.test.ts > planIndAmendment — a category or change kind nobody stated is refused > refuses a change kind outside the vocabulary rather than planning a leaf with no lifecycle operation
+   → expected '' to match /^IND_AMENDMENT_UNSTATED: /
+⎯⎯⎯⎯⎯⎯ Failed Tests 34 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with its project record gets a governed artifact registered against that record
+AssertionError: {"governed":false,"audited":true,"artifactId":null,"formId":"FDA_1571","projectId":null,"programId":"b48b8e50-3906-4a19-a097-6cd5d56fc117","ready":false,"missingRequired":["sponsor_address","ind_type"],"sponsorMustComplete":["ind_type","phase_of_study"],"contentHash":"6ac86cdca581ece9b7b38c09ebd07c9fe58a737db35285b1d4e82501be4c2f86","artifact_registry":"unplaced — this program has no anchored project row, and the governed artifact registry (concept2cure_artifacts) requires one; the built field map is audit-logged with its content hash"}: expected 200 to be 201 // Object.is equality
+ FAIL  server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report accepts an onset stated as "unknown" and prints it; a blank onset is refused
+AssertionError: {"error":{"code":"VALIDATION","message":"The IND safety report cannot be assembled until these are stated: onset date. Nothing is assumed for a field left blank."}}: expected 400 to be 200 // Object.is equality
+ FAIL  server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > with expectedness not recorded the verdict is NOT_DETERMINED, and file / draft refuse with that name (422), never NOT_REPORTABLE
+AssertionError: expected 'NOT_REPORTABLE' to be 'NOT_DETERMINED' // Object.is equality
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original FDA IND is held to the record's IND requirements, as errors
+AssertionError: expected undefined to deeply equal ArrayContaining{…}
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original NDA is held to the marketing requirements, not the IND's
+AssertionError: expected [] to deeply equal ArrayContaining{…}
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is not held to the application's requirements (no "1.20 missing" on an amendment)
+AssertionError: expected [ Array(9) ] to deeply equal []
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > is null for any stage but Validated
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > holds when the validation finds no error, and says whether a verdict was recorded
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > does not hold when the validation now finds errors, and says what to do
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > an undetermined count does not hold — unknown is not zero
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > assessSequenceDispatchReadiness — vault-backed leaves resolve > a Vault version with no approved lifecycle record is a DOCUMENT_NOT_APPROVED warning beside its section, and blocks every release verdict
+AssertionError: expected 'error' to be 'warning' // Object.is equality
+ FAIL  server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > clears when every leaf's document is approved
+ FAIL  server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > blocks freeze, dispatch and transmit while any document is not yet approved, and says it is not an error
+ FAIL  server/services/ectd/__tests__/dispatch-gate.test.ts > evaluateReleaseApprovalGate > blocks on a count it could not determine — unknown is not zero
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.test.ts > required sections, decided per sequence > a section the regulation requires in this sequence is an ERROR when no leaf carries it, citing the record
+AssertionError: expected [] to deeply equal [ '1.1', '1.14.4.1', '1.20' ]
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.test.ts > required sections, decided per sequence > a regulation-required section is satisfied by a sub-section, and is not reported again from the profile list
+AssertionError: expected [ 'warning 1.20', 'warning 1.3' ] to deeply equal [ 'error 1.20', 'warning 1.3' ]
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.test.ts > P-22: approval gates the release, not the technical validation > a resolved leaf whose document is not approved is a DOCUMENT_NOT_APPROVED warning that blocks the release, naming the leaf and its section
+AssertionError: expected 'error' to be 'warning' // Object.is equality
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.test.ts > P-22: approval gates the release, not the technical validation > only a not-yet-approved document is a release blocker; ordinary warnings are not
+AssertionError: expected undefined to be +0 // Object.is equality
+ FAIL  server/services/ind-lifecycle/__tests__/ind-amendment-placement.test.ts > planIndAmendment — a category or change kind nobody stated is refused > names an unstated category and change kind, and plans nothing
+AssertionError: expected '' to match /^IND_AMENDMENT_UNSTATED: /
+ FAIL  server/services/ind-lifecycle/__tests__/ind-amendment-placement.test.ts > planIndAmendment — a category or change kind nobody stated is refused > refuses a change kind outside the vocabulary rather than planning a leaf with no lifecycle operation
+AssertionError: expected '' to match /^IND_AMENDMENT_UNSTATED: /
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist: the forms heading counts only the forms an IND requires > an approved Form 356h placed at 1.1 does not satisfy m1.1, and is not listed as the forms section
+AssertionError: expected [ …(50) ] to deep equally contain ObjectContaining{…}
+ FAIL  server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > IND checklist: the forms heading counts only the forms an IND requires > m1.1 is complete when the IND's own forms are, whatever else sits at the heading
+AssertionError: expected true to be false // Object.is equality
+ FAIL  server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20: with expectedness not recorded there is no verdict > expectedness not recorded: the verdict is NOT_DETERMINED — never NOT_REPORTABLE — with no clock and no inferred expectedness
+AssertionError: expected 'NOT_REPORTABLE' to be 'NOT_DETERMINED' // Object.is equality
+ FAIL  server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20: with expectedness not recorded there is no verdict > expectedness not recorded is NOT_DETERMINED whatever else was stated — never NOT_REPORTABLE (P-20)
+AssertionError: {"causality":"unrelated"}: expected 'NOT_REPORTABLE' to be 'NOT_DETERMINED' // Object.is equality
+    179|       const c = classifyIndSafetyReport(makeEvent({ ...over, expectedn…
+ FAIL  server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20: with expectedness not recorded there is no verdict > a not-determined verdict produces no report to file and says so in the document
+AssertionError: expected 'IND Safety Report (not individually r…' to contain 'IND Safety Report (not determined: ex…'
+Expected: "IND Safety Report (not determined: expectedness not assessed)."
+ FAIL  server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an onset date stated explicitly as unknown is accepted and printed as unknown
+AssertionError: expected [ 'onset date' ] to deeply equal []
+ FAIL  server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > a blank onset date is refused and the refusal says it may be stated as unknown
+AssertionError: expected 'The IND safety report cannot be assem…' to contain 'onset date (a date, or stated as unkn…'
+ FAIL  server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an onset stated both as a date and as unknown is refused, not resolved for the person
+AssertionError: expected undefined to be 'VALIDATION' // Object.is equality
+ FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > Validated is reached only through a validation with no errors (finding 2) > an original IND missing a section the regulation requires is not Validated, and the refusal names it
+AssertionError: expected undefined to be 'VALIDATION_FAILED' // Object.is equality
+ FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22) > Validated records the sequence and counts the document as not yet approved
+ FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22) > the freeze and dispatch prechecks refuse it by name, before any signature
+ FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22) > transmit refuses a dispatched sequence that still carries it
+AssertionError: expected 'Dispatch gate blocks transmit: 1 open…' to match /^Dispatch gate blocks transmit: .*1 l…/
+ FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a stored Validated stage is checked against the current validation (finding 20) > a sequence stored as Validated with no verdict, whose validation finds errors, does not hold — and says why
+AssertionError: expected undefined to match object { holds: false, …(2) }
+ FAIL  server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts > a stored Validated stage is checked against the current validation (finding 20) > a sequence Validated through the validation holds
+AssertionError: expected undefined to deeply equal { holds: true, verdictRecorded: true }
+ Test Files  10 failed | 1 passed (11)
+      Tests  34 failed | 283 passed (317)

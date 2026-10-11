@@ -109,7 +109,15 @@ export interface QmsDocumentRow {
   [key: string]: unknown;
 }
 
-const APPROVABLE_STATES: ReadonlySet<string> = new Set(['draft', 'in_review']);
+/*
+ * Only a document under review is approved. Until 2026-10-08 this set held
+ * 'draft' as well, so one signature made a draft that no one had been asked to
+ * review effective, and the register's Approve dialog said so ("v1.2 becomes
+ * effective when you sign", QA walk 2026-10-08, J8). A draft is sent for review
+ * first — PATCH /api/mdx/qms/documents/:id with status 'in_review', the
+ * register's "Send for review" — and the approval then signs what was reviewed.
+ */
+const APPROVABLE_STATES: ReadonlySet<string> = new Set(['in_review']);
 
 /**
  * The content digest a QMS approval signature is bound to (§11.70). Pure and
@@ -230,7 +238,9 @@ async function lockApprovableDocument(
   if (!APPROVABLE_STATES.has(row.status)) {
     throw new QmsApprovalRefusedError(
       'INVALID_STATE',
-      `Document is ${row.status}; only a draft or in_review document can be approved.`,
+      row.status === 'draft'
+        ? 'This document is a draft. Send it for review first; only a document under review can be approved. Nothing was signed.'
+        : `Document is ${row.status}; only a document under review can be approved. Nothing was signed.`,
     );
   }
   // §11.10(d) two-person rule, the same rule the RBM approvals in this family
@@ -274,7 +284,7 @@ async function applyApproval(
             ),
             updated_at = NOW()
       WHERE id = $1 AND organization_id = $2
-        AND status IN ('draft','in_review')
+        AND status = 'in_review'
         AND deleted_at IS NULL
       RETURNING *`,
     [

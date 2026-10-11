@@ -1,0 +1,9 @@
+ × server/routes/__tests__/task-management-source-project.test.ts > POST /tasks — a task raised on an authoring document is on that document’s project > records the project the document’s program resolves to, read on the request’s RLS client 45ms
+ ✓ server/routes/__tests__/task-management-source-project.test.ts > POST /tasks — a task raised on an authoring document is on that document’s project > a project the caller named is kept, and nothing is looked up 7ms
+ ✓ server/routes/__tests__/task-management-source-project.test.ts > POST /tasks — a task raised on an authoring document is on that document’s project > a document with no project record leaves the task without one 4ms
+ × server/routes/__tests__/task-management-source-project.test.ts > POST /tasks — a task raised on an authoring document is on that document’s project > when the project cannot be read, nothing is created and the refusal says so 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected "vi.fn()" to be called with arguments: [ …(2) ]
+AssertionError: expected 200 to be 503 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)

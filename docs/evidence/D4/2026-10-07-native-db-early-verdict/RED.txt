@@ -1,0 +1,140 @@
+✖ native verdict and its retained report precede the broad suite (2.222421ms)
+✔ both suites run when shared preparation and native checks pass (1.276236ms)
+✖ Provision a deploy-shaped database for the real-database tests fails the job while the independent broad suite still runs (0.675749ms)
+✖ Run real-database tests (unmocked pg, RLS_ENFORCE=on) fails the job while the independent broad suite still runs (0.276921ms)
+✖ Upload real-database test results fails the job while the independent broad suite still runs (0.42711ms)
+✔ shared preparation failure at actions/checkout@11d5960a326750d5838078e36cf38b85af677262 blocks both suites (0.360898ms)
+✔ shared preparation failure at Setup Node.js blocks both suites (0.229566ms)
+✔ shared preparation failure at Install dependencies blocks both suites (0.162855ms)
+✔ shared preparation failure at Install Postgres client blocks both suites (0.142446ms)
+✔ shared preparation failure at Apply GCC migrations blocks both suites (0.171536ms)
+✔ shared preparation failure at Smoke — apply RLS rollout migrations (0019/0020/0021) blocks both suites (0.173227ms)
+✖ a broad failure retains the earlier native verdict and fails the job (0.556856ms)
+✖ cancellation and missing or failed shared preparation cannot start the broad suite (0.620384ms)
+✔ native and broad failures remain blocking for build and release evidence (1.286997ms)
+✔ native and broad suites retain distinct databases and production RLS (0.45569ms)
+✔ both artifacts upload after failures with the existing pinned action and paths (0.261318ms)
+✔ Run real-database tests (unmocked pg, RLS_ENFORCE=on) propagates the actual shell failure status (15.621564ms)
+✔ Run integration tests propagates the actual shell failure status (15.002767ms)
+✔ a failed fresh install cannot execute the deploy migration (10.322916ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 13
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 416.034035
+
+✖ failing tests:
+
+test at scripts/ci/__tests__/native-db-early-verdict.test.mjs:21:1
+✖ native verdict and its retained report precede the broad suite (2.222421ms)
+  AssertionError [ERR_ASSERTION]: false == true
+      at TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/native-db-early-verdict.test.mjs:25:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/ci/__tests__/native-db-early-verdict.test.mjs:38:3
+✖ Provision a deploy-shaped database for the real-database tests fails the job while the independent broad suite still runs (0.675749ms)
+  AssertionError [ERR_ASSERTION]: false == true
+      at TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/native-db-early-verdict.test.mjs:42:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/ci/__tests__/native-db-early-verdict.test.mjs:38:3
+✖ Run real-database tests (unmocked pg, RLS_ENFORCE=on) fails the job while the independent broad suite still runs (0.276921ms)
+  AssertionError [ERR_ASSERTION]: false == true
+      at TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/native-db-early-verdict.test.mjs:42:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/ci/__tests__/native-db-early-verdict.test.mjs:38:3
+✖ Upload real-database test results fails the job while the independent broad suite still runs (0.42711ms)
+  AssertionError [ERR_ASSERTION]: false == true
+      at TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/native-db-early-verdict.test.mjs:42:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/ci/__tests__/native-db-early-verdict.test.mjs:59:1
+✖ a broad failure retains the earlier native verdict and fails the job (0.556856ms)
+  AssertionError [ERR_ASSERTION]: false == true
+      at TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/native-db-early-verdict.test.mjs:62:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/ci/__tests__/native-db-early-verdict.test.mjs:67:1
+✖ cancellation and missing or failed shared preparation cannot start the broad suite (0.620384ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'integration_prerequisites'
+  
+      at TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/native-db-early-verdict.test.mjs:68:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'integration_prerequisites',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

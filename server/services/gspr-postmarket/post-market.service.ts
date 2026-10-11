@@ -397,7 +397,7 @@ export async function createDocument(
  * .set(), so either could move a document into another org, re-parent it, or
  * mark it approved and locked without approving it (ledger L192).
  */
-const DOCUMENT_EDITABLE = [
+export const DOCUMENT_EDITABLE = [
   'documentType',
   'code',
   'title',
@@ -411,6 +411,24 @@ const DOCUMENT_EDITABLE = [
   'relatedCerReportId',
   'relatedPredicateKNumber',
   'metadata',
+] as const satisfies readonly (keyof InsertPostMarketDocument & string)[];
+
+/**
+ * The columns a request may never write, on create or edit: approval and its
+ * signature (approveDocument), the version lineage (supersedeDocument) and who
+ * created or last changed the row (the session). A create request that names
+ * one is refused rather than having it dropped, so a caller never believes it
+ * created an approved, locked or signed document.
+ */
+export const DOCUMENT_GOVERNED = [
+  'status',
+  'locked',
+  'approvedBy',
+  'approvedAt',
+  'signatureId',
+  'version',
+  'createdBy',
+  'updatedBy',
 ] as const satisfies readonly (keyof InsertPostMarketDocument & string)[];
 
 export async function updateDocument(

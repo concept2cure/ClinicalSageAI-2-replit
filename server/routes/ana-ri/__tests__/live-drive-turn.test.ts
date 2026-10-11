@@ -581,14 +581,14 @@ describe('POST /stream/:runId/control — screen_report', () => {
 
 describe('history — the window opens on a question after an unanswered turn', () => {
   // q1's turn failed or was stopped, so post-processing saved no answer. The
-  // thread ends with this turn's own question, saved before the model runs.
+  // snapshot is read before this turn's question is saved.
   const turnOf = (n: number) => [{ role: 'user', content: `q${n}` }, { role: 'assistant', content: `a${n}` }];
   const saved = [...turnOf(0), { role: 'user', content: 'q1, never answered' }, ...range(2, 10).flatMap(turnOf)];
   const sent = () =>
     h.state.gatewayCalls[0].messages.filter((m: any) => m.role !== 'system').map((m: any) => `${m.role}:${m.content}`);
 
   it.each([
-    ['saved in the thread', () => ((h.state.history = [...saved, { role: 'user', content: 'go' }]), {})],
+    ['saved in the thread', () => ((h.state.history = [...saved]), {})],
     ['sent by the client (no saved thread yet)', () => ({ conversation_history: saved })],
   ])('history %s: the answer at the far edge is dropped, not opened on', async (_source, arrange) => {
     await turn(arrange());
@@ -599,7 +599,7 @@ describe('history — the window opens on a question after an unanswered turn', 
 
   it('a thread whose pairs are intact is passed through unchanged', async () => {
     const intact = range(0, 11).flatMap(turnOf);
-    h.state.history = [...intact, { role: 'user', content: 'go' }];
+    h.state.history = [...intact];
     await turn({});
     expect(sent().slice(0, 20)).toEqual(intact.slice(-20).map(m => `${m.role}:${m.content}`));
   });

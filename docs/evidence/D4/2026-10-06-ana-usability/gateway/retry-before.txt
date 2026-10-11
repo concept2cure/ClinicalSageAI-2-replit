@@ -1,0 +1,105 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+{
+  "timestamp": "2026-10-06T00:42:33.923Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T00:42:33.924Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+{
+  "timestamp": "2026-10-06T00:42:33.925Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error
+{
+  "timestamp": "2026-10-06T00:42:34.036Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error
+{
+  "timestamp": "2026-10-06T00:42:35.181Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: upstream 500",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream
+{
+  "timestamp": "2026-10-06T00:42:34.054Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream
+{
+  "timestamp": "2026-10-06T00:42:35.305Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: anthropic/claude-sonnet-5 went silent for 300s before it produced any text or tool call, so the stream was stopped.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > still retries a transient non-streaming fallback once and returns its recovery
+{
+  "timestamp": "2026-10-06T00:42:34.059Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+ × server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error 19ms
+   → a streaming fallback was replayed instead of moving on after one attempt: expected [ [ { …(14) }, …(3) ], …(1) ] to have a length of 1 but got 2
+ × server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream 5ms
+   → a streaming fallback was replayed instead of moving on after one attempt: expected [ [ { …(14) }, …(3) ], …(1) ] to have a length of 1 but got 2
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > still retries a transient non-streaming fallback once and returns its recovery 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error
+ FAIL  server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream
+AssertionError: a streaming fallback was replayed instead of moving on after one attempt: expected [ [ { …(14) }, …(3) ], …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts:78:85
+     76|       expect(await outcome).toBeInstanceOf(GatewayAllProvidersFailedEr…
+     77|       expect(dispatch.mock.calls.filter(([model]) => model.id === fall…
+     78|         'a streaming fallback was replayed instead of moving on after …
+       |                                                                                     ^
+     79|       expect(dispatch).toHaveBeenCalledTimes(2);
+     80|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  20:42:32
+   Duration  1.71s (transform 766ms, setup 61ms, import 1.41s, tests 28ms, environment 0ms)
+

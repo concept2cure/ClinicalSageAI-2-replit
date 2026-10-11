@@ -112,8 +112,36 @@ vi.mock('../../server/db.js', () => ({
     (h.pool as { query: (t: string, p?: unknown[]) => Promise<unknown> }).query(text, params),
 }));
 
+/** A response refused with this status and error code. */
+function refusedWith(r: { status: number; body?: { error?: { code?: string } } }, status: number, code: string): boolean {
+  return r.status === status && r.body?.error?.code === code;
+}
+
 const ORG = 1;
 const OTHER_ORG = 2;
+/**
+ * The Module 1 an original NDA must carry (the regional Module 1 record's
+ * requirement for the kind). Since QA 2026-10-08 (j7) a missing one is a
+ * validation error, so the journey's sequence carries them, each an approved
+ * document with content (ids 110…).
+ */
+async function seedNdaModule1Documents(pool: { query: (text: string, params?: unknown[]) => Promise<unknown> }): Promise<void> {
+  for (const [i, m1] of NDA_MODULE1.entries()) {
+    await pool.query(
+      `INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status)
+       VALUES ($1, $2, $3, $4, $5, 'approved')`,
+      [110 + i, ORG, m1.title, `<h1>${m1.title}</h1><p>Journey Module 1 content.</p>`, m1.sectionCode],
+    );
+  }
+}
+const NDA_MODULE1: ReadonlyArray<{ sectionCode: string; title: string }> = [
+  { sectionCode: '1.1', title: 'Form FDA 356h' },
+  { sectionCode: '1.2', title: 'Cover Letter' },
+  { sectionCode: '1.3.3', title: 'Debarment Certification' },
+  { sectionCode: '1.3.4', title: 'Financial Certification and Disclosure' },
+  { sectionCode: '1.12.14', title: 'Environmental Analysis' },
+  { sectionCode: '1.14.1', title: 'Draft Labeling' },
+];
 /** The author/creator. */
 const USER = 1;
 /** A second authorized user in the same org — the signer. */
@@ -297,6 +325,7 @@ beforeAll(async () => {
        (300,$2,'Other-Tenant Secret','<p>must never be placed</p>','2.5','draft')`,
     [ORG, OTHER_ORG],
   );
+  await seedNdaModule1Documents(jdb.pool);
 
   const { default: c2cProjectsRouter } = await import('../../server/routes/c2c/projects');
   const { default: c2cActionsRouter } = await import('../../server/routes/c2c/actions');
@@ -586,6 +615,14 @@ describe('golden journey — drug NDA / eCTD', () => {
         request(app).get(`/api/submissions/sequences/${sequenceId}/leaves`),
       );
       expect(listed.body).toHaveLength(1);
+      // The Module 1 the NDA requires (see NDA_MODULE1), through the same API.
+      for (const [i, m1] of NDA_MODULE1.entries()) {
+        const placed = await asPrincipal(ORG, USER)(
+          request(app).put(`/api/submissions/sequences/${sequenceId}/leaves`),
+        ).send({ reason: 'Placed by the golden journey for this sequence', sectionCode: m1.sectionCode, title: m1.title,
+          lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 110 + i });
+        expect(placed.status, JSON.stringify(placed.body)).toBe(200);
+      }
       return { leafId: res.body.id, sectionCode: res.body.section_code ?? res.body.sectionCode };
     });
 
@@ -603,7 +640,7 @@ describe('golden journey — drug NDA / eCTD', () => {
         request(app).get(`/api/submissions/sequences/${sequenceId}/leaves`),
       );
       return {
-        blocked: res.status === 403 && listed.body.length === 1,
+        blocked: res.status === 403 && listed.body.length === 1 + NDA_MODULE1.length,
         status: res.status,
         code: res.body?.error?.code,
         leavesAfter: listed.body.length,
@@ -683,7 +720,7 @@ describe('golden journey — drug NDA / eCTD', () => {
       );
       expect(res.status, JSON.stringify(res.body)).toBe(200);
       expect(res.body.validationErrors).toBe(0);
-      expect(res.body.leafCount).toBe(1);
+      expect(res.body.leafCount).toBe(1 + NDA_MODULE1.length);
       /* This endpoint reports the DISPATCH verdict — the transmit re-check —
          and this journey never builds and signs a release package, so the
          §11.70 release-signature control blocks it. That is the correct answer
@@ -712,10 +749,13 @@ describe('golden journey — drug NDA / eCTD', () => {
       // from anything this assertion supplies.
       expect(res.body.shadowReviewRunCount).toBeGreaterThan(0);
       expect(res.body.shadowReviewMissing).toBe(false);
-      // Module-1 completeness is a WARNING, never a fabricated hard error.
-      const warnings = (res.body.readiness.findings as Array<{ severity: string; code: string }>)
-        .filter((f) => f.severity === 'warning');
-      expect(warnings.some((w) => w.code === 'MISSING_REQUIRED_SECTION')).toBe(true);
+      // Module-1 completeness is decided by the regulation (QA 2026-10-08, j7):
+      // a section the record requires of an original NDA is an error when
+      // missing, so this sequence clears validation only because it carries
+      // all of them — no MISSING_REQUIRED_SECTION of either severity remains.
+      const findings = res.body.readiness.findings as Array<{ severity: string; code: string }>;
+      const warnings = findings.filter((f) => f.severity === 'warning');
+      expect(findings.some((f) => f.code === 'MISSING_REQUIRED_SECTION')).toBe(false);
       return {
         validationErrors: res.body.validationErrors,
         gateCleared: res.body.gate.cleared,
@@ -959,6 +999,16 @@ describe('golden journey — drug NDA / eCTD', () => {
         request(app).put(`/api/submissions/sequences/${sequenceId}/leaves`),
       ).send({ reason: 'Placed by the golden journey for this sequence', sectionCode: '2.7', title: 'Clinical Summary', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 100 });
       expect(placed.status, JSON.stringify(placed.body)).toBe(200);
+      // Since 0e50993c5 (QA 2026-10-08, j6) a leaf change returns a Validated
+      // sequence to Assembling. Validate it again, so the freeze below reaches the
+      // signature check and is refused for the reason this step exists to prove:
+      // the signature was applied to a different leaf manifest.
+      const back = await jdb.pool.query(`SELECT status FROM ectd_sequences WHERE id = $1`, [sequenceId]);
+      expect((back.rows[0] as { status: string }).status).toBe('assembling');
+      const revalidated = await asPrincipal(ORG, USER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/transition`),
+      ).send({ status: 'validated' });
+      expect(revalidated.status, JSON.stringify(revalidated.body)).toBe(200);
       const res = await asPrincipal(ORG, SIGNER)(
         request(app).post(`/api/submissions/sequences/${sequenceId}/freeze`),
       ).send({ signatureActionId });
@@ -1065,6 +1115,12 @@ describe('golden journey — drug NDA / eCTD', () => {
       const v = await asPrincipal(ORG, USER)(
         request(app).post(`/api/submissions/sequences/${emptySequenceId}/transition`),
       ).send({ status: 'validated' });
+      // Since 0e50993c5 (QA 2026-10-08, j6) Validated runs the validation, so the
+      // empty sequence is refused there first (422 VALIDATION_FAILED). A row can
+      // still READ validated without that run: rows stored before the rule (QA's
+      // sequence 0000 is one). The freeze must refuse such a row at the gate
+      // whatever signature it carries, so the stored stage is set as those rows hold it.
+      await jdb.pool.query(`UPDATE ectd_sequences SET status = 'validated' WHERE id = $1`, [emptySequenceId]);
       const sign = await signTarget(
         `ectd-sequence:${emptySequenceId}`,
         SIGNER,
@@ -1079,9 +1135,8 @@ describe('golden journey — drug NDA / eCTD', () => {
       return {
         blocked:
           a.status === 200 &&
-          v.status === 200 &&
-          res.status === 422 &&
-          res.body?.error?.code === 'DISPATCH_BLOCKED' &&
+          refusedWith(v, 422, 'VALIDATION_FAILED') &&
+          refusedWith(res, 422, 'DISPATCH_BLOCKED') &&
           (seq.rows[0] as { status: string } | undefined)?.status === 'validated',
         status: res.status,
         code: res.body?.error?.code,

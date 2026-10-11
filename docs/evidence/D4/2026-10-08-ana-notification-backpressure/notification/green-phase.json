@@ -1,0 +1,53 @@
+{
+  "checks": [
+    {
+      "label": "green",
+      "command": [
+        "/root/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "server/services/ana/__tests__/run-control-poll-backpressure.test.ts",
+        "--reporter=verbose"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.868
+    },
+    {
+      "label": "related-green",
+      "command": [
+        "/root/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.config.ts",
+        "server/services/ana/__tests__/run-control-poll-backpressure.test.ts",
+        "server/services/ana/__tests__/run-control.test.ts",
+        "server/services/ana/__tests__/run-control-tenant-scope.test.ts",
+        "--reporter=verbose"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 1.369
+    },
+    {
+      "label": "eslint",
+      "command": [
+        "/root/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+        "node_modules/eslint/bin/eslint.js",
+        "--no-cache",
+        "server/services/ana/__tests__/run-control-poll-backpressure.test.ts",
+        "--max-warnings",
+        "0"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 1.09
+    }
+  ],
+  "files": {
+    "server/services/ana/run-control.ts": "2567b41d4b096daf53b30b9e7c6fb1860bee7376",
+    "server/services/ana/__tests__/run-control-poll-backpressure.test.ts": "2a1b900ed662ecc6d7702e5cae05b6bca744166f"
+  },
+  "head": "e6183e52ee8d8d47b01eb2325f9790097ac16a1a",
+  "redToGreenTestChange": "Expanded existing burst case to assert a burst while successor pending; separated describe callbacks to honor existing max-lines-per-function rule, no suppression."
+}

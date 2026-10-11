@@ -9,6 +9,7 @@ import {
   DEVICE_REGIONS,
   type DeviceRegion,
 } from '../device-classification';
+import { IVDR_CONFORMITY_ROUTES } from '../../regulatory/ivdr-classification';
 
 describe('device-classification framework catalog', () => {
   it('models all three regions', () => {
@@ -90,6 +91,37 @@ describe('classifyDevicePathway — EU IVDR', () => {
 
   it('Class A → Notified Body not required', () => {
     expect(classifyDevicePathway({ region: 'EU_IVDR', deviceClass: 'A' }).notifiedBodyRequired).toBe(false);
+  });
+});
+
+/* IVDR Article 48 routes are held once, in IVDR_CONFORMITY_ROUTES
+   (server/services/regulatory/ivdr-classification.ts). This table offered Class B
+   "Annex IX or Annex XI" (no such route) and dropped Annex XI from Class D and MDR
+   Class III. Basis: recall — see the step's facts file. */
+describe('EU conformity routes — read from the one Article 48 table', () => {
+  it('IVDR typicalPathway and citation read IVDR_CONFORMITY_ROUTES', () => {
+    for (const c of getDeviceFramework('EU_IVDR').classes) {
+      const route = IVDR_CONFORMITY_ROUTES[c.class as 'A' | 'B' | 'C' | 'D'];
+      expect(c.typicalPathway).toBe(route.summary);
+      expect(c.citation).toContain(route.annexes);
+      expect(c.notifiedBodyRequired).toBe(route.notifiedBodyRequired);
+    }
+  });
+
+  it('IVDR Class B is not offered Annex X or Annex XI', () => {
+    const b = classifyDevicePathway({ region: 'EU_IVDR', deviceClass: 'B' });
+    expect(b.pathway).not.toMatch(/Annex XI?\b/);
+  });
+
+  it('IVDR Class D offers Annex X coupled with Annex XI', () => {
+    const d = classifyDevicePathway({ region: 'EU_IVDR', deviceClass: 'D' });
+    expect(d.pathway).toContain('Annex X coupled with Annex XI');
+  });
+
+  it('MDR Class III is Annex IX, or Annex X coupled with Annex XI', () => {
+    const iii = classifyDevicePathway({ region: 'EU_MDR', deviceClass: 'III' });
+    expect(iii.pathway).toContain('Annex IX, or Annex X coupled with Annex XI');
+    expect(iii.citation).toContain('Annex XI');
   });
 });
 

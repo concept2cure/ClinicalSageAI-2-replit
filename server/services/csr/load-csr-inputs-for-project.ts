@@ -178,14 +178,14 @@ export async function loadCsrInputsForProject(
     const sections = sectionRows.map(rowToCSRSection);
     const info = readStudyInfo(job.studyInfoSnapshot);
 
-    // M2.5 / 2.7 narratives quote primaryResult; when the §11.4 section
-    // ("Efficacy Results and Tabulations") has been drafted, surface its
-    // content so the summary is grounded. Otherwise emit a stable
-    // see-also pointer rather than fabricating a result.
-    const efficacy = sectionRows.find(s => s.sectionNumber === '11.4');
-    const primaryResult = efficacy?.content?.trim()
-      ? efficacy.content
-      : 'See §11.4 (Efficacy Results) of the CSR for tabulated results.';
+    // M2.5 / 2.7 quote primaryResult. It is always the pointer to §11.4,
+    // never §11.4's text: every section row is a model draft from study
+    // metadata or a template (csr-job-runner.ts, source 'ai' | 'template'),
+    // and neither is a result anyone computed. Until 2026-10-05 the drafted
+    // §11.4 was copied in here, so a model's efficacy prose reached Module 2
+    // as the study's primary result (CLAUDE.md Rule 2). A result enters
+    // Module 2 when one is computed from the study's data and recorded.
+    const primaryResult = 'See §11.4 (Efficacy Results) of the CSR for tabulated results.';
 
     inputs.push({
       studyId: job.studyId,

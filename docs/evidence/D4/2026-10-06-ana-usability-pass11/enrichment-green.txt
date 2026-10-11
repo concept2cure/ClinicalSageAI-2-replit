@@ -1,0 +1,170 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+{
+  "timestamp": "2026-10-06T03:25:30.109Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T03:25:30.110Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+{
+  "timestamp": "2026-10-06T03:25:30.110Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+{
+  "timestamp": "2026-10-06T03:25:30.113Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T03:25:30.114Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+{
+  "timestamp": "2026-10-06T03:25:30.115Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T03:25:30.110Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T03:25:30.111Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T03:25:30.111Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > reports a failed summary read without discarding healthy enrichment
+{
+  "timestamp": "2026-10-06T03:25:32.187Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "query failed"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when summary stalls 11ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when workflow stalls 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when query stalls 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > starts project, workflow and requested claims reads before the project summary resolves 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > preserves slash rewriting when the requested read times out 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > keeps the static claim-grounding guard when natural-language evidence reads time out 27ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > keeps an availability notice even under the optional composer budget 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > keeps the invoked app and rewrites its mention when app context times out 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > reports a failed summary read without discarding healthy enrichment 3ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > reports a failed workflow read without discarding healthy enrichment 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > retains a slow healthy source inside the budget and preserves common-context ordering 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > preserves the existing greeting rule when common project context is available 16ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > does not confuse healthy empty results with unavailable context 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > does not change the returned snapshot when a query resolves after its deadline 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > keeps projectless guidance without starting scoped reads 1ms
+stderr | server/services/ana-ri/__tests__/context-enrichment-tenant.test.ts > project-memory enrichment is tenant-scoped > scopes every project-memory read to the caller organization
+{
+  "timestamp": "2026-10-06T03:25:32.939Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-tenant.test.ts > CMC build-state enrichment is tenant-scoped > scopes every CMC read to the caller organization
+{
+  "timestamp": "2026-10-06T03:25:32.943Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-tenant.test.ts > domain memory reaches the model when the caller has an organization > reads project_memory_entries for a domain block, scoped to the org
+{
+  "timestamp": "2026-10-06T03:25:32.945Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-tenant.test.ts > project-memory enrichment is tenant-scoped > issues no project_memory_entries read at all without an organization 7ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-tenant.test.ts > project-memory enrichment is tenant-scoped > scopes every project-memory read to the caller organization 4ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-tenant.test.ts > CMC build-state enrichment is tenant-scoped > issues no CMC read at all without an organization 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-tenant.test.ts > CMC build-state enrichment is tenant-scoped > scopes every CMC read to the caller organization 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-tenant.test.ts > domain memory reaches the model when the caller has an organization > reads project_memory_entries for a domain block, scoped to the org 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-tenant.test.ts > domain memory reaches the model when the caller has an organization > still reads nothing when the caller has no organization 0ms
+stdout | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step
+[AnA RI Stream] Context enriched with: claim-grounding
+
+stdout | server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > project data is a source; the instructions, the intelligence prefix and AnA's memory are not
+[AnA RI Stream] Context enriched with: claim-grounding
+
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > names each tool result, carries what a model wrote inside it, and drops a failed step 34ms
+ ✓ server/routes/ana-ri/__tests__/stream-answer-sources.test.ts > the sources the route hands the answer check > project data is a source; the instructions, the intelligence prefix and AnA's memory are not 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > each call's request, effort, thinking and tools are what the gateway received; the closing call's tool choice too 34ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > a closing call told to call no tool is recorded as told so 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-record-sent.test.ts > the record says what each call was sent (MC-RL-8) > and how the turn was routed, and why 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice 29ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 11ms
+
+ Test Files  5 passed (5)
+      Tests  33 passed (33)
+   Start at  23:25:25
+   Duration  7.96s (transform 21.76s, setup 423ms, import 35.57s, tests 261ms, environment 1ms)

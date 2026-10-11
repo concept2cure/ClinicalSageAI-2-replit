@@ -708,52 +708,12 @@ router.post(
  * DELETE /api/concept2cure/documents/:documentId
  * Remove a document from project knowledge.
  */
-router.delete('/documents/:documentId', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const documentId = req.params.documentId;
-
-    const dbProjects = await db
-      .select()
-      .from(projects)
-      .where(and(eq(projects.organizationId, organizationId), isNull(projects.actualEndDate)));
-
-    const target = dbProjects.find(project => {
-      const settings = normalizeProjectSettings(project.settings);
-      const knowledge = normalizeKnowledge(settings);
-      return knowledge.documents.some(doc => doc.id === documentId);
-    });
-
-    if (!target) {
-      return sendError(res, 404, 'Document not found');
-    }
-
-    const settings = normalizeProjectSettings(target.settings);
-    const knowledge = normalizeKnowledge(settings);
-    const updatedKnowledge: ProjectKnowledge = {
-      ...knowledge,
-      documents: knowledge.documents.filter(doc => doc.id !== documentId),
-    };
-
-    const updatedSettings = {
-      ...settings,
-      customInstructions: updatedKnowledge.customInstructions,
-      knowledge: updatedKnowledge,
-    };
-
-    const [updated] = await db
-      .update(projects)
-      .set({ settings: updatedSettings, updatedAt: new Date() })
-      .where(and(eq(projects.id, target.id), eq(projects.organizationId, organizationId)))
-      .returning();
-
-    await logAuditEntry(req, 'UPDATE', 'project', `proj_${target.id}`, target, updated);
-
-    return sendSuccess(res, { deleted: true, documentId });
-  } catch (error: any) {
-    logger.error('Failed to delete knowledge document', { error: error.message });
-    return sendError(res, 500, 'Failed to delete knowledge document');
-  }
+router.delete('/documents/:documentId', (_req: Request, res: Response) => {
+  // Removing a settings reference never withdrew the retained extraction.
+  // Require the canonical, typed project source workflow before any write.
+  return sendError(res, 409,
+    'Choose whether to retain, withdraw, or supersede extracted data from the source in the project Data Room.',
+    undefined, 'DOCUMENT_DISPOSITION_REQUIRED');
 });
 
 /**

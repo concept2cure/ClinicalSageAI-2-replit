@@ -1,0 +1,20 @@
+{
+  "source": "40697292af6b813dcfcaba8881e12c250dab69ef",
+  "workflow_run": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37642069770",
+  "job_id": 112863370413,
+  "baseline": "664196f138705cf843f3ef663215fe87bc885023",
+  "scan_completed": true,
+  "blocking_findings": 3,
+  "rule": "generic.secrets.security.detected-jwt-token.detected-jwt-token",
+  "artifact_findings": [
+    {
+      "file": "docs/evidence/D4/2026-10-07-biotech-workflow-continuation/SAVED-SOURCES-RED.txt",
+      "synthetic_tokens_redacted": 1
+    },
+    {
+      "file": "docs/evidence/D4/2026-10-07-biotech-workflow-continuation/derivation-red.txt",
+      "synthetic_tokens_redacted": 2
+    }
+  ],
+  "remediation": "Remove synthetic opaque preview-token strings from test failure receipts; preserve assertions and verdicts; no scanner suppression or baseline change."
+}

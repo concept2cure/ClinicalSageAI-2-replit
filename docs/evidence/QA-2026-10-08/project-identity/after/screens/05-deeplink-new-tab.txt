@@ -1,0 +1,246 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+LJ
+Concept2Cure.RI
+›
+Project home
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+All projects
+PROJECT
+HLV-333 — Investigational New Drug Application (QA-J1)
+HLV-333 — Investigational New Drug Application (QA-J1)
+H
+FDA
+COPD / ASTHMA
+ACTIVE
+PRIORITY: MEDIUM
+PLANNING
+SPONSOR
+Concept2Cure Therapeutics
+PRODUCT
+Helvanta-QA3
+INDICATION
+COPD / asthma
+IND NUMBER
+not assigned
+Plan
+Evidence
+Author
+Review
+Submit
+Respond
+Lifecycle
+Author
+Draft eCTD sections with AnA, track changes
+AnA · co-author
+Helvanta-QA3 · governed dossier
+Open full thread
+I'm your co-author on Helvanta-QA3, bound to this project's governed dossier. Ask me to draft, reconcile, or review a section and I'll open the full thread with every step grounded to its source.
+Workspace
+Every capability, scoped to this project
+PROGRAM JOURNEY
+Program journey
+The end-to-end biotech/pharma spine — concept to submission to lifecycle
+AUTHOR & ASSEMBLE
+AnA Authoring Engine
+End-to-end document suite for the whole CTD pyramid, raw data to final draft
+Parallel drafting
+AnA drafts several dossier sections in parallel (batch_draft_sections) — one Accept card per section, each promoting through the same governed PATCH (saveSection · draftSource=ana)
+Inconsistency Intelligence
+Change a governed value once and propagate it across every document that cites it
+Source Tracer
+Sentence-level provenance: every sentence carries a typed source (trial data, literature, regulatory guidance or internal data) with a confidence score, and untraced claims are surfaced
+Dossier
+Document-first workspace (Artos/Weave model): eCTD folder tree · submission documents in process with status/version · the live document · Data Room of source files.
+Document editor & authoring
+Section editor with tracked changes, threaded comments, version history and diff, approval routing, and e-signature manifestation (21 CFR §11.50).
+CMC / Module 3
+Module 3 operating system: registers, specifications, stability, batch records, build/compile, contradictions, Part 11 approval, export gate, and placement into the IND submission spine
+Nonclinical / Module 4
+IND-enabling & CTD Module 4: GLP study registry with finding classification and SEND status, SEND 12-domain conformance, the Module 2.6 written/tabulated summary builder, and Module 4 placement
+CSR workflow
+ICH E3 CSR builder + intelligence library.
+Prescribing information
+USPI (PLLR / 21 CFR 201.57), EU SmPC (QRD), SPL
+Document journey
+One document, ideation → submission: ideate → outline → AnA draft → revise → review → QC → approve (§11 e-sign) → assemble (eCTD leaf) → transmit (ESG)
+eCTD co-author
+eCTD tree + section authoring
+Compile & export eCTD
+eCTD 4.0 backbone compile/validate/export across FDA/EMA, keyed on the program’s numeric project id.
+Template library
+Full REST (list/extract-preview/extract+save/create-from-spec/update/render docx|pdf), org-scoped, audited
+EVIDENCE & DATA
+Vault (DMS)
+The program dossier tree (rule-pack builds) plus the filing cabinet: uploads are virus-scanned, SHA-256 hashed, auto-classified to a suggested dossier folder per the program's client-type taxonomy (CTD modules / device submission folders / TMF zones), and confirmed or moved via the governed, audited /file route
+Evidence search (RAG)
+Ask a question across the corpus — 3-layer memory → gateway → cited answer traced back to source chunks.
+Artifacts center
+Cross-project artifact library, version chain, provenance, signature status.
+Decision lineage
+The immutable, Part-11 hash-chained decision trail behind every governed artifact (who decided what, when, on what evidence, signed how)
+Reporting & analytics
+AnA Reporting Canvas — conversational governed reporting over the Report-OS render model, with a per-segment catalog, entitlement tiers and best-practice packs.
+APPLICATIONS & FILING
+Filings catalog
+The canonical index of every regulatory filing type, across pharma/biotech, device, IVD and cross-cutting
+NDA / BLA filing
+NDA/BLA filing cockpit: CTD M1–5 readiness, Module 1 admin set (356h), PDUFA review clock, Refuse-to-File risk (shadow review).
+MAA Module 1 (Regional)
+Regional marketing-application administrative module (eCTD Module 1) — per-agency required-component checklist for EMA/PMDA/MHRA/TGA/HC/Swissmedic/NMPA over the global-RI regional-module1-requirements engine.
+IND lifecycle
+IND checklist, forms (1571/1572/3674), master data, amendments, annual reports, safety reports.
+Submission center
+Package preview, eValidator pass, and the choice between an ESG submission and an eSTAR export.
+Communication Center
+The regulated FDA↔client loop: agency communications (9 source types) auto-generating tasks, submission lifecycle incl
+Submission pyramid
+Deterministic submission work breakdown — submission-type selector, dashboard (progress ring, phase strip, risk gauge, next-available tasks), phase-to-task drill-down with a full-metadata detail sheet (risk, CTD bindings, guidance, dependencies, deliverables), analytics (resources and bottlenecks, document coverage, critical path), and the global pyramid browser
+Dossier map
+CTD/eCTD module map with completeness + readiness overlay.
+Product development (PDEV → IND)
+Activity → AI draft → evidence → confirm
+Health authority questions
+Post-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package.
+REVIEW & GOVERN
+Orchestration & readiness
+Persisted workflow engine: workflowRuns (steps · blockers · diffs · pause/resume/retry), approvalCheckpoints (manual/role/quorum/auto), readiness rules + evaluations → overall score, blocker count, isReady gate before filing.
+Review & approval
+Review queue, threaded comments (open/resolved/outdated), reject-with-reason, e-sign manifestation (21 CFR §11.50).
+Shadow review
+AnA simulates the reviewer who will read your submission (5 real lenses: FDA filing / EMA D120 / PMDA / MDR NB / IVDR NB) and scores the two gates that kill a filing — RTF (administrative) and CRL (substantive)
+Dispatch readiness
+The deterministic last gate before transmit
+Tasks & collaboration
+Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates
+Agency meetings
+Agency interactions: Pre-IND/INTERACT/Type A-D/EOP2/pre-NDA-BLA, device Q-Sub, EMA Scientific Advice
+Audit trail
+Log entries, filters, signed PDF export
+Quality & Assurance
+Quality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records).
+SCIENCE & INTELLIGENCE
+Biostatistics
+SAP authoring, power analysis, TLF shells, adaptive trial plans, IDMC
+Biostat workbench
+Real statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation.
+Risk-based monitoring
+ICH E6(R3) RBQM domain shell — overview, risk review report, RACT, KRIs, QTLs, central monitoring, patient profiles, site risk, site oversight and monitoring plan, read through one aggregated board
+Clinical operations
+Clinical-development operations: studies & enrollment, study sites with RBM risk linkage, DSMB / interim reviews, and protocol deviations with CAPA
+Safety narrative / PV
+SAE narrative generation, ICSR, signal handling.
+Pharmacovigilance
+Safety surveillance: signal detection (PRR/FAERS/EudraVigilance), PSUR/PBRER aggregate-report cycles, expedited 7/15-day submissions across approved products.
+PV cockpit
+Safety-surveillance workbench: KPIs, disproportionality screener (PRR/ROR/EBGM), expedited-reporting clock, regional compliance matrix.
+Precedent intelligence
+Past approvals search + decision rationale
+Global regulatory intelligence
+Deterministic regulatory capabilities, grouped by topic
+Intelligence catalog
+Read-only reference for the deterministic tools AnA can run, grouped by domain, with the determinism-pedigree trust system and the shared result-rendering pattern.
+Deep research
+Long-running multi-source research (Opus)
+LIFECYCLE & ACCESS
+Lifecycle management
+Post-approval: supplements/variations (sBLA, Type II/IB, CBE-30), CMC change control classified against ICH Q12, and renewal cycles (PADER, 5-year, re-examination).
+Pediatric (PIP / PSP)
+FDA §505B PREA / iPSP and EMA PIP: plans, deferrals, waivers, extrapolation rationale and PREA milestones.
+Orphan & rare
+Orphan-drug / rare-disease designations across FDA/EMA/PMDA, RPD priority-review vouchers & grants, and patient-advocacy engagement.
+Registrations
+Global registration lifecycle: market authorization status, agency review clocks, renewals/variations, HA commitments, reliance-pathway strategy.
+Market access
+Commercial bridge: payer coverage (CMS NCD/LCD, private, HTA), value-dossier composer (AMCP/NICE/budget-impact), coding strategy (CPT/PLA/HCPCS), access sequencing.
+Change assessment
+Change impact engine: FDA "When to Submit a 510(k) for a Change" (2017) + EU MDR significant-change (MDCG 2020-3) determinations → new submission vs document-to-file.
+Regulatory change intelligence
+Portfolio horizon scan: monitors FDA guidance, ISO/IEC revisions, EU MDCG/MDR-IVDR and statutory changes; assesses impact and resolves each to an action document (gap analysis, transition plan, update task) — never a passive feed.
+Conversations
+resume a thread held on this project
+No project conversations yet
+Start one in the composer above — threads started here are kept on this project and listed for resuming.
+Module completion
+section status by CTD module
+1 · 18 sections
+0%
+2 · 14 sections
+0%
+3 · 23 sections
+0%
+4 · 22 sections
+0%
+5 · 10 sections
+0%
+M1 · 1 section
+0%
+M2 · 1 section
+0%
+M3 · 1 section
+0%
+M4 · 1 section
+0%
+M5 · 1 section
+0%
+Data room
+the sources this project's documents are written from
+Add sources — drop files here or click to browse. They’re read on upload and become available to AnA for this project.
+No sources in this project yet
+Add the documents this project's submission will be written from — protocols, CSRs, prior correspondence. Every file is read on upload and becomes a traceable source.
+Trace a claim to its source
+Write from these sources
+Tasks
+tasks, review threads and approvals on this program
+No tasks or approvals on this program
+Tasks, review threads, approval blockers and agency correspondence recorded on this program appear here.
+Open task board
+Records in this project
+Submissions 1
+HLV-333 — Investigational New Drug Application (QA-J1)
+ind · fda · planning
+Data Room sources 0
+None in this project yet.
+Authoring documents 0
+None in this project yet.
+Vault documents 0
+None in this project yet.
+Study designs 0
+None in this project yet.
+Filing documents 1
+Helvanta-QA3 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5
+ind
+Team & activity
+JS
+JM Smith
+LEAD
+JM Smith
+c2c.project.create · regulatory_programs
+Oct 8
+JM Smith
+c2c.work.transition · document
+Oct 8
+Dossier readiness
+0%
+0%
+Dossier
+readiness
+Memory
+No project memory yet
+AnA's persisted regulatory-strategy memory, open blockers, and decisions-on-record for this project will appear here once enriched.
+Instructions
+No custom instructions yet
+Authoring instructions saved on this project's intelligence profile will appear here.
+Recent drafts
+No drafted sections yet
+Governed document sections drafted on this project will appear here, newest first.

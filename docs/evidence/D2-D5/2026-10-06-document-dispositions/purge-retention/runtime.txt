@@ -1,0 +1,96 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT
+{
+  "timestamp": "2026-10-06T19:29:30.243Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 4,
+      "documents": 9
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > names who purged which organisation, when, the export it relied on, and what it deleted
+{
+  "timestamp": "2026-10-06T19:29:30.245Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 4,
+      "documents": 9
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > returns the counts it recorded
+{
+  "timestamp": "2026-10-06T19:29:30.248Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 4,
+      "documents": 9
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT 6ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > names who purged which organisation, when, the export it relied on, and what it deleted 3ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > returns the counts it recorded 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > a refused audit row rolls the purge back: ROLLBACK, no COMMIT, and the purge rejects 2ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > refuses a purge it cannot attribute to a person, before anything is touched 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge cannot reach its own record > lists neither the audit trail nor the export receipt it relied on 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge cannot reach its own record > refuses a table-list expansion that would erase retained disposition receipts before touching the database 0ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  15:29:28
+   Duration  1.64s (transform 737ms, setup 67ms, import 1.27s, tests 15ms, environment 0ms)
+

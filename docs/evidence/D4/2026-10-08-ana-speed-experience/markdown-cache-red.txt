@@ -1,0 +1,28 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown-cache.test.ts > AnA markdown cache > keeps a frequently read answer cached across 600 new streaming prefixes 554ms
+   → expected "g" to be called 601 times, but got 604 times
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown-cache.test.ts > AnA markdown cache > evicts an unread answer when a 201st distinct entry arrives 155ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown-cache.test.ts > AnA markdown cache > returns sanitized HTML on cache hits for malicious input 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown-cache.test.ts > AnA markdown cache > keeps a frequently read answer cached across 600 new streaming prefixes
+AssertionError: expected "g" to be called 601 times, but got 604 times
+ ❯ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown-cache.test.ts:36:19
+     34|
+     35|     // One real parse/sanitize of the retained answer plus 600 new pre…
+     36|     expect(parse).toHaveBeenCalledTimes(601);
+       |                   ^
+     37|     expect(sanitize).toHaveBeenCalledTimes(601);
+     38|     expect(parse.mock.calls.filter(([content]) => content === answer))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  11:05:33
+   Duration  1.31s (transform 69ms, setup 105ms, import 14ms, tests 718ms, environment 332ms)

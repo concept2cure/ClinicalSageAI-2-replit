@@ -54,6 +54,7 @@ const auth = (p: Person) => ({ Authorization: `Bearer ${p.token}` });
 async function cleanup() {
   await owner.query(`DELETE FROM license_requests WHERE email LIKE $1`, [`${TAG}-%@example.invalid`]);
   await owner.query(`DELETE FROM organization_users WHERE organization_id BETWEEN $1 AND $2`, [ORG_OWNER, ORG_OWNER + 9]);
+  await owner.query(`DELETE FROM platform_role_grants WHERE user_id IN (SELECT id FROM users WHERE email LIKE $1)`, [`${TAG}-%@example.invalid`]);
   await owner.query(`DELETE FROM users WHERE email LIKE $1`, [`${TAG}-%@example.invalid`]);
   await owner.query(`DELETE FROM organizations WHERE id BETWEEN $1 AND $2`, [ORG_OWNER, ORG_OWNER + 9]);
 }
@@ -108,6 +109,13 @@ beforeAll(async () => {
     );
     people[key] = { id, token };
   }
+
+  // The owner's tenant membership alone carries no platform authority.
+  await owner.query(
+    `INSERT INTO platform_role_grants (user_id, role, granted_by, reason)
+     VALUES ($1, 'super_admin', 'dbter-fixture', 'contract: platform owner designation')`,
+    [people.owner.id],
+  );
 
   await owner.query(
     `INSERT INTO license_requests (name, email, organization, message, status)

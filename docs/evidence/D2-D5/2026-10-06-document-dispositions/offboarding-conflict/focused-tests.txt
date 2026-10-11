@@ -1,0 +1,162 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+{
+  "timestamp": "2026-10-06T19:38:05.374Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T19:38:05.376Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+{
+  "timestamp": "2026-10-06T19:38:05.376Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+[database] Database connection successful
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent
+{
+  "timestamp": "2026-10-06T19:38:05.724Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers a failed purge (its audit row refused) with 500 and no error text
+{
+  "timestamp": "2026-10-06T19:38:05.755Z",
+  "level": "error",
+  "message": "[tenants-simple] Error purging organization:",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > keeps an unrelated database immutability error private
+{
+  "timestamp": "2026-10-06T19:38:05.761Z",
+  "level": "error",
+  "message": "[tenants-simple] Error purging organization:",
+  "context": {
+    "code": "55000"
+  }
+}
+
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > passes the platform administrator, and the request’s IP and user agent 1760ms
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers an unattributable purge as a refusal (403), not a conflict 4ms
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers a failed purge (its audit row refused) with 500 and no error text 3ms
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > answers protected document lineage as an actionable conflict rather than purge success 3ms
+ ✓ server/routes/__tests__/tenants-simple-purge-audit.test.ts > POST /api/tenants/:id/purge — what the audit row is told > keeps an unrelated database immutability error private 3ms
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT
+{
+  "timestamp": "2026-10-06T19:38:06.560Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 4,
+      "documents": 9
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > names who purged which organisation, when, the export it relied on, and what it deleted
+{
+  "timestamp": "2026-10-06T19:38:06.563Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 4,
+      "documents": 9
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+stderr | server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > returns the counts it recorded
+{
+  "timestamp": "2026-10-06T19:38:06.565Z",
+  "level": "warn",
+  "message": "[tenant-offboarding] Tenant purged",
+  "context": {
+    "organizationId": 42,
+    "purgedByUserId": 7,
+    "retentionOverride": null,
+    "finalExportDigest": "sha256:abc",
+    "deletedRows": {
+      "projects": 4,
+      "documents": 9
+    },
+    "turnRecordErasure": {
+      "records": 0,
+      "blobs": 0
+    },
+    "artifactRecordErasure": {
+      "signatures": 0,
+      "snapshots": 0
+    }
+  }
+}
+
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > on the transaction client, after the deletes and the status change, before COMMIT 6ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > names who purged which organisation, when, the export it relied on, and what it deleted 3ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge writes its chained audit row inside its own transaction > returns the counts it recorded 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > a refused audit row rolls the purge back: ROLLBACK, no COMMIT, and the purge rejects 2ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > fail closed > refuses a purge it cannot attribute to a person, before anything is touched 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > rolls back before returning an actionable conflict without status changes or a purge receipt 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > preserves the original 55000 error when its message is IMMUTABILITY_VIOLATION: unrelated retained record 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > preserves the original 55000 error when its message is Unknown failure: DOCUMENT_DISPOSITION_WRITE_REFUSED: details 0ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > preserves the original 42501 error when its message is DOCUMENT_DISPOSITION_WRITE_REFUSED: wrong SQLSTATE 1ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > document disposition retention conflicts > preserves the original 55000 error when its message is document_disposition_write_refused: wrong case 0ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge cannot reach its own record > lists neither the audit trail nor the export receipt it relied on 0ms
+ ✓ server/services/tenant/__tests__/tenant-purge-audit.test.ts > the purge cannot reach its own record > refuses a table-list expansion that would erase retained disposition receipts before touching the database 1ms
+
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+   Start at  15:38:03
+   Duration  3.03s (transform 997ms, setup 87ms, import 740ms, tests 1.80s, environment 0ms)
+

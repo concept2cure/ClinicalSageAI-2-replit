@@ -7,7 +7,8 @@
 import { describe, it, expect } from 'vitest';
 
 import { buildM25ClinicalOverview, buildM24NonclinicalOverview, buildM27ClinicalSummary, buildM23QualityOverallSummary, type CSRSummaryInput } from '../m2-summary-builders';
-import { composeModule3FromCanonicalSources } from '../module3Composer';
+import { composeModule3FromCanonicalSources, type CanonicalSource } from '../module3Composer';
+import { assessRecordedTrending, inspectRecordedSeriesCriterion, unassignedObservations, type StabilityPointRecord } from '../cmc/recorded-stability';
 
 const pivotal: CSRSummaryInput = {
   studyId: 'S3',
@@ -51,6 +52,135 @@ describe('buildM23QualityOverallSummary (QOS via Module 3 composition)', () => {
     expect(qos.narrative).toMatch(/2\.3\.P DRUG PRODUCT/);
     expect(qos.completeness).toBeGreaterThanOrEqual(0);
     expect(qos.completeness).toBeLessThanOrEqual(100);
+  });
+});
+
+const condition = '25°C/60%RH';
+const shortTimes = [0, 3, 6, 9, 12, 18, 24];
+const monthlyTimes = Array.from({ length: 37 }, (_, index) => index);
+const materials = ['drug_substance', 'drug_product'] as const;
+type Material = typeof materials[number];
+const points = (times: number[], parameter = 'Assay'): StabilityPointRecord[] => times.map((timePoint, index) => ({
+  timePoint, parameter, result: 100 - timePoint * 0.1 + [0.03, -0.02, 0.01][index % 3], specification: '>= 95%',
+}));
+const unnamed = (timePoint: number): StabilityPointRecord => ({ timePoint, parameter: '', result: 99, specification: '>= 95%' });
+const source = (material: Material, times: number[], results: StabilityPointRecord[], id = 41): CanonicalSource => ({
+  id: `recorded-study-${id}`, sourceType: 'stability', sourceHash: `fixture-hash-${id}`,
+  sourcePayload: {
+    studyName: 'Recorded LT', stabilityScope: material,
+    storageCondition: condition, storageConditions: [condition], timePoints: times,
+    drugSubstanceTimePoints: material === 'drug_substance' ? times : null,
+    drugSubstanceStorageCondition: material === 'drug_substance' ? condition : null,
+    shelfLifeClaim: '24 months', drugProductShelfLifeClaim: material === 'drug_product' ? '24 months' : null,
+    batchesStudied: [`B${id}`], results,
+  },
+});
+const compose = (material: Material, sources: CanonicalSource[]) => {
+  const sourcesBefore = globalThis.structuredClone(sources);
+  const sections = composeModule3FromCanonicalSources(sources);
+  const upstream = sections.find(section => section.sectionKey === (material === 'drug_substance' ? '3.2.S.7' : '3.2.P.8'))!;
+  const sectionsBefore = globalThis.structuredClone(sections);
+  const qos = buildM23QualityOverallSummary({ module3Sections: sections });
+  const heading = material === 'drug_substance' ? '2.3.S.7 Stability' : '2.3.P.8 Stability';
+  const paragraph = qos.narrative.split(`${heading}\n`)[1].split('\n\n')[0];
+  expect(sources).toEqual(sourcesBefore);
+  expect(sections).toEqual(sectionsBefore);
+  const results = upstream.tables.find(table => table.title.startsWith('Stability Results'))!;
+  expect(results.rows).toHaveLength(sources.reduce((count, study) => count + study.sourcePayload.results.length, 0));
+  expect(results.rows.every(row => row[6] === 'within')).toBe(true);
+  return { upstream, paragraph };
+};
+
+describe('QOS preserves the upstream stability qualification', () => {
+  it.each(materials)('keeps the %s hold and row reason after a recorded monthly schedule', material => {
+    const results = [...points(monthlyTimes), unnamed(36)];
+    const { upstream, paragraph } = compose(material, [source(material, monthlyTimes, results)]);
+    expect(upstream.narrativeDraft).toMatch(/All 38 recorded result\(s\).*within their recorded acceptance criteria/);
+    expect(upstream.narrativeDraft).toMatch(/NOT established/);
+    expect(upstream.narrativeDraft).toMatch(/recorded-study-41, row 38:.*no assigned parameter/);
+    expect(paragraph).toContain('NOT established');
+    expect(paragraph).toMatch(/recorded-study-41, row 38:.*no assigned parameter/);
+    expect(paragraph).toBe(upstream.narrativeDraft);
+  });
+
+  it.each(materials)('retains the complete %s source/row reason when a short hold already fits', material => {
+    const results = [...points(shortTimes), unnamed(24)];
+    const reason = `Stability source recorded-study-41, row 8: ${unassignedObservations(results)[0].reason}`;
+    const { upstream, paragraph } = compose(material, [source(material, shortTimes, results)]);
+    expect(upstream.narrativeDraft).toContain(reason);
+    expect(paragraph).toContain('NOT established');
+    expect(paragraph).toContain(reason);
+    expect(paragraph).toBe(upstream.narrativeDraft);
+  });
+
+  it.each(materials)('retains the existing %s criterion-conflict reason', material => {
+    const results = points(shortTimes).map((point, index) => ({ ...point, specification: index < 3 ? '>= 95%' : '>= 90%' }));
+    const reason = inspectRecordedSeriesCriterion(results).reason!;
+    const { upstream, paragraph } = compose(material, [source(material, shortTimes, results)]);
+    expect(reason).toContain('different acceptance criteria');
+    expect(upstream.narrativeDraft).toContain(reason);
+    expect(upstream.narrativeDraft).toContain('NOT established');
+    expect(paragraph).toContain(reason);
+    expect(paragraph).toBe(upstream.narrativeDraft);
+  });
+
+  it.each(materials)('retains a named unestimable %s trend without changing its assessment', material => {
+    const water = points(shortTimes, 'Water').slice(0, 2).map(point => ({ ...point, result: 0.3, specification: '<= 2%' }));
+    const results = [...points(shortTimes), ...water];
+    const trend = assessRecordedTrending({ id: 41, storageConditions: [condition], stabilityData: results });
+    if (!trend.ok) throw new Error(trend.error);
+    const waterTrend = trend.data.series.find(series => series.parameter === 'Water')!.outcome;
+    expect(waterTrend.ok).toBe(false);
+    if (waterTrend.ok) throw new Error('Expected the existing short-series refusal');
+    const reason = `Water (${condition}): trend not assessed: ${waterTrend.detail}.`;
+    const { upstream, paragraph } = compose(material, [source(material, shortTimes, results)]);
+    expect(upstream.narrativeDraft).toContain(reason);
+    expect(paragraph).toContain(reason);
+    expect(paragraph).toBe(upstream.narrativeDraft);
+  });
+
+  it.each(materials)('retains a later %s study’s source and row refusal', material => {
+    const laterResults = [unnamed(36)];
+    const reason = `Stability source recorded-study-42, row 1: ${unassignedObservations(laterResults)[0].reason}`;
+    const { upstream, paragraph } = compose(material, [
+      source(material, monthlyTimes, points(monthlyTimes)), source(material, monthlyTimes, laterResults, 42),
+    ]);
+    expect(upstream.narrativeDraft).toContain(reason);
+    expect(upstream.narrativeDraft).toContain('NOT established');
+    expect(paragraph).toContain(reason);
+    expect(paragraph).toBe(upstream.narrativeDraft);
+  });
+
+  it.each(materials)('keeps a valid %s monthly series and its trend without inventing a hold', material => {
+    const { upstream, paragraph } = compose(material, [source(material, monthlyTimes, points(monthlyTimes))]);
+    expect(upstream.narrativeDraft).toContain('supporting stability of');
+    expect(upstream.narrativeDraft).toContain('no out-of-trend points');
+    expect(paragraph).not.toMatch(/NOT established|no assigned parameter|trend not assessed/);
+    expect(paragraph).toBe(upstream.narrativeDraft);
+  });
+
+  it('keeps headline tables, input keys, gaps and completeness for the supplied stability sections', () => {
+    const sources = materials.map(material => source(material, shortTimes, points(shortTimes)));
+    const sourcesBefore = globalThis.structuredClone(sources);
+    const stabilitySections = composeModule3FromCanonicalSources(sources).filter(section => ['3.2.S.7', '3.2.P.8'].includes(section.sectionKey));
+    const sectionsBefore = globalThis.structuredClone(stabilitySections);
+    const qos = buildM23QualityOverallSummary({ module3Sections: stabilitySections });
+    expect(qos.inputSectionKeys).toEqual(['3.2.S.7', '3.2.P.8']);
+    expect(qos.gaps).toEqual(['3.2.S.1', '3.2.S.2', '3.2.S.3', '3.2.S.4', '3.2.P.1', '3.2.P.2', '3.2.P.3', '3.2.P.5']);
+    expect(qos.completeness).toBe(20);
+    expect(qos.tables).toEqual(stabilitySections.map(section => section.tables[0]));
+    expect(sources).toEqual(sourcesBefore);
+    expect(stabilitySections).toEqual(sectionsBefore);
+  });
+
+  it('keeps missing-section placeholders and absence metadata', () => {
+    const qos = buildM23QualityOverallSummary({ module3Sections: [] });
+    expect(qos.narrative).toContain('[Section 3.2.S.7 not yet composed — stability data missing]');
+    expect(qos.narrative).toContain('[Section 3.2.P.8 not yet composed]');
+    expect(qos.inputSectionKeys).toEqual([]);
+    expect(qos.gaps).toHaveLength(10);
+    expect(qos.completeness).toBe(0);
+    expect(qos.tables).toEqual([]);
   });
 });
 

@@ -1,0 +1,36 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × client/src/concept2cure/v2/__tests__/driveQueue-react-selection.test.tsx > a healthy drive batch across React selection state > selects a submission then selects its sequence without a manual render between moves 101ms
+   → expected [ 'No sequence "0001" in Alpha IND.' ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/driveQueue-react-selection.test.tsx > a healthy drive batch across React selection state > selects a submission then selects its sequence without a manual render between moves
+AssertionError: expected [ 'No sequence "0001" in Alpha IND.' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "No sequence \"0001\" in Alpha IND.",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/driveQueue-react-selection.test.tsx:84:61
+     82|     // renders inside an async act() that awaits the queue itself.
+     83|     await waitFor(() => expect(onApplied.mock.calls.length + onFailed.…
+     84|     expect(onFailed.mock.calls.map(([, reason]) => reason)).toEqual([]…
+       |                                                             ^
+     85|     expect(onApplied.mock.calls.map(([, detail]) => detail)).toEqual([
+     86|       'Selected Beta IND — the working sequence and any verdict notice…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  21:29:31
+   Duration  1.57s (transform 573ms, setup 122ms, import 722ms, tests 104ms, environment 482ms)
+

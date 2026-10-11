@@ -199,6 +199,11 @@ function mockApi(extra: Handler = () => undefined) {
     if (method === 'POST' && url === '/api/510k/estar/assemble') {
       return { ok: true, status: 200, json: async () => ({ artifactKind: 'none', blockers: [] }) } as Response;
     }
+    // The step's own gates, asked before any signature (QA 2026-10-08, j6).
+    // Cleared by default here; the refusals are pinned in submissionCenterLifecycleQa.
+    if (method === 'POST' && /^\/api\/submissions\/sequences\/\d+\/governed-precheck$/.test(url)) {
+      return { ok: true, status: 200, json: async () => ({ step: (body as { step?: string })?.step, cleared: true, refusal: null }) } as Response;
+    }
     return { ok: true, status: 200, json: async () => [] } as Response;
   });
 }
@@ -363,7 +368,7 @@ describe('governed freeze — the real e-sign chain, never bypassed', () => {
   it('freeze opens the Part 11 modal; sign → freeze runs in order with the actionId', async () => {
     const calls: Array<{ method: string; url: string; body?: unknown }> = [];
     mockApi((method, url, body) => {
-      if (method === 'POST' && (url === '/api/c2c/actions/sign' || url === '/api/submissions/sequences/21/freeze')) {
+      if (method === 'POST' && (url === '/api/c2c/actions/sign' || url === '/api/submissions/sequences/21/freeze' || url.endsWith('/governed-precheck'))) {
         calls.push({ method, url, body });
       }
       if (method === 'POST' && url === '/api/c2c/actions/sign') {
@@ -378,14 +383,15 @@ describe('governed freeze — the real e-sign chain, never bypassed', () => {
     await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
     await openWorkspace('Sequences');
 
-    // Sequence 0000 (validated) offers the governed Frozen target.
+    // Sequence 0000 (validated) offers the governed Frozen target; the dialog
+    // opens only after the step's gates answered clear (the precheck).
     fireEvent.click((await screen.findAllByRole('button', { name: /Frozen/ }))[0]);
 
-    // The Part 11 modal is open — no freeze POST has fired yet.
+    // The Part 11 modal is open — the gates were asked, nothing signed or frozen yet.
     expect(await screen.findByRole('dialog')).toBeTruthy();
     expect(document.body.textContent).toContain('Electronic signature');
     expect(document.body.textContent).toContain('Sequence 0000 · ZX-9 First-in-Human');
-    expect(calls).toHaveLength(0);
+    expect(calls.map((c) => c.url)).toEqual(['/api/submissions/sequences/21/governed-precheck']);
 
     // Complete the form: reason (8+ chars) + password, then sign.
     fireEvent.change(screen.getByLabelText('Reason for this action'), {
@@ -396,12 +402,17 @@ describe('governed freeze — the real e-sign chain, never bypassed', () => {
 
     await waitFor(() => expect(document.body.textContent).toContain('Signature applied'));
 
-    // Chain order and payloads: sign first (re-auth envelope forwarded), then
-    // freeze presenting the server-issued actionId. Never the reverse.
+    // Chain order and payloads: the gates asked (at open, and again just before
+    // signing), sign (re-auth envelope forwarded), then freeze presenting the
+    // server-issued actionId. Never a signature before the gates answer.
     expect(calls.map((c) => c.url)).toEqual([
+      '/api/submissions/sequences/21/governed-precheck',
+      '/api/submissions/sequences/21/governed-precheck',
       '/api/c2c/actions/sign',
       '/api/submissions/sequences/21/freeze',
     ]);
+    expect(calls[0].body).toEqual({ step: 'freeze' });
+    calls.splice(0, 2);
     expect(calls[0].body).toMatchObject({
       target: 'ectd-sequence:21',
       reason: 'Locking sequence 0000 for FDA filing.',

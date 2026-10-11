@@ -1,0 +1,13 @@
+# GREEN — program-project-anchor-backfill.pglite.test.ts
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > 20261008 on the applier > runs after every file it depends on and before the tenant sweeps 3ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > an unanchored program gets the row intake writes > BX-256 (seeded, no project row) is anchored and resolves strict to it 10ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > an unanchored program gets the row intake writes > a program intake created without its row gets its recorded creator; the default priority when none 2ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > an unanchored program gets the row intake writes > a recorded creator who is not a user is not written 2ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > an unanchored program gets the row intake writes > the organisation's own workspace when it has several; the one 20260923 gave an unprovisioned one 3ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > what it leaves alone > an anchored program, a soft-deleted one, and one 20260814 links by code get no new row 3ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > what it leaves alone > several workspaces, none marked: no guess, and the deploy log names the organisation 1ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > what it leaves alone > a program another organisation's row names is not given a second row, and is named 1ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > tenant-correct > every row it wrote is in its program's organisation and in a workspace of that organisation 3ms
+ ✓ tests/schema-contract/program-project-anchor-backfill.pglite.test.ts > Rule 1: replayed on every deploy > a second deploy inserts nothing and changes nothing 27ms
+ Test Files  1 passed (1)
+      Tests  10 passed (10)

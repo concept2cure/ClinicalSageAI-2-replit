@@ -1,0 +1,8 @@
+SopRegister — a draft is sent for review before it can be approved > cannot send a sample row for review
+SopRegister — a draft is sent for review before it can be approved > offers Approve only on a document under review; a draft offers Send for review instead
+SopRegister — a draft is sent for review before it can be approved > sends the draft for review through the existing PATCH route and refreshes the register
+SopRegister — a draft is sent for review before it can be approved > shows the server’s refusal as the server words it, and changes nothing on screen
+isImplementationOverdue > claims nothing for a row that carries no verdict
+isImplementationOverdue > does not flag a change the server says is on schedule, whatever a fixed date would say
+isImplementationOverdue > flags a proposed change the server says is past its target
+useChangeRegister > carries the server verdict and the linked records onto each row

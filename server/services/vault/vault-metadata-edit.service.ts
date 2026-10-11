@@ -27,6 +27,7 @@ import { FROZEN_STAGES } from './vault-lifecycle.js';
 import {
   VAULT_CLASSIFICATIONS,
   VAULT_INGEST_DOCUMENT_TYPES,
+  vaultIngestTypeLabel,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -100,6 +101,28 @@ const FROZEN_PHRASE: Record<string, string> = {
   submitted: 'approved and submitted',
   superseded: 'superseded',
 };
+
+const FIELD_NAME: Record<MetadataChange['field'], string> = {
+  document_title: 'Title',
+  document_type: 'Type',
+  classification: 'Classification',
+};
+
+/**
+ * What changed, in words: "Type: Module 3 · quality -> Report". The history
+ * labels this event from it (details.description), so a reviewer reads what
+ * was changed where the bare event name used to be. A type reads as its label,
+ * the way the Vault shows it; a field with no value yet reads as not recorded.
+ */
+function describeChanges(changes: MetadataChange[]): string {
+  return changes
+    .map((c) => {
+      const shown = (v: string | null) =>
+        v == null ? 'not recorded' : c.field === 'document_type' ? vaultIngestTypeLabel(v) : v;
+      return `${FIELD_NAME[c.field]}: ${shown(c.from)} -> ${shown(c.to)}`;
+    })
+    .join('; ');
+}
 
 export async function editVaultDocumentMetadata(
   args: EditVaultDocumentMetadataArgs,
@@ -186,7 +209,10 @@ export async function editVaultDocumentMetadata(
       resourceId: documentId,
       ipAddress: args.ipAddress,
       userAgent: args.userAgent,
-      details: { programId, changes, reason: reason.reason },
+      // The reason on the row's own column, where the history reads it from.
+      // It stays in details as well: the PostgreSQL suite reads it there.
+      reason: reason.reason,
+      details: { programId, changes, reason: reason.reason, description: describeChanges(changes) },
     });
     await client.query('COMMIT');
     return { ok: true, unchanged: false, changes };

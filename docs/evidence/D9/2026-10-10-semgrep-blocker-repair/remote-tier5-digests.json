@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "subject_sha": "de61922a9351080fdcd76a231c5abd8182054831",
+  "run_id": 38031251300,
+  "files": [
+    {
+      "path": "remote-tier5-metadata.json",
+      "bytes": 12901,
+      "sha256": "aaf4a18d2a799830034042e980495bd2e34c177352d45a47b2d72becd1b4bc88"
+    },
+    {
+      "path": "remote-tier5-excerpts.txt",
+      "bytes": 16309,
+      "sha256": "a7d81afc11b5d6eacb29d2bfebbdb2d0e7c933de9174df0ab7a6eab9f9774e22"
+    }
+  ]
+}

@@ -295,11 +295,28 @@ export function studyDesignToStatisticalInput(design: StudyDesign): DesignAdapte
   } else if (!isIvd) {
     mapped.push('effectSize');
   }
+  if (isIvd) {
+    // A diagnostic-accuracy study is sized from target sensitivity and
+    // specificity, the expected prevalence and the performance-goal margin.
+    // The design schema records none of them (study-design-types.ts
+    // powerAssumptions), and since 2026-10-05 the engine refuses rather than
+    // assume them; until then it filled them with its own defaults.
+    gaps.push({
+      field: 'sensitivity',
+      message:
+        'An IVD accuracy study is sized from target sensitivity and specificity, expected prevalence and the performance-goal margin. ' +
+        'The design does not record them, so it cannot be sized here.',
+      severity: 'blocking',
+      designPath: 'statisticalPlan.powerAssumptions',
+    });
+  }
 
   if (endpointType === 'continuous' && typeof pa.variance !== 'number') {
     gaps.push({
       field: 'variance',
-      message: 'No variance in the power assumptions; the engine will treat the effect size as standardised (SD = effect).',
+      // Must match ComputationEngine.continuousSigma: no variance ⇒ SD = 1, so the
+      // effect size is read as a standardised difference (Cohen's d).
+      message: 'No variance in the power assumptions; the engine will treat the effect size as a standardised difference (SD = 1).',
       severity: 'defaulted',
       designPath: 'statisticalPlan.powerAssumptions.variance',
     });
@@ -447,14 +464,16 @@ export const BRIDGE_STAMP_PREFIX = 'Biostatistics bridge —';
 export function computationToPlanPatch(
   input: StatisticalInput,
   result: ComputationResult,
-  provenance?: { engine: string; version: string; inputsSha256?: string },
+  /** runId: the stored run (stats_computation_runs, S5b) this N was computed by. */
+  provenance?: { engine: string; version: string; inputsSha256?: string; runId?: number },
 ): Partial<StatisticalPlan> {
   const plannedSampleSize = result.adjustedTotal ?? result.sampleSize.total;
   // The stamp always opens with the same words so `applyPlanPatch` can
   // recognise and supersede an earlier bridge stamp without touching the
   // design's own evidence (a prior trial, a TPP, a guidance).
+  const run = provenance?.runId != null ? `, stored run #${provenance.runId}` : '';
   const label = provenance
-    ? `${BRIDGE_STAMP_PREFIX} ${provenance.engine} ${provenance.version} — ${result.method}`
+    ? `${BRIDGE_STAMP_PREFIX} ${provenance.engine} ${provenance.version} — ${result.method}${run}`
     : `${BRIDGE_STAMP_PREFIX} ${result.method}`;
   return {
     alpha: input.alpha,

@@ -1,0 +1,1955 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx > Validation explain: the validator's verdict, the model's prose > shows the explanation under its model label, with each severity from the validator, and no "Blocking." 5236ms
+   → Unable to find role="note"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mValidation · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · validation[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mSequence [0m
+          [0m0000[0m
+          [0m · [0m
+          [0m6[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m [0m
+          [0merror[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m [0m
+          [0mwarning[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m info · computed server-side from the canonical leaves, each shown as the validation-corpus rule it is an instance of.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sp-list"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-row"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0mError[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sp-row-b"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-t"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mMISSING_REQUIRED_SECTION[0m
+                [36m</span>[39m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-dot"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12.1"[39m
+                    [33mcy[39m=[32m"12.1"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mm1.2[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mm1.2 is missing[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-row"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ai"[39m
+            [36m>[39m
+              [0mWarning[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sp-row-b"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-t"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mLEAF_TITLE_EMPTY[0m
+                [36m</span>[39m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-dot"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12.1"[39m
+                    [33mcy[39m=[32m"12.1"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mm2.5[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mA leaf has no title[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sp-primary sc-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mExplain the findings (AI)[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mThe findings could not be explained — [0m
+          [0munexpected response shape[0m
+          [0m. The deterministic findings above stand on their own.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mValidation · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · validation[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mSequence [0m
+          [0m0000[0m
+          [0m · [0m
+          [0m6[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m [0m
+          [0merror[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m [0m
+          [0mwarning[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m info · computed server-side from the canonical leaves, each shown as the validation-corpus rule it is an instance of.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sp-list"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-row"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0mError[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sp-row-b"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-t"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mMISSING_REQUIRED_SECTION[0m
+                [36m</span>[39m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-dot"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12.1"[39m
+                    [33mcy[39m=[32m"12.1"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mm1.2[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mm1.2 is missing[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-row"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ai"[39m
+            [36m>[39m
+              [0mWarning[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sp-row-b"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-t"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mLEAF_TITLE_EMPTY[0m
+                [36m</span>[39m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-dot"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12.1"[39m
+                    [33mcy[39m=[32m"12.1"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mm2.5[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mA leaf has no title[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sp-primary sc-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mExplain the findings (AI)[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mThe findings could not be explained — [0m
+          [0munexpected response shape[0m
+          [0m. The deterministic findings above stand on their own.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx > Validation explain: the validator's verdict, the model's prose > with no model, the findings stand and the panel says why 5046ms
+   → expected 'Validation · sequence 0000dispatch re…' to contain 'No model explanation: No AI provider …'
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mValidation · sequence [0m
+            [0m0000[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdispatch readiness · validation[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mSequence [0m
+            [0m0000[0m
+            [0m · [0m
+            [0m6[0m
+            [0m [0m
+            [0mleaves[0m
+            [0m ·[0m
+            [0m [0m
+            [0m1[0m
+            [0m [0m
+            [0merror[0m
+            [0m ·[0m
+            [0m [0m
+            [0m1[0m
+            [0m [0m
+            [0mwarning[0m
+            [0m ·[0m
+            [0m [0m
+            [0m0[0m
+            [0m info · computed server-side from the canonical leaves, each shown as the validation-corpus rule it is an instance of.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-list"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-warn"[39m
+              [36m>[39m
+                [0mError[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-b"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-t"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mMISSING_REQUIRED_SECTION[0m
+                  [36m</span>[39m
+                  [0m [0m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-dot"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12.1"[39m
+                      [33mcy[39m=[32m"12.1"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m [0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mm1.2[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mm1.2 is missing[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-ai"[39m
+              [36m>[39m
+                [0mWarning[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-b"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-t"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mLEAF_TITLE_EMPTY[0m
+                  [36m</span>[39m
+                  [0m [0m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-dot"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12.1"[39m
+                      [33mcy[39m=[32m"12.1"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m [0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mm2.5[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mA leaf has no title[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sp-primary sc-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mExplain the findings (AI)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mThe findings could not be explained — [0m
+            [0munexpected response shape[0m
+            [0m. The deterministic findings above stand on their own.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx > Validation explain: the validator's verdict, the model's prose > an old-shape reply carrying the model's own blocking flag is not shown as a verdict 5039ms
+   → expected 'Validation · sequence 0000dispatch re…' to match /could not be explained/
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mValidation · sequence [0m
+            [0m0000[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdispatch readiness · validation[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mSequence [0m
+            [0m0000[0m
+            [0m · [0m
+            [0m6[0m
+            [0m [0m
+            [0mleaves[0m
+            [0m ·[0m
+            [0m [0m
+            [0m1[0m
+            [0m [0m
+            [0merror[0m
+            [0m ·[0m
+            [0m [0m
+            [0m1[0m
+            [0m [0m
+            [0mwarning[0m
+            [0m ·[0m
+            [0m [0m
+            [0m0[0m
+            [0m info · computed server-side from the canonical leaves, each shown as the validation-corpus rule it is an instance of.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-list"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-warn"[39m
+              [36m>[39m
+                [0mError[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-b"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-t"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mMISSING_REQUIRED_SECTION[0m
+                  [36m</span>[39m
+                  [0m [0m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-dot"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12.1"[39m
+                      [33mcy[39m=[32m"12.1"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m [0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mm1.2[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mm1.2 is missing[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-ai"[39m
+              [36m>[39m
+                [0mWarning[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-b"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-t"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mLEAF_TITLE_EMPTY[0m
+                  [36m</span>[39m
+                  [0m [0m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-dot"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12.1"[39m
+                      [33mcy[39m=[32m"12.1"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m [0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mm2.5[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mA leaf has no title[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sp-primary sc-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mExplain the findings (AI)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sc-mt"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"scaf-note sc-mb"[39m
+            [36m>[39m
+              [0mBlocking. [0m
+              [0mBlocked.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-list"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"sp-row"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-warn"[39m
+                [36m>[39m
+                  [0mError[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-b"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sp-row-t"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"sc-mono"[39m
+                    [36m>[39m
+                      [0mX[0m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sp-row-s"[39m
+                  [36m>[39m
+                    [0mc[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sp-row-s"[39m
+                  [36m>[39m
+                    [0mFix: [0m
+                    [0mf[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx > Validation explain: the validator's verdict, the model's prose > shows the explanation under its model label, with each severity from the validator, and no "Blocking."
+TestingLibraryElementError: Unable to find role="note"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mValidation · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · validation[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mSequence [0m
+          [0m0000[0m
+          [0m · [0m
+          [0m6[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m [0m
+          [0merror[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m [0m
+          [0mwarning[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m info · computed server-side from the canonical leaves, each shown as the validation-corpus rule it is an instance of.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sp-list"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-row"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0mError[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sp-row-b"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-t"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mMISSING_REQUIRED_SECTION[0m
+                [36m</span>[39m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-dot"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12.1"[39m
+                    [33mcy[39m=[32m"12.1"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mm1.2[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mm1.2 is missing[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-row"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ai"[39m
+            [36m>[39m
+              [0mWarning[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sp-row-b"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-t"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mLEAF_TITLE_EMPTY[0m
+                [36m</span>[39m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-dot"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12.1"[39m
+                    [33mcy[39m=[32m"12.1"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mm2.5[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mA leaf has no title[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sp-primary sc-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mExplain the findings (AI)[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mThe findings could not be explained — [0m
+          [0munexpected response shape[0m
+          [0m. The deterministic findings above stand on their own.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"pj-card"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-h"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"t"[39m
+        [36m>[39m
+          [0mValidation · sequence [0m
+          [0m0000[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"s"[39m
+        [36m>[39m
+          [0mdispatch readiness · validation[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card-b"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"scaf-note sc-mb"[39m
+        [36m>[39m
+          [0mSequence [0m
+          [0m0000[0m
+          [0m · [0m
+          [0m6[0m
+          [0m [0m
+          [0mleaves[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m [0m
+          [0merror[0m
+          [0m ·[0m
+          [0m [0m
+          [0m1[0m
+          [0m [0m
+          [0mwarning[0m
+          [0m ·[0m
+          [0m [0m
+          [0m0[0m
+          [0m info · computed server-side from the canonical leaves, each shown as the validation-corpus rule it is an instance of.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sp-list"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-row"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-warn"[39m
+            [36m>[39m
+              [0mError[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sp-row-b"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-t"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mMISSING_REQUIRED_SECTION[0m
+                [36m</span>[39m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-dot"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12.1"[39m
+                    [33mcy[39m=[32m"12.1"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mm1.2[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mm1.2 is missing[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-row"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rd-chip tone-ai"[39m
+            [36m>[39m
+              [0mWarning[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"sp-row-b"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-t"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mLEAF_TITLE_EMPTY[0m
+                [36m</span>[39m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-dot"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12.1"[39m
+                    [33mcy[39m=[32m"12.1"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m [0m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sc-mono"[39m
+                [36m>[39m
+                  [0mm2.5[0m
+                [36m</span>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-s"[39m
+              [36m>[39m
+                [0mA leaf has no title[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sp-primary sc-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mExplain the findings (AI)[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [0mThe findings could not be explained — [0m
+          [0munexpected response shape[0m
+          [0m. The deterministic findings above stand on their own.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx:73:31
+     71|     });
+     72|     await explain();
+     73|     const note = await screen.findByRole('note');
+       |                               ^
+     74|     expect(note.textContent).toContain(LABEL);
+     75|     expect(note.textContent).toContain('One section is missing and one…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx > Validation explain: the validator's verdict, the model's prose > with no model, the findings stand and the panel says why
+AssertionError: expected 'Validation · sequence 0000dispatch re…' to contain 'No model explanation: No AI provider …'
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mValidation · sequence [0m
+            [0m0000[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdispatch readiness · validation[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mSequence [0m
+            [0m0000[0m
+            [0m · [0m
+            [0m6[0m
+            [0m [0m
+            [0mleaves[0m
+            [0m ·[0m
+            [0m [0m
+            [0m1[0m
+            [0m [0m
+            [0merror[0m
+            [0m ·[0m
+            [0m [0m
+            [0m1[0m
+            [0m [0m
+            [0mwarning[0m
+            [0m ·[0m
+            [0m [0m
+            [0m0[0m
+            [0m info · computed server-side from the canonical leaves, each shown as the validation-corpus rule it is an instance of.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-list"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-warn"[39m
+              [36m>[39m
+                [0mError[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-b"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-t"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mMISSING_REQUIRED_SECTION[0m
+                  [36m</span>[39m
+                  [0m [0m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-dot"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12.1"[39m
+                      [33mcy[39m=[32m"12.1"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m [0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mm1.2[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mm1.2 is missing[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-ai"[39m
+              [36m>[39m
+                [0mWarning[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-b"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-t"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mLEAF_TITLE_EMPTY[0m
+                  [36m</span>[39m
+                  [0m [0m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-dot"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12.1"[39m
+                      [33mcy[39m=[32m"12.1"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m [0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mm2.5[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mA leaf has no title[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sp-primary sc-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mExplain the findings (AI)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sc-verdict tone-err sc-mt"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [0mThe findings could not be explained — [0m
+            [0munexpected response shape[0m
+            [0m. The deterministic findings above stand on their own.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+Expected: "No model explanation: No AI provider is configured."
+Received: "Validation · sequence 0000dispatch readiness · validationSequence 0000 · 6 leaves · 1 error · 1 warning · 0 info · computed server-side from the canonical leaves, each shown as the validation-corpus rule it is an instance of.ErrorMISSING_REQUIRED_SECTION  m1.2Not in the rule corpus, so no rule stands behind this finding.m1.2 is missingWarningLEAF_TITLE_EMPTY  m2.5Not in the rule corpus, so no rule stands behind this finding.A leaf has no title Explain the findings (AI)The findings could not be explained — unexpected response shape. The deterministic findings above stand on their own."
+
+ ❯ client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx:84:59
+     82|     serve({ narrative: null, narrativeUnavailable: { code: 'PROVIDER_U…
+     83|     await explain();
+     84|     await waitFor(() => expect(document.body.textContent).toContain('N…
+       |                                                           ^
+     85|     expect(document.body.textContent).toContain('MISSING_REQUIRED_SECT…
+     86|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx > Validation explain: the validator's verdict, the model's prose > an old-shape reply carrying the model's own blocking flag is not shown as a verdict
+AssertionError: expected 'Validation · sequence 0000dispatch re…' to match /could not be explained/
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mValidation · sequence [0m
+            [0m0000[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0mdispatch readiness · validation[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"scaf-note sc-mb"[39m
+          [36m>[39m
+            [0mSequence [0m
+            [0m0000[0m
+            [0m · [0m
+            [0m6[0m
+            [0m [0m
+            [0mleaves[0m
+            [0m ·[0m
+            [0m [0m
+            [0m1[0m
+            [0m [0m
+            [0merror[0m
+            [0m ·[0m
+            [0m [0m
+            [0m1[0m
+            [0m [0m
+            [0mwarning[0m
+            [0m ·[0m
+            [0m [0m
+            [0m0[0m
+            [0m info · computed server-side from the canonical leaves, each shown as the validation-corpus rule it is an instance of.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-list"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-warn"[39m
+              [36m>[39m
+                [0mError[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-b"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-t"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mMISSING_REQUIRED_SECTION[0m
+                  [36m</span>[39m
+                  [0m [0m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-dot"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12.1"[39m
+                      [33mcy[39m=[32m"12.1"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m [0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mm1.2[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mm1.2 is missing[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-row"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rd-chip tone-ai"[39m
+              [36m>[39m
+                [0mWarning[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"sp-row-b"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-t"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mLEAF_TITLE_EMPTY[0m
+                  [36m</span>[39m
+                  [0m [0m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-dot"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mfocusable[39m=[32m"false"[39m
+                    [33mheight[39m=[32m"1em"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"1.75"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"1em"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"12.1"[39m
+                      [33mcy[39m=[32m"12.1"[39m
+                      [33mr[39m=[32m"1"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [0m [0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sc-mono"[39m
+                  [36m>[39m
+                    [0mm2.5[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mNot in the rule corpus, so no rule stands behind this finding.[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-s"[39m
+                [36m>[39m
+                  [0mA leaf has no title[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"cm-pushbar sc-mt"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sp-primary sc-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m [0m
+              [0mExplain the findings (AI)[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sc-mt"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"scaf-note sc-mb"[39m
+            [36m>[39m
+              [0mBlocking. [0m
+              [0mBlocked.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"sp-list"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"sp-row"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rd-chip tone-warn"[39m
+                [36m>[39m
+                  [0mError[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sp-row-b"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sp-row-t"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"sc-mono"[39m
+                    [36m>[39m
+                      [0mX[0m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sp-row-s"[39m
+                  [36m>[39m
+                    [0mc[0m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"sp-row-s"[39m
+                  [36m>[39m
+                    [0mFix: [0m
+                    [0mf[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected:
+/could not be explained/
+
++ Received:
+"Validation · sequence 0000dispatch readiness · validationSequence 0000 · 6 leaves · 1 error · 1 warning · 0 info · computed server-side from the canonical leaves, each shown as the validation-corpus rule it is an instance of.ErrorMISSING_REQUIRED_SECTION  m1.2Not in the rule corpus, so no rule stands behind this finding.m1.2 is missingWarningLEAF_TITLE_EMPTY  m2.5Not in the rule corpus, so no rule stands behind this finding.A leaf has no title Explain the findings (AI)Blocking. Blocked.ErrorXcFix: f"
+
+ ❯ client/src/concept2cure/v2/__tests__/validationExplainNarrates.test.tsx:91:59
+     89|     serve({ blocking: true, summary: 'Blocked.', explained: [{ ruleId:…
+     90|     await explain();
+     91|     await waitFor(() => expect(document.body.textContent).toMatch(/cou…
+       |                                                           ^
+     92|     expect(document.body.textContent).not.toMatch(/Blocking\./);
+     93|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  18:56:54
+   Duration  16.90s (transform 578ms, setup 173ms, import 731ms, tests 15.33s, environment 515ms)
+

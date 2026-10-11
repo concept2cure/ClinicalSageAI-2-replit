@@ -503,23 +503,13 @@ router.post('/sap/amendment', authMiddleware, async (req: Request, res: Response
   }
 });
 
-/**
- * POST /api/biostat/sap/:sapVersionId/sign
- * Sign / approve a SAP version.
+/*
+ * POST /api/biostat/sap/:sapVersionId/sign is not served. It stamped a SAP
+ * version approved with a signature taken from the request body, verifying no
+ * signer. Nothing called it. Removed 2026-10-08 (P-25 follow-up), with
+ * CollaborativeSapService.signVersion; a signature goes through the platform's
+ * one ceremony (services/part11/reverify-signer.ts).
  */
-router.post('/sap/:sapVersionId/sign', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const orgId = resolveOrganizationId(req);
-    const userId = resolveUserId(req);
-    const sapVersionId = Number(req.params.sapVersionId);
-    const { role, signatureType } = req.body;
-
-    const result = await collaborativeSapService.signVersion(sapVersionId, req.body, orgId, userId);
-    res.json({ success: true, data: result });
-  } catch (error: any) {
-    return serverError(res, logger, 'signing SAP', error);
-  }
-});
 
 /**
  * POST /api/biostat/sap/:sapVersionId/lock

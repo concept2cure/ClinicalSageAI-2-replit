@@ -1,0 +1,151 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — geographic > flags requested regions missing from evidence 2ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — geographic > matches regions case-insensitively 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — population > flags a population gap when only adult evidence is present 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — population > matches population case-insensitively via substring 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — outcome > flags requested outcome types missing from evidence 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — temporal > flags a temporal gap when newest evidence is too old 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — temporal > no temporal gap when an item is within the recency window 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — full coverage > reports complete with no gaps when everything requested is covered 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — empty evidence > reports gaps for everything requested with no evidence 1ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — empty evidence > reports no gaps for an empty query regardless of evidence 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — ordering and determinism > orders gaps stably by GAP_TYPES 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — ordering and determinism > is deterministic across repeated identical calls 0ms
+ × server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > does not treat negated pediatric coverage as pediatric evidence 6ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > a broader cohort label requires applicability confirmation instead of a substring pass 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > future-dated evidence does not clear the requested recency window 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > an empty query is unassessed rather than complete 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > recency with no reference year remains unassessed 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > a geographic gap describes metadata coverage, not proof that evidence does not exist 1ms
+   → expected 'Evidence does not cover requested reg…' to match /structured.*not confirm/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > does not treat negated pediatric coverage as pediatric evidence
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/evidence-gap-detector.test.ts:170:29
+    168|   it('does not treat negated pediatric coverage as pediatric evidence'…
+    169|     const report = detectEvidenceGaps({ population: 'pediatric' }, [{ …
+    170|     expect(report.complete).toBe(false);
+       |                             ^
+    171|     expect(report.gaps[0].type).toBe('population');
+    172|     expect(report.gaps[0].description).toMatch(/structured.*not confir…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > a broader cohort label requires applicability confirmation instead of a substring pass
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/evidence-gap-detector.test.ts:176:29
+    174|   it('a broader cohort label requires applicability confirmation inste…
+    175|     const report = detectEvidenceGaps({ population: 'pediatric' }, [{ …
+    176|     expect(report.complete).toBe(false);
+       |                             ^
+    177|     expect(report.notes.join(' ')).toMatch(/population.*exact/i);
+    178|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > future-dated evidence does not clear the requested recency window
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/evidence-gap-detector.test.ts:181:29
+    179|   it('future-dated evidence does not clear the requested recency windo…
+    180|     const report = detectEvidenceGaps({ recencyYears: 2, asOfYear: 202…
+    181|     expect(report.complete).toBe(false);
+       |                             ^
+    182|     expect(report.gaps[0].type).toBe('temporal');
+    183|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > an empty query is unassessed rather than complete
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/evidence-gap-detector.test.ts:186:29
+    184|   it('an empty query is unassessed rather than complete', () => {
+    185|     const report = detectEvidenceGaps({}, []);
+    186|     expect(report.complete).toBe(false);
+       |                             ^
+    187|     expect(report.assessed).toBe(false);
+    188|     expect(report.notes.join(' ')).toMatch(/no coverage dimensions/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > recency with no reference year remains unassessed
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/evidence-gap-detector.test.ts:192:29
+    190|   it('recency with no reference year remains unassessed', () => {
+    191|     const report = detectEvidenceGaps({ recencyYears: 2 }, [{ year: 20…
+    192|     expect(report.complete).toBe(false);
+       |                             ^
+    193|     expect(report.assessed).toBe(false);
+    194|     expect(report.notes.join(' ')).toMatch(/reference year/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > a geographic gap describes metadata coverage, not proof that evidence does not exist
+AssertionError: expected 'Evidence does not cover requested reg…' to match /structured.*not confirm/i
+
+- Expected:
+/structured.*not confirm/i
+
++ Received:
+"Evidence does not cover requested region(s): EU, JP, CA, CN."
+
+ ❯ server/services/ana/__tests__/evidence-gap-detector.test.ts:199:40
+    197|     const report = detectEvidenceGaps({ regions: ['US', 'EU', 'JP', 'C…
+    198|     expect(report.gaps[0].missing).toEqual(['EU', 'JP', 'CA', 'CN']);
+    199|     expect(report.gaps[0].description).toMatch(/structured.*not confir…
+       |                                        ^
+    200|     expect(report.notes.join(' ')).toMatch(/independently/);
+    201|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 12 passed (18)
+   Start at  12:30:15
+   Duration  353ms (transform 62ms, setup 61ms, import 23ms, tests 18ms, environment 0ms)
+

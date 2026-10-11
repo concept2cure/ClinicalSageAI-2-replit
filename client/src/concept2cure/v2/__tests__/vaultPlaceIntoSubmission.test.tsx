@@ -17,7 +17,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -40,17 +40,25 @@ function refused(code: string, message: string) {
   } as Response;
 }
 
+const PID = '11111111-1111-4111-8111-111111111111';
+/* Anchored to the project the dialog places into: an unanchored submission is
+   not offered for a project's document (QA j3 finding (b)), so the fixtures
+   name their program. */
 const SUBMISSIONS = [
-  { id: 4, title: 'BX-301 NDA', applicationType: 'nda', primaryRegion: 'us', status: 'open' },
-  { id: 5, title: 'BX-301 IRB package', applicationType: 'irb', primaryRegion: 'us', status: 'open' },
-  { id: 6, title: 'OR-801 510(k)', applicationType: '510k', primaryRegion: 'us', status: 'open' },
+  { id: 4, title: 'BX-301 NDA', applicationType: 'nda', primaryRegion: 'us', status: 'open', programId: PID },
+  { id: 5, title: 'BX-301 IRB package', applicationType: 'irb', primaryRegion: 'us', status: 'open', programId: PID },
+  { id: 6, title: 'OR-801 510(k)', applicationType: '510k', primaryRegion: 'us', status: 'open', programId: PID },
 ];
+/* The list as the server returns it: scoped to ?programId when given. */
+function submissionList(rows: Array<{ programId?: string | null }>, url: string) {
+  const program = new URL(url, 'http://localhost').searchParams.get('programId');
+  return program ? rows.filter((row) => row.programId === program) : rows;
+}
 const SEQUENCES = [
   { id: 9, sequenceNumber: '0000', type: 'original', status: 'draft', region: 'us' },
   { id: 10, sequenceNumber: '0001', type: 'amendment', status: 'frozen', region: 'us' },
 ];
 
-const PID = '11111111-1111-4111-8111-111111111111';
 const VERSIONS_URL = `/api/c2c/project-vault/${PID}/documents/${DOC_UUID}/versions`;
 
 /** This version as GET …/versions returns it: its stage, and the server's own VR-14 verdict. */
@@ -71,15 +79,20 @@ let reads: string[];
 /** The answer to GET …/versions. */
 let onVersions: () => Response | Promise<Response>;
 
-function mockApi(onPut: (body: unknown) => Response = () =>
-  ok({ id: 77, sectionCode: '3.2.P.8.3', title: 'CSR-201', lifecycleOp: 'new' })) {
+const leaf = (over: Record<string, unknown> = {}) => ({
+  id: 77, sequenceId: 9, sectionCode: '3.2.P.8.3', title: 'CSR-201', lifecycleOp: 'new',
+  documentTable: 'vault_documents', documentUuid: DOC_UUID,
+  auditTrail: { persisted: true, chained: true }, ...over,
+});
+function mockApi(onPut: (body: unknown) => Response | Promise<Response> = (body) =>
+  ok(leaf({ lifecycleOp: (body as { lifecycleOp: string }).lifecycleOp }))) {
   writes = [];
   reads = [];
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
     if (method !== 'GET') writes.push({ method, url, body });
     else reads.push(url);
-    if (method === 'GET' && url === '/api/submissions') return ok(SUBMISSIONS);
+    if (method === 'GET' && (url === '/api/submissions' || url.startsWith('/api/submissions?'))) return ok(submissionList(SUBMISSIONS, url));
     if (method === 'GET' && /^\/api\/submissions\/\d+\/sequences$/.test(url)) return ok(SEQUENCES);
     if (method === 'GET' && url === VERSIONS_URL) return onVersions();
     if (method === 'PUT' && /\/sequences\/\d+\/leaves$/.test(url)) return onPut(body);
@@ -207,7 +220,7 @@ describe('the target picker is the shared one', () => {
  */
 describe('the section code is judged in the submission type\'s vocabulary', () => {
   it('files a vault document into an IRB package at an IRB slot', async () => {
-    mockApi((body) => ok({ id: 78, sectionCode: (body as { sectionCode: string }).sectionCode, title: 'ICF', lifecycleOp: 'new' }));
+    mockApi((body) => ok(leaf({ id: 78, sectionCode: (body as { sectionCode: string }).sectionCode, title: 'ICF' })));
     render(<VaultPlaceIntoSubmission {...props()} />);
     await fillTarget('irb.consent', '5');
     const btn = screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement;
@@ -226,7 +239,7 @@ describe('the section code is judged in the submission type\'s vocabulary', () =
   });
 
   it('files into a 510(k) at an eSTAR section', async () => {
-    mockApi((body) => ok({ id: 79, sectionCode: (body as { sectionCode: string }).sectionCode, title: 'DD', lifecycleOp: 'new' }));
+    mockApi((body) => ok(leaf({ id: 79, sectionCode: (body as { sectionCode: string }).sectionCode, title: 'DD' })));
     render(<VaultPlaceIntoSubmission {...props()} />);
     await fillTarget('estar.device-description', '6');
     const btn = screen.getByRole('button', { name: /place into submission/i }) as HTMLButtonElement;
@@ -457,5 +470,93 @@ describe("this version's stage and the server's verdict on transmitting it", () 
     render(<VaultPlaceIntoSubmission {...props()} projectId={PID} mimeType="text/plain" />);
     expect(await screen.findByText(/Only a PDF can be filed/)).toBeTruthy();
     expect(reads.some((u) => u.endsWith('/versions'))).toBe(false);
+  });
+});
+
+
+describe('vault filing confirmation', () => {
+  it('blocks retry after a lost write reply and offers the existing filing workspace', async () => {
+    mockApi(async () => { throw new Error('lost reply'); });
+    const callbacks = { ...props(), onNav: vi.fn() };
+    render(<VaultPlaceIntoSubmission {...callbacks} />);
+    await fillTarget(); fireEvent.click(placeBtn());
+    expect(await screen.findByText(/cannot confirm whether.*placed/i)).toBeTruthy();
+    expect(placeBtn().disabled).toBe(true);
+    expect(callbacks.onPlaced).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /Check filing status/i }));
+    expect(callbacks.onNav).toHaveBeenCalledWith('submission-center');
+    expect(callbacks.onClose).toHaveBeenCalled();
+    expect(writes).toHaveLength(1);
+  });
+
+  it.each([
+    null, false, {}, { id: 0 }, { id: 1.5 },
+    { sequenceId: 999 }, { documentUuid: '33333333-3333-4333-8333-333333333333' },
+    { documentTable: 'coauthor_documents' }, { sectionCode: '3.2.P.8.1' }, { lifecycleOp: 'replace' },
+  ])('does not confirm a malformed or mismatched receipt %j', async (over) => {
+    mockApi(() => ok(over && typeof over === 'object' && Object.keys(over).length ? leaf(over) : over));
+    const callbacks = props(); render(<VaultPlaceIntoSubmission {...callbacks} />);
+    await fillTarget(); fireEvent.click(placeBtn());
+    expect(await screen.findByText(/cannot confirm whether.*placed/i)).toBeTruthy();
+    expect(placeBtn().disabled).toBe(true);
+    expect(screen.queryByText(/Filed as leaf/)).toBeNull();
+    expect(callbacks.onPlaced).not.toHaveBeenCalled();
+  });
+
+  it.each([undefined, null, { persisted: false }, { persisted: true, chained: false }])(
+    'discloses incomplete audit confirmation %j without denying the placed leaf', async (auditTrail) => {
+      mockApi(() => ok(leaf({ auditTrail })));
+      const callbacks = props(); render(<VaultPlaceIntoSubmission {...callbacks} />);
+      await fillTarget(); fireEvent.click(placeBtn());
+      expect(await screen.findByText(/Filed as leaf.*placement audit entry/i)).toBeTruthy();
+      expect(placeBtn().disabled).toBe(true);
+      expect(callbacks.onPlaced).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('allows retry after a known pre-write refusal', async () => {
+    mockApi(() => refused('FORBIDDEN', 'Referenced document not found for this organization.'));
+    render(<VaultPlaceIntoSubmission {...props()} />);
+    await fillTarget(); fireEvent.click(placeBtn());
+    await screen.findByText(/not found for this organization/i);
+    expect(placeBtn().disabled).toBe(false);
+  });
+
+  it('ignores a write receipt after switching source document', async () => {
+    let resolve!: (value: Response) => void;
+    mockApi(() => new Promise<Response>((done) => { resolve = done; }));
+    const old = props(); const next = { ...props(), documentUuid: '33333333-3333-4333-8333-333333333333', documentTitle: 'New source' };
+    const { rerender } = render(<VaultPlaceIntoSubmission {...old} />);
+    await fillTarget(); fireEvent.click(placeBtn());
+    rerender(<VaultPlaceIntoSubmission {...next} />);
+    await act(async () => resolve(ok(leaf())));
+    expect(old.onPlaced).not.toHaveBeenCalled(); expect(next.onPlaced).not.toHaveBeenCalled();
+    expect(screen.queryByText(/Filed as leaf/)).toBeNull();
+    expect(screen.getByText('New source')).toBeTruthy();
+    expect(placeBtn().disabled).toBe(true);
+  });
+
+  it('ignores a write receipt after switching the source project', async () => {
+    let resolve!: (value: Response) => void;
+    mockApi(() => new Promise<Response>((done) => { resolve = done; }));
+    const callbacks = props();
+    const { rerender } = render(<VaultPlaceIntoSubmission {...callbacks} projectId={PID} />);
+    await fillTarget(); fireEvent.click(placeBtn());
+    rerender(<VaultPlaceIntoSubmission {...callbacks} projectId="33333333-3333-4333-8333-333333333333" />);
+    await act(async () => resolve(ok(leaf())));
+    expect(callbacks.onPlaced).not.toHaveBeenCalled();
+    expect(screen.queryByText(/Filed as leaf/)).toBeNull();
+    expect(placeBtn().disabled).toBe(true);
+  });
+
+  it('locks filing fields while the write is pending', async () => {
+    let resolve!: (value: Response) => void;
+    mockApi(() => new Promise<Response>((done) => { resolve = done; }));
+    render(<VaultPlaceIntoSubmission {...props()} />);
+    await fillTarget(); fireEvent.click(placeBtn());
+    expect((screen.getByLabelText('Target submission') as HTMLSelectElement).disabled ||
+      screen.getByLabelText('Target submission').closest('fieldset')?.disabled).toBe(true);
+    await act(async () => resolve(ok(leaf())));
+    expect(writes).toHaveLength(1);
   });
 });

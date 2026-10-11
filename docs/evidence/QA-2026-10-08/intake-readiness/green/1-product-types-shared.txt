@@ -1,0 +1,45 @@
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > 510k resolves to a device 2ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > de_novo resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > pma resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > hde resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ide resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > device resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > cer resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > mdr resolves to a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivd resolves to an IVD 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivdr resolves to an IVD 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > 510k can never resolve to a drug or a biologic 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > de_novo can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > pma can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > hde can never resolve to a drug or a biologic 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ide can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > device can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > cer can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > mdr can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivd can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > ivdr can never resolve to a drug or a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > resolves the EU technical files that used to fall through to a drug 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > does not guess at a filing type it has never seen 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a device filing is never a medicinal product > normalises casing and separators the store actually holds 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > reads a 510(k) started from the Diagnostics lane as an IVD 510(k) 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > cannot make a device filing medicinal, whatever the lane says 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the lane refines within the device family, and only there > leaves medicinal filings alone 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > ind resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > IND resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > cta resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > maa resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > jnda resolves to no class, so the person is asked 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > a filing that does not fix the class is a question, never a default (P-21) > the filings that do fix it still resolve: NDA and ANDA are drugs, a BLA is a biologic 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > treats companion diagnostics as IVDs 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > treats software as a medical device as a device 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > keeps medicinal products out of the device family 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > is null-safe and case-insensitive 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > family membership — CDx is an IVD, SaMD is a device > lists exactly the four device-family classes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the vocabulary itself > carries the six classes, each with a label and a regulatory reference 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > the vocabulary itself > recognises its own members and nothing else 1ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > puts every device and IVD instrument in MDX 2ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > buckets the medicinal lanes 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > returns null rather than guessing for an unknown filing type 0ms
+ ✓ shared/constants/domain/__tests__/product-types.test.ts > workstream bucketing > generates SQL that agrees with the function, member for member 1ms
+ Test Files  1 passed (1)
+      Tests  43 passed (43)

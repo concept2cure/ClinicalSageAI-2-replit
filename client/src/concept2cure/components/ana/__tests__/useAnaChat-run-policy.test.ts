@@ -38,7 +38,8 @@ const sentBody = (call = 0) => JSON.parse(fetchMock.mock.calls[call][1].body as 
 /** Open a turn whose stream this test feeds frame by frame. */
 async function openTurn(options: Parameters<typeof useAnaChat>[0] = {}, sendOpts?: Record<string, unknown>) {
   let ctl!: ReadableStreamDefaultController<Uint8Array>;
-  const body = new ReadableStream<Uint8Array>({ start(c) { ctl = c; } });
+  let cancelled = false;
+  const body = new ReadableStream<Uint8Array>({ start(c) { ctl = c; }, cancel() { cancelled = true; } });
   fetchMock.mockResolvedValue({ ok: true, status: 200, body });
   const hook = renderHook(() => useAnaChat(options));
   let sent!: Promise<unknown>;
@@ -54,7 +55,7 @@ async function openTurn(options: Parameters<typeof useAnaChat>[0] = {}, sendOpts
   };
   const close = async () => {
     await act(async () => {
-      ctl.close();
+      if (!cancelled) ctl.close();
       await sent;
     });
   };
@@ -114,7 +115,7 @@ describe('a Manual hold is kept, and cleared', () => {
     expect(hook.result.current.runStatus).toBeNull();
     expect(hook.result.current.runHold).toEqual({ reason: 'expired', next: ['Searching PubMed'] });
     // The turn's done names the stop. The expired hold is KEPT until the
-    // stream closes (review follow-through, objection 24): done arrives at
+    // server finishes the turn (review follow-through, objection 24): done arrives at
     // once after hold_expired, and post-processing runs on after it, so a
     // hold cleared on done left the strip and the panel saying "Working".
     await feed({ type: 'done', stoppedReason: 'hold_expired', rounds: 1, runPolicy: 'manual', pendingSteps: ['Searching PubMed'] });
@@ -123,9 +124,10 @@ describe('a Manual hold is kept, and cleared', () => {
     const turn = lastAssistant(hook.result.current.messages);
     expect(turn).toMatchObject({ stoppedReason: 'hold_expired', rounds: 1, runPolicy: 'manual', pendingSteps: ['Searching PubMed'] });
     await feed({ type: 'post_done' });
-    expect(hook.result.current.runHold).toEqual({ reason: 'expired', next: ['Searching PubMed'] });
-    await close();
     expect(hook.result.current.runHold).toBeNull();
+    expect(hook.result.current.isStreaming).toBe(false);
+    expect(lastAssistant(hook.result.current.messages)).toMatchObject({ stoppedReason: 'hold_expired', pendingSteps: ['Searching PubMed'] });
+    await close();
   });
 
   it('a steer that replaced the held step says which step', async () => {

@@ -43,6 +43,7 @@ const CREATE = (t) => `${'CRE' + 'ATE'} TABLE IF NOT EXISTS ${t} (id integer PRI
 const SELECT = (t) => `${'SEL' + 'ECT'} id ${'FR' + 'OM'} ${t} WHERE id = $1`;
 const ddl = (t) => `await db.execute(sql\`${CREATE(t)}\`);`;
 const query = (t) => `export const read_${t} = '${SELECT(t)}';`;
+const statement = (name, body) => `export const ${name} = \`${body}\`;`;
 
 const FILES = {
   // A reference to a table nothing creates, AFTER a string holding /* and
@@ -93,6 +94,30 @@ const FILES = {
     '}',
     query('sql_commented_notes'),
     '',
+  ].join('\n'),
+
+  // Column names belong to the CTE declaration, not to a persisted table.
+  // A quoted column and adjacent ')AS' also retain SQL token boundaries.
+  'server/services/first-column-cte.ts': statement('first_columns',
+    'WITH RECURSIVE first_columns(id, "Step Count")AS (SELECT 1,0 UNION ALL SELECT id+1,0 FROM first_columns WHERE id<2) SELECT id FROM first_columns'),
+
+  // Statement admission must read storage inside a leading column-list CTE.
+  'server/services/first-column-missing-store.ts': statement('first_missing',
+    'WITH RECURSIVE first_missing_cte(id) AS (SELECT id FROM first_cte_missing_store) SELECT id FROM first_missing_cte'),
+
+  // This is the existing recorded-lineage query shape: seed, then a walk
+  // with declared output columns and a recursive reference to itself.
+  'server/services/later-column-cte.ts': statement('later_columns',
+    'WITH RECURSIVE seeded AS (SELECT 1 AS id), later_walk(id) AS (SELECT id FROM seeded UNION ALL SELECT id+1 FROM later_walk WHERE id<2) SELECT id FROM later_walk'),
+
+  'server/services/later-column-missing-store.ts': statement('later_missing',
+    'WITH seed AS (SELECT 1 AS id), later_missing_cte(id) AS (SELECT id FROM later_cte_missing_store) SELECT id FROM later_missing_cte'),
+
+  // A declaration qualifies only its own literal; another query using the
+  // same name still requires an actual backing table.
+  'server/services/statement-local-cte.ts': [
+    statement('defined_here', 'WITH statement_local_name(id) AS (SELECT 1) SELECT id FROM statement_local_name'),
+    query('statement_local_name'),
   ].join('\n'),
 };
 
@@ -150,4 +175,33 @@ test('DDL only inside real comments backs nothing', () => {
 test('DDL inside an SQL comment within an embedded string backs nothing', () => {
   const r = runGate();
   assert.ok(r.unbacked.has('sql_commented_notes'), r.out);
+});
+
+test('a leading recursive CTE with declared and quoted columns is query-local storage', () => {
+  const r = runGate();
+  assert.ok(!r.unbacked.has('first_columns'), r.out);
+});
+
+test('a leading column-list CTE still reports the missing storage it reads', () => {
+  const r = runGate();
+  assert.ok(r.unbacked.has('first_cte_missing_store'), r.out);
+  assert.ok(!r.unbacked.has('first_missing_cte'), r.out);
+});
+
+test('a later recursive CTE with declared columns is query-local storage', () => {
+  const r = runGate();
+  assert.ok(!r.unbacked.has('later_walk'), r.out);
+  assert.ok(!r.unbacked.has('seeded'), r.out);
+});
+
+test('a later column-list CTE still reports the missing storage it reads', () => {
+  const r = runGate();
+  assert.ok(r.unbacked.has('later_cte_missing_store'), r.out);
+  assert.ok(!r.unbacked.has('later_missing_cte'), r.out);
+});
+
+test('a CTE declaration does not qualify the same table name in another statement', () => {
+  const r = runGate();
+  assert.equal(r.code, 1, r.out);
+  assert.ok(r.unbacked.has('statement_local_name'), r.out);
 });

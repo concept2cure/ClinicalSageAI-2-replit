@@ -1,0 +1,62 @@
+(node:41) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:41) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:62) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > keeps one pending SELECT across slow ticks, then polls again and delivers cancellation 9ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > logs a genuine failed read and releases admission for the next tick 5ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > logs a synchronous query failure without stranding poll admission 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > does not query with no local runs or after the last local run is released 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > executes each admitted poll under actual system scope across tenant requests 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > ignores an old pending poll result after stop/restart while the new poll remains pending 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > returns a late old connection without replacing or leaking the restarted client 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > ignores late old connection failure without releasing the restarted client or arming old polling 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > does not let a released client error rearm the obsolete pool after restart 8ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > does not dispatch notifications from an obsolete released client into a restarted lifecycle 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > coalesces notification bursts while each admitted read is pending 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > does not lose Stop notified while an older running snapshot is pending 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > lets another run deliver cancellation while the first run read stays pending 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > logs rejection and drains the pending successor without stranding admission 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > discards a queued successor after its local run has been released 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > isolates pending results and queued work across listener stop and restart 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > runs admitted and successor reads in actual system scope across tenant requests 12ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > ignores unrelated channels, missing payloads and runs owned elsewhere 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > logs synchronous query failure and admits the next notification 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > overlapping estate-wide sweeps share pending work > bounds twenty overlapping calls to one query, shares its count, then sweeps afresh 6ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > overlapping estate-wide sweeps share pending work > shares across tenant callers while the actual query carries system scope 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > overlapping estate-wide sweeps share pending work > propagates a shared asynchronous rejection and admits a retry 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > overlapping estate-wide sweeps share pending work > shares a synchronous query throw and clears admission for retry 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > sweep admission preserves the existing query contract > keeps separate database pools independent 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > sweep admission preserves the existing query contract > keeps distinct effective stale thresholds independent 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > sweep admission preserves the existing query contract > shares thresholds that round to the same existing SQL parameter 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > sweep admission preserves the existing query contract > shares a null row count as zero without retaining a settled result 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > sweep admission preserves the existing query contract > registers admission before a query callback can reenter the sweep 1ms
+(node:74) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > aborts the local run even when the row write cannot be made
+{
+  "timestamp": "2026-10-08T14:40:52.207Z",
+  "level": "error",
+  "message": "[ana-run-control] [ana-run-control] internal stop failed for run_missing: unreachable",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > reaps under the system scope even when called from inside a tenant request 3ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > does not inherit the caller tenant — the bug this replaces 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > scopes the disconnect write to the run own organization 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > aborts the local run even when the row write cannot be made 2ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > request-time reads inherit the caller scope rather than widening it > reads a run under the request own tenant 0ms
+(node:82) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/run-control.test.ts > runAgenticToolLoop — checkpoint control > aborts cleanly when the checkpoint returns abort (cancel) 2ms
+ ✓ server/services/ana/__tests__/run-control.test.ts > runAgenticToolLoop — checkpoint control > a checkpoint side-effect can steer subsequent rounds (interjection) 1ms
+ ✓ server/services/ana/__tests__/run-control.test.ts > runAgenticToolLoop — checkpoint control > runs uninterrupted when no checkpoint is provided (behavior unchanged) 0ms
+
+ Test Files  3 passed (3)
+      Tests  36 passed (36)
+   Start at  22:40:51
+   Duration  1.04s (transform 284ms, setup 121ms, import 259ms, tests 85ms, environment 0ms)

@@ -1,0 +1,14 @@
+{
+  "publication_base": "9d8eda896bc7b2990f5699760e80f7b3e4bd5014",
+  "qualification_checkpoint": "45e87a5f1ff1ac62f29f3eac108d714656f881e9",
+  "base_client_directory_git_hash": "cbbac668ec3584fa176ac743f7c82b00c7c723f5",
+  "qualified_client_directory_git_hash": "cbbac668ec3584fa176ac743f7c82b00c7c723f5",
+  "client_directory_unchanged": true,
+  "client_paths_changed": [],
+  "out_of_scope_paths": [],
+  "allowed_source_paths": [
+    "server/services/ana/run-control.ts",
+    "server/services/ana/__tests__/run-control-poll-backpressure.test.ts"
+  ],
+  "evidence_directory": "docs/evidence/D4/2026-10-08-ana-control-poll-backpressure/"
+}

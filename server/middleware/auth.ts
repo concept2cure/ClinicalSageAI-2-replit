@@ -23,6 +23,7 @@ import {
 import { establishRequestTenantScope } from './establishRequestTenantScope';
 import { enforceTenantLifecycle } from './tenantLifecycleGuard';
 import { enforceStorageQuota } from './storageQuotaGuard';
+import { rolesHeldBy } from '../../shared/constants/org-roles';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
 
@@ -425,13 +426,33 @@ export function expandRoleClaims(
   roles: readonly string[] | undefined,
 ): string[] {
   const declared = roles?.length ? [...roles] : [role || 'user'];
-  const granted = declared.flatMap(r => ORG_ROLE_FUNCTIONAL_GRANTS.get(String(r).toLowerCase()) ?? []);
+  // P-18: a signing role is granted what the role it extends is granted.
+  const granted = declared.flatMap(r => rolesHeldBy(r).flatMap(held => ORG_ROLE_FUNCTIONAL_GRANTS.get(held) ?? []));
   return [...new Set([...declared, ...granted])];
 }
 
 /**
  * Require specific role(s) for access
  */
+/**
+ * Whether role claims satisfy a requireRole guard: the decision the middleware
+ * below enforces, as a pure function over the claims given, so a screen can
+ * report it before the act (authoring.router.ts callerDocumentAccess) instead
+ * of keeping a second permission model. Extracted unchanged from requireRole
+ * (2026-10-08, filing-spine design review).
+ */
+export function roleClaimsSatisfy(
+  claims: { role?: string; roles?: readonly string[] },
+  allowedRoles: readonly string[],
+): boolean {
+  const userRoles = ((claims.roles as string[] | undefined) || [claims.role as string]).flatMap(r => [r, ...rolesHeldBy(r).slice(1)]);
+  const hasRole = allowedRoles.some(role => userRoles?.includes(role) || role === '*');
+
+  const requiresPlatformRole = allowedRoles.some(role => PLATFORM_SCOPED_ROLES.has(role));
+  const orgAdminStandIn = !requiresPlatformRole && Boolean(userRoles?.includes('admin'));
+  return hasRole || orgAdminStandIn;
+}
+
 export const requireRole = (...allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     // SECURITY FIX: Dev-mode role bypass removed. Roles are always enforced.
@@ -471,13 +492,10 @@ export const requireRole = (...allowedRoles: string[]) => {
     // writes it. A route that genuinely wants to admit org admins alongside
     // staff still works by listing 'admin' explicitly — `hasRole` is evaluated
     // before the stand-in, so an explicit grant always wins.
-    const userRoles = req.user.roles || [req.user.role];
-    const hasRole = allowedRoles.some(role => userRoles?.includes(role) || role === '*');
-
-    const requiresPlatformRole = allowedRoles.some(role => PLATFORM_SCOPED_ROLES.has(role));
-    const orgAdminStandIn = !requiresPlatformRole && Boolean(userRoles?.includes('admin'));
-
-    if (!hasRole && !orgAdminStandIn) {
+    // P-18: a signing role satisfies a guard that admits the role it extends
+    // (approver → manager, reviewer → member). Applied here as well as in
+    // expandRoleClaims, so a token's claims cannot be where the rule is lost.
+    if (!roleClaimsSatisfy(req.user, allowedRoles)) {
       return res.status(403).json({
         error: { code: 'AUTH_004', message: 'Insufficient permissions' },
       });

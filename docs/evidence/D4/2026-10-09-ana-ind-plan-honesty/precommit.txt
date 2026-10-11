@@ -1,0 +1,15 @@
+🔍 Running pre-commit checks...
+📏 Checking file sizes...
+
+🔒 Server-side files changed — running security-pattern check...
+(node:142) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:155) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:155) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+check-security-patterns: 0 violations across 3110 file(s).
+✅ Security-pattern check passed.
+✅ Pre-commit checks complete
+[concept2cure-v2 2a48c72af] test(ana): type IND planning schema assertions precisely
+ 1 file changed, 10 insertions(+), 5 deletions(-)

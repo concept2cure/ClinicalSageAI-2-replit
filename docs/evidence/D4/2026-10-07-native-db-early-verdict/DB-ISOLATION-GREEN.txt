@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 ci:db-test-isolation
+> node scripts/ci/check-db-test-isolation.mjs
+
+[ci:db-test-isolation] OK — 150 real-database test file(s) run unmocked, and every mocked vitest config excludes them.

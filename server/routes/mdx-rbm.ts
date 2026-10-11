@@ -55,7 +55,7 @@
  *     GET   /api/mdx/rbm-summary/:programId
  */
 
-import { Router, Request } from 'express';
+import { Router, Request, type Response } from 'express';
 import { z } from 'zod';
 
 import { createScopedLogger } from '../utils/logger';
@@ -72,8 +72,7 @@ import {
   generatePlanFromAssessment, amendAssessment, approveAssessment, approvePlan,
   amendMonitoringPlan, nextPlanVersion, createAction,
 } from '../services/rbm/rbm-actuator';
-import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
-import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { checkSigningAuthority, type SigningAuthorityRefusal } from '../services/part11/signing-authority-gate';
 import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
 import {
   detectSiteOutliers, scorePatientCohort,
@@ -1005,6 +1004,18 @@ const approveBody = z.object({
   mfaToken: z.string().optional(),
 });
 
+/**
+ * checkSigningAuthority's refusal in this router's envelope (clientError's,
+ * which takes no 5xx), with its own code for a role that may not sign.
+ */
+function rbmSigningAuthorityRefused(res: Response, authority: SigningAuthorityRefusal): Response {
+  return authority.status === 403
+    ? clientError(res, 403, 'Your role does not permit approving this record (21 CFR Part 11 §11.10(g)).', {
+        code: 'RBM_NO_SIGNING_AUTHORITY',
+      })
+    : res.status(authority.status).json({ error: authority.message, details: { code: authority.code } });
+}
+
 /** Approve + activate a risk assessment, capturing the reason for change. */
 router.post('/rbm-assessments/:id/approve', async (req, res) => {
   const orgId = getOrgId(req);
@@ -1015,22 +1026,13 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
   if (!parsed.success) return clientError(res, 422, 'A reason for change is required', parsed.error.flatten().fieldErrors);
   const signerId = getUserId(req);
   if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
+  // 21 CFR Part 11 §11.10(g): identity is not authority. The platform's one
+  // policy (checkSigningAuthority), asked BEFORE the password since 2026-10-08
+  // (P-27): asked after it, a role that may not sign could still test one here.
+  const authority = await checkSigningAuthority(signerId, orgId);
+  if (authority) return rbmSigningAuthorityRefused(res, authority);
   const signoff = await reverifySigner(signerId, { password: parsed.data.password, mfaToken: parsed.data.mfaToken }, signerReverificationDeps());
   if (!signoff.ok) return clientError(res, signoff.status, signoff.error, { code: signoff.code });
-  // 21 CFR Part 11 §11.10(g): identity is not authority. A fully re-authenticated
-  // signer (password + MFA above) may still apply a signature only if their
-  // organization role carries signing authority. The policy is the one every
-  // other signing surface uses — services/part11/signing-authority — so this
-  // route cannot drift into its own idea of who may sign.
-  const signerRole = await resolveSignerOrgRole(signerId, orgId);
-  if (!isSigningAuthorized(signerRole)) {
-    return clientError(
-      res,
-      403,
-      'Your role does not permit approving this record (21 CFR Part 11 §11.10(g)).',
-      { code: 'RBM_NO_SIGNING_AUTHORITY' },
-    );
-  }
 
   const client = await pool.connect();
   try {
@@ -1145,22 +1147,13 @@ router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
   if (!parsed.success) return clientError(res, 422, 'A reason for change is required', parsed.error.flatten().fieldErrors);
   const signerId = getUserId(req);
   if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
+  // 21 CFR Part 11 §11.10(g): identity is not authority. The platform's one
+  // policy (checkSigningAuthority), asked BEFORE the password since 2026-10-08
+  // (P-27): asked after it, a role that may not sign could still test one here.
+  const authority = await checkSigningAuthority(signerId, orgId);
+  if (authority) return rbmSigningAuthorityRefused(res, authority);
   const signoff = await reverifySigner(signerId, { password: parsed.data.password, mfaToken: parsed.data.mfaToken }, signerReverificationDeps());
   if (!signoff.ok) return clientError(res, signoff.status, signoff.error, { code: signoff.code });
-  // 21 CFR Part 11 §11.10(g): identity is not authority. A fully re-authenticated
-  // signer (password + MFA above) may still apply a signature only if their
-  // organization role carries signing authority. The policy is the one every
-  // other signing surface uses — services/part11/signing-authority — so this
-  // route cannot drift into its own idea of who may sign.
-  const signerRole = await resolveSignerOrgRole(signerId, orgId);
-  if (!isSigningAuthorized(signerRole)) {
-    return clientError(
-      res,
-      403,
-      'Your role does not permit approving this record (21 CFR Part 11 §11.10(g)).',
-      { code: 'RBM_NO_SIGNING_AUTHORITY' },
-    );
-  }
 
   const client = await pool.connect();
   try {

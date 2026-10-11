@@ -1,0 +1,25 @@
+{
+  "success": true,
+  "source": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+  "run": 37697288645,
+  "apiRecordSubset": true,
+  "localReplayOfActualRecords": true,
+  "remoteCandidateReleasePassed": false,
+  "primaryFiles": 6,
+  "workflowJobs": 9,
+  "upgrade": {
+    "status": "passed",
+    "count": 2,
+    "artifactId": "ci-upgrade-step-records",
+    "summary": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "unknown": 0
+    }
+  },
+  "stepRecordsEqualActualAPI": true,
+  "auditBytesPreserved": true,
+  "auditSha256": "c16dc87f202991cd7e17dc2b6cacd217a4d31c06536d4cdf3e9ce123c7498c4a"
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "gate": "ci:untracked-imports",
+    "exit": 0,
+    "output": "[ci:untracked-imports] OK \u2014 every relative import in 6 file(s) resolves to a tracked file.\n"
+  },
+  {
+    "gate": "ci:pushed-lint-errors",
+    "exit": 0,
+    "output": "[ci:pushed-lint-errors] OK \u2014 no ESLint errors in 6 changed file(s) against origin/concept2cure-v2.\n"
+  },
+  {
+    "gate": "ci:pushed-lint-warnings",
+    "exit": 0,
+    "output": "[ci:eslint-warning-ratchet] --since 989d23553f5dc81c9a20365b99b8ee1c9066bce2 (989d23553) -- 6 lintable file(s) changed; linting both versions of each...\n[ci:eslint-warning-ratchet] no file changed its warning count since 989d23553f5dc81c9a20365b99b8ee1c9066bce2.\n"
+  }
+]

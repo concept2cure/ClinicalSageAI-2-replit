@@ -489,24 +489,24 @@ export async function getWorkflowStatus(
   let populatedSections: string[] = [];
 
   if (orgScoped) {
-    try {
-      const res = await pool.query(
-        `SELECT DISTINCT type FROM concept2cure_artifacts
-          WHERE organization_id = $2 AND project_id = $1 AND status != 'deleted'`,
-        [projectId, organizationId]
-      );
-      existingArtifacts = res.rows.map((r: any) => r.type);
-    } catch { /* table might not exist */ }
-
-    try {
-      const res = await pool.query(
-        `SELECT DISTINCT ctd_section FROM concept2cure_artifacts
+    // Independent pooled reads overlap; each retains its own failure default.
+    await Promise.all([
+      (async () => {
+        try {
+          const res = await pool.query(`SELECT DISTINCT type FROM concept2cure_artifacts
+          WHERE organization_id = $2 AND project_id = $1 AND status != 'deleted'`, [projectId, organizationId]);
+          existingArtifacts = res.rows.map((r: any) => r.type);
+        } catch { /* table might not exist */ }
+      })(),
+      (async () => {
+        try {
+          const res = await pool.query(`SELECT DISTINCT ctd_section FROM concept2cure_artifacts
           WHERE organization_id = $2 AND project_id = $1
-            AND content IS NOT NULL AND LENGTH(content) > 100`,
-        [projectId, organizationId]
-      );
-      populatedSections = res.rows.map((r: any) => r.ctd_section).filter(Boolean);
-    } catch { /* non-critical */ }
+            AND content IS NOT NULL AND LENGTH(content) > 100`, [projectId, organizationId]);
+          populatedSections = res.rows.map((r: any) => r.ctd_section).filter(Boolean);
+        } catch { /* non-critical */ }
+      })(),
+    ]);
   }
 
   const allSteps = workflow.phases.flatMap(p => p.steps);

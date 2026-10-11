@@ -1,0 +1,23 @@
+{
+  "extends": "/home/user/ClinicalSageAI-2-replit/tsconfig.json",
+  "compilerOptions": { "noEmit": true, "incremental": false },
+  "include": [],
+  "files": [
+    "/home/user/ClinicalSageAI-2-replit/server/types/global.d.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/types/index.d.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/types/ml-stat.d.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/types/pdfkit.d.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/types/xml2js.d.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/services/c2c/program-project-anchor.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/services/c2c/__tests__/project-ref-anchor-read.test.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/routes/ana-ri/stream.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/chat-context-builder.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/relational-profile-service.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/__tests__/prefetch-program-project.test.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/routes/ana-ri/__tests__/stream-project-anchor.test.ts"
+  ]
+}

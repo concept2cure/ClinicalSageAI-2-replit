@@ -1,0 +1,107 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T07:46:03.170Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7f8be14b-90e2-4f61-ad96-7892b110969d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T07:46:03.189Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7f8be14b-90e2-4f61-ad96-7892b110969d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T07:46:03.212Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7f8be14b-90e2-4f61-ad96-7892b110969d by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-08T07:46:03.330Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "approve",
+    "docId": "7f8be14b-90e2-4f61-ad96-7892b110969d",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-08T07:46:03.331Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "export",
+    "docId": "7f8be14b-90e2-4f61-ad96-7892b110969d",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-08T07:46:03.335Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "edit",
+    "docId": "7f8be14b-90e2-4f61-ad96-7892b110969d",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign 37ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not 17ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a FROZEN document can still be filed to the vault — the sealed record is what filing is for 23ms
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant
+{
+  "timestamp": "2026-10-08T07:46:03.371Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "7",
+    "method": "POST",
+    "path": "/authoring/documents/7f8be14b-90e2-4f61-ad96-7892b110969d/request-review",
+    "action": "edit",
+    "docId": "7f8be14b-90e2-4f61-ad96-7892b110969d",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through
+{
+  "timestamp": "2026-10-08T07:46:03.435Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 7f8be14b-90e2-4f61-ad96-7892b110969d by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial 28ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant 34ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > on a FROZEN document even its owner is told why not 27ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through 41ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  07:45:53
+   Duration  10.29s (transform 3.75s, setup 98ms, import 944ms, tests 8.88s, environment 0ms)
+

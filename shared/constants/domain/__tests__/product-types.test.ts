@@ -87,8 +87,27 @@ describe('the lane refines within the device family, and only there', () => {
   });
 
   it('leaves medicinal filings alone', () => {
-    expect(productTypeForFilingType('ind', 'diagnostics')).toBe('biologic');
     expect(productTypeForFilingType('nda', 'medtech')).toBe('drug');
+    expect(productTypeForFilingType('bla', 'diagnostics')).toBe('biologic');
+  });
+});
+
+describe('a filing that does not fix the class is a question, never a default (P-21)', () => {
+  // QA 2026-10-08 (second walk, j1/j7): an inhaled small-molecule IND was
+  // recorded as a biologic. An IND is filed with CDER for a drug and with CBER
+  // for a biologic; an EU MAA, an EU CTA and a Japanese J-NDA cover both too.
+  // The filing type does not say which, so the person does.
+  it.each(['ind', 'IND', 'cta', 'maa', 'jnda'])('%s resolves to no class, so the person is asked', (filing) => {
+    expect(productTypeForFilingType(filing)).toBeNull();
+    for (const lane of ['biotech', 'pharma', 'health']) {
+      expect(productTypeForFilingType(filing, lane)).toBeNull();
+    }
+  });
+
+  it('the filings that do fix it still resolve: NDA and ANDA are drugs, a BLA is a biologic', () => {
+    expect(productTypeForFilingType('nda')).toBe('drug');
+    expect(productTypeForFilingType('anda')).toBe('drug');
+    expect(productTypeForFilingType('bla')).toBe('biologic');
   });
 });
 

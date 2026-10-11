@@ -1,0 +1,77 @@
+# 2026-10-08T06:30:55Z npx vitest run --config vitest.config.ts server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts
+# sources: working tree (the fix)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a database without the anchor column is no linked project, not a failure
+{
+  "timestamp": "2026-10-08T06:31:03.500Z",
+  "level": "warn",
+  "message": "[program-project-anchor] projects.regulatory_program_id absent — program exports stay registry-unplaced (apply migrations/20260814_projects_regulatory_program_anchor.sql)",
+  "context": {
+    "context": "ana-ri.enrichment"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /submit keeps the readiness it read when only the eCTD memory read fails, and names only eCTD
+{
+  "timestamp": "2026-10-08T06:31:03.520Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "terminating connection due to administrator command"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /cmc keeps the Module 3 build state when the CMC memory read fails, and names only the CMC records
+{
+  "timestamp": "2026-10-08T06:31:03.521Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "terminating connection due to administrator command"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > a failed domain-memory read marks the source unavailable instead of passing as empty
+{
+  "timestamp": "2026-10-08T06:31:03.522Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "terminating connection"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > reads the profile and workflow of the linked project, org-scoped, and reports nothing unavailable 50ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a program with no linked project is an honest empty: nothing read, nothing unavailable, and the model is told why 18ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a database without the anchor column is no linked project, not a failure 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > eCTD project memory is read by the integer project id, never the UUID 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /safety reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /cmc reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /csr reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /device reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /cms reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /diagnostics reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, /ectd reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > with no linked project, Draft the Module 2.5 clinical overview for Vorelinib BX-512. reads no memory and says nothing about what is recorded; it is not a failure 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > the CMC build state keeps the program UUID; CMC memory takes the integer 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > a project the caller already resolved is used as given, with no second lookup 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a program UUID reads the project linked to it > an integer project id is still itself, with no lookup 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /safety marks the project records unavailable and asserts no absence 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /cmc marks the project records unavailable and asserts no absence 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on /csr marks the project records unavailable and asserts no absence 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a failed lookup on Draft the Module 2.5 clinical overview for Vorelinib BX-512. marks the project records unavailable and asserts no absence 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > an unresolved project from the caller is reported with its reason, and nothing is looked up again 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a project lookup that could not tell is reported, never read as "no linked project" > a program with no organization to scope its lookup is could-not-tell, not "no linked project" 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /submit keeps the readiness it read when only the eCTD memory read fails, and names only eCTD 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a request that reads several sources reports each on its own > /cmc keeps the Module 3 build state when the CMC memory read fails, and names only the CMC records 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > a failed domain-memory read marks the source unavailable instead of passing as empty 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > records a timeout as a timeout and a failure as a failure 9ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-program-project.test.ts > a source that could not be read is reported, with why > a project lookup that cannot finish marks the project record unavailable and reads nothing 2ms
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  06:30:56
+   Duration  6.99s (transform 4.91s, setup 123ms, import 6.47s, tests 107ms, environment 0ms)
+

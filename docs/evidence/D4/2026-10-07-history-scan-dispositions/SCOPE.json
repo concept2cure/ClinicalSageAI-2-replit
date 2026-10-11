@@ -1,0 +1,273 @@
+{
+  "base": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+  "allowedChanges": "five exact history fingerprints appended to .gitleaksignore, plus this evidence directory",
+  "oldIgnoreBytesPreserved": true,
+  "productionTestsScannerConfigCommandAndLiveStatusesUnchanged": true,
+  "unchangedSourceAndGuardGitBlobs": [
+    {
+      "path": "scripts/ci/__tests__/recorded-lineage-query-bindings.test.mjs",
+      "gitBlob": "a1c570fa26239b039fd42dddcb71aa7cf266554f"
+    },
+    {
+      "path": "scripts/ci/__tests__/unbacked-tables-strings.test.mjs",
+      "gitBlob": "04924c7102e4d7391e0f5a0090d166e9220eb943"
+    },
+    {
+      "path": "scripts/ci/check-unbacked-tables.mjs",
+      "gitBlob": "2c54a799c63e054cc7f061477d8197ae4158a8ee"
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-adoption.test.ts",
+      "gitBlob": "400362485b026a053bc9818290ad1a5e1f8a5275"
+    },
+    {
+      "path": "server/services/__tests__/m2-summary-builders.test.ts",
+      "gitBlob": "42da6314637ee4ab1be055d9c8159c57745ad391"
+    },
+    {
+      "path": "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts",
+      "gitBlob": "859143c949be71107c9ee341f593928c31f5cc69"
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts",
+      "gitBlob": "509e40619ffd2d981d3d7711fd9c6ac862ac6bbb"
+    },
+    {
+      "path": "server/services/document-data-disposition/derived-impact.ts",
+      "gitBlob": "d435e98135a57e3771e52fd3e9ce47df6286ec85"
+    },
+    {
+      "path": "server/services/document-data-disposition/recorded-lineage.ts",
+      "gitBlob": "a7427073a59cf765f5b24dbed9b1932ab52c520b"
+    },
+    {
+      "path": "server/services/m2-summary-builders.ts",
+      "gitBlob": "110c4067916dc2bfc3bda7670c7e3f201384b5a7"
+    },
+    {
+      "path": ".husky/pre-push",
+      "gitBlob": "f46a7751b314f5e33c16cd9a8ac77d115d0d0305"
+    },
+    {
+      "path": ".husky/pre-commit",
+      "gitBlob": "f34550ef6bc560e191aa827b5f7dfee49734b56e"
+    },
+    {
+      "path": ".typecheck-baseline.json",
+      "gitBlob": "2a3cec07f7828f6765bd25c28f5a90acec581657"
+    },
+    {
+      "path": "scripts/ci/check-migration-reachability.mjs",
+      "gitBlob": "faa632a95b952611ad0f9bc47672b898dbaac43c"
+    },
+    {
+      "path": "scripts/ci/check-tables-against-live-schema.mjs",
+      "gitBlob": "e53bfebf36f9571b139f10eb5cba107f02ec07f2"
+    },
+    {
+      "path": "scripts/ci/unbacked-tables-baseline.json",
+      "gitBlob": "a32c74c5072a2c3c57cd814a697ad67fa5f8f73e"
+    },
+    {
+      "path": "scripts/ci/tables-live-schema-baseline.json",
+      "gitBlob": "d9cdb02c571454e0d96dbeddd69ab16a263a7693"
+    },
+    {
+      "path": "scripts/ci/migration-reachability-baseline.json",
+      "gitBlob": "daac3d253cceeb86b84254e47e32cc0e073d5fc4"
+    },
+    {
+      "path": "server/services/module3Composer.ts",
+      "gitBlob": "4886edc9e562ea6d6883f71382bb2898b512410e"
+    },
+    {
+      "path": "server/services/cmc/recorded-stability.ts",
+      "gitBlob": "1e5f2ac619fe31830318d6c010e9860c86b0d23e"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "gitBlob": "0bcde0d7cb8eddc4edaf0583b0064c6630df57eb"
+    },
+    {
+      "path": "vitest.db.config.ts",
+      "gitBlob": "e1be1748b9ce90e92c32d864a457dc42b029b73b"
+    },
+    {
+      "path": "tests/setup.db.ts",
+      "gitBlob": "563f943854797d10ff0c0c687d0ec046bdd0d254"
+    },
+    {
+      "path": "tests/db/two-tenant-fixture.ts",
+      "gitBlob": "adcf6cca0e4f97fe044c42a97b4abf071ddd9b45"
+    },
+    {
+      "path": "server/middleware/requirePlatformAdmin.ts",
+      "gitBlob": "b7076573d5b11fd5c52525138118d1706b01abdc"
+    },
+    {
+      "path": "server/services/entitlements/master-admin.ts",
+      "gitBlob": "0f86569e57329541b0cebd500160c6481f4f8ada"
+    },
+    {
+      "path": "server/routes/admin/master-admin.ts",
+      "gitBlob": "d179ce4f9b417950802f2ed4d574248cb96615d8"
+    },
+    {
+      "path": "server/routes/admin/licensing-trials.ts",
+      "gitBlob": "5043149e5b77709d41f1a8525aab0f7e8762d3b4"
+    },
+    {
+      "path": "server/routes/organizations-routes.ts",
+      "gitBlob": "d56210cd0713978f40493e78b1fe473dfcad9bd7"
+    },
+    {
+      "path": "server/routes/tenant-config.ts",
+      "gitBlob": "fb0e8f3368989fab0e0231b14905bdad20c06f5a"
+    },
+    {
+      "path": "server/routes/module-access-requests.ts",
+      "gitBlob": "fbe8e3e6b8eba318d948f675ac134c7f9f40ec5a"
+    },
+    {
+      "path": "tests/db/tenant-export-withheld-columns.dbtest.ts",
+      "gitBlob": "8583a2c9b51c1d9eb9218e1bde42670bf6cd774b"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "gitBlob": "fce3c88f20e7a04c475cbb9968f59d4bc80a1025"
+    },
+    {
+      "path": "tests/db/master-enterprise-requests.dbtest.ts",
+      "gitBlob": "9a47c80566582470bf0905a4d738d4b4a68c97de"
+    },
+    {
+      "path": "tests/db/module-access-requests.dbtest.ts",
+      "gitBlob": "ba595c1559b782a53d24c78444669ed50af56e03"
+    },
+    {
+      "path": "tests/db/organizations-writes.dbtest.ts",
+      "gitBlob": "65d8392910938bfb09bb1d42fc23316ed881dbfa"
+    },
+    {
+      "path": "scripts/db/generate-report-type-registry-seed.ts",
+      "gitBlob": "9ac53a5f4bb1cea2606677167d00b394723a4e8c"
+    },
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "gitBlob": "1d872cc5971e2d70561e365fe3132656fdc775bb"
+    },
+    {
+      "path": "migrations/20260930_report_type_registry_seed.sql",
+      "gitBlob": "d486d96d1caad9978e00d942cb10d18c0fdb818e"
+    },
+    {
+      "path": "server/services/report-os/taxonomy.ts",
+      "gitBlob": "82870ede7d1aa8965f2c8bfc1a44f2b7c0428a61"
+    },
+    {
+      "path": "server/services/report-os/taxonomy-global.ts",
+      "gitBlob": "414a4207451ec27a9115ece1723dd72eb57e31f9"
+    },
+    {
+      "path": "server/services/report-os/prediction/report-types.ts",
+      "gitBlob": "12a6f94576ae0001f75fe838315dd0d957bbe7eb"
+    },
+    {
+      "path": "shared/schema/report-os.ts",
+      "gitBlob": "2058c77e8bdb1303b4d1222db63751ef3322932f"
+    },
+    {
+      "path": "server/services/report-os/__tests__/report-type-registry-seed.test.ts",
+      "gitBlob": "2a3951f29356ca57ada05ec082e48d9277da3006"
+    },
+    {
+      "path": "tests/db/report-os-registry-seed.dbtest.ts",
+      "gitBlob": "b596da967417e6d798fdfb192d55d600686a8236"
+    },
+    {
+      "path": "server/src/routes/stability.router.ts",
+      "gitBlob": "92915cc45f5968deaea7ff615dace29285b5fb2f"
+    },
+    {
+      "path": "db/migrations/030_stability_results.sql",
+      "gitBlob": "02ac6197305cde656475a34247e0db82bda847d1"
+    },
+    {
+      "path": "db/migrations/20260617_audit_events_hmac_seal.sql",
+      "gitBlob": "2c6d0df44be91bf6e5a5818944a4b9b675a24b42"
+    },
+    {
+      "path": "db/migrations/20260730_licensing_ip_tables.sql",
+      "gitBlob": "fcb46b34115ba86f3f6991f8f044a2a8857e9844"
+    },
+    {
+      "path": "db/migrations/20260331_regulatory_correspondence_os.sql",
+      "gitBlob": "bb3f65792833954ef2d72f83febd655ec7408292"
+    },
+    {
+      "path": "server/services/audit/chain.ts",
+      "gitBlob": "f05dcb5411be28fbe2a8247fdd40707a18a4bfb7"
+    },
+    {
+      "path": "server/routes/regulatory-correspondence.ts",
+      "gitBlob": "024f077b79490a44e338d1000a943d6b4f5b097d"
+    },
+    {
+      "path": "server/routes/regulatory-correspondence.validation.ts",
+      "gitBlob": "d1fd661bc8f6c9d758a5091097edcca7e33a4f47"
+    },
+    {
+      "path": "docs/evidence/D6/2026-10-05-pm-decisions/README.md",
+      "gitBlob": "d0169793469b2a5373530f47308c89ffc3e084d4"
+    },
+    {
+      "path": "server/services/tenant-export/__tests__/tenant-full-export.vault.pglite.integration.test.ts",
+      "gitBlob": "837c4141c3592a7af58f3ac67b0aad3842cca1f3"
+    },
+    {
+      "path": "server/services/tenant-export/__tests__/tenant-export-read-failures.test.ts",
+      "gitBlob": "00c920d00b997ab1318966e3fdef405a311fb2e7"
+    },
+    {
+      "path": "server/routes/__tests__/tenant-export-5xx-containment.test.ts",
+      "gitBlob": "89da7b4acaae7c4752eef96f4f84781213bda89a"
+    },
+    {
+      "path": "server/__tests__/routes/tenant-export.test.ts",
+      "gitBlob": "b09c982abc6bc9db322b785ca82aab2a73ffa582"
+    },
+    {
+      "path": "tests/schema-contract/tenant-export-covers-purge.contract.test.ts",
+      "gitBlob": "d0107c602f327c2e4b17f8a2d15dc43dbda53bd3"
+    },
+    {
+      "path": "server/routes/tenant-export.ts",
+      "gitBlob": "60ecf23a01d85aa614884a10c8719d89c4deffb5"
+    },
+    {
+      "path": "server/services/tenant-export/tenant-full-export.service.ts",
+      "gitBlob": "faa2d1185ae4d0043e3b94836adf50c4e9753e61"
+    },
+    {
+      "path": "server/services/tenant-export/__tests__/tenant-full-export.withheld.pglite.integration.test.ts",
+      "gitBlob": "c3935dde7b42ace85d8cceca39dc1494a2a36ad1"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "gitBlob": "73a7b0b59b71051eb914815a0c6533f810aa78cd"
+    },
+    {
+      "path": "tests/ci/secret-history-scan.contract.test.ts",
+      "gitBlob": "d9b19ff08fc25b36e4dfaa6edf2b4c2b50a519a9"
+    },
+    {
+      "path": "scripts/ci/check-committed-secrets.mjs",
+      "gitBlob": "12533073ece3b19a9c16aa2172caf056e8d57d74"
+    },
+    {
+      "path": "scripts/ci/check-committed-secrets.selftest.mjs",
+      "gitBlob": "868108c16ae32aecf8a701fae53b452f5f99a832"
+    }
+  ],
+  "evidenceFormat": "path and gitBlob in separate fields, to avoid presenting an access-named path as a credential property"
+}

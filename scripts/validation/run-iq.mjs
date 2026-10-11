@@ -16,14 +16,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
-import { parseEnvFile, readEnvFiles, resolveEnv } from './env-files.mjs';
+import { parseEnvFile, resolveEnv, resolveRunDate, configurationPresence } from './env-files.mjs';
 import { passwordLogin, runCredential } from '../../tests/validation/lib/harness.mjs';
 
 const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-27';
+const RUN_DATE = resolveRunDate();
 const BASE_URL = (process.env.VALIDATION_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
-const OUT = path.join(ROOT, 'docs', 'evidence', 'W3', RUN_DATE, 'IQ');
+const OUT = path.join(process.env.VALIDATION_EVIDENCE_ROOT || path.join(ROOT, 'docs', 'evidence', 'W3', RUN_DATE), 'IQ');
 fs.mkdirSync(OUT, { recursive: true });
 
 const checks = [];
@@ -87,18 +87,17 @@ await record('IQ-03', 'Container image definition matches the runbook', 'node:22
   return `Dockerfile checks pass; deploy-aws.yml jobs: ${jobs.join(' → ')}`;
 });
 
-await record('IQ-04', 'Required configuration is declared and (locally) set', 'Every variable docker-compose.yml marks as required exists in .env.example; report which are set in the local env files, .env.local then .env (values never printed)', () => {
+await record('IQ-04', 'Required configuration is declared and (locally) set', 'Every required compose variable is documented; record effective file/process configuration presence without credential values', () => {
   const compose = read('docker-compose.yml');
   // `${VAR:?...}` in the compose header is the syntax example, not a variable.
   const required = [...new Set([...compose.matchAll(/\$\{([A-Z0-9_]+):\?/g)].map((m) => m[1]))].filter((k) => k !== 'VAR');
   const example = parseEnvFile(path.join(ROOT, '.env.example'));
   const exampleText = read('.env.example');
-  const local = readEnvFiles(ROOT);
+  const presence = configurationPresence(required, env);
   const notInExample = required.filter((k) => !(k in example) && !new RegExp(`^#?\\s*${k}=`, 'm').test(exampleText));
-  const setLocally = required.filter((k) => local[k] && local[k].length > 0);
-  const unsetLocally = required.filter((k) => !local[k]);
-  const aiKey = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'KIMI_API_KEY'].filter((k) => local[k] && !/^sk-\.\.\./.test(local[k]));
-  const observed = `compose-required: ${required.join(', ')}; not documented in .env.example: ${notInExample.length ? notInExample.join(', ') : 'none'}; set in local .env.local/.env: ${setLocally.join(', ') || 'none'}; unset locally: ${unsetLocally.join(', ') || 'none'}; AI provider key present locally: ${aiKey.length ? 'yes' : 'no'}`;
+  const setLocally = presence.set;
+  const unsetLocally = presence.unset;
+  const observed = `compose-required: ${required.join(', ')}; not documented in .env.example: ${notInExample.length ? notInExample.join(', ') : 'none'}; set in effective file/process configuration: ${setLocally.join(', ') || 'none'}; unset in effective configuration: ${unsetLocally.join(', ') || 'none'}; AI provider key present: ${presence.providerConfigured ? 'yes' : 'no'}`;
   if (notInExample.length) throw fail(observed);
   return { status: unsetLocally.length ? 'deviation' : 'pass', observed: unsetLocally.length ? `IQ-DEV-002: local environment is a development install, not the production boot contract — ${observed}` : observed };
 });

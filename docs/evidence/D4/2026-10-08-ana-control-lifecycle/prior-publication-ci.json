@@ -1,0 +1,54 @@
+{
+  "observed_at": "2026-10-08T05:10:22.154Z",
+  "source_sha": "117313b90e933b8e96d162e3f855ca08899ec9fc",
+  "runs": [
+    {
+      "id": 37729978374,
+      "name": "CI",
+      "status": "queued",
+      "conclusion": null,
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37729978374",
+      "head_sha": "117313b90e933b8e96d162e3f855ca08899ec9fc"
+    },
+    {
+      "id": 37729978185,
+      "name": "Repo Health Baseline Refresh",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37729978185",
+      "head_sha": "117313b90e933b8e96d162e3f855ca08899ec9fc"
+    },
+    {
+      "id": 37729978090,
+      "name": "CodeQL",
+      "status": "in_progress",
+      "conclusion": null,
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37729978090",
+      "head_sha": "117313b90e933b8e96d162e3f855ca08899ec9fc"
+    },
+    {
+      "id": 37729978053,
+      "name": "Tier 5 Browser Smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37729978053",
+      "head_sha": "117313b90e933b8e96d162e3f855ca08899ec9fc"
+    },
+    {
+      "id": 37729978078,
+      "name": "C2C Agent — Validate & Audit",
+      "status": "in_progress",
+      "conclusion": null,
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37729978078",
+      "head_sha": "117313b90e933b8e96d162e3f855ca08899ec9fc"
+    },
+    {
+      "id": 37729978130,
+      "name": "Semgrep",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37729978130",
+      "head_sha": "117313b90e933b8e96d162e3f855ca08899ec9fc"
+    }
+  ]
+}

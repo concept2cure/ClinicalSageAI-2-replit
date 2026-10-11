@@ -1,0 +1,4 @@
+Warning: modified files without companion tests (non-blocking):
+ - client/src/concept2cure/v2/V2App.tsx
+ - server/services/ai-gateway/providers/clients.ts
+Test presence verified for added/renamed source files.

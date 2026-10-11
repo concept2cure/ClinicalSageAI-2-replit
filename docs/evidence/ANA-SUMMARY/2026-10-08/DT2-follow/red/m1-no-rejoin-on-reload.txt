@@ -1,0 +1,61 @@
+# m1-no-rejoin-on-reload: --config vitest.config.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx
+# exit 1
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 1. a reloaded thread whose last question has a live run renders a followed turn after it, with the plan and the phase line 23ms
+   → expected [ 'user' ] to deeply equal [ 'user', 'assistant' ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > a new conversation’s first turn is rejoined the same way: by its stamped thread and question 4ms
+   → expected [ 'm-501' ] to deeply equal [ 'm-501', 'f-run_live' ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 3. a sealed run hands over to its record: the stored answer takes the turn’s place, under the same id 5ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. a stale owner says how long it has been silent; the reader’s own network says it is retrying, and the rows stay 4ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. the reader backs off 2, 4, 8 … s while its network fails 5ms
+   → expected +0 to be 1 // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 7. with no record: "Recording…" while the owner is still trying, then the run’s reason, its rows and "Not recorded" 9ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 7. …or after 30 s from its end, when the owner never releases it 5ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > a colleague’s read is refused in the server’s words, and nothing is followed 4ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > an admin follows with cancel scope 6ms
+   → expected null to be 'cancel' // Object.is equality
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 2. overlapping SSE frames and polled rows render once 110ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 5. a failed cancel on a detachable turn says "Stop not confirmed. Retrying." and does not abort; a later 200 shows Stopped 2258ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 5. a 409 (already stopped) shows Stopped 79ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > a turn that asked to drive keeps today’s Stop: a failed cancel still aborts 80ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 'leave' never cancels and never says Stopped 80ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > RUN_IN_PROGRESS: the refusal is said in the design’s words, and the run that holds the conversation is followed after its question 140ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > RUN_LIMIT: the refusal is said in the design’s words, and nothing is followed 89ms
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 1. after its question: the rows, the plan rail and the follower phase line 48ms
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 4. a Manual hold renders from `hold`, and its answers send controls 11ms
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 6. a stale owner is said beside the rows, with Stop offered 8ms
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 3. a sealed run hands over, and its rows read the same before and after 6ms
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 7. ended without a record: the run’s reason, the saved rows and "Not recorded" 8ms
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > a gap in the mirror is said once, never in place of the rows 7ms
+ Test Files  2 failed (2)
+      Tests  15 failed | 7 passed (22)
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 1. after its question: the rows, the plan rail and the follower phase line
+TestingLibraryElementError: Unable to find an element by: [data-testid="record"]
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 4. a Manual hold renders from `hold`, and its answers send controls
+TestingLibraryElementError: Unable to find an element with the text: Waiting for you before the next step. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 6. a stale owner is said beside the rows, with Stop offered
+TestingLibraryElementError: Unable to find an element with the text: AnA hasn't reported for 3 min. The server handling this turn may have stopped.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 3. a sealed run hands over, and its rows read the same before and after
+TestingLibraryElementError: Unable to find an element with the text: Recording…. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 7. ended without a record: the run’s reason, the saved rows and "Not recorded"
+TestingLibraryElementError: Unable to find an element with the text: Recording…. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > a gap in the mirror is said once, never in place of the rows
+TestingLibraryElementError: Unable to find an element with the text: Some steps could not be shown live. The full list appears when the turn is recorded.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 1. a reloaded thread whose last question has a live run renders a followed turn after it, with the plan and the phase line
+AssertionError: expected [ 'user' ] to deeply equal [ 'user', 'assistant' ]
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > a new conversation’s first turn is rejoined the same way: by its stamped thread and question
+AssertionError: expected [ 'm-501' ] to deeply equal [ 'm-501', 'f-run_live' ]
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 3. a sealed run hands over to its record: the stored answer takes the turn’s place, under the same id
+TypeError: Cannot read properties of undefined (reading 'streaming')
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. a stale owner says how long it has been silent; the reader’s own network says it is retrying, and the rows stay
+TypeError: Cannot read properties of undefined (reading 'follow')
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. the reader backs off 2, 4, 8 … s while its network fails
+AssertionError: expected +0 to be 1 // Object.is equality
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 7. with no record: "Recording…" while the owner is still trying, then the run’s reason, its rows and "Not recorded"
+TypeError: Cannot read properties of undefined (reading 'streaming')
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 7. …or after 30 s from its end, when the owner never releases it
+TypeError: Cannot read properties of undefined (reading 'turnRecord')
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > a colleague’s read is refused in the server’s words, and nothing is followed
+TypeError: Cannot read properties of undefined (reading 'follow')
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > an admin follows with cancel scope
+AssertionError: expected null to be 'cancel' // Object.is equality

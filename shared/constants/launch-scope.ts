@@ -45,8 +45,13 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
   {
     id: 'projects',
     label: 'Projects',
-    surfaces: ['projects', 'project-home', 'program-journey', 'filings-catalog', 'tasks'],
-    modules: ['projects', 'program-journey', 'filings-catalog', 'tasks'],
+    // CPO decision, 2026-10-08 (docs/SURFACE_DECISIONS_2026-10-08.md, under the
+    // founder's delegation of 2026-10-07): the program journey and the filings
+    // catalog left the app. The journey is empty for every program a client
+    // creates (only the demo seed fills it); the catalog's Start drops the
+    // choice, and the New project wizard already persists the filing type.
+    surfaces: ['projects', 'project-home', 'tasks'],
+    modules: ['projects', 'tasks'],
   },
   {
     id: 'vault',
@@ -59,9 +64,7 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     label: 'Authoring',
     surfaces: [
       'document-authoring',
-      'template-library',
       'review',
-      'regulatory-workspace',
       // Protocol development joined the launch catalog by founder decision on
       // 2026-09-21 (docs/evidence/WI/2026-09-21). It is the clinical protocol
       // authoring workspace — sections, objectives, eligibility, schedule of
@@ -76,28 +79,27 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
       // (No quoted ids in these comments: ci:launch-scope reads the array
       // text and would count one.)
       'protocol-dev',
+      // CPO decision, 2026-10-08: the template library and the regulatory
+      // workspace left the app. A saved template formats no authored document
+      // (export takes no template; Adjust and Apply only send a chat prompt),
+      // and the workspace is a fixed paragraph where the editor should be,
+      // over a store no program writes. The editor is the Authoring app.
     ],
-    modules: ['document-authoring', 'template-library', 'review', 'protocol-dev'],
+    modules: ['document-authoring', 'review', 'protocol-dev'],
   },
   {
     id: 'submission-center',
     label: 'Submission Center',
-    surfaces: [
-      'submission-center',
-      'dossier-map',
-      'ectd-compile',
-      'ectd-coauthor',
-      'ectd-publishing',
-      'gateway-transmittals',
-    ],
-    modules: [
-      'submission-center',
-      'dossier-map',
-      'ectd-compile',
-      'ectd-coauthor',
-      'ectd-publishing',
-      'gateway-transmittals',
-    ],
+    // CPO decision, 2026-10-08: three screens left the app. The co-author is a
+    // second editor over a second store, and its Validate and Compliance tabs
+    // report the same failure whatever the text says (they read section rows
+    // placement never writes); filing copies are placed from the Builder and
+    // edited in the Authoring editor. The dossier map reads a store programs
+    // created in the product never write, so it is always empty; Project home's
+    // dossier readiness is computed from the program's own sections. The
+    // publishing center is a reference page that publishes nothing.
+    surfaces: ['submission-center', 'ectd-compile', 'gateway-transmittals'],
+    modules: ['submission-center', 'ectd-compile', 'gateway-transmittals'],
   },
   {
     id: 'submission-readiness',
@@ -116,8 +118,10 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
   {
     id: 'qms',
     label: 'QMS controlled documents',
-    surfaces: ['quality', 'qmp'],
-    modules: ['quality', 'qmp'],
+    // CPO decision, 2026-10-08: quality-management plans left the app. A plan's
+    // gates and CTQ factors cannot be authored anywhere, and nothing reads them.
+    surfaces: ['quality'],
+    modules: ['quality'],
   },
   {
     id: 'reporting',
@@ -141,8 +145,6 @@ export const LAUNCH_SHELL_SURFACES: Readonly<Record<string, string>> = {
   home: 'the shell landing surface; synthesised by V2App, has no registry row',
   apps: 'the Apps catalog — where a locked destination explains itself',
   'conversation-thread': 'AnA conversation; the product is chat-first',
-  'ana-command': 'AnA command surface',
-  'ana-memory': 'AnA memory; the user must be able to see what AnA remembers',
   'audit-trail': '21 CFR §11.10(e): the audit trail is never switchable',
   'part11-console': 'how Part 11 compliance is evidenced; never switchable',
   'admin-console': 'organisation administration',
@@ -154,9 +156,16 @@ export const LAUNCH_SHELL_SURFACES: Readonly<Record<string, string>> = {
   licensing: 'account administration — grants catalog entries',
   'master-licensing': 'platform-owner administration',
   'access-requests': 'how a member asks for a locked app',
-  training: 'account administration',
   'identity-console': 'SSO / SCIM; a security reviewer expects it (D6)',
 };
+
+// CPO decision, 2026-10-08: three shell entries left. AnA Command answers
+// only enterprise organisations and tells a client two of its runs are
+// recorded to the audit trail when they are not. AnA memory lists a store
+// nothing writes instead of the memory AnA loads each turn, so it tells a
+// client AnA remembers nothing; it returns reading that memory. Training has
+// no path, lesson or certification behind it; training of record is the QMS
+// read-and-understood record.
 
 /** Every surface id in the launch scope: the seven apps plus the shell set. */
 export const LAUNCH_SURFACE_IDS: ReadonlySet<string> = new Set([

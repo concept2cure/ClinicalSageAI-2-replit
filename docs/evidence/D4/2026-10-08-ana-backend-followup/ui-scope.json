@@ -1,0 +1,8 @@
+{
+  "source_base": "f1b00425afd21fa4573201910c626a3d2f33cca6",
+  "validated_local_checkpoint": "6b90c6cfa3bb7bd0db678618ab500862a2e64584",
+  "client_tree_at_base": "ae4345358e38f20f620b0a981516b85bcf6f7c09",
+  "client_tree_at_checkpoint": "ae4345358e38f20f620b0a981516b85bcf6f7c09",
+  "client_files_changed": 0,
+  "outside_authorized_backend_and_evidence_changed": 0
+}

@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts",
+    "-t",
+    "captures candidate deficiency",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-deficiency-read-sharing/output-preservation.json"
+  ],
+  "exitCode": 0,
+  "productionSha256": "0c047c1bfcf80c1165befd660d919b0ee99a423b5870ce8f87e783b380290563",
+  "finalTestSha256": "b5e832d4977f1ced2a1f4e7d803641eadb8215c7dba06b3c6c57dbee1bd167f5",
+  "restoredFinalTest": true
+}

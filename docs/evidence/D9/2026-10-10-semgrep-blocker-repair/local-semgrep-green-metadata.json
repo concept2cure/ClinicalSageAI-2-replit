@@ -1,0 +1,99 @@
+{
+  "verification_stage": "final candidate: after review-driven per-case package fixture output-directory refinement",
+  "started_at": "2026-10-10T06:11:32.575092+00:00",
+  "completed_at": "2026-10-10T06:11:46.576059+00:00",
+  "cwd": "/workspace/scratch/324dc668b968/concept2cure-v2",
+  "command": [
+    "/tmp/c2c-semgrep-1.177.0/bin/semgrep",
+    "scan",
+    "--config=/tmp/c2c-semgrep-configs-2026-10-10/p-default.yaml",
+    "--config=/tmp/c2c-semgrep-configs-2026-10-10/p-ci.yaml",
+    "--metrics=off",
+    "--disable-version-check",
+    "--error",
+    "--no-rewrite-rule-ids",
+    "--json-output=/workspace/scratch/324dc668b968/concept2cure-v2/docs/evidence/D9/2026-10-10-semgrep-blocker-repair/local-semgrep-green.json",
+    "docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs",
+    "server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts",
+    "server/services/__tests__/fixtures/artifact-signed-target-harness.cjs",
+    "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts",
+    "server/services/clinical-regulatory-evidence/dataset-profile.ts",
+    "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+    "server/services/tasking/__tests__/task-project.pglite.test.ts"
+  ],
+  "exit_code": 0,
+  "cli_version": "1.177.0",
+  "sources_unchanged_during_scan": true,
+  "sources": [
+    {
+      "path": "docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs",
+      "sha256": "53f878bd9d07af8ae4a5854c9d47b5e80ec63686d5e46d9b3821b7a485f14fd2",
+      "bytes": 6041,
+      "git_blob": "f6c4b83f17451e25ea80740ef6282a3a841150d6",
+      "base_git_blob": "b116764f098c21503ae552a6b00601d4deb5455d"
+    },
+    {
+      "path": "server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts",
+      "sha256": "1215519a5226ff45796399f415e04fe1c5bff9a7e78e8a415d6ca92ef717c83b",
+      "bytes": 8678,
+      "git_blob": "df446e7ee4f9f56a675a9b0aed4e2cde7b1e52e6",
+      "base_git_blob": "7c975f92654af36f669b93cab61d2cfa1c5c308f"
+    },
+    {
+      "path": "server/services/__tests__/fixtures/artifact-signed-target-harness.cjs",
+      "sha256": "e91eab64e498594bd7de03bfbf9f9d3dcd6dd0dbbcc7e0b5f139de4eb8100dd1",
+      "bytes": 14639,
+      "git_blob": "08e63d722e6a5eab84b145fa9930aac84267772e",
+      "base_git_blob": "b2f0029f2466d0efa910531db7f491150c3bf73c"
+    },
+    {
+      "path": "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+      "sha256": "ff5e653eda87d1f275d1bfdd0b0022166f32ab5cf690bd88133feb735ddd5440",
+      "bytes": 7786,
+      "git_blob": "cbaeb73eacee11ed0a8feab7647a534b3d50ae64",
+      "base_git_blob": "342d050bd62ae5fb49f9009bf9aeced8d088adc4"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts",
+      "sha256": "968444b46b5c50dfeb8322c9cbbcf890e483d6a74bfaa39e126cab7f90b3e2a9",
+      "bytes": 6071,
+      "git_blob": "56faac87c9f4fd9b8aa753c34ea3fd102b4fb29d",
+      "base_git_blob": "f428c1501c8876dffd9d954c42c2a57bbf87ff00"
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/dataset-profile.ts",
+      "sha256": "01d3ff0dd7e22c448707d891ba6ce3447681772c93d80898159b3eb9c662a7d8",
+      "bytes": 8836,
+      "git_blob": "2e104953b9ab140aca6b84b6a10db6def08509ca",
+      "base_git_blob": "ece3c904399146d6fa0dcf5c1d856de23178bb8d"
+    },
+    {
+      "path": "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+      "sha256": "0cca11c11902b5ba5ab0eb2ba47108f89239e68ad28d7f77484d4c0515dc5677",
+      "bytes": 6806,
+      "git_blob": "9c7ff0272e76e8d0c8da9621eec1af1d4b489573",
+      "base_git_blob": "21a98ea797a9c2970c5cf45086a222822cf7f3c9"
+    },
+    {
+      "path": "server/services/tasking/__tests__/task-project.pglite.test.ts",
+      "sha256": "f4e8c6ae3b9f6d205380d978d6e83d35c5248ef9b998fdbfde20d9bf59a69b4f",
+      "bytes": 10778,
+      "git_blob": "979001c9a40efe37f4e5cfd20dcb1cb50bea1d31",
+      "base_git_blob": "cb88f43dc22f50c56ac344422f89b4b231fabad3"
+    }
+  ],
+  "config_pins": [
+    {
+      "pack": "p/default",
+      "sha256": "a0eb4b83d2d9adc52492caaf12b458498b8845e66aea6730e4d5b0d76330313d"
+    },
+    {
+      "pack": "p/ci",
+      "sha256": "5af630531431137f01a1db909594a36876e02b2c78d361f2b6ab1c097ca4f148"
+    }
+  ],
+  "configs_unchanged_before_and_after_scan": true,
+  "log_sha256": "0d5fd7c2c928256b29aec310ca46912222634e669b080f02b7812eb9c0b720e0",
+  "result_json_sha256": "5a3b0488d0f999b04b4f922833847207d4fbd90d1e3c6132c9b65c0d9d294afc"
+}

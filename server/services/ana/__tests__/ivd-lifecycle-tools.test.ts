@@ -67,23 +67,28 @@ describe('IVD lifecycle handlers (live engine calls)', () => {
     expect(out.result).toBeTruthy();
   });
 
-  it('build_postmarket_report drafts a PSUR and reports validity', async () => {
+  // 4b793d04 retired the parallel PSUR builder: a PSUR is the program's post-market
+  // document. The tool refuses it and names the canonical path, and still drafts the
+  // incident reports it owns.
+  it('build_postmarket_report refuses a PSUR and names the canonical post-market document path', async () => {
+    const out = await run('build_postmarket_report', { reportType: 'psur', fields: { deviceName: 'AcmeDx HIV-1', riskClass: 'C' } });
+    expect(out.status).toBe('needs_parameters');
+    expect(String(out.message)).toMatch(/post_market\.document\.create/);
+    expect(String(out.message)).toMatch(/documentType "psur"/);
+  });
+
+  it('build_postmarket_report drafts an EU MIR and reports validity', async () => {
     const out = await run('build_postmarket_report', {
-      reportType: 'psur',
+      reportType: 'mir',
       fields: {
+        manufacturerName: 'Acme Diagnostics',
         deviceName: 'AcmeDx HIV-1',
-        riskClass: 'C',
-        reportingPeriodStart: '2025-01-01',
-        reportingPeriodEnd: '2025-12-31',
-        complaintCount: 12,
-        seriousIncidentCount: 1,
-        fscaCount: 0,
-        signalsDetected: 0,
-        benefitRiskConclusion: 'Benefit-risk remains favourable.',
+        becameAwareDate: '2025-06-01',
+        incidentDescription: 'False-negative result reported by a user laboratory.',
       },
     });
     expect(out.status).toBe('computed');
-    expect(out.result).toHaveProperty('valid');
+    expect(out.result).toHaveProperty('valid', true);
   });
 
   it('build_postmarket_report rejects an unknown report type as needs_parameters', async () => {

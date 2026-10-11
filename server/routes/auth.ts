@@ -36,7 +36,7 @@ import {
   unregisterSession,
 } from '../services/session-inactivity';
 import { requireAccessTokenReason } from '../middleware/tokenType';
-import { sessionPermissions } from '../middleware/orgMembership';
+import { sessionPermissions, sessionRolesOf } from '../middleware/orgMembership';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import { auditOrganizationOf, membershipsOf, signInMembership } from '../services/sign-in-organisation';
 import { PASSWORD_HASH_COST, padUnknownEmailTiming } from '../services/login-timing-pad';
@@ -90,6 +90,7 @@ import {
 import { isEmailConfigured, sendPasswordResetEmail, sendLoginOtpEmail, sendVerificationEmail, sendWelcomeEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
 import { mfaEnrolmentOf, sessionMfaFields } from '../services/mfa-enrolment';
+import { signingPostureOf } from '../services/part11/reverify-signer';
 import * as emailOtpService from '../services/emailOtpService';
 import {
   validatePasswordPolicy,
@@ -110,6 +111,7 @@ import {
 } from '../services/c2c/organization-default-workspace';
 import { runWithTenantScope } from '../db/tenantStore';
 import { signInLimits } from '../middleware/sign-in-limits';
+import { markResetLinkRefused, passwordResetLimits } from '../middleware/password-reset-limits';
 
 const router = Router();
 
@@ -157,20 +159,8 @@ const verificationLimiter = rateLimit({
   },
 });
 
-/** Password reset: 5 per hour per IP */
-const passwordResetLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: {
-      code: 'RATE_LIMIT',
-      message: 'Too many password reset requests. Please try again later.',
-    },
-  },
-});
+// Password reset and activation: two buckets per address, the redeeming one
+// counting only refused links (middleware/password-reset-limits.ts).
 
 // Development auth bypass fully removed — all authentication is enforced.
 // To test locally, create a user via POST /api/auth/signup then login normally.
@@ -233,6 +223,26 @@ function requireDb(res: Response): boolean {
     return false;
   }
   return true;
+}
+
+/**
+ * The name of the organisation a session is scoped to, as its record states it;
+ * null when the session names none, or its record is missing or has no name.
+ * Never a placeholder. Until P-25 (2026-10-08) GET /session answered
+ * "Concept2Cure", and /me and /mfa/verify "Organization", and the account panel
+ * printed that as the person's organisation (CLAUDE.md: fail closed, never
+ * fabricate). A failed read throws: it is the caller's 500, not a missing name.
+ */
+async function recordedOrganizationName(organizationId: unknown): Promise<string | null> {
+  const id = Number.parseInt(String(organizationId ?? ''), 10);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  const [org] = await db
+    .select({ name: organizations.name })
+    .from(organizations)
+    .where(eq(organizations.id, id))
+    .limit(1);
+  const name = typeof org?.name === 'string' ? org.name.trim() : '';
+  return name || null;
 }
 
 /**
@@ -322,21 +332,10 @@ router.get('/session', async (req: Request, res: Response) => {
       }
       sessionRole = sessionMembership.role;
     }
-    const sessionRoles =
-      sessionRole === 'admin' ? ['admin', 'user'] : [sessionRole === 'editor' ? 'editor' : 'user'];
+    const sessionRoles = sessionRolesOf(sessionRole);
 
-    // Get organization
-    let orgName = 'Concept2Cure';
-    if (decoded.organizationId) {
-      const org = await db
-        .select()
-        .from(organizations)
-        .where(eq(organizations.id, parseInt(decoded.organizationId)))
-        .limit(1);
-      if (org.length) {
-        orgName = org[0].name;
-      }
-    }
+    // The organisation as recorded, or none (P-25).
+    const orgName = await recordedOrganizationName(decoded.organizationId);
 
     const sessionStartedAt = new Date((sessionStartSecondsOf(decoded) ?? Math.floor(Date.now() / 1000)) * 1000);
     res.json({
@@ -354,6 +353,7 @@ router.get('/session', async (req: Request, res: Response) => {
         // The account as it is. These were the literals false / [] / false for
         // every account until 2026-09-23 (VSR-001 §13.3 item 4).
         ...sessionMfaFields(userData),
+        signing: signingPostureOf(userData),
         mustChangePassword: userData.mustChangePassword === true,
       },
       // The session as its token states it (P1-1): id, start, the end of its
@@ -586,10 +586,7 @@ router.post('/login', signInLimits.login, async (req: Request, res: Response) =>
 
     // Reuse the role already fetched above for JWT
     const userRole = jwtRole;
-    const roles =
-      userRole === 'admin'
-        ? ['admin', 'user']
-        : [userRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
+    const roles = sessionRolesOf(userRole);
 
     // ── Two-Factor Authentication ──────────────────────────────────────
     // Email OTP is the default 2FA method for all users (zero setup).
@@ -651,9 +648,10 @@ router.post('/login', signInLimits.login, async (req: Request, res: Response) =>
           roles,
           permissions: sessionPermissions(jwtRole),
           organizationId: organizationId.toString(),
-          organizationName: organization?.name || 'Organization',
+          organizationName: organization?.name?.trim() || null,
           organizationUuid: organization?.uuid || null,
           ...sessionMfaFields(userData),
+          signing: signingPostureOf(userData),
           mustChangePassword: userData.mustChangePassword === true,
         },
       });
@@ -795,10 +793,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
     const displayName = (userData.name || '').trim() || userData.email;
-    const roles =
-      jwtRole === 'admin'
-        ? ['admin', 'user']
-        : [jwtRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
+    const roles = sessionRolesOf(jwtRole);
 
     // The session's id, start and idle window, into both tokens; registered
     // against the account's concurrent-session limit (P1-1).
@@ -840,9 +835,10 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         roles,
         permissions: sessionPermissions(jwtRole),
         organizationId: organizationId.toString(),
-        organizationName: organization?.name || 'Organization',
+        organizationName: organization?.name?.trim() || null,
         organizationUuid: organization?.uuid || null,
         ...sessionMfaFields(userData),
+        signing: signingPostureOf(userData),
         mustChangePassword: userData.mustChangePassword === true,
       },
     });
@@ -1672,21 +1668,11 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
     const meRole = meMembership?.role || 'user';
-    const meRoles =
-      meRole === 'admin' ? ['admin', 'user'] : [meRole === 'editor' ? 'editor' : 'user'];
+    const meRoles = sessionRolesOf(meRole);
     const meOrgId = decoded.organizationId || meMembership?.organizationId?.toString();
 
-    // Look up the actual organization name
-    let meOrgName = 'Organization';
-    const meOrgIdNum = parseInt(meOrgId);
-    if (meOrgIdNum) {
-      const [meOrg] = await db
-        .select({ name: organizations.name })
-        .from(organizations)
-        .where(eq(organizations.id, meOrgIdNum))
-        .limit(1);
-      meOrgName = meOrg?.name || 'Organization';
-    }
+    // The organisation as recorded, or none (P-25).
+    const meOrgName = await recordedOrganizationName(meOrgId);
 
     res.json({
       id: userData.id.toString(),
@@ -1698,6 +1684,7 @@ router.get('/me', async (req: Request, res: Response) => {
       permissions: sessionPermissions(meRole),
       organizationId: meOrgId,
       organizationName: meOrgName,
+      signing: signingPostureOf(userData),
     });
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
@@ -1880,21 +1867,10 @@ router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: 
     const mfaLastName = mfaNameParts.slice(1).join(' ') || '';
     const mfaDisplayName = (userData.name || '').trim() || userData.email;
     const mfaRole = challenge.role;
-    const mfaRoles =
-      mfaRole === 'admin'
-        ? ['admin', 'user']
-        : [mfaRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
+    const mfaRoles = sessionRolesOf(mfaRole);
 
-    // Fetch org name
-    let mfaOrgName = 'Organization';
-    if (challenge.organizationId) {
-      const [org] = await db
-        .select({ name: organizations.name })
-        .from(organizations)
-        .where(eq(organizations.id, parseInt(challenge.organizationId)))
-        .limit(1);
-      mfaOrgName = org?.name || 'Organization';
-    }
+    // The organisation as recorded, or none (P-25).
+    const mfaOrgName = await recordedOrganizationName(challenge.organizationId);
 
     // Audit: the session is created here, not at /login, which recorded only the
     // challenge. Every sign-in outside development ends on this route.
@@ -1928,6 +1904,7 @@ router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: 
         // The account's enrolment, not the request's claim: this said true for
         // every account and echoed the `method` the request named.
         ...sessionMfaFields(userData),
+        signing: signingPostureOf(userData),
         mustChangePassword: userData.mustChangePassword === true,
       },
       mfaRequired: false,
@@ -2140,9 +2117,10 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
 /**
  * POST /api/auth/mfa/enable
  * Confirm MFA setup by verifying the initial TOTP code from the authenticator app.
- * Returns backup codes on success.
+ * Returns backup codes on success. A wrong code counts against the account's
+ * second-factor allowance, the one /mfa/verify spends (P-25).
  */
-router.post('/mfa/enable', async (req: Request, res: Response) => {
+router.post('/mfa/enable', signInLimits.authenticatorChange, async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '');
@@ -2219,9 +2197,10 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/mfa/disable
- * Disable MFA for the authenticated user. Requires current TOTP code.
+ * Disable MFA for the authenticated user. Requires current TOTP code. A wrong
+ * code counts against the account's second-factor allowance, as at /mfa/verify (P-25).
  */
-router.post('/mfa/disable', async (req: Request, res: Response) => {
+router.post('/mfa/disable', signInLimits.authenticatorChange, async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '');
@@ -2425,6 +2404,7 @@ async function handleResetPassword(req: Request, res: Response) {
     const { token, newPassword } = req.body;
 
     if (!token || !newPassword) {
+      markResetLinkRefused(res);
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_001', message: 'Reset token and new password are required' },
@@ -2464,6 +2444,7 @@ async function handleResetPassword(req: Request, res: Response) {
         ipAddress: req.ip,
         userAgent: req.get('user-agent'),
       });
+      markResetLinkRefused(res);
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired reset token' },
@@ -2491,6 +2472,7 @@ async function handleResetPassword(req: Request, res: Response) {
         ipAddress: req.ip,
         userAgent: req.get('user-agent'),
       });
+      markResetLinkRefused(res);
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Reset token has expired. Please request a new one.' },
@@ -2553,6 +2535,7 @@ async function handleResetPassword(req: Request, res: Response) {
         ipAddress: req.ip,
         userAgent: req.get('user-agent'),
       });
+      markResetLinkRefused(res);
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired reset token' },
@@ -2596,11 +2579,11 @@ async function handleResetPassword(req: Request, res: Response) {
 }
 
 // Register both legacy and v2 paths (rate-limited)
-router.post('/forgot-password', passwordResetLimiter, handleForgotPassword);
-router.post('/password/reset-request', passwordResetLimiter, handleForgotPassword);
+router.post('/forgot-password', passwordResetLimits.request, handleForgotPassword);
+router.post('/password/reset-request', passwordResetLimits.request, handleForgotPassword);
 
-router.post('/reset-password', passwordResetLimiter, handleResetPassword);
-router.post('/password/reset-confirm', passwordResetLimiter, handleResetPassword);
+router.post('/reset-password', passwordResetLimits.confirm, handleResetPassword);
+router.post('/password/reset-confirm', passwordResetLimits.confirm, handleResetPassword);
 
 // ---------------------------------------------------------------------------
 // Password Change (Authenticated)

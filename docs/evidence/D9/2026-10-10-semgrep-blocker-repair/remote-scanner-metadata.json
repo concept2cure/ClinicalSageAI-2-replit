@@ -1,0 +1,437 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-10-10T06:47:29.114Z",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "branch": "concept2cure-v2",
+  "subject": {
+    "sha": "de61922a9351080fdcd76a231c5abd8182054831",
+    "tree_sha": "ae8a1ae9e50b346021b9979a14f7f0ee948f10cd",
+    "sole_parent_sha": "2c9a4a5fefc639d6d5ccf3dda139f3d64d6b2115"
+  },
+  "run": {
+    "id": 38031251350,
+    "name": "Semgrep",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38031251350",
+    "event": "push",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-10T06:31:45Z",
+    "updated_at": "2026-10-10T06:47:19Z"
+  },
+  "job": {
+    "id": 114152480400,
+    "name": "Analyze (Semgrep)",
+    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38031251350/job/114152480400",
+    "status": "completed",
+    "conclusion": "success",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1
+      },
+      {
+        "name": "Initialize containers",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2
+      },
+      {
+        "name": "Checkout repository",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3
+      },
+      {
+        "name": "Resolve the baseline (the newest trunk commit whose Semgrep run passed)",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4
+      },
+      {
+        "name": "Blocking scan \u2014 nothing the baseline commit did not already have",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5
+      },
+      {
+        "name": "Full scan for the Security tab",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6
+      },
+      {
+        "name": "Upload Semgrep SARIF to code scanning",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7
+      },
+      {
+        "name": "Upload SARIF artifact",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8
+      },
+      {
+        "name": "Post Upload Semgrep SARIF to code scanning",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 14
+      },
+      {
+        "name": "Post Checkout repository",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 15
+      },
+      {
+        "name": "Stop containers",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 16
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 17
+      }
+    ]
+  },
+  "workflow": {
+    "path": ".github/workflows/semgrep.yml",
+    "image": "semgrep/semgrep:1.177.0@sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198",
+    "configs": [
+      "p/default",
+      "p/ci"
+    ],
+    "unchanged_from_parent": true,
+    "blocking_command": "semgrep scan --config=p/default --config=p/ci --metrics=off --error --baseline-commit \"$BASELINE\" --sarif-output=\"$RUNNER_TEMP/semgrep-new.sarif\"",
+    "advisory_command": "semgrep scan --config=p/default --config=p/ci --metrics=off --sarif --output=semgrep.sarif",
+    "blocking_semantics": "Finding delta exit 1 and other nonzero scanner exit statuses fail; successful case 0 message was actually emitted.",
+    "advisory_semantics": "Full scan omits --error, so the findings remain advisory under the existing workflow; nonzero scanner exit still fails. Code-scanning upload is independently continue-on-error, but actually succeeded here.",
+    "git_blob_sha": "531731830bf6c4a46ef90eb75eecf741bf70a505",
+    "sha256": "8a5294ebab7923424d0112860664cf1f1efc1116eac5c056f6be27f27d2e77c9"
+  },
+  "baseline": {
+    "sha": "661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19",
+    "selected_green_run_id": 37735466781,
+    "selection": "Newest completed successful canonical Semgrep commit present in subject ancestry, under unchanged workflow.",
+    "current_version_findings_before_baseline_filter": 59,
+    "baseline_comparison_targets": 31,
+    "baseline_comparison_rules": 12,
+    "standalone_baseline_total_findings": null,
+    "standalone_baseline_total_limit": "The completed log does not report a separate whole-baseline total. Current-version count 59 is not a whole-baseline count."
+  },
+  "blocking_scan": {
+    "step_number": 5,
+    "status": "completed",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_evidence": "Successful completed API step and original emitted case-0 message: No Semgrep finding that 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19 did not already have.",
+    "findings": 0,
+    "blocking_findings": 0,
+    "rules_run": 492,
+    "targets_scanned": 3039,
+    "registry_code_rules_loaded": 1075,
+    "parsed_lines_reported": "~99.9%",
+    "scope": "Files changed since baseline commit",
+    "skipped_files_over_1mb": 7,
+    "skipped_semgrepignore_matches": 100,
+    "timeout_warning_count": 3,
+    "timeout_file": "shared/schema.ts",
+    "timeout_rule_ids": [
+      "javascript.express.security.audit.express-ssrf.express-ssrf",
+      "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "typescript.react.security.audit.react-unsanitized-method.react-unsanitized-method"
+    ]
+  },
+  "full_advisory_scan": {
+    "step_number": 6,
+    "status": "completed",
+    "conclusion": "success",
+    "exit_code": 0,
+    "exit_evidence": "Successful completed API step under the unchanged nonzero-exit guard, completed raw-log summary, and SARIF invocation executionSuccessful:true.",
+    "findings": 680,
+    "rules_run": 647,
+    "targets_scanned": 21215,
+    "registry_code_rules_loaded": 1075,
+    "parsed_lines_reported": "~99.9%",
+    "scope": "Files tracked by git",
+    "skipped_files_over_1mb": 81,
+    "skipped_semgrepignore_matches": 978,
+    "cli_summary_labels_findings_blocking": true,
+    "workflow_findings_are_advisory": true
+  },
+  "full_sarif_review": {
+    "results": 721,
+    "unsuppressed_results": 680,
+    "suppressed_results": 41,
+    "suppression_kinds": {
+      "inSource": 41
+    },
+    "execution_successful": true,
+    "tool_execution_notifications": {
+      "total": 651,
+      "levels": {
+        "warning": 651
+      },
+      "descriptors": {
+        "Syntax error": 624,
+        "Other syntax error": 24,
+        "Timeout": 3
+      },
+      "canonical_notification_array_sha256": "e0a30fba257b1f20e70fab589715fc7594a303b25ca792f5c6bee3e7c685c196",
+      "canonical_hash_method": "UTF-8 json.dumps(all invocations' toolExecutionNotifications in array order, sort_keys=True,separators=(',',':'),ensure_ascii=False)",
+      "timeout_notifications": [
+        {
+          "notification_index_0_based": 647,
+          "original_notification": {
+            "descriptor": {
+              "id": "Timeout"
+            },
+            "level": "warning",
+            "message": {
+              "text": "Timeout when running javascript.express.security.audit.express-ssrf.express-ssrf on shared/schema.ts:\n "
+            }
+          }
+        },
+        {
+          "notification_index_0_based": 648,
+          "original_notification": {
+            "descriptor": {
+              "id": "Timeout"
+            },
+            "level": "warning",
+            "message": {
+              "text": "Timeout when running javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal on shared/schema.ts:\n "
+            }
+          }
+        },
+        {
+          "notification_index_0_based": 649,
+          "original_notification": {
+            "descriptor": {
+              "id": "Timeout"
+            },
+            "level": "warning",
+            "message": {
+              "text": "Timeout when running typescript.react.security.audit.react-unsanitized-method.react-unsanitized-method on shared/schema.ts:\n "
+            }
+          }
+        }
+      ],
+      "notifications_mentioning_any_changed_target_path": []
+    },
+    "results_matching_any_changed_target_path": []
+  },
+  "raw_log_evidence": {
+    "job_id": 114152480400,
+    "github_api": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/jobs/114152480400/logs",
+    "fetch": {
+      "started_at": "2026-10-10T06:47:28.840Z",
+      "completed_at": "2026-10-10T06:47:29.456Z"
+    },
+    "temporary_original_path": "/tmp/c2c-d9-de61922a-semgrep-114152480400.log",
+    "full_fetched_text_sha256": "bd8261eecc6542f83af12e473561d5d39b95b8f300710bbb23eafeab951c169f",
+    "excerpt_file": "remote-scanner-excerpts.txt",
+    "ranges": [
+      {
+        "start": 55,
+        "end": 55,
+        "purpose": "Actual pinned container pull",
+        "excerpt_start_line": 1,
+        "excerpt_end_line": 1,
+        "sha256": "f90b65774a2805d71a49c60cbd567ad94fd100441153190e7ecfdcaf4b2c690d"
+      },
+      {
+        "start": 120,
+        "end": 120,
+        "purpose": "Actual pinned image resolved",
+        "excerpt_start_line": 2,
+        "excerpt_end_line": 2,
+        "sha256": "7906bd2dd5fba1732339ef8dcd11b7080759dadba74192b547b149bca4ac8952"
+      },
+      {
+        "start": 300,
+        "end": 301,
+        "purpose": "Exact checkout SHA",
+        "excerpt_start_line": 3,
+        "excerpt_end_line": 4,
+        "sha256": "2d94ea9a3a7e3d20f1f708b85b3f44c50b4e8945ff3f58edfaaee8e864175b15"
+      },
+      {
+        "start": 343,
+        "end": 343,
+        "purpose": "Resolved baseline commit and prior green run",
+        "excerpt_start_line": 5,
+        "excerpt_end_line": 5,
+        "sha256": "b12961a565ab05622f0b42cfa70aa1cbfcb81b3aab8f4a875b3b5fc9568dbbd7"
+      },
+      {
+        "start": 362,
+        "end": 388,
+        "purpose": "Actual blocking command, configurations and baseline environment",
+        "excerpt_start_line": 6,
+        "excerpt_end_line": 32,
+        "sha256": "e73811e99fc40eaa731c2485792a77ff64d3f652fd34729e47cae1b018e43c91"
+      },
+      {
+        "start": 394,
+        "end": 411,
+        "purpose": "Current-phase targets, timeout warning and prefilter count 59",
+        "excerpt_start_line": 33,
+        "excerpt_end_line": 50,
+        "sha256": "c4ba0afe52ad747f57e21efa698ecb916ffb3ad59c5a81d878d01ae0c17c6134"
+      },
+      {
+        "start": 817,
+        "end": 846,
+        "purpose": "Baseline phase targets, zero delta, skip limits and actual exit-zero case message",
+        "excerpt_start_line": 51,
+        "excerpt_end_line": 80,
+        "sha256": "df251dab232293e9358512794d23a3d7748d3d209264f6e86449d8b2d0818b15"
+      },
+      {
+        "start": 847,
+        "end": 858,
+        "purpose": "Full advisory command and fatal-exit guard",
+        "excerpt_start_line": 81,
+        "excerpt_end_line": 92,
+        "sha256": "67dfdaad7db38f02cff33eeb0d725b2b847282ae3b1fbc28bee78e2e6fabe7ed"
+      },
+      {
+        "start": 864,
+        "end": 895,
+        "purpose": "Full scan rule/file counts, 680 residual findings and skip limits",
+        "excerpt_start_line": 93,
+        "excerpt_end_line": 124,
+        "sha256": "087efbccc33d795e0ccdd10db37439571a05a19675550a242cda668f91a719e7"
+      },
+      {
+        "start": 953,
+        "end": 958,
+        "purpose": "Original artifact ID, bytes and upload digest",
+        "excerpt_start_line": 125,
+        "excerpt_end_line": 130,
+        "sha256": "ae19687809d80d3d6ef06c6e52d083fc2b50f1b893180aed09ec33c4912bb1f2"
+      }
+    ],
+    "range_convention": "1-based inclusive original decoded raw job-log lines, concatenated in listed order without inserted headings, timestamp changes or ANSI stripping",
+    "full_fetched_bytes": 92204,
+    "full_fetched_line_count": 986,
+    "excerpt_bytes": 12788,
+    "excerpt_sha256": "9c603716dbd8918b95a61bcc8ecbde7d63215d940f2db6511b223e8cfe129fa5"
+  },
+  "artifacts": [
+    {
+      "id": 11662291649,
+      "name": "semgrep-sarif",
+      "size_in_bytes": 250133,
+      "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11662291649",
+      "archive_download_url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11662291649/zip",
+      "expired": false,
+      "created_at": "2026-10-10T06:47:15Z",
+      "expires_at": "2027-01-08T06:31:45Z",
+      "updated_at": "2026-10-10T06:47:15Z",
+      "digest": "sha256:e704f445592e98e2449ea3d609b2d49ebdf4740bc00bc1c4ac7ba401b9dc8cf1",
+      "workflow_run": {
+        "id": 38031251350,
+        "repository_id": 1096040843,
+        "head_repository_id": 1096040843,
+        "head_branch": "concept2cure-v2",
+        "head_sha": "de61922a9351080fdcd76a231c5abd8182054831"
+      },
+      "downloaded_archive_sha256": "e704f445592e98e2449ea3d609b2d49ebdf4740bc00bc1c4ac7ba401b9dc8cf1",
+      "downloaded_bytes": 250133,
+      "archive_entries": [
+        {
+          "path": "semgrep.sarif",
+          "bytes": 2845565,
+          "sha256": "80705993b9f698aa24717054baf1f0c827cfccd60da0715bc44a6de4ae614617"
+        }
+      ],
+      "artifact_digest_matched": true
+    }
+  ],
+  "limitations": [
+    "The unchanged configured Semgrep gate succeeded on exact de61922a; this is not a clean or exhaustive scan of the repository.",
+    "Blocking scan had three shared/schema.ts rule timeouts. Full SARIF records 651 warning notifications, including those timeouts and syntax/other-syntax warnings. Files over 1 MB and .semgrepignore patterns were skipped; parsed-lines coverage is approximately 99.9%.",
+    "Full scan retains 680 unsuppressed findings and 41 existing inSource-suppressed SARIF results. The CLI calls findings blocking, while the unchanged full-step invocation makes them advisory by omitting --error.",
+    "Absence of the eight changed paths from SARIF results/notifications describes this archived output; it does not establish vulnerability absence beyond the configured scanner's coverage.",
+    "The remote workflow fetches live registry p/default and p/ci packs; it does not archive their exact YAML bytes. Frozen local config archives have independent byte pins, not an asserted bit-for-bit remote-config bridge.",
+    "The seven earlier fresh delta findings are historical red evidence. This receipt's zero delta, counts and hashes come only from the completed de61922a run.",
+    "No baseline, rule configuration, workflow, dependency or suppression was changed for this repair. No workflow was rerun by this inspection.",
+    "Scanner/Tier 5 success does not repair the separate remaining CI gates or establish scientific source qualification, seal admission, initial IND applicability or release clearance."
+  ],
+  "checked_changed_source_test_fixture_paths": [
+    "docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs",
+    "server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts",
+    "server/services/__tests__/fixtures/artifact-signed-target-harness.cjs",
+    "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts",
+    "server/services/clinical-regulatory-evidence/dataset-profile.ts",
+    "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+    "server/services/tasking/__tests__/task-project.pglite.test.ts"
+  ],
+  "published_source_pins": [
+    {
+      "path": "docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs",
+      "git_blob_sha": "f6c4b83f17451e25ea80740ef6282a3a841150d6",
+      "sha256": "53f878bd9d07af8ae4a5854c9d47b5e80ec63686d5e46d9b3821b7a485f14fd2",
+      "bytes": 6041,
+      "matches_frozen_final_local_green": true
+    },
+    {
+      "path": "server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts",
+      "git_blob_sha": "df446e7ee4f9f56a675a9b0aed4e2cde7b1e52e6",
+      "sha256": "1215519a5226ff45796399f415e04fe1c5bff9a7e78e8a415d6ca92ef717c83b",
+      "bytes": 8678,
+      "matches_frozen_final_local_green": true
+    },
+    {
+      "path": "server/services/__tests__/fixtures/artifact-signed-target-harness.cjs",
+      "git_blob_sha": "08e63d722e6a5eab84b145fa9930aac84267772e",
+      "sha256": "e91eab64e498594bd7de03bfbf9f9d3dcd6dd0dbbcc7e0b5f139de4eb8100dd1",
+      "bytes": 14639,
+      "matches_frozen_final_local_green": true
+    },
+    {
+      "path": "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+      "git_blob_sha": "cbaeb73eacee11ed0a8feab7647a534b3d50ae64",
+      "sha256": "ff5e653eda87d1f275d1bfdd0b0022166f32ab5cf690bd88133feb735ddd5440",
+      "bytes": 7786,
+      "matches_frozen_final_local_green": true
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/dataset-profile.test.ts",
+      "git_blob_sha": "56faac87c9f4fd9b8aa753c34ea3fd102b4fb29d",
+      "sha256": "968444b46b5c50dfeb8322c9cbbcf890e483d6a74bfaa39e126cab7f90b3e2a9",
+      "bytes": 6071,
+      "matches_frozen_final_local_green": true
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/dataset-profile.ts",
+      "git_blob_sha": "2e104953b9ab140aca6b84b6a10db6def08509ca",
+      "sha256": "01d3ff0dd7e22c448707d891ba6ce3447681772c93d80898159b3eb9c662a7d8",
+      "bytes": 8836,
+      "matches_frozen_final_local_green": true
+    },
+    {
+      "path": "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+      "git_blob_sha": "9c7ff0272e76e8d0c8da9621eec1af1d4b489573",
+      "sha256": "0cca11c11902b5ba5ab0eb2ba47108f89239e68ad28d7f77484d4c0515dc5677",
+      "bytes": 6806,
+      "matches_frozen_final_local_green": true
+    },
+    {
+      "path": "server/services/tasking/__tests__/task-project.pglite.test.ts",
+      "git_blob_sha": "979001c9a40efe37f4e5cfd20dcb1cb50bea1d31",
+      "sha256": "f4e8c6ae3b9f6d205380d978d6e83d35c5248ef9b998fdbfde20d9bf59a69b4f",
+      "bytes": 10778,
+      "matches_frozen_final_local_green": true
+    }
+  ]
+}

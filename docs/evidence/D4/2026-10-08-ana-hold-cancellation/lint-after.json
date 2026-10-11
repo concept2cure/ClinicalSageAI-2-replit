@@ -1,0 +1,289 @@
+[
+  {
+    "filePath": "server/services/ana/run-hold.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "server/services/ana/turn-run-policy.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "server/routes/ana-ri/stream.ts",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "severity": 1,
+        "message": "'dbPool' is assigned a value but never used.",
+        "line": 220,
+        "column": 7,
+        "messageId": "unusedVar",
+        "endLine": 220,
+        "endColumn": 13
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'mountStreamRoute' has too many lines (1925). Maximum allowed is 100.",
+        "line": 361,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 361,
+        "endColumn": 33
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async arrow function has too many lines (1866). Maximum allowed is 100.",
+        "line": 362,
+        "column": 62,
+        "messageId": "exceed",
+        "endLine": 362,
+        "endColumn": 64
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 256. Maximum allowed is 15.",
+        "line": 362,
+        "column": 62,
+        "messageId": "complex",
+        "endLine": 362,
+        "endColumn": 64
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (2190). Maximum allowed is 500.",
+        "line": 804,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 3416,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 1324,
+        "column": 13,
+        "messageId": "tooDeeply",
+        "endLine": 1324,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 1369,
+        "column": 13,
+        "messageId": "tooDeeply",
+        "endLine": 1369,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+        "line": 1371,
+        "column": 15,
+        "messageId": "tooDeeply",
+        "endLine": 1371,
+        "endColumn": 18
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (7). Maximum allowed is 4.",
+        "line": 1379,
+        "column": 17,
+        "messageId": "tooDeeply",
+        "endLine": 1379,
+        "endColumn": 19
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (7). Maximum allowed is 4.",
+        "line": 1384,
+        "column": 17,
+        "messageId": "tooDeeply",
+        "endLine": 1384,
+        "endColumn": 19
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async arrow function has too many lines (410). Maximum allowed is 100.",
+        "line": 2164,
+        "column": 39,
+        "messageId": "exceed",
+        "endLine": 2164,
+        "endColumn": 41
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 79. Maximum allowed is 15.",
+        "line": 2164,
+        "column": 39,
+        "messageId": "complex",
+        "endLine": 2164,
+        "endColumn": 41
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 20. Maximum allowed is 15.",
+        "line": 2244,
+        "column": 27,
+        "messageId": "complex",
+        "endLine": 2244,
+        "endColumn": 29
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 2475,
+        "column": 19,
+        "messageId": "tooDeeply",
+        "endLine": 2475,
+        "endColumn": 22
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+        "line": 2476,
+        "column": 21,
+        "messageId": "tooDeeply",
+        "endLine": 2476,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+        "line": 2477,
+        "column": 21,
+        "messageId": "tooDeeply",
+        "endLine": 2477,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 2488,
+        "column": 19,
+        "messageId": "tooDeeply",
+        "endLine": 2488,
+        "endColumn": 21
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 2503,
+        "column": 19,
+        "messageId": "tooDeeply",
+        "endLine": 2503,
+        "endColumn": 21
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+        "line": 2508,
+        "column": 21,
+        "messageId": "tooDeeply",
+        "endLine": 2508,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 2530,
+        "column": 19,
+        "messageId": "tooDeeply",
+        "endLine": 2530,
+        "endColumn": 21
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 2541,
+        "column": 19,
+        "messageId": "tooDeeply",
+        "endLine": 2541,
+        "endColumn": 21
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+        "line": 2546,
+        "column": 21,
+        "messageId": "tooDeeply",
+        "endLine": 2546,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 20. Maximum allowed is 15.",
+        "line": 3365,
+        "column": 77,
+        "messageId": "complex",
+        "endLine": 3365,
+        "endColumn": 79
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 23,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": [],
+    "omittedSourceSha256": "b4a4071efe20e0a3d30ba7d4e6b50d8e49b4f504790b967ee8286613d920082c"
+  },
+  {
+    "filePath": "server/services/ana/__tests__/run-hold-cancellation.test.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  }
+]

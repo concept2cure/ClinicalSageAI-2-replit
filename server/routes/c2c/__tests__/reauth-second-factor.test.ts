@@ -17,7 +17,7 @@
  * does not look at it. Both rules are pinned here.
  */
 import bcrypt from 'bcryptjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   hash: '' as string | null,
@@ -126,5 +126,28 @@ describe('the first factor', () => {
   it('is refused the same way when the signer has no stored password', async () => {
     h.hash = null;
     expect(await verifyReauth(7, { password: PASSWORD })).toEqual({ ok: false, error: 'REAUTH_PASSWORD_INVALID' });
+  });
+});
+
+/**
+ * ADR-0014 P1-2b (P-25, 2026-10-08): the governed actions' re-authentication is
+ * the canonical one, so in production a signer with no authenticator is refused
+ * here too, with a code of this route's REAUTH_* vocabulary.
+ */
+describe('in production, a signer with no authenticator (ADR-0014 P1-2b)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('is refused REAUTH_AUTHENTICATOR_REQUIRED, with the right password', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    h.mfaEnabled = false;
+    expect(await verifyReauth(7, { password: PASSWORD })).toEqual({ ok: false, error: 'REAUTH_AUTHENTICATOR_REQUIRED' });
+  });
+
+  it('control: outside production the password alone still re-authenticates', async () => {
+    vi.stubEnv('NODE_ENV', 'test');
+    h.mfaEnabled = false;
+    expect(await verifyReauth(7, { password: PASSWORD })).toEqual({ ok: true });
   });
 });

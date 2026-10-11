@@ -1,0 +1,22 @@
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled feedback source and keeps healthy context 10ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled profile source and keeps healthy context 3ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled rim source and keeps healthy context 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled relational source and keeps healthy context 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled external source and keeps healthy context 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > starts independent reads together and uses one 3s wait when several stall 3ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > does not report healthy empty results as unavailable and clears the deadline timers 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > reports rejection and the existing 1.5s proactive deadline without blocking other context 2ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > ignores a late source after the turn has received its bounded snapshot 2ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > does not start project or org reads when their scope is absent 2ms
+ ✓ server/services/ana-ri/__tests__/prefetch-program-project.test.ts > prefetch — program UUID → anchored project > reads the relational overlay, briefing and project context for the anchored project 6ms
+ ✓ server/services/ana-ri/__tests__/prefetch-program-project.test.ts > prefetch — program UUID → anchored project > an unanchored program is no project: no NaN reaches any read, and nothing is reported missing 2ms
+ ✓ server/services/ana-ri/__tests__/prefetch-program-project.test.ts > prefetch — program UUID → anchored project > an integer project id is still itself 1ms
+ ✓ server/services/ana-ri/__tests__/prefetch-program-project.test.ts > prefetch — program UUID → anchored project > no project named: the resolver is not asked and the overlay is user-level 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > open findings render into contradictionWatchBlock, org-scoped 7ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > no open findings → empty block (quiet orgs pay no tokens) 2ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > no org context → the query is never made 2ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the orchestrator injects _contradictionWatchBlock into the system prompt 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the live route hands the prefetched block to the orchestrator 2ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the chat-context-builder orchestrator input carries it too 1ms
+ Test Files  3 passed (3)
+      Tests  20 passed (20)

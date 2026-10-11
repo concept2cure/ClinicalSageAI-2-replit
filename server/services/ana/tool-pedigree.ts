@@ -166,6 +166,8 @@ export const DETERMINISTIC_REGISTRY_EXTRA: string[] = [
   'find_cmc_guidance',
   'get_cmc_requirements',
   'explain_cmc_topic',
+  // shared/regulatory/sop-requirements.ts: a fixed clause record and a wording match.
+  'review_sop_requirements',
 ];
 
 const REGISTRY_NAME_SET: ReadonlySet<string> = new Set<string>([

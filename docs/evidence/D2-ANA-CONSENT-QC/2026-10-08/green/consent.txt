@@ -1,0 +1,12 @@
+ ✓ server/services/ana/__tests__/gcp-consent.test.ts > adviseGcp > resolves the sponsor domain via alias (rbm) with citation
+ ✓ server/services/ana/__tests__/gcp-consent.test.ts > adviseGcp > returns all domains when none specified
+ ✓ server/services/ana/__tests__/gcp-consent.test.ts > reviewInformedConsent > flags missing required elements and scores a sparse consent
+ ✓ server/services/ana/__tests__/gcp-consent.test.ts > reviewInformedConsent > scores a complete consent at 100% required
+ ✓ server/services/ana/__tests__/gcp-consent.test.ts > reviewInformedConsent > lists the catalog of domains and consent elements
+ ✓ server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > checks the ClinicalTrials.gov statement (50.25(c)) as required
+ ✓ server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > checks termination by the investigator (b)(2) and the consequences of withdrawing (b)(4)
+ ✓ server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > does not credit confidentiality from the word "records": it looks for FDA inspection of the records
+ ✓ server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > does not credit the research statement from the word "study" alone
+ ✓ server/services/ana/__tests__/gcp-consent-elements.test.ts > the required elements of 21 CFR 50.25 > reports counts of what the wording shows, not a percentage of compliance
+ ✓ server/services/ana/__tests__/gcp-consent-elements.test.ts > the GCP guideline in force > cites ICH E6(R3), not the superseded E6(R2)
+      Tests  11 passed (11)

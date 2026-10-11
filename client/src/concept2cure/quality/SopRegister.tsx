@@ -22,6 +22,12 @@
  * (P1-29 / DP-32, security review 2026-09-24): until 2026-09-26 it was a
  * reason-only confirm, and the route retired the document on the reason alone.
  *
+ * Approve is offered on a document under review only, and a draft offers "Send
+ * for review" — the existing edit route (PATCH status 'in_review'), not a
+ * signature. Until 2026-10-08 a draft row offered Approve, its dialog said the
+ * version "becomes effective when you sign", and nothing in the product routed
+ * a draft to review (QA walk J8); the server now approves in_review only.
+ *
  * @module client/src/concept2cure/quality/SopRegister
  */
 
@@ -41,7 +47,7 @@ import {
 } from './data';
 import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } from './hooks';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
-import { postQmsApproval } from './qmsApproval';
+import { postQmsApproval, sendQmsDocumentForReview } from './qmsApproval';
 import { useAuthUser } from '@/services/portal/authService';
 import type { QmsDoc } from './data';
 /* The canonical sample-mode guard and its marker, shared with the MDX lane —
@@ -135,6 +141,23 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
       approval: password, second factor, meaning and reason, re-verified by the
       server in the transaction that writes the signature. */
   const [retiring, setRetiring] = React.useState<QmsDoc | null>(null);
+  /** The draft being sent for review, while its request is in flight. */
+  const [routing, setRouting] = React.useState<number | null>(null);
+  /** The last register action's outcome, in the server's words when it refused. */
+  const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+  const sendForReview = async (d: QmsDoc) => {
+    setRouting(d.id);
+    setNotice(null);
+    try {
+      await sendQmsDocumentForReview(d.id);
+      setNotice({ tone: 'ok', text: `${d.docNumber} was sent for review. A second person with signing authority can now approve it.` });
+      reg.refresh?.();
+    } catch (err) {
+      setNotice({ tone: 'err', text: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setRouting(null);
+    }
+  };
 
   const effectiveCount = docs.filter((d) => d.status === 'effective').length;
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
@@ -326,6 +349,15 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
             <div>Next review</div>
             <div />
           </div>
+          {notice && (
+            <div
+              className="qms-empty"
+              role={notice.tone === 'err' ? 'alert' : 'status'}
+              data-tone={notice.tone}
+            >
+              {notice.text}
+            </div>
+          )}
           {regFailed && (
             <ErrorState
               title="The controlled-document register could not be read"
@@ -381,7 +413,21 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                   )}
                 </div>
                 <div className="qms-cell qms-rowacts">
-                  {(d.status === 'draft' || d.status === 'in_review') && (
+                  {d.status === 'draft' && (
+                    <button
+                      className="qms-chip"
+                      disabled={showingSample || routing === d.id}
+                      title={
+                        showingSample
+                          ? 'Sample rows cannot be sent for review'
+                          : 'Send this draft for review. Only a document under review can be approved.'
+                      }
+                      onClick={() => void sendForReview(d)}
+                    >
+                      {I.arrowRight} {routing === d.id ? 'Sending…' : 'Send for review'}
+                    </button>
+                  )}
+                  {d.status === 'in_review' && (
                     <button
                       className="qms-chip"
                       disabled={showingSample}

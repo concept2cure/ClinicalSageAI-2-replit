@@ -1,0 +1,232 @@
+{
+  "startSource": "714506d7cd8ac499e07450542b74e72ec5630a5c",
+  "branch": "concept2cure-v2",
+  "ownedFiles": [
+    "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts",
+    "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+    "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+    "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+    "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
+    "server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts"
+  ],
+  "productionGuards": "frozen",
+  "assertions": "preserve existing bytes, tenant, approval/currentness, audit and refusal expectations",
+  "sharedHelperEdits": [],
+  "usedUnchangedHelper": "server/services/document-data-disposition/__tests__/lineage-stores-fixture.ts",
+  "existingMigrationApplied": "migrations/20261006_document_data_dispositions.sql",
+  "removedExistingAssertionLines": 0,
+  "addedRefusalControl": "Original AnA SOURCE_ID/reference with organization_id=NULL; no saved id and unchanged document, section, revision and CREATE audit counts",
+  "executions": {
+    "red": {
+      "receipt": "CI-SOURCES-RED.txt",
+      "physicalFiles": 6,
+      "totalCases": 71,
+      "passed": 38,
+      "failed": 33,
+      "pending": 0,
+      "seconds": 42.25,
+      "processExit": 1,
+      "success": false,
+      "files": [
+        {
+          "file": "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts",
+          "passed": 13,
+          "failed": 7,
+          "pending": 0,
+          "failedCases": [
+            "SEC-A-1 \u2014 \"Re-read source\" re-reads only a citation the path section owns re-reads the section's own citation and records the prior checksum in the same transaction",
+            "SEC-A-1 \u2014 \"Re-read source\" re-reads only a citation the path section owns a re-read that finds the content unchanged writes nothing",
+            "P11-A-1 / SEC-A-8 \u2014 every citation write is on the document trail, with its before-image cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction",
+            "P11-A-1 / SEC-A-8 \u2014 every citation write is on the document trail, with its before-image re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing",
+            "P11-A-1 / SEC-A-8 \u2014 every citation write is on the document trail, with its before-image re-citing with new citation text records the prior text, and leaves the checksum alone",
+            "P11-A-1 / SEC-A-8 \u2014 every citation write is on the document trail, with its before-image uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image",
+            "P11-A-1 \u2014 \"Re-read all\" records each checksum it moves, and refuses a sealed document refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section"
+          ]
+        },
+        {
+          "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+          "passed": 19,
+          "failed": 1,
+          "pending": 0,
+          "failedCases": [
+            "draft_authoring_document \u2014 durable project source references retains current, project-verified source references in saved provenance and CREATE audit metadata"
+          ]
+        },
+        {
+          "file": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+          "passed": 3,
+          "failed": 2,
+          "pending": 0,
+          "failedCases": [
+            "assembleSequence \u2014 vault leaf by uuid, and what transmit must refuse ships the vault-backed leaf in the package instead of skipping it",
+            "assembleSequence \u2014 vault leaf by uuid, and what transmit must refuse reports the draft leaf as a transmit blocker"
+          ]
+        },
+        {
+          "file": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+          "passed": 0,
+          "failed": 12,
+          "pending": 0,
+          "failedCases": [
+            "a vault leaf is finalized only when its version is approved, current, and approved for these bytes an upload nobody reviewed is not finalized",
+            "a vault leaf is finalized only when its version is approved, current, and approved for these bytes a version at authoring is not finalized",
+            "a vault leaf is finalized only when its version is approved, current, and approved for these bytes a version at in_review is not finalized",
+            "a vault leaf is finalized only when its version is approved, current, and approved for these bytes an approved current version at approved is finalized",
+            "a vault leaf is finalized only when its version is approved, current, and approved for these bytes an approved current version at placed is finalized",
+            "a vault leaf is finalized only when its version is approved, current, and approved for these bytes an approved current version at packaged is finalized",
+            "a vault leaf is finalized only when its version is approved, current, and approved for these bytes an approved current version at submitted is finalized",
+            "a vault leaf is finalized only when its version is approved, current, and approved for these bytes a version a later one superseded is not finalized for a new assembly",
+            "a vault leaf is finalized only when its version is approved, current, and approved for these bytes an approval for different bytes is not an approval of these",
+            "a vault leaf is finalized only when its version is approved, current, and approved for these bytes another organization's lifecycle record approves nothing here",
+            "a vault leaf is finalized only when its version is approved, current, and approved for these bytes names the leaf by its file, so the refusal says which document",
+            "a vault leaf is finalized only when its version is approved, current, and approved for these bytes transmit, freeze and dispatch refuse it, naming the document and why"
+          ]
+        },
+        {
+          "file": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
+          "passed": 3,
+          "failed": 9,
+          "pending": 0,
+          "failedCases": [
+            "materializeLeafSources \u2014 vault_documents materializes the vault copy, staging the RAW bytes",
+            "materializeLeafSources \u2014 vault_documents fetches the bytes with the CALLER organization",
+            "materializeLeafSources \u2014 vault_documents gives two vault leaves DISTINCT keys",
+            "every refusal is explained, never a silent drop another organization vault document is not found",
+            "every refusal is explained, never a silent drop a row that predates the storage provider names the backfill that fixes it",
+            "every refusal is explained, never a silent drop bytes the provider will not return for this org are refused",
+            "every refusal is explained, never a silent drop bytes in a store this server cannot open are refused, and no other store is asked",
+            "every refusal is explained, never a silent drop bytes that do not match the recorded hash are REFUSED, not staged",
+            "every refusal is explained, never a silent drop a vault document that is not a PDF is refused on its BYTES, not its mime"
+          ]
+        },
+        {
+          "file": "server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts",
+          "passed": 0,
+          "failed": 2,
+          "pending": 0,
+          "failedCases": [
+            "assembleTechnicalFileFromCore \u2014 a vault leaf by document_uuid puts the vault CER in the technical-file ZIP instead of skipping it",
+            "assembleTechnicalFileFromCore \u2014 a vault leaf by document_uuid is not ready when a leaf that fills a required slot was left out of the ZIP"
+          ]
+        }
+      ]
+    },
+    "setup": {
+      "receipt": "CI-SOURCES-GREEN-SETUP.txt",
+      "physicalFiles": 6,
+      "totalCases": 71,
+      "passed": 71,
+      "failed": 0,
+      "pending": 0,
+      "seconds": 51.48,
+      "processExit": 0,
+      "success": true,
+      "files": [
+        {
+          "file": "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts",
+          "passed": 20,
+          "failed": 0,
+          "pending": 0,
+          "failedCases": []
+        },
+        {
+          "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+          "passed": 20,
+          "failed": 0,
+          "pending": 0,
+          "failedCases": []
+        },
+        {
+          "file": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+          "passed": 5,
+          "failed": 0,
+          "pending": 0,
+          "failedCases": []
+        },
+        {
+          "file": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+          "passed": 12,
+          "failed": 0,
+          "pending": 0,
+          "failedCases": []
+        },
+        {
+          "file": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
+          "passed": 12,
+          "failed": 0,
+          "pending": 0,
+          "failedCases": []
+        },
+        {
+          "file": "server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts",
+          "passed": 2,
+          "failed": 0,
+          "pending": 0,
+          "failedCases": []
+        }
+      ]
+    },
+    "final": {
+      "receipt": "CI-SOURCES-GREEN.txt",
+      "physicalFiles": 6,
+      "totalCases": 72,
+      "passed": 72,
+      "failed": 0,
+      "pending": 0,
+      "seconds": 41.53,
+      "processExit": 0,
+      "success": true,
+      "files": [
+        {
+          "file": "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts",
+          "passed": 20,
+          "failed": 0,
+          "pending": 0,
+          "failedCases": []
+        },
+        {
+          "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+          "passed": 21,
+          "failed": 0,
+          "pending": 0,
+          "failedCases": []
+        },
+        {
+          "file": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+          "passed": 5,
+          "failed": 0,
+          "pending": 0,
+          "failedCases": []
+        },
+        {
+          "file": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+          "passed": 12,
+          "failed": 0,
+          "pending": 0,
+          "failedCases": []
+        },
+        {
+          "file": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
+          "passed": 12,
+          "failed": 0,
+          "pending": 0,
+          "failedCases": []
+        },
+        {
+          "file": "server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts",
+          "passed": 2,
+          "failed": 0,
+          "pending": 0,
+          "failedCases": []
+        }
+      ]
+    }
+  },
+  "lint": {
+    "receipt": "CI-SOURCES-LINT.txt",
+    "physicalFiles": 6,
+    "errors": 0,
+    "warnings": 0,
+    "processExit": 0
+  }
+}

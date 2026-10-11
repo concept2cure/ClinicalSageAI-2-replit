@@ -1,0 +1,122 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 1ms
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 9ms
+   → expected [ 'clinical_study_report', 'smpc' ] to deeply equal [ 'clinical_study_report', …(2) ]
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 1ms
+   → Cannot use 'in' operator to search for 'protocol' in undefined
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > separates existing platform blueprints from agency records and verifies each projection against its source 1ms
+   → Cannot convert undefined or null to object
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 1ms
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 41ms
+   → expected 'Look up the SECTION STRUCTURE of a ke…' to contain 'Cite basis/limits: hand-kept outlines…'
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last 1ms
+   → fits under the 1024-character trim: expected 1084 to be less than or equal to 1024
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 2ms
+ × server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > advertises preparation as questions and regional route, with no evidence or readiness claim 2ms
+   → expected 'Look up the SECTION STRUCTURE of a ke…' to match /not drafted prose, verified evidence…/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record
+AssertionError: expected [ 'clinical_study_report', 'smpc' ] to deeply equal [ 'clinical_study_report', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "clinical_study_report",
+-   "dsur",
+    "smpc",
+  ]
+
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:98:63
+     96|
+     97|   it('calls an outline record-derived only when the library reads it f…
+     98|     expect(Object.keys(TEMPLATE_OUTLINES_FROM_RECORD).sort()).toEqual(…
+       |                                                               ^
+     99|     for (const [id, record] of Object.entries(TEMPLATE_OUTLINES_FROM_R…
+    100|       RECORD_PROOFS[id]();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them
+TypeError: Cannot use 'in' operator to search for 'protocol' in undefined
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:109:54
+    107|     expect(handClause).not.toBe('');
+    108|     for (const t of DOCUMENT_TEMPLATES) {
+    109|       if (t.id in TEMPLATE_OUTLINES_FROM_RECORD || t.id in TEMPLATE_OU…
+       |                                                      ^
+    110|       expect(entryFor(handClause, t.id), t.id).not.toBe('');
+    111|       expect(entryFor(recordClause, t.id), t.id).toBe('');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > separates existing platform blueprints from agency records and verifies each projection against its source
+TypeError: Cannot convert undefined or null to object
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:120:19
+    118|   it('separates existing platform blueprints from agency records and v…
+    119|     const projected = DOCUMENT_TEMPLATES.filter((t) => t.outlineSource…
+    120|     expect(Object.keys(TEMPLATE_OUTLINES_FROM_BLUEPRINT).sort()).toEqu…
+       |                   ^
+    121|     for (const t of projected) {
+    122|       const source = t.outlineSource!;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text
+AssertionError: expected 'Look up the SECTION STRUCTURE of a ke…' to contain 'Cite basis/limits: hand-kept outlines…'
+
+Expected: "Cite basis/limits: hand-kept outlines and blueprint required flags are platform guidance, not the agency's text."
+Received: "Look up the SECTION STRUCTURE of a key submission document: ordered sections (number, heading, purpose, required) and the basis the outline cites. Not drafted prose; use it to scaffold authoring or check completeness. Read-only reference data. Present a hand-kept outline as the platform's outline, not as the guidance's own text, and name its cited basis. Pass `template_id` for one (e.g. 'clinical_overview', 'smpc'), or `family` (ectd|estar|eu_mdr|eu_ivdr|ctis) for a family's templates. Read from a canonical record: smpc (from the QRD SmPC record); clinical_study_report (from the ICH E3 tree). Kept by hand against the cited basis, not from a canonical record: protocol; statistical_analysis_plan; informed_consent; drug_substance; drug_product; dsur; quality_overall_summary; nonclinical_overview; clinical_overview; clinical_summary; cover_letter (platform headings, not a regulator's text); k510_summary; gspr_checklist; ivdr_gspr_checklist; performance_evaluation_report; impd; investigators_brochure; risk_management_plan; pbrer (interim copy of the ICH E2C(R2) numbering)."
+
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:140:25
+    138|
+    139|   it("tells AnA to present a hand-kept outline as the platform's, not …
+    140|     expect(description).toContain(INSTRUCTION);
+       |                         ^
+    141|   });
+    142|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last
+AssertionError: fits under the 1024-character trim: expected 1084 to be less than or equal to 1024
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:144:70
+    142|
+    143|   it('keeps the rule, the input usage and the record list ahead of the…
+    144|     expect(description.length, 'fits under the 1024-character trim').t…
+       |                                                                      ^
+    145|     // Should the library outgrow the cap, the trim must still cut onl…
+    146|     expect(head).toContain(INSTRUCTION);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > advertises preparation as questions and regional route, with no evidence or readiness claim
+AssertionError: expected 'Look up the SECTION STRUCTURE of a ke…' to match /not drafted prose, verified evidence…/i
+
+- Expected:
+/not drafted prose, verified evidence or readiness/i
+
++ Received:
+"Look up the SECTION STRUCTURE of a key submission document: ordered sections (number, heading, purpose, required) and the basis the outline cites. Not drafted prose; use it to scaffold authoring or check completeness. Read-only reference data. Present a hand-kept outline as the platform's outline, not as the guidance's own text, and name its cited basis. Pass `template_id` for one (e.g. 'clinical_overview', 'smpc'), or `family` (ectd|estar|eu_mdr|eu_ivdr|ctis) for a family's templates. Read from a canonical record: smpc (from the QRD SmPC record); clinical_study_report (from the ICH E3 tree). Kept by hand against the cited basis, not from a canonical record: protocol; statistical_analysis_plan; informed_consent; drug_substance; drug_product; dsur; quality_overall_summary; nonclinical_overview; clinical_overview; clinical_summary; cover_letter (platform headings, not a regulator's text); k510_summary; gspr_checklist; ivdr_gspr_checklist; performance_evaluation_report; impd; investigators_brochure; risk_manage"
+
+ ❯ server/services/ana/__tests__/document-template-description.test.ts:165:18
+    163|
+    164|   it('advertises preparation as questions and regional route, with no …
+    165|     expect(head).toMatch(/not drafted prose, verified evidence or read…
+       |                  ^
+    166|     expect(head).toMatch(/exact active `registry_id`.*never guess/i);
+    167|     expect(head).toMatch(/`market`\+`prepare`.*regional route.*at most…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 4 passed (10)
+   Start at  21:44:23
+   Duration  1.37s (transform 826ms, setup 95ms, import 881ms, tests 66ms, environment 0ms)
+

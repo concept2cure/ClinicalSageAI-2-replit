@@ -1,0 +1,38 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > uses the document project even when a different shell project is open 130ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > offers only the open project's submissions, and says how many it does not offer, unanchored ones included 26ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > asks the server for the open project's submissions, so the list is scoped where it is read 27ms
+ × client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > does not offer an unanchored submission even when the server returns one, because the picker checks the same rule 43ms
+   → expected true to be false // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > when every submission is another project's, the empty state says so — not 'none in this organization' 44ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > with no project open, every submission is offered, as before 33ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > does not offer an unanchored submission even when the server returns one, because the picker checks the same rule
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx:87:63
+     85|     open();
+     86|     await waitFor(() => expect(offered().some((t) => t.startsWith('Our…
+     87|     expect(offered().some((t) => t.startsWith('Legacy IND'))).toBe(fal…
+       |                                                               ^
+     88|   });
+     89|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  01:33:53
+   Duration  4.29s (transform 1.22s, setup 286ms, import 1.45s, tests 316ms, environment 1.64s)
+

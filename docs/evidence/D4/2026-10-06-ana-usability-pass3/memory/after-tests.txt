@@ -1,0 +1,79 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > scoreAtom (behaviour-preserving with the previous inlined atomSortScore) > pins working memory above any semantic atom 2ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > scoreAtom (behaviour-preserving with the previous inlined atomSortScore) > combines similarity, confidence, and verified boost with the original weights 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > scoreAtom (behaviour-preserving with the previous inlined atomSortScore) > treats missing similarity/confidence as zero 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > per-layer ranking weights (unified formula) > ignores similarity/confidence for working memory under the default weights 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > per-layer ranking weights (unified formula) > falls back to semantic weights for an unrecognised layer 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > per-layer ranking weights (unified formula) > lets a custom policy unpin working memory so it ranks by similarity 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > always keeps working memory 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > keeps recent semantic atoms and drops stale ones 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > retains stale atoms when verified or high-importance 1ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > shouldRemember (structured forgetting) > keeps atoms with no/invalid createdAt (cannot prove staleness) 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > collapses same layer/title/content-prefix to the higher-scoring atom 1ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > dedupeAtoms > keeps atoms that differ by layer 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > orchestrateAtoms (full pass) > forgets, dedupes, and ranks with working memory on top 2ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > SEMANTIC_WORKING_MEMORY_POLICY > changes only the working_memory weights (semantic layers untouched) 1ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > SEMANTIC_WORKING_MEMORY_POLICY > ranks working memory by similarity instead of a flat pin 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > SEMANTIC_WORKING_MEMORY_POLICY > keeps a small structural edge: ties favour working memory 0ms
+ ✓ server/services/__tests__/memory-orchestrator.test.ts > memory-orchestrator > exposes the reviewed default constants that preserve prior behaviour 1ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > assembles working + client + project memory with metadata diagnostics 5ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > applies structured forgetting to stale, unverified, low-importance memory 2ms
+ ✓ tests/unit/memory-context-assembler.test.ts > MemoryContextAssembler > retains stale but verified memory entries and reports trimming 2ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts tenant-scoped client and project searches before recency resolves 8ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > returns healthy layers after stalled recency reaches the existing 3s deadline 3ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > independent memory layers start together > starts independent searches while semantic working memory is pending 2ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps a timeout notice even when every source is unavailable 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps the unavailability notice ahead of content when the prompt budget trims 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > reports rejected reads as errors with a prompt notice, not empty recall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > deadlines retain truthful memory availability > keeps healthy empty recall empty, with no fabricated unavailable source 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > does not read tenant memory without an organization 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > skips only project memory when no project is selected 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > memory scope and input gates are unchanged > keeps recency recall but skips semantic searches without a query 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > still uses recency when semantic recall times out 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > does not misreport a timed-out semantic read with empty recency as empty memory 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > bounds recency fallback too when both working-memory reads stall 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > semantic working-memory preference and fallback remain bounded > preserves a rejected semantic read as unavailable if recency returns no summary 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > clears successful deadline timers, preventing false timeout logs 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores a late semantic result while its recency fallback is still pending 1ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > excludes expired independent sources that finish during the working-memory fallback 5ms
+ ✓ server/services/__tests__/memory-context-assembler-deadline.test.ts > settled memory results are stable and timers are cleared > ignores late values and rejections after the final result is returned 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'semantic' when the flag is on and similarity recall serves the summary 3ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'recency_fallback' when the flag is ON but semantic clears nothing — the state a pilot must see 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'recency' when the flag is off and the default path answers 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the assembler names how working memory was recalled > 'none' when nothing is recalled at all 0ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > recordAnaTurn counts modes and the rendered family carries them 1ms
+ ✓ server/services/__tests__/memory-context-assembler-mode.test.ts > the mode reaches Prometheus > the stream route hands the mode from diagnostics to recordAnaTurn (source contract) 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > normalises titles and keeps the declared order and statuses 3ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses no steps 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an empty list 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses a step with no title 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses an unknown status 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses duplicate titles 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > refuses more than the cap 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > clips an over-long title rather than overflowing the panel 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan validates and never invents > the handler reports the plan as recorded, with no completion it was not given 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits for a successful update_plan call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for another tool 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a failed call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a cancelled call 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for a result that is not ok 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the plan event is built from the validated result only > emits nothing for an unparseable result 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > survives relevance trimming 1ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > names drafting and project search by what they act on 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > update_plan is always offered and has a calm label > labels the step by its size, not as a raw tool name 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > counts unresolved uploads and keeps the content/name distinction 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > a failed memory read is unavailable, never "none" 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > context_used states only what reached the model > lists the memory items the assembler rendered, and drops what the budget cut 2ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores the last validated plan on the assistant metadata 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > the declared plan is persisted with the turn > stores nothing for a turn that declared no plan 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > reads the refusal a handler returned instead of throwing 0ms
+ ✓ server/services/ana/__tests__/turn-plan-and-context.test.ts > a handler that refuses is a step that did not happen > is null for a result that did not refuse 0ms
+
+ Test Files  5 passed (5)
+      Tests  69 passed (69)
+   Start at  21:35:22
+   Duration  873ms (transform 1.22s, setup 374ms, import 1.40s, tests 92ms, environment 1ms)
+

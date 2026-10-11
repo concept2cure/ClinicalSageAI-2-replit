@@ -1,0 +1,17 @@
+{
+  "release_base": "7f3b84ca5e67f1bb920fc662ebf3289578a4ecb6",
+  "production_boundaries": [
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "start": "// IND narrative-module",
+      "end": "// Medical-information / standard-response advisor."
+    },
+    {
+      "path": "server/services/ana/evidence-literature-tool-defs.ts",
+      "start": "// IND narrative-module",
+      "end": "export const ADVISE_GCP"
+    }
+  ],
+  "outside_these_regions_byte_identical": true,
+  "no_client_or_shared_changes": true
+}

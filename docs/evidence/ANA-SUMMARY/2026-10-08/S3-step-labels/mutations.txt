@@ -1,0 +1,47 @@
+## M1 a finished step reads done whatever its status
+file: server/services/ana/step-presentation.ts
+Tests  1 failed | 23 passed (24)
+  × server/services/ana/__tests__/step-presentation.test.ts > tense > a step that did not succeed keeps the doing form: a failed validation never reads "Validated" 9ms
+
+## M2 the chevron shows the inputs again
+file: client/src/concept2cure/v2/AnaActivity.tsx
+Tests  1 failed | 7 passed (8)
+  × client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 1 — redaction: no id in a step's opened details > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} shows no uuid anywhere 114ms
+
+## M3 the title query drops the open project
+file: server/services/ana/step-presentation.ts
+Tests  1 failed | 5 passed (6)
+  × server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > gives no title to a document of another project of the same organisation 28ms
+
+## M4 the title query drops the data-removed predicate
+file: server/services/ana/step-presentation.ts
+Tests  1 failed | 5 passed (6)
+  × server/services/ana/__tests__/step-document-titles.pglite.test.ts > resolveStepDocumentTitles > gives no title to a deleted document or one whose data was removed 15ms
+
+## M5 usedModel read from a list, not the capture (always false)
+file: server/routes/ana-ri/stream.ts
+Tests  1 failed | 7 passed (8)
+  × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 6. a step whose handler made a model generation carries usedModel: true and the Model fact 11ms
+
+## M6 an unknown tool reads its humanised name again
+file: server/services/ana/step-presentation.ts
+Tests  2 failed | 30 passed (32)
+  × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 3. a tool with no register entry never reaches a frame by its name 16ms
+  × server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > a tool with no entry reads "Running a step" live and "Ran a step" finished 9ms
+
+## M7 the stream announces before resolving titles (no titles)
+file: server/routes/ana-ri/stream.ts
+Tests  1 failed | 7 passed (8)
+  × server/routes/ana-ri/__tests__/stream-step-presentation.test.ts > S3 through the stream route > 5. a read is announced by the title of its document, scoped to the open project 20ms
+
+## M8 the client keeps the announced label on the result
+file: client/src/concept2cure/components/ana/useAnaChat.ts
+Tests  2 failed | 3 passed (5)
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 3: the finished frame's "Ran a step" replaces the announced label 64ms
+  × client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 4: a live step reads in the doing form and the finished one in the done form, with its facts 90ms
+
+## M9 the engine glyph ignores the capture
+file: client/src/concept2cure/v2/anaWorkModel.ts
+Tests  2 failed | 6 passed (8)
+  × client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > a step whose handler made a generation has no engine glyph, and says a model wrote part of it 15ms
+  × client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > shows only for a successful engine step whose capture saw none; unknown is not none 1ms

@@ -1,0 +1,81 @@
+TAP version 13
+# Subtest: security patch: a mapped IPv6 subnet cannot trust every IPv4 client
+ok 1 - security patch: a mapped IPv6 subnet cannot trust every IPv4 client
+  ---
+  duration_ms: 4.734469
+  type: 'test'
+  ...
+# Subtest: security patch: shell quoting rejects line terminators after a comment
+ok 2 - security patch: shell quoting rejects line terminators after a comment
+  ---
+  duration_ms: 3.12753
+  type: 'test'
+  ...
+# Subtest: security patch: an extreme indexed source-map offset is rejected in a bounded child
+not ok 3 - security patch: an extreme indexed source-map offset is rejected in a bounded child
+  ---
+  duration_ms: 29.844752
+  type: 'test'
+  location: '/workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/dependency-risk-gate.test.mjs:361:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    /workspace/scratch/bd36ee581acd/concept2cure/node_modules/source-map-js/lib/source-map-consumer.js:1127
+          throw new Error('"' + aSource + '" is not in the SourceMap.');
+          ^
+    
+    Error: "input.js" is not in the SourceMap.
+        at IndexedSourceMapConsumer.IndexedSourceMapConsumer_sourceContentFor [as sourceContentFor] (/workspace/scratch/bd36ee581acd/concept2cure/node_modules/source-map-js/lib/source-map-consumer.js:1127:13)
+        at /workspace/scratch/bd36ee581acd/concept2cure/node_modules/source-map-js/lib/source-node.js:146:40
+        at Array.forEach (<anonymous>)
+        at Function.SourceNode_fromStringWithSourceMap [as fromStringWithSourceMap] (/workspace/scratch/bd36ee581acd/concept2cure/node_modules/source-map-js/lib/source-node.js:145:32)
+        at [eval]:12:29
+        at runScriptInThisContext (node:internal/vm:209:10)
+        at node:internal/process/execution:449:12
+        at [eval]-wrapper:6:24
+        at runScriptInContext (node:internal/process/execution:447:60)
+        at evalFunction (node:internal/process/execution:87:30)
+    
+    Node.js v22.16.0
+    
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    IndexedSourceMapConsumer.IndexedSourceMapConsumer_sourceContentFor [as sourceContentFor] (/workspace/scratch/bd36ee581acd/concept2cure/node_modules/source-map-js/lib/source-map-consumer.js:1127:13)
+    /workspace/scratch/bd36ee581acd/concept2cure/node_modules/source-map-js/lib/source-node.js:146:40
+    Array.forEach (<anonymous>)
+    Function.SourceNode_fromStringWithSourceMap [as fromStringWithSourceMap] (/workspace/scratch/bd36ee581acd/concept2cure/node_modules/source-map-js/lib/source-node.js:145:32)
+    [eval]:12:29
+    runScriptInThisContext (node:internal/vm:209:10)
+    node:internal/process/execution:449:12
+    [eval]-wrapper:6:24
+    runScriptInContext (node:internal/process/execution:447:60)
+    evalFunction (node:internal/process/execution:87:30)
+    TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/dependency-risk-gate.test.mjs:378:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: security patch: an aborted compressed response destroys its zlib stream
+ok 4 - security patch: an aborted compressed response destroys its zlib stream
+  ---
+  duration_ms: 66.068756
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 3
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 174.228443

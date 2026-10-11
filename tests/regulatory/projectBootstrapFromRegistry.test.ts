@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { bootstrapFromRegistry, getSectionCountForType } from '../../server/services/regulatory/projectBootstrapFromRegistry';
+import { getSectionBlueprint, getSectionBlueprintContext } from '../../server/services/regulatory/sectionBlueprintCatalog';
 
 describe('Project Bootstrap from Registry', () => {
   describe('bootstrapFromRegistry', () => {
@@ -118,4 +119,67 @@ describe('Project Bootstrap from Registry', () => {
       expect(count).toBe(0);
     });
   });
+
+});
+
+describe('regional and standalone authoring groups', () => {
+    it('seeds CTIS Form/MSC and Parts I/II as authoring groups rather than CTD modules', async () => {
+      const result = await bootstrapFromRegistry({ registryId: 'EU_CTA' });
+      expect(result!.sections.find(s => s.sectionCode === 'FORM.COVER')?.module).toBe('CTIS Form/MSC');
+      expect(result!.sections.find(s => s.sectionCode === 'MSC')?.module).toBe('CTIS Form/MSC');
+      expect(result!.sections.find(s => s.sectionCode === 'PART_I.PROTOCOL')?.module).toBe('CTIS Part I');
+      expect(result!.sections.find(s => s.sectionCode === 'PART_II.CONSENT')?.module).toBe('CTIS Part II');
+      expect(new Set(result!.sections.map(s => s.module))).toEqual(new Set(['CTIS Form/MSC', 'CTIS Part I', 'CTIS Part II']));
+    });
+
+    it('seeds the Japan notification outline with a Notification group', async () => {
+      const result = await bootstrapFromRegistry({ registryId: 'JP_CTN' });
+      expect(result!.sections.length).toBeGreaterThan(0);
+      expect(result!.sections.every(s => s.module === 'Notification')).toBe(true);
+      expect(result!.sections.map(s => s.sectionCode)).toEqual((await getSectionBlueprint('JP_CTN'))!.sections.map(s => s.code));
+    });
+
+    it('seeds the dedicated amendment components instead of the initial IND deep dossier', async () => {
+      const result = await bootstrapFromRegistry({ registryId: 'US_IND_AMENDMENT' });
+      const blueprint = (await getSectionBlueprint('US_IND_AMENDMENT'))!;
+      expect(result!.usedDeepAdapter).toBe(false);
+      expect(result!.sections.map(s => s.sectionCode)).toEqual(blueprint.sections.map(s => s.code));
+      expect(result!.sections.every(s => s.module === 'Amendment')).toBe(true);
+      expect(result!.sections.find(s => s.sectionCode === 'amendment.protocol')?.metadata.required).toBe(false);
+      expect(result!.sections.find(s => s.sectionCode === 'amendment.form_1571')?.metadata.required).toBe(true);
+      expect(result!.sections.every(s => s.metadata.dedicatedBlueprint === true)).toBe(true);
+      expect(await getSectionCountForType('US_IND_AMENDMENT')).toBe(result!.sections.length);
+    });
+
+    for (const id of ['ICH_DSUR', 'ICH_CSR']) {
+      it(`${id} uses Document for standalone module-zero rows`, async () => {
+        const result = await bootstrapFromRegistry({ registryId: id });
+        expect(result!.sections.length).toBeGreaterThan(0);
+        expect(result!.sections.every(s => s.module === 'Document')).toBe(true);
+        expect(result!.sections.map(s => s.sectionCode)).toEqual((await getSectionBlueprint(id))!.sections.map(s => s.code));
+      });
+    }
+
+    for (const id of ['EU_CTA', 'JP_CTN', 'US_IND_AMENDMENT', 'CA_CTA', 'CA_CTA_A']) {
+      it(`${id} preserves outline provenance and limitations on every stored section row`, async () => {
+        const result = await bootstrapFromRegistry({ registryId: id });
+        const context = getSectionBlueprintContext(id);
+        expect(context.limitations.length).toBeGreaterThan(0);
+        for (const section of result!.sections) {
+          expect(section.metadata.outlineLimitations).toEqual(context.limitations);
+          if (context.basis) expect(section.metadata.outlineBasis).toEqual(context.basis);
+        }
+      });
+    }
+
+    it('preserves genuine CTD M1–M5 labels, including the initial US IND deep adapter', async () => {
+      const ind = await bootstrapFromRegistry({ registryId: 'US_IND' });
+      expect(ind!.usedDeepAdapter).toBe(true);
+      expect(ind!.sections.every(s => /^M[1-5]$/.test(s.module))).toBe(true);
+      for (const id of ['US_NDA', 'EU_MAA', 'CA_CTA', 'CA_CTA_A', 'ICH_NONCLIN_SUMMARY']) {
+        const result = await bootstrapFromRegistry({ registryId: id });
+        const blueprint = (await getSectionBlueprint(id))!;
+        expect(result!.sections.map(s => s.module)).toEqual(blueprint.sections.map(s => `M${s.module}`));
+      }
+    });
 });

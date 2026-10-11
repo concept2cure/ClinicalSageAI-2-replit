@@ -2,7 +2,7 @@
  * Submission Center — kit app/submission-center.jsx ported (registry id
  * `submission-center`, contract-ready).
  *
- * Real-data standard (no mock in product): the 8 workspaces are scaffolded from
+ * Real-data standard (no mock in product): the 7 workspaces are scaffolded from
  * the REAL contract SUBMISSION_WORKSPACES (@shared/types/submission-ui). The
  * portfolio list binds live to GET /api/submissions and the per-submission
  * sequences to GET /api/submissions/:id/sequences (both DB-backed via
@@ -24,8 +24,8 @@
  *
  * Per-sequence workspaces (SubmissionSeqWorkspaces.tsx) are REAL: a sequence
  * selector feeds Builder (GET/PUT leaves), Validation (dispatch-readiness
- * findings + AI explain), Shadow Review (runs + persisted findings),
- * Cross-region (gap computation off the real leaves) and Dispatch (the
+ * findings + AI explain), Shadow Review (runs + persisted findings) and
+ * Dispatch (the
  * server-computed gate + AI QC advisory). Sequence lifecycle transitions POST
  * the real /sequences/:seqId/transition endpoint and surface the server's
  * verdict verbatim. The irreversible transitions — freeze and dispatch — run
@@ -47,8 +47,10 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor } from '../assessmentState';
-import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
+import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
+import { readShellProject, shellProgramId, type ShellProject } from '../shellProject';
+import { notOfferedCount, programSubmissionsPath, SUB_STATUS_LABEL, SUB_STATUS_TONE } from './programSequence';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import {
   // Canonical enum / label / state-machine maps (mirror shared/types/
@@ -63,18 +65,26 @@ import {
 import {
   BuilderWorkspace,
   Chip,
-  CrossRegionWorkspace,
   DispatchWorkspace,
   SeqPicker,
   ShadowReviewWorkspace,
   ValidationWorkspace,
   VerdictNote,
+  clause,
   mutateVerbatim,
+  type GovernedKind,
+  type GovernedPrecheck,
   type Notice,
   type SeqRow,
+  type TransmitRequest,
 } from './SubmissionSeqWorkspaces';
 import '../styles/submission-v2.css';
-import { C2CForm } from '../C2CForm';
+import { NewSubmissionForm } from './NewSubmissionForm';
+import { gatewayLabel } from '../gatewayLabels';
+import { SubmissionProgramAnchor } from './SubmissionProgramAnchor';
+import { useSurfaceAvailable } from '../surfaceAvailable';
+import { consumeNavParams } from '../navParams';
+import { readSubmissionNavTarget, useOpenOnNavTarget } from './submissionNavTarget';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -84,8 +94,9 @@ import { C2CForm } from '../C2CForm';
    separate table) and its `status` enum is planning|active|submitted|archived
    (distinct from the sequence status enum). ── */
 
-// GET /api/submissions → listSubmissions() → `submissions` rows.
-interface SubRow {
+// GET /api/submissions → listSubmissions() → `submissions` rows. Project home
+// lists the same rows for its project (type-only import, no runtime coupling).
+export interface SubRow {
   id: number;
   title: string;
   productName: string | null;
@@ -170,18 +181,8 @@ function requiredModule1For(
   return out;
 }
 
-// Deterministic display tone for the submission status enum (not sample data).
-const SUB_STATUS_TONE: Record<string, string> = {
-  planning: 'idle',
-  active: 'ai',
-  submitted: 'ok',
-  archived: 'idle',
-};
-// The status cell printed the raw enum ("submitted") while every other chip on
-// the surface carries a label; an unknown value stays visible as itself.
-const SUB_STATUS_LABEL: Record<string, string> = {
-  planning: 'Planning', active: 'Active', submitted: 'Submitted', archived: 'Archived',
-};
+// (SUB_STATUS_TONE / SUB_STATUS_LABEL — the submission status chip — live in
+// programSequence.ts, shared with Project home's list of the project's submissions.)
 
 /* ── Device filings (eSTAR tracker) ─────────────────────────────────────────
    eSTAR is NOT eCTD: a tracked device filing never becomes an ectd_sequences
@@ -332,8 +333,99 @@ function NextSequenceControl({ sub, rows, type, onType, busy, onStart }: {
   );
 }
 
+/** A governed step in flight: what is signed, and for a transmit where it goes. */
+type GovernedFlow = { seq: SeqRow; kind: GovernedKind; transmit?: TransmitRequest };
+const GOVERNED_LABEL: Record<GovernedKind, string> = { freeze: 'Freeze', dispatch: 'Dispatch', transmit: 'Transmit' };
+const GOVERNED_PAST: Record<GovernedKind, string> = { freeze: 'frozen', dispatch: 'dispatched', transmit: 'transmitted' };
+
+/** What POST /sequences/:id/transmit answers. `signatureVoided`: on a
+ *  transmit that sent nothing, whether the signature given for it is now void
+ *  (P-23). */
+type TransmitAnswer = { transmitted?: boolean; reason?: string; gateway?: string; transmittalId?: number; status?: string; dispatchStatus?: string; signatureVoided?: boolean };
+
+/** The server's honest "nothing was sent" (`transmitted: false`), as a sentence. */
+function notTransmittedSentence(a: TransmitAnswer, environment: string | undefined): string {
+  const sentence = a.reason === 'gateway_not_configured'
+    ? `Not transmitted — ${gatewayLabel(a.gateway)} has no ${environment ?? ''} credentials configured for this organization. Nothing was sent; the attempt is recorded.`
+    : `Not transmitted — ${clause(a.reason ?? 'the server did not send it')}. Nothing was sent.`;
+  return a.signatureVoided ? `${sentence} The signature given for it is now void; a new attempt is signed again.` : sentence;
+}
+
+/** A performed transmit, as the server reported it. */
+function transmittedSentence(seq: SeqRow, a: TransmitAnswer, environment: string | undefined): string {
+  return `Sequence ${seq.sequenceNumber} handed to ${gatewayLabel(a.gateway)} (${environment ?? 'environment not recorded'}) — transmittal #${
+    a.transmittalId ?? 'not returned'
+  }, status ${a.status ?? 'not returned'}`;
+}
+
+/** The open project as the create form's programme: the org's own row when
+ *  the projects list has it, otherwise what the shell knows of it. */
+function openProgramme(
+  id: string,
+  row: { title: string; code: string } | undefined,
+  shell: ShellProject | null,
+): { id: string; title: string; code: string } {
+  return { id, title: row?.title || shell?.title || '', code: row?.code || shell?.code || '' };
+}
+
+/** Whose submissions are listed, in one line, with the way to the others.
+ *  `notOffered` is the server's count of the organization's submissions the
+ *  project scope left out (meta.notOffered); null when it did not say, and the
+ *  line then says nothing about them rather than guessing. `name` is null when
+ *  neither the shell nor the projects list names the project; the line then
+ *  says "the open project" once, not twice.
+ *
+ *  One <p>, one <span> of words and the toggle <button> at the same place in
+ *  both states, so the button is the same element after a toggle and keyboard
+ *  focus stays on it (WCAG 2.4.3). It used to sit at a different child index
+ *  in each state, so React replaced it and focus fell to <body>. */
+function ProjectScopeLine({ name, scoped, notOffered, onToggle }: {
+  name: string | null;
+  scoped: boolean;
+  notOffered: number | null;
+  onToggle: () => void;
+}) {
+  const others =
+    notOffered == null
+      ? ''
+      : notOffered === 0
+        ? ' Your organization has no other submissions.'
+        : ` ${plural(notOffered, 'other submission', 'other submissions')} in your organization ${notOffered === 1 ? 'is' : 'are'} not shown.`;
+  const words = !scoped
+    ? 'Every submission in your organization.'
+    : name
+      ? <>Submissions of <b>{name}</b>, the open project.{others}</>
+      : <>Submissions of the open project.{others}</>;
+  // Scoped with no other submission, "show all" would list the same rows.
+  const showToggle = !scoped || notOffered !== 0;
+  return (
+    <p className="sp-state sc-mb" data-testid="sc-scope">
+      <span>{words}</span>{' '}
+      {showToggle && (
+        <button type="button" className="pj-card-h-go" onClick={onToggle}>
+          {scoped ? "Show all of the organization's submissions" : `Show only ${name ? `${name}'s` : "the open project's"} submissions`}
+        </button>
+      )}
+    </p>
+  );
+}
+
+/** AnA's miss on a submission while the list is the open project's. The list
+ *  is the project's, so a miss is a miss there, not "no such submission": the
+ *  organization's others are not listed (the server counted them in
+ *  `notOffered`, null when it did not say), and only the person can list them. */
+function scopedMissReason(wanted: string, projectName: string | null, notOffered: number | null): string {
+  const head = `No submission named "${wanted}" among the open project's submissions${projectName ? ` (${projectName})` : ''}`;
+  if (notOffered === 0) return `${head}; the organization has no other submissions.`;
+  const others =
+    notOffered != null
+      ? `${plural(notOffered, 'other submission', 'other submissions')} of the organization ${notOffered === 1 ? 'is' : 'are'}`
+      : "The organization's other submissions are";
+  return `${head}. ${others} not listed here; the person can list them with "Show all of the organization's submissions" under the title.`;
+}
+
 /** The workspaces that operate on ONE selected sequence (fed by SeqPicker). */
-const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'cross-region', 'dispatch']);
+const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'dispatch']);
 
 export function SubmissionCenter({
   onAsk,
@@ -347,20 +439,60 @@ export function SubmissionCenter({
 }) {
   const [ws, setWs] = React.useState('portfolio');
   const [selSub, setSelSub] = React.useState<number | null>(null);
+  const available = useSurfaceAvailable();
   // The signer sees their own identity in the e-signature dialog (§11.50): the
   // name the platform will print on the signature, not a generic "You".
   const authUser = useAuthUser();
   const signerLabel = authUser?.displayName || authUser?.email || 'the authenticated user';
 
+  /* ── The open project (ONE_ANA_ONE_CANVAS.md slice 24) ─────────────────────
+     With a project open this screen is about that project: it lists the
+     project's submissions (GET /api/submissions?programId=…, the server's own
+     scope) and a new submission belongs to it. The line under the title says
+     whose submissions these are and how many others the organization has, as
+     the server counted them, with a control to list them all. With no project
+     open, or one that is not a regulatory_programs uuid, nothing changes. */
+  const shell = readShellProject();
+  const openProgramId = shellProgramId(shell);
+  const [orgWide, setOrgWide] = React.useState(false);
+  const scopedTo = openProgramId && !orgWide ? openProgramId : null;
+
   // GET /api/submissions — real DB rows, honest empty, honest error (no fixture).
   const [subsBump, setSubsBump] = React.useState(0);
-  const subs = useLiveRows<SubRow>('/api/submissions', ['/api/submissions', subsBump]);
+  const subsPath = scopedTo ? programSubmissionsPath(scopedTo) : '/api/submissions';
+  /* A 200 with no list in it is a failed read, not "no submissions": unguarded
+     it was flattened to zero rows, and New submission preselected the
+     project's region as if that market did not exist (design review
+     2026-10-08, honest-state lens). */
+  const subs = useLiveRows<SubRow>(subsPath, [subsPath, subsBump], isRowsWith<SubRow>('id', 'applicationType', 'primaryRegion'));
+  const notOffered = scopedTo && !subs.loading && !subs.error ? notOfferedCount(subs.meta) : null;
   /* The org's programmes, so the required programId is PICKED rather than
      typed as a uuid — createSubmissionSchema requires one (the submission's
-     project) and a customer does not have one to hand. */
+     project) and a customer does not have one to hand. With a project open the
+     programme is that project, and this list only names it. */
   const programmes = useLiveRows<{ id: string; title: string; code: string }>('/api/c2c/projects');
+  const openRow = openProgramId ? programmes.rows.find((p) => p.id === openProgramId) : undefined;
+  /* The project's name when the shell or the projects list gives one; null
+     when neither does (the shell may carry the id alone), and the screen then
+     says "the open project" rather than a name it does not have. */
+  const openProjectKnownName = openProgramId
+    ? shell?.title || openRow?.title || shell?.code || openRow?.code || null
+    : null;
+  const openProjectName = openProgramId ? openProjectKnownName ?? 'the open project' : null;
   const list = subs.rows;
   const sub = list.find((s) => s.id === selSub) ?? list[0];
+  /* What the Submissions table's "Program" column says, read by the
+     submission's key (submissions.program_id → the program record). It printed
+     `title · productName`, so an unanchored NDA whose product string is
+     "BX-204" read as the BX-204 program — a 510(k) device in Projects — and the
+     two screens appeared to disagree about one program's filing type (QA
+     2026-10-08, j1). A program not on the page read is not named, and only a
+     recorded null is stated as "no program". */
+  const programOf = (s: SubRow): string | null => {
+    if (s.programId === null) return 'No program recorded';
+    const p = s.programId ? programmes.rows.find((r) => r.id === s.programId) : undefined;
+    return p?.code ? `Program ${p.code}` : null;
+  };
 
   /* ── Which of the three things an empty `list` means ────────────────────────
      `subs.rows` is the SAME empty array while the read is in flight, when the
@@ -462,14 +594,14 @@ export function SubmissionCenter({
   });
 
   // The selected working sequence — the selector feeding Builder / Validation /
-  // Shadow Review / Cross-region / Dispatch. Defaults to the first real row.
+  // Shadow Review / Dispatch. Defaults to the first real row.
   const [selSeq, setSelSeq] = React.useState<number | null>(null);
   const seq = seqs.rows.find((r) => r.id === selSeq) ?? seqs.rows[0] ?? null;
 
   // Server-verdict line (transitions, governed outcomes) — verbatim, role=status.
   const [notice, setNotice] = React.useState<Notice | null>(null);
-  // The in-flight governed flow (freeze | dispatch) driving the EsignModal.
-  const [flow, setFlow] = React.useState<{ seq: SeqRow; kind: 'freeze' | 'dispatch' } | null>(null);
+  // The in-flight governed flow (freeze | dispatch | transmit) driving the EsignModal.
+  const [flow, setFlow] = React.useState<GovernedFlow | null>(null);
   // Sequence id with a transition POST in flight (buttons disable, no double-fire).
   const [acting, setActing] = React.useState<number | null>(null);
 
@@ -479,6 +611,16 @@ export function SubmissionCenter({
     setSelSeq(null);
     setNotice(null);
   }, [subId]);
+
+  /* F10: opened on the submission, sequence and tab a sender named (Place into
+     filing's "Open in Submission Center"). Read once on mount; opened against
+     the rows the server returned, after the reset above, never guessed. */
+  const [navParams] = React.useState(() => consumeNavParams('submission-center'));
+  const [navTarget] = React.useState(() =>
+    navParams ? readSubmissionNavTarget({ submissionId: navParams.submissionId, sequenceId: navParams.sequenceId, ws: navParams.ws }) : null);
+  const navMiss = useOpenOnNavTarget(navTarget, {
+    subs, sub, seqs, ws, selSeq, selectSubmission: setSelSub, selectSequence: setSelSeq, openWorkspace: setWs,
+  });
 
   /**
    * Create a submission — POST /api/submissions.
@@ -499,11 +641,17 @@ export function SubmissionCenter({
    * body targeted a different, unmounted router's schema; every submit
    * answered 400 VALIDATION.)
    */
-  const [newOpen, setNewOpen] = React.useState(false);
+  /* F9: the project page's "Add a market" opens this form on arrival — only
+     with a project open, since the submission is that project's (F20). */
+  const [newOpen, setNewOpen] = React.useState(() => navParams?.newSubmission === '1' && !!openProgramId);
   const [creating, setCreating] = React.useState(false);
   const createSubmission = async (v: Record<string, string>) => {
     if (creating) return;
-    const programme = programmes.rows.find((p) => p.id === (v.projectId ?? '').trim());
+    /* With a project open, the submission is that project's: there is no
+       picker, and its name is the product name the picker would have sent. */
+    const programme = openProgramId
+      ? openProgramme(openProgramId, openRow, shell)
+      : programmes.rows.find((p) => p.id === (v.projectId ?? '').trim());
     if (!programme) {
       setNotice({ tone: 'err', text: 'Pick the programme this submission belongs to.' });
       return;
@@ -602,8 +750,42 @@ export function SubmissionCenter({
     }
   };
 
-  /** The governed freeze/dispatch chain, run from inside the EsignModal AFTER
-   *  its §11.200 re-authentication succeeds. Two real server steps:
+  /** Ask the step's own gates before anything is signed — POST
+   *  /sequences/:id/governed-precheck. QA 2026-10-08 (j6): the Sequences row
+   *  opened the e-signature with no gate shown, the signature was recorded, and
+   *  only then did the freeze refuse. A refusal or an unreadable answer is
+   *  returned as the sentence to show; null means the gates clear. */
+  const precheckRefusal = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest): Promise<string | null> => {
+    // A transmit's typed number is judged against the program record here,
+    // before the signature, by the rule transmit applies (P-23).
+    const r = await mutateVerbatim<GovernedPrecheck>('POST', `/api/submissions/sequences/${s.id}/governed-precheck`, {
+      step: kind,
+      ...(transmit ? { environment: transmit.environment, applicationId: transmit.applicationId } : {}),
+    });
+    if (!r.data || typeof r.data.cleared !== 'boolean') {
+      return `Whether the server would accept this could not be checked — ${clause(r.error ?? 'no answer')}. Nothing was signed.`;
+    }
+    return r.data.cleared ? null : `${clause(r.data.refusal ?? 'the server would refuse it')}. Nothing was signed.`;
+  };
+
+  /** Open the e-signature for a governed step only when its gates clear. The
+   *  Sequences row and the Dispatch tab both come here: one path to a signature. */
+  const requestGoverned = async (s: SeqRow, kind: GovernedKind, transmit?: TransmitRequest) => {
+    if (acting != null || flow != null) return;
+    setActing(s.id);
+    setNotice(null);
+    const refusal = await precheckRefusal(s, kind, transmit);
+    setActing(null);
+    if (refusal) {
+      setNotice({ tone: 'err', text: `${GOVERNED_LABEL[kind]} of sequence ${s.sequenceNumber} not started — ${refusal}` });
+      return;
+    }
+    setFlow({ seq: s, kind, ...(transmit ? { transmit } : {}) });
+  };
+
+  /** The governed freeze/dispatch/transmit chain, run from inside the EsignModal AFTER
+   *  its §11.200 re-authentication succeeds. The gates are asked again first
+   *  (they may have moved since the dialog opened), then two real server steps:
    *    1. POST /api/c2c/actions/sign on the exact `ectd-sequence:<id>` target —
    *       the server re-verifies the forwarded credentials, enforces separation
    *       of duties, and writes the sha256-chained ledger row.
@@ -613,9 +795,11 @@ export function SubmissionCenter({
    *  Any failure throws with the server's words; the modal shows it inline and
    *  no success is fabricated. */
   const runGoverned = async (
-    f: { seq: SeqRow; kind: 'freeze' | 'dispatch' },
+    f: GovernedFlow,
     input: { meaning: EsigMeaning; reason: string; password: string; totp?: string },
   ) => {
+    const refusal = await precheckRefusal(f.seq, f.kind, f.transmit);
+    if (refusal) throw new Error(refusal);
     const sign = await mutateVerbatim<{ actionId?: string; sha256Chain?: string }>(
       'POST',
       '/api/c2c/actions/sign',
@@ -628,10 +812,11 @@ export function SubmissionCenter({
     );
     if (sign.error || !sign.data?.actionId) {
       throw new Error(
-        `The e-signature was not recorded — ${sign.error ?? 'no actionId returned'}. Nothing was ${
-          f.kind === 'freeze' ? 'frozen' : 'dispatched'
-        }.`,
+        `The e-signature was not recorded — ${sign.error ?? 'no actionId returned'}. Nothing was ${GOVERNED_PAST[f.kind]}.`,
       );
+    }
+    if (f.kind === 'transmit') {
+      return runTransmit(f, sign.data.actionId, input, sign.data.sha256Chain);
     }
     const done = await mutateVerbatim<SeqRow>(
       'POST',
@@ -654,6 +839,33 @@ export function SubmissionCenter({
       signedAt: new Date().toISOString(),
       hash: sign.data.sha256Chain,
     };
+  };
+
+  /** Transmit: POST /sequences/:id/transmit with the signature, the environment
+   *  and the agency application number. `transmitted: false` is the server's
+   *  honest "nothing was sent" (gateway_not_configured) and is shown as such,
+   *  never as a success. */
+  const runTransmit = async (
+    f: GovernedFlow,
+    signatureActionId: string,
+    input: { meaning: EsigMeaning; reason: string },
+    hash: string | undefined,
+  ) => {
+    const done = await mutateVerbatim<TransmitAnswer>(
+      'POST',
+      `/api/submissions/sequences/${f.seq.id}/transmit`,
+      { signatureActionId, environment: f.transmit?.environment, applicationId: f.transmit?.applicationId },
+    );
+    if (done.error || !done.data || typeof done.data.transmitted !== 'boolean') {
+      throw new Error(`${clause(done.error ?? 'The transmit was not performed')}. Nothing was sent.`);
+    }
+    setSeqBump((b) => b + 1);
+    if (!done.data.transmitted) throw new Error(notTransmittedSentence(done.data, f.transmit?.environment));
+    setNotice({
+      tone: 'ok',
+      text: `${transmittedSentence(f.seq, done.data, f.transmit?.environment)}, signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${signatureActionId}.`,
+    });
+    return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString(), hash };
   };
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
@@ -723,7 +935,9 @@ export function SubmissionCenter({
                   contains.map((s) => s.title),
                   'Matches',
                 )}`
-              : `No submission named "${params.submission}" in this portfolio.${listed()}`,
+              : scopedTo
+                ? `${scopedMissReason(params.submission ?? '', openProjectKnownName, notOffered)}${listed()}`
+                : `No submission named "${params.submission}" in this portfolio.${listed()}`,
         };
       }
       const already = match.id === sub?.id;
@@ -777,7 +991,7 @@ export function SubmissionCenter({
   const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
 
   /* What AnA can see of this screen.
-     The Submission Center is eight workspaces over one selected submission and
+     The Submission Center is seven workspaces over one selected submission and
      one selected sequence, and every question a user asks here is about THAT
      pair — "is this ready to dispatch?", "what is blocking 0002?". Until now she
      was told only that the surface was called "submission-center", so she could
@@ -786,6 +1000,12 @@ export function SubmissionCenter({
      A FAILED read publishes the failure. `list` and `seqs.rows` are both []
      when the read threw, and reporting "no submissions" over an outage would be
      a confident claim about a customer's filing portfolio that nobody made. */
+  // How many submissions are listed, and whose: the scope is stated to AnA, so
+  // a project's list is never reported as the organization's portfolio.
+  const portfolioCountLine = scopedTo
+    ? `${list.length} submission(s) of the open project${openProjectKnownName ? ` ${openProjectKnownName}` : ''}` +
+      (notOffered != null ? ` (${notOffered} other submission(s) of the organization not listed)` : '')
+    : `${list.length} submission(s) in the portfolio`;
   const anaContext = React.useMemo(() => {
     if (subs.loading) {
       return { summary: 'The submission portfolio is still loading; nothing on screen is final yet.' };
@@ -806,15 +1026,18 @@ export function SubmissionCenter({
     return {
       summary:
         `Submission Center, "${SUBMISSION_WORKSPACES.find((w) => w.id === ws)?.label ?? ws}" workspace: ` +
-        `${list.length} submission(s) in the portfolio` +
+        portfolioCountLine +
         (sub
-          ? `, "${sub.title}" selected — a ${regL(sub.primaryRegion)} ${appL(sub.applicationType)} at the ` +
+          ? `, "${sub.title}" selected — ${appL(sub.applicationType)} · ${regL(sub.primaryRegion)}, at the ` +
             `${sub.lifecycleStage} stage, ${seqLine}` +
             (seq ? `, working sequence ${seq.sequenceNumber} (${seq.status})` : '')
           : ', none selected'),
       facts: {
         workspace: ws,
         totalSubmissions: list.length,
+        /* Which submissions `totalSubmissions` counts: the open project's, with
+           the server's count of the organization's others, or all of them. */
+        listScope: scopedTo ? { project: openProjectKnownName, programId: scopedTo, otherSubmissionsNotListed: notOffered } : 'organization',
         selectedSubmission: sub
           ? {
               id: sub.id, title: sub.title, product: sub.productName,
@@ -879,8 +1102,9 @@ export function SubmissionCenter({
                 },
       },
       availableActions: [
-        'Switch workspace — planner, sequences, builder, validation, shadow review, cross-region, dispatch',
+        'Switch workspace — planner, sequences, builder, validation, shadow review, dispatch',
         'Select a different submission from the portfolio picker',
+        ...(openProjectName ? ["List all of the organization's submissions, or only the open project's"] : []),
         'Select the working sequence the build and validation workspaces act on',
         'Move a sequence through its non-governed lifecycle transitions',
         'Freeze or dispatch a sequence (each requires a Part 11 e-signature and a clear gate; a missing release signature never blocks a freeze)',
@@ -889,6 +1113,7 @@ export function SubmissionCenter({
     };
   }, [
     subs.loading, subs.error, list, sub, ws, seqs.loading, seqs.error, seqs.rows, seq,
+    scopedTo, openProjectName, openProjectKnownName, notOffered, portfolioCountLine,
     deviceRes.loading, deviceRes.error, deviceFilings.length, assembly, notice,
     profile.loading, profile.error, profile.data,
   ]);
@@ -901,8 +1126,7 @@ export function SubmissionCenter({
           <div className="sp-eyebrow">Submission</div>
           <h1 className="sp-title">Submission center</h1>
           <p className="sp-state">
-            Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2
-            / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+            Plan, build, validate and dispatch each market&apos;s eCTD v3.2.2 sequences.
           </p>
         </div>
         {list.length > 0 && (
@@ -921,6 +1145,15 @@ export function SubmissionCenter({
         )}
       </div>
 
+      {openProjectName && (
+        <ProjectScopeLine
+          name={openProjectKnownName}
+          scoped={Boolean(scopedTo)}
+          notOffered={notOffered}
+          onToggle={() => setOrgWide((w) => !w)}
+        />
+      )}
+
       {sub && (
         <AnswerLead
           tone="calm"
@@ -928,8 +1161,10 @@ export function SubmissionCenter({
           headline={
             <>
               {sub.title}
-              {sub.productName ? ` (${sub.productName})` : ''} — a {regL(sub.primaryRegion)}{' '}
-              {appL(sub.applicationType)} at the <b>{sub.lifecycleStage}</b> stage.
+              {/* No article: "a FDA", "a EU" read wrong, and an initialism's
+                  article depends on how it is said (design review 2026-10-08). */}
+              {sub.productName ? ` (${sub.productName})` : ''} — {appL(sub.applicationType)} · {regL(sub.primaryRegion)}, at
+              the <b>{sub.lifecycleStage}</b> stage.
             </>
           }
           body={
@@ -973,6 +1208,17 @@ export function SubmissionCenter({
           secondary="Or move through the workspaces below — plan, build, validate, dispatch."
         />
       )}
+      {/* P-14's remedy: a submission the server records with no project is
+          anchored here (POST /api/submissions/:id/program-anchor). */}
+      {sub && sub.programId === null && (
+        <SubmissionProgramAnchor
+          submission={sub}
+          onAnchored={(n) => {
+            setNotice(n);
+            setSubsBump((b) => b + 1);
+          }}
+        />
+      )}
 
       <div className="sc-wsbar" role="tablist">
         {SUBMISSION_WORKSPACES.map((w) => (
@@ -991,52 +1237,18 @@ export function SubmissionCenter({
 
       {/* The latest server verdict (transition / governed outcome) — verbatim. */}
       <VerdictNote notice={notice} />
+      <VerdictNote notice={navMiss} />
 
       {newOpen && (
-        <C2CForm
-          config={{
-            eyebrow: 'Submission',
-            title: 'Create a submission',
-            sub: 'The canonical submission record. Its sequences, validation profile and regional Module 1 are derived from the type and agency chosen here.',
-            submitLabel: creating ? 'Creating…' : 'Create submission',
-            fields: [
-              {
-                key: 'title', label: 'Title', type: 'text',
-                placeholder: 'e.g. BX-701 — Initial IND', required: true,
-              },
-              {
-                key: 'applicationType', label: 'Application type', type: 'select',
-                // The canonical vocabulary the rest of this surface renders —
-                // including the non-US applications (MAA, CTA) a global team
-                // opens as its second market.
-                options: SC_APPTYPES.map((a) => ({ value: a.v, label: a.l })),
-                default: 'ind', required: true, half: true,
-              },
-              {
-                key: 'primaryRegion', label: 'Primary region', type: 'select',
-                options: SC_REGIONS.map((r0) => ({ value: r0.v, label: r0.l })),
-                default: 'fda', required: true, half: true,
-              },
-              {
-                key: 'clientType', label: 'Client type', type: 'select',
-                options: [
-                  { value: 'pharma', label: 'Pharma' },
-                  { value: 'biotech', label: 'Biotech' },
-                  { value: 'mdx', label: 'Medical device' },
-                  { value: 'ivd', label: 'IVD' },
-                ],
-                default: 'biotech', required: true, half: true,
-              },
-              {
-                key: 'projectId', label: 'Programme', type: 'select',
-                options: programmes.rows.map((p) => ({
-                  value: p.id,
-                  label: [p.code, p.title].filter(Boolean).join(' · ') || p.id,
-                })),
-                required: true, half: true,
-              },
-            ],
-          }}
+        <NewSubmissionForm
+          openProgramId={openProgramId}
+          openProjectName={openProjectName}
+          workspace={shell?.ws}
+          projectSubmissions={openProgramId ? list.filter((x) => x.programId === openProgramId) : []}
+          submissionsSettled={!subs.loading}
+          submissionsUnread={!!subs.error}
+          programmes={programmes.rows}
+          creating={creating}
           onCancel={() => setNewOpen(false)}
           onSubmit={createSubmission}
         />
@@ -1051,9 +1263,9 @@ export function SubmissionCenter({
               type="button"
               className="pj-card-h-go"
               onClick={() => setNewOpen(true)}
-              disabled={creating || programmes.rows.length === 0}
+              disabled={creating || (!openProgramId && programmes.rows.length === 0)}
               title={
-                programmes.rows.length === 0
+                !openProgramId && programmes.rows.length === 0
                   ? 'A submission belongs to a programme, and this organization has none yet. Create one in Projects first.'
                   : undefined
               }
@@ -1071,7 +1283,17 @@ export function SubmissionCenter({
                 tone="error"
                 icon={I.alertTriangle}
                 title="Couldn't load the submissions"
-                hint="The canonical submission core didn't respond. These are your organization's submissions — sign in and retry, or check the service is reachable."
+                hint={
+                  scopedTo
+                    ? "The canonical submission core didn't respond, so this project's submissions could not be read — sign in and retry, or check the service is reachable."
+                    : "The canonical submission core didn't respond. These are your organization's submissions — sign in and retry, or check the service is reachable."
+                }
+              />
+            ) : subs.empty && scopedTo ? (
+              <EmptyState
+                icon={I.fileText}
+                title={`No submissions for ${openProjectName} yet`}
+                hint="Create this project's first submission to plan, assemble, validate and dispatch a regulatory sequence."
               />
             ) : subs.empty ? (
               <EmptyState
@@ -1111,7 +1333,9 @@ export function SubmissionCenter({
                         <button type="button" className="sc-subrow-open" aria-label={`Open ${s.title}`}>
                           <b>{s.title}</b>
                         </button>
-                        {s.productName ? <span className="sp-row-s"> · {s.productName}</span> : null}
+                        {[s.productName ? `Product ${s.productName}` : null, programOf(s)]
+                          .filter(Boolean)
+                          .map((part) => <span key={part} className="sp-row-s"> · {part}</span>)}
                       </td>
                       <td>{regL(s.primaryRegion)}</td>
                       <td>{appL(s.applicationType)}</td>
@@ -1155,7 +1379,10 @@ export function SubmissionCenter({
               <EmptyState
                 icon={I.fileText}
                 title="No device filings tracked yet"
-                hint="Start tracking an eSTAR filing (510(k), De Novo, PMA, Q-Sub…) from the 510(k) surface's filing panel — its status and review clock appear here."
+                hint={available('device-510k')
+                  ? "Start tracking an eSTAR filing (510(k), De Novo, PMA, Q-Sub…) from the 510(k) surface's filing panel — its status and review clock appear here."
+                  /* The surface it names is not in this release (F16: no dead ends). */
+                  : 'Device filings are tracked from the 510(k) workbench, which is not part of this release.'}
               />
             ) : (
               <table className="ub-inv">
@@ -1189,14 +1416,19 @@ export function SubmissionCenter({
                       <td>{f.fdaTrackingNumber ?? '—'}</td>
                       <td>{reviewClock(f)}</td>
                       <td>
-                        <button
-                          type="button"
-                          className="sc-trans-b"
-                          title="Open the 510(k) surface — the device filing workspace"
-                          onClick={() => onNav && onNav('device-510k')}
-                        >
-                          {I.right} Open 510(k) surface
-                        </button>
+                        {/* Offered only where the 510(k) surface can be opened:
+                            outside this release it led to the locked panel
+                            (FILING_SPINE.md F16). */}
+                        {available('device-510k') && (
+                          <button
+                            type="button"
+                            className="sc-trans-b"
+                            title="Open the 510(k) surface — the device filing workspace"
+                            onClick={() => onNav && onNav('device-510k')}
+                          >
+                            {I.right} Open 510(k) surface
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -1393,7 +1625,7 @@ export function SubmissionCenter({
         </div>
       )}
 
-      {/* Builder / Validation / Shadow review / Cross-region / Dispatch — the
+      {/* Builder / Validation / Shadow review / Dispatch — the
           per-sequence workspaces. One selector (SeqPicker) chooses the working
           sequence; each workspace then reads/writes the REAL endpoints for it. */}
       {/* ── "No submission selected" is a claim about the reader's portfolio ──
@@ -1431,16 +1663,18 @@ export function SubmissionCenter({
           />
           {!seqs.loading && !seqs.error && seq && (
             <>
-              {ws === 'builder' && <BuilderWorkspace key={seq.id} seq={seq} />}
+              {ws === 'builder' && (
+                <BuilderWorkspace key={seq.id} seq={seq} onSequenceChanged={() => setSeqBump((b) => b + 1)} onNav={onNav} />
+              )}
               {ws === 'validation' && <ValidationWorkspace key={seq.id} sub={sub} seq={seq} />}
               {ws === 'shadow-review' && <ShadowReviewWorkspace key={seq.id} seq={seq} />}
-              {ws === 'cross-region' && <CrossRegionWorkspace key={seq.id} sub={sub} seq={seq} />}
               {ws === 'dispatch' && (
                 <DispatchWorkspace
                   key={`${seq.id}:${seq.status}`}
                   sub={sub}
                   seq={seq}
-                  onGoverned={(s, kind) => setFlow({ seq: s, kind })}
+                  onNav={onNav}
+                  onGoverned={(s, kind, transmit) => void requestGoverned(s, kind, transmit)}
                 />
               )}
             </>
@@ -1490,8 +1724,8 @@ export function SubmissionCenter({
                   Transitions POST the real lifecycle endpoint and the server&#39;s verdict is shown
                   verbatim. Freeze and Dispatch are irreversible — the generic endpoint refuses
                   them, so those two open the Part 11 e-signature chain instead. Selecting a row
-                  sets the working sequence for the Builder, Validation, Shadow review,
-                  Cross-region and Dispatch workspaces.
+                  sets the working sequence for the Builder, Validation, Shadow review
+                  and Dispatch workspaces.
                 </div>
                 <div className="sp-list">
                   {seqs.rows.map((s) => (
@@ -1515,6 +1749,13 @@ export function SubmissionCenter({
                         </span>
                       </span>
                       <Chip map={SC_SEQ_STATUS} k={s.status} />
+                      {s.status === 'validated' && s.validationStatus !== 'passed' ? (
+                        /* A stage stored before 0e50993c5 recorded the verdict
+                           with it (QA 2026-10-08, j7 finding 20). */
+                        <span className="sp-q-s" data-validated-stage="unrecorded">
+                          no validation recorded
+                        </span>
+                      ) : null}
                       <span className="sc-trans">
                         {(SC_TRANSITIONS[s.status] ?? []).map((to) => {
                           const governed = to === 'frozen' || to === 'dispatched';
@@ -1535,7 +1776,7 @@ export function SubmissionCenter({
                                 e.stopPropagation();
                                 setSelSeq(s.id);
                                 if (governed) {
-                                  setFlow({ seq: s, kind: to === 'frozen' ? 'freeze' : 'dispatch' });
+                                  void requestGoverned(s, to === 'frozen' ? 'freeze' : 'dispatch');
                                 } else {
                                   void doTransition(s, to);
                                 }
@@ -1579,12 +1820,14 @@ export function SubmissionCenter({
       {flow && sub && (
         <EsignModal
           open
-          action={flow.kind === 'freeze' ? 'Freeze sequence' : 'Dispatch sequence'}
+          action={`${GOVERNED_LABEL[flow.kind]} sequence`}
           target={`Sequence ${flow.seq.sequenceNumber} · ${sub.title}`}
           targetMeta={`${regL(flow.seq.region)} · ectd-sequence:${flow.seq.id} · ${
             flow.kind === 'freeze'
               ? 'irreversible content lock'
-              : 'records dispatch; wire transmission stays behind the governed transmit path'
+              : flow.kind === 'dispatch'
+                ? 'records dispatch; the package is sent by a separate, signed transmit'
+                : `sends the package to the agency gateway (${flow.transmit?.environment ?? 'environment not chosen'}), application ${flow.transmit?.applicationId ?? 'not given'}`
           }`}
           defaultMeaning={flow.kind === 'freeze' ? 'approval' : 'release'}
           // Freeze and dispatch are approval and release acts. "Authorship"

@@ -1,10 +1,10 @@
 /**
- * Investigator's Brochure -- ICH E6(R2) §7 IB section tree with per-section
+ * Investigator's Brochure -- ICH E6(R3) Appendix A IB section tree with per-section
  * completeness/verdict.
  *
  * Registry id: `investigator-brochure`
  *
- * Surfaces GET /api/investigator-brochure: the ICH E6(R2) §7 IB section registry
+ * Surfaces GET /api/investigator-brochure: the ICH E6(R3) Appendix A IB section registry
  * with a deterministic per-section verdict (rendered | partial | missing) and the
  * inputs each open section still needs. The backend ASSEMBLES this from the org's
  * REAL upstream evidence stores (nonclinical_studies, clinical_ops.studies /
@@ -13,7 +13,7 @@
  * `c2c_investigator_brochure` blob, no fixture. Fixture-free (useLiveRows): renders
  * the real persisted rows, an honest error state, or an honest empty state. A domain
  * the org has no evidence for is honestly `missing`; an org with no upstream evidence
- * at all yields the deterministic ICH E6(R2) §7 skeleton — always real content,
+ * at all yields the deterministic ICH E6(R3) Appendix A skeleton — always real content,
  * never fabricated and never a codebase fixture.
  */
 import React from 'react';
@@ -25,7 +25,7 @@ import '../styles/project-home-v2.css';
 
 /** The per-section display contract GET /api/investigator-brochure returns
  *  (server/services/authoring/investigator-brochure-view-assembler.ts → IBSectionRow):
- *  the real ICH E6(R2) §7 section registry with a deterministic per-section verdict. */
+ *  the real ICH E6(R3) Appendix A section registry with a deterministic per-section verdict. */
 interface IBSectionRow {
   number: string;
   title: string;
@@ -71,7 +71,7 @@ function PageHead({ eyebrow, title, sub, actions }: {
 
 export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
   /* Fixture-free — the real persisted IB section tree, an honest error state, or
-     an honest empty state. The backend returns the deterministic ICH E6(R2) §7
+     an honest empty state. The backend returns the deterministic ICH E6(R3) Appendix A
      skeleton (each data-bearing section marked `missing`) when no program is
      provisioned, so `rows` is real content, never a codebase fixture. */
   const { rows, loading, error, empty } = useLiveRows<IBSectionRow>(
@@ -106,7 +106,7 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
     }
     return {
       summary:
-        `Investigator's Brochure (ICH E6(R2) \u00a77): ${rows.length} section(s), ` +
+        `Investigator's Brochure (ICH E6(R3) Appendix A): ${rows.length} section(s), ` +
         `${required.length} required — ${readyRequired} rendered, so required-section completeness is ` +
         `${completeness}%. ${openCount} section(s) are not yet rendered.` +
         (empty ? ' No program is provisioned, so this is the deterministic ICH skeleton with every data-bearing section marked missing.' : ''),
@@ -135,7 +135,7 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
       <PageHead
         eyebrow="Program · IND authoring"
         title="Investigator's Brochure"
-        sub="ICH E6(R2) §7 section structure with per-section readiness."
+        sub="ICH E6(R3) Appendix A section structure with per-section readiness."
         actions={
           <button className="btn ghost" onClick={() => onAsk('Draft the open Investigator\'s Brochure sections from the linked M2.4 / M2.5 / M2.7 summaries and integrated safety.')}>
             {I.sparkles} Ask AnA
@@ -150,13 +150,13 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the Investigator's Brochure structure"
-          hint="The IB section service didn't respond. This tree is the ICH E6(R2) §7 section registry with each section's live readiness verdict for your organization — sign in and retry, or check that the IB authoring service is reachable."
+          hint="The IB section service didn't respond. This tree is the ICH E6(R3) Appendix A section registry with each section's live readiness verdict for your organization — sign in and retry, or check that the IB authoring service is reachable."
         />
       ) : empty ? (
         <EmptyState
           icon={I.fileText}
           title="No Investigator's Brochure sections returned"
-          hint="The IB section registry came back empty. Once the M2.4 nonclinical overview, M2.5/M2.7 clinical summaries, and integrated safety inputs are linked, the ICH E6(R2) §7 sections populate here with per-section readiness."
+          hint="The IB section registry came back empty. Once the M2.4 nonclinical overview, M2.5/M2.7 clinical summaries, and integrated safety inputs are linked, the ICH E6(R3) Appendix A sections populate here with per-section readiness."
         />
       ) : (
         <>

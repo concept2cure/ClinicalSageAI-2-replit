@@ -37,6 +37,7 @@
  */
 
 import { pool } from '../../db.js';
+import { vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
 
 export class PassageSearchUnavailableError extends Error {
   constructor(reason: string) {
@@ -105,6 +106,12 @@ export interface PassageSearchResult {
   hits: PassageHit[];
   /** Null when the chunking ledger could not be read — unknown, not zero. */
   coverage: PassageCoverage | null;
+  /**
+   * How the hits were ranked: 'text' when the query could not be embedded (no
+   * key, or egress refused) and the text index answered alone; 'meaning_and_text'
+   * when the embedding arm ran too. Null when nothing was returned to rank.
+   */
+  ranking: 'text' | 'meaning_and_text' | null;
 }
 
 /**
@@ -137,7 +144,7 @@ export async function getPassageCoverage(
        FROM vault.documents d
        JOIN regulatory_programs p ON p.id = d.program_id
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE p.organization_id = $1 AND d.deleted_at IS NULL
+      WHERE p.organization_id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
         AND ($2::uuid IS NULL OR d.program_id = $2::uuid)`,
     [organizationId, programId],
   );
@@ -179,6 +186,12 @@ async function coverageOrUnknown(organizationId: number, programId: string | nul
   } catch {
     return null;
   }
+}
+
+/** How retrieval ranked what it returned (see PassageSearchResult.ranking). */
+function rankingOf(documents: Array<{ lexicalOnly?: boolean }>): PassageSearchResult['ranking'] {
+  if (documents.length === 0) return null;
+  return documents.every(d => d.lexicalOnly) ? 'text' : 'meaning_and_text';
 }
 
 export interface PassageSearchOptions {
@@ -239,7 +252,7 @@ export async function searchDocumentPassages(
      at all is a different (also honest) message the caller composes from the
      same coverage. */
   if (coverage && coverage.total > 0 && coverage.indexed === 0) {
-    return { hits: [], coverage };
+    return { hits: [], coverage, ranking: null };
   }
 
   const { ragRouter } = await import('../ragRouter.js');
@@ -289,5 +302,5 @@ export async function searchDocumentPassages(
     similarity: Number(d.finalScore ?? d.initialScore ?? 0),
   }));
 
-  return { hits, coverage };
+  return { hits, coverage, ranking: rankingOf(documents) };
 }

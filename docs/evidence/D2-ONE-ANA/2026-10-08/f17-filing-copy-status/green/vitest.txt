@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a draft document: "Filed as draft. Freeze will refuse it until you re-place it after approval." 276ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a document in review is filed as a draft too 46ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a frozen, unsigned document is filed as finalized, which freeze also refuses 65ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an approved document: filed as approved, with no refusal 40ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an unknown state claims neither: it states the rule 87ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > after placing, the server's copy status is stated, and a draft copy carries the refusal 104ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed, and the copy is now approved: "Re-place approved version" rewrites the same leaf by id 149ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed with a draft copy: no re-place is offered, and the refusal is stated 126ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  13:20:45
+   Duration  3.41s (transform 908ms, setup 312ms, import 1.07s, tests 901ms, environment 851ms)
+

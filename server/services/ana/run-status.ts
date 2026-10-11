@@ -78,13 +78,32 @@ export type RunStoppedReason =
 /**
  * Why a TURN's work stopped — the subset of {@link RunStoppedReason} that the
  * turn's own loop decides, as the `done` frame and the assistant message's
- * metadata carry it. The rest (a dropped socket, a restart, a refused gate, an
- * error) end the RUN and are recorded on the run row, not on the answer.
+ * metadata carry it. The rest (a restart, a refused gate, an error) end the
+ * RUN and are recorded on the run row, not on the answer.
+ *
+ * `client_disconnected` is both since ANA-SUMMARY S4: the page lost its
+ * connection (a phone locked, a tab closed), the run was stopped for it, and
+ * the answer says so — "Stopped: this page lost its connection." with
+ * Continue — rather than reading as a person's Stop (TurnPolicy.noteDisconnected).
  */
-export type TurnStoppedReason = Exclude<
-  RunStoppedReason,
-  'client_disconnected' | 'orphaned' | 'approval_denied' | 'error'
->;
+export type TurnStoppedReason = Exclude<RunStoppedReason, 'orphaned' | 'approval_denied' | 'error'>;
+
+/**
+ * Why a turn ended, as its saved answer and its record say it: the person's
+ * Stop is `cancelled` whatever the loop reported, unless the loop named a stop
+ * of its own (a hold that ran out, the round limit, a lost connection) — that
+ * one says more. The one copy: post-processing saves it, the Summary's end
+ * event reads it.
+ */
+export function stoppedTurnReason(stopped: boolean | undefined, reason: TurnStoppedReason | undefined): TurnStoppedReason | undefined {
+  return stopped && (!reason || reason === 'no_more_tools') ? 'cancelled' : reason;
+}
+
+/** The same, as the Summary's end event says it: null for a turn she finished (turn-timeline-emitter.ts). */
+export function endStoppedReason(stopped: boolean, reason: TurnStoppedReason | undefined): TurnStoppedReason | null {
+  const r = stoppedTurnReason(stopped, reason);
+  return r && r !== 'no_more_tools' ? r : null;
+}
 
 /**
  * One of AnA's OWN holds under Manual, as the assistant message keeps it.
@@ -164,10 +183,12 @@ export function manualHoldDue(input: {
  */
 export function turnStoppedReason(
   loopReason: TurnStoppedReason,
-  hold: { holdExpired: boolean; holdUnavailable: boolean },
+  hold: { holdExpired: boolean; holdUnavailable: boolean; disconnected?: boolean },
 ): TurnStoppedReason {
   if (hold.holdUnavailable) return 'hold_unavailable';
   if (hold.holdExpired) return 'hold_expired';
+  // The loop saw only the abort; the socket that dropped is why (S4).
+  if (hold.disconnected && loopReason === 'cancelled') return 'client_disconnected';
   return loopReason;
 }
 

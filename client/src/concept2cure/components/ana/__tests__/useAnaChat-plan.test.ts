@@ -14,7 +14,8 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, cleanup } from '@testing-library/react';
 
 import { useAnaChat } from '../useAnaChat';
-import { diffPlan, planPosition, readContextUsed, readPlanSteps } from '../anaProgress';
+import { planPosition, readContextUsed, readPlanSteps } from '../anaProgress';
+import { diffPlan } from '@shared/ana/plan-diff';
 
 const ev = (o: unknown) => new TextEncoder().encode(`data: ${JSON.stringify(o)}\n\n`);
 const drain = () => new Promise((r) => setTimeout(r, 25));

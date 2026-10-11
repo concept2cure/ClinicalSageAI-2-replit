@@ -1,0 +1,83 @@
+{
+  "sourceBase": "e7129de74f4f432d629a68b0fffa1a311f6a41a9",
+  "errors": 0,
+  "warningsBefore": 4,
+  "warningsAfter": 4,
+  "files": [
+    {
+      "path": "server/services/ana-biostats/input-normalizer.ts",
+      "errors": 0,
+      "warningsBefore": 3,
+      "warningsAfter": 3,
+      "diagnostics": [
+        {
+          "rule": "max-lines-per-function",
+          "severity": 1,
+          "line": 24,
+          "message": "Method 'normalize' has too many lines (111). Maximum allowed is 100."
+        },
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "line": 24,
+          "message": "Method 'normalize' has a complexity of 40. Maximum allowed is 15."
+        },
+        {
+          "rule": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 168,
+          "message": "'errors' is defined but never used. Allowed unused args must match /^_/u."
+        }
+      ]
+    },
+    {
+      "path": "server/services/ana/__tests__/tool-selection-carry-over.test.ts",
+      "errors": 0,
+      "warningsBefore": 0,
+      "warningsAfter": 0,
+      "diagnostics": []
+    },
+    {
+      "path": "server/services/ana/tool-selection.ts",
+      "errors": 0,
+      "warningsBefore": 0,
+      "warningsAfter": 0,
+      "diagnostics": []
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/retrieval-source-link.pglite.integration.test.ts",
+      "errors": 0,
+      "warningsBefore": 0,
+      "warningsAfter": 0,
+      "diagnostics": []
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/retrieval-source-link.ts",
+      "errors": 0,
+      "warningsBefore": 1,
+      "warningsAfter": 1,
+      "diagnostics": [
+        {
+          "rule": "complexity",
+          "severity": 1,
+          "line": 61,
+          "message": "Async function 'resolveEvidenceSourceIdsByArtifact' has a complexity of 19. Maximum allowed is 15."
+        }
+      ]
+    },
+    {
+      "path": "server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts",
+      "errors": 0,
+      "warningsBefore": 0,
+      "warningsAfter": 0,
+      "diagnostics": []
+    },
+    {
+      "path": "server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts",
+      "errors": 0,
+      "warningsBefore": 0,
+      "warningsAfter": 0,
+      "diagnostics": []
+    }
+  ]
+}

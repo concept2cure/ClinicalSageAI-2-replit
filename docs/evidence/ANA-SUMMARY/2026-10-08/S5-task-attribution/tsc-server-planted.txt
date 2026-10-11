@@ -1,0 +1,20 @@
+server/middleware/orgMembership.ts(368,43): error TS2339: Property 'userId' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'.
+server/middleware/redisRateLimiter.ts(465,30): error TS2339: Property 'tenantContext' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/redisRateLimiter.ts(466,27): error TS2339: Property 'tenantContext' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/redisRateLimiter.ts(566,31): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/redisRateLimiter.ts(566,71): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(175,15): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(176,16): error TS2339: Property 'userEmail' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(62,21): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(70,22): error TS2339: Property 'userEmail' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/project-access.ts(46,19): error TS2339: Property 'tenantContext' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/project-access.ts(81,27): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(384,21): error TS2339: Property 'userEmail' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/routes/c2c/shared.ts(385,21): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/ana/turn-timeline-emitter.ts(245,14): error TS2322: Type 'string' is not assignable to type 'number'.
+server/services/authoring/authoring-permissions.ts(104,43): error TS2339: Property 'userId' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'.
+server/services/authoring/authoring-permissions.ts(107,30): error TS2551: Property 'roles' does not exist on type '{ id: number; email: string; name?: string | undefined; role: string; organizationId: number; }'. Did you mean 'role'?
+server/services/concept2cure/governedDocumentContractService.ts(254,66): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(551,60): error TS2339: Property 'userEmail' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(608,30): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(674,30): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.

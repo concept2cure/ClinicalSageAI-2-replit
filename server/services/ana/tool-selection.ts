@@ -62,6 +62,16 @@ export const ALWAYS_ON_TOOLS: ReadonlySet<string> = new Set([
   'get_document_section_requirements',
   'plan_submission_from_database_lock',
   'list_fda_technical_rules',
+  // The persona's CMC pre-advice rule (ana-ri/persona.ts): requirements,
+  // guideline versions and dates come from these cited records. Ordinary
+  // requests such as "which version of ICH Q5C applies to our stability
+  // plan" and "how do we document the potency assay in Module 3" lost them
+  // to relevance trimming. Like the clinical record tools above, they are
+  // deterministic reads and are retained only when the governed pool allows
+  // them. The existing per-turn budget and hidden/denied-tool refusals remain.
+  'find_cmc_guidance',
+  'get_cmc_requirements',
+  'explain_cmc_topic',
 ]);
 
 /**

@@ -1,0 +1,168 @@
+{
+  "source": "40697292af6b813dcfcaba8881e12c250dab69ef",
+  "core_workflow_run": 37642070713,
+  "core_artifact": 11497393964,
+  "integration_artifact": 11498082667,
+  "counts": {
+    "total": 43536,
+    "passed": 43370,
+    "failed": 54,
+    "pending": 60,
+    "todo": 0
+  },
+  "failed_files": [
+    {
+      "file": "tests/regulatory/regulatory-basis.test.ts",
+      "failed_cases": 1,
+      "first_failures": [
+        {
+          "name": "shared/regulatory/regulatory-basis.ts is the one provenance type lists exactly the regulator hosts the record accepts",
+          "error": "AssertionError: expected [ 'canada.ca', \u2026(12) ] to deeply equal [ 'database.ich.org', \u2026(11) ]\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/regulatory/regulatory-basis.test.ts:48:41\n    a"
+        }
+      ],
+      "suite_error": ""
+    },
+    {
+      "file": "server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts",
+      "failed_cases": 7,
+      "first_failures": [
+        {
+          "name": "SEC-A-1 \u2014 \"Re-read source\" re-reads only a citation the path section owns re-reads the section's own citation and records the prior checksum in the same transaction",
+          "error": "AssertionError: {\"error\":\"INTERNAL_ERROR\",\"message\":\"Something went wrong while saving refresh token. The problem has been logged.\"}: expected 500 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2"
+        },
+        {
+          "name": "SEC-A-1 \u2014 \"Re-read source\" re-reads only a citation the path section owns a re-read that finds the content unchanged writes nothing",
+          "error": "AssertionError: expected 500 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts:312:"
+        }
+      ],
+      "suite_error": ""
+    },
+    {
+      "file": "server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts",
+      "failed_cases": 8,
+      "first_failures": [
+        {
+          "name": "assertAuditImmutabilityTriggers against PGlite names every authoring trigger file the registry names, literally",
+          "error": "error: [cmc-m3-append-only] public.domain_history_append_only() is missing: 20261001_domain_history_append_only.sql must run first.\n    at pe.Le (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/n"
+        },
+        {
+          "name": "assertAuditImmutabilityTriggers against PGlite reports ok after the real trigger migrations have been applied",
+          "error": "error: [cmc-m3-append-only] public.domain_history_append_only() is missing: 20261001_domain_history_append_only.sql must run first.\n    at pe.Le (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/n"
+        }
+      ],
+      "suite_error": ""
+    },
+    {
+      "file": "server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts",
+      "failed_cases": 11,
+      "first_failures": [
+        {
+          "name": "the 510(k) transmit affordance reaches the real FDA ESG AS2 transport puts the assembled bundle bytes on the wire with a real AS2 envelope",
+          "error": "AssertionError: handler refused: Refused: No creator is recorded for this package, so nobody can be shown to be independent of it and it cannot be transmitted. Nothing was transmitted.: expected false to be true // Objec"
+        },
+        {
+          "name": "the 510(k) transmit affordance reaches the real FDA ESG AS2 transport signs the AS2 body with the sponsor key rather than a placeholder",
+          "error": "TypeError: Cannot read properties of undefined (reading 'body')\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:349:36\n    at fil"
+        }
+      ],
+      "suite_error": ""
+    },
+    {
+      "file": "server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts",
+      "failed_cases": 1,
+      "first_failures": [
+        {
+          "name": "draft_authoring_document \u2014 durable project source references retains current, project-verified source references in saved provenance and CREATE audit metadata",
+          "error": "AssertionError: expected undefined to be true // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration."
+        }
+      ],
+      "suite_error": ""
+    },
+    {
+      "file": "server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts",
+      "failed_cases": 0,
+      "first_failures": [],
+      "suite_error": "column \"client_program_id\" of relation \"authoring_documents\" already exists"
+    },
+    {
+      "file": "server/services/ectd/__tests__/assemble-from-core.vault-uuid.pglite.test.ts",
+      "failed_cases": 2,
+      "first_failures": [
+        {
+          "name": "assembleSequence \u2014 vault leaf by uuid, and what transmit must refuse ships the vault-backed leaf in the package instead of skipping it",
+          "error": "Error: Failed query: SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name\n           FROM vault.documents d\n          WHERE d.id = $1::uuid\n            AND d.deleted_at IS NULL\n            AND NOT"
+        },
+        {
+          "name": "assembleSequence \u2014 vault leaf by uuid, and what transmit must refuse reports the draft leaf as a transmit blocker",
+          "error": "Error: Failed query: SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name\n           FROM vault.documents d\n          WHERE d.id = $1::uuid\n            AND d.deleted_at IS NULL\n            AND NOT"
+        }
+      ],
+      "suite_error": ""
+    },
+    {
+      "file": "server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts",
+      "failed_cases": 12,
+      "first_failures": [
+        {
+          "name": "a vault leaf is finalized only when its version is approved, current, and approved for these bytes an upload nobody reviewed is not finalized",
+          "error": "Error: Failed query: SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name\n           FROM vault.documents d\n          WHERE d.id = $1::uuid\n            AND d.deleted_at IS NULL\n            AND NOT"
+        },
+        {
+          "name": "a vault leaf is finalized only when its version is approved, current, and approved for these bytes a version at authoring is not finalized",
+          "error": "Error: Failed query: SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name\n           FROM vault.documents d\n          WHERE d.id = $1::uuid\n            AND d.deleted_at IS NULL\n            AND NOT"
+        }
+      ],
+      "suite_error": ""
+    },
+    {
+      "file": "server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts",
+      "failed_cases": 9,
+      "first_failures": [
+        {
+          "name": "materializeLeafSources \u2014 vault_documents materializes the vault copy, staging the RAW bytes",
+          "error": "Error: Failed query: SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name\n           FROM vault.documents d\n          WHERE d.id = $1::uuid\n            AND d.deleted_at IS NULL\n            AND NOT"
+        },
+        {
+          "name": "materializeLeafSources \u2014 vault_documents fetches the bytes with the CALLER organization",
+          "error": "Error: Failed query: SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name\n           FROM vault.documents d\n          WHERE d.id = $1::uuid\n            AND d.deleted_at IS NULL\n            AND NOT"
+        }
+      ],
+      "suite_error": ""
+    },
+    {
+      "file": "server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts",
+      "failed_cases": 1,
+      "first_failures": [
+        {
+          "name": "scoreSubmissionDraft \u2014 persistence writes a risk_predictions row on every score call",
+          "error": "CompletenessNotAssessedError: Predictive RTF/CRL scoring refused: PMA (Premarket Approval Application) is a device pathway; its completeness is assessed by assessEstarFilingReadiness (server/services/pathway-engines/esta"
+        }
+      ],
+      "suite_error": ""
+    },
+    {
+      "file": "server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts",
+      "failed_cases": 2,
+      "first_failures": [
+        {
+          "name": "assembleTechnicalFileFromCore \u2014 a vault leaf by document_uuid puts the vault CER in the technical-file ZIP instead of skipping it",
+          "error": "Error: Failed query: SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name\n           FROM vault.documents d\n          WHERE d.id = $1::uuid\n            AND d.deleted_at IS NULL\n            AND NOT"
+        },
+        {
+          "name": "assembleTechnicalFileFromCore \u2014 a vault leaf by document_uuid is not ready when a leaf that fills a required slot was left out of the ZIP",
+          "error": "Error: Failed query: SELECT d.storage_version_id, d.storage_provider, d.content_hash, d.file_name\n           FROM vault.documents d\n          WHERE d.id = $1::uuid\n            AND d.deleted_at IS NULL\n            AND NOT"
+        }
+      ],
+      "suite_error": ""
+    }
+  ],
+  "limits": "Prior-source artifact evidence. Causes must be reproduced on current source; no current-source or release pass is inferred. The reporter aggregate counters do not sum to its total; direct assertion statuses are recorded separately and no omitted case is treated as a pass.",
+  "assertion_status_counts": {
+    "passed": 43370,
+    "skipped": 60,
+    "pending": 52,
+    "failed": 54
+  },
+  "actual_physical_files": 3560,
+  "reported_counter_difference": 52
+}

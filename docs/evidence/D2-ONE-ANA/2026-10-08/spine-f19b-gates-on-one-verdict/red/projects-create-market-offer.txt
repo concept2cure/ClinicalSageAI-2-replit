@@ -1,0 +1,339 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+{
+  "timestamp": "2026-10-08T17:13:34.453Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > a program type with no document class (a bare device) has no outline to look for: refused before any SQL
+{
+  "timestamp": "2026-10-08T17:13:34.584Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "0d4d4144-0b7e-4f2b-b5cd-0aaf272bc4e8",
+    "step": "creating the project",
+    "store": null,
+    "storeCheck": "unverified",
+    "code": "PROJECT_RECORD_UNAVAILABLE",
+    "route": "/api/c2c/projects"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > a program type with no document class (a bare device) has no outline to look for: refused before any SQL
+{
+  "timestamp": "2026-10-08T17:13:34.585Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: the anchor column is not provisioned",
+  "context": {
+    "correlationId": "0d4d4144-0b7e-4f2b-b5cd-0aaf272bc4e8",
+    "orgId": 7,
+    "reason": "PENDING_ANCHOR_COLUMN",
+    "detail": "projects.regulatory_program_id is not present in this database (migrations/20260814_projects_regulatory_program_anchor.sql has not been applied). A program cannot be created without its PM-spine anchor."
+  }
+}
+
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an MHRA "IND" with 422 FILING_NOT_OFFERED and its reason, before any SQL 41ms
+   → {"data":{"id":"x","title":"x"},"program":null,"meta":{"created":true,"documentId":"doc_test","scaffoldedSections":24,"submissionId":3101,"submissionCreated":true,"projectAnchorId":9001,"projectAnchorCreated":true}}: expected 201 to be 422 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a new Japanese NDA with 422 FILING_NOT_OFFERED and its reason, before any SQL 7ms
+   → {"data":{"id":"x","title":"x"},"program":null,"meta":{"created":true,"documentId":"doc_test","scaffoldedSections":24,"submissionId":3101,"submissionCreated":true,"projectAnchorId":9001,"projectAnchorCreated":true}}: expected 201 to be 422 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency nothing maps (Swissmedic) with 422 FILING_NOT_OFFERED and its reason, before any SQL 5ms
+   → {"data":{"id":"x","title":"x"},"program":null,"meta":{"created":true,"documentId":"doc_test","scaffoldedSections":24,"submissionId":3101,"submissionCreated":true,"projectAnchorId":9001,"projectAnchorCreated":true}}: expected 201 to be 422 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a drug application at a Notified Body with 422 FILING_NOT_OFFERED and its reason, before any SQL 4ms
+   → {"data":{"id":"x","title":"x"},"program":null,"meta":{"created":true,"documentId":"doc_test","scaffoldedSections":24,"submissionId":3101,"submissionCreated":true,"projectAnchorId":9001,"projectAnchorCreated":true}}: expected 201 to be 422 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Health Canada (an NDS, sent as the wizard sends it) once the scaffold finds no outline, rolled back, nothing committed 5ms
+   → {"data":{"id":"x","title":"x"},"program":null,"meta":{"created":true,"documentId":null,"scaffoldedSections":0,"scaffoldSkipped":"NO_RULE_PACK","scaffoldDetail":"No rule pack.","submissionId":3101,"submissionCreated":true,"projectAnchorId":9001,"projectAnchorCreated":true}}: expected 201 to be 422 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency with no outline (TGA) once the scaffold finds no outline, rolled back, nothing committed 4ms
+   → {"data":{"id":"x","title":"x"},"program":null,"meta":{"created":true,"documentId":null,"scaffoldedSections":0,"scaffoldSkipped":"NO_RULE_PACK","scaffoldDetail":"No rule pack.","submissionId":3101,"submissionCreated":true,"projectAnchorId":9001,"projectAnchorCreated":true}}: expected 201 to be 422 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an EMA application with no EU outline (an NDA) once the scaffold finds no outline, rolled back, nothing committed 6ms
+   → {"data":{"id":"x","title":"x"},"program":null,"meta":{"created":true,"documentId":null,"scaffoldedSections":0,"scaffoldSkipped":"NO_RULE_PACK","scaffoldDetail":"No rule pack.","submissionId":3101,"submissionCreated":true,"projectAnchorId":9001,"projectAnchorCreated":true}}: expected 201 to be 422 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > a program type with no document class (a bare device) has no outline to look for: refused before any SQL 6ms
+   → {"error":"PENDING_STORE","step":"creating the project","message":"This environment is not fully set up, so creating the project failed. Share the reference below with your system administrator or Concept2Cure support.","correlationId":"0d4d4144-0b7e-4f2b-b5cd-0aaf272bc4e8"}: expected 503 to be 422 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > an EU MAA: created, "Author documents for this market", with the reason 18ms
+   → expected undefined to match object { tier: 'author_only', …(1) }
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a continuing PMDA application (an approval number on file): created, author-only 7ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a US commercial IND: created, build and sequence 7ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU mdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 7ms
+   → expected undefined to match object { tier: 'author_only', …(1) }
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU ivdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 5ms
+   → expected undefined to match object { tier: 'author_only', …(1) }
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code us: scaffolded against FDA and created 5ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "primaryAgency": "FDA",
++   {
++     "client": {
++       "query": [Function query],
++       "release": [Function Mock],
++     },
++     "orgId": 7,
++     "primaryAgency": "us",
++     "productName": "BX-204",
++     "programType": "nda",
++     "projectId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
++     "userId": 3,
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code US: scaffolded against FDA and created 4ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "primaryAgency": "FDA",
++   {
++     "client": {
++       "query": [Function query],
++       "release": [Function Mock],
++     },
++     "orgId": 7,
++     "primaryAgency": "US",
++     "productName": "BX-204",
++     "programType": "nda",
++     "projectId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
++     "userId": 3,
+    },
+  ]
+
+
+Number of calls: 1
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an MHRA "IND" with 422 FILING_NOT_OFFERED and its reason, before any SQL
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a new Japanese NDA with 422 FILING_NOT_OFFERED and its reason, before any SQL
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency nothing maps (Swissmedic) with 422 FILING_NOT_OFFERED and its reason, before any SQL
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a drug application at a Notified Body with 422 FILING_NOT_OFFERED and its reason, before any SQL
+AssertionError: {"data":{"id":"x","title":"x"},"program":null,"meta":{"created":true,"documentId":"doc_test","scaffoldedSections":24,"submissionId":3101,"submissionCreated":true,"projectAnchorId":9001,"projectAnchorCreated":true}}: expected 201 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 201
+
+ ❯ expectRefused server/routes/c2c/__tests__/projects-create-market-offer.test.ts:113:48
+    111|
+    112| function expectRefused(res: request.Response, reason: RegExp) {
+    113|   expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                ^
+    114|   expect(res.body.error).toBe('FILING_NOT_OFFERED');
+    115|   expect(res.body.message).toMatch(reason);
+ ❯ server/routes/c2c/__tests__/projects-create-market-offer.test.ts:152:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Health Canada (an NDS, sent as the wizard sends it) once the scaffold finds no outline, rolled back, nothing committed
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency with no outline (TGA) once the scaffold finds no outline, rolled back, nothing committed
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an EMA application with no EU outline (an NDA) once the scaffold finds no outline, rolled back, nothing committed
+AssertionError: {"data":{"id":"x","title":"x"},"program":null,"meta":{"created":true,"documentId":null,"scaffoldedSections":0,"scaffoldSkipped":"NO_RULE_PACK","scaffoldDetail":"No rule pack.","submissionId":3101,"submissionCreated":true,"projectAnchorId":9001,"projectAnchorCreated":true}}: expected 201 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 201
+
+ ❯ expectRefused server/routes/c2c/__tests__/projects-create-market-offer.test.ts:113:48
+    111|
+    112| function expectRefused(res: request.Response, reason: RegExp) {
+    113|   expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                ^
+    114|   expect(res.body.error).toBe('FILING_NOT_OFFERED');
+    115|   expect(res.body.message).toMatch(reason);
+ ❯ server/routes/c2c/__tests__/projects-create-market-offer.test.ts:163:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > a program type with no document class (a bare device) has no outline to look for: refused before any SQL
+AssertionError: {"error":"PENDING_STORE","step":"creating the project","message":"This environment is not fully set up, so creating the project failed. Share the reference below with your system administrator or Concept2Cure support.","correlationId":"0d4d4144-0b7e-4f2b-b5cd-0aaf272bc4e8"}: expected 503 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 503
+
+ ❯ expectRefused server/routes/c2c/__tests__/projects-create-market-offer.test.ts:113:48
+    111|
+    112| function expectRefused(res: request.Response, reason: RegExp) {
+    113|   expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                ^
+    114|   expect(res.body.error).toBe('FILING_NOT_OFFERED');
+    115|   expect(res.body.message).toMatch(reason);
+ ❯ server/routes/c2c/__tests__/projects-create-market-offer.test.ts:175:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > an EU MAA: created, "Author documents for this market", with the reason
+AssertionError: expected undefined to match object { tier: 'author_only', …(1) }
+
+- Expected:
+{
+  "label": "Author documents for this market",
+  "tier": "author_only",
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/c2c/__tests__/projects-create-market-offer.test.ts:186:41
+    184|       .send(body({ programType: 'maa', primaryAgency: 'EMA', submissio…
+    185|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    186|     expect(res.body.meta.marketSupport).toMatchObject({ tier: 'author_…
+       |                                         ^
+    187|     expect(res.body.meta.marketSupport.reason).toMatch(/no EMA sequenc…
+    188|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a continuing PMDA application (an approval number on file): created, author-only
+TypeError: Cannot read properties of undefined (reading 'tier')
+ ❯ server/routes/c2c/__tests__/projects-create-market-offer.test.ts:195:40
+    193|       .send(body({ programType: 'jnda', primaryAgency: 'PMDA', applica…
+    194|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    195|     expect(res.body.meta.marketSupport.tier).toBe('author_only');
+       |                                        ^
+    196|   });
+    197|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a US commercial IND: created, build and sequence
+TypeError: Cannot read properties of undefined (reading 'tier')
+ ❯ server/routes/c2c/__tests__/projects-create-market-offer.test.ts:203:40
+    201|       .send(body({ programType: 'ind', primaryAgency: 'FDA', submissio…
+    202|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    203|     expect(res.body.meta.marketSupport.tier).toBe('build_and_sequence'…
+       |                                        ^
+    204|     expect(sqlCalls()).toContain('COMMIT');
+    205|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU mdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU ivdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline
+AssertionError: expected undefined to match object { tier: 'author_only', …(1) }
+
+- Expected:
+{
+  "label": "Author documents for this market",
+  "tier": "author_only",
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/c2c/__tests__/projects-create-market-offer.test.ts:219:41
+    217|       .send(body({ programType, productType: 'device', primaryAgency: …
+    218|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    219|     expect(res.body.meta.marketSupport).toMatchObject({ tier: 'author_…
+       |                                         ^
+    220|     expect(res.body.meta.marketSupport.reason).toMatch(/no Notified Bo…
+    221|     expect(scaffold).toHaveBeenCalledWith(expect.objectContaining({ pr…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code us: scaffolded against FDA and created
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "primaryAgency": "FDA",
++   {
++     "client": {
++       "query": [Function query],
++       "release": [Function Mock],
++     },
++     "orgId": 7,
++     "primaryAgency": "us",
++     "productName": "BX-204",
++     "programType": "nda",
++     "projectId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
++     "userId": 3,
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/c2c/__tests__/projects-create-market-offer.test.ts:230:22
+    228|       .send(body({ programType: 'nda', primaryAgency }));
+    229|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    230|     expect(scaffold).toHaveBeenCalledWith(expect.objectContaining({ pr…
+       |                      ^
+    231|     expect(res.body.meta.marketSupport.tier).toBe('build_and_sequence'…
+    232|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code US: scaffolded against FDA and created
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "primaryAgency": "FDA",
++   {
++     "client": {
++       "query": [Function query],
++       "release": [Function Mock],
++     },
++     "orgId": 7,
++     "primaryAgency": "US",
++     "productName": "BX-204",
++     "programType": "nda",
++     "projectId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
++     "userId": 3,
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/c2c/__tests__/projects-create-market-offer.test.ts:230:22
+    228|       .send(body({ programType: 'nda', primaryAgency }));
+    229|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    230|     expect(scaffold).toHaveBeenCalledWith(expect.objectContaining({ pr…
+       |                      ^
+    231|     expect(res.body.meta.marketSupport.tier).toBe('build_and_sequence'…
+    232|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed (15)
+   Start at  17:13:30
+   Duration  4.20s (transform 1.93s, setup 149ms, import 3.37s, tests 136ms, environment 0ms)
+

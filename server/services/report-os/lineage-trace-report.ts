@@ -20,6 +20,7 @@ import type {
   DocumentLineageDossier,
   DossierDataLineage,
   DossierPolicyHold,
+  DossierProvenanceCompleteness,
 } from '../ana/lineage-dossier.js';
 import type {
   ProvenanceRef,
@@ -39,46 +40,32 @@ function truncate(text: string, max: number): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Confidence — completeness of the document's lineage (0-100)
+// Confidence — the lineage engine's measured provenance completeness (P-26)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Score how complete a document's lineage is, as the report's confidence.
+ * The evidence & provenance trace's confidence: the document's measured
+ * provenance completeness — the share of its current text whose origin the
+ * span lineage records (DocumentLineageDossier.provenanceCompleteness, from
+ * summarizeDocumentAttribution) — or nothing.
  *
- * This is honest by construction: a document with real iterations AND recorded
- * decisions clears the type's `requireConfidence` (>= 70) gate and can be
- * finalized/sealed; a thin document (e.g. iterations only) scores lower and
- * renders as a viewable `partial` that cannot be sealed. Pure; clamped to the
- * pipeline's [30, 95] band so it never fabricates certainty.
+ * P-26 (docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08): "Confidence is a
+ * measured figure or nothing." This was computeLineageConfidence: 30, plus 25
+ * for a version, 15 for a decision a person resolved, 10 for a provenance
+ * event, 10 for a lineage row or citations, 5 for a signature, clamped to
+ * 30–95. That counted which records exist; an ordinary document cleared the
+ * finalize threshold (70) at 75 with none of its text traced (reporting review
+ * 2026-10-01, PROVENANCE-5). Deterministic; no model supplies it.
+ *
+ * Null — so the run stays below final, the type requiring a confidence — when
+ * the completeness was not measured (the lineage or the text could not be
+ * read, or the document has no text), and when the decision record could not
+ * be read: a trace with an unmeasured section is not measured in full (an
+ * unmeasured dossier once sealed reading "Decisions (total) 0").
  */
-/** A decision a person resolved: approved, executed or rejected, not merely recommended. */
-function decidedByAPerson(d: DocumentLineageDossier['decisions'][number]): boolean {
-  return d.actionState === 'approved' || d.actionState === 'executed' || d.actionState === 'rejected';
-}
-
-export function computeLineageConfidence(dossier: DocumentLineageDossier): number {
-  /* A dossier whose decision read FAILED is not a thin dossier — it is an
-     unmeasured one, and it must not clear the sealing threshold. Withholding
-     the +15 (which is all that happened before) still left 80 against
-     DEFAULT_FINAL_CONFIDENCE_THRESHOLD of 70, so a report reading
-     "Decisions (total) 0" sealed as a Part 11 record. Floor it below the gate
-     instead. */
-  if (dossier.decisionSummary.unavailable) return 30;
-
-  /* Reporting review 2026-10-01 (PROVENANCE-5): a decision counted toward the
-     sealing threshold whatever its state, a recommendation nobody had acted on
-     included, and the model's own reasoning turns added five. What a person
-     decided counts: an approved, executed or rejected decision. The model's
-     reasoning is shown in the report and no longer scores. */
-  let score = 30;
-  if (dossier.versionHistory.length >= 1) score += 25;
-  if (dossier.decisions.some(decidedByAPerson)) score += 15;
-  if (dossier.provenanceEvents.length >= 1) score += 10;
-  const hasCitations =
-    !!dossier.ledger.citations && (dossier.ledger.citations as any).totalSentences > 0;
-  if (dossier.dataLineage.length >= 1 || hasCitations) score += 10;
-  if (dossier.ledger.signatures.length >= 1) score += 5;
-  return Math.max(30, Math.min(95, Math.round(score)));
+export function lineageTraceConfidence(dossier: DocumentLineageDossier): number | null {
+  if (dossier.decisionSummary.unavailable) return null;
+  return dossier.provenanceCompleteness?.percent ?? null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -147,6 +134,81 @@ function policyHoldsSections(dossier: DocumentLineageDossier): ReportSection[] {
   return [{ id: 'policy-holds', title: `AnA's own holds (Manual) (${holds.length})`, blocks }];
 }
 
+/** "Provenance completeness": the trace's confidence and the partition it was
+ *  measured from, linked to the span lineage it was read from. */
+function provenanceCompletenessSection(
+  c: DossierProvenanceCompleteness | null | undefined,
+  artifactPk: number,
+): ReportSection {
+  if (!c || c.percent == null) {
+    return {
+      id: 'provenance-completeness',
+      title: 'Provenance completeness',
+      blocks: [
+        metric(
+          'Provenance completeness',
+          !c ? 'not measured — the span lineage or the document text could not be read' : 'not measured — the document holds no text',
+        ),
+      ],
+    };
+  }
+  const atom: ProvenanceRef[] = [
+    { sourceTable: 'document_span_lineage', sourceField: 'concept2cure_artifacts', recordId: String(artifactPk) },
+  ];
+  return {
+    id: 'provenance-completeness',
+    title: 'Provenance completeness',
+    blocks: [
+      metric('Provenance completeness', `${c.percent}%`, atom),
+      metric('Characters with a recorded origin', `${c.attributedChars} of ${c.contentLength}`),
+      metric('From cited sources', c.byKind.fromSources),
+      metric('Asserted by an author', c.byKind.authorAsserted),
+      metric('Machine-drafted, accepted by a person', c.byKind.machineDrafted),
+      metric('Machine-drafted, not yet accepted', c.byKind.machineDraftedUnaccepted),
+      metric('No recorded origin', c.unattributedChars),
+      metric('Cited source changed since it was cited', c.staleChars),
+    ],
+  };
+}
+
+type GapItem = { title: string; severity?: 'critical' | 'high' | 'medium' | 'low'; message?: string };
+
+/** The trace's gaps: pending decisions, untraced text, absent lineage and signatures. */
+function traceGaps(dossier: DocumentLineageDossier): GapItem[] {
+  const gapItems: GapItem[] = [];
+  const pending = dossier.decisionSummary.pending;
+  if (pending > 0) {
+    gapItems.push({
+      title: `${pending} decision(s) awaiting a human`,
+      severity: 'medium',
+      message: 'Decisions recorded but not yet approved or rejected.',
+    });
+  }
+  const pc = dossier.provenanceCompleteness;
+  if (pc && pc.percent != null && pc.unattributedChars > 0) {
+    gapItems.push({
+      title: `${pc.unattributedChars} of ${pc.contentLength} characters have no recorded origin`,
+      severity: 'medium',
+      message: 'No span lineage records where this text came from: no cited source, no author assertion and no accepted draft.',
+    });
+  }
+  if (dossier.dataLineage.length === 0) {
+    gapItems.push({
+      title: 'No evidence data-lineage links recorded',
+      severity: 'low',
+      message: 'This document has no source→content lineage rows yet.',
+    });
+  }
+  if (dossier.ledger.signatures.length === 0) {
+    gapItems.push({
+      title: 'No e-signatures on any version',
+      severity: 'low',
+      message: 'No 21 CFR Part 11 signature has been applied to a version of this document.',
+    });
+  }
+  return gapItems;
+}
+
 export interface LineageReportMeta {
   reportTypeId: string;
   reportTypeLabel: string;
@@ -202,6 +264,9 @@ export function dossierToRenderedReport(
       metric('Signatures', dossier.ledger.signatures.length),
     ],
   });
+
+  // 1b. Provenance completeness — the trace's confidence, and what it measured.
+  sections.push(provenanceCompletenessSection(dossier.provenanceCompleteness, a.artifactPk));
 
   // 2. Iterations — every version.
   if (dossier.versionHistory.length > 0) {
@@ -348,28 +413,7 @@ export function dossierToRenderedReport(
   sections.push(...policyHoldsSections(dossier));
 
   // 8. Gaps — pending decisions + absent lineage (honest, non-fabricated).
-  const gapItems: Array<{ title: string; severity?: 'critical' | 'high' | 'medium' | 'low'; message?: string }> = [];
-  if (s.pending > 0) {
-    gapItems.push({
-      title: `${s.pending} decision(s) awaiting a human`,
-      severity: 'medium',
-      message: 'Decisions recorded but not yet approved or rejected.',
-    });
-  }
-  if (dossier.dataLineage.length === 0) {
-    gapItems.push({
-      title: 'No evidence data-lineage links recorded',
-      severity: 'low',
-      message: 'This document has no source→content lineage rows yet.',
-    });
-  }
-  if (dossier.ledger.signatures.length === 0) {
-    gapItems.push({
-      title: 'No e-signatures on any version',
-      severity: 'low',
-      message: 'No 21 CFR Part 11 signature has been applied to a version of this document.',
-    });
-  }
+  const gapItems = traceGaps(dossier);
   if (gapItems.length > 0) {
     sections.push({ id: 'gaps', title: 'Gaps', blocks: [{ kind: 'gap-list', items: gapItems }] });
   }

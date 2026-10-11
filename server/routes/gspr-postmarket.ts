@@ -32,6 +32,8 @@ import { Router, Request, Response, NextFunction } from 'express';
 
 import { pool } from '../db';
 import { authenticateToken } from '../middleware/auth';
+import { authedUserId } from '../utils/authedActor';
+import { pickWritable } from '../utils/authedOrgId';
 import {
   computeCoverage,
   listCatalog,
@@ -42,6 +44,8 @@ import {
 import {
   approveDocument,
   createDocument,
+  DOCUMENT_EDITABLE,
+  DOCUMENT_GOVERNED,
   getDocument,
   listProgramDocuments,
   supersedeDocument,
@@ -61,7 +65,11 @@ import {
   upsertPmcfEnrollmentRecord,
   STORE_ABSENT,
 } from '../services/gspr-postmarket/pmcf-enrollment.service';
-import type { PostMarketDocumentType } from '../../shared/schema/gspr-postmarket';
+import type {
+  InsertGsprProgramMapping,
+  InsertPostMarketDocument,
+  PostMarketDocumentType,
+} from '../../shared/schema/gspr-postmarket';
 import {
   POST_MARKET_DOCUMENT_TYPES,
   PMCF_ACTIVITY_KINDS,
@@ -111,6 +119,21 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
 // GSPR
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** What a mapping request may write: the decision, its evidence and its status. */
+const MAPPING_WRITABLE = [
+  'requirementId',
+  'applicability',
+  'rationale',
+  'primaryEvidenceId',
+  'methodOfDemonstration',
+  'conformanceStatus',
+  'gapDescription',
+  'metadata',
+] as const satisfies readonly (keyof InsertGsprProgramMapping & string)[];
+
+/** Who decided or reviewed, and when: the server's to record, never the body's. */
+const MAPPING_ATTRIBUTION = ['decidedBy', 'decidedAt', 'reviewedBy', 'reviewedAt'] as const;
+
 router.get('/catalog', async (req: Request, res: Response) => {
   const reg = req.query.regulation as 'MDR' | 'IVDR' | undefined;
   if (reg && reg !== 'MDR' && reg !== 'IVDR') {
@@ -147,20 +170,34 @@ router.post(
     if (!body.requirementId || !body.applicability) {
       return res.status(422).json({ error: 'requirementId and applicability are required' });
     }
+    // Who decided, and when, are the session's (ledger L195). The whole body
+    // used to be spread into the row, so it chose decidedBy and decidedAt, could
+    // write reviewedBy / reviewedAt (nothing else writes them) and even the row
+    // id, and an absent user was recorded as 'system'. Attribution in the body
+    // is refused, not ignored; everything else is an allow-list of the decision.
+    const forged = MAPPING_ATTRIBUTION.filter((key) => Object.prototype.hasOwnProperty.call(body, key));
+    if (forged.length) {
+      return res.status(422).json({ error: `${forged.join(', ')} cannot be set: the decision is attributed to the signed-in user` });
+    }
+    const userId = authedUserId(req);
+    if (userId === null) {
+      return res.status(401).json({ error: 'Authentication required to record a GSPR decision' });
+    }
+    const decidedBy = String(userId);
     try {
-      const userIdRaw = (req as any).user?.id;
-      const decidedBy =
-        typeof userIdRaw === 'string'
-          ? userIdRaw
-          : userIdRaw != null
-          ? String(userIdRaw)
-          : 'system';
       const row = await upsertMapping({
-        ...body,
+        ...pickWritable<InsertGsprProgramMapping>(body, MAPPING_WRITABLE),
+        requirementId: body.requirementId,
+        applicability: body.applicability,
         organizationId: orgId,
-        programId: req.params.programId,
-        decidedBy: body.decidedBy ?? decidedBy,
-        decidedAt: body.decidedAt ?? new Date(),
+        programId: String(req.params.programId),
+        decidedBy,
+        decidedAt: new Date(),
+        // A new decision has not been reviewed. Before ledger L195 the only
+        // writer of these two columns was a request body, so a review left
+        // standing from then would be attached to a decision it never saw.
+        reviewedBy: null,
+        reviewedAt: null,
       });
 
       // WO-16C #133. The mapping row is committed by upsertMapping above, and
@@ -255,18 +292,30 @@ postMarketRouter.post(
     if (!body.code || !body.title) {
       return res.status(422).json({ error: 'code and title are required' });
     }
+    // A new document is a draft created by the session's user. The whole body
+    // used to be spread into the insert, so a caller could create it approved,
+    // locked and signed by anyone, at any version, and a request with no user
+    // was created by 'system'. Governed fields are refused; the rest is the
+    // same allow-list an edit uses.
+    const governed = DOCUMENT_GOVERNED.filter((key) => Object.prototype.hasOwnProperty.call(body, key));
+    if (governed.length) {
+      return res.status(422).json({
+        error: `${governed.join(', ')} cannot be set on create: a document is created as a draft by the signed-in user, and is approved only through its approval`,
+      });
+    }
+    const userId = authedUserId(req);
+    if (userId === null) {
+      return res.status(401).json({ error: 'Authentication required to create a post-market document' });
+    }
+    const createdBy = String(userId);
     try {
-      const userIdRaw = (req as any).user?.id;
-      const createdBy =
-        typeof userIdRaw === 'string'
-          ? userIdRaw
-          : userIdRaw != null
-          ? String(userIdRaw)
-          : 'system';
       const doc = await createDocument({
-        ...body,
+        ...pickWritable<InsertPostMarketDocument>(body, DOCUMENT_EDITABLE),
+        documentType: body.documentType,
+        code: body.code,
+        title: body.title,
         organizationId: orgId,
-        programId: req.params.programId,
+        programId: String(req.params.programId),
         createdBy,
         updatedBy: createdBy,
       });

@@ -1,0 +1,72 @@
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways returns 403 without org context 19ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways/transmittals returns 403 without org context 5ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways/transmittals/1 returns 403 without org context 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > POST /api/mdx/gateways/fda/esg/transmit returns 403 without org context 9ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways/transmittals/1/status returns 403 without org context 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > GET /api/mdx/gateways/transmittals/1/ack returns 403 without org context 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > POST /api/mdx/gateways/transmittals/1/findings returns 403 without org context 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > PATCH /api/mdx/gateways/findings/1/resolve returns 403 without org context 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — auth gate > POST /api/mdx/gateways/transmittals/1/technical-rejection returns 403 without org context 5ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > POST /api/mdx/gateways/fda/esg/transmit is refused for a read-only viewer 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > POST /api/mdx/gateways/transmittals/1/rollback is refused for a read-only viewer 2ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > POST /api/mdx/gateways/transmittals/1/technical-rejection is refused for a read-only viewer 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > POST /api/mdx/gateways/transmittals/1/findings is refused for a read-only viewer 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > PATCH /api/mdx/gateways/findings/1/resolve is refused for a read-only viewer 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > a viewer keeps every READ on this router — the gate is on writes only 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > a admin (a signing role) may still transmit 8ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > a approver (a signing role) may still transmit 8ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > submission gateway routes — role gate > a reviewer (a signing role) may still transmit 4ms
+ × tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > transmit by a manager is refused 403 ESIGNATURE_NO_AUTHORITY before the password is checked 17ms
+   → {"error":"No assembled package was found for this package id. Assemble the package first, then transmit it.","details":{"code":"BUNDLE_NOT_ASSEMBLED"}}: expected 422 to be 403 // Object.is equality
+ × tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > transmit by a member is refused 403 ESIGNATURE_NO_AUTHORITY before the password is checked 5ms
+   → {"error":"No assembled package was found for this package id. Assemble the package first, then transmit it.","details":{"code":"BUNDLE_NOT_ASSEMBLED"}}: expected 422 to be 403 // Object.is equality
+ × tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > technical rejection by a manager is refused 403 ESIGNATURE_NO_AUTHORITY before the password is checked 5ms
+   → {"error":"Transmittal not found.","details":{"code":"TRANSMITTAL_NOT_FOUND","transmittalId":1}}: expected 404 to be 403 // Object.is equality
+ × tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > technical rejection by a member is refused 403 ESIGNATURE_NO_AUTHORITY before the password is checked 6ms
+   → {"error":"Transmittal not found.","details":{"code":"TRANSMITTAL_NOT_FOUND","transmittalId":1}}: expected 404 to be 403 // Object.is equality
+ × tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > reads the role from the membership row, not the session: a session saying admin over a manager row is refused 5ms
+   → {"error":"No assembled package was found for this package id. Assemble the package first, then transmit it.","details":{"code":"BUNDLE_NOT_ASSEMBLED"}}: expected 422 to be 403 // Object.is equality
+ × tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > a role lookup that cannot run refuses 503 and names no cause 5ms
+   → expected 422 to be 503 // Object.is equality
+ ✓ tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > a rollback is not a signature: it keeps the editor gate and re-authentication only 11ms
+ × tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > GET /gateways tells the screen whether this person may sign a transmit, from the same check 6ms
+   → expected undefined to deeply equal { canSign: false }
+ ✓ tests/mdx-submission-gateway-routes.test.ts > GET /api/mdx/gateways/transmittals > resolves submitted_by to the person, so the log names who transmitted 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > GET /api/mdx/gateways > returns one row per gateway with configured flag 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > rejects unknown region 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > rejects body without bundle hash 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 201 with transmittal id on success 13ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > refuses a transmit that declares no §11.50 signature meaning — nothing reaches the gateway 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > refuses a meaning outside the §11.50 vocabulary 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > loads the stored bundle when only packageId is supplied (no explicit bundle) 21ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > hard-blocks transmit (422) when the stored bundle has validation errors 6ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 422 when neither an explicit bundle nor a stored bundle exists 8ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > returns 422 when neither bundle nor packageId is supplied 7ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > maps CredentialError to 412 5ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > POST /api/mdx/gateways/:region/:gateway/transmit > maps GatewayError to 502 5ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > transmittals listing + detail > lists transmittals filtered by region 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > transmittals listing + detail > rejects invalid region in query 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > transmittals listing + detail > detail 404 when not in tenant 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > transmittals listing + detail > detail returns transmittal + findings 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > status + ack endpoints > status routes to the correct gateway impl 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > status + ack endpoints > ack download returns the ack buffer with correct content-type 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > status + ack endpoints > tells the client who wrote the acknowledgement bytes 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > status + ack endpoints > names a genuine agency acknowledgement as one 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > findings routes > POST finding 404s when transmittal not in tenant 4ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > findings routes > POST finding creates with severity 3ms
+ ✓ tests/mdx-submission-gateway-routes.test.ts > findings routes > PATCH resolve marks resolved 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > transmit by a manager is refused 403 ESIGNATURE_NO_AUTHORITY before the password is checked
+ FAIL  tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > transmit by a member is refused 403 ESIGNATURE_NO_AUTHORITY before the password is checked
+AssertionError: {"error":"No assembled package was found for this package id. Assemble the package first, then transmit it.","details":{"code":"BUNDLE_NOT_ASSEMBLED"}}: expected 422 to be 403 // Object.is equality
+ FAIL  tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > technical rejection by a manager is refused 403 ESIGNATURE_NO_AUTHORITY before the password is checked
+ FAIL  tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > technical rejection by a member is refused 403 ESIGNATURE_NO_AUTHORITY before the password is checked
+AssertionError: {"error":"Transmittal not found.","details":{"code":"TRANSMITTAL_NOT_FOUND","transmittalId":1}}: expected 404 to be 403 // Object.is equality
+ FAIL  tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > reads the role from the membership row, not the session: a session saying admin over a manager row is refused
+AssertionError: {"error":"No assembled package was found for this package id. Assemble the package first, then transmit it.","details":{"code":"BUNDLE_NOT_ASSEMBLED"}}: expected 422 to be 403 // Object.is equality
+ FAIL  tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > a role lookup that cannot run refuses 503 and names no cause
+AssertionError: expected 422 to be 503 // Object.is equality
+ FAIL  tests/mdx-submission-gateway-routes.test.ts > signing authority — the governed signs on this router > GET /gateways tells the screen whether this person may sign a transmit, from the same check
+AssertionError: expected undefined to deeply equal { canSign: false }
+ Test Files  1 failed (1)
+      Tests  7 failed | 43 passed (50)

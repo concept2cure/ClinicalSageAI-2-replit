@@ -1,0 +1,178 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+TAP version 13
+# (node:12) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: canonical gate rejects a new signature error in an untouched caller, then passes the repair
+ok 1 - canonical gate rejects a new signature error in an untouched caller, then passes the repair
+  ---
+  duration_ms: 7185.170653
+  type: 'test'
+  ...
+# Subtest: bounded canonical gate refuses invalid partition settings, baseline writes and nonzero baselines
+ok 2 - bounded canonical gate refuses invalid partition settings, baseline writes and nonzero baselines
+  ---
+  duration_ms: 269.762931
+  type: 'test'
+  ...
+# Subtest: without the opt-in variable the gate retains the stock npx tsc path and incremental arguments
+ok 3 - without the opt-in variable the gate retains the stock npx tsc path and incremental arguments
+  ---
+  duration_ms: 133.685394
+  type: 'test'
+  ...
+# (node:13) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: files-per-process parsing accepts only bounded positive integers
+ok 4 - files-per-process parsing accepts only bounded positive integers
+  ---
+  duration_ms: 1.193646
+  type: 'test'
+  ...
+# Subtest: full context preserves an erroneous transitive caller outside configured roots
+ok 5 - full context preserves an erroneous transitive caller outside configured roots
+  ---
+  duration_ms: 1874.965999
+  type: 'test'
+  ...
+# Subtest: global merging, module augmentation, and declaration context survive partitioning
+ok 6 - global merging, module augmentation, and declaration context survive partitioning
+  ---
+  duration_ms: 2017.032174
+  type: 'test'
+  ...
+# Subtest: skipLibCheck preserves declaration coverage while matching compiler suppression
+ok 7 - skipLibCheck preserves declaration coverage while matching compiler suppression
+  ---
+  duration_ms: 1494.224346
+  type: 'test'
+  ...
+# Subtest: declaration emit diagnostics are included when enabled with noEmit
+ok 8 - declaration emit diagnostics are included when enabled with noEmit
+  ---
+  duration_ms: 1574.846535
+  type: 'test'
+  ...
+# Subtest: missing imports are diagnosed in the identical complete Program
+ok 9 - missing imports are diagnosed in the identical complete Program
+  ---
+  duration_ms: 1106.127772
+  type: 'test'
+  ...
+# Subtest: fileless global and compiler-options diagnostics remain in the aggregate
+ok 10 - fileless global and compiler-options diagnostics remain in the aggregate
+  ---
+  duration_ms: 837.53645
+  type: 'test'
+  ...
+# Subtest: syntax errors and unused expectations match the complete compiler API
+ok 11 - syntax errors and unused expectations match the complete compiler API
+  ---
+  duration_ms: 1670.600406
+  type: 'test'
+  ...
+# Subtest: project-reference redirects and referenced declarations match a complete Program
+ok 12 - project-reference redirects and referenced declarations match a complete Program
+  ---
+  duration_ms: 1413.810611
+  type: 'test'
+  ...
+# Subtest: source manifests are deterministic across different diagnostic partition sizes
+ok 13 - source manifests are deterministic across different diagnostic partition sizes
+  ---
+  duration_ms: 2227.613613
+  type: 'test'
+  ...
+# Subtest: a string partition size enforces the same worker bound as its integer value
+ok 14 - a string partition size enforces the same worker bound as its integer value
+  ---
+  duration_ms: 2752.630285
+  type: 'test'
+  ...
+# Subtest: invalid configuration parsing fails rather than passing an unchecked Program
+ok 15 - invalid configuration parsing fails rather than passing an unchecked Program
+  ---
+  duration_ms: 235.402795
+  type: 'test'
+  ...
+# Subtest: an empty Program fails instead of producing a zero-error success
+ok 16 - an empty Program fails instead of producing a zero-error success
+  ---
+  duration_ms: 232.602651
+  type: 'test'
+  ...
+# Subtest: a source change after discovery invalidates the full-Program snapshot
+ok 17 - a source change after discovery invalidates the full-Program snapshot
+  ---
+  duration_ms: 529.134091
+  type: 'test'
+  ...
+# Subtest: creating a previously absent dependency package.json invalidates module resolution
+ok 18 - creating a previously absent dependency package.json invalidates module resolution
+  ---
+  duration_ms: 539.029003
+  type: 'test'
+  ...
+# Subtest: dependency metadata changes are rejected even when source filenames and text stay fixed
+ok 19 - dependency metadata changes are rejected even when source filenames and text stay fixed
+  ---
+  duration_ms: 543.818356
+  type: 'test'
+  ...
+# Subtest: an inherited config mutation invalidates the complete compiler-options snapshot
+ok 20 - an inherited config mutation invalidates the complete compiler-options snapshot
+  ---
+  duration_ms: 525.006645
+  type: 'test'
+  ...
+# Subtest: crashed workers fail closed
+ok 21 - crashed workers fail closed
+  ---
+  duration_ms: 445.944146
+  type: 'test'
+  ...
+# Subtest: signal-terminated workers fail closed
+ok 22 - signal-terminated workers fail closed
+  ---
+  duration_ms: 428.513019
+  type: 'test'
+  ...
+# Subtest: truncated JSON workers fail closed
+ok 23 - truncated JSON workers fail closed
+  ---
+  duration_ms: 456.005491
+  type: 'test'
+  ...
+# Subtest: wrong schema workers fail closed
+ok 24 - wrong schema workers fail closed
+  ---
+  duration_ms: 439.950817
+  type: 'test'
+  ...
+# Subtest: missing successful-worker assignments are rejected
+ok 25 - missing successful-worker assignments are rejected
+  ---
+  duration_ms: 720.663941
+  type: 'test'
+  ...
+# Subtest: duplicate successful-worker assignments are rejected
+ok 26 - duplicate successful-worker assignments are rejected
+  ---
+  duration_ms: 703.610507
+  type: 'test'
+  ...
+# Subtest: different snapshot successful-worker assignments are rejected
+ok 27 - different snapshot successful-worker assignments are rejected
+  ---
+  duration_ms: 724.312654
+  type: 'test'
+  ...
+1..27
+# tests 27
+# suites 0
+# pass 27
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 23769.998433

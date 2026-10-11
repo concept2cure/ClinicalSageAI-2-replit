@@ -1,0 +1,99 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/routes/ana-ri/__tests__/seal-verified-scope.test.ts
+{
+  "timestamp": "2026-10-09T06:41:09.242Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP scope retention reaches the central service refusal > preserves and refuses qualifiers {"scope":"plan_text_only","artifactVerified":false,"sourceVerified":false} instead of dropping them 31ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP scope retention reaches the central service refusal > preserves and refuses qualifiers {"scope":"plan_text_only","artifactVerified":true,"sourceVerified":true,"sourceDiffPerformed":true} instead of dropping them 6ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP scope retention reaches the central service refusal > preserves and refuses qualifiers {"scope":"document_source_diff"} instead of dropping them 3ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP scope retention reaches the central service refusal > preserves and refuses qualifiers {"scope":null} instead of dropping them 3ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP scope retention reaches the central service refusal > preserves and refuses qualifiers {"scope":{"kind":"artifact"}} instead of dropping them 3ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP scope retention reaches the central service refusal > preserves and refuses qualifiers {"artifactVerified":false} instead of dropping them 3ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP scope retention reaches the central service refusal > preserves and refuses qualifiers {"sourceVerified":false} instead of dropping them 2ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP scope retention reaches the central service refusal > preserves and refuses qualifiers {"sourceDiffPerformed":false} instead of dropping them 2ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP scope retention reaches the central service refusal > preserves and refuses qualifiers {"artifactVerified":null} instead of dropping them 9ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP scope retention reaches the central service refusal > preserves and refuses qualifiers {"sourceVerified":"true"} instead of dropping them 3ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP scope retention reaches the central service refusal > preserves and refuses qualifiers {"sourceDiffPerformed":1} instead of dropping them 2ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP scope retention reaches the central service refusal > does not accept caller-supplied positive flags when ok is false 2ms
+ × server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"artifactPk":"9"} without falling back 8ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"artifactPk":null} without falling back 3ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"artifactPk":0} without falling back 2ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"artifactExternalId":9} without falling back 2ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"artifactExternalId":""} without falling back 2ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"artifactExternalId":null} without falling back 2ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"existingVersionId":"4"} without falling back 2ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"existingVersionId":null} without falling back 2ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"existingVersionNumber":"2"} without falling back 2ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"existingVersionNumber":1.5} without falling back 2ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"existingVersionId":4} without falling back 2ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"existingVersionNumber":2} without falling back 2ms
+   → expected 500 to be 400 // Object.is equality
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > feature and signer gates still precede sealing > retains the disabled feature refusal without checking the signer or DB 2ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > feature and signer gates still precede sealing > retains missing authenticated context refusal 2ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > feature and signer gates still precede sealing > retains missing content refusal 2ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > feature and signer gates still precede sealing > retains signer authority refusal before credential comparison 2ms
+ ✓ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > feature and signer gates still precede sealing > retains signer reauthentication refusal before calling the seal service 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"artifactPk":"9"} without falling back
+ FAIL  server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"artifactPk":null} without falling back
+ FAIL  server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"artifactPk":0} without falling back
+ FAIL  server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"artifactExternalId":9} without falling back
+ FAIL  server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"artifactExternalId":""} without falling back
+ FAIL  server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"artifactExternalId":null} without falling back
+ FAIL  server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"existingVersionId":"4"} without falling back
+ FAIL  server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"existingVersionId":null} without falling back
+ FAIL  server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"existingVersionNumber":"2"} without falling back
+ FAIL  server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"existingVersionNumber":1.5} without falling back
+ FAIL  server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"existingVersionId":4} without falling back
+ FAIL  server/routes/ana-ri/__tests__/seal-verified-scope.test.ts > HTTP target selectors reach the central service validation > refuses malformed or unanchored selectors {"existingVersionNumber":2} without falling back
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/ana-ri/__tests__/seal-verified-scope.test.ts:75:24
+     73|   ])('refuses malformed or unanchored selectors %j without falling bac…
+     74|     const res = await post({ ok: true }, selectors);
+     75|     expect(res.status).toBe(400);
+       |                        ^
+     76|     expect(res.body.error.code).toBe('INVALID_SEAL_TARGET');
+     77|     expect(h.getPool).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 17 passed (29)
+   Start at  02:41:07
+   Duration  2.33s (transform 1.13s, setup 77ms, import 1.87s, tests 114ms, environment 0ms)
+

@@ -1,0 +1,58 @@
+# RED — new tests against a placeholder AccountPanel (returns null) and the old admin copy
+# npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/accountPanel.test.tsx client/src/concept2cure/v2/__tests__/adminSetupMfaCopy.test.tsx
+
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > the account menu offers the panel > lists Account, and choosing it opens the panel on the server's account
+   → expected 'Usage & limits' to be 'Account' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > shows name, e-mail, organisation and the membership role, as the server reports them
+   → Unable to find role="dialog" and name "Account"
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a failed account read is an error with a way to retry, never an empty panel
+   → Unable to find role="dialog" and name "Account"
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a wrong current password shows the server's refusal — not "Session expired" — and the session stays
+   → Unable to find role="dialog" and name "Account"
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > shows every policy refusal the server lists, in its words
+   → Unable to find role="dialog" and name "Account"
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a confirmation that differs is caught before anything is sent
+   → Unable to find role="dialog" and name "Account"
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a change says that every session has ended, this one included, and signs out on request
+   → Unable to find role="dialog" and name "Account"
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > enrolment shows the server's QR code and key, confirms a code, then shows the recovery codes once
+   → Unable to find role="dialog" and name "Account"
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a wrong confirmation code shows the server's refusal, not "Session expired", and keeps the key on screen
+   → Unable to find role="dialog" and name "Account"
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a refused setup is shown in the server's words
+   → Unable to find role="dialog" and name "Account"
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > never loads a QR code from anywhere but the server's own data: URL
+   → Unable to find role="dialog" and name "Account"
+ × client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > removal sends a current code; the server's refusal is shown, and a good code removes it
+   → Unable to find role="dialog" and name "Account"
+ × client/src/concept2cure/v2/__tests__/adminSetupMfaCopy.test.tsx > Setup → Multi-factor authentication > says what sign-in asks for, and where each person enrols an authenticator
+   → expected 'Multi-factor authenticationSign-in as…' not to match /not offered in this product/
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > the account menu offers the panel > lists Account, and choosing it opens the panel on the server's account
+AssertionError: expected 'Usage & limits' to be 'Account' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > shows name, e-mail, organisation and the membership role, as the server reports them
+TestingLibraryElementError: Unable to find role="dialog" and name "Account"
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a failed account read is an error with a way to retry, never an empty panel
+TestingLibraryElementError: Unable to find role="dialog" and name "Account"
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a wrong current password shows the server's refusal — not "Session expired" — and the session stays
+TestingLibraryElementError: Unable to find role="dialog" and name "Account"
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > shows every policy refusal the server lists, in its words
+TestingLibraryElementError: Unable to find role="dialog" and name "Account"
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a confirmation that differs is caught before anything is sent
+TestingLibraryElementError: Unable to find role="dialog" and name "Account"
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > password > a change says that every session has ended, this one included, and signs out on request
+TestingLibraryElementError: Unable to find role="dialog" and name "Account"
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > enrolment shows the server's QR code and key, confirms a code, then shows the recovery codes once
+TestingLibraryElementError: Unable to find role="dialog" and name "Account"
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a wrong confirmation code shows the server's refusal, not "Session expired", and keeps the key on screen
+TestingLibraryElementError: Unable to find role="dialog" and name "Account"
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > a refused setup is shown in the server's words
+TestingLibraryElementError: Unable to find role="dialog" and name "Account"
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > never loads a QR code from anywhere but the server's own data: URL
+TestingLibraryElementError: Unable to find role="dialog" and name "Account"
+ FAIL  client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > removal sends a current code; the server's refusal is shown, and a good code removes it
+TestingLibraryElementError: Unable to find role="dialog" and name "Account"
+ FAIL  client/src/concept2cure/v2/__tests__/adminSetupMfaCopy.test.tsx > Setup → Multi-factor authentication > says what sign-in asks for, and where each person enrols an authenticator
+AssertionError: expected 'Multi-factor authenticationSign-in as…' not to match /not offered in this product/
+ Test Files  2 failed (2)
+      Tests  13 failed (13)

@@ -1,0 +1,130 @@
+2026-10-10T06:31:51.4767628Z ##[command]/usr/bin/docker pull semgrep/semgrep:1.177.0@sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198
+2026-10-10T06:32:02.6224915Z docker.io/semgrep/semgrep:1.177.0@sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198
+2026-10-10T06:32:25.4017612Z [command]/usr/bin/git log -1 --format=%H
+2026-10-10T06:32:25.4043894Z de61922a9351080fdcd76a231c5abd8182054831
+2026-10-10T06:32:28.2593596Z Baseline: 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19, the newest concept2cure-v2 commit whose Semgrep run passed (run 37735466781).
+2026-10-10T06:32:28.2850301Z [36;1mecho "Findings this commit adds over $BASELINE:"[0m
+2026-10-10T06:32:28.2850626Z [36;1mstatus=0[0m
+2026-10-10T06:32:28.2850966Z [36;1m# SEMGREP_CONFIGS is a list of --config flags and is split on purpose.[0m
+2026-10-10T06:32:28.2851368Z [36;1m# shellcheck disable=SC2086[0m
+2026-10-10T06:32:28.2851726Z [36;1msemgrep scan $SEMGREP_CONFIGS --metrics=off --error \[0m
+2026-10-10T06:32:28.2852110Z [36;1m  --baseline-commit "$BASELINE" \[0m
+2026-10-10T06:32:28.2852501Z [36;1m  --sarif-output="$RUNNER_TEMP/semgrep-new.sarif" || status=$?[0m
+2026-10-10T06:32:28.2852876Z [36;1mcase "$status" in[0m
+2026-10-10T06:32:28.2853225Z [36;1m  0) echo "No Semgrep finding that $BASELINE did not already have." ;;[0m
+2026-10-10T06:32:28.2853789Z [36;1m  1)[0m
+2026-10-10T06:32:28.2854410Z [36;1m    echo "::error::Semgrep found what $BASELINE did not have (listed above). Fix it, or mark a reviewed false positive inline with 'nosemgrep: <rule-id>' and the reason."[0m
+2026-10-10T06:32:28.2855050Z [36;1m    exit 1 ;;[0m
+2026-10-10T06:32:28.2855271Z [36;1m  *)[0m
+2026-10-10T06:32:28.2855837Z [36;1m    echo "::error::Semgrep did not finish (exit $status). An unfinished scan is not a pass. Exit 2 also means the baseline commit is not in this checkout's history."[0m
+2026-10-10T06:32:28.2856470Z [36;1m    exit "$status" ;;[0m
+2026-10-10T06:32:28.2856709Z [36;1mesac[0m
+2026-10-10T06:32:28.2861372Z shell: sh -e {0}
+2026-10-10T06:32:28.2861615Z env:
+2026-10-10T06:32:28.2861887Z   SEMGREP_CONFIGS: --config=p/default --config=p/ci
+2026-10-10T06:32:28.2862274Z   BASELINE: 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19
+2026-10-10T06:32:28.2863208Z   CANDIDATES: 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19
+c7a0405d9a1a6da9a7eecb54cbee8870e1dfb333
+519c6acd5854b185e5dd5cbc4d3c077caed52b53
+117313b90e933b8e96d162e3f855ca08899ec9fc
+ca051e95053a2ef160183d6456e3ca82b8ebafa3
+2026-10-10T06:32:28.2864637Z ##[endgroup]
+2026-10-10T06:32:28.3484173Z Findings this commit adds over 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19:
+2026-10-10T06:32:37.5899442Z   Scanning 3039 files tracked by git with 1075 Code rules:
+2026-10-10T06:32:38.1281139Z                                                                                                                         
+2026-10-10T06:32:38.1282718Z   Language      Rules   Files          Origin      Rules                                                                
+2026-10-10T06:32:38.1284267Z  ─────────────────────────────        ───────────────────                                                               
+2026-10-10T06:32:38.1284866Z   <multilang>      47    3039          Community    1075                                                                
+2026-10-10T06:32:38.1285382Z   ts              163     907                                                                                           
+2026-10-10T06:32:38.1285870Z   json              4     566                                                                                           
+2026-10-10T06:32:38.1286333Z   js              153      56                                                                                           
+2026-10-10T06:32:38.1286828Z   yaml             35       5                                                                                           
+2026-10-10T06:32:38.1287330Z   bash              4       5                                                                                           
+2026-10-10T06:32:38.1287851Z   python          243       4                                                                                           
+2026-10-10T06:32:38.1288337Z                                                                                                                         
+2026-10-10T06:35:27.3324398Z Warning: 3 timeout error(s) in shared/schema.ts when running the following rules:
+2026-10-10T06:35:27.3325528Z [javascript.express.security.audit.express-ssrf.express-ssrf, javascript.lang.security.audit.path-traversal.path-join-
+2026-10-10T06:35:27.3326910Z resolve-traversal.path-join-resolve-traversal, typescript.react.security.audit.react-unsanitized-method.react-
+2026-10-10T06:35:27.3327700Z unsanitized-method]
+2026-10-10T06:35:27.3328268Z Semgrep stopped running rules on shared/schema.ts after 3 timeout error(s). See `--timeout-threshold` for more info.
+2026-10-10T06:35:28.6070860Z   Current version has 59 findings.
+2026-10-10T06:35:29.7134904Z   Scanning 31 files tracked by git with 12 Code rules:
+2026-10-10T06:35:29.7186796Z                                                                                                                         
+2026-10-10T06:35:29.7187583Z   Language      Rules   Files          Origin      Rules                                                                
+2026-10-10T06:35:29.7188339Z  ─────────────────────────────        ───────────────────                                                               
+2026-10-10T06:35:29.7188883Z   <multilang>       1      31          Community      12                                                                
+2026-10-10T06:35:29.7189381Z   ts                9      28                                                                                           
+2026-10-10T06:35:29.7189857Z   js                9       2                                                                                           
+2026-10-10T06:35:29.7190291Z   yaml              1       1                                                                                           
+2026-10-10T06:35:29.7190705Z                                                                                                                         
+2026-10-10T06:35:35.9935617Z                 
+2026-10-10T06:35:35.9936022Z                 
+2026-10-10T06:35:35.9936540Z ┌──────────────┐
+2026-10-10T06:35:35.9936782Z │ Scan Summary │
+2026-10-10T06:35:35.9937013Z └──────────────┘
+2026-10-10T06:35:35.9937281Z ✅ Scan completed successfully.
+2026-10-10T06:35:35.9937615Z  • Findings: 0 (0 blocking)
+2026-10-10T06:35:35.9937887Z  • Rules run: 492
+2026-10-10T06:35:35.9938135Z  • Targets scanned: 3039
+2026-10-10T06:35:35.9938397Z  • Parsed lines: ~99.9%
+2026-10-10T06:35:35.9938644Z  • Scan skipped: 
+2026-10-10T06:35:35.9938953Z    ◦ Files larger than  files 1.0 MB: 7
+2026-10-10T06:35:35.9939314Z    ◦ Files matching .semgrepignore patterns: 100
+2026-10-10T06:35:35.9939733Z  • Scan was limited to files changed since baseline commit.
+2026-10-10T06:35:35.9940289Z  • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+2026-10-10T06:35:35.9940728Z Ran 492 rules on 3039 files: 0 findings.
+2026-10-10T06:35:35.9943978Z (need more rules? `semgrep login` for additional free Semgrep Registry rules)
+2026-10-10T06:35:35.9944299Z 
+2026-10-10T06:35:36.0157614Z 
+2026-10-10T06:35:36.0158113Z A new version of Semgrep is available. See https://semgrep.dev/docs/upgrading
+2026-10-10T06:35:36.3934292Z No Semgrep finding that 661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19 did not already have.
+2026-10-10T06:35:36.4009387Z ##[group]Run status=0
+2026-10-10T06:35:36.4009684Z [36;1mstatus=0[0m
+2026-10-10T06:35:36.4009922Z [36;1m# shellcheck disable=SC2086[0m
+2026-10-10T06:35:36.4010394Z [36;1msemgrep scan $SEMGREP_CONFIGS --metrics=off --sarif --output=semgrep.sarif || status=$?[0m
+2026-10-10T06:35:36.4010860Z [36;1mif [ "$status" -ne 0 ]; then[0m
+2026-10-10T06:35:36.4011230Z [36;1m  echo "::error::The full Semgrep scan did not finish (exit $status)."[0m
+2026-10-10T06:35:36.4011603Z [36;1m  exit "$status"[0m
+2026-10-10T06:35:36.4011833Z [36;1mfi[0m
+2026-10-10T06:35:36.4012192Z shell: sh -e {0}
+2026-10-10T06:35:36.4012398Z env:
+2026-10-10T06:35:36.4012639Z   SEMGREP_CONFIGS: --config=p/default --config=p/ci
+2026-10-10T06:35:36.4012941Z ##[endgroup]
+2026-10-10T06:36:14.8436966Z   Scanning 21215 files tracked by git with 1075 Code rules:
+2026-10-10T06:36:18.7517799Z                                                                                                                         
+2026-10-10T06:36:18.7518716Z   Language      Rules   Files          Origin      Rules                                                                
+2026-10-10T06:36:18.7520067Z  ─────────────────────────────        ───────────────────                                                               
+2026-10-10T06:36:18.7520941Z   <multilang>      62   21215          Community    1075                                                                
+2026-10-10T06:36:18.7521846Z   ts              163    7287                                                                                           
+2026-10-10T06:36:18.7522559Z   json              4    2860                                                                                           
+2026-10-10T06:36:18.7523306Z   js              153     758                                                                                           
+2026-10-10T06:36:18.7524226Z   bash              4      92                                                                                           
+2026-10-10T06:36:18.7524946Z   yaml             36      79                                                                                           
+2026-10-10T06:36:18.7525679Z   terraform       101      45                                                                                           
+2026-10-10T06:36:18.7526397Z   html              1      45                                                                                           
+2026-10-10T06:36:18.7527137Z   python          243      40                                                                                           
+2026-10-10T06:36:18.7527849Z   php              38       2                                                                                           
+2026-10-10T06:36:18.7528531Z                                                                                                                         
+2026-10-10T06:47:03.3844465Z                 
+2026-10-10T06:47:03.3844867Z                 
+2026-10-10T06:47:03.3845508Z ┌──────────────┐
+2026-10-10T06:47:03.3845856Z │ Scan Summary │
+2026-10-10T06:47:03.3846189Z └──────────────┘
+2026-10-10T06:47:03.3846560Z ✅ Scan completed successfully.
+2026-10-10T06:47:03.3847020Z  • Findings: 680 (680 blocking)
+2026-10-10T06:47:03.3847485Z  • Rules run: 647
+2026-10-10T06:47:03.3847863Z  • Targets scanned: 21215
+2026-10-10T06:47:03.3848675Z  • Parsed lines: ~99.9%
+2026-10-10T06:47:03.3849050Z  • Scan skipped: 
+2026-10-10T06:47:03.3849470Z    ◦ Files larger than  files 1.0 MB: 81
+2026-10-10T06:47:03.3850017Z    ◦ Files matching .semgrepignore patterns: 978
+2026-10-10T06:47:03.3850614Z  • Scan was limited to files tracked by git
+2026-10-10T06:47:03.3851404Z  • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+2026-10-10T06:47:03.3852407Z Ran 647 rules on 21215 files: 680 findings.
+2026-10-10T06:47:03.3865651Z 
+2026-10-10T06:47:15.2879053Z Finished uploading artifact content to blob storage!
+2026-10-10T06:47:15.2880388Z SHA256 digest of uploaded artifact zip is e704f445592e98e2449ea3d609b2d49ebdf4740bc00bc1c4ac7ba401b9dc8cf1
+2026-10-10T06:47:15.2882210Z Finalizing artifact upload
+2026-10-10T06:47:15.5424051Z Artifact semgrep-sarif.zip successfully finalized. Artifact ID 11662291649
+2026-10-10T06:47:15.5425680Z Artifact semgrep-sarif has been successfully uploaded! Final size is 250133 bytes. Artifact ID is 11662291649
+2026-10-10T06:47:15.5435328Z Artifact download URL: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/38031251350/artifacts/11662291649

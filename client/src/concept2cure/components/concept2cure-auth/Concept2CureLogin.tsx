@@ -284,9 +284,15 @@ export const Concept2CureLogin: React.FC = () => {
     try {
       const result = await login({ email: email.trim(), password, rememberDevice: rememberMe });
       if (!result.success) {
+        // AUTH_001 is the server's "Invalid credentials" — one answer for a
+        // wrong password, an unknown address and an invitee with no password
+        // yet, so it is said the same way for all three (QA 2026-10-08, j9).
         setError({
           field: 'password',
-          message: result.error?.message || t('error.signInFailed'),
+          message:
+            result.error?.code === 'AUTH_001'
+              ? t('error.invalidCredentials')
+              : result.error?.message || t('error.signInFailed'),
           code: result.error?.code,
         });
         return;

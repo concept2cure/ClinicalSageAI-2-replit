@@ -1,0 +1,6 @@
+CC-2026-014|under_assessment||0
+CC-2026-012|in_implementation|2|0
+CC-2026-009|verification|2|0
+CC-2026-006|approved|2|0
+CC-2026-002|closed|2|0
+CC-2026-001|proposed||0

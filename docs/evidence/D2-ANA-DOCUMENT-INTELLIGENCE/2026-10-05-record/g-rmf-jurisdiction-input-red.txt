@@ -1,0 +1,296 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/rmf-jurisdiction-input.test.ts
+{
+  "timestamp": "2026-10-05T12:53:08.758Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T12:53:08.760Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/rmf-jurisdiction-input.test.ts
+{
+  "timestamp": "2026-10-05T12:53:08.760Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/rmf-jurisdiction-input.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/rmf-jurisdiction-input.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/rmf-jurisdiction-input.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > declares an optional jurisdiction input whose values are exactly the RMF jurisdictions 9ms
+   → expected undefined to be defined
+ × server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns the EU AFAP policy beside the RMF structure for an EU MDR file 7ms
+   → expected undefined to be defined
+ × server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns the policy beside the assessment when sections are given (EU IVDR) 2ms
+   → Cannot read properties of undefined (reading 'jurisdiction')
+ × server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(EU_MDR) unchanged, with no restated copy 4ms
+   → expected undefined to deeply equal { jurisdiction: 'EU_MDR', …(5) }
+ × server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(EU_IVDR) unchanged, with no restated copy 1ms
+   → expected undefined to deeply equal { jurisdiction: 'EU_IVDR', …(5) }
+ × server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(FDA) unchanged, with no restated copy 1ms
+   → expected undefined to deeply equal { jurisdiction: 'FDA', …(5) }
+ × server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(OTHER) unchanged, with no restated copy 1ms
+   → expected undefined to deeply equal { jurisdiction: 'OTHER', …(5) }
+ × server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > states the FDA policy as manufacturer-defined, not AFAP 1ms
+   → Cannot read properties of undefined (reading 'principle')
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns no policy when no jurisdiction is given, rather than assuming one 5ms
+ × server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > refuses an unknown jurisdiction instead of ignoring it 1ms
+   → expected true to be undefined
+ × server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > refuses a jurisdiction for a CER or PER, where no acceptability policy is modelled 16ms
+   → expected true to be undefined
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > declares an optional jurisdiction input whose values are exactly the RMF jurisdictions
+AssertionError: expected undefined to be defined
+ ❯ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts:37:32
+     35|   it('declares an optional jurisdiction input whose values are exactly…
+     36|     const props = ASSESS_DEVICE_EVIDENCE_STRUCTURE.input_schema.proper…
+     37|     expect(props.jurisdiction).toBeDefined();
+       |                                ^
+     38|     expect(props.jurisdiction.type).toBe('string');
+     39|     expect([...(props.jurisdiction.enum ?? [])].sort()).toEqual([...JU…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns the EU AFAP policy beside the RMF structure for an EU MDR file
+AssertionError: expected undefined to be defined
+ ❯ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts:49:37
+     47|     expect(out.ok).toBe(true);
+     48|     expect(Array.isArray(out.sections)).toBe(true);
+     49|     expect(out.acceptabilityPolicy).toBeDefined();
+       |                                     ^
+     50|     expect(out.acceptabilityPolicy.principle).toBe('AFAP');
+     51|     expect(out.acceptabilityPolicy.economicJustificationPermitted).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns the policy beside the assessment when sections are given (EU IVDR)
+TypeError: Cannot read properties of undefined (reading 'jurisdiction')
+ ❯ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts:59:36
+     57|     expect(out.ok).toBe(true);
+     58|     expect(out.assessment.missingRequiredSections).toContain('control'…
+     59|     expect(out.acceptabilityPolicy.jurisdiction).toBe('EU_IVDR');
+       |                                    ^
+     60|     expect(out.acceptabilityPolicy.principle).toBe('AFAP');
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(EU_MDR) unchanged, with no restated copy
+AssertionError: expected undefined to deeply equal { jurisdiction: 'EU_MDR', …(5) }
+
+- Expected:
+{
+  "basis": [
+    {
+      "confidence": "recall",
+      "note": "§2: reducing risks as far as possible means without adversely affecting the benefit-risk ratio. §4: residual risk per hazard and overall residual risk judged acceptable; control measures in priority order. A 2026-10-05 search extract of eur-lex matched the §2 wording; a verbatim read of the eur-lex text is owed before this is regulator-text.",
+      "ref": "MDR (EU) 2017/745 Annex I §2 and §4",
+      "url": "https://eur-lex.europa.eu/eli/reg/2017/745/oj",
+    },
+    {
+      "confidence": "recall",
+      "note": "Understood to require risk reduction as far as possible under MDR/IVDR Annex I, with no room for economic considerations as a reason to stop. Not checked against the CEN/BSI text.",
+      "ref": "EN ISO 14971:2019+A11:2021 Annex ZA",
+    },
+  ],
+  "economicJustificationPermitted": false,
+  "jurisdiction": "EU_MDR",
+  "modelled": true,
+  "principle": "AFAP",
+  "statement": "For EU devices (MDR/IVDR): reduce every risk as far as possible (AFAP) without adversely affecting the benefit-risk ratio, so that each residual risk and the overall residual risk are acceptable when weighed against the benefits. Cost or economic practicability is not a permitted reason to stop risk reduction.",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts:65:37
+     63|   it.each(JURISDICTIONS)('returns riskAcceptabilityPolicy(%s) unchange…
+     64|     const out = await run({ document: 'rmf', jurisdiction: j });
+     65|     expect(out.acceptabilityPolicy).toEqual(JSON.parse(JSON.stringify(…
+       |                                     ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(EU_IVDR) unchanged, with no restated copy
+AssertionError: expected undefined to deeply equal { jurisdiction: 'EU_IVDR', …(5) }
+
+- Expected:
+{
+  "basis": [
+    {
+      "confidence": "recall",
+      "note": "§2: reducing risks as far as possible means without adversely affecting the benefit-risk ratio. §4: residual risk per hazard and overall residual risk judged acceptable; control measures in priority order. A 2026-10-05 search extract of eur-lex matched the §2 wording; a verbatim read of the eur-lex text is owed before this is regulator-text.",
+      "ref": "IVDR (EU) 2017/746 Annex I §2 and §4",
+      "url": "https://eur-lex.europa.eu/eli/reg/2017/746/oj",
+    },
+    {
+      "confidence": "recall",
+      "note": "Understood to require risk reduction as far as possible under MDR/IVDR Annex I, with no room for economic considerations as a reason to stop. Not checked against the CEN/BSI text.",
+      "ref": "EN ISO 14971:2019+A11:2021 Annex ZA",
+    },
+  ],
+  "economicJustificationPermitted": false,
+  "jurisdiction": "EU_IVDR",
+  "modelled": true,
+  "principle": "AFAP",
+  "statement": "For EU devices (MDR/IVDR): reduce every risk as far as possible (AFAP) without adversely affecting the benefit-risk ratio, so that each residual risk and the overall residual risk are acceptable when weighed against the benefits. Cost or economic practicability is not a permitted reason to stop risk reduction.",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts:65:37
+     63|   it.each(JURISDICTIONS)('returns riskAcceptabilityPolicy(%s) unchange…
+     64|     const out = await run({ document: 'rmf', jurisdiction: j });
+     65|     expect(out.acceptabilityPolicy).toEqual(JSON.parse(JSON.stringify(…
+       |                                     ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(FDA) unchanged, with no restated copy
+AssertionError: expected undefined to deeply equal { jurisdiction: 'FDA', …(5) }
+
+- Expected:
+{
+  "basis": [
+    {
+      "confidence": "recall",
+      "note": "Clause 4.2: top management defines the policy for establishing criteria for risk acceptability. Clause 4.4: the risk management plan includes those criteria. Clause 7.4 is the benefit-risk analysis for a residual risk not judged acceptable by them. ISO 14971:2019 does not require ALARP: clause 4.2 NOTE 1 lists reducing risk as low as reasonably practicable (ALARP), as low as reasonably achievable (ALARA), or as far as possible without adversely affecting the benefit-risk ratio (AFAP) as approaches the manufacturer's policy can define (recall; secondary sources). The 2007 edition's Annex D material is in ISO/TR 24971:2020. Not checked against the ISO text. Because clause 4.2 NOTE 1 lets the manufacturer's policy adopt ALARP, whether practicability or economic considerations count in risk reduction is the manufacturer's choice under its own acceptability criteria. FDA recognises ISO 14971:2019 as a consensus standard and does not mandate it (recall).",
+      "ref": "ISO 14971:2019 clauses 4.2 and 4.4",
+    },
+  ],
+  "economicJustificationPermitted": true,
+  "jurisdiction": "FDA",
+  "modelled": true,
+  "principle": "manufacturer-defined",
+  "statement": "FDA (recall): ISO 14971:2019 is an FDA-recognised consensus standard. Under it the manufacturer defines its risk-acceptability criteria (clause 4.2 policy, clause 4.4 plan) and evaluates residual risk against them, with a benefit-risk analysis (clause 7.4) for any residual risk the criteria do not accept.",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts:65:37
+     63|   it.each(JURISDICTIONS)('returns riskAcceptabilityPolicy(%s) unchange…
+     64|     const out = await run({ document: 'rmf', jurisdiction: j });
+     65|     expect(out.acceptabilityPolicy).toEqual(JSON.parse(JSON.stringify(…
+       |                                     ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(OTHER) unchanged, with no restated copy
+AssertionError: expected undefined to deeply equal { jurisdiction: 'OTHER', …(5) }
+
+- Expected:
+{
+  "basis": [
+    {
+      "confidence": "recall",
+      "note": "Clause 4.2: top management defines the policy for establishing criteria for risk acceptability. Clause 4.4: the risk management plan includes those criteria. Clause 7.4 is the benefit-risk analysis for a residual risk not judged acceptable by them. ISO 14971:2019 does not require ALARP: clause 4.2 NOTE 1 lists reducing risk as low as reasonably practicable (ALARP), as low as reasonably achievable (ALARA), or as far as possible without adversely affecting the benefit-risk ratio (AFAP) as approaches the manufacturer's policy can define (recall; secondary sources). The 2007 edition's Annex D material is in ISO/TR 24971:2020. Not checked against the ISO text.",
+      "ref": "ISO 14971:2019 clauses 4.2 and 4.4",
+    },
+  ],
+  "economicJustificationPermitted": null,
+  "jurisdiction": "OTHER",
+  "modelled": false,
+  "principle": "manufacturer-defined",
+  "statement": "This jurisdiction's own risk-acceptability rules are not modelled. ISO 14971:2019 leaves the criteria to the manufacturer (clauses 4.2 and 4.4); confirm the regulator's expectations before relying on them.",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts:65:37
+     63|   it.each(JURISDICTIONS)('returns riskAcceptabilityPolicy(%s) unchange…
+     64|     const out = await run({ document: 'rmf', jurisdiction: j });
+     65|     expect(out.acceptabilityPolicy).toEqual(JSON.parse(JSON.stringify(…
+       |                                     ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > states the FDA policy as manufacturer-defined, not AFAP
+TypeError: Cannot read properties of undefined (reading 'principle')
+ ❯ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts:70:36
+     68|   it('states the FDA policy as manufacturer-defined, not AFAP', async …
+     69|     const out = await run({ document: 'rmf', jurisdiction: 'FDA' });
+     70|     expect(out.acceptabilityPolicy.principle).toBe('manufacturer-defin…
+       |                                    ^
+     71|   });
+     72|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > refuses an unknown jurisdiction instead of ignoring it
+AssertionError: expected true to be undefined
+
+- Expected:
+undefined
+
++ Received:
+true
+
+ ❯ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts:81:20
+     79|   it('refuses an unknown jurisdiction instead of ignoring it', async (…
+     80|     const out = await run({ document: 'rmf', jurisdiction: 'EU' });
+     81|     expect(out.ok).toBeUndefined();
+       |                    ^
+     82|     expect(out.error).toMatch(/jurisdiction must be one of: EU_MDR, EU…
+     83|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > refuses a jurisdiction for a CER or PER, where no acceptability policy is modelled
+AssertionError: expected true to be undefined
+
+- Expected:
+undefined
+
++ Received:
+true
+
+ ❯ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts:88:22
+     86|     for (const document of ['cer', 'per']) {
+     87|       const out = await run({ document, jurisdiction: 'EU_MDR' });
+     88|       expect(out.ok).toBeUndefined();
+       |                      ^
+     89|       expect(out.error).toMatch(/jurisdiction applies to document 'rmf…
+     90|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 1 passed (11)
+   Start at  12:53:04
+   Duration  15.70s (transform 10.66s, setup 230ms, import 14.79s, tests 53ms, environment 0ms)
+

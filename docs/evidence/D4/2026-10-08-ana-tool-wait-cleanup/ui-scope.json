@@ -1,0 +1,18 @@
+{
+  "publication_base": "4536fe4c2a4ad16a9722c9bfe61bc1a403426c06",
+  "qualification_checkpoint": "a8f59c24c74f1870d7590bb06424f42f0dbcbcae",
+  "base_client_tree": "6ffd68220ef6ab075eba1f9404901cbb85aaabf9",
+  "qualified_client_tree": "6ffd68220ef6ab075eba1f9404901cbb85aaabf9",
+  "client_tree_unchanged": true,
+  "client_paths_changed": [],
+  "out_of_scope_paths": [],
+  "allowed_source_paths": [
+    "server/services/ana/agentic-loop.ts",
+    "server/services/ana/AnaToolExecutor.ts",
+    "server/routes/ana-ri/stream.ts",
+    "server/services/ana/__tests__/tool-wait-cleanup.test.ts",
+    "server/services/ana/__tests__/executor-tool-wait-cleanup.test.ts",
+    "server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts"
+  ],
+  "evidence_directory": "docs/evidence/D4/2026-10-08-ana-tool-wait-cleanup/"
+}

@@ -96,7 +96,7 @@ export class DomainAdapter {
 
     // Template modifiers for document generation
     templateModifiers['section_header_prefix'] = 'Statistical Analysis Plan';
-    templateModifiers['regulatory_framework'] = 'ICH E9/E9(R1), ICH E6(R2)';
+    templateModifiers['regulatory_framework'] = 'ICH E9/E9(R1), ICH E6(R3)';
     templateModifiers['estimand_section'] = 'required';
     templateModifiers['sensitivity_analysis_section'] = 'required';
     templateModifiers['missing_data_section'] = 'required';

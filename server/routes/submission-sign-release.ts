@@ -66,7 +66,7 @@ import {
 import part11ComplianceService from '../services/part11ComplianceService.js';
 import { reverifySigner } from '../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
-import { isSigningAuthorized } from '../services/part11/signing-authority.js';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import auditService from '../services/auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
@@ -177,15 +177,13 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
   // authority. The role is resolved from the persisted membership record (never
   // req.user.role, never the body) and gated by the same policy as
   // /api/esignature/sign. Checked before any run probing so an unauthorized
-  // caller learns nothing about the submission.
+  // caller learns nothing about the submission. The platform's one policy
+  // (checkSigningAuthority) since 2026-10-08 (P-27): a role that cannot be read
+  // is 503 SIGNING_AUTHORITY_UNVERIFIED, where this route's own copy threw.
+  const authority = await checkSigningAuthority(signerId, organizationId);
+  if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
+  // The membership role the release signature records (not a second authority check).
   const signerRole = await resolveSignerOrgRole(signerId, organizationId);
-  if (!isSigningAuthorized(signerRole)) {
-    return res.status(403).json({
-      error:
-        'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-      code: 'ESIGNATURE_NO_AUTHORITY',
-    });
-  }
 
   const submissionIdParam = String(req.params.submissionId);
 

@@ -1,0 +1,123 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > names the vault document by uuid, on the vault_documents table 491ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > writes NO snapshot — that is the whole point of the uuid column 81ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > reports the leaf the server actually wrote 134ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > surfaces the server verdict verbatim and never claims a placement 168ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > writes nothing for a section code no document can be filed at 82ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the target picker is the shared one > offers the draft sequence and disables the frozen one, saying why 217ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files a vault document into an IRB package at an IRB slot 85ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > refuses a CTD code in an IRB package, naming the IRB vocabulary 121ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files into a 510(k) at an eSTAR section 119ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > stays strict for an eCTD submission: an IRB slot is not a CTD section 133ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > says why, and offers no placement 11ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > a PDF is filed as before 74ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the placement carries its reason > keeps Place disabled until a reason meets the floor, and says why 126ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the placement carries its reason > sends the trimmed reason with the leaf 99ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (a) pre-fills a confirmed filing's section, says where it came from, and files at it 161ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (a) stops saying "pre-filled" once the person changes the code 19ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (b) leaves a suggested section for the person to enter, and says what was suggested 17ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) no filing leaves the section blank and claims nothing 95ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) a null filing leaves the section blank and claims nothing 82ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) a confirmed filing with no section leaves the section blank and claims nothing 38ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) a confirmed filing with a blank section leaves the section blank and claims nothing 16ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (c) an unfiled document leaves the section blank and claims nothing 64ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (d) a pre-filled code is judged like a typed one: a container keeps Place disabled 135ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is pre-filled from a confirmed filing, and only from one > (d) a pre-filled CTD code is judged in the chosen submission's vocabulary 195ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (e) an in-review version: its stage, and the server's reason it would not be transmitted 39ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > says it is reading while the read is in flight 255ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (f) an approved, current version says so and warns of nothing 187ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (g) an approved stage the server refuses anyway: "superseded by a later version", printed verbatim 111ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (g) an approved stage the server refuses anyway: "approved for different content than these bytes", printed verbatim 153ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (h) a Delete leaf ships no content: no approval is checked and nothing is warned of 162ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (i) an unapproved version can still be placed, and the verdict says it will not be transmitted 98ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (j) an approved, current version's placement claims nothing about transmission 172ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (k) a failed read says the stage could not be read, and placement stays open 120ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (k) a list without this version says the stage could not be read, and placement stays open 129ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (k) a version the server gave no verdict for says the stage could not be read, and placement stays open 53ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > (l) without a project it reads nothing and says the stage is not shown 58ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > this version's stage and the server's verdict on transmitting it > a file that can never be filed is not read for its stage 6ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > blocks retry after a lost write reply and offers the existing filing workspace 86ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt null 124ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt false 94ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {} 101ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"id":0} 120ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"id":1.5} 135ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"sequenceId":999} 128ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"documentUuid":"33333333-3333-4333-8333-333333333333"} 76ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"documentTable":"coauthor_documents"} 71ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"sectionCode":"3.2.P.8.1"} 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > does not confirm a malformed or mismatched receipt {"lifecycleOp":"replace"} 64ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > discloses incomplete audit confirmation undefined without denying the placed leaf 75ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > discloses incomplete audit confirmation null without denying the placed leaf 109ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > discloses incomplete audit confirmation {"persisted":false} without denying the placed leaf 79ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > discloses incomplete audit confirmation {"persisted":true,"chained":false} without denying the placed leaf 102ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > allows retry after a known pre-write refusal 152ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > ignores a write receipt after switching source document 93ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > ignores a write receipt after switching the source project 81ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > vault filing confirmation > locks filing fields while the write is pending 82ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > opens a drawer and POSTs the mapped body to the register endpoint 428ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > shows the SERVER’s row, not the values that were typed 272ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > a rejected write adds nothing and names the rejected field 226ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > an edit PUTs against the row and keeps the validation record it was seeded with 220ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > records the signed-in user as the analyst on a new result 203ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > refuses to let the analyst review their own result, and says why 103ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > a review PUTs the disposition and the reviewer, never the analyst 144ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > renders the per-section build state the endpoint returns 128ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > refuses to build a section that no source data feeds, and says why 105ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > compiles the whole module against the operating-system endpoint 232ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > a compile that is refused reports the server’s reason and changes nothing 254ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > resolves a contradiction through the governed endpoint with its note 168ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the export gate’s refusal as the verdict it is, with the reason 129ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the pass verdict when the gate allows the export 153ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > asks for a project rather than guessing one 10ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > reports a failed board read as a failure, never as "nothing here yet" 27ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > says the artifact registry is unlinked instead of rendering its absence as "no artifacts" 32ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > places approved sections into a chosen sequence through the placement endpoint 216ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > does not place without a stated reason, and offers only this program’s submissions 214ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows a placement refusal as the gate verdict it is, verbatim 248ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > says that another document already holds the section, and still allows the placement as a second New leaf 524ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > says that this document is already placed at that section, and does not offer to place it again 142ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > when the same document is already placed there under another operation, it says how to change that, and does not offer the placement 130ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > says nothing about occupancy when the section is free 120ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no class that no stylesheet defines 215ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no invented class when it shows a pre-filled section, a version's stage and the server's transmit verdict 49ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > renders the shared dialog shell the other dialogs use 29ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > is labelled by its own title 26ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > moves focus into the dialog on open 21ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > returns focus to whatever opened it 22ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on Escape 24ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on a click outside, but not on a click inside 21ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > keeps the latest submission sequences when an earlier read finishes last 78ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > does not restore sequences after the submission is cleared 5ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > does not restore either read after reset 4ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > ignores an earlier submission-list error after a successful reload 55ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > invalidates a selected target and reloads when the explicit project changes 108ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > reloads an active picker on a published shell-project change 110ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetIsolation.test.tsx > filing target request isolation > keeps an explicit document project when the shell project changes 55ms
+ ✓ client/src/concept2cure/v2/__tests__/placementReasonField.test.tsx > PlacementReasonField (dialog) > is announced as required, with the floor stated on first render 201ms
+ ✓ client/src/concept2cure/v2/__tests__/placementReasonField.test.tsx > PlacementReasonField (dialog) > marks a too-short value invalid and keeps the requirement in the note 31ms
+ ✓ client/src/concept2cure/v2/__tests__/placementReasonField.test.tsx > PlacementReasonField (inline) > is announced as required, with the floor stated on first render 108ms
+ ✓ client/src/concept2cure/v2/__tests__/placementReasonField.test.tsx > PlacementReasonField (inline) > marks a too-short value invalid and keeps the requirement in the note 120ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > uses the document project even when a different shell project is open 82ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > offers only the open project's submissions, and says how many it does not offer, unanchored ones included 26ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > asks the server for the open project's submissions, so the list is scoped where it is read 22ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > does not offer an unanchored submission even when the server returns one, because the picker checks the same rule 21ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > when every submission is another project's, the empty state says so — not 'none in this organization' 29ms
+ ✓ client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx > the filing picker and the project > with no project open, every submission is offered, as before 21ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each sequence and section that carries a version, with the operation 63ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > a version placed nowhere says so, and a row the server said nothing about claims nothing 28ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each official eSTAR export that attached a version, and claims nothing when there is none 13ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names the CMC records a version is evidence for, with the Module 3 sections that read them 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > several placements read as one list 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W1 names the submission, the sequence and its status when that sequence is not yet sent 11ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W2 says nothing when the agency already holds that sequence 10ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W3 says nothing when the only leaf is a Delete, which carries no content 9ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W4 says nothing when only an earlier version is placed 9ms
+
+ Test Files  8 passed (8)
+      Tests  114 passed (114)
+   Start at  01:28:30
+   Duration  27.06s (transform 1.98s, setup 1.11s, import 4.23s, tests 12.30s, environment 6.93s)
+

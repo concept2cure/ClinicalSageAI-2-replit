@@ -54,14 +54,15 @@ import { pool } from '../../db';
 import { visibleOrgClause } from './evidence-spine.service';
 import type { Queryable } from './span-lineage.service';
 import { citesAcrossProjects, readCitationEnds } from './citation-ends';
+import { capturedDataEligibleSql } from '../document-data-disposition/eligibility';
 import type { CitationSource } from '@shared/authoring/citations';
 
 /** The `authoring_citations.source` discriminator for a canonical-source citation. */
 export const CRE_SOURCE_CITATION = 'cre_evidence_source';
 
 export class SourceUsageError extends Error {
-  /** BAD_INPUT unless named; CROSS_PROJECT when the section and the source belong to different projects (PF-11). */
-  constructor(message: string, readonly code: 'BAD_INPUT' | 'CROSS_PROJECT' = 'BAD_INPUT') {
+  /** Named refusals preserve project boundaries and current source-data eligibility. */
+  constructor(message: string, readonly code: 'BAD_INPUT' | 'CROSS_PROJECT' | 'SOURCE_WITHDRAWN' = 'BAD_INPUT') {
     super(message);
     this.name = 'SourceUsageError';
   }
@@ -250,6 +251,12 @@ export async function citeSource(
       'CROSS_PROJECT',
     );
   }
+  // Retained extractions remain citable. Withdrawal and supersession forbid
+  // new grounding; historical readers retain the original recorded citation.
+  const visibility = visibleOrgClause(orgId, 2);
+  const eligible = await executor.query(`SELECT src.id FROM cre_evidence_sources src WHERE src.id=$1 AND ${visibility.sql}
+    AND src.deleted_at IS NULL AND ${capturedDataEligibleSql('src')} LIMIT 1`, [sourceId, visibility.param]);
+  if (!eligible.rows.length) throw new SourceUsageError('This source data has been withdrawn or superseded and cannot ground a new citation. Nothing was saved.', 'SOURCE_WITHDRAWN');
   const checksum = ends.source.checksum;
 
   // Locked for the same reason as the re-read below: it is the before-image.
@@ -604,7 +611,7 @@ export async function refreshSourceCitation(
       sourceId: number;
       change: CitationChange | null;
     }
-  | { ok: false; reason: 'not_found' | 'not_a_source_citation' | 'unresolved_source' | 'frozen' }
+  | { ok: false; reason: 'not_found' | 'not_a_source_citation' | 'unresolved_source' | 'source_withdrawn' | 'frozen' }
 > {
   if (!target.sectionId || !target.citationId) return { ok: false, reason: 'not_found' };
   // FOR UPDATE: the checksum read here is the before-image the caller records;
@@ -626,12 +633,13 @@ export async function refreshSourceCitation(
   if (!sourceId) return { ok: false, reason: 'unresolved_source' };
 
   const c = visibleOrgClause(orgId, 2);
-  const src = await executor.query<{ checksum: string | null }>(
-    `SELECT checksum FROM cre_evidence_sources
-      WHERE id = $1 AND ${c.sql} AND deleted_at IS NULL LIMIT 1`,
+  const src = await executor.query<{ checksum: string | null; data_eligible: boolean }>(
+    `SELECT src.checksum, ${capturedDataEligibleSql('src')} AS data_eligible FROM cre_evidence_sources src
+      WHERE src.id = $1 AND ${c.sql} AND src.deleted_at IS NULL LIMIT 1`,
     [sourceId, c.param],
   );
   if (src.rows.length === 0) return { ok: false, reason: 'unresolved_source' };
+  if (!src.rows[0].data_eligible) return { ok: false, reason: 'source_withdrawn' };
 
   const currentChecksum = src.rows[0].checksum ?? null;
   const previousChecksum = row.payload_sha256 ?? null;

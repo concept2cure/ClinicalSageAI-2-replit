@@ -1,0 +1,30 @@
+BEFORE: Vorelinib (50c41bb6-...), the walker's program, pre-fix server (5077). Rows named Protocol-Stability* after the first reproduction:
+    id    |     document_code      | version | supersedes |     hash     |   document_title   | folder_id | placement_status | created  
+----------+------------------------+---------+------------+--------------+--------------------+-----------+------------------+----------
+ 68687c91 | Protocol-Stability.pdf | 1.0     |            | b0fda7fb90a3 | Protocol-Stability | module-3  | suggested        | 01:12:19
+ e11a7095 | Protocol-Stability     | 1.0     |            | 4d51d14f8942 | Protocol-Stability | module-3  | suggested        | 01:12:25
+(2 rows)
+
+
+PRE-FIX replay: Nexavir (0ebc8c26-...), old code on 5077:
+    id    |     document_code      | version | supersedes |     hash     |   document_title   | folder_id | placement_status | created  
+----------+------------------------+---------+------------+--------------+--------------------+-----------+------------------+----------
+ 9d5549f3 | Protocol-Stability.pdf | 1.0     |            | b0fda7fb90a3 | Protocol-Stability | module-3  | suggested        | 01:25:45
+ ccdb6689 | Protocol-Stability     | 1.0     |            | 4d51d14f8942 | Protocol-Stability | module-3  | suggested        | 01:25:49
+(2 rows)
+
+
+POST-FIX replay: Ardemvir (14b0fa15-...), fixed code on 5078:
+    id    |     document_code      | version | supersedes |     hash     |   document_title   | folder_id | placement_status | created  
+----------+------------------------+---------+------------+--------------+--------------------+-----------+------------------+----------
+ 9f7dabca | Protocol-Stability.pdf | 1.0     |            | b0fda7fb90a3 | Protocol-Stability | module-3  | suggested        | 01:26:09
+ afac7757 | Protocol-Stability.pdf | 2.0     | 9f7dabca   | 45f62da250fa | Protocol-Stability | module-3  | suggested        | 01:26:16
+(2 rows)
+
+AFTER the UI check on 5078 (Ardemvir): refused filings store nothing; only the replayed rows remain.
+    id    |     document_code      | version | supersedes |     hash     | placement_status | created  
+----------+------------------------+---------+------------+--------------+------------------+----------
+ 9f7dabca | Protocol-Stability.pdf | 1.0     |            | b0fda7fb90a3 | suggested        | 01:26:09
+ afac7757 | Protocol-Stability.pdf | 2.0     | 9f7dabca   | 45f62da250fa | suggested        | 01:26:16
+(2 rows)
+

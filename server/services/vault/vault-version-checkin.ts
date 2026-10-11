@@ -186,6 +186,37 @@ export async function planCheckIn(
 }
 
 /**
+ * The current version of the document recorded at `documentCode` in this
+ * program and organization: the end of its successor chain, which is the one a
+ * new version is added to (planCheckIn refuses any other). Used when an upload
+ * conflicts with a recorded version, so the refusal can name what to add to.
+ * Null when no document of the caller's holds that code.
+ *
+ * Read-only. A conflict that names another document's version is no offer.
+ */
+export async function currentVersionOfCode(
+  q: CheckInQueryable,
+  p: { organizationId: number; programId: string; documentCode: string },
+): Promise<{ id: string; version: string } | null> {
+  const { rows } = await q.query(
+    `SELECT d.id::text AS id, d.version
+       FROM vault.documents d
+      WHERE d.program_id = $1::uuid AND d.organization_id = $2 AND d.document_code = $3
+        AND d.deleted_at IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM vault.documents s
+           WHERE s.supersedes_id = d.id AND s.deleted_at IS NULL
+             AND s.program_id = d.program_id AND s.organization_id = d.organization_id
+             AND s.document_code IS NOT DISTINCT FROM d.document_code
+        )
+      ORDER BY d.created_at DESC
+      LIMIT 1`,
+    [p.programId, p.organizationId, p.documentCode],
+  );
+  return (rows[0] as { id: string; version: string } | undefined) ?? null;
+}
+
+/**
  * What a check-in does not accept (VR-08): the server assigns the version, and
  * the new version keeps its document's filing. Refused before anything is
  * stored, and said, rather than silently ignored.

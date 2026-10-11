@@ -218,27 +218,34 @@ describe('POST /runs/:id/finalize is an electronic signature (reporting review 2
 
 /*
  * P1-44b (2026-10-01). Finalizing is the run's signature, so the signer needs
- * the authority to sign (§11.10(g)) as well as finalize's tier: every other
- * signing route asks (governed-signed-act.ts step 3a, the QMS approval, the
- * submission release); this one did not. The role is the membership row's,
- * never the token's or the body's, and the refusal comes before the run is
- * read or a password is compared, so it spends no guess and writes nothing.
+ * the authority to sign (§11.10(g)) as well as finalize's tier. The role is
+ * the membership row's, never the token's or the body's.
+ *
+ * Follow-up decision "Report finalize" (docs/LAUNCH_DEFINITION_OF_DONE.md):
+ * finalize keeps ONE authority check, the ceremony's floor
+ * (governed-signature-ceremony assertSigningAuthority, 505f71263). The route
+ * carried its own copy ahead of it, so the membership was read twice and the
+ * two copies could drift. With the copy removed, these refusals come from the
+ * ceremony: after the run is read, before any password is compared or any
+ * transaction is opened, so they spend no guess and write nothing.
  */
-describe('POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g))', () => {
+const CEREMONY_NO_AUTHORITY =
+  'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.';
+
+describe('POST /runs/:id/finalize needs signing authority, checked once, by the ceremony (P1-44b, 21 CFR 11.10(g))', () => {
   it.each(['owner', 'manager'])(
-    'refuses the role %s, which the default signing policy does not admit: 403, before anything is read',
+    'refuses the role %s, which the default signing policy does not admit: the ceremony\'s 403, before any password or transaction',
     async (role) => {
       h.memberRole.mockResolvedValue(role);
       eligible();
       lockedAs('completed');
       const res = await finalize(role);
       expect(res.status).toBe(403);
-      expect(res.body).toMatchObject({ success: false, error: { code: 'ESIGNATURE_NO_AUTHORITY' } });
-      expect(res.body.error.message).toMatch(/Nothing was finalized/);
+      expect(res.body).toEqual({ success: false, error: { code: 'ESIGNATURE_NO_AUTHORITY', message: CEREMONY_NO_AUTHORITY } });
+      expect(h.memberRole, 'one authority check').toHaveBeenCalledTimes(1);
       expect(h.memberRole).toHaveBeenCalledWith(5, 7);
-      expect(h.reads.select, 'the run is not read').toBe(0);
       expect(h.reauth, 'no password is compared').not.toHaveBeenCalled();
-      expect(h.statements).toEqual([]);
+      expect(h.statements, 'no transaction is opened').toEqual([]);
       nothingWritten();
     },
   );
@@ -246,23 +253,36 @@ describe('POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(
   it.each([
     ['a viewer membership under a token saying admin (the role is the membership\'s)', 'viewer'],
     ['no membership in the organization', null],
-  ])('refuses %s', async (_label, member) => {
+  ])('refuses %s, through the ceremony', async (_label, member) => {
     h.memberRole.mockResolvedValue(member);
     eligible();
     const res = await finalize('admin');
     expect(res.status).toBe(403);
-    expect(res.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(res.body.error).toEqual({ code: 'ESIGNATURE_NO_AUTHORITY', message: CEREMONY_NO_AUTHORITY });
+    expect(h.memberRole).toHaveBeenCalledTimes(1);
     nothingWritten();
   });
 
-  it('a membership that cannot be read is a 500 with no detail, and nothing is written', async () => {
+  it('a membership that cannot be read signs nothing: the ceremony\'s 503, with no detail', async () => {
     h.memberRole.mockRejectedValue(new Error('organization_users unreadable: secret-detail'));
     eligible();
     const res = await finalize('admin');
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('SIGNING_AUTHORITY_UNVERIFIED');
     expect(JSON.stringify(res.body)).not.toContain('secret-detail');
     expect(h.reauth).not.toHaveBeenCalled();
+    expect(h.statements).toEqual([]);
     nothingWritten();
+  });
+
+  it('a role with authority is looked up once, by the ceremony, and signs', async () => {
+    h.memberRole.mockResolvedValue('admin');
+    eligible();
+    lockedAs('completed');
+    const res = await finalize('admin');
+    expect(res.status).toBe(200);
+    expect(h.memberRole).toHaveBeenCalledTimes(1);
+    expect(h.memberRole).toHaveBeenCalledWith(5, 7);
   });
 });
 

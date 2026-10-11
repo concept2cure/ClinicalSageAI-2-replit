@@ -1,0 +1,20 @@
+ × server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > narrows threads and tasks to the program’s anchored project 26ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, ObjectContaining{…} ]
+ × server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > a program with no project record has an empty inbox here, and nothing is read for it 32ms
+   → expected { threads: [ { count: 2 } ], …(9) } to match object { threads: [], tasks: [], …(2) }
+ × server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > a lookup that could not complete is a 500, never an empty inbox 6ms
+   → expected 200 to be 500 // Object.is equality
+ × server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > a programId that is not a program UUID is refused 4ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > with no programId the whole inbox is read, as before 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > narrows threads and tasks to the program’s anchored project
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, ObjectContaining{…} ]
+ FAIL  server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > a program with no project record has an empty inbox here, and nothing is read for it
+AssertionError: expected { threads: [ { count: 2 } ], …(9) } to match object { threads: [], tasks: [], …(2) }
+ FAIL  server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > a lookup that could not complete is a 500, never an empty inbox
+AssertionError: expected 200 to be 500 // Object.is equality
+     82|     h.anchor.mockRejectedValue(new Error('connection terminated'));
+ FAIL  server/routes/c2c/__tests__/reviews-my-queue-program.test.ts > GET /reviews/my-queue?programId= > a programId that is not a program UUID is refused
+AssertionError: expected 200 to be 400 // Object.is equality
+ Test Files  1 failed (1)

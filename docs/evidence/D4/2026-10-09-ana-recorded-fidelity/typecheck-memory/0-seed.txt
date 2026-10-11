@@ -1,0 +1,3 @@
+{"version":"5.6.3","mode":"seed","rootCount":7105,"sourceCount":12164,"skippedDuringNativeInvalidation":53,"pendingBefore":476,"pendingAfter":476,"checkedCount":0,"cachedDiagnosticFileCount":0,"rssMb":5415,"heapMb":5166,"gcEvents":[],"checked":[]}
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)

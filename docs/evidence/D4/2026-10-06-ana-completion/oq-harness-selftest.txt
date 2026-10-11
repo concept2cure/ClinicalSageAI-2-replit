@@ -1,0 +1,43 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 validation:oq:selftest
+> node tests/validation/lib/harness.selftest.mjs
+
+node:internal/deps/undici/undici:13510
+      Error.captureStackTrace(err);
+            ^
+
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async devLogin (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/validation/lib/harness.mjs:120:15)
+    at async createRun (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/validation/lib/harness.mjs:431:95)
+    at async file:///workspace/scratch/bd36ee581acd/concept2cure/tests/validation/lib/harness.selftest.mjs:21:13 {
+  [cause]: AggregateError [ECONNREFUSED]: 
+      at internalConnectMultiple (node:net:1139:18)
+      at afterConnectMultiple (node:net:1714:7) {
+    code: 'ECONNREFUSED',
+    [errors]: [
+      Error: connect ECONNREFUSED ::1:5200
+          at createConnectionError (node:net:1677:14)
+          at afterConnectMultiple (node:net:1707:16) {
+        errno: -111,
+        code: 'ECONNREFUSED',
+        syscall: 'connect',
+        address: '::1',
+        port: 5200
+      },
+      Error: connect ECONNREFUSED 127.0.0.1:5200
+          at createConnectionError (node:net:1677:14)
+          at afterConnectMultiple (node:net:1707:16) {
+        errno: -111,
+        code: 'ECONNREFUSED',
+        syscall: 'connect',
+        address: '127.0.0.1',
+        port: 5200
+      }
+    ]
+  }
+}
+
+Node.js v22.16.0

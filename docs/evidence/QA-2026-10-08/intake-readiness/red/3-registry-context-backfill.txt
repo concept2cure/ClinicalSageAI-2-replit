@@ -1,0 +1,4 @@
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261008c_projects_registry_context.sql'
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261008c_projects_registry_context.sql' }
+ Test Files  1 failed (1)
+      Tests  31 skipped (31)

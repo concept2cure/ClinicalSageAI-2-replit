@@ -1,0 +1,10 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentOpenReads.test.tsx > opening one Vault document > reads each panel endpoint once, not once per panel mount 103ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  01:17:43
+   Duration  1.72s (transform 515ms, setup 176ms, import 629ms, tests 110ms, environment 593ms)
+

@@ -1,0 +1,4 @@
+# unit + PGlite: upload, adopt and the projects router, the Vault read, evidence spine, data-room processing, search, filing and counts, derived uploads, the project page and Vault surfaces, the walk
+ Test Files  159 passed (159)
+      Tests  1505 passed (1505)
+# tsc --noEmit: exit 0. Lint ratchet --since HEAD: no file changed its warning count. ci:migration-set-order, ci:migration-drop-safety, require-migration-headers: OK.

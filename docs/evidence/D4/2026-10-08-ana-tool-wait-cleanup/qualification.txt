@@ -1,0 +1,777 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+{
+  "timestamp": "2026-10-08T07:29:15.038Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:29:15.039Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+{
+  "timestamp": "2026-10-08T07:29:15.039Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "auto" → runPolicy "auto" 34ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "manual" → runPolicy "manual" 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "AUTO" → runPolicy null 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "" → runPolicy null 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy undefined → runPolicy null 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > runs round 1 unheld, holds before round 2 naming the step, then runs it 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold before a step that already goes to a person 18ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold while a demonstration drives 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > a person pausing a Manual turn is a person, not the policy 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > Auto and no policy never hold on their own 6ms
+stderr | server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened
+[AnA RI Stream] run control unavailable: ana_runs is unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > Auto without a run row runs on, as today
+[AnA RI Stream] run control unavailable: ana_runs is unavailable
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > the held step never runs; the model is told it was redirected, with the steer in the same call 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > a steer already waiting replaces the step without holding 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > …and the record says the steer replaced a step nobody was shown — never that she stopped and was answered 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > under Auto the same steer does not replace anything: it applies after the step 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > hold_expired, no further model call, the step named and not run 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > a person's own pause in a Manual turn ends it the same way 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > the same pause under Auto is resumed as abandoned, as today 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run has no owner who could resume it 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > Auto without a run row runs on, as today 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > an approval nobody answers ends the turn with a closing answer 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, the same unanswered approval is a denial and the turn goes on 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > past 15 minutes of work the next call is the closing answer 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > time held for a person is not work 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, a long step is not a stop 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Auto keeps going past the effort ceiling while each round is new, to 20 rounds 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy the same turn keeps its effort ceiling (balanced: 6 + 2) 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Manual keeps the effort ceiling too 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "failed" (not a person's pause): fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "finished" (not a person's pause): fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads null (not a person's pause): fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written though the row reads running, twice: fails closed, never runs unasked 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written (holdForPerson threw): fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "failed" — no person answered: fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "finished" — no person answered: fails closed 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as null — no person answered: fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > a person's own pause already in place where Manual would hold becomes her hold: Next is shown, and Resume answers it 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > Stop at a hold: not run, named on done, and the hold filed as stopped 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > a person's pause that expires is filed as the person's pause, not as AnA waiting before her step 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2c) a demonstration the model starts does not switch Manual off > Manual with Live Drive on (not a demo), round 1 starts a demo: a hold is still due before round 2 3ms
+(node:46) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+{
+  "timestamp": "2026-10-08T07:29:19.984Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:29:19.984Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+{
+  "timestamp": "2026-10-08T07:29:19.985Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a failed lookup reaches enrichment as unresolved (error), so it is reported; no reader gets a project
+[AnA RI Stream] Project not resolved: error terminating connection due to administrator command
+
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > memory, prefetch, enrichment, bootstrap, the tool-run log and the reflection get 42, resolved once, org-scoped 37ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > a program with no linked project reads no project: memory gets no project id, nothing NaN 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a failed lookup reaches enrichment as unresolved (error), so it is reported; no reader gets a project 4ms
+stderr | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a stalled lookup holds the turn no longer than the deadline, and reaches enrichment as unresolved (timeout)
+[AnA RI Stream] Project not resolved: timeout project lookup deadline exceeded
+
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a stalled lookup holds the turn no longer than the deadline, and reaches enrichment as unresolved (timeout) 3006ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > names the sources in plain words on the stream 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"error"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["ectd"] {"ectd":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","recommendations"] {"readiness":"timeout","recommendations":"timeout"} 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile","workflow"] {"project-profile":"error","workflow":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:safety/safety"] undefined 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:fda/ectd"] {"app:fda/ectd":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc"] {"cmc":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc-build-state"] {"cmc-build-state":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["iss"] {"iss":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["simulation"] {"simulation":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-agent-activity"] {"proactive-agent-activity":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-client-journey"] {"proactive-client-journey":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["tour-guide"] {"tour-guide":"timeout"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","proactive-readiness"] {"readiness":"error","proactive-readiness":"error"} 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > every key the enrichment budget can record reads as plain words, never as the key 3ms
+(node:62) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts
+{
+  "timestamp": "2026-10-08T07:29:25.591Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:29:25.592Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts
+{
+  "timestamp": "2026-10-08T07:29:25.592Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > Stop interrupts parent hold reads through the production route > person hold ends before its pending read, and ignores a later stale paused result 80ms
+ ✓ server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > Stop interrupts parent hold reads through the production route > manual hold ends before its pending read, and ignores a later stale paused result 63ms
+ ✓ server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > Stop interrupts parent hold wakes through the production route > person hold ends while the 5 s wake remains unresolved 56ms
+ ✓ server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > Stop interrupts parent hold wakes through the production route > manual hold ends while the 5 s wake remains unresolved 55ms
+ ✓ server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > normal Continue still answers a parent hold > person hold resumes and runs the intended step 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-hold-cancellation.test.ts > normal Continue still answers a parent hold > manual hold resumes and runs the intended step 5ms
+(node:78) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-08T07:29:28.479Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:29:28.480Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-08T07:29:28.481Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true
+[AnA RI] Intelligence prefix failed: recall unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[AnA RI Stream] Conversation preparation failed: database unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[AnA RI Stream] Refused caller-supplied thread id: undefined
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=false 32ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 8ms
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 8ms
+   → expected [ 'list_platform_commands', …(3) ] to not include 'get_cmc_requirements'
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > reads memory only with the resolved thread ID 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs 3ms
+(node:94) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+{
+  "timestamp": "2026-10-08T07:29:30.774Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:29:30.775Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+{
+  "timestamp": "2026-10-08T07:29:30.776Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop-options.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+{
+  "timestamp": "2026-10-08T07:29:34.349Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onModelResponse threw; the loop carries on: observer broke",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:29:34.349Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onToolEvent threw; the loop carries on: observer broke",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+{
+  "timestamp": "2026-10-08T07:29:34.350Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onToolEvent threw; the loop carries on: observer broke",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+{
+  "timestamp": "2026-10-08T07:29:34.350Z",
+  "level": "warn",
+  "message": "[ana-agentic-dispatch] [ana-agentic-dispatch] onModelResponse threw; the loop carries on: observer broke",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn cut at its round ceiling says max_rounds 5ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn stopped after its first round says cancelled, not no_more_tools 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > an answer with no tools reports a zero-round loop 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > answers TOOL_NOT_OFFERED without dispatching, and lists no other tools 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > an offered name with no handler lists only the offered tools, never the whole registry 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > without an allowlist the unknown-tool answer is what it always was 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent: start and end per call, fired inside the worker, with the round and latency 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent reports a refused call too, so a caller can list what did not run 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onModelResponse: once per gateway call, first call included, with its round 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes 3ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > stopWhen is the caller’s > ends the turn with a closing answer and its own reason 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > bounds a round to the lanes asked for 32ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > is 4 when not asked, as before 32ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 0 lanes is refused before any model call is spent 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > -1 lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 1.5 lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > NaN lanes is refused before any model call is spent 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the dispatch runs inside the refusal scope, and the gateway sends nothing for it 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the loop's own model calls are not refused 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolModelCalls 'refuse' alone also tells the tool (ctx.modelCalls), so it asks for its model-free path 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolContext.modelCalls 'refuse' alone also opens the refusal scope, so the gateway enforces it 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > with neither, the tool is handed exactly the context the caller passed: no modelCalls 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > without the option a tool may call a model, as before 0ms
+(node:102) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > returns immediately when the first turn has no tool calls 2ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > chains multiple rounds until the model stops calling tools 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > caps at maxRounds and forces a final answer (tools withdrawn on the last round) 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > detects thrashing (same call repeated) and withdraws tools to break the loop 1ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > continues when a tool result encodes an error (executor does not throw) 0ms
+ ✓ tests/services/agentic-loop.test.ts > runAgenticToolLoop > rejects a maxRounds below 1 1ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > returns short content unchanged 0ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > truncates oversized content but keeps the head, tail, and a marker 0ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > clamps an unreasonably small limit so it never produces a negative tail 0ms
+ ✓ tests/services/agentic-loop.test.ts > capToolResultForModel > grounds an answer against the capped view, not the omitted middle 16ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > preserves input order even when workers resolve out of order 30ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > never exceeds the concurrency limit 22ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > processes every item and handles the empty case 0ms
+ ✓ tests/services/agentic-loop.test.ts > mapWithConcurrency > rejects a concurrency below 1 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > produces friendly labels for known tools, incorporating key args 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > truncates long argument values in the label 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > falls back to a humanized name for unknown tools 0ms
+ ✓ tests/services/agentic-loop.test.ts > describeToolPlan > handles a missing query gracefully 0ms
+(node:110) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-disconnect.test.ts
+{
+  "timestamp": "2026-10-08T07:29:36.251Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:29:36.252Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-disconnect.test.ts
+{
+  "timestamp": "2026-10-08T07:29:36.252Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-disconnect.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > local-only stream disconnect > aborts pending generation once after a dropped response without inventing a human cancel 27ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > local-only stream disconnect > ignores ordinary request completion and keeps its heartbeat active while generation waits 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > local-only stream disconnect > also aborts when an interrupted incoming request closes 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run > settles an already-dropped response when beginRun resumes (local-only=true) 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > disconnect while opening the run > settles an already-dropped response when beginRun resumes (local-only=false) 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > does not abort a normally completed response (local-only=true) 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > does not abort a normally completed response (local-only=false) 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-disconnect.test.ts > completed and durable stream lifecycle > keeps a durable disconnect distinct from a human control and settles it once 4ms
+(node:126) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts
+{
+  "timestamp": "2026-10-08T07:29:38.811Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:29:38.812Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts
+{
+  "timestamp": "2026-10-08T07:29:38.812Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts > SSE completed tool wait lifetime > returns to its listener baseline after twelve successful tools before the next model call 43ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts > SSE failed tool wait lifetime > cleans a throwing handler and retains its genuine error in telemetry and the turn record 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts > SSE a completed wait beside an active tool > removes only the completed listener, then stops the active wait and observes its late rejection 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-wait-cleanup.test.ts > SSE mid-tool Stop with the production gateway abort contract > closes as cancelled without entering an aborted follow-up model call or emitting an error 10ms
+(node:142) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/executor-agentic-loop.test.ts
+{
+  "timestamp": "2026-10-08T07:29:40.602Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:29:40.603Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop.test.ts
+{
+  "timestamp": "2026-10-08T07:29:40.603Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > runs a round's tools in parallel, caps oversized results, and returns the final answer 32ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > stops on duplicate (thrash) tool calls before the round cap 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > short-circuits when the abort signal is already set 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > returns immediately when the first turn requests no tools 0ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > fills it from the request scope when the scope is the same tenant 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > never borrows another tenant's uuid 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > keeps a uuid the caller passed 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > invents nothing outside a scope 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > tool output reaches the model framed as untrusted data > a tool result that carries an instruction is fenced, labelled, and cannot close its frame 2ms
+(node:150) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores a round-limit stop and the rounds it ran 2ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores a repeated-step stop, and a stop the person made 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > omits the reason when she finished herself, and keeps the rounds 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > stores nothing new for a turn that ran no tools and ended normally 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > keeps a stop even when nothing else about the turn was worth storing 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > the assistant metadata keeps how the turn ended > keeps no round count that is not a positive whole number 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names a round-limit stop, with its rounds, and says not to reuse the work as complete 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names the limit without a number when the rounds were not kept 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > names a repeated-step stop 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > says nothing for a turn she finished, or one the person stopped 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > says nothing for a stored reason that names an Object.prototype member 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > formatStoppedTurnNote tells the next turn its predecessor did not finish > reads only the LAST assistant turn — an earlier stop was already followed by a later answer 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says the answer was written from the work so far, for the round limit and the repeat guard 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says a stop between rounds as one, and a stop before the first round without claiming a round 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnStopWarning — what the turn record says about a stop > says nothing for a turn she finished 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > a loop that ended for want of tools, on an answer that was cut off, did not finish 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > an answer that ended on its own, or whose ending is unknown, leaves the reason as it was 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > a stop the loop already reports stands — it already says the turn stopped short 0ms
+ ✓ server/services/ana/__tests__/tool-trace-stopped-turn.test.ts > turnEndingReason — a cut-off answer is not a finished turn > the next turn is told, and the record says, that the answer was cut off 0ms
+(node:158) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/executor-tool-wait-cleanup.test.ts
+{
+  "timestamp": "2026-10-08T07:29:42.948Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:29:42.949Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-tool-wait-cleanup.test.ts
+{
+  "timestamp": "2026-10-08T07:29:42.950Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-tool-wait-cleanup.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/executor-tool-wait-cleanup.test.ts > non-SSE completed tool wait lifetime > returns to its listener baseline after twelve successful tools before the next model call 7ms
+ ✓ server/services/ana/__tests__/executor-tool-wait-cleanup.test.ts > non-SSE failed tool wait lifetime > cleans a throwing handler while preserving its error and adaptation guidance 1ms
+ ✓ server/services/ana/__tests__/executor-tool-wait-cleanup.test.ts > non-SSE a completed wait beside an active tool > removes only the completed listener, then cancels the active wait and observes its late rejection 2ms
+(node:166) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'budget_exhausted' after round 2 withdraws tools from the round-2 model call and names itself 3ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'approval_timeout' after round 2 withdraws tools from the round-2 model call and names itself 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > 'halt' ends the loop as cancelled with no further model call 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > a thrashing round still reports duplicate_thrash, not the budget 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > stopWhen: a caller-owned budget ends the turn with a closing answer > is asked once per executed round, with that round 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > hands the checkpoint the pending calls as its second argument 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > replan: the pending calls never run, the model reads one redirected result per call, the count is unchanged 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > the redirected result says the step did not run and asks the model to follow the person 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > the checkpoint is shown the pending step, not handed it: changing what it was shown changes nothing that runs 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > the checkpoint sees what would run, and 'replan' replaces it > abort still stops before the round, exactly as before 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > bounds progress-earned extension 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > bounds a ceiling that rises mid-turn (the demo promotion) 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > without it, the same demo-promoted Auto budget would have reached 34 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > an always-novel Auto loop stops at 20 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > a repeating Auto loop is cut for thrashing well before 20 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > roundCap: an absolute ceiling nothing raises > also bounds a base ceiling above it 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, null) → {"maxRounds":6,"progressExtension":2} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, manual) → {"maxRounds":6,"progressExtension":2} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (balanced, auto) → {"maxRounds":6,"progressExtension":14,"roundCap":20} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (thorough, auto) → {"maxRounds":10,"progressExtension":10,"roundCap":20} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (fast, auto) → {"maxRounds":4,"progressExtension":16,"roundCap":20} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > (thorough, null) → {"maxRounds":10,"progressExtension":4} 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > takes an explicit base ceiling (the demo base) and never lowers it 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > resolveRoundBudget > adds no roundCap key outside Auto 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'novel, capped': stopWhen returning null and no roundCap change nothing 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'novel, extended': stopWhen returning null and no roundCap change nothing 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'thrash': stopWhen returning null and no roundCap change nothing 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'ends early': stopWhen returning null and no roundCap change nothing 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > 'demo floor': stopWhen returning null and no roundCap change nothing 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds-control.test.ts > a loop that opts into nothing runs exactly as before > a one-argument checkpoint that never replans behaves as before 0ms
+(node:174) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > produces one entry per call, with the ids preserved 2ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > every entry SAYS it was cancelled rather than being empty 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > names the tool, so the record says WHICH step was stopped 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > its barge-in branch returns a mapped result, not an empty array 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > passes the abort signal to the gateway, not only to its own checks 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > forwards the round-boundary checkpoint the loop has always accepted 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > drains the queued operator turns into the next round 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > places them AFTER the tool results, as the streaming route does 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > is declared on the public options, beside the checkpoint it serves 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > races each handler against the signal 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > puts the signal INTO the handler context, not only around it 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > a CANCELLED tool is not reported as a FAILED tool 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > a genuine tool failure still carries its errorMessage 1ms
+(node:182) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > scales the round ceiling by effort 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > lifts the old flat cap of 5 for the default (balanced) turn 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > falls back to the balanced ceiling for unknown/absent effort 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveMaxRounds > never returns fewer rounds than needed to chain a real investigation 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveRoundExtension > scales the progress-earned allowance by effort 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > resolveRoundExtension > falls back to the balanced allowance for unknown/absent effort 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > extends past maxRounds while every round tries novel work 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > does NOT extend when the model is repeating itself 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > default behavior is unchanged when progressExtension is not set 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > runAgenticToolLoop — progress-earned extension > thrash still cuts the loop even with extension headroom 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > passes small rounds through byte-identical (classic per-result caps) 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > squeezes an oversized round into the total budget 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > never squeezes a result below the floor 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > budgetToolResultsForModel > handles an empty round 1ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > returns empty when nothing failed 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > names the failures and coaches adaptation, not retry 0ms
+ ✓ server/services/ana/__tests__/agentic-loop-rounds.test.ts > buildAdaptationNote > truncates a pathological error message 0ms
+(node:190) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/generation-capture.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes what a model wrote inside the capture
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes what a model wrote inside the capture
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes nothing outside a capture, and a call outside is not noted inside
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes nothing outside a capture, and a call outside is not noted inside
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:190) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:190) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes nothing outside a capture, and a call outside is not noted inside
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+
+stdout | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > keeps two concurrent tool calls apart
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > keeps two concurrent tool calls apart
+[AI Gateway Audit] AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > keeps two concurrent tool calls apart
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > keeps two concurrent tool calls apart
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture opened inside another also notes into the outer one
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture opened inside another also notes into the outer one
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:190) AuditWarning: AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:190) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:190) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+stdout | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a generation that failed wrote nothing the tool could return
+[AI Gateway Audit] ✗ anthropic/claude-opus-5-5 task=document_drafting tokens=0 3413ms org=42 user=- caller=- req=02a6b585-d807-43bd-8d82-9d78fb35f86a
+
+stderr | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a generation that failed wrote nothing the tool could return
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes what a model wrote inside the capture 18ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > notes nothing outside a capture, and a call outside is not noted inside 7ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > keeps two concurrent tool calls apart 3ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture opened inside another also notes into the outer one 2ms
+stdout | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > the tool calls a model chose inside the capture are noted too
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > the tool calls a model chose inside the capture are noted too
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture that outgrows its bound says so rather than keeping a part
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture that outgrows its bound says so rather than keeping a part
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture that outgrows its bound says so rather than keeping a part
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+
+(node:190) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:190) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:190) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a generation that failed wrote nothing the tool could return 3415ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > the tool calls a model chose inside the capture are noted too 3ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > a capture that outgrows its bound says so rather than keeping a part 2ms
+ ✓ server/services/ai-gateway/__tests__/generation-capture.test.ts > the generation capture > the stream captures every tool handler it runs 1ms
+(node:198) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > abortRace > rejects as soon as the run is cancelled 2ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > abortRace > rejects immediately when the run was already cancelled 0ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > abortRace > lets a handler that finishes first win 0ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > abortRace > never settles without a signal, so an uncontrolled run is unchanged 11ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > abortRace > does not reject on a signal that never fires 11ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > the cancelled result > names the tool and says the person stopped it 0ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > the cancelled result > tells the model not to read it as the tool having no answer 0ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > the cancelled result > does not claim the work was undone 0ms
+ ✓ server/services/ana/__tests__/tool-run-cancelled.test.ts > a cancelled round still accounts for every call > produces one result per call, never an empty round 1ms
+(node:206) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+{
+  "timestamp": "2026-10-08T07:29:49.904Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:29:49.905Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+{
+  "timestamp": "2026-10-08T07:29:49.906Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts > non-SSE cancellation before a queued handler starts > does not start queued work after Stop with 1 active lanes 7ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts > non-SSE cancellation before a queued handler starts > does not start queued work after Stop with 4 active lanes 2ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-queued-cancel.test.ts > an uninterrupted queued tool round > still runs each handler and carries its result into the next model turn 1ms
+(node:214) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > does not accumulate listeners across sixteen successful tools on one live run 3ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > releases the listener while retaining the handler original error 2ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > does not create a cancellation wait before a synchronously throwing handler 1ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > one tool wait owns one listener > disposes a completed sibling without removing active or unrelated listeners 1ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > one tool wait owns one listener > is idempotent and disposal does not abort the signal or another wait 1ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > remains assignable to Promise and rejects with the existing cancellation class 0ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > rejects an already-aborted signal without registering a listener 0ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > retains never-settling no-signal behavior after disposal 0ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > observes a late handler rejection after Stop and cleans the listener 1ms
+(node:222) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts
+{
+  "timestamp": "2026-10-08T07:29:52.051Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:29:52.052Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts
+{
+  "timestamp": "2026-10-08T07:29:52.052Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts > a call whose arguments were lost is not run > the handler is never called, and the model reads the lost-input result 3ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts > a call whose arguments were lost is not run > a tool outside the allowlist is still answered TOOL_NOT_OFFERED, not lost input 1ms
+ ✓ server/services/ana/__tests__/executor-agentic-loop-lost-input.test.ts > a call whose arguments were lost is not run > control: a call with no parse error and empty input still runs 2ms
+(node:230) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/run-scope.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > a call made inside a run scope is recorded under that run
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > a call made inside a run scope is recorded under that run
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > a request that names its own run keeps it
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > a request that names its own run keeps it
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > outside any run, nothing is invented
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=document_drafting tokens=2 1ms org=42 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > outside any run, nothing is invented
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:230) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:230) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:230) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > a call made inside a run scope is recorded under that run 21ms
+ ✓ server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > a request that names its own run keeps it 4ms
+ ✓ server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > outside any run, nothing is invented 2ms
+ ✓ server/services/ai-gateway/__tests__/run-scope.test.ts > the run scope > the stream opens the run scope around every tool handler it runs 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was
+AssertionError: expected [ 'list_platform_commands', …(3) ] to not include 'get_cmc_requirements'
+ ❯ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts:379:47
+    377|     thread([{ tool: 'get_cmc_requirements', status: 'error' }], 'and f…
+    378|     await turn('and for the EU?');
+    379|     expect(h.state.gatewayCalls[0].tools).not.toContain('get_cmc_requi…
+       |                                               ^
+    380|
+    381|     h.state.gatewayCalls = [];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 19 passed (20)
+      Tests  1 failed | 262 passed (263)
+   Start at  15:29:10
+   Duration  43.06s (transform 7.41s, setup 273ms, import 32.54s, tests 7.61s, environment 2ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-08-ana-tool-wait-cleanup/qualification.json

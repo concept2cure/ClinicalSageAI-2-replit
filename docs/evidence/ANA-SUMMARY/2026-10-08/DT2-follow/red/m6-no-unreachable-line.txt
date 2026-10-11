@@ -1,0 +1,9 @@
+# m6-no-unreachable-line: --config vitest.config.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts -t stale owner says
+# exit 1
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. a stale owner says how long it has been silent; the reader’s own network says it is retrying, and the rows stay 33ms
+   → expected 'AnA hasn\'t reported for 2 min. The s…' to be 'Can\'t reach the server. Retrying.' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. a stale owner says how long it has been silent; the reader’s own network says it is retrying, and the rows stay
+AssertionError: expected 'AnA hasn\'t reported for 2 min. The s…' to be 'Can\'t reach the server. Retrying.' // Object.is equality

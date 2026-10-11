@@ -18,6 +18,7 @@
  * own to filter on, and a boundary twenty lines up is the shape that decays.
  */
 import { supersededSql } from './vault-version-family.js';
+import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -50,6 +51,8 @@ export function anyTermsQuery(q: string): string {
 }
 
 export interface VaultSearchHit {
+  originalFileAvailable?: boolean;
+  disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
   id: string;
   title: string;
   fileName: string | null;
@@ -73,7 +76,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams):
   const inProgram = p.programId ? `AND d.program_id = $${params.push(p.programId)}::uuid` : '';
   /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary user
      text (quotes, OR, -negation) and never raises a syntax error. */
-  const where = `d.deleted_at IS NULL ${inProgram}
+  const where = `d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')} ${inProgram}
           AND EXISTS (
             SELECT 1 FROM regulatory_programs rp
              WHERE rp.id = d.program_id AND rp.organization_id = $1 AND rp.deleted_at IS NULL
@@ -88,6 +91,8 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams):
   const page = [...params, p.limit, p.offset];
   const rows = await db.query(
     `SELECT d.id, d.document_title, d.file_name, d.document_type, d.file_size,
+            ${vaultBinaryAvailableSql('d')} AS original_file_available,
+            ${vaultDispositionChoiceSql('d')} AS disposition,
             d.folder_id, d.ctd_section, d.placement_status, d.created_at, d.version,
             NOT ${supersededSql('d')} AS current,
             d.program_id::text AS program_id, prog.name AS program_name,
@@ -110,6 +115,8 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams):
   return {
     total: counted.rows[0]?.total ?? 0,
     results: rows.rows.map((r) => ({
+      originalFileAvailable: r.original_file_available ?? true,
+      disposition: r.disposition ?? null,
       id: String(r.id),
       title: r.document_title || r.file_name || 'Untitled',
       fileName: r.file_name ?? null,

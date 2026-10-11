@@ -1,0 +1,32 @@
+{
+  "actualAuditCommand": "npm audit --audit-level=high --json",
+  "actualScanner": "npm 11.9.0 / Node 22.16.0",
+  "lockfileSha256": "e5950b44018f8093e400bd0b482c44ab2d995c850ee6a4b9e86c0fe637718d40",
+  "observedDirectHighCriticalAdvisories": [
+    [
+      "GHSA-5P2G-FCMC-QVQQ",
+      "image-size"
+    ],
+    [
+      "GHSA-VFJ7-8CJW-P6XM",
+      "braces"
+    ],
+    [
+      "GHSA-W3RX-R6R6-PGPR",
+      "image-size"
+    ]
+  ],
+  "reviewedActiveAdvisoriesUnchanged": true,
+  "reviewedInstalledVersionsUnchanged": true,
+  "metadata": {
+    "info": 0,
+    "low": 1,
+    "moderate": 43,
+    "high": 31,
+    "critical": 0,
+    "total": 75
+  },
+  "patchedFindingsAbsent": true,
+  "riskAcceptancesAdded": false,
+  "remainingOwnerAction": "Existing team-string owners need an accountable human named before the existing expiries (braces 2026-11-05; image-size 2026-11-25). No owner/expiry/disposition changed by this remediation."
+}

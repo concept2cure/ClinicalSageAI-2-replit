@@ -16,7 +16,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
 
-const { mockAdvance, mockVerifyReauth, mockLogAction } = vi.hoisted(() => ({
+const { mockAdvance, mockVerifyReauth, mockLogAction, mockSignerRole } = vi.hoisted(() => ({
+  mockSignerRole: vi.fn(async (): Promise<string | null> => 'approver'),
   mockAdvance: vi.fn(async () => ({ id: 'sub-1', status: 'filed' })),
   mockVerifyReauth: vi.fn(async () => ({ ok: true })),
   mockLogAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
@@ -38,6 +39,11 @@ vi.mock('../../server/routes/c2c/actions', async (importOriginal) => ({
   verifyReauth: mockVerifyReauth,
 }));
 
+/* §11.10(g): the filer's role, as the membership row holds it. */
+vi.mock('../../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: (...a: unknown[]) => mockSignerRole(...(a as [])),
+}));
+
 const { fakeDb } = vi.hoisted(() => ({ fakeDb: { select: vi.fn(), update: vi.fn() } as any }));
 vi.mock('../../server/db', () => ({ db: fakeDb, pool: { query: vi.fn() } }));
 vi.mock('../../server/db/requestDb', () => ({ requestDb: () => fakeDb }));
@@ -49,7 +55,8 @@ function handler() {
     (l: any) => l.route?.path === '/submissions/:id' && l.route?.methods?.patch,
   );
   if (!layer) throw new Error('Missing route PATCH /submissions/:id');
-  return layer.route.stack[layer.route.stack.length - 1].handle;
+  const stack = layer.route!.stack;
+  return stack[stack.length - 1].handle as (req: unknown, res: unknown) => Promise<void>;
 }
 
 const DOC = 'a2b4c6d8-0000-4000-8000-000000000002';
@@ -76,6 +83,7 @@ describe('PATCH /submissions/:id — filing carries a signature', () => {
     vi.clearAllMocks();
     mockVerifyReauth.mockResolvedValue({ ok: true });
     mockAdvance.mockResolvedValue({ id: 'sub-1', status: 'filed' });
+    mockSignerRole.mockResolvedValue('approver');
   });
 
   it('files with the artifact, the declared meaning and what was actually verified', async () => {
@@ -167,5 +175,44 @@ describe('PATCH /submissions/:id — filing carries a signature', () => {
     const [, input] = mockAdvance.mock.calls[0] as any[];
     expect(input).toMatchObject({ toStatus: 'under_review', fdaTrackingNumber: 'K260001' });
     expect(input.signature).toBeUndefined();
+  });
+});
+
+/* QA 2026-10-08 (j6 sweep): filing is the signature that declares a
+   submission made to FDA. The route re-authenticated the filer and wrote the
+   signature row with no signing-authority check, so a member's or a manager's
+   (P-18) password filed one. The platform's one policy, before the password. */
+describe('PATCH /submissions/:id — signing authority before the password', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockVerifyReauth.mockResolvedValue({ ok: true });
+    mockAdvance.mockResolvedValue({ id: 'sub-1', status: 'filed' });
+    mockSignerRole.mockResolvedValue('approver');
+  });
+
+  it.each(['manager', 'member'])('refuses a filing by a %s 403 ESIGNATURE_NO_AUTHORITY before the password, and nothing is advanced', async (role) => {
+    mockSignerRole.mockResolvedValue(role);
+    const req = makeReq(signedBody);
+    const res = createMockResponse() as any;
+
+    await handler()(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json.mock.calls[0][0]).toMatchObject({ code: 'ESIGNATURE_NO_AUTHORITY' });
+    expect(mockSignerRole).toHaveBeenCalledWith(9, 2);
+    expect(mockVerifyReauth).not.toHaveBeenCalled();
+    expect(mockAdvance).not.toHaveBeenCalled();
+  });
+
+  it('asks nothing of the role for a transition that is not a signature', async () => {
+    mockSignerRole.mockResolvedValue('member');
+    mockAdvance.mockResolvedValue({ id: 'sub-1', status: 'under_review' } as any);
+    const req = makeReq({ status: 'under_review', fdaTrackingNumber: 'K260001' });
+    const res = createMockResponse() as any;
+
+    await handler()(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockSignerRole).not.toHaveBeenCalled();
   });
 });

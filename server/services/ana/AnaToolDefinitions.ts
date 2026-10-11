@@ -64,6 +64,7 @@ import {
   ASSESS_IMMUNOGENICITY,
   ASSESS_BLA_FILING_RISK,
   GENERATE_SOP,
+  REVIEW_SOP_REQUIREMENTS,
   RESOLVE_SUBMISSION_PLAN,
   GET_CTD_MODULE_HOME,
   COMPUTE_FIH_DOSE,
@@ -373,7 +374,6 @@ import {
   VALIDATE_ECTD_PACKAGE,
   PLAN_SUBMISSION,
   EXPLAIN_VALIDATION_FINDINGS,
-  CROSS_REGION_GAP_ANALYSIS,
   DISPATCH_QC_CHECK,
   TRACE_PROVENANCE,
   CHECK_CONSISTENCY,
@@ -1294,17 +1294,19 @@ export const FETCH_TEMPLATE_AND_FILL: AnaTool = {
 export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
   name: 'package_ectd_for_region',
   description:
-    `Assemble a regional eCTD zip from a set of CTD leaves, for any of the twelve regions the gateway layer supports: ${agencyList()}. Produces that region's Module 1 folder structure and regional backbone (us-regional.xml / eu-regional.xml / jp-regional.xml / ca-regional.xml / …), computes SHA-256, and returns the bundle metadata for downstream transmit. The bundle carries a regionalBackbone status recording whether the backbone is built to the agency's own Module 1 structure or reuses another region's as a placeholder — read it before telling a user a package is agency-conformant. Use after AnA has gathered the leaf manifest for a submission.`,
+    `Assemble a regional eCTD zip from a set of CTD leaves, for any of the twelve regions the gateway layer supports: ${agencyList()}. Produces that region's Module 1 folder structure and regional backbone (us-regional.xml / eu-regional.xml / jp-regional.xml / ca-regional.xml / …), computes SHA-256, and returns the bundle metadata for downstream transmit. The bundle carries a regionalBackbone status recording whether the backbone is built to the agency's own Module 1 structure or reuses another region's as a placeholder — read it before telling a user a package is agency-conformant. The application number and the applicant are not inputs: they are read from the record of the project named by program_id (its recorded agency application number, and the organisation's name), and the tool refuses PACKAGE_IDENTITY_MISSING, naming what is missing, when the record lacks either. Use after AnA has gathered the leaf manifest for a submission.`,
   input_schema: {
     type: 'object',
     properties: {
       region:          { type: 'string', enum: [...ALL_REGIONS] },
-      application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA), dossier id (Health Canada).' },
+      // 2026-10-08 (P-27, Rule 2): application_id, sponsor_id and sponsor_name
+      // were model input, so the backbone's application number and applicant
+      // were whatever the model wrote. They are read from the record now
+      // (ectd/package-identity.ts), as export and compile read them.
+      program_id:      { type: 'string', description: 'The project (regulatory_programs.id, UUID) this package is filed for. The agency application number and the applicant are read from its record and the organisation\'s; they are never taken from this call.' },
       sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
       submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
       application_type: { type: 'string', description: 'REQUIRED for region "fda": what is being filed — nda | snda | anda | bla | ind | dmf. The us-regional backbone carries this as the application-type attribute, and it is a statement about the filing, so the packager refuses to guess it. Device pathways (510k, de_novo, pma) have no eCTD Module 1 code and are not filed on this backbone.' },
-      sponsor_id:      { type: 'string', description: 'DUNS / EMA org id / PMDA applicant id.' },
-      sponsor_name:    { type: 'string' },
       product_name:    { type: 'string' },
       leaves: {
         type: 'array',
@@ -1340,7 +1342,7 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
       },
       output_dir: { type: 'string', description: 'Where to write the zip: a directory in your organization\'s AnA workspace. Omit it to use a fresh one.' },
     },
-    required: ['region', 'application_id', 'sequence', 'submission_type', 'sponsor_id', 'sponsor_name', 'product_name', 'leaves'],
+    required: ['region', 'program_id', 'sequence', 'submission_type', 'product_name', 'leaves'],
   },
 };
 
@@ -2010,7 +2012,6 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   VALIDATE_ECTD_PACKAGE,
   PLAN_SUBMISSION,
   EXPLAIN_VALIDATION_FINDINGS,
-  CROSS_REGION_GAP_ANALYSIS,
   DISPATCH_QC_CHECK,
   TRACE_PROVENANCE,
   CHECK_CONSISTENCY,
@@ -2272,6 +2273,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   ASSESS_IMMUNOGENICITY,
   ASSESS_BLA_FILING_RISK,
   GENERATE_SOP,
+  REVIEW_SOP_REQUIREMENTS,
   RESOLVE_SUBMISSION_PLAN,
   GET_CTD_MODULE_HOME,
   MINE_PRECEDENTS,
@@ -2402,9 +2404,11 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   {
     name: 'detect_evidence_contradictions',
     description:
-      'Deterministically flag contradictions across gathered evidence (no LLM): same-subject numeric mismatches and ' +
-      'opposing positive/negative assertions. Pass structured claims (subject required; optional metric/value/polarity/date). ' +
-      'Use before stating a synthesized conclusion to catch self-contradicting sources.',
+      'Check supplied structured evidence for potential disagreements (no LLM). Use observed source fields, never invented metadata. ' +
+      'Numeric comparisons require matching endpoints and compatible units; unspecified units remain preliminary. ' +
+      'Different dates alone do not establish authority or supersession. Read assessed, comparedPairs, inputIssues and notes: an unassessed or skipped comparison does not prove consistency. ' +
+      'Correct invalid tool fields from available source context and retry before asking the client to repeat known facts. ' +
+      'Verify scope, population, methods and source authority before synthesizing; retrieve available context and ask targeted questions only for consequential remaining gaps.',
     input_schema: {
       type: 'object',
       properties: {
@@ -2417,9 +2421,9 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
               id: { type: 'string' },
               source: { type: 'string' },
               subject: { type: 'string', description: 'Entity the claim is about (required to pair claims).' },
-              metric: { type: 'string' },
+              metric: { type: 'string', description: 'Observed endpoint or quantity; different endpoints are not directly compared.' },
               value: { type: 'number' },
-              unit: { type: 'string' },
+              unit: { type: 'string', description: 'Observed measurement unit; incompatible units require explicit verified conversion before comparison.' },
               polarity: { type: 'string', enum: ['positive', 'negative', 'neutral'] },
               date: { type: 'string' },
               text: { type: 'string' },
@@ -2438,9 +2442,11 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   {
     name: 'detect_evidence_gaps',
     description:
-      'Deterministically detect what the gathered evidence is MISSING relative to the question (no LLM): geographic, ' +
-      'population, outcome, and temporal/recency gaps. Returns gaps with suggested follow-up queries. Use to decide whether ' +
-      'to answer now or first offer to broaden the search.',
+      'Check requested geographic, population, outcome and recency coverage against supplied structured metadata (no LLM). ' +
+      'Use observed source fields, never invented metadata. Population labels match exactly after normalization. ' +
+      'Read assessed, complete, inputIssues and notes: complete covers only assessed metadata dimensions, not scientific sufficiency or joint applicability. ' +
+      'Correct invalid tool fields from available source context and retry before asking the client to repeat known facts. ' +
+      'A metadata gap does not prove evidence is absent. Retrieve available context or ask targeted questions about consequential remaining uncertainty before synthesizing.',
     input_schema: {
       type: 'object',
       properties: {

@@ -1,0 +1,4 @@
+ FAIL  server/services/vault/__tests__/vault-signing-posture.test.ts [ server/services/vault/__tests__/vault-signing-posture.test.ts ]
+Error: Cannot find module '/server/services/vault/vault-signing-posture' imported from /home/user/ClinicalSageAI-2-replit/server/services/vault/__tests__/vault-signing-posture.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+      Tests  no tests

@@ -17,6 +17,7 @@
  * @module server/services/projects/contextual-ingest
  */
 import { pool } from '../../db.js';
+import { atomOriginalFileAvailableSql } from '../document-data-disposition/eligibility.js';
 import { getGateway } from '../ai-gateway/gateway.js';
 
 export interface ContextualTextChunk {
@@ -159,13 +160,26 @@ export async function ingestContextualChunks(params: {
   const { artifactId, organizationId, title, text } = params;
   if (!artifactId || !Number.isFinite(organizationId) || organizationId <= 0) return { chunks: 0 };
   try {
-    const contextual = await contextualizeDocument(title, text);
+    const canIndex = async () => {
+      const result = await pool.query(
+        `SELECT 1 FROM (SELECT $1::int AS organization_id, 'data_room_upload'::text AS source_type,
+          $2::text AS source_id, '{}'::json AS structured_data) a
+         WHERE ${atomOriginalFileAvailableSql('a')}`, [organizationId, artifactId],
+      );
+      return result.rows.length === 1;
+    };
+    if (!(await canIndex())) return { chunks: 0 };
+    const contextual = await contextualizeDocument(title, text, {}, async (...args) => {
+      if (!(await canIndex())) throw new Error('Source withdrawn before contextual indexing.');
+      return generateChunkContext(...args);
+    });
     if (contextual.length === 0) return { chunks: 0 };
     const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
     const embeddingService = getEmbeddingService(pool);
     let stored = 0;
     for (const c of contextual) {
       try {
+        if (!(await canIndex())) break;
         const res = await pool.query(
           `INSERT INTO lumen_data_atoms
              (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)

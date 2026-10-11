@@ -110,6 +110,13 @@ export interface SurfaceViewProps {
    * instead of being torn down with the screen that started it.
    */
   shellChat?: UseAnaChatReturn;
+  /**
+   * The engine the shell's chat runs on (`prefs.anaMode`) and its setter. The
+   * right rail carried the conversation's engine picker; with the rail gone
+   * (docs/design/ONE_ANA_ONE_CANVAS.md, slices 6 and 9) the conversation's
+   * composer carries it.
+   */
+  engine?: { mode: string; setMode: (mode: string) => void };
 }
 
 /**
@@ -366,9 +373,10 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // NO `ownsConversation`. All seven of this surface's AnA hand-offs are
   // GOVERNED mutations — invite a member, grant program access, edit role
   // scopes, rotate an API key, change an org setting — and the §11.50 e-sign
-  // prompt for a governed command is rendered by the rail, from the real
+  // prompt for a governed command was rendered by the rail, from the real
   // `pendingSignoffs` on the turn (V2App adaptChatMessage → AnaRail →
-  // GovernedActionSignoff). Hiding the rail hid the signature gate: the prompt
+  // GovernedActionSignoff; the rail is deleted since ana-2a, and the prompt is
+  // drawn in the conversation, ConversationThread). Hiding the rail hid the signature gate: the prompt
   // was drawn into a column this screen never showed. The layout affords the
   // rail — `.adm-members-layout` is `minmax(0,1fr) 320px` with a 1100px
   // single-column fallback and `.adm-access{min-width:0}` — so the rail is the

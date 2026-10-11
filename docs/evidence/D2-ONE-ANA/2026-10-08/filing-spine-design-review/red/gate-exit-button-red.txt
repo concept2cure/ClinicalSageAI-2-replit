@@ -1,0 +1,39 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the surfaces this test treats as locked are outside the launch scope, and the doors it expects are inside it 2ms
+ ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: a device filing row does not offer the locked 510(k) surface 137ms
+ ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Submission Center: with no device filings, the empty state does not send the reader to the locked 510(k) surface 43ms
+ ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with a project open: no "Inspection readiness" door into the locked eTMF 76ms
+ ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Vault, with no project open: one button opens Projects 283ms
+ ✓ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > Builder: says where documents come from, opens the editor and the Vault, and never points at the Co-Author 159ms
+ × client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the launch-scope panel has one way back: Projects 31ms
+   → expected 'btn' to match /\bbtn\b.*\b(ghost|primary)\b/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx > No dead ends on the filing path (F16) > the launch-scope panel has one way back: Projects
+AssertionError: expected 'btn' to match /\bbtn\b.*\b(ghost|primary)\b/
+
+- Expected:
+/\bbtn\b.*\b(ghost|primary)\b/
+
++ Received:
+"btn"
+
+ ❯ client/src/concept2cure/v2/__tests__/filingPathNoDeadEnds.test.tsx:167:31
+    165|     // A bare `.btn` has no border or fill: the one exit read as grey …
+    166|     // (design review 2026-10-08, review-launch-scope-gate-desktop-128…
+    167|     expect(back[0].className).toMatch(/\bbtn\b.*\b(ghost|primary)\b/);
+       |                               ^
+    168|     fireEvent.click(back[0]);
+    169|     expect(onNav).toHaveBeenCalledWith('projects');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  18:02:49
+   Duration  4.56s (transform 2.13s, setup 253ms, import 2.54s, tests 746ms, environment 717ms)
+

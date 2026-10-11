@@ -126,6 +126,41 @@ describe('File into Vault from the data room (VR-11)', () => {
   });
 });
 
+describe('a revised file refused as a conflict is offered as the next version (QA-2026-10-08)', () => {
+  const CONFLICT = 'A different document is already recorded at code "Protocol-Stability.pdf" version "1.0" for this program. Nothing was changed. Add it as a new version of that document instead of replacing the recorded one.';
+
+  it('offers the recorded document, and files the source as its next version', async () => {
+    let call = 0;
+    onFile = () => {
+      call += 1;
+      return call === 1
+        ? ok({ success: true, complete: false, items: [{ sourceId: 2, outcome: 'refused', code: 'VERSION_CONTENT_CONFLICT', message: CONFLICT, headDocumentId: 'head-2', headVersion: '1.0' }] })
+        : ok({ success: true, complete: true, items: [{ sourceId: 2, outcome: 'filed', documentId: 'doc-9', version: '2.0', placementStatus: 'suggested', folderLabel: 'Module 4 · Nonclinical', needsReview: false }] });
+    };
+    const lane = await openRoom();
+    fireEvent.click(within(lane).getByLabelText('Select Protocol.pdf to file into the Vault'));
+    fireEvent.click(within(lane).getByRole('button', { name: 'File 1 into Vault' }));
+    fireEvent.click(await within(lane).findByRole('button', { name: 'Add as the next version of Protocol.pdf' }));
+
+    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('POST', FILE_URL, { sourceIds: [2], newVersionOf: { 2: 'head-2' } }));
+    const result = await within(lane).findByRole('status');
+    expect(result.textContent).toContain('Protocol.pdf: Filed as v2.0, suggested for Module 4 · Nonclinical, awaiting your filing decision.');
+    expect(result.textContent).not.toContain('Not filed');
+  });
+
+  it('a refusal that is not a conflict offers no new version', async () => {
+    onFile = () => ok({
+      success: true, complete: false,
+      items: [{ sourceId: 2, outcome: 'refused', code: 'SOURCE_BYTES_CHANGED', message: 'Capture the file again.' }],
+    });
+    const lane = await openRoom();
+    fireEvent.click(within(lane).getByLabelText('Select Protocol.pdf to file into the Vault'));
+    fireEvent.click(within(lane).getByRole('button', { name: 'File 1 into Vault' }));
+    await within(lane).findByRole('status');
+    expect(within(lane).queryByRole('button', { name: /as the next version/ })).toBeNull();
+  });
+});
+
 describe('the words for each outcome', () => {
   it('already in the Vault names the version and what replaced it', () => {
     expect(fileItemText({ sourceId: 1, outcome: 'already_filed', documentId: 'd', version: '1.0', supersededBy: '2.0' }))

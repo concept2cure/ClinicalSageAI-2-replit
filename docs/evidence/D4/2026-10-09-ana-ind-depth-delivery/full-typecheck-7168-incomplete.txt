@@ -1,0 +1,42 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] FAIL — tsc did not complete.
+  exit status : 134
+  heap cap    : 7168 MB (override with TYPECHECK_HEAP_MB)
+  The error count below is NOT trustworthy — the compiler died before finishing.
+  Last 40 lines of output:
+    (node:13) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+    (Use `node --trace-warnings ...` to show where the warning was created)
+    npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+    
+    <--- Last few GCs --->
+    
+    [26:0x2bc14000]   201892 ms: Mark-Compact 7043.9 (7203.5) -> 7029.2 (7204.7) MB, pooled: 0 MB, 2832.90 / 0.00 ms  (average mu = 0.063, current mu = 0.013) allocation failure; scavenge might not succeed
+    [26:0x2bc14000]   204739 ms: Mark-Compact 7045.3 (7205.0) -> 7030.8 (7206.5) MB, pooled: 0 MB, 2794.47 / 0.00 ms  (average mu = 0.041, current mu = 0.018) allocation failure; scavenge might not succeed
+    
+    
+    <--- JS stacktrace --->
+    
+    FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+    ----- Native stack trace -----
+    
+     1: 0xe46bbe node::OOMErrorHandler(char const*, v8::OOMDetails const&) [node]
+     2: 0x1245390 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+     3: 0x1245667 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+     4: 0x1474575  [node]
+     5: 0x14745a3  [node]
+     6: 0x148d67a  [node]
+     7: 0x1490848  [node]
+     8: 0x1cf93d1  [node]
+    Aborted
+    
+
+  If this host cannot supply the heap, the gate has NOT run — do not
+  report the diff as typechecked. Options, in order of soundness:
+    1. Run it on a host with the memory, or in CI.
+    2. Raise/lower the cap: TYPECHECK_HEAP_MB=<mb> npm run ci:typecheck:no-regression
+    3. Scoped, NOT equivalent: npx tsc --noEmit --skipLibCheck <changed files>
+       — catches within-file errors only; blind to callers. A narrow
+       tsconfig include is not a substitute either: it double-loads the
+       global .d.ts augmentations and invents errors in untouched files.

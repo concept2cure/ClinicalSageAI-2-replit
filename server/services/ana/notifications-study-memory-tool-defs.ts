@@ -441,7 +441,7 @@ export const FINALIZE_PROTOCOL_DOCUMENT: AnaTool = {
 export const ADD_PROTOCOL_RISK: AnaTool = {
   name: 'add_protocol_risk',
   description:
-    "Add a risk to a protocol's risk register, scored on a likelihood × impact matrix (ICH E6(R2) §5.0). Categories: participant_safety, data_integrity, regulatory, operational, privacy, other. Returns the computed risk level. Governed + audited.",
+    "Add a risk to a protocol's risk register, scored on a likelihood × impact matrix (ICH E6(R3) Annex 1 §3.10.1, risk management). Categories: participant_safety, data_integrity, regulatory, operational, privacy, other. Returns the computed risk level. Governed + audited.",
   input_schema: {
     type: 'object',
     properties: {

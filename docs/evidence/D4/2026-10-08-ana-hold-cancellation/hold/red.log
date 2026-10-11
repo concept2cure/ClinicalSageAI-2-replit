@@ -1,0 +1,128 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation while a status read is unresolved > releases immediately, cleans its listener, and observes a later query rejection 10ms
+   → expected { done: false } to deeply equal { done: true, value: 'cancelled' }
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation while a status read is unresolved > also releases during a later read and closes the held-time interval 2ms
+   → expected { done: false } to deeply equal { done: true, value: 'cancelled' }
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > does not apply a stale paused result after Stop 2ms
+   → expected 'expired' to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > does not apply a stale running result after Stop 1ms
+   → expected 'running' to be 'cancelled' // Object.is equality
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > cancels one pending reader while another waiter can still resume normally 1ms
+   → expected { done: false } to deeply equal { done: true, value: 'cancelled' }
+ ✓ server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > removes read listeners after an uninterrupted status read completes 1ms
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending null policy hold when Stop lands 1ms
+   → expected { done: false } to deeply equal { done: true, value: 'abort' }
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending auto policy hold when Stop lands 1ms
+   → expected { done: false } to deeply equal { done: true, value: 'abort' }
+ × server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending manual policy hold when Stop lands 1ms
+   → expected { done: false } to deeply equal { done: true, value: 'abort' }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation while a status read is unresolved > releases immediately, cleans its listener, and observes a later query rejection
+AssertionError: expected { done: false } to deeply equal { done: true, value: 'cancelled' }
+
+Compared values have no visual difference.
+
+ ❯ server/services/ana/__tests__/run-hold-cancellation.test.ts:74:22
+     72|       controller.abort();
+     73|       await flush();
+     74|       expect(result).toEqual({ done: true, value: 'cancelled' });
+       |                      ^
+     75|       expect(world.state.frames).toEqual([]);
+     76|       expect(world.wake).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation while a status read is unresolved > also releases during a later read and closes the held-time interval
+AssertionError: expected { done: false } to deeply equal { done: true, value: 'cancelled' }
+
+Compared values have no visual difference.
+
+ ❯ server/services/ana/__tests__/run-hold-cancellation.test.ts:104:22
+    102|       controller.abort();
+    103|       await flush();
+    104|       expect(result).toEqual({ done: true, value: 'cancelled' });
+       |                      ^
+    105|       expect(world.wake).toHaveBeenCalledTimes(1);
+    106|       expect(world.hold.heldMs()).toBe(25);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > does not apply a stale paused result after Stop
+AssertionError: expected 'expired' to be 'cancelled' // Object.is equality
+
+Expected: "cancelled"
+Received: "expired"
+
+ ❯ server/services/ana/__tests__/run-hold-cancellation.test.ts:129:29
+    127|       read.resolve(status);
+    128|       controller.abort();
+    129|       expect(await pending).toBe('cancelled');
+       |                             ^
+    130|       expect(world.state.frames).toEqual([]);
+    131|       expect(world.endHeld).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > does not apply a stale running result after Stop
+AssertionError: expected 'running' to be 'cancelled' // Object.is equality
+
+Expected: "cancelled"
+Received: "running"
+
+ ❯ server/services/ana/__tests__/run-hold-cancellation.test.ts:129:29
+    127|       read.resolve(status);
+    128|       controller.abort();
+    129|       expect(await pending).toBe('cancelled');
+       |                             ^
+    130|       expect(world.state.frames).toEqual([]);
+    131|       expect(world.endHeld).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > cancellation at the status-read boundary > cancels one pending reader while another waiter can still resume normally
+AssertionError: expected { done: false } to deeply equal { done: true, value: 'cancelled' }
+
+Compared values have no visual difference.
+
+ ❯ server/services/ana/__tests__/run-hold-cancellation.test.ts:153:26
+    151|       controller.abort();
+    152|       await flush();
+    153|       expect(mineResult).toEqual({ done: true, value: 'cancelled' });
+       |                          ^
+    154|       expect(otherResult.done).toBe(false);
+    155|       read.resolve('paused');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending null policy hold when Stop lands
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending auto policy hold when Stop lands
+ FAIL  server/services/ana/__tests__/run-hold-cancellation.test.ts > TurnPolicy passes the existing cancellation signal into the shared hold > releases a pending manual policy hold when Stop lands
+AssertionError: expected { done: false } to deeply equal { done: true, value: 'abort' }
+
+Compared values have no visual difference.
+
+ ❯ server/services/ana/__tests__/run-hold-cancellation.test.ts:205:22
+    203|       controller.abort();
+    204|       await flush();
+    205|       expect(result).toEqual({ done: true, value: 'abort' });
+       |                      ^
+    206|       expect(frames).toEqual([{ type: 'cancelled', round: 2 }]);
+    207|       expect(world.wake).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed (9)
+   Start at  13:51:59
+   Duration  384ms (transform 96ms, setup 69ms, import 54ms, tests 24ms, environment 0ms)

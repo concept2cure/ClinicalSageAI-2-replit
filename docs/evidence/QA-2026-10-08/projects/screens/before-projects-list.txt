@@ -1,0 +1,145 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+RP
+Concept2Cure.RI
+›
+Projects
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+WORKSPACE
+Projects
+Every regulatory program across all workstreams. Open one to enter its project home.
+Ask AnA
+New project
+18 active programs
+0% average readiness
+1 filing < 60 days
+Grid
+List
+All workstreams
+MDX
+Biotech
+Pharma
+All
+Active
+Complete
+Blocked
+Submitted
+Approved
+HLV-333 — Investigational New Drug Application (QA-J1)
+H · Planning · Lead JM Smith
+0% ready
+Jun 30, 2027
+BIOTECH
+ACTIVE
+Investigational New Drug Application
+ARD-411 · Planning · Lead JM Smith
+0% ready
+Sep 30, 2027
+BIOTECH
+ACTIVE
+QA-J1 Ardemvir · relapsing multiple sclerosis (IND)
+ARD-410 · Planning · Lead JM Smith
+0% ready
+Sep 30, 2027
+BIOTECH
+ACTIVE
+Investigational New Drug Application
+Q · Planning · Lead JM Smith
+0% ready
+—
+BIOTECH
+ACTIVE
+QA member-created project (should be refused)
+QMPS · Planning · Lead Emily Watson
+0% ready
+—
+BIOTECH
+ACTIVE
+Nexavir · moderate-to-severe Crohn's disease (IND)
+NXV-777 · Planning · Lead JM Smith
+0% ready
+Jun 30, 2027
+BIOTECH
+ACTIVE
+BX-420 · neuromyelitis optica (J-NDA)
+BX-420 · Submission · Lead Sarah Chen
+Readiness not measured
+Mar 06, 2027
+PHARMA
+ACTIVE
+Vorelinib · KIT-mutant GIST (IND)
+BX-512 · Planning · Lead Sarah Chen
+Readiness not measured
+Jul 04, 2027
+BIOTECH
+ACTIVE
+CV-117 ECG Patch
+CV-117 · Cleared · Lead JM Smith
+Readiness not measured
+—
+MDX
+COMPLETE
+BX-099 · generalized myasthenia gravis (MAA)
+BX-099 · Submission · Lead Sarah Chen
+Readiness not measured
+Nov 21, 2026
+PHARMA
+ACTIVE
+IV-415 Companion Diagnostic
+IV-415 · Clinical Evaluation · Lead JM Smith
+Readiness not measured
+—
+MDX
+ACTIVE
+NM-512 Neuromodulation Lead
+NM-512 · Manufacturing · Lead JM Smith
+Readiness not measured
+—
+MDX
+BLOCKED
+OR-801 Pedicle Screw System
+OR-801 · In Review · Lead JM Smith
+Readiness not measured
+—
+MDX
+SUBMITTED
+PM-660 Patient Monitor
+PM-660 · Cleared · Lead JM Smith
+Readiness not measured
+—
+MDX
+APPROVED
+BX-204 Continuous Glucose Monitor
+BX-204 · Authoring · Lead JM Smith
+Readiness not measured
+—
+MDX
+ACTIVE
+RX-340 Surgical Stapler
+RX-340 · Predicate · Lead JM Smith
+Readiness not measured
+—
+MDX
+ACTIVE
+BX-256 · systemic lupus erythematosus (IND)
+BX-256 · Planning · Lead Sarah Chen
+Readiness not measured
+May 05, 2027
+BIOTECH
+ACTIVE
+BX-301 · paroxysmal nocturnal hemoglobinuria (BLA)
+BX-301 · Submission · Lead Sarah Chen
+Readiness not measured
+Jan 05, 2027
+BIOTECH
+ACTIVE

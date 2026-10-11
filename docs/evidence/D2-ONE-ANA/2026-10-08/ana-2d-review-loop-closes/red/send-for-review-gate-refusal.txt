@@ -1,0 +1,9 @@
+# red: the gate-refusal case against SendForReviewDialog.tsx as wave 2D's first pass left it (the middleware's 'authoring object' sentence shown as is)
+# command: npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/sendForReview.test.tsx -t 'object gate'
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > the object gate’s refusal is said as what it means for this act, not as “the authoring object” 571ms
+   → expected 'The review request was refused: You d…' to be 'The review request was refused: Sendi…' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > the object gate’s refusal is said as what it means for this act, not as “the authoring object”
+AssertionError: expected 'The review request was refused: You d…' to be 'The review request was refused: Sendi…' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 skipped (17)

@@ -1,6 +1,13 @@
 /**
  * Tests for describeToolPlan — the human-readable narration labels surfaced
- * in the stream's tool_use / tool_result events (and the tool trace). Pure.
+ * in the stream's step and tool_use events (and the tool trace). Pure.
+ *
+ * Since ANA-SUMMARY S3 every label comes from the tool's `present` entry in
+ * tool-authorization.register.json through presentStep, in the doing form
+ * (the stream switches a finished step to the done form). What a step was
+ * asked is its preview, never part of its label, so an input — a report type
+ * id, a query, a count of sections the model listed — no longer reaches the
+ * label (step-presentation.test.ts covers the preview).
  */
 
 import { describe, it, expect } from 'vitest';
@@ -18,7 +25,7 @@ describe('describeToolPlan', () => {
       'Scanning regulatory deadlines',
       'Scanning open project risks',
       'Checking the evidence for contradictions',
-      'Reconciling where your program stands',
+      'Looking up where your program stands',
     ]);
     // Each step echoes its tool name so the client can correlate with events.
     expect(plan.map(p => p.tool)).toEqual([
@@ -29,16 +36,17 @@ describe('describeToolPlan', () => {
     ]);
   });
 
-  it('interpolates input into parameterized labels', () => {
+  it('keeps the input out of the label: it is the preview, from allow-listed fields only', () => {
     const [d] = describeToolPlan([
       { id: '1', name: 'lookup_submission_deficiencies', input: { submission_type: 'nda' } },
     ]);
-    expect(d.label).toBe('Looking up likely submission deficiencies for Nda');
+    expect(d.label).toBe('Looking up likely submission deficiencies');
   });
 
-  it('falls back to a humanized name for unlabeled tools (never raw snake_case)', () => {
+  it('reads "Running a step" for a tool with no entry, never its name', () => {
     const [d] = describeToolPlan([{ id: '1', name: 'some_unmapped_tool', input: {} }]);
-    expect(d.label).toBe('Some unmapped tool');
+    expect(d.label).toBe('Running a step');
+    expect(d.label).not.toMatch(/unmapped/i);
   });
 
   it('gives calm labels to the document-lifecycle + eTMF + reporting tools', () => {
@@ -53,37 +61,32 @@ describe('describeToolPlan', () => {
       // Not "the vault document": this tool reads the Artifacts Center, and the
       // Vault is a different store (vault-named-tools-honesty.test.ts).
       'Reading an Artifacts Center document',
-      'Saving the document to the vault',
+      'Saving a document to the Vault',
       'Opening the Trial Master File',
-      'Finding the reports that fit your programs',
+      'Looking up reports that fit your programs',
       'Drafting the Module 2.5 Clinical Overview',
     ]);
   });
 
-  it('reports the batch draft count in the human label', () => {
+  it('labels a batch draft without a count the model chose', () => {
     const [one] = describeToolPlan([{ id: '1', name: 'batch_draft_sections', input: { sections: [{}] } }]);
-    expect(one.label).toBe('Drafting 1 section in parallel');
-    const [many] = describeToolPlan([
-      { id: '2', name: 'batch_draft_sections', input: { sections: [{}, {}, {}, {}, {}] } },
-    ]);
-    expect(many.label).toBe('Drafting 5 sections in parallel');
-    const [none] = describeToolPlan([{ id: '3', name: 'batch_draft_sections', input: {} }]);
-    expect(none.label).toBe('Drafting sections in parallel');
+    const [many] = describeToolPlan([{ id: '2', name: 'batch_draft_sections', input: { sections: [{}, {}, {}, {}, {}] } }]);
+    expect(one.label).toBe('Drafting several sections at once');
+    expect(many.label).toBe(one.label);
   });
 
-  it('labels the connected-repository search with the query', () => {
+  it('labels the connected-repository search by what it searches; the query is the preview', () => {
     const [d] = describeToolPlan([
       { id: '1', name: 'search_connected_repositories', input: { query: 'signed 1572' } },
     ]);
-    expect(d.label).toBe('Searching your connected repositories for "signed 1572"');
+    expect(d.label).toBe('Searching your connected repositories');
   });
 
-  it('interpolates the report type into the generate_report label', () => {
+  it('never puts a report type id in the generate_report label', () => {
     const [d] = describeToolPlan([
       { id: '1', name: 'generate_report', input: { report_type_id: 'readiness.executive_digest' } },
     ]);
-    expect(d.label).toBe('Generating the "readiness.executive_digest" report');
-    const [bare] = describeToolPlan([{ id: '2', name: 'generate_report', input: {} }]);
-    expect(bare.label).toBe('Generating the report');
+    expect(d.label).toBe('Generating a report');
+    expect(d.label).not.toContain('readiness.executive_digest');
   });
 });

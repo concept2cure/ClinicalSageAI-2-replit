@@ -1,0 +1,293 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-06T01:49:20.672Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:49:20.673Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-06T01:49:20.673Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-06T01:49:20.800Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA Command] Proposed create_task: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA RI Stream] Dispatched 1 command(s)
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a reply of nothing but a provisional block, beside a navigation chip: the draft, marked not saved
+[AnA action blocks] 1 block(s) → 0 put to the person
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why
+{
+  "timestamp": "2026-10-06T01:49:23.508Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "ana-ri.post-processing",
+    "err": "db.select is not a function"
+  }
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why
+[AnA action blocks] 1 block(s) → 0 put to the person
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it 3128ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals 3ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a reply of nothing but a provisional block, beside a navigation chip: the draft, marked not saved 5ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why 3ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > an empty reply with only a navigation chip: nothing was changed 1ms
+stderr | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts
+{
+  "timestamp": "2026-10-06T01:49:25.123Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains pending confirmation while retaining the proposal and making no write
+{
+  "timestamp": "2026-10-06T01:49:25.224Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:49:25.224Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains pending confirmation while retaining the proposal and making no write
+{
+  "timestamp": "2026-10-06T01:49:25.224Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains pending confirmation while retaining the proposal and making no write
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains pending confirmation while retaining the proposal and making no write
+[AnA Command] Proposed create_task: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains pending confirmation while retaining the proposal and making no write
+[AnA RI Stream] Dispatched 1 command(s)
+
+stderr | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains a refused command with its actual permission reason
+[AnA Command] Blocked create_task: RBAC_DENIED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains a refused command with its actual permission reason
+[AnA RI Stream] Dispatched 1 command(s)
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > reports success only when the read command actually succeeded
+[AnA Command] Executed list_projects: OK — Found 0 project(s).
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > reports success only when the read command actually succeeded
+[AnA RI Stream] Dispatched 1 command(s)
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command cleanup preserves ordinary answer prose > keeps the prose around a command and still carries its pending signoff
+[AnA Command] Proposed create_task: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command cleanup preserves ordinary answer prose > keeps the prose around a command and still carries its pending signoff
+[AnA RI Stream] Dispatched 1 command(s)
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains pending confirmation while retaining the proposal and making no write 841ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > explains a refused command with its actual permission reason 3ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command-only answers describe the real dispatch outcome > reports success only when the read command actually succeeded 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command cleanup preserves ordinary answer prose > keeps the prose around a command and still carries its pending signoff 2ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-command-only.test.ts > command cleanup preserves ordinary answer prose > keeps a plain answer with no commands unchanged 1ms
+stderr | server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts
+{
+  "timestamp": "2026-10-06T01:49:27.589Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels
+{
+  "timestamp": "2026-10-06T01:49:27.799Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:49:27.800Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels
+{
+  "timestamp": "2026-10-06T01:49:27.800Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > the strip leads with the engine's check, beside the labels 1009ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > post_done, the stored message and the sealed record carry the same check 8ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > with no tool run, a turn still says what was checked: claims unchecked, not grounded 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-answer-check.test.ts > the answer check AnA reports > a short answer the labels do not assess is still checked 1ms
+stderr | server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts
+{
+  "timestamp": "2026-10-06T01:49:30.216Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > post_done names what the proposed draft states that this turn's sources do not hold
+[AnA RI Stream] Dispatched 3 command(s)
+
+stdout | server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > a result that is not put to a person carries no check
+[AnA RI Stream] Dispatched 3 command(s)
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > post_done names what the proposed draft states that this turn's sources do not hold 30ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > a result that is not put to a person carries no check 4ms
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts
+{
+  "timestamp": "2026-10-06T01:49:31.725Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stdout | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+{
+  "timestamp": "2026-10-06T01:49:31.830Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T01:49:31.830Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+{
+  "timestamp": "2026-10-06T01:49:31.830Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer
+[AnA RI Stream] Assistant persist failed: db down
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it
+[AnA RI Stream] Post-processing failed: socket hiccup
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it
+[AnA RI Stream] Post-processing failed: Cannot read properties of null (reading 'filter')
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered 956ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop 8ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer 3ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it 1ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it 1ms
+
+ Test Files  5 passed (5)
+      Tests  21 passed (21)
+   Start at  21:49:17
+   Duration  15.26s (transform 3.49s, setup 121ms, import 8.42s, tests 6.03s, environment 1ms)
+

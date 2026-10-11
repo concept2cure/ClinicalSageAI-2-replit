@@ -1,0 +1,12 @@
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > prefers organization membership to client portal 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects non-canonical internal routes outside allowed beta prefixes 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects traversal-style redirect payloads 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects backslash path payloads 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > preserves canonical query/hash in allowed paths 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects control-character payloads 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > uses role-based client redirect for client_user/client_admin 0ms
+ ✓ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > reads the token, provider and an allowed return path from the fragment 3ms
+ ✓ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > drops a return path that is not a same-origin path this app allows 1ms
+ ✓ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > is null without a token shaped like a JWT, and for an empty or unrelated fragment 0ms
+ Test Files  5 passed (5)
+      Tests  20 passed (20)

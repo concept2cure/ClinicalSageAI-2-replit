@@ -1,0 +1,74 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > without strict, the same failure is still reported as unaddressable (degraded readers are unchanged)
+{
+  "timestamp": "2026-10-08T03:18:28.542Z",
+  "level": "warn",
+  "message": "[cmc-artifact-spine] Numeric project-id ownership check failed; treating id as unaddressable",
+  "context": {
+    "orgId": 7,
+    "projectId": 42,
+    "err": "connection reset"
+  }
+}
+
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > resolves a numeric projects.id only when it belongs to the caller org 7ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > refuses a numeric projects.id that belongs to another org (cross-tenant IDOR) 1ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > resolves a program uuid through the canonical anchor reader 4ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > reports an unanchored program as a state, not an error or an empty answer 1ms
+ × server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > an unanchored detail does not say its artifacts stay unplaced: Module 3 placement into a submission still works without the anchor 5ms
+   → expected 'This program has no PM-spine anchor (…' to match /artifacts are not listed here/
+ × server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > an unanchored detail names no internal column and says what the person can do 1ms
+   → expected 'This program has no PM-spine anchor (…' not to match /PM-spine|projects\.|regulatory_progra…/
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > refuses ids that address neither spine 1ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > a numeric lookup that could not complete throws in strict mode — "could not tell" is not "not yours" 2ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > without strict, the same failure is still reported as unaddressable (degraded readers are unchanged) 3ms
+ ✓ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject — strict, for an authorization decision (PF-17) > strict reaches the anchor reader for a program uuid 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > an unanchored detail does not say its artifacts stay unplaced: Module 3 placement into a submission still works without the anchor
+AssertionError: expected 'This program has no PM-spine anchor (…' to match /artifacts are not listed here/
+
+- Expected:
+/artifacts are not listed here/
+
++ Received:
+"This program has no PM-spine anchor (projects.regulatory_program_id), so the governed artifact registry cannot be addressed for it. CMC capture, compile, provenance and placement into a submission still work; the registry’s artifacts are not listed until the program is anchored."
+
+ ❯ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts:86:22
+     84|     expect(r.detail).not.toMatch(/stay unplaced/);
+     85|     expect(r.detail).toMatch(/placement into a submission still work/);
+     86|     expect(r.detail).toMatch(/artifacts are not listed here/);
+       |                      ^
+     87|   });
+     88|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts > resolveCmcArtifactProject > an unanchored detail names no internal column and says what the person can do
+AssertionError: expected 'This program has no PM-spine anchor (…' not to match /PM-spine|projects\.|regulatory_progra…/
+
+- Expected:
+/PM-spine|projects\.|regulatory_program_id|\(.*_.*\)/
+
++ Received:
+"This program has no PM-spine anchor (projects.regulatory_program_id), so the governed artifact registry cannot be addressed for it. CMC capture, compile, provenance and placement into a submission still work; the registry’s artifacts are not listed until the program is anchored."
+
+ ❯ server/services/cmc/__tests__/resolve-cmc-artifact-project.test.ts:97:26
+     95|     const r = await resolveCmcArtifactProject(ORG, PROGRAM_UUID);
+     96|     if (r.state !== 'unanchored') throw new Error('expected an unancho…
+     97|     expect(r.detail).not.toMatch(/PM-spine|projects\.|regulatory_progr…
+       |                          ^
+     98|     expect(r.detail).toMatch(/not linked to your organization.s artifa…
+     99|     expect(r.detail).toMatch(/ask your organization administrator to l…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  03:18:25
+   Duration  2.83s (transform 1.52s, setup 478ms, import 1.89s, tests 30ms, environment 0ms)
+

@@ -377,7 +377,11 @@ async function seedUnreadableWithdrawals() {
     -- 601 was filed and its content has since been emptied.
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
       (601, ${ORG}, 'Emptied', '', '3.2', 'approved'),
-      (602, ${ORG}, 'Filed Twice', '<p>v1</p>', '3.2', 'approved');
+      (602, ${ORG}, 'Filed Twice', '<p>v1</p>', '3.2', 'approved'),
+      -- Every IND submission carries its Form FDA 1571 (21 CFR 312; P-20
+      -- follow-up), so each amendment below files one at 1.1. Without it the
+      -- readiness this suite compares against reports the missing form.
+      (603, ${ORG}, 'Form FDA 1571', '<p>Form FDA 1571</p>', 'm1.1', 'approved');
     -- 700 was filed; its upload bytes have since been rotated off disk.
     INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, mime_type, storage_path) VALUES
       (700, ${ORG}, 'stab.pdf', 'application/pdf', '/nonexistent/rotated/stab.pdf');
@@ -396,7 +400,12 @@ async function seedUnreadableWithdrawals() {
        (47, 'm3.2.s.4', 'Vault doc', 'delete', 'vault_documents', NULL, $4::uuid, NULL, $1, $2),
        (47, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2),
        (49, 'm3.2.s.5', 'Filed Twice', 'delete', 'coauthor_documents', 602, NULL, NULL, $1, $2),
-       (49, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2)`,
+       (49, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2),
+       (41, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
+       (43, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
+       (45, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
+       (47, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2),
+       (49, 'm1.1', 'Form FDA 1571', 'new', 'coauthor_documents', 603, NULL, NULL, $1, $2)`,
     [ORG, USER, sha('<p>the filed text</p>'), VAULT_UUID],
   );
   // As the packager records a filed leaf: with the backbone ID a later

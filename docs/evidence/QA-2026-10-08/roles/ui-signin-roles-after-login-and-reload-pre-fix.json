@@ -1,0 +1,120 @@
+{
+  "email": "emily.watson@concept2cure.pro",
+  "afterLogin": {
+    "trialsage_user": {
+      "roles": [
+        "member",
+        "user"
+      ],
+      "permissions": [
+        "governed:write"
+      ]
+    }
+  },
+  "afterReload": {
+    "trialsage_user": {
+      "roles": [
+        "member",
+        "user"
+      ],
+      "permissions": [
+        "governed:write"
+      ]
+    }
+  },
+  "loginCalls": [
+    {
+      "url": "/api/v1/auth/login",
+      "status": 200,
+      "roles": [
+        "member",
+        "user"
+      ],
+      "permissions": [
+        "governed:write"
+      ]
+    }
+  ],
+  "sessionCalls": [
+    {
+      "url": "/api/v1/auth/session",
+      "status": 200,
+      "roles": [
+        "user"
+      ],
+      "permissions": [
+        "governed:write"
+      ]
+    },
+    {
+      "url": "/api/v1/auth/session",
+      "status": 200,
+      "roles": [
+        "user"
+      ],
+      "permissions": [
+        "governed:write"
+      ]
+    },
+    {
+      "url": "/api/v1/auth/session",
+      "status": 200,
+      "roles": [
+        "user"
+      ],
+      "permissions": [
+        "governed:write"
+      ]
+    },
+    {
+      "url": "/api/v1/auth/session",
+      "status": 200,
+      "roles": [
+        "user"
+      ],
+      "permissions": [
+        "governed:write"
+      ]
+    },
+    {
+      "url": "/api/v1/auth/session",
+      "status": 200,
+      "roles": [
+        "user"
+      ],
+      "permissions": [
+        "governed:write"
+      ]
+    },
+    {
+      "url": "/api/v1/auth/session",
+      "status": 200,
+      "roles": [
+        "user"
+      ],
+      "permissions": [
+        "governed:write"
+      ]
+    },
+    {
+      "url": "/api/v1/auth/session",
+      "status": 200,
+      "roles": [
+        "user"
+      ],
+      "permissions": [
+        "governed:write"
+      ]
+    },
+    {
+      "url": "/api/v1/auth/session",
+      "status": 200,
+      "roles": [
+        "user"
+      ],
+      "permissions": [
+        "governed:write"
+      ]
+    }
+  ]
+}

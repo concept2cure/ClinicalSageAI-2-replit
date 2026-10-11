@@ -1,18 +1,42 @@
 /**
- * IVDR Annex VIII classification engine (pure, deterministic).
+ * IVDR Annex VIII classification — the form-shaped adapter, and the one
+ * IVDR Article 48 conformity-route table.
  *
- * Extracted from server/routes/ivdr-routes.ts so the rule logic is reusable and
- * unit-testable, and wired to the IVD knowledge base: the result carries the
- * ids of the knowledge entries that explain and justify the classification, so
- * callers can surface citations alongside the class.
+ * `classifyIvdrAnnexVIII` is what /api/ivdr/classify, /api/ivd-lifecycle/classify/ivdr,
+ * the IVD program plan and drift detection call. It holds NO rule logic: it maps
+ * its form-shaped input onto the canonical IVDR facts and delegates to
+ * `classifyIvdr` in server/services/market-specs/device-classification.ts, whose
+ * `EU_IVDR_RULES` is the platform's one encoding of IVDR Annex VIII. It keeps the
+ * output shape those callers persist and compare (classification, ruleTrace,
+ * notifiedBodyRequired, confidence, knowledgeRefs, conformityRoute).
  *
- * The rule descriptions and class outcomes are kept byte-identical to the
- * original route logic so existing behavior/persistence is unchanged.
+ * `IVDR_CONFORMITY_ROUTES` is the platform's one statement of the IVDR Article 48
+ * conformity-assessment routes per class. global-ri/device-classification.ts reads
+ * it; nothing else may restate the routes.
  *
- * Regulatory backbone: IVDR (EU) 2017/746 Annex VIII; MDCG 2020-16.
+ * FAIL CLOSED (DECISIONS.md #1): when the inputs cannot decide the class — a blood
+ * grouping device that names no marker, a transmissible-agent test that is not
+ * blood screening — the canonical engine returns no class and this adapter throws
+ * `DeviceClassificationFactError` (`code: 'VALIDATION'`) naming the missing facts.
+ * No class is stated, so none is persisted.
+ *
+ * BASIS: recall — see
+ * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-ivdr-adapter-and-conformity-routes-facts.md.
+ * Regulatory backbone: Regulation (EU) 2017/746 (IVDR) Annex VIII and Article 48; MDCG 2020-16.
  */
 
-export type IvdrClass = 'A' | 'B' | 'C' | 'D';
+import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
+import {
+  classifyIvdr,
+  readRule2Marker,
+  DeviceClassificationFactError,
+  EU_IVDR_RULES,
+  IVDR_RULE4A_CLASS_B_ANALYTES,
+  type IvdrClass,
+  type IvdrDeviceFacts,
+} from '../market-specs/device-classification';
+
+export type { IvdrClass } from '../market-specs/device-classification';
 
 export interface IvdrClassificationInput {
   deviceName?: string;
@@ -24,34 +48,116 @@ export interface IvdrClassificationInput {
   bloodScreening?: boolean;
   detectsCancer?: boolean;
   prenatalScreening?: boolean;
+  /** Not an Annex VIII criterion: it never changes the class (it used to decide the Rule 4(a) exception). */
   riskToPatient?: 'low' | 'medium' | 'high';
   isGeneticTest?: boolean;
+  /** A self-test's analytes (Rule 4(a) exceptions), or a blood-grouping device's markers (Rule 2). */
   analytes?: string[];
 }
 
 export interface RuleTraceEntry {
+  /** Canonical row id in `EU_IVDR_RULES`. */
+  id: string;
   rule: string;
   description: string;
   matched: boolean;
+  /** How the rule wording must be presented (recall until checked against EUR-Lex). */
+  basisLabel: string;
 }
 
 export interface IvdrClassificationResult {
   classification: IvdrClass;
+  /** The canonical rule(s) that gave the class. */
+  ruleApplied: string;
   ruleTrace: RuleTraceEntry[];
   matchedRules: RuleTraceEntry[];
   /** Class A (non-sterile) self-declares; B/C/D require a notified body. */
   notifiedBodyRequired: boolean;
   /** Confidence in the classification given the completeness of the inputs. */
   confidence: 'high' | 'moderate' | 'low';
-  /** Notes where the inputs were sparse or multiple rules competed. */
+  /** Notes where the inputs were sparse, were read by assumption, or multiple rules competed. */
   ambiguityNotes: string[];
   /** The likely-corresponding US FDA pathway (cross-jurisdiction orientation). */
   fdaEquivalentPathway: string;
-  /** Plain-language conformity-route summary for the resulting class. */
+  /** Plain-language conformity-route summary for the resulting class, from `IVDR_CONFORMITY_ROUTES`. */
   conformityRoute: string;
   /** Ids into the IVD knowledge base explaining/justifying this classification. */
   knowledgeRefs: string[];
 }
+
+// ── IVDR Article 48 conformity routes — held once ────────────────────────────
+
+const IVDR_URL = 'https://eur-lex.europa.eu/eli/reg/2017/746/oj';
+const ROUTE_NOTE =
+  'Paraphrase from recall, corroborated by secondary search extracts on 2026-10-05 (TÜV SÜD IVDR Article 48 page; MDCG 2019-13 rev.1 listed on health.ec.europa.eu, not opened); EUR-Lex text not read (host egress-blocked). Verbatim re-read owed.';
+const routeBasis = (detail: string): RegulatoryBasis => ({
+  ref: `Regulation (EU) 2017/746 (IVDR) Article 48; ${detail}`,
+  confidence: 'recall',
+  url: IVDR_URL,
+  note: ROUTE_NOTE,
+});
+
+export interface IvdrConformityRoute {
+  class: IvdrClass;
+  /** Whether a notified body is involved (Class A: only for a sterile device, and only for its sterility aspects). */
+  notifiedBodyRequired: boolean;
+  /** The routes the manufacturer chooses between. */
+  options: readonly string[];
+  /** What applies on top of the chosen route. */
+  additional: readonly string[];
+  /** The annexes the routes run through, for a citation line. */
+  annexes: string;
+  /** One line for a result field: the options, then the additions. */
+  summary: string;
+  basis: RegulatoryBasis;
+}
+
+/** Annex IX section 5.1: technical-documentation assessment of self-testing and near-patient devices (recall). */
+const SELF_TEST_ASSESSMENT = 'Self-testing and near-patient devices: the notified body also assesses the technical documentation under Annex IX section 5.1.';
+/** Annex IX section 5.2 / Annex X section 3(k): companion-diagnostic consultation (recall). */
+export const IVDR_CDX_CONSULTATION =
+  'Companion diagnostics: the notified body consults a medicines authority (a national competent authority under Directive 2001/83/EC, or the EMA) under Annex IX section 5.2 or Annex X section 3(k).';
+
+function route(cls: IvdrClass, notifiedBodyRequired: boolean, options: string[], additional: string[], annexes: string): IvdrConformityRoute {
+  const summary = `${options.join('; or ')}.${additional.length ? ` ${additional.join(' ')}` : ''}`;
+  return Object.freeze({
+    class: cls, notifiedBodyRequired, options: Object.freeze(options), additional: Object.freeze(additional), annexes, summary,
+    basis: routeBasis(annexes),
+  });
+}
+
+/** IVDR Article 48 conformity-assessment routes by class — the platform's one statement of them. */
+export const IVDR_CONFORMITY_ROUTES: Readonly<Record<IvdrClass, IvdrConformityRoute>> = Object.freeze({
+  A: route('A', false,
+    ['EU declaration of conformity (Article 17) on the technical documentation of Annexes II and III, without a notified body'],
+    ['A sterile Class A device: a notified body assesses only the aspects of establishing, securing and maintaining sterile conditions, under Annex IX or Annex XI.'],
+    'Annexes II and III; Annex IX or XI for sterile devices'),
+  B: route('B', true,
+    ['Notified body: Annex IX Chapters I and III (quality management system), with assessment of the technical documentation of at least one representative device per category of devices'],
+    [SELF_TEST_ASSESSMENT],
+    'Annex IX Chapters I and III'),
+  C: route('C', true,
+    [
+      'Notified body: Annex IX Chapters I and III (quality management system), with assessment of the technical documentation of at least one representative device per generic device group',
+      'Notified body: Annex X coupled with Annex XI (EU type-examination, then production quality assurance)',
+    ],
+    [SELF_TEST_ASSESSMENT, IVDR_CDX_CONSULTATION],
+    'Annex IX Chapters I and III; Annexes X and XI'),
+  D: route('D', true,
+    [
+      'Notified body: Annex IX Chapters I, II (except section 5) and III (quality management system and technical-documentation assessment of each device)',
+      'Notified body: Annex X coupled with Annex XI (EU type-examination, then production quality assurance)',
+    ],
+    [
+      'Where an EU reference laboratory is designated for the device, it verifies the performance claimed and compliance with the common specifications, and tests manufactured batches.',
+      'Where no common specifications exist, the notified body consults the expert panel on the performance evaluation report.',
+      SELF_TEST_ASSESSMENT,
+      IVDR_CDX_CONSULTATION,
+    ],
+    'Annex IX Chapters I, II and III; Annexes X and XI'),
+});
+
+// ── FDA orientation (heuristic) ──────────────────────────────────────────────
 
 const FDA_PATHWAY_BY_CLASS: Record<IvdrClass, string> = {
   A: 'US: typically Class I (often 510(k)-exempt) under general controls.',
@@ -60,268 +166,226 @@ const FDA_PATHWAY_BY_CLASS: Record<IvdrClass, string> = {
   D: 'US: typically Class III PMA (or biologics licensure for blood-screening/transfusion assays).',
 };
 
-const CONFORMITY_ROUTE_BY_CLASS: Record<IvdrClass, string> = {
-  A: 'Self-declaration (EU Declaration of Conformity); notified body only for sterile aspects.',
-  B: 'Notified body — Annex IX (QMS + tech-doc on a sampling basis) or Annex X+XI.',
-  C: 'Notified body — Annex IX or Annex X+XI; CDx adds a medicines-authority/EMA consultation.',
-  D: 'Notified body — Annex IX (per-device tech-doc) + EU reference-laboratory performance/batch verification.',
-};
-
-const CLASS_PRIORITY: Record<IvdrClass, number> = { A: 1, B: 2, C: 3, D: 4 };
-
-/* Class A self-declares (notified body only for sterile aspects); B, C and D all
-   require one. A lookup rather than `classResult !== 'A'`, which since the Rule 6
-   default became Class B is a comparison against a class the engine can no
-   longer produce — true by construction, and read by TypeScript as dead. */
+/* Class A self-declares (notified body only for sterile aspects); B, C and D all require one. */
 const NOTIFIED_BODY_REQUIRED_BY_CLASS: Record<IvdrClass, boolean> = {
-  A: false, B: true, C: true, D: true,
+  A: IVDR_CONFORMITY_ROUTES.A.notifiedBodyRequired,
+  B: IVDR_CONFORMITY_ROUTES.B.notifiedBodyRequired,
+  C: IVDR_CONFORMITY_ROUTES.C.notifiedBodyRequired,
+  D: IVDR_CONFORMITY_ROUTES.D.notifiedBodyRequired,
 };
+
+// ── Mapping the form onto the canonical facts ────────────────────────────────
+
+/** Intended-purpose phrases that make the device a Rule 2 blood-grouping / tissue-typing device. */
+const RULE2_PURPOSE_PHRASES: readonly string[] = ['blood group', 'blood typing', 'tissue typing'];
+
+/** How a Rule 4(a) self-test analyte was read by the canonical reader, and the spelling it read. */
+interface Rule4aReading {
+  reading: 'B' | 'C' | 'unread';
+  spelling: string;
+}
 
 /**
- * Run the Annex VIII rule engine. Pure: same input → same output, no I/O.
- * Mirrors the rule order/descriptions used by /api/ivdr/classify.
+ * Read one free-text analyte through the canonical Rule 4(a) table (`classifyIvdr`'s own `selfTestAnalyte` reader).
+ * A form tag like "glucose (urine)" is also tried urine-first ("urine glucose").
  */
-export function classifyIvdrAnnexVIII(
-  input: IvdrClassificationInput
-): IvdrClassificationResult {
-  const {
-    intendedPurpose,
-    isSelfTest,
-    isNearPatient,
-    isCompanionDiagnostic,
-    detectsTransmissibleAgent,
-    bloodScreening,
-    detectsCancer,
-    prenatalScreening,
-    riskToPatient,
-    isGeneticTest,
-  } = input;
-
-  const ruleTrace: RuleTraceEntry[] = [];
-  /* Annex VIII Rule 6: a device matching no other rule is class B, not class A.
-     Class A is reachable only through Rule 5, which none of these inputs can
-     establish — see the Rule 5 trace entry and the ambiguity note below. */
-  let classResult: IvdrClass = 'B';
-  const upgradeClass = (target: 'B' | 'C' | 'D') => {
-    if (CLASS_PRIORITY[target] > CLASS_PRIORITY[classResult]) classResult = target;
-  };
-
-  // Rule 1 — Class D: Blood/tissue screening for transmissible agents
-  const rule1Match = bloodScreening === true && detectsTransmissibleAgent === true;
-  ruleTrace.push({
-    rule: 'Annex VIII, Rule 1 (Class D)',
-    description:
-      'IVDs intended to be used for blood screening, assessing eligibility of blood/tissue donations, and detecting transmissible agents (HIV, HBV, HCV, HTLV, Treponema pallidum, CMV, Chlamydia, RhD, Kell, Duffy/Kidd)',
-    matched: rule1Match,
-  });
-  if (rule1Match) classResult = 'D';
-
-  // Rule 2 — Class D: Blood group typing (ABO, Rh, Kell, Kidd, Duffy)
-  const isBloodGrouping =
-    intendedPurpose.toLowerCase().includes('blood group') ||
-    intendedPurpose.toLowerCase().includes('blood typing');
-  ruleTrace.push({
-    rule: 'Annex VIII, Rule 2 (Class D)',
-    description:
-      'IVDs intended for blood grouping or tissue typing to ensure immunological compatibility of blood, blood components, cells, tissues, or organs intended for transfusion/transplant (ABO, Rh, anti-Kell)',
-    matched: isBloodGrouping,
-  });
-  if (isBloodGrouping && classResult !== 'D') classResult = 'D';
-
-  // Rule 3a — Class C: Companion Diagnostics
-  const rule3aMatch = isCompanionDiagnostic === true;
-  ruleTrace.push({
-    rule: 'Annex VIII, Rule 3a (Class C)',
-    description:
-      'IVDs intended as companion diagnostics — devices essential for the safe and effective use of a corresponding medicinal product, to identify patients most likely to benefit or at increased risk of serious adverse reactions',
-    matched: rule3aMatch,
-  });
-  if (rule3aMatch) upgradeClass('C');
-
-  // Rule 3b — Class C: Cancer screening/diagnosis as first-line
-  const rule3bMatch = detectsCancer === true;
-  ruleTrace.push({
-    rule: 'Annex VIII, Rule 3b (Class C)',
-    description:
-      'IVDs intended for screening, diagnosis, or staging of cancer. First-line standalone diagnostic use for detecting cancer markers (CEA, PSA, CA-125, HER2, etc.)',
-    matched: rule3bMatch,
-  });
-  if (rule3bMatch) upgradeClass('C');
-
-  // Rule 3c — Class C: Genetic testing with direct patient management impact
-  const rule3cMatch = isGeneticTest === true;
-  ruleTrace.push({
-    rule: 'Annex VIII, Rule 3c (Class C)',
-    description:
-      'IVDs intended to provide information about genetic predisposition. Human genetic testing whose results directly lead to patient management decisions (pharmacogenomic, hereditary condition screening)',
-    matched: rule3cMatch,
-  });
-  if (rule3cMatch) upgradeClass('C');
-
-  // Rule 3d — Class C: Prenatal screening / congenital abnormalities
-  const rule3dMatch = prenatalScreening === true;
-  ruleTrace.push({
-    rule: 'Annex VIII, Rule 3d (Class C)',
-    description:
-      'IVDs intended for prenatal screening of women to determine their immune status, for detecting congenital abnormalities of the foetus, or for determining foetal status where there is an imminent risk to the foetus',
-    matched: rule3dMatch,
-  });
-  if (rule3dMatch) upgradeClass('C');
-
-  /*
-   * Rule 4(a) — Class C: self-testing, with the regulation's OWN Class B
-   * exception. Annex VIII Rule 4(a) reads: devices for self-testing are class C,
-   * "except for those devices from which the result is not determining a
-   * medically critical status, or is preliminary and requires follow-up with
-   * appropriate laboratory testing, in which case they are class B."
-   *
-   * This engine scored EVERY self-test class B — the exception applied as if it
-   * were the rule, so a self-test whose result IS medically critical was told it
-   * could take the lighter conformity route. There is no dedicated input for
-   * "medically critical", so the exception is taken from the risk level the
-   * caller already supplies: only an explicitly LOW risk-to-patient reads as the
-   * non-critical case. Absent or unknown risk resolves to the rule, not the
-   * exception, because under-classifying is the direction that hurts.
-   */
-  const rule4aMatch = isSelfTest === true;
-  ruleTrace.push({
-    rule: 'Annex VIII, Rule 4(a) (Class C; Class B where the result is not medically critical)',
-    description:
-      'IVDs intended for self-testing by lay persons. Class C unless the result does not determine a medically critical status, or is preliminary and requires follow-up laboratory testing, in which case Class B',
-    matched: rule4aMatch,
-  });
-  if (rule4aMatch) upgradeClass(riskToPatient === 'low' ? 'B' : 'C');
-
-  /*
-   * Rule 4(b) — near-patient testing is "classified in their own right". It
-   * carries no class of its own: a point-of-care device takes whatever class its
-   * intended purpose earns under the other rules. This was scored as a Class B
-   * rule, which is not what Annex VIII says.
-   */
-  const rule4bMatch = isNearPatient === true && !isSelfTest;
-  ruleTrace.push({
-    rule: 'Annex VIII, Rule 4(b) (classified in its own right)',
-    description:
-      'IVDs intended for near-patient (point-of-care) testing are classified in their own right — the setting does not itself set a class; the device takes the class its intended purpose earns under the other rules',
-    matched: rule4bMatch,
-  });
-
-  /*
-   * Rule 5 — Class A, and the ONLY route to Class A there is: products for
-   * general laboratory use with no critical characteristics, instruments
-   * intended for IVD procedures, and specimen receptacles. None of the inputs
-   * this engine collects identifies such a device, so it cannot assert Rule 5
-   * and never matches it. That is reported below rather than assumed.
-   */
-  ruleTrace.push({
-    rule: 'Annex VIII, Rule 5 (Class A)',
-    description:
-      'Products for general laboratory use with no critical characteristics, accessories, buffer and washing solutions, general culture media and histological stains; instruments intended for IVD procedures; specimen receptacles. The only route to Class A',
-    matched: false,
-  });
-
-  /*
-   * Rule 6 — Class B, verbatim: "Devices not covered by the above-mentioned
-   * classification rules are classified as class B."
-   *
-   * THIS IS THE DEFAULT, AND IT WAS CLASS A. `classResult` started at 'A' and a
-   * device matching no rule kept it, which the trace then reported as
-   * "Rule 7 (Class A) — All other IVDs not covered by Rules 1-6". Annex VIII has
-   * no such rule. Class A self-declares; Class B does not. So an IVD the engine
-   * could not place was told it could CE-mark without a notified body, when the
-   * regulation puts it in the class that requires one.
-   */
-  const higherRuleMatched =
-    rule1Match || isBloodGrouping || rule3aMatch || rule3bMatch || rule3cMatch || rule3dMatch || rule4aMatch;
-  ruleTrace.push({
-    rule: 'Annex VIII, Rule 6 (Class B)',
-    description:
-      'Devices not covered by the above-mentioned classification rules are classified as class B',
-    matched: !higherRuleMatched,
-  });
-
-  /*
-   * Rule 7 — Class B: controls without a quantitative or qualitative assigned
-   * value. No input identifies one, so like Rule 5 it never matches; it is
-   * enumerated so the trace is the whole of Annex VIII rather than the part this
-   * engine can decide.
-   */
-  ruleTrace.push({
-    rule: 'Annex VIII, Rule 7 (Class B)',
-    description: 'Devices which are controls without a quantitative or qualitative assigned value',
-    matched: false,
-  });
-
-  // ── Knowledge linkage ──────────────────────────────────────────────────────
-  const knowledgeRefs = new Set<string>([
-    'eu.ivdr.classification-rules',
-    'eu.ivdr.conformity-routes',
-    'mdcg.2020-16-classification',
-  ]);
-  if (rule3aMatch) knowledgeRefs.add('eu.ivdr.companion-diagnostics');
-  if (rule3aMatch) knowledgeRefs.add('fda.ivd.cdx');
-  if (rule3bMatch) knowledgeRefs.add('bio.her2');
-  if (rule3cMatch) knowledgeRefs.add('legal.ivd.data-privacy');
-  if (rule1Match) knowledgeRefs.add('bio.hiv');
-  if (classResult === 'D') knowledgeRefs.add('eu.ivdr.notified-bodies');
-
-  // ── Confidence + ambiguity ─────────────────────────────────────────────────
-  const matched = ruleTrace.filter(r => r.matched);
-  const booleanInputs = [
-    isSelfTest, isNearPatient, isCompanionDiagnostic, detectsTransmissibleAgent,
-    bloodScreening, detectsCancer, prenatalScreening, isGeneticTest,
-  ].filter(v => v !== undefined).length;
-
-  const ambiguityNotes: string[] = [];
-  /* Fell through to the Rule 6 catch-all rather than matching a rule. Class B is
-     the regulation's answer for that, but it is the answer to "nothing above
-     applied", so the intended purpose is worth a second read. */
-  const byCatchAll = !ruleTrace.some(
-    r => r.matched && /Rule 1|Rule 2|Rule 3|Rule 4\(a\)/.test(r.rule),
-  );
-  if (byCatchAll) {
-    ambiguityNotes.push(
-      'Class B by the Annex VIII Rule 6 catch-all (no other rule matched) — confirm the intended purpose does not trigger Rules 1–4.',
-    );
+function readRule4aAnalyte(analyte: string): Rule4aReading {
+  const words = analyte.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  const candidates = [analyte];
+  const site = words.findIndex((w) => w === 'urine' || w === 'urinary');
+  if (site >= 0 && words.length > 1) candidates.push(['urine', ...words.filter((_, i) => i !== site)].join(' '));
+  for (const spelling of candidates) {
+    try {
+      const fired = classifyIvdr({ selfTesting: true, selfTestAnalyte: spelling }).ruleTrace.map((t) => t.id);
+      if (fired.includes('ivdr-4a-b')) return { reading: 'B', spelling };
+      if (fired.includes('ivdr-4a-c')) return { reading: 'C', spelling };
+    } catch (e) {
+      if (!(e instanceof DeviceClassificationFactError)) throw e;
+    }
   }
-  /* Class A is reachable ONLY through Rule 5, and nothing this engine collects
-     identifies a Rule 5 device. Saying so is the honest form of a class it
-     cannot award; the previous engine awarded it by default instead. */
+  return { reading: 'unread', spelling: analyte };
+}
+
+/** Read `readRule2Marker` without letting an over-long value throw (it then names nothing readable). */
+function markerOf(value: string): string[] | null {
+  try {
+    return readRule2Marker(value);
+  } catch (e) {
+    if (e instanceof DeviceClassificationFactError) return null;
+    throw e;
+  }
+}
+
+const quoted = (xs: string[]): string => xs.map((x) => JSON.stringify(x)).join(', ');
+
+/**
+ * Rule 1 and Rule 3. Rule 1's second and third indents (life-threatening high-propagation agents; infectious load) and
+ * Rule 3(a)–(e) concern transmissible agents: with no transmissible agent stated they do not apply; with one stated
+ * outside blood screening this form does not say which applies, so those facts are left unstated.
+ */
+function mapRules1And3(input: IvdrClassificationInput, facts: IvdrDeviceFacts, notes: string[]): void {
+  const transmissible = input.detectsTransmissibleAgent === true;
+  facts.bloodDonationScreening = transmissible && input.bloodScreening === true;
+  const agentResolved = !transmissible || facts.bloodDonationScreening;
+  if (agentResolved) {
+    facts.lifeThreateningHighPropagation = false;
+    facts.infectiousLoadLifeThreatening = false;
+  }
+  const points: string[] = [];
+  if (input.detectsCancer) points.push('h');
+  if (input.isGeneticTest) points.push('i');
+  if (points.length) facts.rule3Points = points;
+  if (input.isCompanionDiagnostic) facts.companionDiagnostic = true;
+  if (input.prenatalScreening) {
+    facts.infectiousOrCancerOrGenetic = true;
+    notes.push('Pre-natal screening is Rule 3(d) (immune status towards transmissible agents) or Rule 3(l) (congenital disorders in the embryo or foetus); both are Class C — record which applies.');
+  } else if (agentResolved) {
+    facts.infectiousOrCancerOrGenetic = points.length > 0 || input.isCompanionDiagnostic === true;
+  }
+}
+
+/** Rule 2: blood grouping / tissue typing by intended purpose; the markers named (analytes, purpose) decide C or D. */
+function mapRule2(input: IvdrClassificationInput, analytes: string[], facts: IvdrDeviceFacts, notes: string[]): void {
+  const purpose = input.intendedPurpose.toLowerCase();
+  facts.bloodGrouping = RULE2_PURPOSE_PHRASES.some((p) => purpose.includes(p));
+  if (!facts.bloodGrouping) return;
+  const listed = new Set<string>();
+  const notListed: string[] = [];
+  const unread: string[] = [];
+  const take = (value: string, m: string[]) => (m.length ? m.forEach((x) => listed.add(x)) : notListed.push(value));
+  for (const a of analytes) {
+    const m = markerOf(a);
+    if (m === null) unread.push(a);
+    else take(a, m);
+  }
+  // Purpose tokens of two or more characters, so a sentence-initial "A" is never read as the A antigen.
+  for (const token of input.intendedPurpose.split(/[\s,;/+&]+/)) {
+    const m = token.replace(/[()[\].:]/g, '').length < 2 ? null : markerOf(token);
+    if (m !== null) take(token, m);
+  }
+  // A listed marker decides D; otherwise C needs every named analyte read (an unread one could be a listed marker).
+  if (listed.size) facts.bloodGroupingMarker = [...listed];
+  else if (notListed.length && unread.length === 0) facts.bloodGroupingMarker = notListed;
+  if (!listed.size && unread.length) notes.push(`Rule 2: ${quoted(unread)} not read as a blood-group or tissue-typing marker.`);
+}
+
+/** Rule 4(a): the self-test's analytes decide the Class B exception — B only when every analyte is one. */
+function mapRule4a(analytes: string[], facts: IvdrDeviceFacts, notes: string[]): void {
+  if (!facts.selfTesting) return;
+  const readings = analytes.map((a) => ({ a, ...readRule4aAnalyte(a) }));
+  const unread = readings.filter((x) => x.reading === 'unread').map((x) => x.a);
+  facts.selfTestAnalyte = readings.length > 0 && readings.every((x) => x.reading === 'B') ? readings[0].spelling : 'other';
+  const exceptions = IVDR_RULE4A_CLASS_B_ANALYTES.join(', ');
+  if (readings.length === 0) {
+    notes.push(`Rule 4(a): no analyte was named, so the self-test is Class C. Class B applies only to ${exceptions}.`);
+  } else if (unread.length) {
+    notes.push(`Rule 4(a): ${quoted(unread)} not recognised as a Class B exception (${exceptions}), so read as another analyte (Class C). Name it as one of these if it is.`);
+  }
+}
+
+function mapToFacts(input: IvdrClassificationInput): { facts: IvdrDeviceFacts; notes: string[] } {
+  const notes: string[] = [];
+  const analytes = (input.analytes ?? []).filter((a) => typeof a === 'string' && a.trim() !== '');
+  const facts: IvdrDeviceFacts = { selfTesting: input.isSelfTest === true };
+  mapRules1And3(input, facts, notes);
+  mapRule2(input, analytes, facts, notes);
+  mapRule4a(analytes, facts, notes);
+  return { facts, notes };
+}
+
+// ── Reading the canonical result into the form's shape ───────────────────────
+
+const TRANSMISSIBLE_AGENT_MISSING =
+  'whether Rule 1 (second or third indent: a life-threatening agent with a high risk of propagation, or an infectious load) or a Rule 3 sub-point (a)–(e) applies to the transmissible agent';
+
+/** Notes on what the form could not say, or said without effect. */
+function resultNotes(input: IvdrClassificationInput, byCatchAll: boolean): string[] {
+  const notes: string[] = [];
   if (byCatchAll) {
-    ambiguityNotes.push(
+    notes.push(
+      'Class B by the Annex VIII Rule 6 catch-all (no other rule matched) — confirm the intended purpose does not trigger Rules 1–4 or Rule 3 points this form does not ask about (g, j, k, m).',
       'Class A is not inferable from these inputs: Annex VIII reaches it only through Rule 5 (general laboratory use, IVD instruments, specimen receptacles), which the manufacturer must assert.',
     );
   }
-  /* The Rule 4(a) exception was taken from the risk level, not from a dedicated
-     "medically critical" input — say so wherever it decided the class. */
-  if (rule4aMatch) {
-    ambiguityNotes.push(
-      riskToPatient === 'low'
-        ? 'Self-test placed in Class B under the Rule 4(a) exception because risk-to-patient was given as low — confirm the result does not determine a medically critical status.'
-        : 'Self-test placed in Class C under Rule 4(a) — Class B applies only where the result does not determine a medically critical status, or is preliminary and requires laboratory follow-up.',
+  if (input.isNearPatient) notes.push('Near-patient testing is classified in its own right (Rule 4(b)): the setting sets no class; the other rules do.');
+  if (input.riskToPatient !== undefined) notes.push('riskToPatient is not an Annex VIII criterion and does not change the class.');
+  const ruleThreeTriggers = [input.isCompanionDiagnostic, input.detectsCancer, input.isGeneticTest, input.prenatalScreening].filter(Boolean).length;
+  if (ruleThreeTriggers > 1) notes.push('Multiple Rule 3 criteria apply; Class C governs, but document each applicable criterion.');
+  return notes;
+}
+
+function confidenceOf(input: IvdrClassificationInput, matched: RuleTraceEntry[], byCatchAll: boolean): IvdrClassificationResult['confidence'] {
+  if (matched.some((r) => /^Annex VIII, Rule [123]\b/.test(r.rule))) return 'high';
+  if (!byCatchAll) return 'moderate';
+  const booleanInputs = [
+    input.isSelfTest, input.isNearPatient, input.isCompanionDiagnostic, input.detectsTransmissibleAgent,
+    input.bloodScreening, input.detectsCancer, input.prenatalScreening, input.isGeneticTest,
+  ].filter((v) => v !== undefined).length;
+  return booleanInputs >= 2 ? 'moderate' : 'low';
+}
+
+function knowledgeRefsOf(fired: ReadonlySet<string>, cls: IvdrClass): string[] {
+  const refs = new Set<string>(['eu.ivdr.classification-rules', 'eu.ivdr.conformity-routes', 'mdcg.2020-16-classification']);
+  const byRow: ReadonlyArray<[string, string[]]> = [
+    ['ivdr-3f', ['eu.ivdr.companion-diagnostics', 'fda.ivd.cdx']],
+    ['ivdr-3h', ['bio.her2']],
+    ['ivdr-3i', ['legal.ivd.data-privacy']],
+    ['ivdr-1-first-indent', ['bio.hiv']],
+  ];
+  for (const [row, ids] of byRow) if (fired.has(row)) ids.forEach((id) => refs.add(id));
+  if (cls === 'D') refs.add('eu.ivdr.notified-bodies');
+  return [...refs];
+}
+
+/** The class's Article 48 summary, plus the CDx consultation when Rule 3(f) fired and the class's routes do not name it. */
+function conformityRouteOf(cls: IvdrClass, fired: ReadonlySet<string>): string {
+  const routes = IVDR_CONFORMITY_ROUTES[cls];
+  return fired.has('ivdr-3f') && !routes.additional.includes(IVDR_CDX_CONSULTATION)
+    ? `${routes.summary} ${IVDR_CDX_CONSULTATION}`
+    : routes.summary;
+}
+
+// ── The adapter ──────────────────────────────────────────────────────────────
+
+/**
+ * Classify an IVD from the form-shaped input by delegating to the canonical IVDR Annex VIII engine (`classifyIvdr`).
+ * Pure: same input → same output, no I/O.
+ * @throws DeviceClassificationFactError (`code: 'VALIDATION'`) when the inputs do not decide the class.
+ */
+export function classifyIvdrAnnexVIII(input: IvdrClassificationInput): IvdrClassificationResult {
+  const { facts, notes } = mapToFacts(input);
+  const canonical = classifyIvdr(facts);
+  /* A transmissible agent outside blood screening may fall under Rule 1's second or third indent (Class D), which
+     this form does not ask; so no class below D is stated for it, whatever else fired. */
+  const transmissibleUnresolved = facts.lifeThreateningHighPropagation === undefined;
+  if (canonical.class === null || (transmissibleUnresolved && canonical.class !== 'D')) {
+    const missing = transmissibleUnresolved ? [...canonical.missingFacts, TRANSMISSIBLE_AGENT_MISSING] : canonical.missingFacts;
+    throw new DeviceClassificationFactError(
+      `IVDR class not determined from these inputs: ${[...new Set(missing)].join('; ')}.${notes.length ? ` ${notes.join(' ')}` : ''} No class is stated.`,
     );
   }
-  // Multiple Rule-3 triggers (e.g., CDx + cancer + genetic) still resolve to C
-  // but are worth surfacing.
-  const ruleThreeTriggers = [isCompanionDiagnostic, detectsCancer, isGeneticTest, prenatalScreening].filter(Boolean).length;
-  if (ruleThreeTriggers > 1) {
-    ambiguityNotes.push('Multiple Rule 3 criteria apply; Class C governs, but document each applicable criterion.');
-  }
-
-  let confidence: IvdrClassificationResult['confidence'];
-  if (matched.some(r => /Rule 1|Rule 2|Rule 3/.test(r.rule))) confidence = 'high';
-  else if (booleanInputs >= 2 || riskToPatient !== undefined) confidence = 'moderate';
-  else confidence = byCatchAll ? 'low' : 'moderate';
+  const cls = canonical.class;
+  const fired = new Set(canonical.ruleTrace.map((t) => t.id));
+  const ruleTrace: RuleTraceEntry[] = EU_IVDR_RULES.map((row) => ({
+    id: row.id,
+    rule: `Annex VIII, ${row.rule} (Class ${row.class})`,
+    description: row.ruleText,
+    matched: fired.has(row.id),
+    basisLabel: basisLabel(row.basis),
+  }));
+  const matched = ruleTrace.filter((r) => r.matched);
+  const byCatchAll = fired.has('ivdr-6') && fired.size === 1;
 
   return {
-    classification: classResult,
+    classification: cls,
+    ruleApplied: canonical.ruleApplied,
     ruleTrace,
     matchedRules: matched,
-    notifiedBodyRequired: NOTIFIED_BODY_REQUIRED_BY_CLASS[classResult],
-    confidence,
-    ambiguityNotes,
-    fdaEquivalentPathway: FDA_PATHWAY_BY_CLASS[classResult],
-    conformityRoute: CONFORMITY_ROUTE_BY_CLASS[classResult],
-    knowledgeRefs: [...knowledgeRefs],
+    notifiedBodyRequired: NOTIFIED_BODY_REQUIRED_BY_CLASS[cls],
+    confidence: confidenceOf(input, matched, byCatchAll),
+    ambiguityNotes: [...notes, ...resultNotes(input, byCatchAll)],
+    fdaEquivalentPathway: FDA_PATHWAY_BY_CLASS[cls],
+    conformityRoute: conformityRouteOf(cls, fired),
+    knowledgeRefs: knowledgeRefsOf(fired, cls),
   };
 }

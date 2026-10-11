@@ -1,0 +1,1404 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > opens the shared signing dialog in place and sends the signed transition, never sending the signer to the Task board 5084ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-assign"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-user"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+          />
+          <circle
+            cx="12"
+            cy="7"
+            r="4"
+          />
+        </svg>
+         Assign review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · high priority · needs e-signature to complete
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-9"
+          >
+            TASK-9
+          </span>
+        </div>
+        <div
+          class="scaf-note"
+          role="status"
+          style="margin-top: 6px; font-size: 12px;"
+        >
+          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — your password, the meaning, a reason — runs on the Task board.
+          <button
+            class="nda-open"
+            style="margin-left: 8px;"
+            type="button"
+          >
+            Open Task board
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-assign"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-user"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+          />
+          <circle
+            cx="12"
+            cy="7"
+            r="4"
+          />
+        </svg>
+         Assign review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · high priority · needs e-signature to complete
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-9"
+          >
+            TASK-9
+          </span>
+        </div>
+        <div
+          class="scaf-note"
+          role="status"
+          style="margin-top: 6px; font-size: 12px;"
+        >
+          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — your password, the meaning, a reason — runs on the Task board.
+          <button
+            class="nda-open"
+            style="margin-left: 8px;"
+            type="button"
+          >
+            Open Task board
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > closing the dialog without signing changes nothing and claims nothing 5022ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-assign"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-user"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+          />
+          <circle
+            cx="12"
+            cy="7"
+            r="4"
+          />
+        </svg>
+         Assign review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · high priority · needs e-signature to complete
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-9"
+          >
+            TASK-9
+          </span>
+        </div>
+        <div
+          class="scaf-note"
+          role="status"
+          style="margin-top: 6px; font-size: 12px;"
+        >
+          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — your password, the meaning, a reason — runs on the Task board.
+          <button
+            class="nda-open"
+            style="margin-left: 8px;"
+            type="button"
+          >
+            Open Task board
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-assign"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-user"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+          />
+          <circle
+            cx="12"
+            cy="7"
+            r="4"
+          />
+        </svg>
+         Assign review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · high priority · needs e-signature to complete
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-9"
+          >
+            TASK-9
+          </span>
+        </div>
+        <div
+          class="scaf-note"
+          role="status"
+          style="margin-top: 6px; font-size: 12px;"
+        >
+          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — your password, the meaning, a reason — runs on the Task board.
+          <button
+            class="nda-open"
+            style="margin-left: 8px;"
+            type="button"
+          >
+            Open Task board
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > opens the shared signing dialog in place and sends the signed transition, never sending the signer to the Task board
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-assign"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-user"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+          />
+          <circle
+            cx="12"
+            cy="7"
+            r="4"
+          />
+        </svg>
+         Assign review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · high priority · needs e-signature to complete
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-9"
+          >
+            TASK-9
+          </span>
+        </div>
+        <div
+          class="scaf-note"
+          role="status"
+          style="margin-top: 6px; font-size: 12px;"
+        >
+          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — your password, the meaning, a reason — runs on the Task board.
+          <button
+            class="nda-open"
+            style="margin-left: 8px;"
+            type="button"
+          >
+            Open Task board
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-assign"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-user"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+          />
+          <circle
+            cx="12"
+            cy="7"
+            r="4"
+          />
+        </svg>
+         Assign review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · high priority · needs e-signature to complete
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-9"
+          >
+            TASK-9
+          </span>
+        </div>
+        <div
+          class="scaf-note"
+          role="status"
+          style="margin-top: 6px; font-size: 12px;"
+        >
+          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — your password, the meaning, a reason — runs on the Task board.
+          <button
+            class="nda-open"
+            style="margin-left: 8px;"
+            type="button"
+          >
+            Open Task board
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx:85:33
+     83|     fireEvent.click(await screen.findByTestId('rt-complete'));
+     84|
+     85|     const dialog = await screen.findByRole('dialog');
+       |                                 ^
+     86|     expect(patches).toEqual([{ status: 'completed', progress: 100 }]);
+     87|     expect(dialog.textContent).toContain('Electronic signature');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > closing the dialog without signing changes nothing and claims nothing
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-assign"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-user"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+          />
+          <circle
+            cx="12"
+            cy="7"
+            r="4"
+          />
+        </svg>
+         Assign review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · high priority · needs e-signature to complete
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-9"
+          >
+            TASK-9
+          </span>
+        </div>
+        <div
+          class="scaf-note"
+          role="status"
+          style="margin-top: 6px; font-size: 12px;"
+        >
+          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — your password, the meaning, a reason — runs on the Task board.
+          <button
+            class="nda-open"
+            style="margin-left: 8px;"
+            type="button"
+          >
+            Open Task board
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-assign"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-user"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+          />
+          <circle
+            cx="12"
+            cy="7"
+            r="4"
+          />
+        </svg>
+         Assign review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · high priority · needs e-signature to complete
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-9"
+          >
+            TASK-9
+          </span>
+        </div>
+        <div
+          class="scaf-note"
+          role="status"
+          style="margin-top: 6px; font-size: 12px;"
+        >
+          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — your password, the meaning, a reason — runs on the Task board.
+          <button
+            class="nda-open"
+            style="margin-left: 8px;"
+            type="button"
+          >
+            Open Task board
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx:114:18
+    112|     const { fireToast } = mount();
+    113|     fireEvent.click(await screen.findByTestId('rt-complete'));
+    114|     await screen.findByRole('dialog');
+       |                  ^
+    115|     fireEvent.keyDown(document, { key: 'Escape' });
+    116|     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  03:15:27
+   Duration  11.94s (transform 317ms, setup 192ms, import 372ms, tests 10.11s, environment 604ms)
+

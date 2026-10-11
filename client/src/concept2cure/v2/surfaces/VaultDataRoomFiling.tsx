@@ -24,7 +24,15 @@ export type DataRoomFileItem =
       needsReview: boolean;
     }
   | { sourceId: number; outcome: 'already_filed'; documentId: string; version: string | null; supersededBy: string | null }
-  | { sourceId: number; outcome: 'refused'; code: string; message: string };
+  | {
+      sourceId: number;
+      outcome: 'refused';
+      code: string;
+      message: string;
+      /** A conflict names the current version it can be added to as its next version. */
+      headDocumentId?: string;
+      headVersion?: string;
+    };
 
 export interface DataRoomFileOutcome {
   complete: boolean;
@@ -67,10 +75,17 @@ export function fileOutcomeSummary(outcome: DataRoomFileOutcome): string {
 }
 
 /** POST the selection; a refusal or a dropped connection is an Error carrying what to tell the person. */
-async function postFiling(projectId: string, sourceIds: number[]): Promise<DataRoomFileOutcome> {
+async function postFiling(
+  projectId: string,
+  sourceIds: number[],
+  newVersionOf?: Record<number, string>,
+): Promise<DataRoomFileOutcome> {
   let res: Response;
   try {
-    res = await apiRequest('POST', `/api/c2c/project-vault/${encodeURIComponent(projectId)}/data-room/file`, { sourceIds });
+    res = await apiRequest('POST', `/api/c2c/project-vault/${encodeURIComponent(projectId)}/data-room/file`, {
+      sourceIds,
+      ...(newVersionOf ? { newVersionOf } : {}),
+    });
   } catch (e) {
     // apiRequest throws on every refusal but a 401; only a thrown non-API error is a dropped connection.
     if (e instanceof ApiRequestError) {
@@ -93,6 +108,8 @@ export interface DataRoomFiling {
   outcome: DataRoomFileOutcome | null;
   error: string | null;
   fileSelected: () => Promise<void>;
+  /** Add one refused source as the next version of the document it conflicts with (VR-08/09). */
+  addAsVersion: (sourceId: number, documentId: string) => Promise<void>;
 }
 
 /** Selection and filing state for the data room. `onFiled` re-reads the Vault after anything was filed. */
@@ -110,20 +127,43 @@ export function useDataRoomFiling(projectId: string | null, onFiled: () => void)
       return next;
     });
 
-  const fileSelected = async () => {
-    if (!projectId || busy || selected.size === 0) return;
+  /** Run one filing request, and report what it filed. */
+  const run = async (sourceIds: number[], newVersionOf?: Record<number, string>) => {
     setBusy(true);
     setError(null);
+    try {
+      return await postFiling(projectId as string, sourceIds, newVersionOf);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const fileSelected = async () => {
+    if (!projectId || busy || selected.size === 0) return;
     setOutcome(null);
     try {
-      const result = await postFiling(projectId, Array.from(selected));
+      const result = await run(Array.from(selected));
       setOutcome(result);
       setSelected(new Set());
       if (result.items.some((i) => i.outcome === 'filed')) onFiled();
     } catch (e) {
       setError(e instanceof Error ? e.message : UNKNOWN_OUTCOME);
-    } finally {
-      setBusy(false);
+    }
+  };
+
+  const addAsVersion = async (sourceId: number, documentId: string) => {
+    if (!projectId || busy) return;
+    try {
+      const result = await run([sourceId], { [sourceId]: documentId });
+      // Only this source's answer changes; the rest of the batch is as it was.
+      const byId = new Map(result.items.map((i) => [i.sourceId, i] as const));
+      setOutcome((prev) => {
+        const items = prev ? prev.items.map((i) => byId.get(i.sourceId) ?? i) : result.items;
+        return { complete: items.every((i) => i.outcome !== 'refused'), items };
+      });
+      if (result.items.some((i) => i.outcome === 'filed')) onFiled();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : UNKNOWN_OUTCOME);
     }
   };
 
@@ -136,6 +176,7 @@ export function useDataRoomFiling(projectId: string | null, onFiled: () => void)
     outcome,
     error,
     fileSelected,
+    addAsVersion,
   };
 }
 
@@ -199,6 +240,18 @@ export function DataRoomFileBar({
             {filing.outcome.items.map((i) => (
               <li key={i.sourceId} className={i.outcome === 'refused' ? 'vd-dr-file-refused' : undefined}>
                 <b>{titleOf(i.sourceId)}</b>: {fileItemText(i)}
+                {i.outcome === 'refused' && i.code === 'VERSION_CONTENT_CONFLICT' && i.headDocumentId ? (
+                  /* A different file under a recorded name is a new version of that document, if the person
+                     says so. The offer is theirs to take, never made by the filing itself (QA-2026-10-08). */
+                  <button
+                    className="sp-ask"
+                    onClick={() => void filing.addAsVersion(i.sourceId, i.headDocumentId as string)}
+                    disabled={filing.busy}
+                    aria-label={`Add as the next version of ${titleOf(i.sourceId)}`}
+                  >
+                    Add as the next version
+                  </button>
+                ) : null}
               </li>
             ))}
           </ul>

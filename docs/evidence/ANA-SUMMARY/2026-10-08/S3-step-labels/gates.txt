@@ -1,0 +1,36 @@
+## npm run ci:internals-in-copy
+check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+
+## npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+## npm run ci:gateway-bypass
+[check-gateway-bypass] OK — no new bypasses (8 baselined site(s) tolerated).
+
+## npm run ci:workflow-targets
+[ci:workflow-targets] 16 dead reference(s); 16 baselined
+[ci:workflow-targets] OK
+
+## npm run ci:ana-surface-context
+  several, and a child can publish for a parent that has no call of its own
+  (78 surface file(s) hold a call).
+
+
+## npm run ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 71 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+
+## npm run ci:action-overclaim
+check-action-overclaim: no new occurrences. 0 baselined.
+
+## npm run ci:success-before-ok
+check-success-before-ok: no occurrences across 217 file(s).
+
+## npm run ci:empty-state-honesty
+check-empty-state-honesty: no new occurrences. 1 baselined across 1 file(s).
+
+## npm run ci:fabricated-identity
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+
+## npm run ci:step-presentation
+ci:step-presentation OK — 608 in-scope tools each have a present entry (615 entries in all); 123 engine claims, none with a reachable model call.
+

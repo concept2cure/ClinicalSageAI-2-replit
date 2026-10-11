@@ -1,0 +1,7 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+/workspace/scratch/bd36ee581acd/concept2cure/shared/regulatory/global-document-registry.ts
+  26:1  warning  Function 'entry' has too many parameters (8). Maximum allowed is 5  max-params
+
+✖ 1 problem (0 errors, 1 warning)
+

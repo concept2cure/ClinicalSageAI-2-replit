@@ -1,0 +1,34 @@
+## npm run ci:migration-set-order
+[ci:migration-set-order] OK — 368 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit 0
+
+## npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 368 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit 0
+
+## npm run ci:migration-drop-safety:selftest
+  ✓ dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)
+  ✓ dynamic — a reviewed allowDynamic entry suppresses the data-bearing case
+
+[ci:migration-drop-safety:selftest] OK — 12/12 cases; the gate fires on all three replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.
+exit 0
+
+## npm run ci:purge-coverage
+     coauthor_status_history
+     csr_extraction_log
+     document_audit_log
+     qmp_audit_trail
+exit 0
+
+## npm run ci:purge-coverage:selftest
+  ✓ FAILS closed on a list with no public-schema entries
+  ✓ FAILS closed on a list that parses to zero entries
+
+[ci:purge-coverage:selftest] 30 passed — the gate fails on what it exists to catch.
+exit 0
+
+## npm run ci:tables-live-schema
+[ci:tables-live-schema] 1298 relations on the live database; 759 referenced by server SQL; 13 resolved as functions; 39 absent
+[ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (39 baselined)
+exit 0
+

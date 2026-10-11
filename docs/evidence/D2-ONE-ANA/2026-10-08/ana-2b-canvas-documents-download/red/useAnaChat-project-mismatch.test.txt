@@ -1,0 +1,55 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > the stream’s refusal becomes that text, with the code recorded on the message
+[useAnaChat] stream failed: This conversation belongs to another project. Start a new conversation in the project you have open.
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > a refusal with no code records none
+[useAnaChat] stream failed: Something failed
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > says the conversation belongs to another project and that nothing was sent 21ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'This conversation belongs to another …' // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > the stream’s refusal becomes that text, with the code recorded on the message 45ms
+   → expected 'AnA couldn\'t complete this request. …' to be 'This conversation belongs to another …' // Object.is equality
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > a refusal with no code records none 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > says the conversation belongs to another project and that nothing was sent
+AssertionError: expected 'AnA couldn\'t complete this request. …' to be 'This conversation belongs to another …' // Object.is equality
+
+Expected: "This conversation belongs to another project. Start a new conversation in the project you have open. Your request was not sent to the AI provider."
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts:26:68
+     24| describe('THREAD_PROJECT_MISMATCH', () => {
+     25|   it('says the conversation belongs to another project and that nothin…
+     26|     expect(streamRefusalText({ code: 'THREAD_PROJECT_MISMATCH' })).toB…
+       |                                                                    ^
+     27|   });
+     28|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > the stream’s refusal becomes that text, with the code recorded on the message
+AssertionError: expected 'AnA couldn\'t complete this request. …' to be 'This conversation belongs to another …' // Object.is equality
+
+Expected: "This conversation belongs to another project. Start a new conversation in the project you have open. Your request was not sent to the AI provider."
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts:41:23
+     39|     const last = result.current.messages.at(-1)!;
+     40|     expect(last.role).toBe('assistant');
+     41|     expect(last.text).toBe(MISMATCH);
+       |                       ^
+     42|     expect(last.refusalCode).toBe('THREAD_PROJECT_MISMATCH');
+     43|     expect(last.interrupted).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  05:04:15
+   Duration  1.93s (transform 568ms, setup 203ms, import 619ms, tests 80ms, environment 743ms)
+

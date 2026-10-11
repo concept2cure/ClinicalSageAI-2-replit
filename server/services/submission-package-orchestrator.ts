@@ -61,6 +61,8 @@ import {
   assembleRealPackage,
   isPackagerBuildableRegion,
 } from './ectd/orchestrator-real-package.js';
+import { dryRunPackageIdentity } from './ectd/package-identity.js';
+import { resolveRunPackageIdentity } from './ectd/run-package-identity.js';
 import {
   isSignSealConfigured,
   sealSignPayloadDigest,
@@ -435,6 +437,17 @@ export interface AssembledPackage {
    * of this JSON shape.
    */
   backboneXml?: string;
+  /**
+   * True when the record did not name this package's identity (no submission
+   * on record, no recorded application number or applicant, or a run naming a
+   * number the record does not): the backbone carries the dry-run placeholder,
+   * the assembly still validates, and package.sign refuses it — a release
+   * signature never binds placeholder identity. False when the recorded
+   * identity was used. P-27 follow-up, 2026-10-08.
+   */
+  dryRun?: boolean;
+  /** Why it is a dry run, in the words package.sign refuses with. */
+  dryRunReason?: string;
 }
 
 // ── Dependency graph ────────────────────────────────────────────────────────
@@ -565,11 +578,23 @@ function hashOutput(output: unknown): string {
  * normalization is skipped), so the sign-path drift check — which re-derives and
  * compares sha256(assembly.leaves) — stays stable.
  */
+/** The package.assemble step's outputRef; a dry run says it is one. */
+function assembleStepOutputRef(assembled: AssembledPackage): string {
+  return (
+    `package.assemble:${assembled.leaves.length}-leaves (Module 3 only; M1/M2/CSR outputs are reported on the run but are not in this package)` +
+    (assembled.dryRun ? ` — dry run, not a package: ${assembled.dryRunReason} It is validated but cannot be signed.` : '')
+  );
+}
+
 async function assembleForValidation(
   sections: ComposedSection[],
   inputs: OrchestratorInputs,
   sequenceNumber: string
 ): Promise<{ assembled: AssembledPackage; leafBuffers: Record<string, Buffer> }> {
+  const identity = await resolveRunPackageIdentity(inputs);
+  const dryRun = identity.recorded
+    ? { dryRun: false }
+    : { dryRun: true, dryRunReason: identity.reason };
   // Region widening (Move-7) accepts regions beyond the four the canonical
   // packager has a backbone builder for. For a region the packager cannot build,
   // fall back to a derived manifest so the run still assembles + validates
@@ -585,16 +610,23 @@ async function assembleForValidation(
         sequenceNumber,
         region: inputs.region,
         submissionType: inputs.submissionType,
+        ...dryRun,
       },
       leafBuffers: {},
     };
   }
 
+  // The applicant's <id> (D-U-N-S) has no recorded home yet (package-identity.ts
+  // header); with a recorded applicant it says so as the compile's does. A dry
+  // run carries the one dry-run placeholder throughout.
+  const placeholder = dryRunPackageIdentity(sequenceNumber, inputs.organizationId);
   const real = await assembleRealPackage(sections, {
     region: inputs.region,
     applicationNumber: inputs.applicationNumber,
     sequenceNumber,
     submissionType: inputs.submissionType,
+    applicantId: placeholder.sponsorId,
+    sponsorName: identity.recorded ? identity.applicantName : placeholder.sponsorName,
     productName: inputs.drugProductName ?? inputs.drugSubstanceName,
   });
   return {
@@ -606,6 +638,7 @@ async function assembleForValidation(
       region: inputs.region,
       submissionType: inputs.submissionType,
       backboneXml: real.backboneXml,
+      ...dryRun,
     },
     leafBuffers: real.leafBuffers,
   };
@@ -1838,7 +1871,7 @@ export async function runOrchestrator(
       outputs.assembly = assembled;
       assembledLeafBuffers = leafBuffers;
       return {
-        outputRef: `package.assemble:${assembled.leaves.length}-leaves (Module 3 only; M1/M2/CSR outputs are reported on the run but are not in this package)`,
+        outputRef: assembleStepOutputRef(assembled),
         output: assembled,
       };
     });
@@ -2094,6 +2127,17 @@ async function runPackageSignGate(args: {
       signStep,
       signInputHash,
       `skipped (submissionType=${inputs.submissionType} not in REQUIRED allowlist)`
+    );
+  } else if (outputs.assembly?.dryRun) {
+    // P-27 (2026-10-08): a dry run carries placeholder identity; a release
+    // signature binds the package's recorded identity, so it is refused here —
+    // no payload digest, no signed snapshot, nothing stored as a package.
+    await recordSignStepSkipped(
+      run,
+      signStep,
+      signInputHash,
+      `skipped (dry run, not a package: ${outputs.assembly.dryRunReason ?? 'its identity is not recorded.'} ` +
+        'A release signature binds the recorded application number and applicant, so nothing was signed.)'
     );
   } else if (validateStep.status !== 'complete' || !outputs.assembly || !outputs.validation) {
     // The gate is required, but upstream isn't gateway-ready. Mark skipped
@@ -2579,7 +2623,7 @@ async function resumeOrchestratorRun(
       outputs.assembly = assembled;
       assembledLeafBuffers = leafBuffers;
       return {
-        outputRef: `package.assemble:${assembled.leaves.length}-leaves (Module 3 only; M1/M2/CSR outputs are reported on the run but are not in this package)`,
+        outputRef: assembleStepOutputRef(assembled),
         output: assembled,
       };
     });
@@ -2928,6 +2972,16 @@ async function resumeAwaitingSignature(
       sequenceNumber
     );
     outputs.assembly = assembled;
+    // P-27 (2026-10-08): a legacy run re-derived without recorded identity is a
+    // dry run; its signature cannot be completed over placeholder identity.
+    if (assembled.dryRun) {
+      return failResumeSignStep(
+        signStep,
+        previousRun,
+        outputs,
+        `signature_dry_run_identity: ${assembled.dryRunReason ?? 'its identity is not recorded.'}`
+      );
+    }
 
     if (!inputs.skipValidation) {
       const context: HardenedValidationContext = {

@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/submissions-list-program-scope.test.ts
+{
+  "timestamp": "2026-10-08T01:33:39.545Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:33:39.547Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/submissions-list-program-scope.test.ts
+{
+  "timestamp": "2026-10-08T01:33:39.547Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/submissions-list-program-scope.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/submissions-list-program-scope.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/submissions-list-program-scope.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/submissions-list-program-scope.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submissions-list-program-scope.test.ts
+{
+  "timestamp": "2026-10-08T01:33:40.536Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/submissions-list-program-scope.test.ts > GET /api/submissions > without programId, returns the whole organization as a bare list, as the Submission Center reads it 71ms
+ ✓ server/routes/__tests__/submissions-list-program-scope.test.ts > GET /api/submissions > with programId, returns only that program's submissions, and says how many it left out 9ms
+ ✓ server/routes/__tests__/submissions-list-program-scope.test.ts > GET /api/submissions > refuses a programId that is not a program uuid, rather than ignoring it and offering everything 4ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  01:33:35
+   Duration  10.25s (transform 6.78s, setup 181ms, import 9.38s, tests 100ms, environment 0ms)
+

@@ -1,0 +1,42 @@
+{
+  "sourceReportSha256": "7f5cb1e6b62d6f03fa6ef4558a16489234baad4e2cf93c7e6a5830436321d9e6",
+  "sourceReportBytes": 864985,
+  "createdAt": "2026-10-06T13:02:22.862440463-04:00",
+  "sourceReportMetadata": {
+    "RepoURL": "https://github.com/concept2cure/ClinicalSageAI-2-replit.git",
+    "Branch": "concept2cure-v2",
+    "Commit": "73a151ec663b52c0d0964e7ce802123328518b78",
+    "CommitMsg": "chore(repo-health): auto-refresh baseline after merge [skip ci]",
+    "Author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+    "Committer": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+  },
+  "schemaVersion": 2,
+  "firstScanExit": 0,
+  "note": "Complete first filesystem scan report retained as scratch intermediate. This extraction omits package inventory only; all result targets and High/Critical vulnerability/secret findings are included. A subsequent same-cache scanner rerun fault is separately retained.",
+  "results": [
+    {
+      "Target": "package-lock.json",
+      "Class": "lang-pkgs",
+      "Type": "npm"
+    },
+    {
+      "Target": "requirements.txt",
+      "Class": "lang-pkgs",
+      "Type": "pip"
+    },
+    {
+      "Target": "server/services/python/requirements.txt",
+      "Class": "lang-pkgs",
+      "Type": "pip"
+    },
+    {
+      "Target": "tests/validation/package-lock.json",
+      "Class": "lang-pkgs",
+      "Type": "npm"
+    },
+    {
+      "Target": "docs/evidence/D6/2026-09-25-p1/IAM-18-6/red/before-fix.txt",
+      "Class": "secret"
+    }
+  ]
+}

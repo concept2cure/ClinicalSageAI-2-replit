@@ -1,0 +1,387 @@
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > opens a governed form, requires a reason, and sends nothing without one 501ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > PATCHes the organization and user the server named, with the role and the reason 143ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > shows the server's refusal in its own words and keeps the form and its values 112ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > changing a member's role > a 401 answer is not reported as a change 98ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > removing a member > DELETEs with the reason after a governed confirmation, and says what removal does 126ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > what is not offered > the administrator's own row: neither control is enabled, and the drawer says why 51ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > what is not offered > a payload without the organization or user id: fail closed 41ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > is offered for an invited member only, behind a confirmation that says the old link stops working 138ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > says "on your clipboard" when the copy succeeded 100ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > issuing a new setup link > inviting an invited address again through the form says a new link was issued and the role is unchanged 134ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > assigning a signing role > PATCHes approver with the reason 80ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessMemberActions.test.tsx > assigning a signing role > the invite form offers the same roles, labelled as the rest of the page labels them 53ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycleSigningRoles.test.ts > rolesCannotAuthor > admits an approver and a reviewer, as the sign-in session carries them 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycleSigningRoles.test.ts > rolesCannotAuthor > still withholds from a viewer, and leaves an unknown-only session to the server 0ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records the request for a real account 29ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > records an attempt against an address with no account 5ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > requesting a password reset is audited > still says exactly the same thing either way 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production, a forged Host does not become the link the victim is emailed 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > a reset link is built on the deployment's address, never the request's Host (D6) > in production without APP_URL, every address is refused alike and no token is issued 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records the change itself, which used to be only a logger line 758ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > refuses, and records, a token another request used first — no second success 327ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records a token that matched no account 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > records an expired token 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password is audited — the credential-changing event > does not audit a change it refused before looking anything up 2ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > changing the password while signed in is audited too (IAM-17) > records user_password_changed for the account holder, in the account tenant, without the password 666ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > setting its password through the activation link 997ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > an expired link 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a link another request used first 326ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > asking for a reset 4ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a wrong password 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a sign-in refused because the account is locked 3ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a sign-in refused because the address is not yet confirmed 6ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > a sign-in refused because the account was taken out of use (the entry OQ-PROJ-18 reads) 7ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > changing its password while signed in 641ms
+ ✓ server/routes/__tests__/passwordResetAuditTrail.test.ts > an account added through user administration: its events reach its organisation (F-41) > keeps the default organisation when the account is a member there 999ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > the registry says which surfaces claim the rail column > the four fixed surfaces no longer hide the rail they were writing to 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > "Invite member" opens the invite form rather than asking the rail 265ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > a member-level grant is a governed ask, not a local mutation 207ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > csr-workflow — its section rows reach the rail > opens a section through the shell conversation 22ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > protocol-dev — "Ask AnA" reaches the rail > hands the completeness question to the shell conversation 1243ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > insights — no button hands a question to a rail it hides > renders the canvas with no "Ask AnA about this report" affordance 22ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > shows each version's stage and sign-offs, apart from its filing 528ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > sends a version nobody started for review, after saying what that means: starts its record, then moves it to In review 253ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > signs the review through the e-signature dialog: meaning, reason and password go to the lifecycle route 409ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > a refused approval shows the server's reason, in the dialog 373ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says before signing that the reviewer, and the uploader, do not approve 603ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says who sent it for review, and a role without authoring rights, may not act 578ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > names the earlier approved version an approval supersedes 289ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > a dropped connection says the outcome is not known, never that nothing happened 379ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > a server failure shows the reference its sentence asks the user to quote 377ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > the list row says the stage beside the filing 44ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > what counts as settled in a folder (VR-13, FD4) > an upload counts only once approved; a confirmed filing is not an approval 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a sign-off carried from Authoring (FD5 (c)) > says it was signed in Authoring, by the printed name the Authoring signature holds 3ms
+ ✓ server/routes/__tests__/password-reset-limits.test.ts > redeeming a link (activation, reset) > a password the policy refuses can be retried, past the limit, and then set 777ms
+ ✓ server/routes/__tests__/password-reset-limits.test.ts > redeeming a link (activation, reset) > refused links are counted: past the limit even a good link waits, and is told how long 19ms
+ ✓ server/routes/__tests__/password-reset-limits.test.ts > redeeming a link (activation, reset) > asking for links does not use up redeeming them 980ms
+ ✓ server/routes/__tests__/password-reset-limits.test.ts > asking for a link > every request counts, and the refusal says when to retry 12ms
+ ✓ server/routes/__tests__/password-reset-limits.test.ts > asking for a link > the numbers: five requests and five refused links per address per hour 1ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > second factor — the row says what sign-in enforces > reports the challenge as required, whatever settings.security.mfaEnabled holds 22ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > second factor — the row says what sign-in enforces > says the second factor is skipped on a development server with dev auth on 6ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > second factor — the row says what sign-in enforces > counts an authenticator only when sign-in would ask for one 5ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > names a failed api_keys read in meta.unavailable 9ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > names a failed audit read 6ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > withholds settings and SSO derived from a failed organizations read 9ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > withholds SSO when scim_tenants could not be read 4ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > a failed facet read is reported, not rendered as empty > keeps a missing table (42P01) an honest empty — nothing is unavailable 6ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > audit rows name people and events, not ids > uses the recorded description, the account name and the named target 5ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > audit rows name people and events, not ids > humanizes an action with no recorded description 4ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > member rows carry what the membership routes take > names the organization, each member by user id, and marks only the caller as self 3ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > member rows carry what the membership routes take > marks no row as self when the session names no user 2ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > member state says whether the account can sign in > invited (setup link not redeemed), active, disabled — and the KPI counts only active 4ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > member state says whether the account can sign in > reads the invitation from the hash prefix in SQL and never returns the hash 3ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > roles say what they may do, from the checks the server enforces > describes each live role and lists its scopes 3ms
+ ✓ server/routes/__tests__/mdx-admin-honesty.test.ts > roles say what they may do, from the checks the server enforces > a role the product does not describe says so, and lists only what the checks grant it 2ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > creates the account pending verification, mails the link, and answers without a token 463ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing 11ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before) 554ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > moves the account from pending to active, once, and never from any other status 15ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > refuses a token of another class, a forged one, and a missing one alike 10ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/resend-verification > answers 202 for every address; mails only an account that is pending 9ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/login for an unconfirmed account > refuses with AUTH_EMAIL_UNVERIFIED after the password is checked, and records the refusal 11ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > shows the organization’s real name, not an invented default 152ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > seeds the translation policy from the persisted section 43ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > addresses the org from the token claim, never the stale localStorage id 63ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup reads the organization record > writes nothing to the browser-local settings blob it replaced 93ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > sends nothing until something has changed 67ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > refuses to write without a reason, because the route audits one 98ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > PATCHes both governed routes with the reason and the token’s org id 85ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > never carries a stale record’s “guardrail off” claim back to the server 70ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > leaves a refused section dirty, and re-sends only that section 87ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup governed save > reports an unreachable server as unreachable, not as a refusal 84ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > has no switch for anything enforced elsewhere or per user 65ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > offers the agency gateway account choice (D7, founder decision 2026-10-01) 34ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > offers Require PDF/A, the organisation's own choice (D7, the PDF/A rule, 2026-10-01) 30ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > states the approval guardrails as always enforced 31ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > discloses that the editable translation preferences are not yet read 32ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupGoverned.test.tsx > Admin → Setup claims no control it does not have > does not offer edits it cannot persist when the record fails to load 24ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns apiKeys from api_keys (revoked filtered, prefix owner, no invented rotation) 31ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > returns audit from audit_logs with a real chained sha and system actor 7ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > derives settings only from real org values 6ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > builds a TRUTHFUL sso object (disabled + no SCIM) — not the mock topology 5ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > reflects SSO enabled + active SCIM when the org config says so 6ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > fails a single facet closed — a missing api_keys table does not sink the payload 5ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s without an org context (no tenant leak) 3ms
+ ✓ server/routes/__tests__/mdx-admin-facets.test.ts > GET /api/mdx/admin — real facets > 403s an authenticated NON-admin member (fail-closed authorization) 3ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > labels the count as authenticator enrolment and a member without one as "Emailed code" 154ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > shows the sign-in policy row as a fact, not a setting to change 59ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > API keys: "--" and "Couldn't load", not "0" and "No API keys" 37ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > audit: "Couldn't load the admin audit", not "No admin audit entries yet" 43ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > settings and SSO: say they could not be read 53ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > retries the read from the error 304ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > renders the audit band and Last seen for a reader 28ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > shows an API key by prefix and owner name, and revokes it by its numeric id 115ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > invited members are not counted as active > the Members KPI reads "1 active · 1 invited", and the Invited filter lists the invitee 25ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered to a customer org admin the console refuses 300ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered on masterAdmin alone — the commercial unlock is not console access 82ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is offered when the server says the console guard admits this viewer, and opens it 148ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > follows the server, not the org role: a platform admin without an org-admin role sees it 65ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > survives resolved:false — the answer does not depend on the catalog read 49ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered when the navigation fetch fails 51ms
+ ✓ client/src/concept2cure/v2/__tests__/accountMenuMasterLicensing.test.tsx > Account menu — Master Administration licensing entry > is not offered when an older server omits the field 46ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names no category for a surface that belongs to both — the launch core, a device workbench 3ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names the one category a surface belongs to, and Admin for an admin surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD") 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > never names a category the rail does not list the surface under — for every surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > the header draws exactly that crumb 38ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > shows the organisation as a label, not as a control that does nothing 12ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > Help goes where the account menu’s "Get help" goes 193ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > marks the open surface as the current page, and the chosen category as pressed — not current 61ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > draws the current page, and draws a chosen category differently 3ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > collapsed, the brand mark keeps the top and the toggle moves to the foot 36ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > expanded, the toggle stays at the top 25ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > draws no floating launcher — the header’s Task and Collaborate buttons open it 4ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > the header’s Task and Collaborate buttons open it — the path that replaced the floating button 125ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > names the surface, not its URL slug or the payload field 32ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > offers each module once, by name, with the server’s value 38ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > labels priorities for people, and posts the server’s values 20ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > keeps the auto-assign note one sentence beside its icon 23ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing written 308ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > an empty reason: 400 REASON_REQUIRED and nothing written 7ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing written 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > writes one chained row on the change transaction, before COMMIT, with roles, member and reason 8ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > revokes the cached membership once the change commits, so a demotion takes effect on the next request 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write leaves the cached membership alone (nothing changed) 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > the action it writes is one the administrative changes report reads 4ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write rolls the change back and the 500 carries no error text 5ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a role set to the one the member already holds writes nothing and records nothing 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a member not in the organisation is 404 and nothing is recorded 4ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no body: 400 REASON_REQUIRED and nothing removed 4ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing removed 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing removed 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > writes one chained row on the removal transaction, before COMMIT, then revokes the cached membership 4ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a failed audit write rolls the removal back: 500, no error text, the membership cache untouched 4ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > PATCH: 409 LAST_ADMINISTRATOR, a sentence that says nothing changed, nothing written or recorded 4ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > DELETE: 409 LAST_ADMINISTRATOR and nothing removed or recorded 4ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > locks the administrator rows FOR UPDATE on the change transaction, before the change 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > with another administrator left, an administrator can be demoted and removed 6ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > the last administrator cannot be demoted or removed > promoting a member to administrator is never refused by the guard 3ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > approver: assigned with a reason, recorded with the role before and after 2ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > reviewer: assigned with a reason, recorded with the role before and after 2ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > approver: refused without a reason (400 REASON_REQUIRED), nothing written 2ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > reviewer: refused without a reason (400 REASON_REQUIRED), nothing written 2ms
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > assigning approver and reviewer > a role outside the assignable list is still refused 3ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused 417ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > failed passwords for one address signed in with are refused past the per-account limit — and nobody else is 42ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > wrong second-factor codes for one account are refused past the per-account limit — the next account is not 32ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > a successful sign-in spends none of the account’s allowance 55ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > reads the period from the server and says when it is the 25-year default 90ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a failed read is an error, never the default presented as this organisation’s period 182ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a member is told who sets the period and is offered no control 48ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a 403 that is not about role is shown in the server’s words, never as “your role cannot” 46ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > shortening sends the reason and the governing rule; a refusal leaves the period in force and says why 98ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a lengthened period is shown from the server’s answer, and only then reported as saved 115ms
+ ✓ client/src/concept2cure/auth/__tests__/signInRefusal.test.tsx > a refused sign-in > AUTH_001 reads as an incorrect email or password, never as an expired session 266ms
+ ✓ client/src/concept2cure/auth/__tests__/signInRefusal.test.tsx > a refused sign-in > any other refusal is shown in the server's words 81ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > GET /:tenantId — non-member of the target org is denied (403) 134ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > GET /:tenantId — a member of the target org may list (200) 6ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > GET /:tenantId — a request role of super_admin with no platform grant may not list another org (403) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > GET /:tenantId — a super_admin platform grant holder may list any org (200) 5ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > POST / — non-admin of the target org cannot create users (403) 14ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > DELETE /:org/:userId — non-admin of the target org cannot remove users (403) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > PATCH /:org/:userId — non-member of the target org cannot re-role (403) 8ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > a membership role of super_admin with no platform grant cannot administer another org's users (403, nothing written) 12ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > a super_admin platform grant holder administers another org's users (membership role member, not a member of the target) 49ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > a platform_admin platform grant is not super_admin standing for tenant users (403) 6ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users authorization > a support platform grant is not super_admin standing for tenant users (403) 5ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — inviting an EXISTING user from another org creates a PENDING invitation, not a membership (202) 5ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — inviting a NEW (unregistered) email keeps the current flow: user + membership created (201) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — a body with no organizationId targets the caller’s session organization 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — with no session organization and no body organizationId, 400 (never a guessed tenant) 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — a NEW account cannot sign in until it redeems the setup link; without SMTP the admin gets the link 9ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — when the activation link cannot be issued, the 201 says so instead of claiming a 500 5ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — in production with no public origin, nothing is created and the admin is told why (503) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST / — with SMTP configured the invitation is emailed and the link is NOT echoed back 5ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > GET /invitations/mine — lists only the caller-scoped pending invitations (200) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST /invitations/:id/accept — the invited user accepting creates the membership and marks accepted (200) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST /invitations/:id/decline — declining marks declined and does NOT create a membership (200) 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST /invitations/:id/accept — a stranger cannot accept someone else's invitation (404) 2ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST /invitations/:id/decline — a stranger cannot decline someone else's invitation (404) 2ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Cross-org invite consent (decision-register #12, issue #727) > POST /invitations/:id/accept — already-responded invitation is rejected (409) 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users self-modification (#973 port) > PATCH /:org/:self — an admin cannot change their own role (400, no UPDATE) 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users self-modification (#973 port) > DELETE /:org/:self — an admin cannot remove themselves (400, no DELETE) 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users self-modification (#973 port) > super_admin is refused on self too — the guard is about the caller, not the role 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users self-modification (#973 port) > a non-member is still told 403 first — the self check never discloses past authZ 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Tenant-users self-modification (#973 port) > an admin acting on ANOTHER user still reaches the write 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Re-issuing an invitation (POST / for a member who never activated) > replaces the setup token, returns the new link, keeps the stored role, creates nothing (200) 6ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Re-issuing an invitation (POST / for a member who never activated) > looks only in the target organization, and only at an unredeemed invitation hash 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Re-issuing an invitation (POST / for a member who never activated) > an activated member is still refused (400 USER_EXISTS), and no token is written 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Re-issuing an invitation (POST / for a member who never activated) > a non-admin of the target organization is refused before any lookup (403) 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenant-users.contract.test.ts > Re-issuing an invitation (POST / for a member who never activated) > with SMTP configured the new link is emailed and not echoed back 3ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > renders the REAL members and audit, with no provenance pill or fixture 130ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > derives every KPI from the real rows (not hardcoded, not a fixture) 34ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > adopts the real API-keys and SSO panels on tab switch 61ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest empty state > shows an EmptyState — never a fixture — when the org has no admin data 17ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest error state > says "no access" — not "didn't respond" — when the caller is not an org admin (403) 15ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest error state > shows an error state — never a fixture — when the read fails (500) 16ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > renders nothing until a minute before the window, then the warning with the seconds left 156ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > "Stay signed in" closes the warning, tells the server, and the window starts again 30ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > signs out at the end of the window with the reason kept; "Sign out now" does so at once 58ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > uses the window the server reports, and ends the session at the end of its lifetime 4ms
+ ✓ client/src/concept2cure/components/session/__tests__/IdleSessionGuard.test.tsx > IdleSessionGuard > keeps the server informed of activity while the person works without API traffic 2ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > a member sees the catalog and that they cannot run it 32ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > an administrator can run them; a platform administrator too 10ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > no organisation, no catalog 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a non-reader is refused 403 with the audit gate body, before any query 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a session without an organisation is refused 403 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > an unknown report is 404 UNKNOWN_REPORT 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > the full audit trail is 409 USE_SIGNED_EXPORT: its run is the signed export 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2026-09-30&to=2026-09-01) is 400 BAD_PERIOD 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (to=2026-02-30) is 400 BAD_PERIOD 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2024-01-01&to=2026-01-01) is 400 BAD_PERIOD 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — a run > reads in a tenant-stamped transaction, records the run, and sends an export that verifies 9ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > the existing verification endpoint verifies the package, and refuses it after a one-byte change 14ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > a CSV run is one file of titled sections 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > an unknown format is refused rather than read as JSON 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation is ok only when every check is intact, and false when any is broken 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation runs one report at a time: a second concurrent run is 429 REPORT_IN_PROGRESS 9ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > report runs are rate limited per organisation and person: 429 REPORT_RATE_LIMITED 29ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 0 is not a tenant: 403 before anything 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of -3 is not a tenant: 403 before anything 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 7.5 is not a tenant: 403 before anything 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of "7abc" is not a tenant: 403 before anything 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects the backslash open-redirect payloads 2ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects protocol-relative and absolute URLs 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects non-strings / empty 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > accepts a legitimate same-origin path (incl. query) 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted) 216ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects an mfa_challenge token 7ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token still refreshes a VALID access token 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /select-organization rejects a partial token 16ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports unauthenticated for a partial token 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports authenticated for a VALID access token 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/setup rejects a partial token 15ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/enable rejects a partial token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/disable rejects a partial token 9ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects a partial token (401) 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects an mfa_challenge token (401) 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /me rejects a partial token (401) 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401) 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401) 7ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401) 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /password/change rejects a partial token (401) 6ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > tokenFromLocation > reads the fragment first, then the query, and refuses junk 8ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > posts the fragment token, drops it from the address bar, and offers sign-in when the server confirms 52ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > when the server refuses, says so and lets the person request a new link by address 29ms
+ ✓ client/src/concept2cure/auth/__tests__/VerifyEmail.test.tsx > VerifyEmail > with no token in the address, asks for a new link without calling the server 8ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a 401 SESSION_IDLE on an API call ends the session: no refresh, storage cleared, reason kept, session_expired with the reason 22ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > a refresh refused with SESSION_LIFETIME keeps that reason 3ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > any other 401 still refreshes and retries 2ms
+ ✓ client/src/services/portal/__tests__/authService-session-end.test.ts > the auth service on a session the server ended > remembers the session policy the probe reports and defaults to 15 minutes and 12 hours 2ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSetupMfaCopy.test.tsx > Setup → Multi-factor authentication > does not tell members to enrol an authenticator the product cannot enrol 116ms
+ ✓ client/src/concept2cure/auth/__tests__/SignupVerifyStep.test.tsx > SignupVerifyStep > names the address, holds the resend for the cooldown, then sends again once and restarts the cooldown 57ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > grants regulatory-author to every org role that does the work 2ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > does NOT grant it to viewer — read-only is the point of that role 1ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > does not grant it to an unknown role 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > grants nothing beyond the functional role — a member does not become an admin 1ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > keeps the declared roles, and does not duplicate a role already present 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > reads the roles array when the token carries one, and the role claim otherwise 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > expandRoleClaims — org roles carry the functional role the guards name > is case-insensitive about the stored role 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > the guard the grant exists for > requireRole(regulatory-author) admits a member and refuses a viewer 1ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > the guard the grant exists for > a member still cannot pass a guard that asks for admin or a platform role 1ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the platform grants > admits every organization role except viewer 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the platform grants > names no role the platform cannot grant 0ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the platform grants > is the ONE implementation — no route file keeps a private copy 27ms
+ ✓ server/middleware/__tests__/role-claims.test.ts > GOVERNED_WRITE_ROLES — the governed FDA write gate names roles the platform grants > refuses a viewer, admits a member, and requires a usable org context 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > serves the org-scoped device profile 8ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > 404s a profile outside the caller org without leaking data 2ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > updates intake fields and returns the fresh profile 3ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > rejects an invalid device class instead of writing it 2ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > passes through an honest unavailable classification result 2ms
+ ✓ tests/routes/510k-device-routes.test.ts > 510(k) device profile + openFDA lookups > labels predicate fallback results as reduced 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > runs the role gate BEFORE the entitlement gate 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a viewer is refused 403 and NO row is updated and NO audit row is written 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a guest is refused 403 and NO row is updated and NO audit row is written 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a  is refused 403 and NO row is updated and NO audit row is written 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a admin succeeds 2ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a manager succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a member succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a approver succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a reviewer succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a owner succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a super_admin succeeds 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a successful patch writes exactly ONE audit row naming the changed fields 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a rejected patch writes NO audit row 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > a program outside the caller org writes no audit row either 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > refuses the write when no actor resolves — never audits an invented id 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the governed write is role-gated and audited > leaves the READS open — a viewer can still read the profile 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > refuses without an organization context 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > rejects a query naming neither a program nor a product code 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > resolves the org's own program to its product code 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > 404s a program outside the caller org without looking anything up or leaking it 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > prefers an explicit product code over the saved one — an unsaved edit is checkable 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > answers 200 with the labelled unavailable envelope, not an error or an empty list 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > GET /standards — recognized consensus standards for a product code > passes a real, empty answer through as available — distinct from no dataset 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > persists a claimed predicate and audits which one was claimed 3ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > drops a blank optional fact instead of storing an empty string 2ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > CLEARS the claim on null — no predicate is not a stale predicate 2ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > refuses a nameless predicate instead of writing it 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > refuses an idless predicate instead of writing it 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > refuses two entries claiming the same device instead of writing it 1ms
+ ✓ tests/routes/510k-device-routes.test.ts > PUT /profile — the predicate of record > refuses a bare string list instead of writing it 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > posts the refresh token of the loaded session with the bearer 18ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > still posts the stored refresh token when the access token has lapsed and nothing is loaded in memory 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says when the server did not end every session: a refusal is not swallowed 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout(true) says every session was ended when the server did 1ms
+ ✓ client/src/services/portal/__tests__/authService-logout.test.ts > authService.logout > logout() asks nothing of the other sessions 1ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password returns the server's refusal, and no refresh is attempted 10ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password with a stale session in storage still says so, and does not end or refresh it 4ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong current password (401 AUTH_001) is the refusal, not an expiry, and the session stays 3ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong verification code (401 AUTH_004) is the refusal, not an expiry 2ms
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a real expiry still says expiry > a signed-in request refused for its session, whose refresh also fails, is SESSION_EXPIRED 4ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > the rule: a signing role holds the role it extends, never the reverse > approver holds manager, reviewer holds member; manager and member gain nothing 2ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > the rule: a signing role holds the role it extends, never the reverse > an administrator can assign both 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > signs (policy unchanged: a manager still does not) 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > writes governed records and finalizes reports, which needs both the manager tier and signing 1ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > passes every requireRole that admits a manager, and gets the regulatory-author grant 1ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > administers programs and projects, reads the audit trail, and is reported as privileged 1ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > meets the manager tier of the RBAC hierarchy (AnA command minimum roles) 1ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > an approver may do everything a manager may, and sign > holds every governance action a manager holds 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > writes governed records, does not finalize reports (a member does not) 1ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > gets the regulatory-author grant a member gets, and creates programs 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > meets the member tier, not the manager tier 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > holds every governance action a member holds, and sign 0ms
+ ✓ server/middleware/__tests__/signing-roles-p18.test.ts > a reviewer is admitted wherever a member is, and signs > is not a manager anywhere 0ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > keeps every locale bundle key/placeholder/markup-faithful to English 19ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > resolves every static t()/i18nKey reference in the client to a real key 44ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > keeps the client registry, locale dirs and server AnaLanguage overlays in sync 1ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > gives every non-English language a non-empty response + cultural overlay 1ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > maps every language home-market to a real market brief 1ms
+ ✓ client/src/i18n/__tests__/locale-integrity.test.ts > i18n locale & overlay integrity > declares a usable Intl locale and endonym for every registered language 28ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts a session the server confirms: stored, policy kept, login raised, no refresh token 21ms
+ ✓ client/src/services/portal/__tests__/authService-adopt-session.test.ts > authService.adoptSession > adopts nothing the server refuses 3ms
+ ✓ client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > openWorkspaceAfterSignup > adopts the sign-up session (persistently) and opens the workspace 3ms
+ ✓ client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > openWorkspaceAfterSignup > a session the server does not confirm goes to sign-in 0ms
+ ✓ client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > openWorkspaceAfterSignup > no session (verification required, or none issued) goes to sign-in without asking the server 0ms
+ ✓ client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > ZenSignup source > sends nobody to the dead /ai route 0ms
+ ✓ client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > ZenSignup source > does not keep the session under the unread legacy key "token" 0ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > warns a minute before the window ends and ends the session at the window 5ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > activity before the warning starts the window again 4ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > while the warning stands, ordinary activity does not extend the session; extend() does 2ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > the tab becoming visible is activity; stop() ends the watch silently 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > throttles activity to once a second 1ms
+ ✓ client/src/services/portal/__tests__/idleSession.test.ts > startIdleWatch > a warning longer than the window is clamped to it: the warning stands from the start 1ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a refusal nested under error, as /mfa/resend writes it 2ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > still reads a top-level { code, message } 1ms
+ ✓ client/src/services/portal/__tests__/authService-api-error.test.ts > apiErrorOfResponse > reads a bare error string, and falls back to the status when the body says nothing 1ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > is read back on the next load (persistent adoption) 6ms
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > an expired stored session is still not read back 1ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > allows internal next param 2ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects external next param 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects protocol-relative next param starting with // 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > prefers organization membership to client portal 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects non-canonical internal routes outside allowed beta prefixes 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects traversal-style redirect payloads 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects backslash path payloads 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > preserves canonical query/hash in allowed paths 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > rejects control-character payloads 0ms
+ ✓ client/src/concept2cure/auth/__tests__/computeRedirect.test.ts > computeRedirect > uses role-based client redirect for client_user/client_admin 0ms
+ ✓ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > reads the token, provider and an allowed return path from the fragment 2ms
+ ✓ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > drops a return path that is not a same-origin path this app allows 1ms
+ ✓ client/src/concept2cure/auth/__tests__/ssoHandoff.test.ts > parseSsoHandoff > is null without a token shaped like a JWT, and for an empty or unrelated fragment 0ms
+ Test Files  39 passed (39)
+      Tests  385 passed (385)

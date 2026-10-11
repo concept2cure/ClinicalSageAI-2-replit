@@ -1,0 +1,41 @@
+{
+  "no_warning_growth": true,
+  "checks": [
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "errors": 0,
+      "before_warnings": 99,
+      "after_warnings": 98
+    },
+    {
+      "path": "server/services/ana/__tests__/verify-docx-against-source.test.ts",
+      "errors": 0,
+      "before_warnings": 0,
+      "after_warnings": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/verify-docx-claim-scope.test.ts",
+      "errors": 0,
+      "before_warnings": 0,
+      "after_warnings": 0
+    },
+    {
+      "path": "server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts",
+      "errors": 0,
+      "before_warnings": 0,
+      "after_warnings": 0
+    },
+    {
+      "path": "server/services/ana/docx-fidelity.ts",
+      "errors": 0,
+      "before_warnings": 0,
+      "after_warnings": 0
+    },
+    {
+      "path": "server/services/ana/legacy-import-tool-defs.ts",
+      "errors": 0,
+      "before_warnings": 1,
+      "after_warnings": 1
+    }
+  ]
+}

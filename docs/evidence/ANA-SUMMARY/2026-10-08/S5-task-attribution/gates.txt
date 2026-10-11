@@ -1,0 +1,30 @@
+ci:undefined-css-classes exit 0
+ci:internals-in-copy exit 0
+ci:empty-state-honesty exit 0
+ci:check-unrun-tests exit 0
+ci:check-test-imports exit 0
+ci:untracked-imports exit 0
+ci:unreferenced-modules exit 0
+ci:step-presentation exit 0
+ci:design-system exit 0
+ci:check-css-selector-shadowing exit 0
+ci:duplicate-exported-types exit 1
+
+ci:duplicate-exported-types: the same 17 names S4 recorded, all in files S5 does not touch; TaskRow (new, turnSummaryRows.ts) is not among them:
+  AgentRole
+  CtqCategory
+  DocumentProvenance
+  EligibilityAssessment
+  EuRegulation
+  ObligationStatus
+  OutlineNode
+  OutlineSection
+  PrecedentComparison
+  Refusal
+  RequirementQuery
+  RuleTraceEntry
+  SealCheck
+  SealVerdict
+  ServedModel
+  StepStatus
+  ToolOutcome

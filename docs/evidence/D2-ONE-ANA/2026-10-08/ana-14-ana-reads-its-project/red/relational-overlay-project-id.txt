@@ -1,0 +1,123 @@
+# 2026-10-08T06:33:53Z npx vitest run --config vitest.config.ts server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts
+# sources: HEAD (7a6edef06): all five source files of this slice
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id NaN, never sending it
+{
+  "timestamp": "2026-10-08T06:33:54.841Z",
+  "level": "warn",
+  "message": "[ana-relational] relational overlay load failed: invalid input syntax for type integer: \"NaN\"",
+  "context": {}
+}
+
+ × server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id NaN, never sending it 10ms
+   → expected [ 7, 3, NaN ] to deeply equal [ 7, 3, null ]
+ × server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id 0, never sending it 2ms
+   → expected [ 7, 3, +0 ] to deeply equal [ 7, 3, null ]
+ × server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id -1, never sending it 1ms
+   → expected [ 7, 3, -1 ] to deeply equal [ 7, 3, null ]
+ × server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id 1.5, never sending it 1ms
+   → expected [ 7, 3, 1.5 ] to deeply equal [ 7, 3, null ]
+ ✓ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > passes an integer project id through 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id NaN, never sending it
+AssertionError: expected [ 7, 3, NaN ] to deeply equal [ 7, 3, null ]
+
+- Expected
++ Received
+
+  [
+    7,
+    3,
+-   null,
++   NaN,
+  ]
+
+ ❯ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts:37:38
+     35|     const block = await loadRelationalOverlay({ organizationId: 7, use…
+     36|     expect(h.query).toHaveBeenCalledTimes(1);
+     37|     expect(h.query.mock.calls[0][1]).toEqual([7, 3, null]);
+       |                                      ^
+     38|     expect(block).toContain('Prefers tables over prose.');
+     39|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id 0, never sending it
+AssertionError: expected [ 7, 3, +0 ] to deeply equal [ 7, 3, null ]
+
+- Expected
++ Received
+
+  [
+    7,
+    3,
+-   null,
++   0,
+  ]
+
+ ❯ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts:37:38
+     35|     const block = await loadRelationalOverlay({ organizationId: 7, use…
+     36|     expect(h.query).toHaveBeenCalledTimes(1);
+     37|     expect(h.query.mock.calls[0][1]).toEqual([7, 3, null]);
+       |                                      ^
+     38|     expect(block).toContain('Prefers tables over prose.');
+     39|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id -1, never sending it
+AssertionError: expected [ 7, 3, -1 ] to deeply equal [ 7, 3, null ]
+
+- Expected
++ Received
+
+  [
+    7,
+    3,
+-   null,
++   -1,
+  ]
+
+ ❯ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts:37:38
+     35|     const block = await loadRelationalOverlay({ organizationId: 7, use…
+     36|     expect(h.query).toHaveBeenCalledTimes(1);
+     37|     expect(h.query.mock.calls[0][1]).toEqual([7, 3, null]);
+       |                                      ^
+     38|     expect(block).toContain('Prefers tables over prose.');
+     39|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts > loadRelationalOverlay project id > reads the person alone for project id 1.5, never sending it
+AssertionError: expected [ 7, 3, 1.5 ] to deeply equal [ 7, 3, null ]
+
+- Expected
++ Received
+
+  [
+    7,
+    3,
+-   null,
++   1.5,
+  ]
+
+ ❯ server/services/ana-ri/__tests__/relational-overlay-project-id.test.ts:37:38
+     35|     const block = await loadRelationalOverlay({ organizationId: 7, use…
+     36|     expect(h.query).toHaveBeenCalledTimes(1);
+     37|     expect(h.query.mock.calls[0][1]).toEqual([7, 3, null]);
+       |                                      ^
+     38|     expect(block).toContain('Prefers tables over prose.');
+     39|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  06:33:54
+   Duration  542ms (transform 174ms, setup 129ms, import 91ms, tests 18ms, environment 0ms)
+

@@ -1,0 +1,42 @@
+# Green — 2026-10-11
+
+## The ceremony suite (includes the 3 new contract cases)
+ ✓ approving an artifact is an electronic signature > no re-authentication: refused 401, and the artifact, the signatures and the ledger are untouched 36ms
+ ✓ approving an artifact is an electronic signature > a wrong password: refused 401, and the artifact, the signatures and the ledger are untouched 10ms
+ ✓ approving an artifact is an electronic signature > no meaning: refused 400 before the password is checked, nothing written 5ms
+ ✓ approving an artifact is an electronic signature > free text: refused 400 before the password is checked, nothing written 5ms
+ ✓ approving an artifact is an electronic signature > another act’s meaning: refused 400 before the password is checked, nothing written 7ms
+ ✓ approving an artifact is an electronic signature > re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger r
+ ✓ approving: what the signature binds, and what goes back with it > enrolled in TOTP: signed with password and a verified code; without the code, refused 24ms
+ ✓ approving: what the signature binds, and what goes back with it > no stored row for the version: the act records it from the content and signs that — never ap
+ ✓ approving: what the signature binds, and what goes back with it > a provenance event that cannot be written takes the whole act back 19ms
+ ✓ approving: what the signature binds, and what goes back with it > a signature that cannot be written takes the approval back with it 18ms
+ ✓ locking an approved artifact is an electronic signature > without re-authentication: refused 401, not locked, no snapshot 7ms
+ ✓ locking an approved artifact is an electronic signature > re-authenticated with the meaning release: locked at the version, with its snapshot, signature and led
+ ✓ the signed act commits only from the state the signer was shown > approved in between (a second approval racing the first): not signed, nothing written 9ms
+ ✓ the signed act commits only from the state the signer was shown > edited in between (a new version): not signed, nothing written 6ms
+ ✓ the signed act commits only from the state the signer was shown > re-approved in between with no version recorded (the lock would cover nothing): not signed, no
+ ✓ the column set the signed act accepts > the harness metadata the route republishes is written by the act, through the route 18ms
+ ✓ the column set the signed act accepts > an extra column is a contract error, never "the document changed", and nothing is written 6ms
+ ✓ the column set the signed act accepts > a column it must write, removed is a contract error, never "the document changed", and nothing is written 7ms
+      Tests  18 passed (18)
+
+## Every suite touching the signed act, the approval act or the status route (16 files)
+      Tests  297 passed (297)
+ Test Files  16 passed (16)
+
+## The two new contract cases, with validatedStatusChanges throwing the OLD conflict error
+  × an extra column is a contract error, never "the document changed" → a wrong column set was reported as a conflict: expected ArtifactActConflictError … to be an instance of ArtifactActContractError
+  × a column it must write, removed … → same
+
+## Gates
+ci:sign-ceremony exit=0 :: [ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.
+ci:server-error-leaks exit=0 :: [ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+ci:discarded-audit-write exit=0 :: check-discarded-audit-write: no new occurrences. 112 baselined across 50 file(s).
+check:security-patterns exit=0 :: check-security-patterns: 0 violations across 3107 file(s).
+ci:error-envelope exit=0 :: [ci:error-envelope] OK — 0 hand-rolled read(s) (baseline 0), none new.
+ci:step-presentation exit=0 :: ci:step-presentation OK — 608 in-scope tools each have a present entry (615 entries in all); 123 engine claims, none with a reachable mode
+ci:tenant-isolation:no-regression exit=0 :: [ci:tenant-isolation] OK — no new findings above baseline (7 current, 8 baseline)
+[ci:requestdb-coverage] OK — no new shared-pool routes (227 current, 228 baseline)
+
+Scoped typecheck: clean. ESLint: artifact-signed-act.ts 1 (head 1), artifacts.ts 24 (head 24), the ceremony suite 0 (head 0).

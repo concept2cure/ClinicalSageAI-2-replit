@@ -1,0 +1,69 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+RP
+Concept2Cure.RI
+›
+Submission center
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+SUBMISSION
+Submission center
+
+Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2 / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
+
+HLV-334 — Investigational New Drug Application (QA-FIX j1) · IND · FDA (US)
+HLV-333 — Investigational New Drug Application (QA-J1) · IND · FDA (US)
+Investigational New Drug Application · IND · FDA (US)
+QA-J1 Ardemvir · relapsing multiple sclerosis (IND) · IND · FDA (US)
+Investigational New Drug Application · IND · FDA (US)
+QA member-created project (should be refused) · IND · FDA (US)
+Nexavir · moderate-to-severe Crohn's disease (IND) · IND · FDA (US)
+C2C-001 IND (FDA) · IND · FDA (US)
+Vorelinib · KIT-mutant GIST (IND) · IND · FDA (US)
+BX-256 · systemic lupus erythematosus (IND) · IND · FDA (US)
+BX-301 (anti-BCMA mAb) · IND · FDA (US)
+BX-204 (NDA 212345 · 505(b)(1)) · NDA · FDA (US)
+MDX-100 510(k) (FDA) · 510(k) · FDA (US)
+WHERE VORELINIB · KIT-MUTANT GIST (IND) STANDS
+Vorelinib · KIT-mutant GIST (IND) (Vorelinib · BX-512) — a FDA (US) IND at the original stage.
+2 eCTD sequences tracked. Plan, assemble, validate and dispatch it across the workspaces below; validation findings load per sequence once it is assembled.
+I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you.
+Open the sequences
+Or move through the workspaces below — plan, build, validate, dispatch.
+Submissions
+Planner
+Builder
+Sequences
+Validation
+Shadow review
+Cross-region
+Dispatch
+Working sequence
+0000 · original · Validated (no validation recorded)
+0001 · amendment · Draft
+VALIDATED
+Dispatch · sequence 0000
+dispatch readiness · QC
+Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the deterministic dispatch gate before it can be dispatched. The gate below is computed server-side from the canonical leaves and open Shadow Review criticals — the same gate the freeze/dispatch endpoints enforce atomically with the e-signature.
+Sequence 0000 is recorded as Validated, but its validation now finds 8 errors, and no validation verdict was recorded when it was marked. Validated means the validation found no error: return it to Assembling, resolve the errors and validate again. Freeze refuses it until then.
+Dispatch blocked — 4 blockers
+8 open error-severity validation finding(s) must be resolved before dispatch.
+3 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.
+No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.
+Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:6).
+8 validation errors · 0 unacknowledged shadow criticals · 0 shadow reviews run · 6 leaves · status Validated (no validation recorded)
+No completed Shadow Review has run for this sequence — that is one of the reasons the gate blocks. Dispatch is not permitted until it has been adversarially reviewed.
+PACKAGE AND TRANSMIT
+Download an inspection copy of the package (zip)
+Transmit opens once sequence 0000 is dispatched. It sends this package to the region's agency gateway, under its own Part 11 e-signature, and only when that gateway holds credentials for this organization.
+Freeze stays locked while the gate blocks. The server enforces this same gate atomically with the e-signature, so it cannot be bypassed from here.
+Run dispatch QC

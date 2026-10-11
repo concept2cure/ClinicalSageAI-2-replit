@@ -1,0 +1,10 @@
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > is the number the program records, when the export supplies none 191ms
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > with no agency number recorded, is refused by name — the program code is never an application number 108ms
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > for a submission with no program, is refused by name: no number is recorded for it 77ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that agrees with the record is used 71ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied number that contradicts the recorded one is refused 9ms
+ ✓ server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the application number an exported package carries > a supplied value that is not a usable identifier is refused, never written into a filename 3ms
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > is the organisation the record names, not a placeholder 69ms
+ × server/services/ectd/__tests__/export-application-identity.pglite.test.ts > the applicant an exported package names > an organisation whose record has no usable name is refused by name 63ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 4 passed (8)

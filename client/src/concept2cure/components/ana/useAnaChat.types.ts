@@ -23,6 +23,9 @@ import type { BriefingBookPremortemResult } from './BriefingBookPanel';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 import type { DetectedDocumentTemplatePayload } from '../../../../../shared/types/ana-document-detection';
 import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
+import type { StepFact, StepSource } from '@shared/ana/step-verbs';
+import type { PlanChange, PlanStep } from '@shared/ana/plan-diff';
+import type { TimelineEvent } from '@shared/ana/turn-timeline';
 
 /** Shape of an action chip produced by the server's guidance/command executors. */
 export interface AnaChatAction {
@@ -73,7 +76,8 @@ export interface AnaChatAction {
 export interface AnaToolCall {
   name: string;
   label: string;
-  status: 'running' | 'success' | 'error';
+  /** Unconfirmed means the turn closed without a result for this call, not a failure verdict. */
+  status: 'running' | 'success' | 'error' | 'unconfirmed';
   /**
    * The server's id for this call (the model's tool_use id). A step runs its
    * calls concurrently, and several can be the SAME tool, so the name alone
@@ -87,14 +91,31 @@ export interface AnaToolCall {
    * multi-round investigation reads as the progression it actually was.
    */
   round?: number;
-  /** The input args AnA passed to the tool — for the audit/inspect disclosure. */
+  /**
+   * The input args AnA passed to the tool. Kept for the client's own parsers;
+   * never rendered (ANA-SUMMARY S3): a step's details are its `facts`.
+   */
   input?: unknown;
-  /** The tool's returned result, capped client-side — for the audit disclosure. */
+  /**
+   * The tool's returned result, capped client-side. Kept for the client's own
+   * parsers (a drafted document's id, a verification); never rendered.
+   */
   result?: string;
+  /** Where the step worked, from the server's closed source list (shared/ana/step-verbs.ts). */
+  source?: StepSource;
+  /** One allow-listed input field, as the server cleaned it: "shelf life". */
+  preview?: string | null;
+  /** What the step's details state, built by the server from allow-listed fields only. */
+  facts?: StepFact[];
+  /**
+   * The step's generation capture saw a model generation (true), saw none
+   * (false), or could not see (null). The engine glyph needs false.
+   */
+  usedModel?: boolean | null;
   /**
    * The server's own human-readable note for a step that did not succeed, e.g.
-   * "AnA couldn't finish searching the literature. She'll continue with what
-   * she has." Written server-side (stream.ts) precisely so the UI never has to
+   * "AnA couldn't finish searching the literature and continued without it."
+   * Written server-side (step-presentation.ts stepMessage) so the UI never has to
    * render a raw tool payload at a user: `result` is the uncapped truth for the
    * audit disclosure, this is the sentence.
    */
@@ -132,24 +153,14 @@ export interface AnaProgressPhase {
  * count: a turn that declared no plan has none, and a step is `completed`
  * only because she marked it so — nothing on the client infers it.
  */
-export interface AnaPlanStep {
-  title: string;
-  status: 'pending' | 'in_progress' | 'completed';
-}
+export type AnaPlanStep = PlanStep;
 /**
  * One change to the declared plan, in the order it arrived. The panel reads
  * the plan itself; the transcript reads these to say "Planned 5 steps" or
- * "Added step …" at the point in the work where it happened.
+ * "Added step …" at the point in the work where it happened. The diff is the
+ * server's too (shared/ana/plan-diff.ts): the Summary's task rows come from it.
  */
-export interface AnaPlanChange {
-  kind: 'added' | 'started' | 'completed' | 'removed';
-  title: string;
-  at: number;
-  /** The agentic-loop round of the update_plan call that made the change. */
-  round?: number;
-  /** True for the steps of the first plan the turn declared. */
-  initial?: boolean;
-}
+export type AnaPlanChange = PlanChange;
 /**
  * What the turn actually read before answering — the server's
  * `context_used` event (server/services/ana/turn-context-used.ts). Only
@@ -207,6 +218,21 @@ export type AnaTurnRecordStatus =
  *   hold_expired      Manual waited for the person, who did not come back
  *   hold_unavailable  Manual could not hold this turn, so she stopped
  *
+ * And since ANA-SUMMARY S4:
+ *   client_disconnected  the page lost its connection (a phone locked, a tab
+ *                        closed), so the run was stopped
+ *
+ * And the run row's own reasons (AnA detach §2.10; the client reads them from
+ * DT2, the server writes the first four from DT3), which a follower reads off
+ * the run when the turn ended without a record:
+ *   unattended_limit  nobody was watching for 15 minutes
+ *   session_ended     the session that started the turn ended
+ *   server_shutdown   the server restarted for an update
+ *   orphaned          the server handling the turn stopped responding
+ *   error             the turn ended with an error
+ *   admin_cancelled   an administrator stopped it (the admin-cancel variant
+ *                     of `cancelled`; see anaWorkModel STOP_LINES)
+ *
  * Distinct from `stopped` (the person's Stop, seen by this client) and
  * `interrupted` (the stream failed): a round-limit stop is neither, and must
  * not borrow their flags.
@@ -222,7 +248,47 @@ export type AnaStoppedReason =
   | 'hold_unavailable'
   /** The answer she was writing was cut off: the model's length limit, or a
    *  stream that stalled mid-answer. */
-  | 'answer_cut_off';
+  | 'answer_cut_off'
+  | 'client_disconnected'
+  | 'unattended_limit'
+  | 'session_ended'
+  | 'server_shutdown'
+  | 'orphaned'
+  | 'error'
+  | 'admin_cancelled';
+
+/**
+ * A turn this view follows by polling GET /runs/:runId/events instead of by
+ * its own stream (AnA detach DT2, docs/design/ANA_DETACH_2026-10-08.md §4):
+ * opened on another device, or rejoined after a reload. Every field is the
+ * last poll's, and every time is the server's (ms), read against the poll's
+ * own `serverNow` through `skewMs`.
+ */
+export interface AnaFollow {
+  runId: string;
+  /** 'all' for the person who asked; 'cancel' for an organisation admin (§2.5). */
+  scope: 'all' | 'cancel';
+  /** The run row's status. */
+  status: string;
+  /** When the run started (server ms). */
+  startedAt: number | null;
+  /** The server's clock minus this client's, at the last poll. */
+  skewMs: number;
+  /** The owner's last heartbeat (server ms). */
+  lastBeatAt: number | null;
+  /** The highest seq the owner emitted; above the rows read, a gap (§3.6). */
+  highWater: number;
+  /** The mirror reached its cap (§3.5). */
+  truncated?: boolean;
+  /** The owner finished trying to record the turn (`released_at`). */
+  released?: boolean;
+  /** Waiting on an approval this reader cannot give (an admin's view). */
+  approvalWaiting?: boolean;
+  /** This reader's own network is failing; the last known state stays (§5.1). */
+  unreachable?: boolean;
+  /** The server refused this reader the live progress (403), in its words. */
+  forbidden?: string;
+}
 
 export interface AnaContextUsed {
   uploads: Array<{ fileId: string; fileName: string; mimeType: string; read: 'content' | 'name_only' }>;
@@ -321,8 +387,34 @@ export interface MessageAttachment {
 }
 export interface AnaChatMessage {
   id: string;
+  /**
+   * The stored message's own id (chat_messages.id), for a message read back
+   * from the server: the key its turn's record names it by
+   * (`assistant_message_id`). Absent for a turn sent in this view.
+   */
+  serverId?: number;
   role: 'user' | 'assistant';
   text: string;
+  /**
+   * The Summary's events for this turn, as the server sent them live
+   * (`timeline` frames; shared/ana/turn-timeline.ts). The same events the
+   * record seals, so a reload reads them back from the record, not from here.
+   */
+  timeline?: TimelineEvent[];
+  /**
+   * True while this view is still asking the server, by run id, whether the
+   * turn's record was filed (the confirm waits): the Summary then reads
+   * "Recording…", never "Not recorded".
+   */
+  recordConfirming?: boolean;
+  /** Set while this view follows the turn by polling rather than by its own stream (DT2). */
+  follow?: AnaFollow;
+  /**
+   * The person pressed Stop and the server has not confirmed it (§5.2): the
+   * cancel failed and is being retried. The turn stays as it is meanwhile;
+   * Stopped is shown only once the server says so.
+   */
+  stopUnconfirmed?: boolean;
   /** Files attached to this (user) turn, shown as chips above the bubble. */
   attachments?: MessageAttachment[];
   /** True while tokens are still arriving for this message. */
@@ -352,6 +444,14 @@ export interface AnaChatMessage {
    * never got going cannot read as finished.
    */
   interrupted?: boolean;
+  /** True only when an interrupted stream delivered response text, before any failure copy. */
+  interruptedWithPartialResponse?: boolean;
+  /**
+   * The code the server refused this turn with, when it sent one (for example
+   * `THREAD_PROJECT_MISMATCH`: the conversation belongs to another project).
+   * A host reads it to offer the way out the refusal names; the text says why.
+   */
+  refusalCode?: string;
   /**
    * Intent lens AnA detected for this turn (audit / risk / strategy /
    * improve / compare / auto). Rendered as a small meta chip.
@@ -470,8 +570,9 @@ export interface AnaChatMessage {
   };
   /**
    * Tools AnA invoked this turn, shown as calm status rows for transparency
-   * and audit (e.g. "Computing sample size — biostatistics engine"). Lets the
-   * user see that a deterministic engine ran rather than a free-text guess.
+   * and audit (e.g. "Computed the sample size", with the engine glyph when the
+   * step's capture saw no model). Lets the user see that a deterministic engine
+   * ran rather than a free-text guess.
    */
   toolCalls?: AnaToolCall[];
   /**
@@ -750,6 +851,15 @@ export interface AnaSendOptions {
    * without it sends the host's, never an earlier turn's.
    */
   authoringContext?: AuthoringContextPack | null;
+  /**
+   * The screen a question was asked from, for THIS turn only: its published
+   * surface context and its id (docs/design/ONE_ANA_ONE_CANVAS.md, slice 8).
+   * Every ask now lands in the one conversation, whose own screen context is
+   * the conversation's, so the origin screen's travels with the turn it asked.
+   * Each wins over the hook's `moduleContext` / `screenName`.
+   */
+  moduleContext?: Record<string, unknown> | null;
+  screenName?: string | null;
 }
 
 /** Control status of an in-flight AnA run (null when no run is active). */
@@ -780,8 +890,21 @@ export interface UseAnaChatReturn {
     attachments?: MessageAttachment[],
     sendOpts?: AnaSendOptions,
   ) => Promise<void>;
-  /** Abort the current stream (and cancel the run server-side). */
-  stop: () => void;
+  /**
+   * Stop the run in flight. `'stop'` (the default) is the person's Stop: it
+   * cancels the run on the server and, for a run that has a durable id, shows
+   * Stopped only once the server confirms it — a failed cancel is retried and
+   * the turn goes on meanwhile (§5.2). `'leave'` is this view going away: it
+   * never cancels and never shows Stopped.
+   */
+  stop: (abortIntent?: 'stop' | 'leave') => void | Promise<void>;
+  /**
+   * Who this view is to the turn it follows: 'all' when it is the person who
+   * asked (every control, and the composer steers), 'cancel' when it is an
+   * organisation admin watching (no steer; Stop only once DT3 accepts an
+   * admin's cancel). Null while no turn is followed.
+   */
+  followScope?: 'all' | 'cancel' | null;
   /** Control status of the in-flight run (drives the pause/resume UI). */
   runStatus: RunControlStatus;
   /**
@@ -818,4 +941,6 @@ export interface UseAnaChatReturn {
   threadId: string | null;
   /** True while loadThread is fetching messages. */
   isLoadingThread: boolean;
+  /** A failed history load blocks sending until retry or reset. */
+  threadLoadError?: { threadId: string; message: string } | null;
 }

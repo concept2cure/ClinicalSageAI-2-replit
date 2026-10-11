@@ -48,6 +48,12 @@ function res(payload: unknown, status = 200) {
   return { ok: status < 400, status, json: async () => payload } as Response;
 }
 
+/* The list as the server returns it: scoped to ?programId when given (QA j3 finding (b)). */
+function submissionList<T extends { programId?: string | null }>(rows: T[], url: string): T[] {
+  const program = new URL(url, 'http://localhost').searchParams.get('programId');
+  return program ? rows.filter((row) => row.programId === program) : rows;
+}
+
 /** Every call the surface made, as [method, url, body] triples. */
 const calls = () => apiRequest.mock.calls as Array<[string, string, unknown?]>;
 const callsTo = (method: string, url: string) =>
@@ -490,8 +496,8 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
           data: { totalSections: 2, approvedSections: 2, staleSections: 0, openCriticalContradictions: 0, exportReady: true },
         });
       }
-      if (m === 'GET' && u === '/api/submissions') {
-        return res([{ id: 10, title: 'ABC-123 IND', applicationType: 'ind', primaryRegion: 'FDA', status: 'active' }]);
+      if (m === 'GET' && (u === '/api/submissions' || u.startsWith('/api/submissions?'))) {
+        return res(submissionList([{ id: 10, title: 'ABC-123 IND', applicationType: 'ind', primaryRegion: 'FDA', status: 'active', programId: PROJECT }], u));
       }
       if (m === 'GET' && u === '/api/submissions/10/sequences') {
         return res([
@@ -551,11 +557,11 @@ describe('CmModule3Build — the operating system, finally reachable', () => {
 
   it('does not place without a stated reason, and offers only this program’s submissions', async () => {
     wirePlacement((m, u) =>
-      m === 'GET' && u === '/api/submissions'
-        ? res([
+      m === 'GET' && (u === '/api/submissions' || u.startsWith('/api/submissions?'))
+        ? res(submissionList([
             { id: 10, title: 'ABC-123 IND', applicationType: 'ind', primaryRegion: 'FDA', status: 'active', programId: PROJECT },
             { id: 11, title: 'Another program IND', applicationType: 'ind', primaryRegion: 'FDA', status: 'active', programId: '99999999-0000-4000-8000-000000000099' },
-          ])
+          ], u))
         : null,
     );
     render(<CmModule3Build ask={() => {}} />);

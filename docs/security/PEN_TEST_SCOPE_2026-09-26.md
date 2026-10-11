@@ -379,6 +379,17 @@ door); a signature, approval, release, retirement or freeze without the ceremony
 or written with a body-supplied actor; a governed write from model output without a person's confirmation; upload
 abuse (§2.7); SSRF from the connectors and webhooks; an out-of-scope module reached despite `LAUNCH_SCOPE`.
 
+**SQL injection is critical on its own, whatever RLS does** (added 2026-10-08, D3). RLS here is a control over
+application code, not over SQL an attacker writes. The tenant selector (`app.current_tenant_id`) and the
+isolation switches (`app.rls_enforce`, `app.bypass_rls`, `app.is_admin`, `app.current_user_role = 'app_super_admin'`)
+are session variables that `app_service` can set. So a statement the attacker controls can choose any tenant, and
+no policy stops it (shown on PostgreSQL 16 in `docs/evidence/D3/2026-10-08-isolation-not-session-switchable/`).
+Any injection reaching SQL, through a query parameter, a report or search filter, an export option, a model-written
+query or a connector, is to be reported as cross-tenant critical, not mitigated-by-RLS. One related scenario must
+produce a finding if it succeeds: a switch set during one request reaching another tenant's next request on the
+same pooled connection. The platform pins the switches whenever a scope is applied and clears them on release
+(`server/db/sessionScope.ts`).
+
 ## 5. Rules of engagement
 
 **Accounts.** The founder provisions, before kick-off, on staging: organisations A and B with owner, admin, manager,

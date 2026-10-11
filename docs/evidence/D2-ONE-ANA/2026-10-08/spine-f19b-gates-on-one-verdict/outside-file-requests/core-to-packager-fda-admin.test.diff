@@ -1,0 +1,14 @@
+--- a/server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts
++++ b/server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts
+@@ -41,7 +41,10 @@
+   });
+ 
+   it('an amendment / response sequence is an Original Application, sub-type amendment', () => {
+-    for (const type of ['amendment', 'response', 'variation']) {
++    // 'variation' is no longer here: FDA has no variation, and coding one as an
++    // amendment misfiled a post-approval change. It is refused — see
++    // __tests__/fda-variation-not-coded.test.ts (F19b, 2026-10-08).
++    for (const type of ['amendment', 'response']) {
+       expect(fdaSubmissionTypeFor({ sequenceNumber: '0003', region: 'fda', type }, [])).toEqual({
+         submissionType: 'original',
+         submissionSubType: 'amendment',

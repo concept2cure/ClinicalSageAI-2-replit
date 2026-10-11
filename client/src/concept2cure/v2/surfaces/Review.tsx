@@ -23,6 +23,15 @@
  * electronic signature — see DecisionModal below. Binding signatures are applied
  * from the authoring workspace (server/routes/authoring.router.ts), re-verified
  * and sealed against a frozen document version.
+ *
+ * ── Opening the document (2026-10-08) ────────────────────────────────────────
+ * "Open in editor", "Open the document to sign" and, on an AI comment, "Open
+ * the document" open THE reviewed document, by id, through the editor
+ * deep-link channel (../editorTarget.ts), the way Vault's "Open in editor"
+ * does. They used to navigate to the editor with no document, so the reviewer
+ * landed on its list (docs/design/ONE_ANA_ONE_CANVAS.md §4.7, slice 19). The
+ * AI comment's button said "Apply in editor"; nothing applies the suggestion,
+ * so it is named for what it does.
  */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
@@ -33,15 +42,17 @@ import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { useDialog } from '../useDialog';
 import type { ReviewItem, ReviewComment, ReviewWorkflow } from '../fixtures/review-data';
-import { STATUS_TONE } from '../fixtures/review-data';
 import { assessmentStateFor, hasAnswer } from '../assessmentState';
-import { readShellProject } from '../shellProject';
+import { publishShellProject, readShellProject } from '../shellProject';
+import { setEditorTarget } from '../editorTarget';
 import { ReviewThreadsPane } from './ReviewThreads';
+import { ReviewVaultQueue, type VaultReviewItem } from './ReviewVaultQueue';
+import { reviewStanding, REVIEW_STANDING_PILL_TONE } from './reviewStanding';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
 /** Sub-headline shared by the surface header and its honest empty/error states. */
-const REVIEW_SUB = 'Reviews requested in Authoring: approve, request changes with a reason, or decline.';
+const REVIEW_SUB = 'Reviews requested in Authoring: approve, request changes with a reason, or decline. Vault versions sent for review are listed with who can sign them.';
 
 /**
  * The render contract of GET /api/review/board (server/routes/review-board-routes.ts),
@@ -52,6 +63,8 @@ interface ReviewBoardData {
   queue: ReviewItem[];
   workflows: Record<string, ReviewWorkflow>;
   thread: ReviewComment[];
+  /** Vault versions in review (QA 2026-10-08, walk 2, j3): null when that read failed. */
+  vaultReviews?: VaultReviewItem[] | null;
 }
 
 type Scope = 'all' | 'mine' | 'requested';
@@ -136,7 +149,35 @@ function ScopeBar({ scope, onScope, program, onlyProgram, onOnlyProgram }: {
   );
 }
 
+/**
+ * Open the reviewed document itself in the editor, not the editor's list.
+ *
+ * The target names the document by id, the strongest claim the channel takes:
+ * the editor opens it or states the miss. The editor's document list is scoped
+ * to the open program, so when the document belongs to another program, that
+ * program is opened first: REPLACE, never merge, as MdxSurfaceHost's
+ * openEditor does. A document with no program opens only if the editor can
+ * see it, and otherwise the editor says it could not.
+ */
+export function openReviewDocument(
+  item: Pick<ReviewItem, 'id' | 'programId' | 'prog'>,
+  onNav: (id: string) => void,
+): void {
+  const shell = readShellProject();
+  if (item.programId && String(shell?.id ?? '') !== item.programId) {
+    publishShellProject({ id: item.programId, ...(item.prog ? { title: item.prog } : {}) });
+  }
+  setEditorTarget({ docType: null, docId: item.id, programId: item.programId, programTitle: item.prog });
+  onNav('document-authoring');
+}
+
 /* ── Review-decision modal ── */
+
+/** What a thrown review request says: the API's own message, or that nothing was reached. */
+function unreachedMessage(e: unknown): string {
+  const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+  return known && (e as Error).message ? (e as Error).message : 'Could not reach the authoring service. Nothing changed.';
+}
 
 function DecisionModal({ onClose, item, onRecorded }: {
   onClose: () => void;
@@ -158,16 +199,21 @@ function DecisionModal({ onClose, item, onRecorded }: {
    * exists: server/routes/authoring.router.ts applies a re-verified signature
    * bound to a frozen document version, from the authoring workspace.
    */
-  const [decision, setDecision] = useState<Verdict>('approved');
+  /* P-21 (docs/LAUNCH_DEFINITION_OF_DONE.md): a regulated choice starts
+     unstated. This opened on 'approved' with a "Record approval" button, so one
+     click recorded an approval verdict nobody chose (QA 2026-10-08, walk 2,
+     j4). '' is "Not stated — choose", and nothing is sent until a verdict is. */
+  const [decision, setDecision] = useState<Verdict | ''>('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  const needsReason = decision !== 'approved';
+  const chosen = decision !== '';
+  const needsReason = decision !== 'approved' && chosen;
   const reasonOk = !needsReason || reason.trim().length >= 8;
 
   const record = async () => {
-    if (busy) return;
+    if (busy || decision === '') return;
     if (!reasonOk) {
       setErr('A change request or a rejection needs a reason of at least 8 characters — it is what the author has to act on.');
       return;
@@ -188,8 +234,7 @@ function DecisionModal({ onClose, item, onRecorded }: {
       }
       onRecorded?.(decision);
     } catch (e) {
-      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-      setErr(known && (e as Error).message ? (e as Error).message : 'Could not reach the authoring service. Nothing changed.');
+      setErr(unreachedMessage(e));
     } finally {
       setBusy(false);
     }
@@ -202,7 +247,8 @@ function DecisionModal({ onClose, item, onRecorded }: {
   const submitLabel =
     decision === 'approved' ? 'Record approval'
     : decision === 'changes_requested' ? 'Record change request'
-    : 'Record rejection';
+    : decision === 'rejected' ? 'Record rejection'
+    : 'Record decision';
 
   return (
     <div className="esign-bd" onClick={onClose}>
@@ -231,8 +277,9 @@ function DecisionModal({ onClose, item, onRecorded }: {
             <select
               id="rv-decision"
               value={decision}
-              onChange={(e) => setDecision(e.target.value as Verdict)}
+              onChange={(e) => setDecision(e.target.value as Verdict | '')}
             >
+              <option value="">Not stated — choose</option>
               <option value="approved">Approve</option>
               <option value="changes_requested">Request changes — send it back with a reason</option>
               <option value="rejected">Decline — reject this document</option>
@@ -254,9 +301,15 @@ function DecisionModal({ onClose, item, onRecorded }: {
           </div>
           {err && <div className="esign-err" role="alert">{err}</div>}
           <div className="esign-manifest">
-            This records your review verdict — <b>{REVIEW_STATUS_LABEL[decision]}</b> — on
-            the document in the authoring workflow, where the author and the other
-            reviewers see it. It is <b>not</b> a 21 CFR §11.50 signature manifestation —
+            {chosen ? (
+              <>This records your review verdict — <b>{REVIEW_STATUS_LABEL[decision]}</b> — on
+              the document in the authoring workflow, where the author and the other
+              reviewers see it.</>
+            ) : (
+              <>No verdict is chosen yet, and nothing is recorded until one is. The verdict you
+              choose is recorded on the document in the authoring workflow, where the author and
+              the other reviewers see it.</>
+            )} It is <b>not</b> a 21 CFR §11.50 signature manifestation —
             no signer identity is re-verified here and nothing is sealed against a
             frozen document version. Apply a binding signature from the authoring
             workspace, where the signer's password is re-verified and the signature sealed.
@@ -268,7 +321,7 @@ function DecisionModal({ onClose, item, onRecorded }: {
             className="btn primary"
             style={{ flex: 1, justifyContent: 'center' }}
             onClick={record}
-            disabled={busy || !reasonOk}
+            disabled={busy || !chosen || !reasonOk}
           >
             {I.shieldCheck} {busy ? 'Recording…' : submitLabel}
           </button>
@@ -335,7 +388,6 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   const [requesting, setRequesting] = useState(false);
   const [requestErr, setRequestErr] = useState('');
   const [scope, setScope] = useState<Scope>('all');
-  const [onlyProgram, setOnlyProgram] = useState(false);
   const [toast, fireToast] = useToast();
   /** The queue column — "Open the queue" scrolls to it and focuses the row it selected. */
   const queueRef = useRef<HTMLDivElement>(null);
@@ -348,6 +400,11 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     if (!p || !UUID_RE.test(String(p.id))) return null;
     return { id: String(p.id), title: p.title || p.code || p.product || String(p.id) };
   }, []);
+  /* With a program open, the board starts on THAT program. It started
+     org-wide, so the screen reached from BX-256's project home listed BX-204's
+     device items under it (QA 2026-10-08, j1). Every program stays one click
+     away: the toggle widens the board on purpose. */
+  const [onlyProgram, setOnlyProgram] = useState(() => program !== null);
 
   // Live, org-scoped review board — GET /api/review/board → { success, data }.
   // useLiveData unwraps the success envelope, so `board` is the render contract
@@ -516,8 +573,14 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   }, [sel, queue]);
 
   const scopeBar = (
-    <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={setOnlyProgram} />
+    <>
+      <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={setOnlyProgram} />
+      {/* Send for review on a Vault version assigns nobody, so it was in no
+          queue (QA 2026-10-08, walk 2, j3). Listed here with who has it. */}
+      <ReviewVaultQueue items={board?.vaultReviews} onOpenVault={() => onNav('vault')} />
+    </>
   );
+  const vaultInReview = (board?.vaultReviews ?? []).length;
 
   // ── The three honest states, before any row is dereferenced. No fixture ──
   if (boardState.loading && queue.length === 0) {
@@ -549,8 +612,11 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
        it comes back as `queue: []`. No array means nothing was read, and the
        honest copy says that instead of reassuring. */
     const boardRead = Array.isArray(board?.queue);
-    const emptyTitle =
-      scope === 'mine' ? 'Nothing awaits your review'
+    /* With Vault versions listed above, "nothing" would be untrue: the claim
+       narrows to the Authoring queue. */
+    const emptyTitle = vaultInReview > 0
+      ? 'No Authoring document is in this queue'
+      : scope === 'mine' ? 'Nothing awaits your review'
       : scope === 'requested' ? 'You have not requested a review'
       : 'Nothing is in review';
     const emptyHint =
@@ -575,7 +641,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
           />
         )}
         {/* Threads can exist even when no document is on the approval board. */}
-        <ReviewThreadsPane onNotice={fireToast} board={boardContext} />
+        <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? program : null} />
         <C2CToast msg={toast} />
       </div>
     );
@@ -584,9 +650,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   const item = queue.find((r) => r.id === sel) || queue[0];
   const wf: ReviewWorkflow | null = workflows[item.id] || null;
 
-  const openEditor = () => {
-    onNav('document-authoring');
-  };
+  const openEditor = () => openReviewDocument(item, onNav);
 
   /**
    * Request changes — the authoring verdict `changes_requested`, through
@@ -775,7 +839,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
             <button key={r.id} className="lrow" data-on={sel === r.id || undefined} onClick={() => selectRow(r.id)}>
               <div className="lrow-top">
                 <span className="mono">{r.prog ?? r.module ?? ''}</span>
-                <Pill tone={STATUS_TONE[r.state] || 'warn'}>{r.state}</Pill>
+                <Pill tone={REVIEW_STANDING_PILL_TONE[reviewStanding(r).group]}>{reviewStanding(r).words}</Pill>
               </div>
               <div className="lrow-title">{r.doc}</div>
               <div className="lrow-meta"><span>{r.reviewer}{r.role ? ' · ' + r.role : ''}</span></div>
@@ -815,7 +879,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                 : item.myReviewStatus && item.myReviewStatus !== 'pending'
                   ? <RecordDecision item={item} />
                   : item.atMySignOff
-                    ? <button className="btn primary" onClick={openEditor}>{I.lock} Sign in the authoring workspace</button>
+                    ? <button className="btn primary" onClick={openEditor} data-testid="rv-open-to-sign">{I.lock} Open the document to sign</button>
                     : item.state === 'approved'
                       ? <span className="rd-chip tone-ok" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.shieldCheck} Approved</span>
                       : item.state === 'changes-requested'
@@ -908,7 +972,10 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
               unread chain. */}
           {!wf && (
             <div className="esign-banner">
-              <span className="ico">{I.gitBranch}</span> Not yet submitted for sign-off. The approval chain appears here once the author submits the document from the authoring workspace.
+              {/* QA 2026-10-08 (j4): this said the author submits the document
+                  from the authoring workspace; no control there submits to a
+                  chain. What is true is said instead. */}
+              <span className="ico">{I.gitBranch}</span> No approval chain: this document has not been submitted to one. In the authoring workspace it is approved by an Approval e-signature, which an approver applies after the review.
             </div>
           )}
           {wf && (
@@ -948,7 +1015,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                     {Math.round(item.conf * 100)}% confidence
                   </span>
                 )}
-                <button className="btn ghost" style={{ height: 28 }} onClick={openEditor}>{I.externalLink} Open in editor</button>
+                <button className="btn ghost" style={{ height: 28 }} onClick={openEditor} data-testid="rv-open-in-editor">{I.externalLink} Open in editor</button>
               </div>
             </div>
             <div className="rv-doc-page">
@@ -991,7 +1058,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                 {c.state === 'open' && (
                   <div className="cmt-actions">
                     <button className="btn ghost" style={{ height: 26 }} onClick={() => resolveCmt(c.id)}>Resolve</button>
-                    {c.ai && <button className="btn ghost" style={{ height: 26 }} onClick={openEditor}>Apply in editor</button>}
+                    {c.ai && <button className="btn ghost" style={{ height: 26 }} onClick={openEditor} data-testid="rv-comment-open-doc">Open the document</button>}
                   </div>
                 )}
               </div>
@@ -1014,7 +1081,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
       {/* Real, persisted review threads (Phase-13 backend) — assigned to the
           signed-in reviewer, with reply / request-changes / resolve in place. */}
-      <ReviewThreadsPane onNotice={fireToast} board={boardContext} />
+      <ReviewThreadsPane onNotice={fireToast} board={boardContext} program={onlyProgram ? program : null} />
 
       <C2CToast msg={toast} />
     </div>

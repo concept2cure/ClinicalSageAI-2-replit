@@ -3043,6 +3043,102 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-pma-pack-software-doc-level-*.
   'migrations/20261005b_pma_fda_outline_v1_1_software_documentation_level.sql',
 
+  // W2/D2 + D5: append-only typed logical file/extracted-data dispositions.
+  // Source/Vault/lineage rows and physical retention remain intact. Before the
+  // final RLS sweeps because this is public + organization_id INTEGER.
+  'migrations/20261006_document_data_dispositions.sql',
+
+  // ── Every program has its project record (2026-10-08, P-19) ──────────────
+  // Inserts the projects row intake inserts (ensureProgramProjectAnchor's
+  // values and workspace rule) for each live program that no projects row
+  // anchors: programs a seed or a pre-anchor intake wrote. Skips, with a
+  // NOTICE, an organisation whose workspace is ambiguous, and a program another
+  // organisation's row names. After 20260814 (whose code/name link runs first),
+  // 20260923, 20260926b and 20261001b. INSERT … WHERE NOT EXISTS … ON CONFLICT
+  // DO NOTHING; creates no table, drops nothing. Evidence
+  // docs/evidence/QA-2026-10-08/program-anchor/.
+  'migrations/20261008_program_project_anchor_backfill.sql',
+
+  // ── The 1571's sponsor address and IND type, on the program (2026-10-08) ──
+  // P-20 follow-up: two nullable TEXT columns on regulatory_programs, which the
+  // IND forms panel saves (PUT /api/ind-forms/program-facts) and the 1571 build
+  // reads. ADD COLUMN IF NOT EXISTS only; no CHECK (the IND type is validated
+  // against the forms registry by the route), no DROP. regulatory_programs is
+  // public + organization_id INTEGER, so it creates nothing the sweeps below
+  // must reach. Evidence docs/evidence/QA-2026-10-08/ind-reporting-3/.
+  'migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql',
+
+  // ── The Data Room keeps the text it read, and is searchable (2026-10-08) ──
+  // Data Room catalog S2 (D2): extracted_text, char_count, page_count and
+  // text_extracted_at on cre_evidence_sources, plus a GIN full-text index over
+  // vault.document_search_vector for client documents. ADD COLUMN / CREATE
+  // INDEX IF NOT EXISTS, each guarded; no DROP. The table is public with
+  // organization_id INTEGER and already policied. Evidence
+  // docs/evidence/D2-DATA-ROOM-CATALOG/2026-10-08-s2-processed-searchable/.
+  'migrations/20261008c_data_room_source_text.sql',
+
+  // ── A capture names its study, of its own organization (2026-10-08) ──
+  // Data Room catalog S3 (D2): study_ref on cre_evidence_sources, a unique
+  // (id, tenant_id) index on cdisc_prm_studies, and a NOT VALID same-org key
+  // ON DELETE SET NULL (study_ref). Each guarded; no DROP; nothing new for the
+  // sweeps to reach. After 20260926b, which keys the study to its program.
+  'migrations/20261008d_cre_source_study_ref.sql',
+
+  // ── AnA's catalog record is a suggestion a person confirms (2026-10-08) ──
+  // Data Room catalog S4 (D5): catalog_state, the proposer (agent, model,
+  // thread, turn) and the person's confirmation or correction on
+  // vault.document_catalog, with a CHECK added only when absent. ADD COLUMN
+  // IF NOT EXISTS; no DROP; no row rewritten. After 20260905_document_catalog.
+  'migrations/20261008e_document_catalog_attribution.sql',
+
+  // ── A computed figure names its stored, reproducible run (2026-10-08) ──
+  // Data Room catalog S5b (D2): public.stats_computation_runs (inputs, outputs,
+  // their SHA-256, engine, version, seed), organization_id INTEGER NOT NULL for
+  // the sweeps below, and same-organization keys to the project and the study
+  // design ON DELETE SET NULL of their own column. IF NOT EXISTS; no DROP.
+  // After 20261008d, whose cdisc_prm_studies (id, tenant_id) index it keys to.
+  'migrations/20261008f_stats_computation_runs.sql',
+  // ── The readiness digest's registry context, on the project record ───────
+  // (2026-10-08, QA second walk j8). Adds registryId / submissionType keys to
+  // projects.metadata where the program's own organisation's record holds
+  // none: the program's recorded wizard choice, else the entry its filing type
+  // and agency fix (PROGRAM_TYPE_REGISTRY, server/services/c2c/program-
+  // registry-context.ts). After 20261008, whose anchor rows it completes in
+  // the same deploy. UPDATE … WHERE no context; never overwrites, creates no
+  // table, drops nothing. Evidence docs/evidence/QA-2026-10-08/intake-readiness/.
+  'migrations/20261008c_projects_registry_context.sql',
+
+  // ── A review task raised on an authoring document is on its project ──────
+  // (2026-10-08, QA second walk j1). Sets unified_tasks.project_id where NULL
+  // for tasks whose source is an authoring document, to that document's
+  // program's project record in the same organisation (lowest id, as
+  // readProgramAnchorRow reads it) — the rule POST /api/tasks/tasks now applies
+  // (services/tasking/task-project.ts). After 20261008, whose anchors it reads.
+  // UPDATE … WHERE project_id IS NULL; creates nothing, drops nothing.
+  // Evidence docs/evidence/QA-2026-10-08/intake-readiness/.
+  'migrations/20261008d_unified_tasks_authoring_review_project.sql',
+
+  // ── An attached Module 1 form records the forms engine's check ───────────
+  // (2026-10-08, QA second walk j7). rendered_leaf_files.required_fields_missing
+  // text[]: '{}' complete, non-empty attached-not-complete, NULL never checked
+  // (never complete). The IND checklist counts a sponsor-attached form only on
+  // '{}'. ADD COLUMN IF NOT EXISTS; no backfill (earlier attachments were never
+  // checked); drops nothing. After 20260903 (the table). Evidence
+  // docs/evidence/QA-2026-10-08/intake-readiness/.
+  'migrations/20261008e_rendered_leaf_files_required_fields_missing.sql',
+
+  // ── AnA detach DT1: the live turn's timeline mirror (2026-10-08) ─────────
+  // public.ana_run_events: append-only (guard trigger), deleted only through
+  // three SECURITY DEFINER doors owned by the NOLOGIN ana_run_events_purger
+  // role (release after the record is sealed, legal-hold-aware expiry, the
+  // tenant purge). After 20260917 (ana_runs, its FK parent, amended in place
+  // the same day with six columns) and 20260926 (ana_turn_records, which the
+  // guard and the doors read). public + organization_id INTEGER NOT NULL, so
+  // it sits above the final sweeps, which give it its tenant policy. Creates
+  // only; drops nothing. docs/design/ANA_DETACH_2026-10-08.md §3; evidence
+  // docs/evidence/ANA-SUMMARY/2026-10-08/DT1-run-events/.
+  'migrations/20261008f_ana_run_events.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

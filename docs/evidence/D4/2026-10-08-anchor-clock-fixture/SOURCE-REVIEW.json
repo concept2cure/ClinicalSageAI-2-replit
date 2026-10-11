@@ -1,0 +1,35 @@
+{
+  "readOnlySourceReview": true,
+  "sourceBase": "c7ae8c0702c50f8ab37a688ef9a5a35079edf937",
+  "checks": {
+    "case12IsUniqueInBothVersions": true,
+    "everyByteOutsideCase12CallbackUnchanged": true,
+    "deletedCountAssertionUnchanged": true,
+    "completeVerdictAssertionUnchanged": true,
+    "originalArchiveDoorCallUnchanged": true,
+    "originalDormantRowsAndAnchorUnchanged": true
+  },
+  "protectedSources": [
+    {
+      "path": "server/services/audit/chain-anchor.ts",
+      "identicalToBase": true,
+      "gitBlob": "cee8d0791b475f34bb9270143fbe0343ec47547b"
+    },
+    {
+      "path": "server/services/audit/chain.ts",
+      "identicalToBase": true,
+      "gitBlob": "f05dcb5411be28fbe2a8247fdd40707a18a4bfb7"
+    },
+    {
+      "path": "db/migrations/20260617_audit_logs_immutability.sql",
+      "identicalToBase": true,
+      "gitBlob": "0886876fa9210df7661d3803ac13c1146e16491d"
+    },
+    {
+      "path": "migrations/20260921_audit_logs_chain_seq.sql",
+      "identicalToBase": true,
+      "gitBlob": "1498ac2ae2342f87e63f32af153c2c9a379c3308"
+    }
+  ],
+  "nativeSourceSha256": "0913b6ab79c14155ea2e618bca4bbafa81a606e8fa7968be463b22001da77f3c"
+}

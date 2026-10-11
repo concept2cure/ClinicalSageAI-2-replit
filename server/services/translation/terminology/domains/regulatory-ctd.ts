@@ -7,7 +7,7 @@
  *
  * Authoring conventions for this module:
  *  - DNT identifiers (eCTD, eCTD module labels M1–M5, regulatory citations like
- *    21 CFR, ICH guideline ids like ICH E6(R2)) carry `doNotTranslate: true` and
+ *    21 CFR, ICH guideline ids like ICH E6(R3)) carry `doNotTranslate: true` and
  *    `target: null`; they are masked before MT and restored verbatim.
  *  - Translatable submission/scientific terms use `category: 'preferred_term'`
  *    and a Japanese `target`.
@@ -110,15 +110,17 @@ export const REGULATORY_CTD_TERMS: TerminologyEntry[] = [
   // ───────────────────────────────────────────────────────────────────────────
   // DNT identifiers: ICH guideline ids
   // ───────────────────────────────────────────────────────────────────────────
+  // Legacy GCP revision id, superseded by ICH E6(R3) (2025-01-06); kept as a
+  // DNT term because real documents still contain it.
   {
     source: 'ICH E6(R2)',
     target: null,
     domain: DOMAIN,
     category: 'regulatory_citation',
     doNotTranslate: true,
-    sourceRef: 'ICH E6(R2) Good Clinical Practice',
+    sourceRef: 'ICH E6(R2) Good Clinical Practice (superseded by ICH E6(R3), 2025-01-06)',
     verificationStatus: 'unverified',
-    notes: 'ICH guideline id (GCP). Citation kept verbatim.',
+    notes: 'ICH guideline id (GCP), legacy revision still present in real documents. Citation kept verbatim.',
   },
   {
     source: 'ICH E8(R1)',

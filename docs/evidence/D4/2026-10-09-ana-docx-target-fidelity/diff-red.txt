@@ -1,0 +1,243 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts
+{
+  "timestamp": "2026-10-09T07:57:58.390Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > needs no caller text and binds every resolved identity and exact file/text digest
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > accepts identical optional caller text without upgrading source qualification
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > rejects forged caller text even when it exactly matches the DOCX extraction
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > cannot pass substantive divergence just because headings are present
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > reports a missing required string despite exact persisted text fidelity
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > detects a changed dose even when the dose heading and units remain present 44ms
+   → expected { ok: true, …(8) } to match object { ok: false, …(2) }
+(7 matching properties omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > passes exact repeated headings despite the heuristic summary reporting a modified section 16ms
+   → expected 0 to be greater than 0
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > refuses an omitted duplicate line despite matching unordered line sets 12ms
+   → expected { Object (error) } to match object { ok: false, artifactVerified: false }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > refuses an reordered duplicate line despite matching unordered line sets 12ms
+   → expected { Object (error) } to match object { ok: false, artifactVerified: false }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > refuses a newline-heavy mismatch above the line-product budget before allocating LCS 13ms
+   → expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > permits an exact newline-heavy match without allocating a quadratic mismatch diff 17ms
+   → expected { Object (error) } to match object { ok: true, artifactVerified: true }
+(1 matching property omitted from actual)
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > blank id cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > spaces id cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > null id cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > number id cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > object id cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > missing id cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > missing version cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > null version cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > string version cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > zero version cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > negative version cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > fraction version cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > overflow version cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > NaN version cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > infinite version cannot silently request the legacy caller-text path
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses missing project honestly
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses UUID-only project honestly
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses string project honestly
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses zero project honestly
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses fraction project honestly
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses overflow project honestly
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses negative organization honestly
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses fraction organization honestly
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses overflow organization honestly
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > explicit malformed target selectors fail before OCR or database access > refuses string organization honestly
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses another organization artifact
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses an artifact in another project of the same organization
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > ignores input project_id as authority and cannot override the context project
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a project owned by another organization
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses an unavailable project even if artifact rows still name it
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing external artifact ID
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > does not treat an internal numeric ID string as the selected external ID
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a selected version that exists only under a different artifact
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a selected version belonging to another organization
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing selected version
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses an older version even when the old and new text hashes coincide
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses head content different from the selected persisted version
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses corrupt artifact hashes rather than trusting equal stored digests
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses corrupt version hashes rather than trusting equal stored digests
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses corrupt both hashes rather than trusting equal stored digests
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing artifact hash
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a missing version hash
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a rendition excluded by a real remove_data disposition
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > refuses a rendition excluded by a real supersede disposition
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > owned current artifact/version and real disposition policy are mandatory > can compare retained current text after keep_data without claiming scientific verification
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed when the projects read fails
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed when the concept2cure_artifact_versions read fails
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed when the document_data_dispositions read fails
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a head change made during extraction
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a version change made during extraction
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a version_number change made during extraction
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a removed_version change made during extraction
+ × server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a replacement_version change made during extraction 14ms
+   → expected { ok: true, …(9) } to match object { ok: false, …(2) }
+(12 matching properties omitted from actual)
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a removed_project change made during extraction
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a withdrawal change made during extraction
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > reports a failed extractor rather than inventing fidelity
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > fails closed if the recheck database read fails after successful extraction
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > marks caller_text_fidelity explicitly unbound, even with forged positive qualifiers
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > marks required_strings_only explicitly unbound, even with forged positive qualifiers
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > does not let a copied persisted report become seal proof
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > does not let a copied caller_text report become seal proof
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > does not let a copied required_strings report become seal proof
+ ↓ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > caller strings are scoped findings and cannot qualify verified seals > retains workspace isolation even when persisted selectors are valid
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > detects a changed dose even when the dose heading and units remain present
+AssertionError: expected { ok: true, …(8) } to match object { ok: false, …(2) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "artifactVerified": false,
+    "missingRequiredStrings": [],
+-   "ok": false,
++   "ok": true,
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:176:20
+    174|     state.value.text = '2 DOSAGE\nDose is 5 mg once daily.';
+    175|     const result = await run({ required_strings: ['2 DOSAGE', 'mg once…
+    176|     expect(result).toMatchObject({ ok: false, artifactVerified: false,…
+       |                    ^
+    177|     expect(result.divergence.additions + result.divergence.deletions).…
+    178|     nonsealable(result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > passes exact repeated headings despite the heuristic summary reporting a modified section
+AssertionError: expected 0 to be greater than 0
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:185:40
+    183|     await storedText(text);
+    184|     const heuristic = diffDocumentStructure(text, text);
+    185|     expect(heuristic.summary.modified).toBeGreaterThan(0);
+       |                                        ^
+    186|     expect(heuristic.flat).toMatchObject({ additions: 0, deletions: 0 …
+    187|     const result = await run();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > refuses an omitted duplicate line despite matching unordered line sets
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > refuses an reordered duplicate line despite matching unordered line sets
+AssertionError: expected { Object (error) } to match object { ok: false, artifactVerified: false }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "artifactVerified": false,
+-   "ok": false,
++   "error": "verify_docx_against_source requires expected_text and/or a non-empty required_strings array.",
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:201:20
+    199|     expect(new Set(text.split('\n'))).toEqual(new Set(extracted.split(…
+    200|     const result = await run();
+    201|     expect(result).toMatchObject({ ok: false, artifactVerified: false …
+       |                    ^
+    202|     expect(result.divergence.additions + result.divergence.deletions).…
+    203|     nonsealable(result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > refuses a newline-heavy mismatch above the line-product budget before allocating LCS
+AssertionError: expected { Object (error) } to match object { ok: false, …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_DIFF_LIMIT",
+-   "ok": false,
+-   "sealEligible": false,
++   "error": "verify_docx_against_source requires expected_text and/or a non-empty required_strings array.",
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:210:20
+    208|     state.value.text = Array.from({ length: 1_100 }, (_, index) => `Ch…
+    209|     const result = await run();
+    210|     expect(result).toMatchObject({ ok: false, code: 'VERIFICATION_DIFF…
+       |                    ^
+    211|     expect(result.target).toBeUndefined();
+    212|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > registered DOCX verifier compares server-loaded persisted current text > permits an exact newline-heavy match without allocating a quadratic mismatch diff
+AssertionError: expected { Object (error) } to match object { ok: true, artifactVerified: true }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "artifactVerified": true,
+-   "ok": true,
++   "error": "verify_docx_against_source requires expected_text and/or a non-empty required_strings array.",
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:217:20
+    215|     await storedText(Array.from({ length: 1_100 }, (_, index) => `Sour…
+    216|     const result = await run();
+    217|     expect(result).toMatchObject({ ok: true, artifactVerified: true });
+       |                    ^
+    218|     expect(result.divergence).toMatchObject({ additions: 0, deletions:…
+    219|     nonsealable(result);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts > failed reads and extraction-time changes never leave usable target proof > refuses a replacement_version change made during extraction
+AssertionError: expected { ok: true, …(9) } to match object { ok: false, …(2) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VERIFICATION_TARGET_CHANGED",
+-   "ok": false,
+-   "sealEligible": false,
++   "ok": true,
+  }
+
+ ❯ server/services/ana/__tests__/verify-docx-persisted-target.pglite.test.ts:346:22
+    344|       };
+    345|       const result = await run({ expected_text: TEXT });
+    346|       expect(result).toMatchObject({ ok: false, code: 'VERIFICATION_TA…
+       |                      ^
+    347|       expect(result.target).toBeUndefined();
+    348|       expect(state.extract).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 67 skipped (74)
+   Start at  03:57:52
+   Duration  8.22s (transform 4.10s, setup 59ms, import 5.98s, tests 1.94s, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-docx-target-fidelity/diff-red.json

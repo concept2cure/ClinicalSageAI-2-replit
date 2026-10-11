@@ -20,7 +20,7 @@ import {
   getSectionBlueprintForEntry,
 } from '../../../shared/regulatory/project-bootstrap.js';
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
-import { getSectionBlueprint } from './sectionBlueprintCatalog.js';
+import { getSectionBlueprint, getSectionBlueprintContext } from './sectionBlueprintCatalog.js';
 import { getTaskBlueprint } from './taskBlueprintCatalog.js';
 import { buildDefaultInstructions } from './defaultInstructionBuilder.js';
 import type {
@@ -60,6 +60,7 @@ export interface BootstrapResult {
 
 export interface SectionRow {
   sectionCode: string;
+  /** CTD M1–M5 where applicable; otherwise the document's authoring group. */
   module: string;
   title: string;
   status: string;
@@ -104,7 +105,7 @@ export async function bootstrapFromRegistry(
   if (!entry) return null;
 
   // For US IND, use the deep adapter
-  const isUSIND = entry.id === 'US_IND' || entry.id === 'US_IND_AMENDMENT';
+  const isUSIND = entry.id === 'US_IND';
   if (isUSIND) {
     return bootstrapUSIND(entry, input);
   }
@@ -174,9 +175,9 @@ async function bootstrapUSIND(
  * Bootstrap any type using registry blueprints.
  *
  * Resolution order for sections:
- *   1. Dedicated, hand-authored section blueprint (region-specific Module 1,
- *      correct required flags) from `sectionBlueprintCatalog` — covers EU MAA/CTA,
- *      Canada NDS, Japan marketing approval, China/Brazil/India/Australia, US NDA/BLA.
+ *   1. Dedicated section blueprint from `sectionBlueprintCatalog`, including
+ *      regional trial authoring groups, amendment components and standalone
+ *      document structures as well as regional CTD dossiers.
  *   2. Generic CTD blueprint from `project-bootstrap` (`getSectionBlueprintForEntry`).
  *
  * Task/milestones prefer the dedicated blueprint via `taskBlueprintCatalog`,
@@ -190,10 +191,11 @@ async function bootstrapGeneric(
   const usedDedicatedBlueprint = dedicatedSectionBlueprint !== null;
   const sectionBlueprint = dedicatedSectionBlueprint ?? getSectionBlueprintForEntry(entry);
   const taskBlueprint = await getTaskBlueprint(entry.id);
+  const outlineContext = getSectionBlueprintContext(entry.id);
 
   const sections: SectionRow[] = sectionBlueprint.sections.map(s => ({
     sectionCode: s.code,
-    module: `M${s.module}`,
+    module: sectionAuthoringGroup(entry.id, s.module),
     title: s.title,
     status: 'not_started',
     estimatedHours: 0,
@@ -206,6 +208,8 @@ async function bootstrapGeneric(
       registryId: entry.id,
       blueprintId: sectionBlueprint.id,
       dedicatedBlueprint: usedDedicatedBlueprint,
+      ...(outlineContext.basis ? { outlineBasis: outlineContext.basis } : {}),
+      outlineLimitations: [...outlineContext.limitations],
     },
   }));
 
@@ -218,6 +222,22 @@ async function bootstrapGeneric(
     dossierStandard: entry.dossierStandard,
     usedDeepAdapter: false,
   };
+}
+
+/** Preserve CTD labels without assigning a CTD filing location to authoring groups. */
+function sectionAuthoringGroup(registryId: string, moduleNumber: number): string {
+  if (registryId === 'EU_CTA') {
+    const groups: Record<number, string> = {
+      1: 'CTIS Form/MSC',
+      2: 'CTIS Part I',
+      3: 'CTIS Part II',
+    };
+    return groups[moduleNumber] ?? 'CTIS';
+  }
+  if (registryId === 'JP_CTN') return 'Notification';
+  if (registryId === 'US_IND_AMENDMENT') return 'Amendment';
+  if (moduleNumber === 0) return 'Document';
+  return `M${moduleNumber}`;
 }
 
 /**

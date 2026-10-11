@@ -1,0 +1,54 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × shared/constants/domain/__tests__/vault-spine-label.test.ts > the Vault header names the project's filing > an NDA project's vault reads NDA · 21 CFR 314, not IND · 21 CFR 312 7ms
+   → vaultSpineLabel is not a function
+ × shared/constants/domain/__tests__/vault-spine-label.test.ts > the Vault header names the project's filing > an IND and a BLA read as themselves 2ms
+   → vaultSpineLabel is not a function
+ × shared/constants/domain/__tests__/vault-spine-label.test.ts > the Vault header names the project's filing > a filing type the view does not list, or none, names the view and guesses no regulation 1ms
+   → vaultSpineLabel is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/constants/domain/__tests__/vault-spine-label.test.ts > the Vault header names the project's filing > an NDA project's vault reads NDA · 21 CFR 314, not IND · 21 CFR 312
+TypeError: vaultSpineLabel is not a function
+ ❯ shared/constants/domain/__tests__/vault-spine-label.test.ts:16:12
+     14| describe("the Vault header names the project's filing", () => {
+     15|   it("an NDA project's vault reads NDA · 21 CFR 314, not IND · 21 CFR …
+     16|     expect(vaultSpineLabel('pharma', 'NDA')).toBe('NDA · 21 CFR 314');
+       |            ^
+     17|     expect(vaultSpineLabel('pharma', 'nda')).toBe('NDA · 21 CFR 314');
+     18|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  shared/constants/domain/__tests__/vault-spine-label.test.ts > the Vault header names the project's filing > an IND and a BLA read as themselves
+TypeError: vaultSpineLabel is not a function
+ ❯ shared/constants/domain/__tests__/vault-spine-label.test.ts:21:12
+     19|
+     20|   it('an IND and a BLA read as themselves', () => {
+     21|     expect(vaultSpineLabel('pharma', 'ind')).toBe('IND · 21 CFR 312');
+       |            ^
+     22|     expect(vaultSpineLabel('biotech', 'BLA')).toBe('BLA · 42 USC 262 (…
+     23|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  shared/constants/domain/__tests__/vault-spine-label.test.ts > the Vault header names the project's filing > a filing type the view does not list, or none, names the view and guesses no regulation
+TypeError: vaultSpineLabel is not a function
+ ❯ shared/constants/domain/__tests__/vault-spine-label.test.ts:26:12
+     24|
+     25|   it('a filing type the view does not list, or none, names the view an…
+     26|     expect(vaultSpineLabel('pharma', 'JNDA')).toBe('Pharmaceutical');
+       |            ^
+     27|     expect(vaultSpineLabel('pharma', null)).toBe('Pharmaceutical');
+     28|     expect(vaultSpineLabel('biotech', 'nda')).toBe('Biotechnology');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  18:02:47
+   Duration  738ms (transform 263ms, setup 168ms, import 137ms, tests 16ms, environment 0ms)
+

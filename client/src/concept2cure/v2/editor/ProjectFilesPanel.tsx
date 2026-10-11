@@ -64,19 +64,24 @@ interface SearchHit {
 export interface ProjectFilesPanelProps {
   programId: string | null;
   programName: string | null;
-  onClose: () => void;
   fireToast: FireToast;
+  /* Optional below: on the project's page (ProjectHome's Evidence stage, slice
+     23) there is no editor. No `onClose`, no rail header; no editor callbacks,
+     no cite and no ask for a section that is not there. */
+  onClose?: () => void;
   /** An editable section is open — the cite/insert actions need a caret. */
-  sectionOpen: boolean;
-  sectionCode: string | null;
+  sectionOpen?: boolean;
+  sectionCode?: string | null;
   /** The project's data-room sources (the workbench already reads them for
    *  the citation picker); a vault upload is citable when its hash matches. */
-  projectSources: ProjectSource[];
+  projectSources?: ProjectSource[];
   /** Insert a citation node through the editor. False when nothing was inserted. */
-  onCite: (sourceId: string) => boolean;
+  onCite?: (sourceId: string) => boolean;
   /** Insert plain reference text through the editor. False when nothing was inserted. */
-  onInsertReference: (text: string) => boolean;
+  onInsertReference?: (text: string) => boolean;
 }
+
+const NO_SOURCES: ProjectSource[] = [];
 
 type ReadState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -366,9 +371,7 @@ function ProjectFilesHeader({ programName, onClose }: { programName: string | nu
   return (
     <div className="ed-comments-h ed-comments-h-row">
       <span>Project files{programName ? ` · ${programName}` : ''}</span>
-      <button type="button" className="ed-comments-close" aria-label="Close project files" title="Close project files" onClick={onClose}>
-        {I.close}
-      </button>
+      <button type="button" className="ed-comments-close" aria-label="Close project files" title="Close project files" onClick={onClose}>{I.close}</button>
     </div>
   );
 }
@@ -488,9 +491,9 @@ function VaultReadCaveats({ vault }: { vault: VaultRead | null }) {
  *  them renders: reading, failed, genuinely empty, or the vault itself. */
 function VaultBrowseBody(props: RowsProps & {
   state: ReadState; vault: VaultRead | null; readError: string | null;
-  programName: string | null; onRetry: () => void;
+  programName: string | null; onRetry: () => void; editorAttached: boolean;
 }) {
-  const { state, vault, readError, programName, onRetry, ...rows } = props;
+  const { state, vault, readError, programName, onRetry, editorAttached, ...rows } = props;
   if (state === 'loading' && !vault) {
     return <div role="status" className="scaf-note" style={{ padding: 12 }}>Reading the project vault…</div>;
   }
@@ -508,7 +511,7 @@ function VaultBrowseBody(props: RowsProps & {
         icon={I.vault} title="Nothing in the vault yet"
         hint={vault.pendingStore
           ? 'The document store is not provisioned in this environment.'
-          : `${programName ?? 'This program'} has no vault documents yet. Upload files in the Vault surface, or file this document to the vault.`}
+          : `${programName ?? 'This program'} has no vault documents yet. Upload files in the Vault surface${editorAttached ? ', or file this document to the vault' : ''}.`}
       />
     );
   }
@@ -576,9 +579,9 @@ function PdfViewerPane(props: {
  *  why a file that is not a data-room source cannot be cited. */
 function SelectedFileActions(props: {
   doc: VaultDoc; sectionOpen: boolean; sectionCode: string | null; source: ProjectSource | null;
-  busy: boolean; onOpen: () => void; onCite: () => void; onInsertRef: () => void;
+  busy: boolean; onOpen: () => void; onCite: () => void; onInsertRef: () => void; editorAttached: boolean;
 }) {
-  const { doc, busy, onOpen, ...actions } = props;
+  const { doc, busy, onOpen, editorAttached, ...actions } = props;
   const { sectionOpen, source } = props;
   return (
     <div className="pf-sel" data-testid="pf-selected">
@@ -592,7 +595,7 @@ function SelectedFileActions(props: {
           </button>
         )}
         <SectionActions {...actions} citeTestId="pf-cite" refTestId="pf-insert-reference" />
-        {!sectionOpen && <span className="pf-sel-m">Open an editable section to cite or refer to this file.</span>}
+        {editorAttached && !sectionOpen && <span className="pf-sel-m">Open an editable section to cite or refer to this file.</span>}
       </div>
       {sectionOpen && !source && (
         <div className="pf-sel-m" data-testid="pf-not-citable">
@@ -604,9 +607,10 @@ function SelectedFileActions(props: {
 }
 
 export function ProjectFilesPanel({
-  programId, programName, sectionOpen, sectionCode, projectSources,
+  programId, programName, sectionOpen = false, sectionCode = null, projectSources = NO_SOURCES,
   onCite, onInsertReference, onClose, fireToast,
 }: ProjectFilesPanelProps) {
+  const editorAttached = Boolean(onCite && onInsertReference);
   const { state, vault, readError, load } = useProjectVaultRead(programId);
   const [query, setQuery] = useState('');
   const search = useProjectVaultSearch(programId, query);
@@ -618,13 +622,13 @@ export function ProjectFilesPanel({
   const allDocs = useMemo(() => flattenVaultDocs(vault?.tree ?? []), [vault]);
   const selected = findSelectedDoc(selectedId, allDocs, search.hits);
   const { opening, openDoc, cite, insertRef } = useVaultFileActions({
-    programId, sectionCode, fireToast, sourceFor, onCite, onInsertReference, showPdf,
+    programId, sectionCode, fireToast, sourceFor, showPdf, onCite: onCite ?? (() => false), onInsertReference: onInsertReference ?? (() => false),
   });
 
   const onToggleFolder = useCallback((id: string, isOpen: boolean) => setOpenFolders(o => ({ ...o, [id]: isOpen })), []);
   const onSelectDoc = useCallback((id: string) => setSelectedId(cur => (cur === id ? null : id)), []);
   const rows = { openFolders, onToggleFolder, selectedId, onSelectDoc };
-  const header = <ProjectFilesHeader programName={programName} onClose={onClose} />;
+  const header = onClose ? <ProjectFilesHeader programName={programName} onClose={onClose} /> : null;
 
   if (!programId) {
     return (
@@ -660,11 +664,11 @@ export function ProjectFilesPanel({
         <VaultSearchResults {...rows} {...search} query={query} programName={programName} onRetry={() => setQuery(q => q + '')} />
       ) : (
         <VaultBrowseBody {...rows} state={state} vault={vault} readError={readError}
-          programName={programName} onRetry={() => void load()} />
+          programName={programName} onRetry={() => void load()} editorAttached={editorAttached} />
       )}
       {selected && (
         <SelectedFileActions doc={selected} sectionOpen={sectionOpen} sectionCode={sectionCode} source={sourceFor(selected)}
-          busy={opening === selected.id} onOpen={() => void openDoc(selected)}
+          busy={opening === selected.id} onOpen={() => void openDoc(selected)} editorAttached={editorAttached}
           onCite={() => cite(selected)} onInsertRef={() => insertRef(selected)} />
       )}
     </>

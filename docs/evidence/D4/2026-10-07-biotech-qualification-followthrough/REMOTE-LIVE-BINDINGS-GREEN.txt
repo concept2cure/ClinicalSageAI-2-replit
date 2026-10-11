@@ -1,0 +1,21 @@
+✔ existing recorded-lineage statements bind their walk relation in each inspected literal (2783.807377ms)
+✔ the live scanner already recognizes declared-column CTEs while retaining their real storage reads (10.87724ms)
+✔ a standalone same-named table remains subject to storage qualification (0.169313ms)
+✔ a reference to an uncreated table after a string holding /* is reported (927.171587ms)
+✔ runtime DDL after a string holding /* backs its table (6.432118ms)
+✔ runtime DDL after an https:// string on the same line backs its table (0.467499ms)
+✔ DDL only inside real comments backs nothing (0.417303ms)
+✔ DDL inside an SQL comment within an embedded string backs nothing (0.200472ms)
+✔ a leading recursive CTE with declared and quoted columns is query-local storage (13.295798ms)
+✔ a leading column-list CTE still reports the missing storage it reads (0.212701ms)
+✔ a later recursive CTE with declared columns is query-local storage (0.156784ms)
+✔ a later column-list CTE still reports the missing storage it reads (15.405932ms)
+✔ a CTE declaration does not qualify the same table name in another statement (0.554291ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3412.626768

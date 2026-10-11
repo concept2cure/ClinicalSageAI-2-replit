@@ -24,6 +24,7 @@
  * pglite suites flake under combined load.
  */
 
+import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
@@ -112,6 +113,7 @@ async function makeSection(
 
 beforeAll(async () => {
   pglite = new PGlite();
+  await pglite.exec(RECORDED_LINEAGE_STORES_DDL);
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
   await pglite.exec(migration('migrations/20260726_cre_source_program_scope.sql'));
   await pglite.exec(migration('db/migrations/20260725_authoring_document_loop_tables.sql'));
@@ -120,6 +122,7 @@ beforeAll(async () => {
   // authoring_documents.client_program_id: a document's project, which a citation is judged by (PF-11).
   await pglite.exec(migration('migrations/20260727_authoring_document_program_scope.sql'));
   await pglite.exec(migration('migrations/20260726_authoring_citation_source_usage.sql'));
+  await pglite.exec(migration('migrations/20261006_document_data_dispositions.sql'));
   // Four real migrations into a cold WASM Postgres exceeds the 10s default hook
   // timeout on a loaded runner.
 }, 90_000);

@@ -1,0 +1,307 @@
+{
+  "readiness": {
+    "5": {
+      "status": 200,
+      "sequenceStatus": "draft",
+      "validatedStage": "(absent)",
+      "errors": 7,
+      "warnings": 0,
+      "releaseBlockers": 0,
+      "gate": [
+        "7 open error-severity validation finding(s) must be resolved before dispatch.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+        "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:5)."
+      ],
+      "freezeGate": [
+        "7 open error-severity validation finding(s) must be resolved before dispatch.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+      ],
+      "findings": [
+        "error UNRESOLVED_DOCUMENT 1.2 :: Leaf \"Cover Letter\" (1.2) points at coauthor_documents 5, which has no authored content, so it cannot be assembled into the package. Write the document first; its content is pinned when it is placed a",
+        "error MISSING_REQUIRED_SECTION 1.1 :: Required section 1.1 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+        "error MISSING_REQUIRED_SECTION 1.3 :: Required section 1.3 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+        "error MISSING_REQUIRED_SECTION 1.12.14 :: Required section 1.12.14 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without ",
+        "error MISSING_REQUIRED_SECTION 1.14.4.1 :: Required section 1.14.4.1 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without",
+        "error MISSING_REQUIRED_SECTION 1.14.4.2 :: Required section 1.14.4.2 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without",
+        "error MISSING_REQUIRED_SECTION 1.20 :: Required section 1.20 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it."
+      ]
+    },
+    "6": {
+      "status": 200,
+      "sequenceStatus": "validated",
+      "validatedStage": {
+        "holds": false,
+        "verdictRecorded": false,
+        "errors": 8,
+        "reason": "Sequence 0000 is recorded as Validated, but its validation now finds 8 errors, and no validation verdict was recorded when it was marked. Validated means the validation found no error: return it to Assembling, resolve the errors and validate again. Freeze refuses it until then."
+      },
+      "errors": 8,
+      "warnings": 3,
+      "releaseBlockers": 3,
+      "gate": [
+        "8 open error-severity validation finding(s) must be resolved before dispatch.",
+        "3 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+        "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:6)."
+      ],
+      "freezeGate": [
+        "8 open error-severity validation finding(s) must be resolved before dispatch.",
+        "3 leaves point at documents not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+      ],
+      "findings": [
+        "warning [blocksRelease] DOCUMENT_NOT_APPROVED 3.2.S.4.1 :: Leaf \"Vorelinib-DS-Specification-J3\" (3.2.S.4.1) points at vault_documents 805b9144-9227-45c2-8c0e-34d6b05210c7, which is not yet approved (not reviewed). Validation does not wait for approval, but on",
+        "warning [blocksRelease] DOCUMENT_NOT_APPROVED 3.2.S.4.1 :: Leaf \"Vorelinib-DS-Specification-J3-r2\" (3.2.S.4.1) points at vault_documents 45224282-30b0-4f3f-b30c-0d4c2cb859f6, which is not yet approved (not reviewed). Validation does not wait for approval, but",
+        "warning [blocksRelease] DOCUMENT_NOT_APPROVED 3.2.P.8 :: Leaf \"Vorelinib DS Stability Protocol STB-0042\" (3.2.P.8) points at vault_documents 3551f13c-f929-4979-a832-7cc014536570, which is not yet approved (not reviewed). Validation does not wait for approva",
+        "error UNRESOLVED_DOCUMENT 1.5 :: Leaf \"Table of Contents\" (1.5) points at coauthor_documents 37, which has no authored content, so it cannot be assembled into the package. Write the document first; its content is pinned when it is pl",
+        "error MISSING_REQUIRED_SECTION 1.1 :: Required section 1.1 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+        "error MISSING_REQUIRED_SECTION 1.2 :: Required section 1.2 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+        "error MISSING_REQUIRED_SECTION 1.3 :: Required section 1.3 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+        "error MISSING_REQUIRED_SECTION 1.12.14 :: Required section 1.12.14 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without ",
+        "error MISSING_REQUIRED_SECTION 1.14.4.1 :: Required section 1.14.4.1 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without",
+        "error MISSING_REQUIRED_SECTION 1.14.4.2 :: Required section 1.14.4.2 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without",
+        "error MISSING_REQUIRED_SECTION 1.20 :: Required section 1.20 has no leaf in this sequence. The regional Module 1 record (US) requires it in an original IND application, so this sequence cannot be validated, frozen or dispatched without it.",
+        "info DUPLICATE_NEW_SECTION 3.2.S.4.1 :: Section 3.2.S.4.1 has 2 leaves with operation \"new\" — confirm the lifecycle is intended.",
+        "info DUPLICATE_NEW_SECTION 2.5.1 :: Section 2.5.1 has 2 leaves with operation \"new\" — confirm the lifecycle is intended."
+      ]
+    },
+    "7": {
+      "status": 200,
+      "sequenceStatus": "draft",
+      "validatedStage": "(absent)",
+      "errors": 1,
+      "warnings": 2,
+      "releaseBlockers": 1,
+      "gate": [
+        "1 open error-severity validation finding(s) must be resolved before dispatch.",
+        "1 leaf points at a document not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+        "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:7)."
+      ],
+      "freezeGate": [
+        "1 open error-severity validation finding(s) must be resolved before dispatch.",
+        "1 leaf points at a document not yet approved. Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+      ],
+      "findings": [
+        "error UNRESOLVED_DOCUMENT 1.1 :: Leaf \"Form FDA 356h (Application to Market a New Drug)\" (1.1) points at coauthor_documents 4, which has no authored content, so it cannot be assembled into the package. Write the document first; its c",
+        "warning LIFECYCLE_BINDING_NOT_ASSESSED 1.1 :: Leaf \"Form FDA 356h (Application to Market a New Drug)\" declares \"replace\". Which filed leaf it acts on is established when the sequence is assembled, not here; freeze and dispatch assemble it and ref",
+        "warning [blocksRelease] DOCUMENT_NOT_APPROVED 3.2.P.8 :: Leaf \"Vorelinib-Stability-Protocol-STB-0042\" (3.2.P.8) points at vault_documents b9b008cf-0c7b-4230-a05b-e3b3354c8728, which is not yet approved (superseded by a later version). Validation does not wa",
+        "info DUPLICATE_NEW_SECTION m1.1 :: Section m1.1 has 2 leaves with operation \"new\" — confirm the lifecycle is intended."
+      ]
+    }
+  },
+  "checklist": [
+    {
+      "submissionId": 14,
+      "programId": "3783998f-a3db-4b3b-95a8-5152b7667f6b",
+      "code": "Helvanta",
+      "m11Blocker": true,
+      "m11Section": null,
+      "forms": [
+        "FDA_1571:false",
+        "FDA_1572:false",
+        "FDA_3674:false"
+      ],
+      "overall": 0,
+      "blockers": 51
+    },
+    {
+      "submissionId": 12,
+      "programId": "d979e567-4622-46f1-8cb7-8bf434227f25",
+      "code": "Helvanta-QA3",
+      "m11Blocker": true,
+      "m11Section": null,
+      "forms": [
+        "FDA_1571:false",
+        "FDA_1572:false",
+        "FDA_3674:false"
+      ],
+      "overall": 0,
+      "blockers": 51
+    },
+    {
+      "submissionId": 11,
+      "programId": "f20f9a72-0c37-4f7f-9e91-4e2280a01129",
+      "code": "ARD-411",
+      "m11Blocker": true,
+      "m11Section": null,
+      "forms": [
+        "FDA_1571:false",
+        "FDA_1572:false",
+        "FDA_3674:false"
+      ],
+      "overall": 0,
+      "blockers": 51
+    },
+    {
+      "submissionId": 10,
+      "programId": "14b0fa15-19d9-4126-88ac-f3439a3d13ff",
+      "code": "ARD-410",
+      "m11Blocker": true,
+      "m11Section": null,
+      "forms": [
+        "FDA_1571:false",
+        "FDA_1572:false",
+        "FDA_3674:false"
+      ],
+      "overall": 0,
+      "blockers": 51
+    },
+    {
+      "submissionId": 9,
+      "programId": "51578985-617f-44c4-9d05-57708e7befd3",
+      "code": "QA-EMPTY-NAME",
+      "m11Blocker": true,
+      "m11Section": null,
+      "forms": [
+        "FDA_1571:false",
+        "FDA_1572:false",
+        "FDA_3674:false"
+      ],
+      "overall": 0,
+      "blockers": 51
+    },
+    {
+      "submissionId": 8,
+      "programId": "c03a94f6-d3dc-4934-9e64-737b94fe73ba",
+      "code": "QA member-created project (should be refused)",
+      "m11Blocker": true,
+      "m11Section": null,
+      "forms": [
+        "FDA_1571:false",
+        "FDA_1572:false",
+        "FDA_3674:false"
+      ],
+      "overall": 0,
+      "blockers": 51
+    },
+    {
+      "submissionId": 7,
+      "programId": "0ebc8c26-7268-46c7-b40b-43d6ca08f32c",
+      "code": "NXV-777",
+      "m11Blocker": true,
+      "m11Section": null,
+      "forms": [
+        "FDA_1571:false",
+        "FDA_1572:false",
+        "FDA_3674:false"
+      ],
+      "overall": 0,
+      "blockers": 51
+    },
+    {
+      "submissionId": 6,
+      "programId": "50c41bb6-5796-4dc6-a848-72e4d1246ebd",
+      "code": "Vorelinib · BX-512",
+      "m11Blocker": true,
+      "m11Section": null,
+      "forms": [
+        "FDA_1571:true",
+        "FDA_1572:true",
+        "FDA_3674:false"
+      ],
+      "overall": 8,
+      "blockers": 48
+    },
+    {
+      "submissionId": 5,
+      "programId": "099991d1-dac8-43c5-b88a-8baab26194ee",
+      "code": "BX-256",
+      "m11Blocker": true,
+      "m11Section": null,
+      "forms": [
+        "FDA_1571:false",
+        "FDA_1572:false",
+        "FDA_3674:false"
+      ],
+      "overall": 2,
+      "blockers": 50
+    },
+    {
+      "submissionId": 4,
+      "programId": null,
+      "code": "BX-301",
+      "m11Blocker": true,
+      "m11Section": null,
+      "forms": [
+        "FDA_1571:true",
+        "FDA_1572:true",
+        "FDA_3674:false"
+      ],
+      "overall": 22,
+      "blockers": 40
+    }
+  ],
+  "safetyUnknownOnset": {
+    "status": 200,
+    "obligation": "FIFTEEN_DAY",
+    "onsetLine": "Grade 4 hepatotoxicity Onset: unknown (stated as unknown). Sponsor awareness (clock-start): 2026-09-25."
+  },
+  "safetyBlankOnset": {
+    "status": 400,
+    "body": {
+      "error": {
+        "code": "VALIDATION",
+        "message": "The IND safety report cannot be assembled until these are stated: onset date (a date, or stated as unknown). Nothing is assumed for a field left blank."
+      }
+    }
+  },
+  "safetyNoExpectedness": {
+    "status": 200,
+    "body": {
+      "obligation": "NOT_DETERMINED",
+      "reportingWindowDays": null,
+      "deadline": null,
+      "determinations": {
+        "serious": true,
+        "suspected": true,
+        "unexpected": null,
+        "expectednessRecorded": false,
+        "fatalOrLifeThreatening": false
+      },
+      "regulatoryBasis": "21 CFR 312.32(a)",
+      "rationale": "Not determined: expectedness not assessed. No determination against the IB / Reference Safety Information has been recorded, so whether this is an expedited IND safety report cannot be decided. Record expectedness to obtain a verdict."
+    }
+  },
+  "amendmentUnstated": {
+    "status": 400,
+    "body": {
+      "error": {
+        "code": "IND_AMENDMENT_UNSTATED",
+        "message": "IND_AMENDMENT_UNSTATED: state these before the amendment is planned — \"Protocol v2\": content category, change kind. Nothing is assumed for a choice left blank."
+      }
+    }
+  },
+  "formsListing": {
+    "status": 200,
+    "forms": [
+      "FDA_1571",
+      "FDA_1572",
+      "FDA_3674",
+      "FDA_3454",
+      "FDA_3455",
+      "FDA_1574"
+    ],
+    "indTypeOptions": [
+      "Commercial IND",
+      "Research IND",
+      "Emergency Use IND",
+      "Treatment IND"
+    ],
+    "phaseOptions": [
+      "Phase 1",
+      "Phase 2",
+      "Phase 3",
+      "Phase 4"
+    ]
+  },
+  "build1571": {
+    "unstated": [
+      "sponsor_address",
+      "ind_type",
+      "phase_of_study"
+    ],
+    "stated": []
+  }
+}

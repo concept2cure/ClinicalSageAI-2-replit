@@ -1,0 +1,6 @@
+ × governed-transmit-signature.test.ts > executeGovernedTransmit — only a role that may sign transmits (21 CFR 11.10(g)) > refuses a signer whose role is member, and nothing is read, signed or sent
+ × governed-transmit-signature.test.ts > executeGovernedTransmit — only a role that may sign transmits (21 CFR 11.10(g)) > refuses a signer whose role is manager, and nothing is read, signed or sen
+ × governed-transmit-signature.test.ts > executeGovernedTransmit — only a role that may sign transmits (21 CFR 11.10(g)) > refuses a signer whose role is viewer, and nothing is read, signed or sent
+ × governed-transmit-signature.test.ts > executeGovernedTransmit — only a role that may sign transmits (21 CFR 11.10(g)) > refuses a signer whose role is null, and nothing is read, signed or sent 3
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 8 passed (12)

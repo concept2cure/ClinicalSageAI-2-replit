@@ -1,0 +1,427 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stdout | server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+{
+  "timestamp": "2026-10-06T16:14:17.607Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:14:17.608Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+{
+  "timestamp": "2026-10-06T16:14:17.608Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+{
+  "timestamp": "2026-10-06T16:14:17.614Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:14:17.615Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+{
+  "timestamp": "2026-10-06T16:14:17.615Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/live-drive-turn.test.ts
+{
+  "timestamp": "2026-10-06T16:14:17.619Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:14:17.620Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/live-drive-turn.test.ts
+{
+  "timestamp": "2026-10-06T16:14:17.620Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:14:17.618Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:14:17.619Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:14:17.619Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T16:14:17.627Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:14:17.629Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+{
+  "timestamp": "2026-10-06T16:14:17.629Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+{
+  "timestamp": "2026-10-06T16:14:17.641Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:14:17.643Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+{
+  "timestamp": "2026-10-06T16:14:17.643Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+{
+  "timestamp": "2026-10-06T16:14:17.938Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-run-policy.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/live-drive-turn.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a run-policy turn stores its policy, the steps it did not run and her own holds (S4)
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+stderr | server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason
+[AnA RI Stream] Action-block proposals failed: [vitest] No "settleActionBlocks" export is defined on the "../../../services/ana-guidance-executor.js" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message 4593ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a run-policy turn stores its policy, the steps it did not run and her own holds (S4) 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > keeps the loop rounds beside its reason 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and the run policy 1ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice 0ms
+ × server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history 3ms
+   → expected -1 to be greater than -1
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > decides a cut-off answer from the last call, before anything reads the reason 1ms
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true
+[AnA RI] Intelligence prefix failed: recall unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[AnA RI Stream] Conversation preparation failed: private database host unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[AnA RI Stream] Conversation preparation failed: private connection write failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > every call of a reasoning turn carries the turn's thinking config, and every round's reasoning is shown and kept 46ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a demonstration keeps its follow-up rounds as narration: no reasoning display there 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > the rounds that read the evidence reason as the first call does (MC-RL-6) > a Fast turn reasons on no call 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > runs at high API effort on the first call and every follow-up, whatever effort was chosen 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-followup-reasoning.test.ts > a high-stakes turn reasons harder on every call (MC-RL-5) > a turn that is not high-stakes keeps the effort chosen 4ms
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[AnA RI Stream] Conversation preparation failed: database unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined 39ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."} 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > an empty stored thread does not import old browser assumptions 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > a saved correction and clarification remain in the actual gateway context 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > retains the last real assistant answer instead of dropping whichever row is last 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > another turn arriving during the save cannot displace a prior clarification or duplicate the current question 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > filters stored system/tool roles before sending the transcript 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > new conversations still accept bounded user/assistant browser turns 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=false 39ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream intelligence recall overlaps optional route prefetch > handles early recall with rejection=true 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > warns when requested enrichment is unavailable and retains its model availability notice 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > reports unavailable optional context to the person and includes it in the model input 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > Continue receives the visible partial draft even when stored history lacks it 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > encapsulates the handoff with the request and never sends an unguarded duplicate 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > does not attach a continuation draft to an unrelated request 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > reads memory only with the resolved thread ID 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "auto" → runPolicy "auto" 46ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "manual" → runPolicy "manual" 16ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "AUTO" → runPolicy null 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy "" → runPolicy null 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (1) the done frame says which policy the turn ran under > run_policy undefined → runPolicy null 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > runs round 1 unheld, holds before round 2 naming the step, then runs it 8ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > drive_state — a mid-turn promotion says so > a driving turn that starts a demonstration announces the promotion as promoted 49ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > drive_state — a mid-turn promotion says so > a turn that began as a demonstration is not promoted, and its one drive_state is unmarked 10ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — screen reports and steers drained together, told apart > frames the report as an observation and announces only the steer as the person steering 11ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — screen reports and steers drained together, told apart > a report alone announces nothing 5ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > navigations: the two AnA could not make are chips, ahead of the six she made 14ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > actions: the one past the budget is the first chip 6ms
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[AnA RI Stream] Refused caller-supplied thread id: undefined
+
+stderr | server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails 9ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining {"threadId": ""} ]
+
+Number of calls: 0
+
+ ✓ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > refuses foreign-thread access before memory or the model runs 10ms
+stderr | server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened
+[AnA RI Stream] run control unavailable: ana_runs is unavailable
+
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > a move she made and re-asked for past the budget is offered once, not twice 5ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > past chip room she is told the move is not offered either — never promised a chip that is dropped 9ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > a turn that does not drive reaches the same chip derivation, unchanged 9ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > names each move, so the screen can report it back 6ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > holds her next round until the move lands — and a landing puts nothing in front of her 4ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a move that did not land reaches the round she writes next 3ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a move still unsettled at the ceiling is told to her as not confirmed, never as done 4ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a client that does not report its moves is not waited on 4ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > is accepted with the move it settles 5ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > needs a move id, and refuses one that is not a move id 4ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > a screen report can name the move it is about 3ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > is accepted as its own action, not as a steer 2ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > needs something to report 1ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > an empty steer is still refused, and an unknown action still is 3ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > history saved in the thread: the answer at the far edge is dropped, not opened on 3ms
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > history sent by the client (no saved thread yet): the answer at the far edge is dropped, not opened on 2ms
+ × server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > a thread whose pairs are intact is passed through unchanged 8ms
+   → expected [ 'user:q3', 'assistant:a3', …(18) ] to deeply equal [ 'user:q2', 'assistant:a2', …(18) ]
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > narration — each round starts its own paragraph > a stop narrated after the last one is not run on from it 7ms
+stderr | server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > Auto without a run row runs on, as today
+[AnA RI Stream] run control unavailable: ana_runs is unavailable
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold before a step that already goes to a person 25ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > does not hold while a demonstration drives 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > a person pausing a Manual turn is a person, not the policy 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2) Manual stops before each further step, and runs it on Run this step > Auto and no policy never hold on their own 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > the held step never runs; the model is told it was redirected, with the steer in the same call 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > a steer already waiting replaces the step without holding 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > …and the record says the steer replaced a step nobody was shown — never that she stopped and was answered 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (3) Do this instead replaces the held step > under Auto the same steer does not replace anything: it applies after the step 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > hold_expired, no further model call, the step named and not run 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > a person's own pause in a Manual turn ends it the same way 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4) a Manual hold nobody answers ends the turn > the same pause under Auto is resumed as abandoned, as today 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run row could not be opened 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > when the run has no owner who could resume it 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5) Manual that cannot hold stops where she would have asked > Auto without a run row runs on, as today 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > an approval nobody answers ends the turn with a closing answer 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, the same unanswered approval is a denial and the turn goes on 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > past 15 minutes of work the next call is the closing answer 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > time held for a person is not work 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy, a long step is not a stop 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Auto keeps going past the effort ceiling while each round is new, to 20 rounds 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > with no policy the same turn keeps its effort ceiling (balanced: 6 + 2) 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (6) Auto ends a turn honestly at its ceilings > Manual keeps the effort ceiling too 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "failed" (not a person's pause): fails closed 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads "finished" (not a person's pause): fails closed 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold wrote nothing and the row reads null (not a person's pause): fails closed 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written though the row reads running, twice: fails closed, never runs unasked 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > the hold could not be written (holdForPerson threw): fails closed 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "failed" — no person answered: fails closed 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as "finished" — no person answered: fails closed 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > held, then the row left the hold as null — no person answered: fails closed 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (5b) a Manual hold that did not happen, or lost its run, never runs the step > a person's own pause already in place where Manual would hold becomes her hold: Next is shown, and Resume answers it 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > Stop at a hold: not run, named on done, and the hold filed as stopped 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (4b) a Manual hold ended by Stop leaves its step on the record > a person's pause that expires is filed as the person's pause, not as AnA waiting before her step 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-policy.test.ts > (2c) a demonstration the model starts does not switch Manual off > Manual with Live Drive on (not a demo), round 1 starts a demo: a hold is still due before round 2 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > a thread whose pairs are intact is passed through unchanged
+AssertionError: expected [ 'user:q3', 'assistant:a3', …(18) ] to deeply equal [ 'user:q2', 'assistant:a2', …(18) ]
+
+- Expected
++ Received
+
+@@ -1,8 +1,6 @@
+  [
+-   "user:q2",
+-   "assistant:a2",
+    "user:q3",
+    "assistant:a3",
+    "user:q4",
+    "assistant:a4",
+    "user:q5",
+@@ -17,6 +15,8 @@
+    "assistant:a9",
+    "user:q10",
+    "assistant:a10",
+    "user:q11",
+    "assistant:a11",
++   "user:go",
++   "user:take me through it",
+  ]
+
+ ❯ server/routes/ana-ri/__tests__/live-drive-turn.test.ts:604:33
+    602|     h.state.history = [...intact, { role: 'user', content: 'go' }];
+    603|     await turn({});
+    604|     expect(sent().slice(0, 20)).toEqual(intact.slice(-20).map(m => `${…
+       |                                 ^
+    605|   });
+    606| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history
+AssertionError: expected -1 to be greater than -1
+ ❯ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts:150:16
+    148|   it('adds the stopped-turn note beside the trace note, from the same …
+    149|     const at = src.indexOf('const traceNote = formatTraceForContext(co…
+    150|     expect(at).toBeGreaterThan(-1);
+       |                ^
+    151|     const near = src.slice(at, at + 800);
+    152|     expect(near).toMatch(/const stoppedNote = formatStoppedTurnNote\(p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > stream conversation memory access > does not read caller thread memory after persistence fails
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining {"threadId": ""} ]
+
+Number of calls: 0
+
+ ❯ server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts:391:22
+    389|     h.thread.mockRejectedValue(new Error('database unavailable'));
+    390|     await turn('Review this', 'thorough', { thread_id: 'secret' });
+    391|     expect(h.memory).toHaveBeenCalledWith(expect.objectContaining({ th…
+       |                      ^
+    392|     expect(JSON.stringify(h.state.gatewayCalls)).not.toContain('PRIVAT…
+    393|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  3 failed | 3 passed (6)
+      Tests  3 failed | 99 passed (102)
+   Start at  12:14:13
+   Duration  7.72s (transform 21.37s, setup 493ms, import 37.52s, tests 5.37s, environment 1ms)
+

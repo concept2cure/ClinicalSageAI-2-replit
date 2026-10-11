@@ -1,0 +1,31 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > reaps under the system scope even when called from inside a tenant request 3ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > does not inherit the caller tenant — the bug this replaces 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > scopes the disconnect write to the run own organization 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > aborts the local run even when the row write cannot be made 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > request-time reads inherit the caller scope rather than widening it > reads a run under the request own tenant 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > bounds a twenty-call burst and drains the newest round before any caller completes 3ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > refreshes timestamps for overlapping requests even when their rounds are identical 2ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > keeps run handles independent within one pool and across pools 4ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > uses actual request tenant scope on admitted and successor writes without system bypass 2ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > discards queued and future writes after local release while the issued write settles 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat pending-write admission > does no database work after release before admission or before a scheduled first query 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat failures and microtask admission > warns on asynchronous failure, drains the newest request and admits a later retry 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat failures and microtask admission > warns on a synchronous throw, writes the pending newest round and remains retryable 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat failures and microtask admission > registers admission before the query callback can reenter heartbeat 1ms
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > heartbeat failures and microtask admission > does not lose a request between the final await and promise settlement 1ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  00:44:43
+   Duration  458ms (transform 136ms, setup 82ms, import 88ms, tests 25ms, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-08-ana-heartbeat-backpressure/heartbeat/green.json
+(node:7) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)

@@ -1,0 +1,404 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/regulatory/__tests__/market-support-offer.test.ts
+{
+  "timestamp": "2026-10-08T17:13:26.629Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:13:26.642Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+{
+  "timestamp": "2026-10-08T17:13:26.643Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/__tests__/market-support-offer.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (ind, FDA) is built and sequenced, and says transmit is not proven 12ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (nda, FDA) is built and sequenced, and says transmit is not proven 2ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (bla, FDA) is built and sequenced, and says transmit is not proven 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (anda, FDA) is built and sequenced, and says transmit is not proven 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU MAA: Module 1 is flat, so no EMA sequence is built 7ms
+   → expected undefined to match object { tier: 'author_only', …(1) }
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU clinical trial (CTA through CTIS) 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (510k): authored, no sequence 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (de_novo): authored, no sequence 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (pma): authored, no sequence 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (ide): authored, no sequence 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a master file: bound to the harmonised Module 3 outline, as creation binds it, and authored 3ms
+   → expected 'no_outline' to be 'outline' // Object.is equality
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a continuing PMDA application (approval number on file): authored, Module 1 flat 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nds, Health_Canada) 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, Health Canada) 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (cta, Health_Canada) 0ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, TGA) 0ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, NMPA) 2ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, MFDS) 0ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EMA) 0ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (ind, MHRA) 0ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, ANVISA) 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EU / Notified Body) 0ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, EU / Notified Body) 0ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, FDA) 0ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (jnda, PMDA) 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > refuses a variation for FDA, however the region is named 0ms
+   → sequenceTypeRefusal is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > an EU variation, and every other FDA type, is not refused here 0ms
+   → sequenceTypeRefusal is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA NDA names the NDA and the marketing applications of its family, and no meeting, designation, supplement, report or QMS record 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA BLA names the BLA and the 351(k), not the supplement 0ms
+   → Cannot read properties of undefined (reading 'appliesTo')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an author-only or refused offer is not scoped to named filings 0ms
+   → Cannot read properties of undefined (reading 'appliesTo')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (mdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 1ms
+   → expected null to be 'EU' // Object.is equality
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (ivdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 1ms
+   → expected null to be 'EU' // Object.is equality
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (cer, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body 1ms
+   → expected null to be 'EU' // Object.is equality
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > however the catalog or an API caller names it 1ms
+   → Cannot read properties of undefined (reading 'tier')
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, us) → FDA 0ms
+   → documentAgencyFor is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, US) → FDA 0ms
+   → documentAgencyFor is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, EU) → EMA 0ms
+   → documentAgencyFor is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, eu) → EMA 0ms
+   → documentAgencyFor is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, FDA) → FDA 0ms
+   → documentAgencyFor is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Health Canada) → Health_Canada 0ms
+   → documentAgencyFor is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (mdr, EU / Notified Body) → EMA 0ms
+   → documentAgencyFor is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (ivdr, EU / Notified Body) → EMA 0ms
+   → documentAgencyFor is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (cer, EU / Notified Body) → EMA 0ms
+   → documentAgencyFor is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, EU / Notified Body) → null: the caller keeps what it sent 0ms
+   → documentAgencyFor is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Swissmedic) → null: the caller keeps what it sent 0ms
+   → documentAgencyFor is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (device, EU / Notified Body) → null: the caller keeps what it sent 0ms
+   → documentAgencyFor is not a function
+ × server/services/regulatory/__tests__/market-support-offer.test.ts > Health Canada: the channel says nothing is sent, not that an adapter posts > the statement uses the Health Canada sentence, which the adapter refusal also uses 1ms
+   → expected 'its adapter posts to an endpoint writ…' to be undefined // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 47 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (ind, FDA) is built and sequenced, and says transmit is not proven
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (nda, FDA) is built and sequenced, and says transmit is not proven
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (bla, FDA) is built and sequenced, and says transmit is not proven
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence: US drug applications only > (anda, FDA) is built and sequenced, and says transmit is not proven
+TypeError: Cannot read properties of undefined (reading 'tier')
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:36:14
+     34|   it.each(['ind', 'nda', 'bla', 'anda'])('(%s, FDA) is built and seque…
+     35|     const o = offer(t, 'FDA');
+     36|     expect(o.tier).toBe('build_and_sequence');
+       |              ^
+     37|     expect(o.label).toBe('Build and sequence');
+     38|     expect(o.reason).toMatch(/eCTD sequence for FDA\. Transmit not pro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU MAA: Module 1 is flat, so no EMA sequence is built
+AssertionError: expected undefined to match object { tier: 'author_only', …(1) }
+
+- Expected:
+{
+  "label": "Author documents for this market",
+  "tier": "author_only",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:45:15
+     43|   it('an EU MAA: Module 1 is flat, so no EMA sequence is built', () =>…
+     44|     const o = offer('maa', 'EMA');
+     45|     expect(o).toMatchObject({ tier: 'author_only', label: 'Author docu…
+       |               ^
+     46|     expect(o.reason).toMatch(/filed flat .* so no EMA sequence is buil…
+     47|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > an EU clinical trial (CTA through CTIS)
+TypeError: Cannot read properties of undefined (reading 'tier')
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:50:30
+     48|
+     49|   it('an EU clinical trial (CTA through CTIS)', () => {
+     50|     expect(offer('cta', 'EMA').tier).toBe('author_only');
+       |                              ^
+     51|   });
+     52|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (510k): authored, no sequence
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (de_novo): authored, no sequence
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (pma): authored, no sequence
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a US device filing (ide): authored, no sequence
+TypeError: Cannot read properties of undefined (reading 'tier')
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:55:14
+     53|   it.each(['510k', 'de_novo', 'pma', 'ide'])('a US device filing (%s):…
+     54|     const o = offer(t, 'FDA');
+     55|     expect(o.tier).toBe('author_only');
+       |              ^
+     56|     expect(o.reason).toMatch(/builds no FDA sequence for a /);
+     57|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a master file: bound to the harmonised Module 3 outline, as creation binds it, and authored
+AssertionError: expected 'no_outline' to be 'outline' // Object.is equality
+
+Expected: "outline"
+Received: "no_outline"
+
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:61:29
+     59|   it('a master file: bound to the harmonised Module 3 outline, as crea…
+     60|     const s = marketSupport({ applicationType: 'dmf', market: 'FDA' },…
+     61|     expect(s.outline.state).toBe('outline');
+       |                             ^
+     62|     expect(s.outline.pack?.label).toBe('mod3:ich');
+     63|     expect(s.offer.tier).toBe('author_only');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — author documents for this market > a continuing PMDA application (approval number on file): authored, Module 1 flat
+TypeError: Cannot read properties of undefined (reading 'tier')
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:68:14
+     66|   it('a continuing PMDA application (approval number on file): authore…
+     67|     const o = offer('jnda', 'PMDA', true);
+     68|     expect(o.tier).toBe('author_only');
+       |              ^
+     69|     expect(o.reason).toMatch(/no PMDA sequence is built/);
+     70|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nds, Health_Canada)
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, Health Canada)
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (cta, Health_Canada)
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, TGA)
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, NMPA)
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, MFDS)
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EMA)
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (ind, MHRA)
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, ANVISA)
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (nda, EU / Notified Body)
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, EU / Notified Body)
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (device, FDA)
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — not offered, with the reason > (jnda, PMDA)
+TypeError: Cannot read properties of undefined (reading 'tier')
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:90:14
+     88|   ])('(%s, %s)', (t, market, reason) => {
+     89|     const o = offer(t, market);
+     90|     expect(o.tier).toBe('not_offered');
+       |              ^
+     91|     expect(o.label).toBe('Not offered');
+     92|     expect(o.reason).toMatch(reason);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > refuses a variation for FDA, however the region is named
+TypeError: sequenceTypeRefusal is not a function
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:99:56
+     97| describe('sequenceTypeRefusal — FDA has no variation', () => {
+     98|   it('refuses a variation for FDA, however the region is named', () =>…
+     99|     for (const r of ['fda', 'FDA', 'US', 'us']) expect(sequenceTypeRef…
+       |                                                        ^
+    100|   });
+    101|   it('an EU variation, and every other FDA type, is not refused here',…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > sequenceTypeRefusal — FDA has no variation > an EU variation, and every other FDA type, is not refused here
+TypeError: sequenceTypeRefusal is not a function
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:102:12
+    100|   });
+    101|   it('an EU variation, and every other FDA type, is not refused here',…
+    102|     expect(sequenceTypeRefusal('eu', 'variation')).toBeNull();
+       |            ^
+    103|     expect(sequenceTypeRefusal('ema', 'variation')).toBeNull();
+    104|     for (const t of ['original', 'amendment', 'response', 'annual', 'w…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA NDA names the NDA and the marketing applications of its family, and no meeting, designation, supplement, report or QMS record
+TypeError: Cannot read properties of undefined (reading 'tier')
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:113:14
+    111|   it('an FDA NDA names the NDA and the marketing applications of its f…
+    112|     const o = offer('nda', 'FDA');
+    113|     expect(o.tier).toBe('build_and_sequence');
+       |              ^
+    114|     expect(o.appliesTo).toEqual(expect.arrayContaining(['US_NDA', 'US_…
+    115|     for (const id of ['US_TYPE_A_MEETING', 'US_IND_AMENDMENT', 'US_NDA…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an FDA BLA names the BLA and the 351(k), not the supplement
+TypeError: Cannot read properties of undefined (reading 'appliesTo')
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:121:14
+    119|   it('an FDA BLA names the BLA and the 351(k), not the supplement', ()…
+    120|     const o = offer('bla', 'FDA');
+    121|     expect(o.appliesTo).toEqual(expect.arrayContaining(['US_BLA', 'US_…
+       |              ^
+    122|     expect(o.appliesTo).not.toContain('US_BLA_SUPP');
+    123|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — build and sequence is stated for the application itself, not for every filing of its type > an author-only or refused offer is not scoped to named filings
+TypeError: Cannot read properties of undefined (reading 'appliesTo')
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:125:30
+    123|   });
+    124|   it('an author-only or refused offer is not scoped to named filings',…
+    125|     expect(offer('maa', 'EMA').appliesTo).toBeNull();
+       |                              ^
+    126|     expect(offer('nda', 'TGA').appliesTo).toBeNull();
+    127|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (mdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (ivdr, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > (cer, EU / Notified Body) reads the EU device outline and is authored, naming the Notified Body
+AssertionError: expected null to be 'EU' // Object.is equality
+
+- Expected:
+"EU"
+
++ Received:
+null
+
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:133:22
+    131|   it.each(['mdr', 'ivdr', 'cer'])('(%s, EU / Notified Body) reads the …
+    132|     const s = marketSupport({ applicationType: t, market: 'EU / Notifi…
+    133|     expect(s.region).toBe('EU');
+       |                      ^
+    134|     expect(s.agency).toBe('Notified_Body');
+    135|     expect(s.outline.pack?.label).toBe(`${t}:ema`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > offer — the EU device lane through a Notified Body > however the catalog or an API caller names it
+TypeError: Cannot read properties of undefined (reading 'tier')
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:141:80
+    139|   it('however the catalog or an API caller names it', () => {
+    140|     for (const m of ['EU / Notified Body', 'Notified_Body', 'notified …
+    141|       expect(marketSupport({ applicationType: 'mdr', market: m }, pack…
+       |                                                                                ^
+    142|     }
+    143|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, us) → FDA
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, US) → FDA
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, EU) → EMA
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (maa, eu) → EMA
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, FDA) → FDA
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Health Canada) → Health_Canada
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (mdr, EU / Notified Body) → EMA
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (ivdr, EU / Notified Body) → EMA
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (cer, EU / Notified Body) → EMA
+TypeError: documentAgencyFor is not a function
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:152:12
+    150|     ['mdr', 'EU / Notified Body', 'EMA'], ['ivdr', 'EU / Notified Body…
+    151|   ])('(%s, %s) → %s', (t, m, want) => {
+    152|     expect(documentAgencyFor({ applicationType: t, market: m })).toBe(…
+       |            ^
+    153|   });
+    154|   it.each([['nda', 'EU / Notified Body'], ['nda', 'Swissmedic'], ['dev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, EU / Notified Body) → null: the caller keeps what it sent
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (nda, Swissmedic) → null: the caller keeps what it sent
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > documentAgencyFor — creation scaffolds against the market the verdict judged > (device, EU / Notified Body) → null: the caller keeps what it sent
+TypeError: documentAgencyFor is not a function
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:155:12
+    153|   });
+    154|   it.each([['nda', 'EU / Notified Body'], ['nda', 'Swissmedic'], ['dev…
+    155|     expect(documentAgencyFor({ applicationType: t, market: m })).toBeN…
+       |            ^
+    156|   });
+    157| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/47]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support-offer.test.ts > Health Canada: the channel says nothing is sent, not that an adapter posts > the statement uses the Health Canada sentence, which the adapter refusal also uses
+AssertionError: expected 'its adapter posts to an endpoint writ…' to be undefined // Object.is equality
+
+- Expected:
+undefined
+
++ Received:
+"its adapter posts to an endpoint written from no agency source, so nothing is sent through it"
+
+ ❯ server/services/regulatory/__tests__/market-support-offer.test.ts:163:30
+    161|     const s = marketSupport({ applicationType: 'nds', market: 'Health_…
+    162|     expect(s.channel.state).toBe('none');
+    163|     expect(s.channel.detail).toBe(HEALTH_CANADA_NO_TRANSPORT);
+       |                              ^
+    164|     expect(s.channel.detail).not.toBe(ADAPTER_UNSOURCED);
+    165|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/47]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  47 failed (47)
+   Start at  17:13:22
+   Duration  6.02s (transform 3.50s, setup 99ms, import 5.17s, tests 60ms, environment 0ms)
+

@@ -1,0 +1,15 @@
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > honors the limit 2ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > ranks title/tag matches above detail-only matches 3ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > pagination > listEntriesPaged returns total + window and is stable across offsets 1ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > pagination > listEntriesPaged total reflects filters, not the page size 0ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > pagination > searchPaged total counts all matches; window respects offset/limit 7ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > retrieval helpers > gets an entry by id and resolves its related entries 0ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > retrieval helpers > returns null for an unknown id 0ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > retrieval helpers > listEntries filters by topic 0ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > retrieval helpers > lists domains and topics 1ms
+
+ Test Files  3 passed (3)
+      Tests  38 passed (38)
+   Start at  12:50:42
+   Duration  1.85s (transform 1.75s, setup 566ms, import 1.46s, tests 158ms, environment 0ms)
+

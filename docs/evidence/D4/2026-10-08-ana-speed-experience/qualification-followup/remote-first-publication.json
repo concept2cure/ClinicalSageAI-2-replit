@@ -1,0 +1,144 @@
+{
+  "observed_at_utc": "2026-10-08T04:47:31.932Z",
+  "head_sha": "c77a594b087f8b2f5205cdf4ff6a0d47ec54f1c7",
+  "runs": [
+    {
+      "id": 37723736304,
+      "name": "C2C Agent — Validate & Audit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37723736304"
+    },
+    {
+      "id": 37723736334,
+      "name": "Repo Health Baseline Refresh",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37723736334"
+    },
+    {
+      "id": 37723736346,
+      "name": "CodeQL",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37723736346"
+    },
+    {
+      "id": 37723736286,
+      "name": "Tier 5 Browser Smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37723736286"
+    },
+    {
+      "id": 37723736327,
+      "name": "Semgrep",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37723736327"
+    },
+    {
+      "id": 37723736646,
+      "name": "CI",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37723736646"
+    }
+  ],
+  "ci_jobs": [
+    {
+      "id": 113137043608,
+      "name": "Lint",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Proof tier — schema contracts + golden journeys + export contracts",
+        "Guardrails — launch scope is real and fixture-free (with selftest)"
+      ]
+    },
+    {
+      "id": 113137043773,
+      "name": "Security Contract Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 113137043792,
+      "name": "Secret scan (full history)",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 113137043795,
+      "name": "Security Scan",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "id": 113137044609,
+      "name": "Nightly Governance Strict",
+      "status": "completed",
+      "conclusion": "skipped",
+      "failed_steps": []
+    },
+    {
+      "id": 113153776306,
+      "name": "Test",
+      "status": "queued",
+      "conclusion": null,
+      "failed_steps": []
+    },
+    {
+      "id": 113153776319,
+      "name": "Integration Tests",
+      "status": "queued",
+      "conclusion": null,
+      "failed_steps": []
+    },
+    {
+      "id": 113153776371,
+      "name": "Coverage (ratchet)",
+      "status": "queued",
+      "conclusion": null,
+      "failed_steps": []
+    },
+    {
+      "id": 113153776373,
+      "name": "AnA Readiness Tests",
+      "status": "queued",
+      "conclusion": null,
+      "failed_steps": []
+    },
+    {
+      "id": 113153776384,
+      "name": "Production Image Boot (built image, empty database, sign-in)",
+      "status": "queued",
+      "conclusion": null,
+      "failed_steps": []
+    },
+    {
+      "id": 113153776419,
+      "name": "Production Boot Smoke (RLS on, non-superuser role)",
+      "status": "queued",
+      "conclusion": null,
+      "failed_steps": []
+    },
+    {
+      "id": 113153776434,
+      "name": "AIOS Audit Assets",
+      "status": "queued",
+      "conclusion": null,
+      "failed_steps": []
+    },
+    {
+      "id": 113153776435,
+      "name": "Blank DB Provisioning + Deploy Migration",
+      "status": "queued",
+      "conclusion": null,
+      "failed_steps": []
+    }
+  ]
+}

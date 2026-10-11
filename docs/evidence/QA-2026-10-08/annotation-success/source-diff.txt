@@ -1,0 +1,138 @@
+# Source diff, annotation-success fix (Option X). Not committed.
+# The onPlaced hunk in Vault.tsx (placement refresh, +3 lines near 1409) is another agent's and is NOT part of this change.
+
+diff --git a/client/src/concept2cure/v2/surfaces/Vault.tsx b/client/src/concept2cure/v2/surfaces/Vault.tsx
+index 8a3bc193c..4a741d267 100644
+--- a/client/src/concept2cure/v2/surfaces/Vault.tsx
++++ b/client/src/concept2cure/v2/surfaces/Vault.tsx
+@@ -725,7 +725,15 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
+  *  to operate, and "no documents" or "no such folder" would misstate why. */
+ const NO_PROGRAM_OPEN = 'No program is open, so there is no vault here yet — open a program first.';
+ 
+-export function Vault({ onAsk, onNav }: SurfaceViewProps) {
++/* The Vault for the project open now. The body is keyed by the project, so a
++   switch remounts it with no data: the read hook keeps the last payload while a
++   new path loads, and the previous project's documents must not stand in for the
++   new project's while it loads. */
++export function Vault(props: SurfaceViewProps) {
++  return <VaultForProject key={currentProjectId() ?? ''} {...props} />;
++}
++
++function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
+   const projectId = currentProjectId();
+   const vaultPath = projectId
+     ? '/api/c2c/project-vault/' + encodeURIComponent(projectId)
+@@ -734,6 +742,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
+      patched locally: what the Vault shows is what the Vault stored. */
+   const [vaultEpoch, setVaultEpoch] = useState(0);
+   const vaultState = useLiveData<VaultDisplayShape>(vaultPath, [vaultPath, vaultEpoch]);
++  // The placeholder shows only before there is data to show. A re-read after a change keeps the
++  // body mounted, so a confirmation held in it (a save, a post, a decision) stays on screen.
+   const vault = vaultState.data;
+   /* The data room's "File into Vault" (VR-11): held here so its answer
+      survives the re-read that follows a filing. */
+@@ -1404,6 +1414,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
+           projectId={projectId ?? null}
+           filing={filingIntoSubmission.filing ?? null}
+           onNav={onNav}
++          /* A placement changes the version's "placed in" line, which reads the
++             versions list: re-read it, or the line stays "not placed" until reload. */
++          onPlaced={() => setVaultEpoch((n) => n + 1)}
+           onClose={() => setFilingIntoSubmission(null)}
+         />
+       )}
+@@ -1460,7 +1473,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
+             hint="The Vault (DMS) shows the governed document tree for the project you have open. Open a project from Projects or Project management to load its CTD / eSTAR / IVDR / TMF spine."
+           />
+         </div>
+-      ) : vaultState.loading ? (
++      ) : vaultState.loading && !vault ? (
+         <div role="status" className="scaf-note" style={{ padding: '18px 24px' }}>
+           Loading the project vault…
+         </div>
+@@ -1730,7 +1743,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
+                 )}
+ 
+                 {sel.src === 'upload' && sel.docId && projectId && (!sel.disposition || sel.disposition === 'keep_data') && <DocumentDisposition
+-                  key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} targetType="vault_document" targetId={sel.docId}
++                  key={`disposition-${sel.docId}`} projectId={projectId} targetType="vault_document" targetId={sel.docId}
+                   title={sel.title} existingChoice={sel.disposition} onChanged={() => setVaultEpoch(n => n + 1)}
+                 />}
+                 {sel.originalFileAvailable === false && <p className="sec-sub" role="status">Original file unavailable. Retained extracted data and its lineage remain accessible.</p>}
+@@ -1928,9 +1941,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
+                     ) : null}
+                     {projectId && sel.docId ? (
+                       <VaultAnnotations
+-                        key={`annotations-${sel.docId}-${vaultEpoch}`}
++                        key={`annotations-${sel.docId}`}
+                         projectId={projectId}
+                         documentId={sel.docId}
++                        refreshKey={vaultEpoch}
+                         onChanged={() => setVaultEpoch((n) => n + 1)}
+                       />
+                     ) : null}
+@@ -1968,9 +1982,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
+                       onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+                     />
+                     <VaultAnnotations
+-                      key={`annotations-${sel.docId}-${vaultEpoch}`}
++                      key={`annotations-${sel.docId}`}
+                       projectId={projectId}
+                       documentId={sel.docId}
++                      refreshKey={vaultEpoch}
+                       onChanged={() => setVaultEpoch((n) => n + 1)}
+                     />
+                     <VaultRelationships
+diff --git a/client/src/concept2cure/v2/surfaces/VaultAnnotations.tsx b/client/src/concept2cure/v2/surfaces/VaultAnnotations.tsx
+index cd2f7f4e0..d185f4f96 100644
+--- a/client/src/concept2cure/v2/surfaces/VaultAnnotations.tsx
++++ b/client/src/concept2cure/v2/surfaces/VaultAnnotations.tsx
+@@ -153,7 +153,8 @@ function useActorId(given: number | null | undefined): number | null {
+   return user?.id && /^\d+$/.test(user.id) ? Number(user.id) : null;
+ }
+ 
+-function useAnnotations(projectId: string, documentId: string) {
++/** The list is read on mount and again whenever `refreshKey` changes (the parent bumps it after a change). */
++function useAnnotations(projectId: string, documentId: string, refreshKey: number | undefined) {
+   const [data, setData] = useState<AnnotationsShape | null>(null);
+   const [readError, setReadError] = useState<string | null>(null);
+   const load = useCallback(async () => {
+@@ -167,8 +168,8 @@ function useAnnotations(projectId: string, documentId: string) {
+       setReadError(said(e));
+     }
+   }, [projectId, documentId]);
+-  useEffect(() => { void load(); }, [load]);
+-  return { data, readError, load };
++  useEffect(() => { void load(); }, [load, refreshKey]);
++  return { data, readError };
+ }
+ 
+ interface Ctx { projectId: string; actorId: number | null; currentId: string | null; family: OpenByVersion[]; onDone: (text: string) => void }
+@@ -524,21 +525,23 @@ export interface VaultAnnotationsProps {
+   projectId: string;
+   /** The version the panel is opened on; a new annotation is posted on it. */
+   documentId: string;
+-  /** Called after the server recorded a change. */
++  /** Called after the server recorded a change. The parent re-reads and bumps `refreshKey`; this panel is not remounted. */
+   onChanged: () => void;
++  /** Changing it reads the list again. The Vault passes its re-read counter, so one change is one read. */
++  refreshKey?: number;
+   /** The signed-in user's id; read from the session when not given. */
+   actorId?: number | null;
+ }
+ 
+-export function VaultAnnotations({ projectId, documentId, onChanged, actorId }: VaultAnnotationsProps) {
++export function VaultAnnotations({ projectId, documentId, onChanged, refreshKey, actorId }: VaultAnnotationsProps) {
+   const me = useActorId(actorId);
+-  const { data, readError, load } = useAnnotations(projectId, documentId);
++  const { data, readError } = useAnnotations(projectId, documentId, refreshKey);
+   const [adding, setAdding] = useState(false);
+   const [done, setDone] = useState<string | null>(null);
++  // No read here: the parent's re-read bumps `refreshKey`, and that is the one read after a change.
+   const changed = (text: string) => {
+     setDone(text);
+     setAdding(false);
+-    void load();
+     onChanged();
+   };
+   const ctx: Ctx = {

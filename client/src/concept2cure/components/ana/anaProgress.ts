@@ -27,7 +27,6 @@
 import type {
   AnaChatMessage,
   AnaContextUsed,
-  AnaPlanChange,
   AnaPlanStep,
   AnaProgressPhase,
   AnaServedModel,
@@ -36,6 +35,8 @@ import type {
   AnaTurnRecordStatus,
 } from './useAnaChat.types';
 import { isAnaRunPolicy, stepLabels } from '@shared/ana/run-policy';
+import { unknownStepLabel } from '@shared/ana/step-verbs';
+import { diffPlan } from '@shared/ana/plan-diff';
 
 /**
  * Phases the client itself observes (no server `status` event carries them).
@@ -102,22 +103,10 @@ export function closeProgress(
 }
 
 /** "57s", "1m 12s", "2h 05m". Whole seconds; a duration is never fractional here. */
-export function formatElapsed(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
-  if (m > 0) return `${m}m ${String(s).padStart(2, '0')}s`;
-  return `${s}s`;
-}
+export { formatElapsed } from '@shared/ana/turn-timeline';
 
-/** "340 ms" under a second, "2.4s" above it. For a single tool step. */
-export function formatStepDuration(ms: number): string {
-  if (!Number.isFinite(ms) || ms < 0) return '';
-  if (ms < 1000) return `${Math.round(ms)} ms`;
-  return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`;
-}
+/** "340 ms" under a second, "2.4s" above it. For a single tool step; the server's "Took" fact uses the same one. */
+export { formatStepDuration } from '@shared/ana/step-verbs';
 
 export interface ToolTally {
   total: number;
@@ -155,7 +144,8 @@ export function summarizeToolWork(calls: AnaToolCall[] | undefined): string {
   const seen = new Set<string>();
   const labels: string[] = [];
   for (const c of list) {
-    const raw = (c.label || c.name || '').trim();
+    // The server's label; a step with none is never named by its tool (step-verbs.ts).
+    const raw = (c.label || unknownStepLabel(c.status === 'success' ? 'done' : 'doing')).trim();
     if (!raw) continue;
     // "Searching the literature for X" → "searching the literature for X".
     const l = raw.charAt(0).toLowerCase() + raw.slice(1);
@@ -186,8 +176,8 @@ export function byRound(calls: AnaToolCall[]): Array<{ round: number; calls: Ana
 
 /**
  * Close every step still "running" when the turn ends before they report —
- * a stop, a timeout, a lost connection. A step the turn never heard back
- * from did not complete, and a row that keeps saying "running" beside
+ * a stop, a timeout, a lost connection, or final completion without a result.
+ * A step without a result has no confirmed completion; keeping "running" beside
  * "Stopped after 12s" is a contradiction on screen. `note` is the sentence
  * the row shows for why. Pure; returns the same array when nothing is open.
  */
@@ -195,9 +185,10 @@ export function settleRunningCalls(
   calls: AnaToolCall[] | undefined,
   note: string,
   now: number,
+  status: 'error' | 'unconfirmed' = 'error',
 ): AnaToolCall[] | undefined {
   if (!calls || !calls.some(c => c.status === 'running')) return calls;
-  return calls.map(c => (c.status === 'running' ? { ...c, status: 'error', endedAt: now, message: note } : c));
+  return calls.map(c => (c.status === 'running' ? { ...c, status, endedAt: now, message: note } : c));
 }
 
 /** The step currently in flight, if any — the row the panel highlights. */
@@ -230,34 +221,6 @@ export function readPlanSteps(raw: unknown): AnaPlanStep[] | null {
     steps.push({ title, status: status as AnaPlanStep['status'] });
   }
   return steps;
-}
-
-/**
- * The changes from one plan to the next, keyed by title (the tool asks for the
- * same titles on every call). A first plan is all `added`, marked `initial`,
- * so the transcript can say "Planned 5 steps" once rather than five times.
- */
-export function diffPlan(
-  prev: AnaPlanStep[] | undefined,
-  next: AnaPlanStep[],
-  at: number,
-  round?: number,
-): AnaPlanChange[] {
-  const before = new Map((prev ?? []).map((s) => [s.title.toLowerCase(), s]));
-  const initial = !prev || prev.length === 0;
-  const tag = { at, ...(round ? { round } : {}), ...(initial ? { initial: true } : {}) };
-  const changes: AnaPlanChange[] = [];
-  for (const s of next) {
-    const was = before.get(s.title.toLowerCase());
-    if (!was) changes.push({ kind: 'added', title: s.title, ...tag });
-    if (s.status !== was?.status) {
-      if (s.status === 'in_progress') changes.push({ kind: 'started', title: s.title, ...tag });
-      if (s.status === 'completed') changes.push({ kind: 'completed', title: s.title, ...tag });
-    }
-    before.delete(s.title.toLowerCase());
-  }
-  for (const gone of before.values()) changes.push({ kind: 'removed', title: gone.title, at, ...(round ? { round } : {}) });
-  return changes;
 }
 
 /** Apply a `plan` event to the turn it belongs to. A malformed payload changes nothing. */
@@ -356,6 +319,7 @@ const KNOWN_STOPPED_REASONS: ReadonlySet<string> = new Set<AnaStoppedReason>([
   'hold_expired',
   'hold_unavailable',
   'answer_cut_off',
+  'client_disconnected',
 ]);
 
 /** Labels that are non-empty strings (shared/ana/run-policy.ts), or undefined when there are none. */

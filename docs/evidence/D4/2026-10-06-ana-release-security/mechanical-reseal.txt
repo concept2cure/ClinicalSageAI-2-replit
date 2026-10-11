@@ -1,0 +1,9 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 ci:dependency-risk:reseal
+> node scripts/ci/reseal-dependency-risk-ledger.mjs
+
+Dependency risk reseal: OK — 3 reviewed High/Critical occurrence(s), finding set unchanged.
+  lockfileSha256: 35931d2ae5265c2b863407d51e2eb41c756b14ad3dc9b38d65252ff15d50d2c1 -> e5950b44018f8093e400bd0b482c44ab2d995c850ee6a4b9e86c0fe637718d40
+  lockfileVersion 3; rootPackageVersion 1.0.0; npm 11.9.0; generatedAt 2026-10-06T16:59:57.411Z
+Commit the rewritten ledger together with the lockfile change, then verify with: npm run ci:dependency-risk

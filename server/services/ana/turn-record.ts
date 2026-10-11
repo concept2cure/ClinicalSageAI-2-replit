@@ -62,13 +62,21 @@ import { servedModelsOf } from './turn-record-models.js';
 import type { TurnPlanStep } from './turn-plan.js';
 import type { ContextUsedEvent } from './turn-context-used.js';
 import type { TurnVerification } from './turn-verification.js';
+import { endReasonOf, stepRecordLink, type SealedTimelineEvent, type StepRecordLink, type StepRecordTimes, type TimelineEvent } from '@shared/ana/turn-timeline';
 
 /**
  * /2 (2026-10-04) adds `verification`. A /1 record has no such section.
  * /3 (2026-10-05, AnA reasoning round 9) adds `routing`, and on each model
  * call its gateway `requestId` and what it was `sent`.
+ * /4 (2026-10-08, ANA-SUMMARY S4) adds `timeline` — the events the Summary is
+ * built from, exactly as the client was sent them, each note's text by
+ * reference — and `stoppedReason`; and on each step its tool-use id, its
+ * timeline handle, when its handler was dispatched and ended, whether it was
+ * held back, its status sentence and whether a model was used in it.
+ * Verification has no schema gate: /1–/3 records verify as they always did,
+ * and only the Summary branches on the version.
  */
-export const TURN_RECORD_SCHEMA = 'ana-turn-record/3';
+export const TURN_RECORD_SCHEMA = 'ana-turn-record/4';
 export const TURN_RECORD_AUDIT_ACTION = 'ana.turn.recorded';
 export const TURN_RECORD_RESOURCE = 'ana_turn_record';
 
@@ -106,7 +114,8 @@ export interface RecordedFile {
   uploadSha256: string | null;
 }
 
-export interface RecordedStep {
+/** A step as the record keeps it; from /4 with its link to the timeline (StepRecordLink). */
+export interface RecordedStep extends StepRecordLink {
   round: number;
   tool: string;
   label: string;
@@ -126,6 +135,9 @@ export interface RecordedStep {
   /** 'server' for a model-provider tool (web search / fetch) run inside the model call. */
   runBy: 'platform' | 'server';
 }
+
+/** What /4 adds to a step, as the stream knows it when the step ends. */
+export type RecordedStepTimes = StepRecordTimes;
 
 export interface RecordedDraft {
   title: string;
@@ -213,6 +225,13 @@ export interface TurnRecordBody {
    */
   verification: TurnVerification | null;
   warnings: string[];
+  /**
+   * From /4: the Summary's events, in the order the client was sent them
+   * (shared/ana/turn-timeline.ts), a note's text by reference. Absent before /4.
+   */
+  timeline?: SealedTimelineEvent[];
+  /** From /4: why the run stopped, `client_disconnected` included; null when it was not stopped. */
+  stoppedReason?: string | null;
 }
 
 /**
@@ -286,6 +305,7 @@ export class TurnRecorder {
   private verification: TurnVerification | null = null;
   private routing: TurnRecordBody['routing'] = null;
   private readonly warnings: string[] = [];
+  private readonly timeline: SealedTimelineEvent[] = [];
   private streamedSoFar = '';
 
   /** Keep a text as a blob and return its reference. */
@@ -416,7 +436,7 @@ export class TurnRecorder {
     result: string | null;
     error?: string | null;
     runBy?: 'platform' | 'server';
-  }): void {
+  } & StepRecordTimes): void {
     this.steps.push({
       round: s.round,
       tool: s.tool,
@@ -427,9 +447,20 @@ export class TurnRecorder {
       result: typeof s.result === 'string' ? this.ref(s.result) : null,
       error: s.error ?? null,
       runBy: s.runBy ?? 'platform',
+      // From /4: the step's link to its timeline events, only the fields the stream reported.
+      ...stepRecordLink(s),
     });
     if (s.toolUseId) this.stepByToolUseId.set(s.toolUseId, this.steps.length - 1);
   }
+
+  /**
+   * One timeline event, as the client was sent it. A note's text is kept as a
+   * blob and referenced, so it shares the blob of the round's prose. Accepted
+   * until the record seals, whatever the run's status: the steps a cancel
+   * stopped are written after the cancel, and they are rows the person reads.
+   * The end event's stop reason is the record's `stoppedReason`.
+   */
+  addEvent(e: TimelineEvent): void { this.timeline.push(e.kind === 'note' ? { ...e, text: this.ref(e.text) } : { ...e }); }
 
   /** The round's results as the model received them; recorded where they differ from the result. */
   setSentToModel(entries: Array<{ tool_use_id: string; content: string }>): void {
@@ -543,6 +574,7 @@ export class TurnRecorder {
       verification: this.verification,
       routing: this.routing,
       warnings: this.warnings,
+      timeline: this.timeline, stoppedReason: endReasonOf(this.timeline),
     };
     const text = canonicalJson(body);
     return { body, text, sha256: sha256Hex(text), blobs: new Map(this.blobs) };

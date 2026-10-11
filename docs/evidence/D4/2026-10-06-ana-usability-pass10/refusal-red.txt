@@ -1,0 +1,75 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'THREAD_FORBIDDEN' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'GATEWAY_UNAVAILABLE' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'WEEKLY_LIMIT_EXCEEDED' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'THREAD_FORBIDDEN', message: 'Refused' } }
+[useAnaChat] stream failed: Stream error
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'Refused' } }
+[useAnaChat] stream failed: Stream error
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 401 }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 429 }
+[useAnaChat] stream failed: Refused
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'THREAD_FORBIDDEN' } 21ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'GATEWAY_UNAVAILABLE' } 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'WEEKLY_LIMIT_EXCEEDED' } 3ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'THREAD_FORBIDDEN', message: 'Refused' } } 7ms
+   → expected 'AnA couldn\'t complete this request. …' to contain 'another user'
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'Refused' } } 3ms
+   → expected 'AnA couldn\'t complete this request. …' to contain 'weekly limit'
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 401 } 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 429 } 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'THREAD_FORBIDDEN', message: 'Refused' } }
+AssertionError: expected 'AnA couldn\'t complete this request. …' to contain 'another user'
+
+Expected: "another user"
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts:24:50
+     22|     const { result } = renderHook(() => useAnaChat({}));
+     23|     await act(async () => { await result.current.send('Read my convers…
+     24|     expect(result.current.messages.at(-1)?.text).toContain(expected);
+       |                                                  ^
+     25|     expect(result.current.messages.at(-1)?.interruptedWithPartialRespo…
+     26|     expect(result.current.isStreaming).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'Refused' } }
+AssertionError: expected 'AnA couldn\'t complete this request. …' to contain 'weekly limit'
+
+Expected: "weekly limit"
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts:24:50
+     22|     const { result } = renderHook(() => useAnaChat({}));
+     23|     await act(async () => { await result.current.send('Read my convers…
+     24|     expect(result.current.messages.at(-1)?.text).toContain(expected);
+       |                                                  ^
+     25|     expect(result.current.messages.at(-1)?.interruptedWithPartialRespo…
+     26|     expect(result.current.isStreaming).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  22:56:47
+   Duration  1.00s (transform 228ms, setup 122ms, import 264ms, tests 45ms, environment 435ms)

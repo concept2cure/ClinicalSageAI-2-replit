@@ -739,15 +739,27 @@ export class AISentinel {
     status: string,
     resolvedById?: number
   ): Promise<any> {
+    // Resolving or dismissing closes a finding, and the closer is recorded on
+    // the transition only (ledger L195): a repeat of the same status keeps the
+    // original closer and time. Any other status (open, acknowledged) means
+    // nobody has closed it, so the last closer is cleared rather than left to
+    // stand beside a state they did not set. Column references in SET read the
+    // row as it was before this UPDATE.
     const result = await this.pool.query(
       `UPDATE sentinel_findings SET
          status = $1,
-         resolved_at = CASE WHEN $1 = 'resolved' THEN NOW() ELSE resolved_at END,
-         resolved_by_id = CASE WHEN $1 = 'resolved' THEN $2 ELSE resolved_by_id END,
+         resolved_at = CASE
+           WHEN $1 IN ('resolved', 'dismissed') AND status IS DISTINCT FROM $1 THEN NOW()
+           WHEN $1 IN ('resolved', 'dismissed') THEN resolved_at
+           ELSE NULL END,
+         resolved_by_id = CASE
+           WHEN $1 IN ('resolved', 'dismissed') AND status IS DISTINCT FROM $1 THEN $2::integer
+           WHEN $1 IN ('resolved', 'dismissed') THEN resolved_by_id
+           ELSE NULL END,
          updated_at = NOW()
        WHERE finding_id = $3 AND organization_id = $4
        RETURNING *`,
-      [status, resolvedById || null, findingId, organizationId]
+      [status, resolvedById ?? null, findingId, organizationId]
     );
     return result.rows[0];
   }

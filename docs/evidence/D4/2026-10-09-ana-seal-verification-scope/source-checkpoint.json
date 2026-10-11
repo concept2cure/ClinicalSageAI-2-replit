@@ -1,0 +1,12 @@
+{
+  "source_checkpoint": "2df0142b9a27b2e182bcb72d5c865d1f80b33d2d",
+  "release_base": "b9a87ab1704b5a59e1293070748b3e99c940d5c1",
+  "normal_precommit_passed": true,
+  "elapsed_seconds": 1.585,
+  "source_files": [
+    "server/routes/ana-ri/seal-verified.ts",
+    "server/services/ana/verifiedSealService.ts",
+    "server/services/ana/__tests__/verified-seal-scope.test.ts",
+    "server/routes/ana-ri/__tests__/seal-verified-scope.test.ts"
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "head": "b7984438bc472348b5ed2958f8fd101c97d5a666",
+  "runs": [
+    {
+      "id": 37477805866,
+      "name": "Repo Health Baseline Refresh",
+      "status": "completed",
+      "conclusion": "success",
+      "head": "b7984438bc472348b5ed2958f8fd101c97d5a666"
+    },
+    {
+      "id": 37477805896,
+      "name": "Tier 5 Browser Smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "head": "b7984438bc472348b5ed2958f8fd101c97d5a666"
+    },
+    {
+      "id": 37477805847,
+      "name": "C2C Agent — Validate & Audit",
+      "status": "completed",
+      "conclusion": "success",
+      "head": "b7984438bc472348b5ed2958f8fd101c97d5a666"
+    },
+    {
+      "id": 37477805911,
+      "name": "Semgrep",
+      "status": "completed",
+      "conclusion": "failure",
+      "head": "b7984438bc472348b5ed2958f8fd101c97d5a666"
+    },
+    {
+      "id": 37477805741,
+      "name": "CodeQL",
+      "status": "completed",
+      "conclusion": "success",
+      "head": "b7984438bc472348b5ed2958f8fd101c97d5a666"
+    },
+    {
+      "id": 37477806751,
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "failure",
+      "head": "b7984438bc472348b5ed2958f8fd101c97d5a666"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 112317733699,
+      "name": "Secret scan (full history)",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112317733950,
+      "name": "Lint",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typecheckSteps": [
+        {
+          "name": "Run TypeScript check (no regression vs baseline)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run beta-slice TypeScript check",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 112317734993,
+      "name": "Security Contract Tests",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112317735425,
+      "name": "Security Scan",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Run lockfile audit and dependency-risk ledger gate",
+        "Trivy filesystem scan (deps + secrets)"
+      ],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112317736615,
+      "name": "Nightly Governance Strict",
+      "conclusion": "skipped",
+      "failedSteps": [],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112323772546,
+      "name": "Production Image Boot (built image, empty database, sign-in)",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112323772572,
+      "name": "Blank DB Provisioning + Deploy Migration",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112323772639,
+      "name": "AIOS Audit Assets",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112323772648,
+      "name": "Production Boot Smoke (RLS on, non-superuser role)",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112323772732,
+      "name": "Integration Tests",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Run integration tests"
+      ],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112323772808,
+      "name": "Test",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Run tests"
+      ],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112323772929,
+      "name": "Coverage (ratchet)",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Coverage may not go down"
+      ],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112323773570,
+      "name": "AnA Readiness Tests",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112345105023,
+      "name": "Build",
+      "conclusion": "skipped",
+      "failedSteps": [],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112345106724,
+      "name": "Assemble Release Evidence",
+      "conclusion": "skipped",
+      "failedSteps": [],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112345106987,
+      "name": "Release evidence gate",
+      "conclusion": "skipped",
+      "failedSteps": [],
+      "typecheckSteps": []
+    }
+  ],
+  "logRetrieval": "Test job log retrieval returned Internal error. No root cause attribution."
+}

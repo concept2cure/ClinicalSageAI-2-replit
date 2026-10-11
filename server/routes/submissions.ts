@@ -15,7 +15,8 @@ import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { requireRole } from '../middleware/auth';
 import { isUuid } from '../middleware/uuidParam';
-import { requestDb } from '../db/requestDb';
+import { ok } from '../lib/api-response';
+import { requestDb, requestPgClient } from '../db/requestDb';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import {
@@ -34,8 +35,11 @@ import {
   listLeaves,
   upsertLeaf,
   removeLeaf,
+  anchorSubmissionToProgram,
+  listAnchorCandidates,
   SUBMISSION_ERROR_STATUS,
 } from '../services/submission-service/submission-service';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
 import {
   isPlaceableDocumentTable,
   unplaceableDocumentTableMessage,
@@ -44,7 +48,6 @@ import { assessPathwayReadiness, PATHWAYS, type Pathway } from '../services/path
 import {
   generateSubmissionPlan,
   explainValidation,
-  computeCrossRegionGap,
   runDispatchQc,
 } from '../services/submission-ai/submission-ai-service';
 import {
@@ -216,8 +219,23 @@ const AUTHOR = 'regulatory-author';
 router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  /* ?programId=<uuid> scopes the list to one program's submissions: the filing
+     picker's list, where an unanchored submission is not offered for a document
+     of a program (QA j3 finding (b)). The count of submissions the scope leaves
+     out rides in `meta.notOffered`, so the picker can say what it did not offer.
+     Without it the whole organization is listed, as the Submission Center reads it. */
+  const programParam = req.query.programId;
   try {
-    res.json(await listSubmissions(ctx));
+    if (programParam === undefined) {
+      res.json(await listSubmissions(ctx));
+      return;
+    }
+    if (typeof programParam !== 'string' || !isUuid(programParam)) {
+      return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'programId must be a program uuid.' } });
+    }
+    const programId = programParam.toLowerCase();
+    const [rows, all] = await Promise.all([listSubmissions(ctx, { programId }), listSubmissions(ctx)]);
+    ok(res, rows, { notOffered: all.length - rows.length });
   } catch (err) {
     fail(res, err);
   }
@@ -262,7 +280,6 @@ router.get('/capabilities', limiter, requireRole(AUTHOR), async (req, res) => {
         sequences: true,
         validation: true,
         'shadow-review': true,
-        'cross-region': true,
         dispatch: true,
       },
       // Capability flags (not workspaces). The assemble/publish BYTES are now
@@ -297,6 +314,46 @@ router.get('/validation-rules', limiter, requireRole(AUTHOR), async (req, res) =
     const { RULE_CORPUS, rulesForRegion, corpusSummary } = await import('../services/ectd/validation-rule-corpus.js');
     const rules = region ? rulesForRegion(region as (typeof REGIONS)[number]) : RULE_CORPUS;
     res.json({ region: region || 'all', summary: corpusSummary(), rules });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── What the platform can carry for a market (FILING_SPINE.md F19) ──────────
+// One statement per (application type, market), composed by
+// services/regulatory/market-support.ts from the rule pack, the regional
+// backbone, the region profile and the channel with its adapter's refusal. No
+// model writes any of it. `?applicationType=` is required; `?market=` (an
+// agency, a region code or a submission region) narrows to one market, and
+// without it every region the platform names is returned.
+// Registered before '/:id' so the literal path is not shadowed.
+router.get('/market-support', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const first = (v: unknown) => String(Array.isArray(v) ? v[0] : v ?? '').trim();
+  const applicationType = first(req.query.applicationType);
+  const market = first(req.query.market);
+  if (!applicationType || applicationType.length > 64 || market.length > 64) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'applicationType is required (at most 64 characters); market, when given, is at most 64.' } });
+  }
+  try {
+    const [{ readMarketSupport }, { REGION_IDENTITY }] = await Promise.all([
+      import('../services/regulatory/market-support.js'),
+      import('../../shared/regulatory/region-identity.js'),
+    ]);
+    const markets = market ? [market] : Object.keys(REGION_IDENTITY);
+    const asOf = new Date().toISOString().slice(0, 10);
+    /* The request's own pinned connection, not the shared pool
+       (ci:requestdb-coverage). readMarketSupport reads the platform's active
+       rule packs — reference data, not this tenant's rows — but it reads them
+       on the caller's request scope like every other read in this router, so
+       the route holds no second path to the database. */
+    const out = await readMarketSupport(
+      requestPgClient(req),
+      markets.map((m) => ({ applicationType, market: m })),
+      asOf,
+    );
+    res.json({ applicationType, asOf, markets: out });
   } catch (err) {
     fail(res, err);
   }
@@ -893,6 +950,51 @@ router.post('/:id/sequences', limiter, requireRole(AUTHOR), async (req, res) => 
   }
 });
 
+// ── Anchor a submission to its project (P-14's remedy) ───────────────────────
+// A submission created before submissions recorded their project accepts no
+// placement of a project's document (409 UNANCHORED_SUBMISSION, P-14). This is
+// where it is anchored: by the project's lead or an organization manager, with
+// a reason, on the audit chain (anchorSubmissionToProgram). The role is the
+// membership row's, never the token's or the body's.
+const anchorProgramSchema = z.object({ programId: z.string().uuid() });
+// The projects this submission may be anchored to: its own filing type, by the
+// rule the anchor applies (listAnchorCandidates). QA 2026-10-08 (j6): the
+// control offered every programme, a device programme for an NDA among them.
+router.get('/:id/program-anchor', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  try {
+    res.json(await listAnchorCandidates(id, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+router.post('/:id/program-anchor', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = idParam(req.params.id);
+  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
+  const parsed = anchorProgramSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) {
+    return res.status(400).json({ error: { code: 'REASON_REQUIRED', message: reason.error }, field: 'reason' });
+  }
+  try {
+    const orgRole = await resolveSignerOrgRole(ctx.userId, ctx.organizationId);
+    res.json(
+      await anchorSubmissionToProgram(
+        { submissionId: id, programId: parsed.data.programId, reason: reason.reason },
+        { ...ctx, orgRole },
+      ),
+    );
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 router.post('/sequences/:seqId/transition', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -964,6 +1066,14 @@ router.delete('/sequences/:seqId/leaves/:leafId', limiter, requireRole(AUTHOR), 
   if (seqId === null || leafId === null) {
     return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence or leaf id.' } });
   }
+  /* A removal decides what content leaves a regulator-facing sequence, the
+     inverse of a placement, so it takes the reason a placement takes (PX-1) and
+     records it on the LEAF_REMOVED row. QA 2026-10-08 (j6): the Builder had no
+     remove control at all; the one it has now sends the reason. */
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!reason.ok) {
+    return res.status(400).json({ error: { code: 'REASON_REQUIRED', message: reason.error }, field: 'reason' });
+  }
   try {
     /* WO-16C #133. `removeLeaf` now reports what became of its §11.10(e) row,
        and this route answered 204 No Content — which has no body to put it in, so
@@ -977,8 +1087,13 @@ router.delete('/sequences/:seqId/leaves/:leafId', limiter, requireRole(AUTHOR), 
        reporting's sake. Same reason and same shape as the predicate-intelligence
        proxy, which forwards an upstream body verbatim and therefore also reports
        through headers. */
-    const removal = await removeLeaf(leafId, seqId, ctx);
+    const removal = await removeLeaf(leafId, seqId, ctx, reason.reason);
     setAuditRowHeaders(res, removal.auditTrail);
+    // A removal from a Validated sequence returned it to Assembling; the 204
+    // has no body, so the change rides on a header like the audit outcome.
+    if (removal.sequenceStatusChanged) {
+      res.setHeader('X-Sequence-Status-Changed', `${removal.sequenceStatusChanged.from}->${removal.sequenceStatusChanged.to}`);
+    }
     res.status(204).end();
   } catch (err) {
     fail(res, err);
@@ -1024,28 +1139,6 @@ router.post('/:id/validation/explain', limiter, requireRole(AUTHOR), async (req,
   try {
     await getSubmission(id, ctx);
     res.json(await explainValidation(parsed.data, { ...ctx, submissionId: id }));
-  } catch (err) {
-    fail(res, err);
-  }
-});
-
-// ── Cross-region gap (AI) ────────────────────────────────────────────────────
-const crossRegionSchema = z.object({
-  sourceRegion: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
-  targetRegions: z.array(z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'])).min(1),
-  applicationType: z.string().min(1).max(64),
-  sectionsPresent: z.array(z.string()).optional(),
-});
-router.post('/:id/cross-region', limiter, requireRole(AUTHOR), async (req, res) => {
-  const ctx = ctxOf(req);
-  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const id = idParam(req.params.id);
-  if (id === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid submission id.' } });
-  const parsed = crossRegionSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  try {
-    await getSubmission(id, ctx);
-    res.json(await computeCrossRegionGap(parsed.data, { ...ctx, submissionId: id }));
   } catch (err) {
     fail(res, err);
   }
@@ -1592,42 +1685,57 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
   }
 });
 
-// ── Assemble (assemble step of assemble→submit→transmit) ──────────────────────
-// Drives the real eCTD publisher off the sequence's canonical leaves. Returns a
-// sanitized package descriptor (no server paths). Does NOT transmit — submit/
-// transmit stays behind the governed transmit_submission tool + Part 11 e-sign.
-const assembleSchema = z.object({
-  applicationId: z.string().min(1).max(128).optional(),
-  sponsorId: z.string().min(1).max(128).optional(),
-  sponsorName: z.string().min(1).max(256).optional(),
-});
+// ── Assemble (a dry run of the assemble step) ─────────────────────────────────
+// Drives the real eCTD publisher off the sequence's canonical leaves and reports
+// what the package would hold and what transmit would refuse. Returns a
+// sanitized descriptor (no server paths). Does NOT transmit — submit/transmit
+// stays behind the governed transmit_submission tool + Part 11 e-sign.
+//
+// 2026-10-08 (P-27 follow-up): it is a dry run, and says so. It filled the
+// backbone's identity from the body or from UNASSIGNED placeholders and answered
+// with the digest of bytes it then deleted. A package names only recorded
+// identity (package-identity.ts); this route produces none, so it takes no
+// identity — a body naming one is refused rather than silently ignored — and the
+// answer carries dryRun / packageProduced / notice.
+const DRY_RUN_IDENTITY_FIELDS = ['applicationId', 'sponsorId', 'sponsorName'] as const;
 router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
-  const parsed = assembleSchema.safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  const named = DRY_RUN_IDENTITY_FIELDS.filter((f) => (req.body ?? {})[f] !== undefined);
+  if (named.length > 0) {
+    return res.status(400).json({
+      error: {
+        code: 'DRY_RUN_TAKES_NO_IDENTITY',
+        message:
+          `This assembly is a dry run and takes no identity (${named.join(', ')}). A package's application number and ` +
+          'applicant are read from the record when it is exported, compiled or sent. Nothing was assembled.',
+      },
+    });
+  }
   const assembly = await import('../services/ectd/assemble-from-core');
   try {
     const { assembleSequence, assembledTransmitBlockers } = assembly;
+    const { DRY_RUN_NOTICE } = await import('../services/ectd/package-identity');
     const result = await assembleSequence({
       sequenceId: seqId,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      // Never fabricate an agency identifier — these reach the regional
-      // backbone and the package filename. Unassigned values say so.
-      applicationId: parsed.data.applicationId ?? `UNASSIGNED-SEQ-${seqId}`,
-      sponsorId: parsed.data.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
-      sponsorName: parsed.data.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
+      dryRun: true,
     });
-    // Assemble-only: the response carries metadata, not bytes — the staged
-    // temp package is not needed once we've read the descriptor.
+    // A dry run: the response carries metadata, not bytes, and the staged
+    // bundle is discarded before answering — nothing of it is kept.
     await result.cleanup();
     // Sanitized — never expose the server temp path.
     res.json({
       ok: true,
-      sha256: result.bundle.sha256,
+      dryRun: true,
+      packageProduced: false,
+      notice: DRY_RUN_NOTICE,
+      // No sha256: a digest of discarded placeholder-identity bytes is exactly
+      // what could be recorded as a package's (P-27). Size and format describe
+      // the dry run; the digest of a package is its export's or its compile's.
       format: result.bundle.format,
       sizeBytes: result.bundle.sizeBytes,
       materialized: result.materialized,
@@ -1699,6 +1807,39 @@ router.get('/sequences/:seqId/dispatch-readiness', limiter, requireRole(AUTHOR),
 // frozen or dispatched while the gate blocks. Neither transmits.
 const governedTransitionSchema = z.object({ signatureActionId: z.string().min(1).max(128) });
 
+// ── Governed precheck (ask the step's gates BEFORE a signature is taken) ─────
+// QA 2026-10-08 (j6): the client signed first and asked the gate second, so a
+// refused freeze left an executed approval signature. This runs the step's own
+// gates without a signature (precheckGovernedStep) and answers 200 with
+// { cleared, refusal } either way — a refusal here is the answer, not an error.
+// It authorizes nothing: the step re-runs every gate itself.
+const governedPrecheckSchema = z.object({
+  step: z.enum(['freeze', 'dispatch', 'transmit']),
+  environment: z.enum(['staging', 'production']).optional(),
+  // Transmit: the number the person typed, judged against the program record
+  // before anyone signs (P-23), by the rule transmit itself applies.
+  applicationId: z.string().min(1).max(128).optional(),
+});
+router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = governedPrecheckSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { precheckGovernedStep } = await import('../services/submission-service/submission-service');
+    res.json(
+      await precheckGovernedStep(seqId, parsed.data.step, ctx, {
+        environment: parsed.data.environment,
+        applicationId: parsed.data.applicationId,
+      }),
+    );
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 router.post('/sequences/:seqId/freeze', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -1741,7 +1882,7 @@ const transmitSchema = z.object({
   environment: z.enum(['staging', 'production']).optional(),
   applicationId: z.string().min(1).max(128).optional(),
   sponsorId: z.string().min(1).max(128).optional(),
-  sponsorName: z.string().min(1).max(256).optional(),
+  // No sponsorName: the package names the organisation's recorded name (QA j6).
 });
 router.post('/sequences/:seqId/transmit', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
@@ -1759,7 +1900,6 @@ router.post('/sequences/:seqId/transmit', limiter, requireRole(AUTHOR), async (r
       environment: parsed.data.environment,
       applicationId: parsed.data.applicationId,
       sponsorId: parsed.data.sponsorId,
-      sponsorName: parsed.data.sponsorName,
     });
     res.json(result);
   } catch (err) {

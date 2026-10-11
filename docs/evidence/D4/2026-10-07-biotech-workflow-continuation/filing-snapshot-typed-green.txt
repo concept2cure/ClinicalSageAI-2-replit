@@ -1,0 +1,54 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status content drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-07T14:58:39.066Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "afe4d9bb-acab-450c-a06e-a36668092446",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status title drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-07T14:58:39.150Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "f99e03ac-f319-4ac4-bf7f-e4b4549399a7",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status order drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-07T14:58:39.191Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "4e9a7eed-243a-4be1-b399-0e1f53bbd407",
+    "why": "document sections changed during filing"
+  }
+}
+
+··stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status added section drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-07T14:58:39.224Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "032ed3c4-2789-4bf2-b0dc-d6d95805f2c5",
+    "why": "document sections changed during filing"
+  }
+}
+
+···
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  10:58:31
+   Duration  7.97s (transform 649ms, setup 163ms, import 430ms, tests 6.94s, environment 0ms)

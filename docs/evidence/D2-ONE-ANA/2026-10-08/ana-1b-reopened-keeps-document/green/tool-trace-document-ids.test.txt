@@ -1,0 +1,12 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana/__tests__/tool-trace-document-ids.test.ts > the saved step summary of a step that built a document > keeps the document id, the program and the title, whatever came before them 4ms
+ ✓ server/services/ana/__tests__/tool-trace-document-ids.test.ts > the saved step summary of a step that built a document > does not carry the draft text into the trace 1ms
+ ✓ server/services/ana/__tests__/tool-trace-document-ids.test.ts > the saved step summary of a step that built a document > leaves every other result as it was 1ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  01:34:31
+   Duration  449ms (transform 134ms, setup 84ms, import 81ms, tests 10ms, environment 0ms)
+

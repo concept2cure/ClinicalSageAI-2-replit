@@ -1,0 +1,26 @@
+{
+  "runtime": "v22.23.3",
+  "baselineCommit": "117313b90e933b8e96d162e3f855ca08899ec9fc",
+  "forcedNoIgnore": true,
+  "baseline": [
+    {
+      "file": "useAnaChat.ts",
+      "errors": 0,
+      "warnings": 36
+    }
+  ],
+  "current": [
+    {
+      "file": "useAnaChat-steering-receipts.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "file": "useAnaChat.ts",
+      "errors": 0,
+      "warnings": 36
+    }
+  ],
+  "sourceWarningGrowth": 0,
+  "sourceRuleCountsUnchanged": true
+}

@@ -77,6 +77,25 @@ describe('renderHtmlToPdf fallback — document structure survives', () => {
     expect(text).not.toContain('color:red');
   }, 60_000);
 
+  it('prints no markup from a whole HTML document, and no garbage rule under the notice (QA 2026-10-08, j4)', async () => {
+    /* The authoring PDF export hands this renderer a complete document —
+       doctype, head, stylesheet — and the walk's file read
+       "% % % … %" (the box-drawing rule, which the standard PDF font cannot
+       encode) and then the literal "<!doctype html>" before the title. */
+    const whole =
+      '<!doctype html><html><head><meta charset="utf-8"><title>T</title>' +
+      '<style>body { font-family: Georgia; } h2 { font-size: 14pt; }</style></head>' +
+      '<body><h1>2.5 Clinical Overview</h1><h2>2.5.1 — Rationale</h2><p>Body text.</p></body></html>';
+    const text = await extractText(await renderFallbackPdf(whole));
+    expect(text).not.toMatch(/doctype/i);
+    expect(text).not.toContain('<');
+    expect(text).not.toContain('font-family');
+    expect(text).not.toMatch(/%\s*%\s*%/);
+    // The notice is followed directly by the document.
+    const afterNotice = text.slice(text.indexOf('formatted document.') + 'formatted document.'.length).trim();
+    expect(afterNotice.startsWith('2.5 Clinical Overview')).toBe(true);
+  }, 60_000);
+
   it('renders a placeholder rather than an empty page for empty input', async () => {
     expect(await extractText(await renderFallbackPdf(''))).toContain(
       'Document content not available',
@@ -138,4 +157,39 @@ describe('renderHtmlToPdf fallback — document structure survives', () => {
     if (!driverInstalled) expect(usedFallback).toBe(true);
     else expect(typeof usedFallback).toBe('boolean');
   }, 120_000);
+});
+
+/* docs/design/ONE_ANA_ONE_CANVAS.md §4.5: an authoring working copy says
+   "DRAFT — uncontrolled copy" on EVERY page. This fallback renders every
+   authoring PDF and applies no CSS, so the banner is stamped by the engine. */
+describe('renderFallbackPdf — a page banner on every page', () => {
+  const BANNER = 'DRAFT — uncontrolled copy · not a controlled record · D1 · v3';
+  const LONG = Array.from({ length: 160 }, (_, i) => `<p>Paragraph ${i + 1} of a long working draft.</p>`).join('\n');
+
+  async function pages(pdf: Buffer): Promise<string[]> {
+    const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const doc = await getDocument({ data: new Uint8Array(pdf), useSystemFonts: true }).promise;
+    const out: string[] = [];
+    for (let p = 1; p <= doc.numPages; p++) {
+      const content = await (await doc.getPage(p)).getTextContent();
+      out.push(content.items.map((i: any) => i.str).join(' ').replace(/\s+/g, ' '));
+    }
+    return out;
+  }
+
+  it('prints the banner at the top and bottom of every page of a multi-page document', async () => {
+    const text = await pages(await renderFallbackPdf(LONG, { pageBanner: BANNER }));
+    expect(text.length).toBeGreaterThan(2);
+    for (const [i, page] of text.entries()) {
+      expect(page.split(BANNER).length - 1, `page ${i + 1}`).toBe(2);
+    }
+    // Stamping the banner added no page of its own.
+    const plain = await pages(await renderFallbackPdf(LONG));
+    expect(text.length).toBe(plain.length);
+  });
+
+  it('prints no banner when none is asked for', async () => {
+    const text = await pages(await renderFallbackPdf(LONG));
+    expect(text.join(' ')).not.toContain('uncontrolled copy');
+  });
 });

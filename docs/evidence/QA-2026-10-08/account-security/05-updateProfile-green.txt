@@ -1,0 +1,10 @@
+# Item 4 GREEN — updateProfile removed from authService.tsx (no caller: grep -rn updateProfile client server shared tests e2e found only its definition)
+$ npx vitest run client/src/services/portal/__tests__/authService-routes-exist.test.ts
+ ✓ client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > the client singleton addresses /api/v1/auth, where the auth router is mounted 3ms
+ ✓ client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > reads every api call in the client (none is skipped for its shape) 2ms
+ ✓ client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > each one is registered on server/routes/auth.ts 1ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+
+$ grep -rn updateProfile client/src server shared tests
+client/src/services/portal/__tests__/authService-routes-exist.test.ts:6: * /mfa/backup-codes, none of which exists, and `updateProfile`, which called

@@ -1,0 +1,115 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts
+saved-source-route setup: disposition fixture
+
+stdout | server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts
+saved-source-route setup: projection schema
+
+stdout | server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts
+saved-source-route setup: real router import
+
+stderr | server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T14:30:01.791Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts
+saved-source-route setup: ready
+
+xxx--x
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts > sealed source-linked /export uses persisted source receipts > reads actual saved provenance and refuses withdrawn data before audit/history
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts:129:27
+    127|     const docId = await sealed(f);
+    128|     const result = await exportDoc(f, docId);
+    129|     expect(result.status).toBe(409);
+       |                           ^
+    130|     expect(result.body.code).toBe('SOURCE_REFERENCES_UNAVAILABLE');
+    131|     await expectNoExportRecord(f, docId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts > sealed source-linked /export uses persisted source receipts > refuses a noncurrent source version without inventing a disposition
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts:140:27
+    138|     const docId = await sealed(f);
+    139|     const result = await exportDoc(f, docId);
+    140|     expect(result.status).toBe(409);
+       |                           ^
+    141|     expect(result.body.code).toBe('SOURCE_REFERENCES_UNAVAILABLE');
+    142|     await expectNoExportRecord(f, docId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts > sealed source-linked /export uses persisted source receipts > refuses recorded extraction failure before audit/history
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts:150:27
+    148|     const docId = await sealed(f);
+    149|     const result = await exportDoc(f, docId);
+    150|     expect(result.status).toBe(409);
+       |                           ^
+    151|     expect(result.body.code).toBe('SOURCE_REFERENCES_UNAVAILABLE');
+    152|     await expectNoExportRecord(f, docId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts > sealed source-linked /export uses persisted source receipts > refuses malformed persisted groups without treating them as manually authored
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts:173:27
+    171|     const docId = await sealed(f, { projectSourceReferences: [{ sectio…
+    172|     const result = await exportDoc(f, docId);
+    173|     expect(result.status).toBe(409);
+       |                           ^
+    174|     expect(result.body.code).toBe('SOURCE_REFERENCES_UNAVAILABLE');
+    175|     await expectNoExportRecord(f, docId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 skipped (6)
+   Start at  10:29:53
+   Duration  15.46s (transform 5.70s, setup 191ms, import 828ms, tests 13.87s, environment 0ms)

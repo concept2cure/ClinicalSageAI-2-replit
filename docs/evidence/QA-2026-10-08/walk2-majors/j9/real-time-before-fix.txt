@@ -1,0 +1,62 @@
+0.01m REQ GET /api/v1/auth/session
+0.01m REQ GET /api/v1/auth/session
+0.01m REQ GET /api/v1/auth/session
+0.01m REQ GET /api/v1/auth/session
+0.02m REQ GET /api/v1/auth/session
+0.02m REQ GET /api/v1/auth/session
+0.61m poll url /concept2cure/projects dialog 0
+1.11m poll url /concept2cure/projects dialog 0
+1.61m poll url /concept2cure/projects dialog 0
+2.11m poll url /concept2cure/projects dialog 0
+2.61m poll url /concept2cure/projects dialog 0
+3.11m poll url /concept2cure/projects dialog 0
+3.61m poll url /concept2cure/projects dialog 0
+4.11m poll url /concept2cure/projects dialog 0
+4.61m poll url /concept2cure/projects dialog 0
+5.11m poll url /concept2cure/projects dialog 0
+5.61m poll url /concept2cure/projects dialog 0
+6.11m poll url /concept2cure/projects dialog 0
+6.61m poll url /concept2cure/projects dialog 0
+7.11m poll url /concept2cure/projects dialog 0
+7.61m poll url /concept2cure/projects dialog 0
+8.11m poll url /concept2cure/projects dialog 0
+8.36m REQ GET /api/v1/auth/session
+8.36m REQ GET /api/v1/auth/session
+8.36m REQ GET /api/v1/auth/session
+8.36m REQ GET /api/v1/auth/session
+8.61m poll url /concept2cure/projects dialog 0
+9.11m poll url /concept2cure/projects dialog 0
+9.61m poll url /concept2cure/projects dialog 0
+10.11m poll url /concept2cure/projects dialog 0
+10.61m poll url /concept2cure/projects dialog 0
+11.11m poll url /concept2cure/projects dialog 0
+11.19m REQ GET /api/v1/auth/session
+11.19m REQ GET /api/v1/auth/session
+11.20m REQ GET /api/v1/auth/session
+11.20m REQ GET /api/v1/auth/session
+11.20m REQ GET /api/v1/auth/session
+11.20m REQ GET /api/v1/auth/session
+11.61m poll url /concept2cure/projects dialog 0
+12.11m poll url /concept2cure/projects dialog 0
+12.24m REQ GET /api/v1/auth/session
+12.24m REQ GET /api/v1/auth/session
+12.24m REQ GET /api/v1/auth/session
+12.24m REQ GET /api/v1/auth/session
+12.25m REQ GET /api/v1/auth/session
+12.25m REQ GET /api/v1/auth/session
+12.61m poll url /concept2cure/projects dialog 0
+13.11m poll url /concept2cure/projects dialog 0
+13.61m poll url /concept2cure/projects dialog 0
+14.11m poll url /concept2cure/projects dialog 0
+14.61m poll url /concept2cure/projects dialog 0
+15.11m poll url /concept2cure/projects dialog 0
+15.42m REQ GET /api/v1/auth/session
+15.42m REQ GET /api/v1/auth/session
+15.43m REQ GET /api/v1/auth/session
+15.43m REQ GET /api/v1/auth/session
+15.43m REQ GET /api/v1/auth/session
+15.43m REQ GET /api/v1/auth/session
+15.61m poll url /concept2cure/projects dialog 0
+16.11m poll url /concept2cure/projects dialog 0
+16.61m poll url /concept2cure/projects dialog 0
+17.11m poll url /concept2cure/projects dialog 0

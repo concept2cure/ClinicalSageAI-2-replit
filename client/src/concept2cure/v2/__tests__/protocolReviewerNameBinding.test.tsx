@@ -76,7 +76,7 @@ describe('the request-a-review drawer', () => {
   it('says a chosen account is listed under its own name, before anything is typed', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url === '/api/tenant-users/42') {
-        return { ok: true, status: 200, json: async () => [{ id: 21, name: 'Dr Amara Okafor', email: 'okafor@c2c.test', role: 'member' }] } as Response;
+        return { ok: true, status: 200, json: async () => [{ id: 21, name: 'Dr Amara Okafor', email: 'okafor@c2c.test', role: 'reviewer', canSign: true }] } as Response;
       }
       return { ok: true, status: 200, json: async () => ({}) } as Response;
     });

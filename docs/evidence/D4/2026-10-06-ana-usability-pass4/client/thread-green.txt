@@ -1,0 +1,41 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > no C2C_CONVO at all (a first visit, or AnA’s own navigation here): AnA's running turn is kept, and on screen 94ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > { id: "new" } with no seed: AnA's running turn is kept, and on screen 34ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > "Open full thread" with an empty box: AnA's running turn is kept, and on screen 35ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an unseeded ask to draft: AnA's running turn is kept, and on screen 42ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an idle conversation is kept too — arriving is not a request to start over 26ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an empty conversation in progress is titled as the new conversation it is 31ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > a question sent here while AnA is still answering > neither aborts her nor vanishes: it waits in the composer, and the person is told 31ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > a question sent here while AnA is still answering > when she is idle, the question starts its new conversation and is sent 25ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > another conversation, asked for by id > is not loaded over a turn that is still running — the person is told to open it again 29ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > another conversation, asked for by id > once loaded, is the conversation in progress — the next arrival does not load it again 50ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > New conversation resets the shell’s chat 145ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > is not offered while a conversation is loading 56ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > is not offered mid-turn — a reset would abort AnA where she stands 58ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > keeps the reply draft while history is loading 53ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > keeps the reply draft while history is failed 54ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > shows the failed history with retry for that same thread and an explicit new conversation control 65ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > clears the previous transcript on switch and blocks a failed selection until retry succeeds
+[useAnaChat] loadThread non-ok: 503
+[useAnaChat] loadThread failed: loadThread 503
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > allows an explicit new conversation after a failed history read
+[useAnaChat] loadThread failed: Offline
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps the latest selected thread when an older response arrives last 27ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps loading and refuses send while the newer history is still pending 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > refuses a same-tick send and ignores a superseded response still reading its body 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > ignores an obsolete load failure without surfacing an error on the newer selection 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > reset cancels pending history so it cannot replace a newly asked conversation 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > unmount cancels a history read and ignores its late result 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > clears the previous transcript on switch and blocks a failed selection until retry succeeds 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > allows an explicit new conversation after a failed history read 3ms
+
+ Test Files  2 passed (2)
+      Tests  24 passed (24)
+   Start at  21:49:44
+   Duration  4.38s (transform 1.54s, setup 194ms, import 2.12s, tests 887ms, environment 895ms)
+

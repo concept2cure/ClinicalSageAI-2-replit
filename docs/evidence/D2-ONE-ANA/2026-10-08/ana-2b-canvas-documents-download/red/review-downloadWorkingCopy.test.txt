@@ -1,0 +1,673 @@
+# Red, as reviewed: ConversationThread.tsx, DocumentCanvas.tsx, CanvasDocumentList.tsx and DownloadMenu.tsx set back to the reviewed copies (restored afterwards, checked with cmp); the test file as it now stands.
+# npx vitest run client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy 235ms
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > choosing Working copy (Word) on a draft posts the working-copy route and downloads what the server sent 76ms
+   → expected "vi.fn()" to be called with arguments: [ …(2) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "Working copy of Clinical Overview (Word) requested in your browser. Every page is marked DRAFT — uncontrolled copy.",
++   "Downloaded a working copy of Clinical Overview (Word). Every page is marked DRAFT — uncontrolled copy.",
+    "ok",
+  ]
+
+
+Number of calls: 1
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > Working copy (PDF) asks for a PDF 64ms
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a refusal is said in the server’s words, beside the control and in a toast, and nothing downloads 63ms
+   → expected 'No working copy was downloaded. The w…' to be 'No working copy of Clinical Overview …' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item 45ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a FROZEN document offers the controlled export, through the export route 38ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a APPROVED document offers the controlled export, through the export route 43ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a approved document offers the controlled export, through the export route 41ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open 22ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > opens on ArrowDown with focus on the first item; the arrows move; Escape closes and returns focus 28ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > choosing an item closes the menu and returns focus to the button 43ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > where the browser has a top layer, the menu opens in it as a manual popover, placed from its button
+An update to AuthoringCreateExport inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > What the control says belongs to one document > a refusal for one document is not shown beside the next one the control is handed 36ms
+   → expected 'No working copy was downloaded. Docum…' to be 'No working copy of Clinical Overview …' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > What the control says belongs to one document > an answer that arrives after the person moved on is told, but not shown beside the other document, and does not hold its control 70ms
+   → Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  <button
+    class="btn ghost"
+    style="height: 30px;"
+  />
+
+  Name "New section":
+  <button
+    class="btn ghost"
+    style="height: 30px;"
+  />
+
+  Name "Preparing…":
+  <button
+    aria-busy="true"
+    aria-expanded="false"
+    aria-haspopup="menu"
+    class="btn ghost"
+    type="button"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New document
+    </button>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New section
+    </button>
+    <span
+      class="dlm"
+      data-testid="ed-download"
+    >
+      <button
+        aria-busy="true"
+        aria-expanded="false"
+        aria-haspopup="menu"
+        class="btn ghost"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+         
+        Preparing…
+         
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+      <span
+        aria-live="polite"
+        class="sr-only"
+      >
+        Preparing a working copy (Word)…
+      </span>
+    </span>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > where the browser has a top layer, the menu opens in it as a manual popover, placed from its button 36ms
+   → expected [] to deeply equal [ …(1) ]
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > near the top of the screen it opens below its button, right edges aligned, in fixed coordinates 3ms
+   → placeMenu is not a function
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > with room above it opens above; aligned left where right-aligned would run off the screen 1ms
+   → placeMenu is not a function
+ × client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > taller than the room below, it scrolls inside itself rather than running off the screen 1ms
+   → placeMenu is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > choosing Working copy (Word) on a draft posts the working-copy route and downloads what the server sent
+AssertionError: expected "vi.fn()" to be called with arguments: [ …(2) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "Working copy of Clinical Overview (Word) requested in your browser. Every page is marked DRAFT — uncontrolled copy.",
++   "Downloaded a working copy of Clinical Overview (Word). Every page is marked DRAFT — uncontrolled copy.",
+    "ok",
+  ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:111:23
+    109|     expect(posts('/export')).toHaveLength(0);
+    110|     // "requested": the browser may still ask where to save it, or blo…
+    111|     expect(fireToast).toHaveBeenCalledWith(
+       |                       ^
+    112|       'Working copy of Clinical Overview (Word) requested in your brow…
+    113|       'ok',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a refusal is said in the server’s words, beside the control and in a toast, and nothing downloads
+AssertionError: expected 'No working copy was downloaded. The w…' to be 'No working copy of Clinical Overview …' // Object.is equality
+
+Expected: "No working copy of Clinical Overview was downloaded. The working copy could not be recorded, so it was not sent."
+Received: "No working copy was downloaded. The working copy could not be recorded, so it was not sent."
+
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:135:30
+    133|     fireEvent.click(item('Working copy (Word)'));
+    134|     const said = await screen.findByTestId('dlm-refusal');
+    135|     expect(said.textContent).toBe('No working copy of Clinical Overvie…
+       |                              ^
+    136|     expect(fireToast).toHaveBeenCalledWith(said.textContent, 'error');
+    137|     expect(downloads).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > What the control says belongs to one document > a refusal for one document is not shown beside the next one the control is handed
+AssertionError: expected 'No working copy was downloaded. Docum…' to be 'No working copy of Clinical Overview …' // Object.is equality
+
+Expected: "No working copy of Clinical Overview was downloaded. Document not found."
+Received: "No working copy was downloaded. Document not found."
+
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:215:68
+    213|     const { rerender } = render(<AuthoringCreateExport {...base} docSt…
+    214|     fireEvent.click(item('Working copy (Word)'));
+    215|     expect((await screen.findByTestId('dlm-refusal')).textContent).toB…
+       |                                                                    ^
+    216|     rerender(<AuthoringCreateExport {...base} docId="D2" docTitle="Non…
+    217|     expect(screen.queryByTestId('dlm-refusal')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > What the control says belongs to one document > an answer that arrives after the person moved on is told, but not shown beside the other document, and does not hold its control
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/^Download/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "New document":
+  <button
+    class="btn ghost"
+    style="height: 30px;"
+  />
+
+  Name "New section":
+  <button
+    class="btn ghost"
+    style="height: 30px;"
+  />
+
+  Name "Preparing…":
+  <button
+    aria-busy="true"
+    aria-expanded="false"
+    aria-haspopup="menu"
+    class="btn ghost"
+    type="button"
+  />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New document
+    </button>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-plus"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M5 12h14"
+        />
+        <path
+          d="M12 5v14"
+        />
+      </svg>
+       New section
+    </button>
+    <span
+      class="dlm"
+      data-testid="ed-download"
+    >
+      <button
+        aria-busy="true"
+        aria-expanded="false"
+        aria-haspopup="menu"
+        class="btn ghost"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+         
+        Preparing…
+         
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+      <span
+        aria-live="polite"
+        class="sr-only"
+      >
+        Preparing a working copy (Word)…
+      </span>
+    </span>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ downloadButton client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:78:37
+     76|
+     77| const base = { docId: 'D1', docTitle: 'Clinical Overview', module: 'M2…
+     78| const downloadButton = () => screen.getByRole('button', { name: /^Down…
+       |                                     ^
+     79| const openMenu = () => {
+     80|   if (!screen.queryByRole('menu')) fireEvent.click(downloadButton());
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:238:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > where the browser has a top layer, the menu opens in it as a manual popover, placed from its button
+AssertionError: expected [] to deeply equal [ …(1) ]
+
+- Expected
++ Received
+
+- [
+-   <div
+-     aria-label="Download Clinical Overview"
+-     class="dlm-menu"
+-     id="_r_17_"
+-     role="menu"
+-   >
+-     <div
+-       aria-label="Working copy"
+-       class="dlm-group"
+-       role="group"
+-     >
+-       <div
+-         aria-hidden="true"
+-         class="dlm-sec"
+-       >
+-         Working copy
+-       </div>
+-       <span
+-         hidden=""
+-         id="_r_18_"
+-       >
+-         Marked DRAFT — uncontrolled copy. Not a controlled record. Any status.
+-       </span>
+-       <button
+-         aria-describedby="_r_18_"
+-         aria-label="Working copy (Word)"
+-         class="dlm-item"
+-         data-testid="dlm-wc-docx"
+-         role="menuitem"
+-         type="button"
+-       >
+-         <span
+-           class="dlm-item-t"
+-         >
+-           Working copy (Word)
+-         </span>
+-         <span
+-           aria-hidden="true"
+-           class="dlm-item-d"
+-         >
+-           Marked DRAFT — uncontrolled copy
+-         </span>
+-       </button>
+-       <button
+-         aria-describedby="_r_18_"
+-         aria-label="Working copy (PDF)"
+-         class="dlm-item"
+-         data-testid="dlm-wc-pdf"
+-         role="menuitem"
+-         type="button"
+-       >
+-         <span
+-           class="dlm-item-t"
+-         >
+-           Working copy (PDF)
+-         </span>
+-         <span
+-           aria-hidden="true"
+-           class="dlm-item-d"
+-         >
+-           Marked DRAFT — uncontrolled copy
+-         </span>
+-       </button>
+-     </div>
+-     <div
+-       aria-label="Controlled export"
+-       class="dlm-group"
+-       role="group"
+-     >
+-       <div
+-         aria-hidden="true"
+-         class="dlm-sec"
+-       >
+-         Controlled export
+-       </div>
+-       <span
+-         class="dlm-reason"
+-         data-testid="dlm-ctl-reason"
+-         id="_r_19_"
+-       >
+-         Freeze or approve to export a controlled copy
+-       </span>
+-       <button
+-         aria-describedby="_r_19_"
+-         aria-disabled="true"
+-         aria-label="Controlled export (Word)"
+-         class="dlm-item"
+-         data-testid="dlm-ctl-docx"
+-         role="menuitem"
+-         type="button"
+-       >
+-         <span
+-           class="dlm-item-t"
+-         >
+-           Controlled export (Word)
+-         </span>
+-       </button>
+-       <button
+-         aria-describedby="_r_19_"
+-         aria-disabled="true"
+-         aria-label="Controlled export (PDF)"
+-         class="dlm-item"
+-         data-testid="dlm-ctl-pdf"
+-         role="menuitem"
+-         type="button"
+-       >
+-         <span
+-           class="dlm-item-t"
+-         >
+-           Controlled export (PDF)
+-         </span>
+-       </button>
+-       <button
+-         aria-describedby="_r_19_"
+-         aria-disabled="true"
+-         aria-label="Controlled export (XML)"
+-         class="dlm-item"
+-         data-testid="dlm-ctl-xml"
+-         role="menuitem"
+-         type="button"
+-       >
+-         <span
+-           class="dlm-item-t"
+-         >
+-           Controlled export (XML)
+-         </span>
+-       </button>
+-     </div>
+-   </div>,
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:259:21
+    257|       fireEvent.click(downloadButton());
+    258|       const menu = document.querySelector('.dlm-menu') as HTMLElement;
+    259|       expect(shown).toEqual([menu]);
+       |                     ^
+    260|       expect(menu.getAttribute('popover')).toBe('manual');
+    261|       expect(menu.style.top).not.toBe('');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > near the top of the screen it opens below its button, right edges aligned, in fixed coordinates
+TypeError: placeMenu is not a function
+ ❯ placed client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:273:5
+    271|     btn.getBoundingClientRect = () => rect(button);
+    272|     menu.getBoundingClientRect = () => rect(size);
+    273|     placeMenu(btn, menu);
+       |     ^
+    274|     const st = menu.style;
+    275|     return { position: st.position, top: st.top, bottom: st.bottom, le…
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:279:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > with room above it opens above; aligned left where right-aligned would run off the screen
+TypeError: placeMenu is not a function
+ ❯ placed client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:273:5
+    271|     btn.getBoundingClientRect = () => rect(button);
+    272|     menu.getBoundingClientRect = () => rect(size);
+    273|     placeMenu(btn, menu);
+       |     ^
+    274|     const st = menu.style;
+    275|     return { position: st.position, top: st.top, bottom: st.bottom, le…
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:286:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > taller than the room below, it scrolls inside itself rather than running off the screen
+TypeError: placeMenu is not a function
+ ❯ placed client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:273:5
+    271|     btn.getBoundingClientRect = () => rect(button);
+    272|     menu.getBoundingClientRect = () => rect(size);
+    273|     placeMenu(btn, menu);
+       |     ^
+    274|     const st = menu.style;
+    275|     return { position: st.position, top: st.top, bottom: st.bottom, le…
+ ❯ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx:292:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 9 passed (17)
+   Start at  05:42:43
+   Duration  2.09s (transform 253ms, setup 175ms, import 388ms, tests 850ms, environment 491ms)
+

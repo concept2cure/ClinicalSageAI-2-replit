@@ -3,17 +3,18 @@ import { z } from 'zod';
 import { pool, transaction } from '../db';
 import { inVerifiedOrgScope } from '../services/tenant/verified-org-scope';
 import {
-  changeMemberRole,
-  memberChangeReason,
-  removeMember,
-  type MembershipActor,
+  ADMINISTRATOR_ROLES, changeMemberRole, memberChangeReason, LAST_ADMINISTRATOR_REFUSAL, removeMember,
+  wouldLeaveNoAdministrator, type MembershipActor,
 } from '../services/tenant/membership-change';
 import { clientIpOf } from '../utils/client-ip';
+import { ASSIGNABLE_ORG_ROLES } from '../../shared/constants/org-roles';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
 import {
   issueInvitation,
+  reissueForUnredeemedInvitee,
   type InvitationDelivery,
 } from '../services/tenant/invitation-delivery';
 import {
@@ -29,7 +30,8 @@ const router = Router();
 const createUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(2).max(100),
-  role: z.enum(['admin', 'manager', 'member', 'viewer']),
+  // P-18: approver and reviewer are assignable (shared/constants/org-roles.ts).
+  role: z.enum(ASSIGNABLE_ORG_ROLES),
   title: z.string().optional(),
   department: z.string().optional(),
   organizationId: z
@@ -43,7 +45,7 @@ const createUserSchema = z.object({
 
 // Schema for user role update
 const updateUserRoleSchema = z.object({
-  role: z.enum(['admin', 'manager', 'member', 'viewer']),
+  role: z.enum(ASSIGNABLE_ORG_ROLES),
   reason: memberChangeReason,
 });
 
@@ -101,7 +103,7 @@ async function authorizeOrgAccess(
     res.status(403).json({ error: 'You do not have access to this organization' });
     return false;
   }
-  if (opts.requireAdmin && role !== 'admin' && role !== 'owner') {
+  if (opts.requireAdmin && !ADMINISTRATOR_ROLES.includes(role)) {
     res.status(403).json({ error: 'Admin of the target organization required' });
     return false;
   }
@@ -319,7 +321,11 @@ router.post('/invitations/:invitationId/decline', async (req, res) => {
 
 /**
  * GET /api/tenant-users/:tenantId
- * Get users for a specific tenant
+ * Get users for a specific tenant. Each row says whether the member may apply
+ * an electronic signature (`canSign`), read from the signing policy itself
+ * (isSigningAuthorized on the membership role), so a picker that must offer
+ * only signers (the protocol reviewer picker; a review is assigned only to
+ * someone who can sign its disposition) does not keep its own role list.
  */
 router.get('/:tenantId', async (req, res) => {
   try {
@@ -364,7 +370,7 @@ router.get('/:tenantId', async (req, res) => {
       pool.query(query, [tenantId])
     );
     log.debug(`Retrieved ${result.rows.length} users for organization ${tenantId}`);
-    res.json(result.rows);
+    res.json(result.rows.map((row: { role?: string | null }) => ({ ...row, canSign: isSigningAuthorized(row.role) })));
   } catch (error) {
     log.error('Error retrieving tenant users', error);
     res.status(500).json({ error: 'Failed to retrieve tenant users' });
@@ -413,6 +419,18 @@ router.post('/', async (req, res) => {
         message: 'Members cannot be added: this deployment has no public address configured (APP_URL), so no activation link can be sent.',
       });
     }
+
+    // Inviting a member who never set a password again re-issues their setup
+    // link (QA 2026-10-08, j9 finding 5): it was handed over once, and lost
+    // with the clipboard. Before the seat gate: it adds no member and no seat.
+    const reissued = await reissueForUnredeemedInvitee(req, {
+      email: validatedData.email,
+      organizationId,
+      verifiedRole,
+      callerId: getCallerId(req),
+      appBaseUrl,
+    });
+    if (reissued) return res.status(reissued.status).json(reissued.body);
 
     // Seat-licensing gate: a new member/invitation consumes a purchased seat.
     // Report-only by default; blocks only when SEAT_LIMIT_ENFORCEMENT=enforce.
@@ -586,13 +604,17 @@ router.patch('/:organizationId/:userId', async (req, res) => {
     }
     const { role, reason } = parsed.data;
 
-    // The role before (locked), the change and its audit row: one transaction.
+    // The organization's administrators (locked), the role before (locked), the
+    // change and its audit row: one transaction.
     const outcome = await inVerifiedOrgScope(req, organizationId, verifiedRole, () =>
-      transaction(client =>
-        changeMemberRole(client, membershipActor(req), { organizationId, userId, role, reason })
+      transaction(async client =>
+        (await wouldLeaveNoAdministrator(client, { organizationId, userId, newRole: role }))
+          ? ('last_admin' as const)
+          : changeMemberRole(client, membershipActor(req), { organizationId, userId, role, reason })
       )
     );
 
+    if (outcome === 'last_admin') return res.status(409).json(LAST_ADMINISTRATOR_REFUSAL);
     if (outcome === 'not_found') {
       return res.status(404).json({ error: 'User not found in organization' });
     }
@@ -643,11 +665,17 @@ router.delete('/:organizationId/:userId', async (req, res) => {
     if (!parsed.success) return reasonRequired(res, 'remove a member');
     const { reason } = parsed.data;
 
-    // The removal and its audit row: one transaction.
+    // The organization's administrators (locked), the removal and its audit
+    // row: one transaction.
     const removed = await inVerifiedOrgScope(req, organizationId, verifiedRole, () =>
-      transaction(client => removeMember(client, membershipActor(req), { organizationId, userId, reason }))
+      transaction(async client =>
+        (await wouldLeaveNoAdministrator(client, { organizationId, userId, newRole: null }))
+          ? ('last_admin' as const)
+          : removeMember(client, membershipActor(req), { organizationId, userId, reason })
+      )
     );
 
+    if (removed === 'last_admin') return res.status(409).json(LAST_ADMINISTRATOR_REFUSAL);
     if (!removed) {
       return res.status(404).json({ error: 'User not found in organization' });
     }

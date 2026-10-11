@@ -67,7 +67,7 @@
  *     getCtdAuthoringGuidance (server/services/ind/ctd/index.ts) — exact or a
  *     parent of registered codes; never its descendant fallback, which would
  *     resolve a parent request to any child. A code below a registry leaf
- *     (2.7.4.99, 3.2.P.2.1) is not checked — M4 subdivides some leaves and
+ *     (2.7.4.99, 3.2.P.2.1.1.99) is not checked — M4 subdivides some leaves and
  *     leaves others to the sponsor — so it is a notice, not 'resolved'.
  *     A gap is unresolved only under a heading whose registered children are
  *     all of ICH M4's (CTD_M4_CHILD_COUNT); elsewhere the registry is known to

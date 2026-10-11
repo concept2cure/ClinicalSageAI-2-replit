@@ -1,0 +1,83 @@
+2026-10-06T07:11:07.7703557Z ┌─────────────────┐
+2026-10-06T07:11:07.7703796Z │ 6 Code Findings │
+2026-10-06T07:11:07.7704029Z └─────────────────┘
+2026-10-06T07:11:07.7704233Z                                   
+2026-10-06T07:11:07.7704500Z     server/routes/ana-ri/stream.ts
+2026-10-06T07:11:07.7705049Z     ❯❱ javascript.express.security.audit.xss.direct-response-write.direct-response-write
+2026-10-06T07:11:07.7705591Z           ❰❰ Blocking ❱❱
+2026-10-06T07:11:07.7706039Z           Detected directly writing to a Response object from user-defined input. This bypasses any HTML      
+2026-10-06T07:11:07.7706751Z           escaping and may expose your application to a Cross-Site-scripting (XSS) vulnerability. Instead, use
+2026-10-06T07:11:07.7707382Z           'resp.render()' to render safely escaped HTML.                                                      
+2026-10-06T07:11:07.7707947Z           Details: https://sg.run/vzGl                                                                        
+2026-10-06T07:11:07.7708393Z                                                                                                               
+2026-10-06T07:11:07.7708962Z           944┆ res.write(`data: ${JSON.stringify({ type: 'warning', message: warning })}\n\n`);
+2026-10-06T07:11:07.7709394Z                                                         
+2026-10-06T07:11:07.7709725Z     server/services/ectd/__tests__/stf-generator.test.ts
+2026-10-06T07:11:07.7710297Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-06T07:11:07.7710798Z           ❰❰ Blocking ❱❱
+2026-10-06T07:11:07.7711251Z           RegExp() called with a `href` function argument, this might allow an attacker to cause a Regular    
+2026-10-06T07:11:07.7712355Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-06T07:11:07.7713151Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-06T07:11:07.7713867Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-06T07:11:07.7714871Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-06T07:11:07.7715453Z           ReDoS.                                                                                              
+2026-10-06T07:11:07.7715961Z           Details: https://sg.run/gr65                                                                        
+2026-10-06T07:11:07.7716595Z                                                                                                               
+2026-10-06T07:11:07.7717259Z           214┆ const m = indexXml.match(new RegExp(`<leaf [^>]*xlink:href="${href.replace(/[.]/g,
+2026-10-06T07:11:07.7717792Z                '\\.')}"[^>]*ID="([^"]+)"`));                                                     
+2026-10-06T07:11:07.7718185Z                                                    
+2026-10-06T07:11:07.7718562Z     server/services/market-specs/device-labeling.ts
+2026-10-06T07:11:07.7719178Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-06T07:11:07.7719739Z           ❰❰ Blocking ❱❱
+2026-10-06T07:11:07.7720189Z           RegExp() called with a `element` function argument, this might allow an attacker to cause a Regular 
+2026-10-06T07:11:07.7720933Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-06T07:11:07.7721644Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-06T07:11:07.7722724Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-06T07:11:07.7723856Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-06T07:11:07.7724738Z           ReDoS.                                                                                              
+2026-10-06T07:11:07.7725494Z           Details: https://sg.run/gr65                                                                        
+2026-10-06T07:11:07.7726266Z                                                                                                               
+2026-10-06T07:11:07.7726986Z           420┆ if (new RegExp(`(^|[^a-z0-9])${escapeRe(normalize(p))}($|[^a-z0-9])`).test(body)) return p;
+2026-10-06T07:11:07.7727957Z             ⋮┆----------------------------------------
+2026-10-06T07:11:07.7728470Z           424┆ const re = new RegExp(`^${escapeRe(normalize(h))}($|[^a-z0-9])`);
+2026-10-06T07:11:07.7728839Z                                                
+2026-10-06T07:11:07.7729151Z     server/services/memory-context-assembler.ts
+2026-10-06T07:11:07.7729644Z      ❱ javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring
+2026-10-06T07:11:07.7730094Z           ❰❰ Blocking ❱❱
+2026-10-06T07:11:07.7730526Z           Detected string concatenation with a non-literal variable in a util.format / console.log function.
+2026-10-06T07:11:07.7731195Z           If an attacker injects a format specifier in the string, it will forge the log message. Try to use
+2026-10-06T07:11:07.7731770Z           constant values for the format string.                                                            
+2026-10-06T07:11:07.7732403Z           Details: https://sg.run/7Y5R                                                                      
+2026-10-06T07:11:07.7732840Z                                                                                                             
+2026-10-06T07:11:07.7733377Z           248┆ console.warn(`[MemoryContextAssembler] ${label} failed:`, err?.message);
+2026-10-06T07:11:07.7733802Z                                                                        
+2026-10-06T07:11:07.7734197Z     server/services/submission-gateways/__tests__/stf-packaging.test.ts
+2026-10-06T07:11:07.7734826Z     ❯❱ javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
+2026-10-06T07:11:07.7735513Z           ❰❰ Blocking ❱❱
+2026-10-06T07:11:07.7735931Z           RegExp() called with a `href` function argument, this might allow an attacker to cause a Regular    
+2026-10-06T07:11:07.7736578Z           Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For  
+2026-10-06T07:11:07.7737227Z           this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-      
+2026-10-06T07:11:07.7738017Z           controlled input, consider performing input validation or use a regex checking/sanitization library 
+2026-10-06T07:11:07.7738683Z           such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to
+2026-10-06T07:11:07.7739200Z           ReDoS.                                                                                              
+2026-10-06T07:11:07.7739644Z           Details: https://sg.run/gr65                                                                        
+2026-10-06T07:11:07.7740091Z                                                                                                               
+2026-10-06T07:11:07.7740626Z            71┆ indexXml.match(new RegExp(`<leaf [^>]*xlink:href="${href.replace(/[.]/g,
+2026-10-06T07:11:07.7741058Z                '\\.')}"[^>]*ID="([^"]+)"`))![1];                                       
+2026-10-06T07:11:07.7741293Z 
+2026-10-06T07:11:07.8071025Z                 
+2026-10-06T07:11:07.8071366Z                 
+2026-10-06T07:11:07.8072003Z ┌──────────────┐
+2026-10-06T07:11:07.8072339Z │ Scan Summary │
+2026-10-06T07:11:07.8072676Z └──────────────┘
+2026-10-06T07:11:07.8074148Z ✅ Scan completed successfully.
+2026-10-06T07:11:07.8074476Z  • Findings: 6 (6 blocking)
+2026-10-06T07:11:07.8074735Z  • Rules run: 213
+2026-10-06T07:11:07.8074977Z  • Targets scanned: 484
+2026-10-06T07:11:07.8075226Z  • Parsed lines: ~100.0%
+2026-10-06T07:11:07.8075469Z  • Scan skipped: 
+2026-10-06T07:11:07.8075759Z    ◦ Files larger than  files 1.0 MB: 1
+2026-10-06T07:11:07.8076117Z    ◦ Files matching .semgrepignore patterns: 15
+2026-10-06T07:11:07.8076539Z  • Scan was limited to files changed since baseline commit.
+2026-10-06T07:11:07.8077077Z  • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+2026-10-06T07:11:07.8077504Z Ran 213 rules on 484 files: 6 findings.

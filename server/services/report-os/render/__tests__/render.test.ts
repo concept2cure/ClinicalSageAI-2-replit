@@ -38,12 +38,15 @@ describe('renderReport', () => {
     expect(ids).not.toContain('blockers');
   });
 
-  it('includes a Confidence metric block', () => {
+  /* QA 2026-10-08 (j8): the stored figure was `95 − 20 × blockers`, printed as
+     "Overall confidence 75%" beside a readiness that was not computed. No engine
+     behind this renderer measures a confidence, so none is printed
+     (render-one-readiness.test.ts pins what is said instead). */
+  it('prints no confidence, whatever figure the run carries', () => {
     const report = renderReport(baseInput({ confidence: 88 }));
     const exec = sectionById(report.sections, 'executive-summary');
-    const metric = exec?.blocks.find(b => b.kind === 'metric' && b.label === 'Confidence');
-    expect(metric).toBeDefined();
-    expect(metric).toMatchObject({ kind: 'metric', label: 'Confidence', value: 88, unit: '%' });
+    expect(exec?.blocks.find(b => b.kind === 'metric' && b.label === 'Confidence')).toBeUndefined();
+    expect(JSON.stringify(report.sections)).not.toMatch(/confidence/i);
   });
 
   it('produces one provider table row per provider', () => {
@@ -122,7 +125,7 @@ describe('renderReport', () => {
       }),
     );
     const exec = sectionById(report.sections, 'executive-summary');
-    const score = exec?.blocks.find(b => b.kind === 'metric' && b.label === 'Readiness score');
+    const score = exec?.blocks.find(b => b.kind === 'metric' && b.label === 'Submission readiness');
     const level = exec?.blocks.find(b => b.kind === 'metric' && b.label === 'Readiness level');
     expect(score).toMatchObject({ value: 62, unit: '%' });
     expect(level).toMatchObject({ value: 'in_progress' });

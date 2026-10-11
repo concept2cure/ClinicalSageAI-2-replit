@@ -1,0 +1,90 @@
+{
+  "base": "512369c95a4a89a32e20bc2cb32601521a2a2df4",
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--stdin",
+    "--stdin-filename",
+    "server/services/ana-ri/context-enrichment.ts",
+    "--format",
+    "json"
+  ],
+  "exit": 0,
+  "elapsed_seconds": 1.195,
+  "results": [
+    {
+      "filePath": "/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana-ri/context-enrichment.ts",
+      "messages": [
+        {
+          "ruleId": "max-params",
+          "severity": 1,
+          "message": "Async function 'readProjectMemory' has too many parameters (6). Maximum allowed is 5.",
+          "line": 219,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 219,
+          "endColumn": 33
+        },
+        {
+          "ruleId": "max-params",
+          "severity": 1,
+          "message": "Async function 'enrichWithProjectMemory' has too many parameters (6). Maximum allowed is 5.",
+          "line": 300,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 300,
+          "endColumn": 39
+        },
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1511). Maximum allowed is 500.",
+          "line": 709,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1980,
+          "endColumn": 1
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'enrichWithProjectSummary' has a complexity of 24. Maximum allowed is 15.",
+          "line": 1073,
+          "column": 1,
+          "messageId": "complex",
+          "endLine": 1073,
+          "endColumn": 40
+        },
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Async function 'enrichContextForChat' has too many lines (688). Maximum allowed is 100.",
+          "line": 1159,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 1159,
+          "endColumn": 43
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Async function 'enrichContextForChat' has a complexity of 186. Maximum allowed is 15.",
+          "line": 1159,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 1159,
+          "endColumn": 43
+        }
+      ],
+      "suppressedMessages": [],
+      "errorCount": 0,
+      "fatalErrorCount": 0,
+      "warningCount": 6,
+      "fixableErrorCount": 0,
+      "fixableWarningCount": 0,
+      "usedDeprecatedRules": [],
+      "omittedSourceSha256": "0c047c1bfcf80c1165befd660d919b0ee99a423b5870ce8f87e783b380290563"
+    }
+  ]
+}

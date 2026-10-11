@@ -44,12 +44,13 @@ import { writeChainedAuditRow } from '../services/auditService';
 import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { parseEvalidatorJsonReport } from '../services/ectd/external-validator/lorenz-adapter';
 import { tallyFindings, type ExternalValidationFinding } from '../services/ectd/external-validator/types';
-import { resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
+import { resolveSequenceSpine, resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
 import { sectionMatches } from '../services/ectd/section-code-match';
 import { formRequirementForDocumentType } from '../services/ectd/section-to-ctd';
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
-import { recordedApplicationId } from '../services/ectd/regulatory-identifiers';
+import { usableIdentifier } from '../services/ectd/regulatory-identifiers';
+import { readRecordedPackageIdentity, packageIdentityRefusal } from '../services/ectd/package-identity';
 import {
   resolveRequiredSections,
   type RequiredSectionSet,
@@ -250,8 +251,13 @@ async function resolveCompileAnchor(ident: string, orgId: number): Promise<Compi
 
 /** The agency application-number field from the program record — the one rule
  *  (services/ectd/regulatory-identifiers.ts), shared with the export. */
-function applicationIdFor(anchor: CompileAnchor, fallbackKey: string): string {
-  return recordedApplicationId({ applicationNumber: anchor.applicationNumber, programCode: anchor.programCode }, fallbackKey);
+/**
+ * The agency application number the project records, or null. ONLY the
+ * recorded number: the program code is the sponsor's own handle and never an
+ * agency number (QA 2026-10-08, j6 — PLR-606 reached <application-number>).
+ */
+function recordedApplicationNumber(anchor: CompileAnchor): string | null {
+  return usableIdentifier('applicationNumber', anchor.applicationNumber);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -289,6 +295,52 @@ async function anchorFromRequest(
     return null;
   }
   return { orgId, anchor, ident };
+}
+
+/**
+ * The spine this request works on (FILING_SPINE.md F14): the sequence the
+ * caller names (`sequenceId`, in the body or the query string) when this
+ * project owns it, else the program's spine by the existing rule
+ * (resolveSubmissionSpine: one submission per program, by its type). A
+ * malformed id is 400 and another project's sequence 404, answered here; null
+ * means a response was sent. `named` lets a write refuse a named sequence with
+ * nothing placed in it rather than fall back to a different store.
+ */
+async function spineForRequest(
+  req: Request,
+  res: Response,
+  anchor: Parameters<typeof resolveSubmissionSpine>[0],
+  orgId: number,
+): Promise<{ spine: SubmissionSpine | null; named: boolean } | null> {
+  const raw = (req.body as { sequenceId?: unknown } | undefined)?.sequenceId ?? (req.query as { sequenceId?: unknown } | undefined)?.sequenceId;
+  if (raw === undefined || raw === null || raw === '') {
+    return { spine: await resolveSubmissionSpine(anchor, orgId), named: false };
+  }
+  const id = Number(raw);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({ error: { code: 'BAD_SEQUENCE_ID', message: 'sequenceId names a sequence by its id, a whole number.' } });
+    return null;
+  }
+  const spine = await resolveSequenceSpine(anchor, orgId, id);
+  if (!spine) {
+    res.status(404).json({ error: { code: 'SEQUENCE_NOT_FOUND', message: `Sequence ${id} is not a sequence of this project.` } });
+    return null;
+  }
+  return { spine, named: true };
+}
+
+/** A named sequence with nothing placed in it is refused: the program's section
+ *  store is not that sequence, and compiling or validating it would answer for
+ *  something else. True when a response was sent. */
+function refuseEmptyNamedSequence(res: Response, chosen: { spine: SubmissionSpine | null; named: boolean }, act: string): boolean {
+  if (!chosen.named || (chosen.spine?.sequence?.leafCount ?? 0) > 0) return false;
+  res.status(409).json({
+    error: {
+      code: 'SEQUENCE_EMPTY',
+      message: `Sequence ${chosen.spine?.sequence?.sequenceNumber ?? ''} has no documents placed in it, so there is nothing to ${act}. Place documents into it first.`,
+    },
+  });
+  return true;
 }
 
 /**
@@ -497,7 +549,9 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     // 0. CANONICAL PATH: a program whose submission spine carries placed leaves
     //    compiles through the real generator (assemble-from-core → regional
     //    packager) — genuine rendered PDF leaves, real index.xml, real MD5s.
-    const spine = await resolveSubmissionSpine(anchor, orgId);
+    const chosen = await spineForRequest(req, res, anchor, orgId);
+    if (!chosen || refuseEmptyNamedSequence(res, chosen, 'compile')) return;
+    const spine = chosen.spine;
     if (spine?.sequence && spine.sequence.leafCount > 0) {
       // The sequence's recorded region decides the package; the selector only
       // cross-checks it. A region that contradicts the record is refused, the
@@ -620,9 +674,10 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
       });
 
     // 4. Generate eCTD 4.0 XML backbone. `applicationRef` is written into
-    //    <ectd:application-number>, so it takes the same chain the assembled
-    //    package uses (applicationIdFor): the RECORDED agency number, else the
-    //    program's own code, else a handle that says it is unassigned.
+    //    <ectd:application-number>: the RECORDED agency number, else a handle
+    //    that says it is unassigned. This draft is a status document ("NOT A
+    //    TRANSMISSIBLE SEQUENCE"), so it says so rather than refusing; the
+    //    program code is never written there (QA 2026-10-08, j6).
     //
     //    A legacy numeric project used to get `IND-${numericProjectId}` here —
     //    a string shaped exactly like an agency IND number, synthesised from a
@@ -631,12 +686,9 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     //    the opposite ("recorded identity we actually hold"). Such a project has
     //    no program record and therefore nothing recorded, so it says so.
     const xmlBackbone = generateECTD4Backbone({
-      applicationRef: applicationIdFor(
-        anchor,
-        anchor.numericProjectId !== null
-          ? `UNASSIGNED-PROJECT-${anchor.numericProjectId}`
-          : anchor.programId ?? ident,
-      ),
+      applicationRef:
+        recordedApplicationNumber(anchor) ??
+        (anchor.numericProjectId !== null ? `UNASSIGNED-PROJECT-${anchor.numericProjectId}` : 'UNASSIGNED-PROGRAM'),
       submissionType,
       region,
       modules: moduleStatuses,
@@ -979,19 +1031,21 @@ async function compileFromSpine(
   let auditTrail: AuditRowOutcome | undefined;
 
   try {
+    // The application and the applicant from the record, or nothing is
+    // assembled: the refusal becomes this compile's ASSEMBLY_REFUSED finding
+    // and its `failed` status below (package-identity.ts, QA 2026-10-08 j6).
+    const identity = await readRecordedPackageIdentity(pool, orgId, anchor.programId);
+    const missingIdentity = packageIdentityRefusal(identity, 'Nothing was assembled.');
+    if (missingIdentity) throw missingIdentity;
     const assembled = await assembleSequence({
       sequenceId: seq.id,
       organizationId: orgId,
       userId: resolveUserId(req),
-      // Recorded identity only: the agency's assigned number when the program
-      // records one, else the program's real code, else a handle that says it is
-      // unassigned — never an invented agency number, and never an applicant
-      // name the agency would read as real. The comment here already claimed
-      // "neutral", but `Organization 7` in <name> does not read as a gap; these
-      // follow regulatory-identifiers.ts' stated wording instead.
-      applicationId: applicationIdFor(anchor, `UNASSIGNED-SEQ-${seq.id}`),
+      applicationId: identity.applicationNumber as string,
+      // The applicant's <id> (D-U-N-S) has no recorded home on this path yet
+      // (package-identity.ts header); its name is the organisation's.
       sponsorId: `UNASSIGNED-ORG-${orgId}`,
-      sponsorName: `UNASSIGNED (organization ${orgId})`,
+      sponsorName: identity.applicantName as string,
       priorState,
     });
     auditTrail = assembled.auditTrail;
@@ -1162,8 +1216,9 @@ async function compileFromSpine(
         xmlBackbone,
         JSON.stringify(validationResults),
         // The SAME identifier the backbone carries, so the compilation history
-        // and the next sequence's manifest lookup agree with what was filed.
-        applicationIdFor(anchor, `SEQ-${seq.id}`),
+        // and the next sequence's manifest lookup agree with what was filed;
+        // NULL when none is recorded (the assembly was then refused).
+        recordedApplicationNumber(anchor),
         seq.sequenceNumber,
         leafManifestJson,
         // Stable per-submission key: lets the NEXT sequence locate this manifest
@@ -1250,7 +1305,10 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
 
     // The leaf-rendering half of readiness comes from the submission spine's
     // REAL state (documents placed into the sequence), not a capability flag.
-    const spine = await resolveSubmissionSpine(anchor, orgId);
+    // A named sequence (F14) is read when this project owns it.
+    const chosen = await spineForRequest(req, res, anchor, orgId);
+    if (!chosen) return;
+    const spine = chosen.spine;
     // A program has no linked section store, so for it the section-store count
     // was always 0 of N — shown beside documents already placed in its
     // sequence. Where the sequence carries leaves, readiness counts what is
@@ -1318,7 +1376,7 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       readinessBasis: placedLeaves ? 'placed' : 'approved',
       /** The sequence a compile would build, with its recorded region. */
       sequence: spine?.sequence
-        ? { sequenceNumber: spine.sequence.sequenceNumber, region: spine.sequence.region, leafCount: spine.sequence.leafCount }
+        ? { id: spine.sequence.id, sequenceNumber: spine.sequence.sequenceNumber, region: spine.sequence.region, leafCount: spine.sequence.leafCount }
         : null,
       requiredSectionSource: required.provenance,
       totalSections: sections.length,
@@ -1419,7 +1477,9 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
     // the canonical compile actually assembles — not the (empty) legacy section
     // store. Placement-only findings here: rendering is only claimed by the
     // compile, which performs it.
-    const spine = await resolveSubmissionSpine(anchor, orgId);
+    const chosen = await spineForRequest(req, res, anchor, orgId);
+    if (!chosen || refuseEmptyNamedSequence(res, chosen, 'validate')) return;
+    const spine = chosen.spine;
     let results: ValidationResult[];
     if (spine?.sequence && spine.sequence.leafCount > 0) {
       const leaves = await loadSpineLeaves(spine.sequence.id, orgId);
@@ -1641,7 +1701,9 @@ async function importEvalidatorReport(
     res.status(422).json({ error: { code: 'REPORT_UNREADABLE', message: (err as Error).message } });
     return;
   }
-  const spine = await resolveSubmissionSpine(resolved.anchor, resolved.orgId);
+  const chosen = await spineForRequest(req, res, resolved.anchor, resolved.orgId);
+  if (!chosen) return;
+  const spine = chosen.spine;
   if (!spine) {
     res.status(409).json({
       error: { code: 'NO_SUBMISSION', message: 'This program has no submission, so it has no compiled package a report could cover.' },

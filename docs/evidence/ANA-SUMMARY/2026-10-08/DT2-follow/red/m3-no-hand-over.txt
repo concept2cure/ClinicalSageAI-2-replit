@@ -1,0 +1,12 @@
+# m3-no-hand-over: --config vitest.config.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx -t hands over
+# exit 1
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 3. a sealed run hands over to its record: the stored answer takes the turn’s place, under the same id 34ms
+   → expected '' to be 'There are three stability reports.' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 3. a sealed run hands over, and its rows read the same before and after 114ms
+ Test Files  2 failed (2)
+      Tests  2 failed | 20 skipped (22)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 3. a sealed run hands over, and its rows read the same before and after
+TestingLibraryElementError: Unable to find an element with the text: Recorded. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 3. a sealed run hands over to its record: the stored answer takes the turn’s place, under the same id
+AssertionError: expected '' to be 'There are three stability reports.' // Object.is equality

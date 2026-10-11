@@ -50,6 +50,7 @@ import { EmptyState } from '../dataConnect';
 import { useAnaChat } from '../../components/ana/useAnaChat';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { AnaActivity, activityPropsFor } from '../AnaActivity';
+import { useHostSummary } from '../TurnSummary';
 import { RunPolicyDockNote } from '../RunPolicySwitch';
 import { AnaGrounding } from '../AnaGrounding';
 import { AnaOutputCards } from '../AnaOutputs';
@@ -72,10 +73,11 @@ import { downloadBlob, safeFileName } from '../download';
 import { ProjectFilesPanel } from './ProjectFilesPanel';
 import { ReviewTasksPanel } from './ReviewTasksPanel';
 import { FileToVaultDialog } from './FileToVaultDialog';
-import { AssignReviewDialog } from './AssignReviewDialog';
+import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramSummary, programHeadline, programName } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt } from './askAnaToDraft';
-import { describeProvenance, type DocumentProvenance } from './provenance';
+import { describeFigureCheck, describeProvenance, type DocumentProvenance, type FigureCheckSummary } from './provenance';
+import { DraftFigureLine } from './DraftFigureLine';
 import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
@@ -96,6 +98,8 @@ import { getAuthToken } from '@/utils/authToken';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
 
 import { useFilingOutline, findSectionForNode, nodeHasDraft } from '../useFilingOutline';
+import { outlineReadState, unboundNodeTitle, unboundNodeToast } from './outlineReadState';
+import { useStartOutlineSection, unstartedRowProps } from './startOutlineSection';
 import {
   editorTargetDocLabel,
   clearEditorTarget,
@@ -129,6 +133,12 @@ interface AuthDoc {
   status: string;
   updated_at: string | null;
   section_count: number | string | null;
+  /** The author (GET /docs returns it): not offered as the document's reviewer. */
+  created_by?: string | number | null;
+  /** The governed filing this is the editing copy of; null when unbound,
+      absent when the list did not say. The outline starts a section only in
+      the filing's copy (startOutlineSection.ts startOffer). */
+  c2c_document_id?: string | null;
 }
 
 /**
@@ -579,14 +589,21 @@ export interface DocumentActGate {
 export interface DocumentAccess {
   freeze: DocumentActGate | null;
   esign: DocumentActGate | null;
+  /** The review signature alone (E-sign, meaning Review): a Reviewer grant
+   *  suffices for it (QA 2026-10-08, j4). */
+  esignReview: DocumentActGate | null;
   fileToVault: DocumentActGate | null;
   assignReview: DocumentActGate | null;
+  /** Place into filing: its two writes require regulatory-author. */
+  placeIntoFiling: DocumentActGate | null;
 }
 export const UNKNOWN_DOCUMENT_ACCESS: DocumentAccess = {
   freeze: null,
   esign: null,
+  esignReview: null,
   fileToVault: null,
   assignReview: null,
+  placeIntoFiling: null,
 };
 
 function readActGate(raw: unknown): DocumentActGate | null {
@@ -603,9 +620,39 @@ export function readDocumentAccess(raw: unknown): DocumentAccess {
   return {
     freeze: readActGate(a.freeze),
     esign: readActGate(a.esign),
+    esignReview: readActGate(a.esignReview),
     fileToVault: readActGate(a.fileToVault),
     assignReview: readActGate(a.assignReview),
+    placeIntoFiling: readActGate(a.placeIntoFiling),
   };
+}
+
+/**
+ * What a section save's `filing` field says, as a sentence appended to the save
+ * confirmation; '' when the server reported nothing (QA 2026-10-08, j4: the
+ * field was never read, so a save that did not reach the filing read exactly
+ * like one that did). The server's own reason is shown as given.
+ */
+export function filingCommitNote(filing: unknown): string {
+  if (!filing || typeof filing !== 'object') return '';
+  const f = filing as { committed?: unknown; reason?: unknown; partOf?: unknown };
+  /* QA 2026-10-08, walk 2: a section under an undivided outline node (2.5.1 of
+     the 2.5 Clinical Overview) goes into that node with the document's other
+     sections there; the server names the node as `partOf`. */
+  if (f.committed === true && typeof f.partOf === 'string' && f.partOf.trim()) {
+    return ` The text was committed to the filing as part of its section ${f.partOf}, with this document’s other sections under ${f.partOf}.`;
+  }
+  if (f.committed === true) return ' The text was committed to the filing.';
+  if (f.committed === false) {
+    const why = typeof f.reason === 'string' && f.reason.trim() ? f.reason.trim() : 'the server gave no reason.';
+    return ` The text is saved in Authoring but not in the filing: ${why}`;
+  }
+  return '';
+}
+
+/** True when the server refuses every signature but the review signature. */
+export function esignReviewOnly(access: DocumentAccess): boolean {
+  return !!actRefusal(access.esign) && access.esignReview?.allowed === true;
 }
 
 /** The sentence to show for a refused act; null when allowed OR unknown. */
@@ -910,6 +957,9 @@ export function DocumentWorkbench({
      dropdown pair, defaulted to M3, identical for every filing type. */
   const projectIdForOutline = programId;
   const filing = useFilingOutline(projectIdForOutline);
+  /* The outline's keys: a node the outline does not subdivide opens the
+     document's sections under it (findSectionForNode; QA 2026-10-08, walk 2). */
+  const outlineKeys = useMemo(() => Array.from(filing.flat, n => n.key), [filing.flat]);
   /* The program's name and phase, for the header. Read from the one program
      route (GET /api/c2c/projects/:id); null while unread or with no program. */
   const program = useProgramSummary(programId);
@@ -1031,10 +1081,12 @@ export function DocumentWorkbench({
     | null
   >(embedded ? null : 'ana');
   /* The two governed dialogs this workbench opens itself: filing the document
-     into the project vault (POST /docs/:id/file-to-vault) and assigning a
-     review task (POST /api/tasks/tasks). Both are closed until asked for. */
+     into the project vault (POST /docs/:id/file-to-vault) and sending it for
+     review (POST /documents/:id/request-review, then each reviewer's task,
+     POST /api/tasks/tasks: SendForReviewDialog.tsx). Both are closed until
+     asked for. */
   const [fileToVaultOpen, setFileToVaultOpen] = useState(false);
-  const [assignReviewOpen, setAssignReviewOpen] = useState(false);
+  const [sendForReviewOpen, setSendForReviewOpen] = useState(false);
   /* Bumped after a task is created so the Tasks rail re-reads. */
   const [tasksEpoch, setTasksEpoch] = useState(0);
   /* What the document header says about where its content came from — the
@@ -1042,6 +1094,8 @@ export function DocumentWorkbench({
      the gateway reported, the conversation). Null until read; a failed read
      is a failed read, and the header then makes no origin claim. */
   const [docProvenance, setDocProvenance] = useState<DocumentProvenance | null>(null);
+  /* S5a: the save's check of the draft's figures against its cited sources. */
+  const [docFigures, setDocFigures] = useState<FigureCheckSummary | null>(null);
   /** What this caller may do to the open document (GE-P-3); unknown until read. */
   const [docAccess, setDocAccess] = useState<DocumentAccess>(UNKNOWN_DOCUMENT_ACCESS);
   const assignRefusalId = useId();
@@ -1432,6 +1486,8 @@ export function DocumentWorkbench({
      every other host (workDock.ts), toggled by the chip in the pane header,
      and the background queue read only while shown. */
   const dock = useProgressDock();
+  /* A turn's Summary: the panel at that turn, or the sheet below 760px (S4). */
+  const summary = useHostSummary(ana.messages, dock, ana.isStreaming);
   const anaWorkQueue = useAgentActivity(dock.open, ana.isStreaming);
   const anaComposerRef = useRef<HTMLTextAreaElement>(null);
   const anaReturnFocusRef = useRef<HTMLElement | null>(null);
@@ -1499,10 +1555,30 @@ export function DocumentWorkbench({
     openConversationWithPrompt(prompt, onNav);
   }, [onAsk, onNav, program]);
 
+  /* While AnA works the pane follows the bottom, where her work grows. When
+     the turn ends it shows the START of her answer: pinned to the bottom, a
+     long turn left only its suggestion chips on screen under the work card,
+     and the answer above them out of sight (QA 2026-10-08, walk 2, j5). */
+  const anaWasStreaming = useRef(false);
   useEffect(() => {
     if (rail !== 'ana') return;
     const el = anaScrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    const finished = anaWasStreaming.current && !ana.isStreaming;
+    anaWasStreaming.current = ana.isStreaming;
+    if (!el) return;
+    if (finished) {
+      const answers = el.querySelectorAll<HTMLElement>('[data-ana-answer]');
+      const newest = answers[answers.length - 1];
+      if (newest) {
+        /* This pane's scroller only: scrollIntoView also moved the page under
+           the app bar. */
+        const top = el.scrollTop + newest.getBoundingClientRect().top - el.getBoundingClientRect().top - 8;
+        if (typeof el.scrollTo === 'function') el.scrollTo({ top: Math.max(0, top) });
+        else el.scrollTop = Math.max(0, top);
+        return;
+      }
+    }
+    el.scrollTop = el.scrollHeight;
   }, [rail, ana.messages.length, ana.isStreaming]);
 
   useEffect(() => {
@@ -1592,6 +1668,7 @@ export function DocumentWorkbench({
   useEffect(() => {
     provenanceDocRef.current = activeDocId;
     setDocProvenance(null);
+    setDocFigures(null);
     setDocAccess(UNKNOWN_DOCUMENT_ACCESS);
     if (!activeDocId) return;
     const wanted = activeDocId;
@@ -1601,6 +1678,7 @@ export function DocumentWorkbench({
       if (provenanceDocRef.current !== wanted) return;
       if (!ok || !body?.document) return;
       setDocProvenance(describeProvenance(body.document.provenance));
+      setDocFigures(describeFigureCheck(body.document.provenance));
       /* GE-P-3: the same read carries the caller's access. */
       setDocAccess(readDocumentAccess(body.access));
     });
@@ -1663,6 +1741,14 @@ export function DocumentWorkbench({
     }
     void loadSections(activeDocId);
   }, [activeDocId, loadSections]);
+
+  /* F4: a click on an outline node with no section here starts it — created
+     through POST /api/authoring/sections, opened, the cursor put in it — but
+     only in the document that is the filing's editing copy. */
+  const startNode = useStartOutlineSection({
+    activeDoc, filing: filing.document, docs, sections, loadSections, requestLeave, fireToast,
+    activeSectionId, docPane: () => docScrollRef.current,
+  });
 
   /* ── Reset editor bookkeeping on section switch ──
      The canonical editor remounts per section (key includes the id) and reads
@@ -2584,9 +2670,10 @@ export function DocumentWorkbench({
            row's counter; the sentence now names what came back, and defers to
            the History rail when nothing did. */
         fireToast(
-          adopted && adopted.revision_count != null
+          (adopted && adopted.revision_count != null
             ? `Section saved — revision ${num(adopted.revision_count)} recorded (${activeSection.code}).`
-            : `Section saved (${activeSection.code}) — open History to confirm the revision.`
+            : `Section saved (${activeSection.code}) — open History to confirm the revision.`) +
+            filingCommitNote((json as { filing?: unknown } | null)?.filing)
         );
         // Keep the history and audit rails fresh if open — a save writes both.
         if (rail === 'history') void loadHistory(activeSection.id);
@@ -3388,10 +3475,16 @@ export function DocumentWorkbench({
                  failed, so every node rendered dimmed, "not started in this
                  document yet", with its "required" chip and a "no draft yet"
                  toast on click — drafting-status claims produced by a read that
-                 had not happened. Unread is now its own state. */
-              const sectionsUnread = sectionsState !== 'ready';
-              const bound = sectionsUnread ? null : findSectionForNode(sections, node.key);
+                 had not happened. Unread is now its own state — and so is
+                 "no document open", which read as "still being read" forever
+                 (QA 2026-10-08, walk 2, j4; ./outlineReadState.ts). */
+              const readState = outlineReadState({ activeDocId, docsState, sectionsState });
+              const sectionsUnread = readState !== 'ready';
+              const bound = sectionsUnread ? null : findSectionForNode(sections, node.key, outlineKeys);
               const isActive = bound != null && bound.id === activeSectionId;
+              // F4: an unstarted node's tooltip, accessible name, disabled and
+              // busy state (spread last, so its title is the one shown).
+              const startProps = bound || sectionsUnread ? null : unstartedRowProps(startNode, node);
               return (
                 <button
                   key={node.key}
@@ -3399,20 +3492,14 @@ export function DocumentWorkbench({
                   data-active={isActive || undefined}
                   style={{ paddingLeft: 10 + node.depth * 12, opacity: bound || sectionsUnread ? 1 : 0.62 }}
                   title={
-                    sectionsUnread
-                      ? `${node.label} — this document’s sections have not been read yet`
-                      : bound
-                        ? `${node.label} — open`
-                        : `${node.label} — not started in this document yet`
+                    readState !== 'ready'
+                      ? unboundNodeTitle(node.label, readState)
+                      : `${node.label} — open`
                   }
+                  {...startProps}
                   onClick={() => {
-                    if (sectionsUnread) {
-                      fireToast(
-                        sectionsState === 'error'
-                          ? 'This document’s sections could not be read, so nothing is known about whether this part is drafted. Retry from the tree.'
-                          : 'This document’s sections are still being read.',
-                        'error'
-                      );
+                    if (readState !== 'ready') {
+                      fireToast(unboundNodeToast(node, readState), 'error');
                     } else if (bound) {
                       // The module rides with the navigation: a nav the guard
                       // holds must not move the create/export default to a
@@ -3424,10 +3511,9 @@ export function DocumentWorkbench({
                         module: m ? `M${m}` : undefined,
                       });
                     } else {
-                      fireToast(
-                        `${node.key} ${node.label} — no draft yet in this document.`,
-                        'error'
-                      );
+                      // F4: the click starts the section (a person's act),
+                      // or says why it cannot be started in this document.
+                      void startNode(node);
                     }
                   }}
                 >
@@ -3645,6 +3731,110 @@ export function DocumentWorkbench({
               </>
             )}
           </div>
+          {/* The governed acts — the reason for change, Save, lock / freeze /
+              e-sign, Place into filing — are a group of their own that wraps
+              and is never clipped. They sat at the far end of the panel
+              scroller below, past its edge at 1440px and at 390px, so an
+              author could not see Save or E-sign without scrolling a strip
+              that did not look scrollable (QA 2026-10-08, walk 2, j5). */}
+          <div className="ed-doc-commit" role="group" aria-label="Save and sign">
+            {/* Reason for change, stated once per section and carried on every
+                save of it. Inline beside Save rather than a dialog: there is no
+                autosave here, but Save and ⌘S each fire many times while
+                working through a section, and a modal on each would be the
+                friction the regulation does not ask for. */}
+            {/* 2026-09-28, coverage-gap sweep GA-1: the rule lived in the
+                placeholder, gone after one keystroke, and why Save stayed
+                inert was a `title` on a disabled button, which a keyboard
+                never reaches. The field is now aria-required, and the rule is
+                a persistent note both the field and Save are described by —
+                the ProtocolDevSection `pde-sec-state` pattern. */}
+            {dirty && !docSealed && (
+              <>
+                <input
+                  className="de-input"
+                  style={{ height: 30, width: 260 }}
+                  value={changeReason}
+                  onChange={e => setChangeReason(e.target.value)}
+                  placeholder="Why this changed (at least 8 characters)"
+                  aria-label="Reason for change"
+                  aria-required="true"
+                  aria-describedby={reasonNoteId}
+                  data-testid="change-reason"
+                />
+                <span
+                  id={reasonNoteId}
+                  aria-live="polite"
+                  style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 220 }}
+                  data-testid="change-reason-note"
+                >
+                  {changeReason.trim().length < 8
+                    ? 'Required to save: at least 8 characters, recorded with the revision.'
+                    : 'Recorded with the revision.'}
+                </span>
+              </>
+            )}
+            <button
+              className="btn primary"
+              style={{ height: 30 }}
+              onClick={() => void editorRef.current?.save()}
+              aria-describedby={dirty && !docSealed ? reasonNoteId : undefined}
+              disabled={!dirty || saving || docSealed || changeReason.trim().length < 8}
+              title={
+                docSealed
+                  ? 'This document is frozen — its content cannot be edited.'
+                  : !activeSection
+                    ? 'Open a section to edit and save it.'
+                    : dirty && changeReason.trim().length < 8
+                      ? 'Say why this section changed, in at least 8 characters — it is recorded with the revision.'
+                      : undefined
+              }
+              data-testid="save-section"
+            >
+              {/* "Saved" is a claim about a section's save state. It fell through
+                  to that word whenever nothing was dirty — including with no
+                  document or section open ("eCTD › No document" … "Saved"). */}
+              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
+            </button>
+            {activeDoc && (
+              <AuthoringFilingBar
+                docId={activeDoc.id}
+                docTitle={activeDoc.title}
+                docStatus={activeDoc.status}
+                onChanged={() => {
+                  void loadDocs();
+                  if (activeDocId) void loadSections(activeDocId);
+                }}
+                fireToast={fireToast}
+                signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+                freezeRefusal={actRefusal(docAccess.freeze)}
+                /* A Reviewer grant may sign the review and nothing else: the
+                   control stays open for that one meaning (QA 2026-10-08, j4). */
+                esignRefusal={esignReviewOnly(docAccess) ? null : actRefusal(docAccess.esign)}
+                reviewOnly={esignReviewOnly(docAccess)}
+              />
+            )}
+            {/* The authoring → filing seam: place the OPEN document into an
+                eCTD sequence of the canonical submission core. Beside the
+                freeze/e-sign bar because it is the same family of act — the
+                document leaving the editor for the governed record. */}
+            {activeDoc && (
+              <AuthoringPlaceIntoFiling
+                docId={activeDoc.id}
+                docTitle={activeDoc.title}
+                activeSectionCode={activeSection?.code ?? null}
+                /* The whole document is filed (QA 2026-10-08, j4), so the dialog
+                   files it at its own code; only a read it can trust. */
+                sectionCodes={sectionsState === 'ready' ? sections.map(s => s.code) : undefined}
+                /* The filing copy takes this state when placed (F17). */
+                docStatus={activeDoc.status ?? null}
+                refusal={actRefusal(docAccess.placeIntoFiling)}
+                dirty={dirty}
+                onNav={onNav}
+                fireToast={fireToast}
+              />
+            )}
+          </div>
           <div className="ed-doc-actions">
             <AuthoringCreateExport
               docId={activeDoc?.id ?? null}
@@ -3665,9 +3855,13 @@ export function DocumentWorkbench({
                     requestLeave({ kind: 'section', id: s.id })
                   );
               }}
-              /* A successful export re-baselines this document, so the Exports
+              /* A confirmed export record re-baselines this document, so the Exports
                  rail's "changed since the last export" verdict is now stale. */
               onExported={() => setExportsEpoch(e => e + 1)}
+              onCheckExports={() => {
+                setExportsEpoch(e => e + 1);
+                setRail('exports');
+              }}
             />
             {/* Section / Document. An author writes a section but SHIPS a
                 document, and until now the whole document was never on screen
@@ -3806,17 +4000,23 @@ export function DocumentWorkbench({
               {I.checkSquare} Tasks
             </button>
             {/* GE-P-3 (2026-09-28): disabled, not hidden, when the server
-                will refuse this caller — the reason is the text beside it. */}
+                will refuse this caller — the reason is the text beside it.
+                2026-10-08: "Assign review" created a task the Review board
+                never reads. Send for review records the review request the
+                board lists, and each reviewer's task with it, as one act. The
+                gate is that act's: the task create's role check, then the
+                request's Owner or Author grant on a document that is not
+                sealed (wave 2D, authoring.router.ts callerDocumentAccess). */}
             {activeDoc && (
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={() => setAssignReviewOpen(true)}
+                onClick={() => setSendForReviewOpen(true)}
                 disabled={!!actRefusal(docAccess.assignReview)}
                 aria-describedby={actRefusal(docAccess.assignReview) ? assignRefusalId : undefined}
-                data-testid="assign-review-open"
+                data-testid="send-for-review-open"
               >
-                {I.user} Assign review
+                {I.send} Send for review
               </button>
             )}
             {activeDoc && actRefusal(docAccess.assignReview) && (
@@ -3848,64 +4048,6 @@ export function DocumentWorkbench({
                 {actRefusal(docAccess.fileToVault)}
               </span>
             )}
-            {/* Reason for change, stated once per section and carried on every
-                save of it. Inline beside Save rather than a dialog: there is no
-                autosave here, but Save and ⌘S each fire many times while
-                working through a section, and a modal on each would be the
-                friction the regulation does not ask for. */}
-            {/* 2026-09-28, coverage-gap sweep GA-1: the rule lived in the
-                placeholder, gone after one keystroke, and why Save stayed
-                inert was a `title` on a disabled button, which a keyboard
-                never reaches. The field is now aria-required, and the rule is
-                a persistent note both the field and Save are described by —
-                the ProtocolDevSection `pde-sec-state` pattern. */}
-            {dirty && !docSealed && (
-              <>
-                <input
-                  className="de-input"
-                  style={{ height: 30, width: 260 }}
-                  value={changeReason}
-                  onChange={e => setChangeReason(e.target.value)}
-                  placeholder="Why this changed (at least 8 characters)"
-                  aria-label="Reason for change"
-                  aria-required="true"
-                  aria-describedby={reasonNoteId}
-                  data-testid="change-reason"
-                />
-                <span
-                  id={reasonNoteId}
-                  aria-live="polite"
-                  style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 220 }}
-                  data-testid="change-reason-note"
-                >
-                  {changeReason.trim().length < 8
-                    ? 'Required to save: at least 8 characters, recorded with the revision.'
-                    : 'Recorded with the revision.'}
-                </span>
-              </>
-            )}
-            <button
-              className="btn primary"
-              style={{ height: 30 }}
-              onClick={() => void editorRef.current?.save()}
-              aria-describedby={dirty && !docSealed ? reasonNoteId : undefined}
-              disabled={!dirty || saving || docSealed || changeReason.trim().length < 8}
-              title={
-                docSealed
-                  ? 'This document is frozen — its content cannot be edited.'
-                  : !activeSection
-                    ? 'Open a section to edit and save it.'
-                    : dirty && changeReason.trim().length < 8
-                      ? 'Say why this section changed, in at least 8 characters — it is recorded with the revision.'
-                      : undefined
-              }
-              data-testid="save-section"
-            >
-              {/* "Saved" is a claim about a section's save state. It fell through
-                  to that word whenever nothing was dirty — including with no
-                  document or section open ("eCTD › No document" … "Saved"). */}
-              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
-            </button>
             <button
               className="btn ghost"
               style={{ height: 30 }}
@@ -3957,35 +4099,6 @@ export function DocumentWorkbench({
                 fireToast={fireToast}
               />
             )}
-            {activeDoc && (
-              <AuthoringFilingBar
-                docId={activeDoc.id}
-                docTitle={activeDoc.title}
-                docStatus={activeDoc.status}
-                onChanged={() => {
-                  void loadDocs();
-                  if (activeDocId) void loadSections(activeDocId);
-                }}
-                fireToast={fireToast}
-                signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
-                freezeRefusal={actRefusal(docAccess.freeze)}
-                esignRefusal={actRefusal(docAccess.esign)}
-              />
-            )}
-            {/* The authoring → filing seam: place the OPEN document into an
-                eCTD sequence of the canonical submission core. Beside the
-                freeze/e-sign bar because it is the same family of act — the
-                document leaving the editor for the governed record. */}
-            {activeDoc && (
-              <AuthoringPlaceIntoFiling
-                docId={activeDoc.id}
-                docTitle={activeDoc.title}
-                activeSectionCode={activeSection?.code ?? null}
-                dirty={dirty}
-                onNav={onNav}
-                fireToast={fireToast}
-              />
-            )}
           </div>
         </header>
 
@@ -4030,6 +4143,7 @@ export function DocumentWorkbench({
                       {docProvenance.line}
                     </div>
                   )}
+                  {docFigures && <DraftFigureLine check={docFigures} />}
                   <div className="ed-mast-meta">
                     {/* "0 sections" printed over a failed or in-flight read,
                         directly above a body that said the read failed. */}
@@ -4236,6 +4350,7 @@ export function DocumentWorkbench({
                       {docProvenance.line}
                     </div>
                   )}
+                  {docFigures && <DraftFigureLine check={docFigures} />}
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
                     {num(activeSection.revision_count) > 0
@@ -4543,7 +4658,7 @@ export function DocumentWorkbench({
                 messages={ana.messages}
                 streaming={ana.isStreaming}
                 open={dock.open}
-                onToggle={dock.toggle}
+                onToggle={summary.toggleDock}
                 controls={dock.panelId}
               />
               <button
@@ -4558,11 +4673,15 @@ export function DocumentWorkbench({
             </span>
           </div>
           {/* AnA's progress — the same panel the shell rail mounts — above the
-              conversation, so the work is seen before the words. */}
+              conversation, so the work is seen before the words. Held to a
+              share of the pane and scrolled on its own (`ed-ana-work`): at
+              full height it left the conversation a strip that showed the
+              suggestion chips and not the answer (QA 2026-10-08, walk 2, j5). */}
           {dock.open && (
-            <div className="ana-work-host">
+            <div className="ana-work-host ed-ana-work">
               <AnaWorkPanel
                 id={dock.panelId}
+                turn={summary.panelTurn}
                 messages={ana.messages}
                 streaming={ana.isStreaming}
                 runStatus={ana.runStatus}
@@ -4580,6 +4699,7 @@ export function DocumentWorkbench({
               />
             </div>
           )}
+          {summary.sheet}
           {/* A labelled region, NOT a live one. As a polite `log` marked busy
               while streaming, it made the whole transcript a live region and
               held every announcement inside it until the turn ended — the
@@ -4621,14 +4741,14 @@ export function DocumentWorkbench({
                     <div className="cmt-body">{m.text}</div>
                   </div>
                 ) : (
-                  <div key={i} className="cmt">
+                  <div key={i} className="cmt" data-ana-answer="">
                     <div className="cmt-meta">
                       <b>AnA</b>
                     </div>
                     {/* Her work first — while she works, its live phase is the
                         waiting state, so this pane no longer prints the same
                         phase a second time under it — then the answer. */}
-                    <AnaActivity {...activityPropsFor(m)} />
+                    <AnaActivity {...activityPropsFor(m)} onSummary={() => summary.openFor(m.id)} />
                     {m.text && <AnaMarkdown text={m.text} />}
                     {/* The grounding verdict and her output — with the record
                         above, the same three every host renders. This pane had
@@ -5365,9 +5485,10 @@ export function DocumentWorkbench({
             docId={activeDocId}
             docTitle={activeDoc?.title ?? null}
             refreshKey={tasksEpoch}
-            onAssign={() => setAssignReviewOpen(true)}
-            assignRefusal={actRefusal(docAccess.assignReview)}
-            onNav={onNav}
+            onSendForReview={() => setSendForReviewOpen(true)}
+            sendRefusal={actRefusal(docAccess.assignReview)}
+            signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
+            onOpenBoard={() => onNav('review')}
             onClose={closeRail}
             fireToast={fireToast}
           />
@@ -5697,16 +5818,27 @@ export function DocumentWorkbench({
           fireToast={fireToast}
         />
       )}
-      {assignReviewOpen && activeDoc && (
-        <AssignReviewDialog
+      {sendForReviewOpen && activeDoc && (
+        <SendForReviewDialog
           docId={activeDoc.id}
           docTitle={activeDoc.title}
           programId={programId}
           sectionCode={activeSection?.code ?? null}
-          onClose={() => setAssignReviewOpen(false)}
-          onCreated={() => {
+          authorId={activeDoc.created_by != null ? String(activeDoc.created_by) : null}
+          onClose={() => setSendForReviewOpen(false)}
+          onSent={() => {
+            /* The tasks the act created are listed beside the document. */
             setTasksEpoch(e => e + 1);
             setRail('tasks');
+          }}
+          onCheckTasks={() => {
+            setSendForReviewOpen(false);
+            setTasksEpoch(e => e + 1);
+            setRail('tasks');
+          }}
+          onOpenBoard={() => {
+            setSendForReviewOpen(false);
+            onNav('review');
           }}
           fireToast={fireToast}
         />

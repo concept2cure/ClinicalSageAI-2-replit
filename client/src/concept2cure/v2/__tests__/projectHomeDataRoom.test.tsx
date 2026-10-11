@@ -11,6 +11,9 @@
  *     identical to one that can be drafted from;
  *   - an empty project says it is empty;
  *   - a failed read says so instead of rendering as "no sources".
+ *
+ * The data room is on the Evidence tab since FILING_SPINE.md F3 (2026-10-08);
+ * it sat under Author (projectHomeDocuments.test.tsx).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -23,6 +26,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { ProjectHome } from '../surfaces/ProjectHome';
+import { CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 
@@ -54,11 +58,21 @@ const props = () => ({
   segment: 'biopharma',
 });
 
+/** The data room is on the Evidence tab (FILING_SPINE.md F3): render, then open it. */
+function renderOnEvidence(ui: React.ReactElement) {
+  const r = render(ui);
+  const tab = Array.from(document.querySelectorAll<HTMLButtonElement>('.pj-lc-stage')).find((b) => b.textContent?.trim() === 'Evidence');
+  if (!tab) throw new Error('Project home has no Evidence tab');
+  fireEvent.click(tab);
+  return r;
+}
+
 /** Route every ProjectHome read; only /sources carries a payload we assert on. */
-function mockApi(sourcesResponse: () => Response) {
+function mockApi(sourcesResponse: (url: string) => Response) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, url: string) => {
-    if (url === `/api/c2c/projects/${PID}/sources`) return sourcesResponse();
+    // The Data Room read carries its search and page as query parameters (S2).
+    if (url.startsWith(`/api/c2c/projects/${PID}/sources`)) return sourcesResponse(url);
     if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'BX-301', code: 'BX301' });
     return ok({});
   });
@@ -73,9 +87,18 @@ beforeEach(() => {
 });
 
 describe('ProjectHome — data room', () => {
+  it('offers only the shared chat candidates from its project-source picker', async () => {
+    mockApi(() => ok({ projectId: PID, sources: [], unscoped: [] }));
+    renderOnEvidence(<ProjectHome {...props()} />);
+    await screen.findByText(/No sources in this project yet/);
+    const picker = screen.getByLabelText('Attach files to this project') as HTMLInputElement;
+    expect(picker.accept).toBe(CHAT_UPLOAD_ACCEPT);
+    expect(picker.accept.split(',')).toEqual(expect.arrayContaining(['.csv', '.xlsx', '.json', '.xml']));
+  });
+
   it('lists the project\'s real sources', async () => {
     mockApi(() => ok({ projectId: PID, sources: [source()], unscoped: [] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
 
     expect(await screen.findByText('protocol-v2.pdf')).toBeTruthy();
     // Kind, size and date come from the source's own metadata.
@@ -95,7 +118,7 @@ describe('ProjectHome — data room', () => {
         unscoped: [],
       }),
     );
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
 
     await screen.findByText('good.pdf');
     // A document whose text could not be read must not look like one that can
@@ -117,43 +140,50 @@ describe('ProjectHome — data room', () => {
         unscoped: [],
       }),
     );
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText(/2 sources · 1 readable/);
   });
 
   it('renders an honest empty state for a project with no sources', async () => {
     mockApi(() => ok({ projectId: PID, sources: [], unscoped: [] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     expect(await screen.findByText(/No sources in this project yet/)).toBeTruthy();
   });
 
   it('distinguishes a failed read from an empty data room', async () => {
     mockApi(() => ({ ok: false, status: 500, json: async () => ({}) }) as Response);
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     expect(await screen.findByText(/Couldn't load this project's sources/)).toBeTruthy();
     expect(screen.queryByText(/No sources in this project yet/)).toBeNull();
   });
 
-  it('filters the list without refetching', async () => {
-    mockApi(() =>
-      ok({
-        projectId: PID,
-        sources: [source({ id: 1, title: 'protocol.pdf' }), source({ id: 2, title: 'csr.pdf' })],
-        unscoped: [],
-      }),
+  /* Since 2026-10-08 (Data Room catalog S2) the server searches title and the
+     text read from each file, over the whole room; the list is its answer. A
+     client-side title filter over the loaded page could not find the 201st
+     file, or a word inside a document. */
+  it('searches the whole room on the server, by title and text, and lists its answer', async () => {
+    mockApi((url) =>
+      url.includes('q=spirometry')
+        ? ok({ projectId: PID, unscoped: [], total: 1, currentTotal: 1, window: { shown: 1, truncated: false },
+            sources: [source({ id: 2, title: 'csr.pdf', snippet: 'decline in <b>spirometry</b> at week 52' })] })
+        : ok({ projectId: PID, unscoped: [], total: 2, currentTotal: 2,
+            sources: [source({ id: 1, title: 'protocol.pdf' }), source({ id: 2, title: 'csr.pdf' })] }),
     );
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('protocol.pdf');
 
-    fireEvent.change(screen.getByLabelText('Search sources'), { target: { value: 'csr' } });
+    fireEvent.change(screen.getByLabelText('Search sources by title or text'), { target: { value: 'spirometry' } });
 
     await waitFor(() => expect(screen.queryByText('protocol.pdf')).toBeNull());
     expect(screen.getByText('csr.pdf')).toBeTruthy();
+    expect(document.body.textContent).toContain('decline in spirometry at week 52');
+    expect(document.body.textContent).toMatch(/1 source match .spirometry. in their title or text/);
+    expect(apiRequest.mock.calls.some(([, url]) => String(url).includes('/sources?q=spirometry'))).toBe(true);
   });
 
   it('offers a way to add sources', async () => {
     mockApi(() => ok({ projectId: PID, sources: [], unscoped: [] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     expect(await screen.findByLabelText('Add sources to this project')).toBeTruthy();
   });
 });
@@ -174,7 +204,7 @@ describe('ProjectHome — pinning sources as context', () => {
         unscoped: [],
       }),
     );
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('good.pdf');
 
     expect((screen.getByLabelText('Use good.pdf as context') as HTMLInputElement).disabled).toBe(false);
@@ -193,7 +223,7 @@ describe('ProjectHome — pinning sources as context', () => {
       }),
     );
     const p = props();
-    render(<ProjectHome {...p} />);
+    renderOnEvidence(<ProjectHome {...p} />);
     await screen.findByText('a.pdf');
 
     fireEvent.click(screen.getByLabelText('Use a.pdf as context'));
@@ -208,7 +238,7 @@ describe('ProjectHome — pinning sources as context', () => {
 
   it('offers no pin action until something is pinned', async () => {
     mockApi(() => ok({ projectId: PID, sources: [source()], unscoped: [] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('protocol-v2.pdf');
     expect(screen.queryByText(/Draft with .* pinned source/)).toBeNull();
   });
@@ -232,7 +262,7 @@ describe('ProjectHome — where a source is used', () => {
     mockUsageApi([
       source({ id: 1, title: 'protocol.pdf', usage: { sections: 3, documents: 2, changedSections: 0 } }),
     ]);
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('protocol.pdf');
     expect(screen.getByText(/Used in 3 sections · 2 documents/)).toBeTruthy();
   });
@@ -241,7 +271,7 @@ describe('ProjectHome — where a source is used', () => {
     // An uploaded document nothing cites is the state a reviewer most wants to
     // notice, so it must not read the same as a cited one.
     mockUsageApi([source({ id: 1, title: 'orphan.pdf', usage: { sections: 0, documents: 0, changedSections: 0 } })]);
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('orphan.pdf');
     expect(screen.getByText('Not cited yet')).toBeTruthy();
   });
@@ -250,7 +280,7 @@ describe('ProjectHome — where a source is used', () => {
     mockUsageApi([
       source({ id: 1, title: 'moved.pdf', usage: { sections: 4, documents: 1, changedSections: 2 } }),
     ]);
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('moved.pdf');
     expect(screen.getByText(/2 written against older content/)).toBeTruthy();
   });
@@ -259,7 +289,7 @@ describe('ProjectHome — where a source is used', () => {
     // An older server is not the same fact as "cited nowhere". Guessing either
     // way would be the fabrication this surface exists to avoid.
     mockUsageApi([source({ id: 1, title: 'unknown.pdf' })]);
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('unknown.pdf');
     expect(screen.queryByText('Not cited yet')).toBeNull();
     expect(screen.queryByText(/Used in/)).toBeNull();
@@ -281,7 +311,7 @@ describe('ProjectHome — where a source is used', () => {
         },
       ],
     );
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText(/1 section in this project was drafted from a source that has since changed/);
     expect(screen.getByText(/CTD 3\.2\.P · P\.1/)).toBeTruthy();
     // The platform reports; it does not silently regenerate regulated text.
@@ -290,7 +320,7 @@ describe('ProjectHome — where a source is used', () => {
 
   it('shows no change banner when nothing is stale', async () => {
     mockUsageApi([source({ id: 1, usage: { sections: 1, documents: 1, changedSections: 0 } })]);
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('protocol-v2.pdf');
     expect(screen.queryByText(/drafted from a source that has since changed/)).toBeNull();
   });
@@ -308,19 +338,40 @@ describe('ProjectHome — data room counts', () => {
       source({ id: 1, title: 'protocol-v1.pdf', isCurrent: false }),
       source({ id: 2, title: 'protocol-v2.pdf', isCurrent: true }),
     ] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('protocol-v2.pdf');
     expect(document.body.textContent).toMatch(/(^|\D)1 source · 1 readable/);
     expect(document.body.textContent).not.toMatch(/(^|\D)2 sources/);
   });
 
-  it('a full window reads as a floor', async () => {
-    mockApi(() => ok({ projectId: PID, unscoped: [], window: { shown: 2, truncated: true }, sources: [
-      source({ id: 1, title: 'a.pdf' }), source({ id: 2, title: 'b.pdf' }),
+  /* What the catalog found a source is (S3), as facts: only those it found. */
+  it('shows what the catalog found: protocol, registry id, data cut-off, and a table\'s CDISC domain', async () => {
+    mockApi(() => ok({ projectId: PID, unscoped: [], total: 2, currentTotal: 2, sources: [
+      source({ id: 1, title: 'csr.pdf', catalog: { studyRef: 4, trialRegistryIdentifier: 'NCT04567890', protocolNumber: 'BX-301-02',
+        documentDate: '2025-03-14', dataCutDate: '2024-12-31', dataset: null } }),
+      source({ id: 2, title: 'ae.csv', catalog: { studyRef: null, trialRegistryIdentifier: null, protocolNumber: null, documentDate: null,
+        dataCutDate: null, dataset: { format: 'csv', tableCount: 1, tables: [{ name: 'ae.csv', standard: 'SDTM', domain: 'AE', rowCount: 340, columnCount: 23 }] } } }),
     ] }));
-    render(<ProjectHome {...props()} />);
+    renderOnEvidence(<ProjectHome {...props()} />);
+    await screen.findByText('csr.pdf');
+    const lines = screen.getAllByTestId('source-catalog').map((e) => e.textContent);
+    expect(lines).toEqual(['Protocol BX-301-02 · NCT04567890 · data cut-off 2024-12-31', 'SDTM AE · 23 columns · 340 rows']);
+  });
+
+  /* The server counts the whole room (currentTotal) and pages; nothing is a floor. */
+  it('a full page shows the exact total and pages to the older sources', async () => {
+    mockApi((url) => url.includes('offset=200')
+      ? ok({ projectId: PID, unscoped: [], total: 201, currentTotal: 201, window: { shown: 1, truncated: false },
+          sources: [source({ id: 3, title: 'oldest.pdf' })] })
+      : ok({ projectId: PID, unscoped: [], total: 201, currentTotal: 201, window: { shown: 2, truncated: true },
+          sources: [source({ id: 1, title: 'a.pdf' }), source({ id: 2, title: 'b.pdf' })] }));
+    renderOnEvidence(<ProjectHome {...props()} />);
     await screen.findByText('a.pdf');
-    expect(document.body.textContent).toMatch(/2\+ sources/);
-    expect(document.body.textContent).toMatch(/newest 2 shown/);
+    expect(document.body.textContent).toMatch(/201 sources/);
+    expect(document.body.textContent).not.toMatch(/\+ sources/);
+    expect(document.body.textContent).toMatch(/showing 1.2\)/);
+    fireEvent.click(screen.getByText('Older sources'));
+    await screen.findByText('oldest.pdf');
+    expect(screen.getByText('Newer sources')).toBeTruthy();
   });
 });

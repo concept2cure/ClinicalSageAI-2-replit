@@ -1,0 +1,79 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > reads only this project and tenant, using exact saved document types and placements 28ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > empty content and incomplete approval projections cannot vouch for completed evidence 18ms
+ × server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > wrong-meaning, malformed or stale-bound signatures cannot count as approved progress 28ms
+   → expected 'approved' to be 'review' // Object.is equality
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > retired empty projections retain their retired status and cannot defeat current evidence 22ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > a foreign or deleted active project cannot be assessed 4ms
+ ✓ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > a failed content query throws instead of returning a successful empty inventory 5ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > requires an active project by default even if the model supplies a project id and approvals 39ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > ignores model approval and project claims when a project is open 5ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > explicit hypothetical scenarios cannot certify a completed client package 2ms
+ × server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > invalid hypothetical rows produce an actionable refusal 43ms
+   → Cannot read properties of null (reading 'code')
+ × server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > invalid hypothetical rows produce an actionable refusal 5ms
+   → expected 'hypothetical' to be 'needs_parameters' // Object.is equality
+ × server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > invalid hypothetical rows produce an actionable refusal 3ms
+   → expected 'hypothetical' to be 'needs_parameters' // Object.is equality
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > does not turn a failed saved-record read into an empty successful assessment 1ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > refuses a project that cannot be resolved in this tenant 0ms
+ ✓ server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > asks for a recognized filing scope before any project read 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > invalid hypothetical rows produce an actionable refusal
+TypeError: Cannot read properties of null (reading 'code')
+ ❯ server/services/regulatory/submissionPackageBuilder.ts:119:70
+    117|
+    118|   // Map actual data
+    119|   const sectionMap = groupSubmissionEvidence(projectSections, s => s.c…
+       |                                                                      ^
+    120|   const artifactMap = groupSubmissionEvidence(projectArtifacts, a => a…
+    121|
+ ❯ groupSubmissionEvidence server/services/regulatory/submissionEvidenceStatus.ts:24:16
+ ❯ buildPackageManifest server/services/regulatory/submissionPackageBuilder.ts:119:22
+ ❯ assessSubmissionPackageTool server/services/ana/submission-package-tool.ts:14:22
+ ❯ server/services/ana/AnaToolExecutor.ts:16506:10
+ ❯ instrumented server/services/ana/AnaToolExecutor.ts:569:22
+ ❯ call server/services/ana/__tests__/submission-package-project-scope.test.ts:16:90
+ ❯ server/services/ana/__tests__/submission-package-project-scope.test.ts:50:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > invalid hypothetical rows produce an actionable refusal
+ FAIL  server/services/ana/__tests__/submission-package-project-scope.test.ts > Anna submission package assessment uses saved project evidence > invalid hypothetical rows produce an actionable refusal
+AssertionError: expected 'hypothetical' to be 'needs_parameters' // Object.is equality
+
+Expected: "needs_parameters"
+Received: "hypothetical"
+
+ ❯ server/services/ana/__tests__/submission-package-project-scope.test.ts:51:24
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts > saved package inventory uses the canonical store with real SQL > wrong-meaning, malformed or stale-bound signatures cannot count as approved progress
+AssertionError: expected 'approved' to be 'review' // Object.is equality
+
+Expected: "review"
+Received: "approved"
+
+ ❯ server/services/regulatory/__tests__/submissionPackageInventory.pglite.test.ts:69:112
+     67|     const empty = await seed('cover_letter', 'approved', { signature: …
+     68|     const result = (await read())!;
+     69|     for (const id of [reviewed, stale, empty]) expect(result.artifacts…
+       |                                                                                                                ^
+     70|   });
+     71|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 11 passed (15)
+   Start at  22:53:19
+   Duration  14.32s (transform 6.05s, setup 154ms, import 9.83s, tests 3.64s, environment 0ms)
+

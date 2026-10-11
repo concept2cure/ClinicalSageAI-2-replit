@@ -13,6 +13,7 @@ import {
   compareSectionCode,
   sortBySectionCode,
   sectionInsertIndex,
+  sectionInsertSlot,
   duplicateSectionCodes,
   sectionStructureIssues,
 } from '../section-code';
@@ -114,6 +115,24 @@ describe('sectionInsertIndex', () => {
     const at = sectionInsertIndex(manual, '5.3');
     manual.splice(at, 0, '5.3');
     expect(manual).toEqual(['5.3', '5.6', '5.1']);
+  });
+});
+
+describe('sectionInsertSlot', () => {
+  const rows = (pairs: Array<[string, number]>) => pairs.map(([code, orderIndex], i) => ({ id: `r${i}`, code, orderIndex }));
+
+  it('takes a STORED index, so a code after template-spaced sections lands last (QA 2026-10-08, j4)', () => {
+    // The list position (7) is below every template index (100…700): stored first.
+    const tpl = rows([['2.5.1', 100], ['2.5.2', 200], ['2.5.3', 300], ['2.5.4', 400], ['2.5.5', 500], ['2.5.6', 600], ['2.5.7', 700]]);
+    expect(sectionInsertSlot(tpl, '2.5.8')).toEqual({ orderIndex: 701, shiftIds: [] });
+    expect(sectionInsertSlot(tpl, '2.5.3.1')).toEqual({ orderIndex: 400, shiftIds: ['r3', 'r4', 'r5', 'r6'] });
+  });
+
+  it('moves rows by id, so rows that share an index keep their order', () => {
+    // A document created before positions were assigned: every row at 0.
+    const legacy = rows([['5.1', 0], ['5.6', 0]]);
+    expect(sectionInsertSlot(legacy, '5.3')).toEqual({ orderIndex: 0, shiftIds: ['r1'] });
+    expect(sectionInsertSlot([], '5.1')).toEqual({ orderIndex: 0, shiftIds: [] });
   });
 });
 

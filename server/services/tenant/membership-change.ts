@@ -102,6 +102,42 @@ export async function changeMemberRole(
   return 'changed';
 }
 
+/** The 409 answer to a change wouldLeaveNoAdministrator refused; nothing was written. */
+export const LAST_ADMINISTRATOR_REFUSAL = {
+  error: 'LAST_ADMINISTRATOR',
+  message:
+    "This member is the organization's only administrator. Make another member an administrator first. Nothing was changed.",
+} as const;
+
+/** The organisation roles that administer it (tenant-users authorizeOrgAccess). */
+export const ADMINISTRATOR_ROLES: readonly string[] = ['admin', 'owner'];
+
+/**
+ * True when changing `userId` to `newRole` (null: removing them) would leave the
+ * organisation with no administrator, and so nobody able to undo it (QA
+ * 2026-10-08, j9 finding 1).
+ *
+ * The route already refuses an administrator's change to their own membership,
+ * but that leaves two ways to the same end: a platform operator acting on the
+ * last administrator, and two administrators demoting each other at the same
+ * moment — each request sees its caller as an administrator, each locks only
+ * its own target row, and both commit. So the organisation's administrator rows
+ * are locked here, in the change's transaction and in one order, before the
+ * change: the second request waits, then reads the first one's result.
+ */
+export async function wouldLeaveNoAdministrator(
+  client: MembershipTxClient,
+  change: { organizationId: number; userId: number; newRole: string | null }
+): Promise<boolean> {
+  if (change.newRole !== null && ADMINISTRATOR_ROLES.includes(change.newRole)) return false;
+  const { rows } = await client.query(
+    `SELECT user_id FROM organization_users WHERE organization_id = $1 AND role IN ('admin', 'owner') ORDER BY user_id FOR UPDATE`,
+    [change.organizationId]
+  );
+  const administrators = rows.map(r => Number(r.user_id));
+  return administrators.includes(change.userId) && administrators.every(id => id === change.userId);
+}
+
 /** The removal and its audit row, which records the role the member held. False when not a member. */
 export async function removeMember(
   client: MembershipTxClient,

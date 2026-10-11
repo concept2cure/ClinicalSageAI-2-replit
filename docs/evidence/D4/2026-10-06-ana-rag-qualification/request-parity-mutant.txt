@@ -1,0 +1,3 @@
+Mutation: unchanged prompt/source content, temperature 0.3 -> 0.4.
+Result: exact canonical request parity assertion rejected the mutant.
+Repository source was not mutated.

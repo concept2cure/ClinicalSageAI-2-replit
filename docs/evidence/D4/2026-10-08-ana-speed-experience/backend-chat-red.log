@@ -1,0 +1,53 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > starts scoped memory while optional route context remains pending and retains both 7ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > never reads a named thread before the caller-scoped admission resolves 2ms
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > awaits memory after optional context has completed 1ms
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > uses no private thread memory when access is refused 1ms
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > uses no private thread memory when access is missing 1ms
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > uses no private thread memory when access is unnamed 1ms
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > handles an early memory rejection while route context remains pending 1ms
+ × server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > benchmarks controlled context latency: 180 ms route plus 120 ms memory completes in 180 ms 4ms
+   → expected 300 to be 180 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > starts scoped memory while optional route context remains pending and retains both
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/services/ana-ri/__tests__/chat-context-latency.test.ts:95:25
+     93|       await started.promise;
+     94|       expect(io.resolve).toHaveBeenCalledWith('thread-owned', 7, 19);
+     95|       expect(io.memory).toHaveBeenCalledTimes(1);
+       |                         ^
+     96|       expect(io.memory).toHaveBeenCalledWith({
+     97|         threadId: 'thread-owned', organizationId: 7, projectId: 33,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > benchmarks controlled context latency: 180 ms route plus 120 ms memory completes in 180 ms
+AssertionError: expected 300 to be 180 // Object.is equality
+
+- Expected
++ Received
+
+- 180
++ 300
+
+ ❯ server/services/ana-ri/__tests__/chat-context-latency.test.ts:193:38
+    191|     await vi.advanceTimersByTimeAsync(300);
+    192|     const context = await pending;
+    193|     expect(completedAt! - startedAt).toBe(180);
+       |                                      ^
+    194|     expect(context.messages[0].content).toContain(memoryResult.memoryB…
+    195|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  11:06:14
+   Duration  433ms (transform 160ms, setup 57ms, import 139ms, tests 19ms, environment 0ms)

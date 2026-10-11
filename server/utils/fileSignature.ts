@@ -209,6 +209,9 @@ const NAME_BINDINGS: ReadonlyMap<string, NameBinding> = new Map<string, NameBind
   // no Content-Type at all reaches multer as text/plain (busboy's default).
   ['.txt', { canonical: 'text/plain', declared: ['text/plain'] }],
   ['.csv', { canonical: 'text/csv', declared: ['text/csv', 'application/csv', 'text/plain'] }],
+  ['.tsv', { canonical: 'text/tab-separated-values', declared: ['text/tab-separated-values', 'text/plain'] }],
+  ['.json', { canonical: 'application/json', declared: ['application/json', 'text/json', 'text/plain'] }],
+  ['.xml', { canonical: 'application/xml', declared: ['application/xml', 'text/xml', 'text/plain'] }],
   ['.md', { canonical: 'text/markdown', declared: ['text/markdown', 'text/x-markdown', 'text/plain'] }],
   ['.rtf', { canonical: 'text/rtf', declared: ['text/rtf', 'text/plain'] }],
 ]);

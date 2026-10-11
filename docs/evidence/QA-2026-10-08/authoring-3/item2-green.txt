@@ -1,0 +1,2276 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:39.350Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+✅ Template tables initialized
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:42.579Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:42.588Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "9d785baa-5aee-46aa-a67f-3d907ada0610",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:42.593Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "9d785baa-5aee-46aa-a67f-3d907ada0610",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:42.603Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:42.614Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:42.615Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "548f912e-9601-4154-86a5-8f2b624eda38"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:42.632Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:42.647Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:42.657Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:42.658Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "e217ba45-fb8f-443d-8cd4-f4823ec069d5"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:42.666Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:42.672Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:42.682Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:42.682Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "f58f1c72-da33-48e2-b199-d32c7bf4cb7d"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+{
+  "timestamp": "2026-10-08T13:50:42.689Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > writes the text into the governed section
+{
+  "timestamp": "2026-10-08T13:50:42.698Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > writes the text into the governed section
+{
+  "timestamp": "2026-10-08T13:50:42.744Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > a re-save enters the Part 11 ledger ATTRIBUTED to the real actor
+{
+  "timestamp": "2026-10-08T13:50:42.764Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > a re-save enters the Part 11 ledger ATTRIBUTED to the real actor
+{
+  "timestamp": "2026-10-08T13:50:42.784Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > writes the text into the governed section 65ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > the governed outline now reports the section as written 4ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > a re-save enters the Part 11 ledger ATTRIBUTED to the real actor 28ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a save in the editor reaches the filing > and the working copy still holds the text too 1ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > refuses a content save with no reason, and writes nothing
+{
+  "timestamp": "2026-10-08T13:50:42.794Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > still records a real reason verbatim when the save gives one
+{
+  "timestamp": "2026-10-08T13:50:42.802Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > still records a real reason verbatim when the save gives one
+{
+  "timestamp": "2026-10-08T13:50:42.821Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > refuses a whitespace-only reason as no reason at all
+{
+  "timestamp": "2026-10-08T13:50:42.837Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes a chained, sealed row for the save
+{
+  "timestamp": "2026-10-08T13:50:42.848Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes a chained, sealed row for the save
+{
+  "timestamp": "2026-10-08T13:50:42.871Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes exactly ONE chained row per save, not one per ledger
+{
+  "timestamp": "2026-10-08T13:50:42.881Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes exactly ONE chained row per save, not one per ledger
+{
+  "timestamp": "2026-10-08T13:50:42.909Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > refuses a content save with no reason, and writes nothing 9ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > still records a real reason verbatim when the save gives one 31ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the reason for change is recorded, never invented > refuses a whitespace-only reason as no reason at all 12ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes a chained, sealed row for the save 34ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > a freeze — which writes its OWN chained row — still gets exactly one
+{
+  "timestamp": "2026-10-08T13:50:42.925Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > a freeze — which writes its OWN chained row — still gets exactly one
+{
+  "timestamp": "2026-10-08T13:50:42.929Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "a3444516-1ef3-4134-a5b1-58483e586e55",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > a freeze — which writes its OWN chained row — still gets exactly one
+{
+  "timestamp": "2026-10-08T13:50:42.931Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "a3444516-1ef3-4134-a5b1-58483e586e55",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > a freeze — which writes its OWN chained row — still gets exactly one
+{
+  "timestamp": "2026-10-08T13:50:42.936Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > a freeze — which writes its OWN chained row — still gets exactly one
+{
+  "timestamp": "2026-10-08T13:50:43.001Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc a3444516-1ef3-4134-a5b1-58483e586e55 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > takes the whole save down if the chained row cannot be written
+{
+  "timestamp": "2026-10-08T13:50:43.019Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > takes the whole save down if the chained row cannot be written
+{
+  "timestamp": "2026-10-08T13:50:43.049Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > takes the whole save down if the chained row cannot be written
+CRITICAL: Failed to create audit trail: error: new row for relation "audit_logs" violates check constraint "tmp_no_authoring"
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 753,
+  severity: 'ERROR',
+  code: '23514',
+  detail: 'Failing row contains (fd5fadae-5d07-4ecd-9aba-6e8c8d9f6a7a, 1, 42, authoring.section.UPDATE, authoring_section, e217ba45-fb8f-443d-8cd4-f4823ec069d5, 42, authoring_section:e217ba45-fb8f-443d-8cd4-f4823ec069d5, null, null, drafting the overview, a9757392182fa2028fd3c8de3c52a1a70c9d813918bf9e808be1bee37a73a4d7, null, fea1079e29a86f7eb01d204238d28e36a5995df29d833bf8afde0acca4ee2983, 2026-10-08 13:50:43.049+00, 4bc0539f043fc01eb5475548a876b28d267b3ffc7d2197951cddaed6b4c80da8, null, {"docId":"9d785baa-5aee-46aa-a67f-3d907ada0610","sectionId":"e21..., 127.0.0.1, unknown).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'audit_logs',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'tmp_no_authoring',
+  file: 'execMain.c',
+  line: '2081',
+  routine: 'ExecConstraints',
+  query: 'INSERT INTO audit_logs\n' +
+    '       (id, tenant_id, user_id, action, table_name, record_id,\n' +
+    '        actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,\n' +
+    '        old_values, new_values, ip_address, user_agent, reason)\n' +
+    '     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16,$17)',
+  params: [
+    'fd5fadae-5d07-4ecd-9aba-6e8c8d9f6a7a',
+    1,
+    42,
+    'authoring.section.UPDATE',
+    'authoring_section',
+    'e217ba45-fb8f-443d-8cd4-f4823ec069d5',
+    42,
+    'authoring_section:e217ba45-fb8f-443d-8cd4-f4823ec069d5',
+    'a9757392182fa2028fd3c8de3c52a1a70c9d813918bf9e808be1bee37a73a4d7',
+    'fea1079e29a86f7eb01d204238d28e36a5995df29d833bf8afde0acca4ee2983',
+    '2026-10-08T13:50:43.049Z',
+    '4bc0539f043fc01eb5475548a876b28d267b3ffc7d2197951cddaed6b4c80da8',
+    null,
+    '{"docId":"9d785baa-5aee-46aa-a67f-3d907ada0610","sectionId":"e217ba45-fb8f-443d-8cd4-f4823ec069d5","operationType":"UPDATE","contentHashBefore":"e7b1302707cd457401de02c743e6296f7cd0d0c8cd19d6fc8c81893d1a6748a0","contentHashAfter":"7d604aecd91103e250840f371484ebf1137dafb4fd41e3cb074643eb8c5f394f","changeReason":"drafting the overview","actorRole":"unknown","sessionId":"c0394dc4-d48a-4a0f-809f-14f2fd174170","trailId":"f0c301ae-7d8f-4f40-a86b-ca206e9c8aa1","metadataSha256":"35e650679425d31dfd1bd233ba0c606eaa7bb07cbf9ffbf864a631a2372d087f","actorEmail":"author@filing.example"}',
+    '127.0.0.1',
+    'unknown',
+    'drafting the overview'
+  ],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > takes the whole save down if the chained row cannot be written
+{
+  "timestamp": "2026-10-08T13:50:43.056Z",
+  "level": "error",
+  "message": "[authoring-router] Section save refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "e217ba45-fb8f-443d-8cd4-f4823ec069d5",
+    "tenantId": 1,
+    "err": "new row for relation \"audit_logs\" violates check constraint \"tmp_no_authoring\""
+  }
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > writes exactly ONE chained row per save, not one per ledger 43ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > a freeze — which writes its OWN chained row — still gets exactly one 92ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections
+{
+  "timestamp": "2026-10-08T13:50:43.063Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections
+{
+  "timestamp": "2026-10-08T13:50:43.090Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections
+{
+  "timestamp": "2026-10-08T13:50:43.098Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections
+{
+  "timestamp": "2026-10-08T13:50:43.120Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections
+{
+  "timestamp": "2026-10-08T13:50:43.130Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections
+{
+  "timestamp": "2026-10-08T13:50:43.150Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section save reaches the hash-chained ledger > takes the whole save down if the chained row cannot be written 47ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > creates a section to rename
+{
+  "timestamp": "2026-10-08T13:50:43.164Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > creates a section to rename
+{
+  "timestamp": "2026-10-08T13:50:43.171Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:43.172Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "ed165584-0969-4481-8aff-431eb0273e3b"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > creates a section to rename
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > creates a section to rename
+{
+  "timestamp": "2026-10-08T13:50:43.178Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a RENAME, naming what moved, and creates NO content revision
+{
+  "timestamp": "2026-10-08T13:50:43.183Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a RENAME, naming what moved, and creates NO content revision
+{
+  "timestamp": "2026-10-08T13:50:43.189Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a TRACK_CHANGES toggle
+{
+  "timestamp": "2026-10-08T13:50:43.200Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a TRACK_CHANGES toggle
+{
+  "timestamp": "2026-10-08T13:50:43.206Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: TRACK_CHANGES on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > does not audit a metadata PATCH that changes nothing
+{
+  "timestamp": "2026-10-08T13:50:43.216Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > creates a section on the bound document
+{
+  "timestamp": "2026-10-08T13:50:43.227Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > creates a section on the bound document
+{
+  "timestamp": "2026-10-08T13:50:43.236Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:43.236Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "f3892d34-88a5-4896-b2d4-f3e7058fdea9"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > creates a section on the bound document
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > creates a section on the bound document
+{
+  "timestamp": "2026-10-08T13:50:43.247Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > refuses a code change, and changes nothing
+{
+  "timestamp": "2026-10-08T13:50:43.251Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > restores the filing to the reverted content, not only authoring_sections 100ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert moves the filing too, not just the working copy > records WHY in the version ledger — a mechanism naming itself 1ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > creates a section to rename 18ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a RENAME, naming what moved, and creates NO content revision 17ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > reaches the hash-chained ledger, not only the soft table 1ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > records a TRACK_CHANGES toggle 15ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a metadata change to a section is audited > does not audit a metadata PATCH that changes nothing 10ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > creates a section on the bound document 26ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a title-only rename — the code is present but unchanged
+{
+  "timestamp": "2026-10-08T13:50:43.265Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a title-only rename — the code is present but unchanged
+{
+  "timestamp": "2026-10-08T13:50:43.270Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break
+{
+  "timestamp": "2026-10-08T13:50:43.278Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break
+{
+  "timestamp": "2026-10-08T13:50:43.282Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "484fa504-1838-408e-9e22-74e0512e1603",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break
+{
+  "timestamp": "2026-10-08T13:50:43.284Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "484fa504-1838-408e-9e22-74e0512e1603",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break
+{
+  "timestamp": "2026-10-08T13:50:43.287Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break
+{
+  "timestamp": "2026-10-08T13:50:43.294Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 484fa504-1838-408e-9e22-74e0512e1603 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:43.294Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "6662f682-2c1d-4fe4-82e2-f94715b823a8"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break
+{
+  "timestamp": "2026-10-08T13:50:43.300Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break
+{
+  "timestamp": "2026-10-08T13:50:43.304Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break
+{
+  "timestamp": "2026-10-08T13:50:43.315Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc 484fa504-1838-408e-9e22-74e0512e1603 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many
+{
+  "timestamp": "2026-10-08T13:50:43.330Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many
+{
+  "timestamp": "2026-10-08T13:50:43.334Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "fbc162a7-bdb6-4209-a605-25dbdbfdf9d2",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many
+{
+  "timestamp": "2026-10-08T13:50:43.336Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "fbc162a7-bdb6-4209-a605-25dbdbfdf9d2",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many
+{
+  "timestamp": "2026-10-08T13:50:43.340Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many
+{
+  "timestamp": "2026-10-08T13:50:43.353Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fbc162a7-bdb6-4209-a605-25dbdbfdf9d2 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:43.355Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "4944d65e-3816-4cca-9235-749958d0be3b"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many
+{
+  "timestamp": "2026-10-08T13:50:43.360Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > refuses a code change, and changes nothing 14ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a title-only rename — the code is present but unchanged 13ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a section code is locked to the filing on a bound document > allows a code change on an UNBOUND document — there is no filing to break 47ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many
+{
+  "timestamp": "2026-10-08T13:50:43.366Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided
+{
+  "timestamp": "2026-10-08T13:50:43.384Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided
+{
+  "timestamp": "2026-10-08T13:50:43.387Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "57a97261-d371-4df9-8c51-b80a4739d476",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided
+{
+  "timestamp": "2026-10-08T13:50:43.389Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "57a97261-d371-4df9-8c51-b80a4739d476",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided
+{
+  "timestamp": "2026-10-08T13:50:43.392Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided
+{
+  "timestamp": "2026-10-08T13:50:43.409Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 57a97261-d371-4df9-8c51-b80a4739d476 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:43.409Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "dec484c0-d8fe-47fc-8fb6-6439ae37740f"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided
+{
+  "timestamp": "2026-10-08T13:50:43.416Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided
+{
+  "timestamp": "2026-10-08T13:50:43.422Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+{
+  "timestamp": "2026-10-08T13:50:43.431Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+{
+  "timestamp": "2026-10-08T13:50:43.434Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "6e5e2fed-ee9f-48ea-861a-86ced5c6817d",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+{
+  "timestamp": "2026-10-08T13:50:43.435Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "6e5e2fed-ee9f-48ea-861a-86ced5c6817d",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+{
+  "timestamp": "2026-10-08T13:50:43.439Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+{
+  "timestamp": "2026-10-08T13:50:43.454Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6e5e2fed-ee9f-48ea-861a-86ced5c6817d by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:43.454Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "7f457b7b-87cd-4b77-b55e-e2cf36a34a1b"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+{
+  "timestamp": "2026-10-08T13:50:43.460Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+{
+  "timestamp": "2026-10-08T13:50:43.465Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+{
+  "timestamp": "2026-10-08T13:50:43.474Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent
+{
+  "timestamp": "2026-10-08T13:50:43.482Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 6e5e2fed-ee9f-48ea-861a-86ced5c6817d by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a reviewer comment is still open, and says how many 58ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > refuses while a tracked change is undecided 48ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands
+{
+  "timestamp": "2026-10-08T13:50:43.491Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands
+{
+  "timestamp": "2026-10-08T13:50:43.495Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "ba4f0e60-a383-4e8f-b89f-92a90758566a",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands
+{
+  "timestamp": "2026-10-08T13:50:43.497Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "ba4f0e60-a383-4e8f-b89f-92a90758566a",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands
+{
+  "timestamp": "2026-10-08T13:50:43.504Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands
+{
+  "timestamp": "2026-10-08T13:50:43.520Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ba4f0e60-a383-4e8f-b89f-92a90758566a by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:43.520Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "c7c390ba-ea6d-4d49-b0ab-b9dffd82cc62"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands
+{
+  "timestamp": "2026-10-08T13:50:43.526Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands
+{
+  "timestamp": "2026-10-08T13:50:43.530Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands
+{
+  "timestamp": "2026-10-08T13:50:43.540Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc ba4f0e60-a383-4e8f-b89f-92a90758566a by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge
+{
+  "timestamp": "2026-10-08T13:50:43.548Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge
+{
+  "timestamp": "2026-10-08T13:50:43.552Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "50df738d-e278-432f-afaf-cb9a3215c280",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge
+{
+  "timestamp": "2026-10-08T13:50:43.554Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "50df738d-e278-432f-afaf-cb9a3215c280",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge
+{
+  "timestamp": "2026-10-08T13:50:43.557Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge
+{
+  "timestamp": "2026-10-08T13:50:43.572Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 50df738d-e278-432f-afaf-cb9a3215c280 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:43.573Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "562376e6-20af-437a-b152-a56c9e4e5ce6"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge
+{
+  "timestamp": "2026-10-08T13:50:43.584Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds once the comment is resolved — the refusal is not permanent 59ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > proceeds when the caller states they intend to seal it as it stands 57ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge
+{
+  "timestamp": "2026-10-08T13:50:43.589Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge
+{
+  "timestamp": "2026-10-08T13:50:43.598Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 50df738d-e278-432f-afaf-cb9a3215c280 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > does not invent a section the rule pack does not define
+{
+  "timestamp": "2026-10-08T13:50:43.605Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > does not invent a section the rule pack does not define
+{
+  "timestamp": "2026-10-08T13:50:43.624Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9d785baa-5aee-46aa-a67f-3d907ada0610 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-08T13:50:43.641Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-08T13:50:43.648Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "2ea30575-2146-4b10-8fe7-8d22983c646b",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-08T13:50:43.651Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "2ea30575-2146-4b10-8fe7-8d22983c646b",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-08T13:50:43.655Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-08T13:50:43.662Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2ea30575-2146-4b10-8fe7-8d22983c646b by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:43.662Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "1dc44162-43aa-4ebf-a0ec-0a3b55ca8a07"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-08T13:50:43.669Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-08T13:50:43.678Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing
+{
+  "timestamp": "2026-10-08T13:50:43.699Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 2ea30575-2146-4b10-8fe7-8d22983c646b by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a freeze refuses a document that is still asking questions > freezes a settled document with nothing to acknowledge 57ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > does not invent a section the rule pack does not define 32ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the two stores move together or neither does > a filing write that cannot happen takes the authored write down with it
+{
+  "timestamp": "2026-10-08T13:50:43.711Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the two stores move together or neither does > a filing write that cannot happen takes the authored write down with it
+{
+  "timestamp": "2026-10-08T13:50:43.730Z",
+  "level": "error",
+  "message": "[authoring-router] Section save refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "e217ba45-fb8f-443d-8cd4-f4823ec069d5",
+    "tenantId": 1,
+    "err": "new row for relation \"c2c_document_sections\" violates check constraint \"tmp_refuse\""
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-08T13:50:43.741Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-08T13:50:43.745Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "4cc6908a-5d15-4440-b68f-77089587f6f2",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-08T13:50:43.746Z",
+  "level": "error",
+  "message": "[authoring-documents] creator ownership grant failed; creator will be denied on next edit",
+  "context": {
+    "docId": "4cc6908a-5d15-4440-b68f-77089587f6f2",
+    "error": "column \"principal_id\" does not exist"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-08T13:50:43.751Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-08T13:50:43.757Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4cc6908a-5d15-4440-b68f-77089587f6f2 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:43.757Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "1bc2529a-c271-43c1-87a9-757c70dca957"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-08T13:50:43.767Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-08T13:50:43.772Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-08T13:50:43.779Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4cc6908a-5d15-4440-b68f-77089587f6f2 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:43.779Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "55ff2593-bb55-4aae-a786-b80999c7b8d0"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-08T13:50:43.786Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-08T13:50:43.790Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-08T13:50:43.798Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 4cc6908a-5d15-4440-b68f-77089587f6f2 by a***@filing.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T13:50:43.799Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "42",
+    "tenantId": 1,
+    "resourceId": "c636e337-8741-4e1a-be7e-d5320a11e9f1"
+  }
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided
+{
+  "timestamp": "2026-10-08T13:50:43.805Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > what it deliberately does NOT do > an unbound document saves, and says the text did not reach a filing 72ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > the two stores move together or neither does > a filing write that cannot happen takes the authored write down with it 27ms
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a save of 2.5.1 reaches the filing’s 2.5, and says that is where it went
+{
+  "timestamp": "2026-10-08T13:50:43.810Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a save of 2.5.1 reaches the filing’s 2.5, and says that is where it went
+{
+  "timestamp": "2026-10-08T13:50:43.835Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 4cc6908a-5d15-4440-b68f-77089587f6f2 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a save of 2.5.2 keeps 2.5.1 in the node and adds itself after it, in the document’s order
+{
+  "timestamp": "2026-10-08T13:50:43.848Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a save of 2.5.2 keeps 2.5.1 in the node and adds itself after it, in the document’s order
+{
+  "timestamp": "2026-10-08T13:50:43.871Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 4cc6908a-5d15-4440-b68f-77089587f6f2 by a***@filing.example",
+  "context": {}
+}
+
+stderr | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a section under a node the outline subdivides is still not filed, and says so
+{
+  "timestamp": "2026-10-08T13:50:43.883Z",
+  "level": "warn",
+  "message": "[auth-middleware] Org membership enrichment JOIN failed; using membership-only decision",
+  "context": {
+    "userId": 42,
+    "organizationId": 1,
+    "error": "Failed query: select \"organization_users\".\"role\", \"organizations\".\"uuid\" from \"organization_users\" left join \"organizations\" on \"organization_users\".\"organization_id\" = \"organizations\".\"id\" where (\"organization_users\".\"user_id\" = $1 and \"organization_users\".\"organization_id\" = $2) limit $3\nparams: 42,1,1"
+  }
+}
+
+stdout | tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a section under a node the outline subdivides is still not filed, and says so
+{
+  "timestamp": "2026-10-08T13:50:43.904Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 4cc6908a-5d15-4440-b68f-77089587f6f2 by a***@filing.example",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > sets up a filing whose outline has 2.5 as one node and 3.2.S subdivided 73ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a save of 2.5.1 reaches the filing’s 2.5, and says that is where it went 38ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a save of 2.5.2 keeps 2.5.1 in the node and adds itself after it, in the document’s order 35ms
+ ✓ tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a document whose sections sit under one outline node commits into that node > a section under a node the outline subdivides is still not filed, and says so 32ms
+
+ Test Files  1 passed (1)
+      Tests  34 passed (34)
+   Start at  13:50:33
+   Duration  10.21s (transform 3.42s, setup 95ms, import 800ms, tests 9.00s, environment 0ms)
+

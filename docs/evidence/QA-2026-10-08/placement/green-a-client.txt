@@ -1,0 +1,13 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > says that another document already holds the section, and still allows the placement as a second New leaf 295ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > says that this document is already placed at that section, and does not offer to place it again 96ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > when the same document is already placed there under another operation, it says how to change that, and does not offer the placement 76ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceOccupancy.test.tsx > the placement dialog and what the section already holds > says nothing about occupancy when the section is free 89ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:26:25
+   Duration  2.97s (transform 888ms, setup 427ms, import 1.09s, tests 567ms, environment 656ms)
+

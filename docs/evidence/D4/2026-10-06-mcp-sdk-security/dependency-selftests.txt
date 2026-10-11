@@ -1,0 +1,45 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 test:dependency-risk
+> node --test scripts/ci/__tests__/dependency-risk-gate.test.mjs
+
+✔ passes a reviewed unreachable advisory (70.977573ms)
+✔ passes the npm transitive wrapper for a reviewed advisory (74.675914ms)
+✔ passes a diamond: two wrappers sharing one reviewed transitive (94.891901ms)
+✔ passes a reviewed high cause alongside a separately reported moderate-only branch (66.705385ms)
+✔ blocks an uncovered high cause even when its wrapper claims moderate severity (57.575347ms)
+✔ blocks an uncovered critical advisory even when every wrapper claims moderate severity (65.044879ms)
+✔ passes a well-formed moderate-only scanner graph without a high decision (61.368682ms)
+✔ blocks a truncated moderate branch beside a reviewed high cause (68.048582ms)
+✔ blocks a cycle in a moderate branch beside a reviewed high cause (67.641203ms)
+✔ blocks malformed advisory metadata in a moderate branch (57.760366ms)
+✔ blocks a high wrapper with no reported high or critical cause (57.827331ms)
+✔ fails closed on a true via cycle (61.174129ms)
+✔ fails closed on a via-string naming a package absent from the report (60.322713ms)
+✔ fails closed on a new high advisory (70.728206ms)
+✔ fails closed when the scanner is unavailable (60.189252ms)
+✔ fails closed on an expired exception (60.906474ms)
+✔ fails closed on a malformed validation clock instead of bypassing expiration (57.458045ms)
+✔ fails closed on an invalid decision expiry instead of accepting NaN (56.190623ms)
+✔ fails closed on an impossible calendar date in a decision expiry (61.366899ms)
+✔ fails closed on a malformed decision review date (66.462008ms)
+✔ fails closed on a malformed exception approval timestamp (64.99322ms)
+✔ fails closed when the ledger seal does not match the lockfile (60.46608ms)
+✔ reseal refuses a new advisory and writes nothing (182.759432ms)
+✔ reseal refuses when a covered finding vanishes from the audit (189.012559ms)
+✔ reseal refuses when a covered finding's installed version changed (178.996619ms)
+✔ reseal refuses when the scanner is unavailable (187.675175ms)
+✔ reseal rebinds an unchanged finding set and the gate passes again (313.978745ms)
+✔ security patch: a mapped IPv6 subnet cannot trust every IPv4 client (4.372578ms)
+✔ security patch: shell quoting rejects line terminators after a comment (2.165378ms)
+✔ security patch: an extreme indexed source-map offset is rejected in a bounded child (63.513769ms)
+✔ security patch: an aborted compressed response destroys its zlib stream (75.567479ms)
+✔ integration: committed ledger seals the committed package-lock.json (79.413463ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2792.266769

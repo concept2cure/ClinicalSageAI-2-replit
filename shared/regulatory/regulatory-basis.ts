@@ -49,6 +49,7 @@ export const REGULATOR_HOSTS: readonly string[] = Object.freeze([
   'esubmission.ema.europa.eu',
   'eur-lex.europa.eu',
   'health.ec.europa.eu',
+  'canada.ca',
   'pmda.go.jp',
   'mhlw.go.jp',
   'ich.org',

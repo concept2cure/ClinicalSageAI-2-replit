@@ -1,0 +1,82 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > lists what the server returns, open by default, with the summary, the three anchors and stale notes 368ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > says when nothing is open on any version 8ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 500 says so and never reads as no open annotations 19ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 200 that is not the expected shape says so too 20ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > claims a whole-document comment only once the server answered 201 48ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a 409 shows the server message, keeps the form and claims nothing 36ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a returned 401 is not a success either 42ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > codePointRange converts UTF-16 offsets and refuses a split character or an empty range 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > posts the selected passage at its absolute code-point offset with the hash as read 79ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > offers Retract only on the actor’s own annotations and replies 123ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a 422 on resolve shows the server message and keeps the form 88ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a retraction is claimed after the 200, with its reason sent 69ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a reply is claimed after the 201, and its form closes 139ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > offers the page input when the text read gives a page count 99ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > does not offer it when the version has no recorded page count 31ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > openAnnotationsSentence (7) > says what was open, or that it could not be read 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a post made in the Vault (8) > the confirmation is still shown once the Vault has re-read, and the list shows the new annotation 149ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a post made in the Vault (8) > a refused refresh after the post keeps the confirmation, and says only that the list could not be read 123ms
+stderr | client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a post made in the Vault (8) > one post makes one annotation read and one Vault re-read after it
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a post made in the Vault (8) > one post makes one annotation read and one Vault re-read after it 237ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx > Vault detail pane: one document at a time > shows one Details block, for the document selected, however many documents were opened 255ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx > Vault detail pane: a saved change > shows the server confirmation, and still shows it after the Vault has re-read the save and settled 273ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx > Vault detail pane: a removal decision > shows the recorded decision after the Vault has re-read the document and settled 1135ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDetailsPane.test.tsx > Vault document history > shows the reason recorded with a change, not only its event name 98ms
+stderr | client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx > a project switch > never shows the previous project's documents or annotations, not even while the new project loads
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx > a project switch > never shows the previous project's documents or annotations, not even while the new project loads
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx > a project switch > never shows the previous project's documents or annotations, not even while the new project loads
+An update to Root inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultProjectSwitch.test.tsx > a project switch > never shows the previous project's documents or annotations, not even while the new project loads 364ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentOpenReads.test.tsx > opening one Vault document > reads each panel endpoint once, not once per panel mount 103ms
+
+ Test Files  4 passed (4)
+      Tests  25 passed (25)
+   Start at  01:48:04
+   Duration  10.25s (transform 1.47s, setup 399ms, import 2.65s, tests 3.93s, environment 2.46s)
+

@@ -1,0 +1,42 @@
+# Every request the stand-in model received from the :5086 app during the S4 walks, in order:
+# file | model | thinking parameter the gateway sent | tools offered | first user message (the thread's first turn).
+# The log accumulates across harness runs. 0025-0029 are the Thorough turn (claude-opus-5-5, a model that returns
+# progress updates inside thinking): every tool round asks for display "updates" (decision 3, A), so her notes are
+# her words; 0006-0010 and 0018-0022 are the >240-character thinking turn on claude-sonnet-5 ("summarized").
+0001.json | claude-sonnet-5 | null | 50 | s4 summary: find every stability report in this project, rea
+0002.json | claude-sonnet-5 | null | 50 | s4 summary: find every stability report in this project, rea
+0003.json | claude-sonnet-5 | null | 50 | s4 summary: find every stability report in this project, rea
+0004.json | claude-sonnet-5 | null | 50 | s4 summary: find every stability report in this project, rea
+0005.json | claude-sonnet-5 | null | 50 | s4 summary: find every stability report in this project, rea
+0006.json | claude-sonnet-5 | {"type": "adaptive", "display": "summarized"} | 50 | s4 summary: find every stability report in this project, rea
+0007.json | claude-sonnet-5 | {"type": "adaptive", "display": "summarized"} | 50 | s4 summary: find every stability report in this project, rea
+0008.json | claude-sonnet-5 | {"type": "adaptive", "display": "summarized"} | 50 | s4 summary: find every stability report in this project, rea
+0009.json | claude-sonnet-5 | {"type": "adaptive", "display": "summarized"} | 50 | s4 summary: find every stability report in this project, rea
+0010.json | claude-sonnet-5 | {"type": "adaptive", "display": "summarized"} | 50 | s4 summary: find every stability report in this project, rea
+0011.json | claude-sonnet-5 | null | 35 | s4 summary: find every stability report in this project, rea
+0012.json | claude-sonnet-5 | null | 35 | s4 summary: find every stability report in this project, rea
+0013.json | claude-sonnet-5 | null | 50 | s4 summary: find every stability report in this project, rea
+0014.json | claude-sonnet-5 | null | 50 | s4 summary: find every stability report in this project, rea
+0015.json | claude-sonnet-5 | null | 50 | s4 summary: find every stability report in this project, rea
+0016.json | claude-sonnet-5 | null | 50 | s4 summary: find every stability report in this project, rea
+0017.json | claude-sonnet-5 | null | 50 | s4 summary: find every stability report in this project, rea
+0018.json | claude-sonnet-5 | {"type": "adaptive", "display": "summarized"} | 50 | s4 summary: find every stability report in this project, rea
+0019.json | claude-sonnet-5 | {"type": "adaptive", "display": "summarized"} | 50 | s4 summary: find every stability report in this project, rea
+0020.json | claude-sonnet-5 | {"type": "adaptive", "display": "summarized"} | 50 | s4 summary: find every stability report in this project, rea
+0021.json | claude-sonnet-5 | {"type": "adaptive", "display": "summarized"} | 50 | s4 summary: find every stability report in this project, rea
+0022.json | claude-sonnet-5 | {"type": "adaptive", "display": "summarized"} | 50 | s4 summary: find every stability report in this project, rea
+0023.json | claude-opus-5-5 | null | 0 | You are AnA reflecting privately after a conversation turn, 
+0024.json | claude-opus-5-5 | null | 0 | You are AnA reflecting privately after a conversation turn, 
+0025.json | claude-opus-5-5 | {"type": "adaptive", "display": "updates"} | 50 | s4 summary: find every stability report in this project, rea
+0026.json | claude-opus-5-5 | {"type": "adaptive", "display": "updates"} | 50 | s4 summary: find every stability report in this project, rea
+0027.json | claude-opus-5-5 | {"type": "adaptive", "display": "updates"} | 50 | s4 summary: find every stability report in this project, rea
+0028.json | claude-opus-5-5 | {"type": "adaptive", "display": "updates"} | 50 | s4 summary: find every stability report in this project, rea
+0029.json | claude-opus-5-5 | {"type": "adaptive", "display": "updates"} | 50 | s4 summary: find every stability report in this project, rea
+0030.json | claude-sonnet-5 | null | 35 | s4 summary: find every stability report in this project, rea
+0031.json | claude-sonnet-5 | null | 35 | s4 summary: find every stability report in this project, rea
+0032.json | claude-sonnet-5 | null | 35 | s4 summary: find every stability report in this project, rea
+0033.json | claude-sonnet-5 | null | 35 | s4 summary: find every stability report in this project, rea
+0034.json | claude-sonnet-5 | null | 35 | s4 summary: find every stability report in this project, rea
+0035.json | claude-sonnet-5 | null | 35 | s4 summary: find every stability report in this project, rea
+0036.json | claude-sonnet-5 | null | 35 | s4 summary: find every stability report in this project, rea
+0037.json | claude-sonnet-5 | null | 35 | s4 summary: find every stability report in this project, rea

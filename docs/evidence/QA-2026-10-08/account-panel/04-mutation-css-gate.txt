@@ -1,0 +1,10 @@
+# MUTATION — an undefined class planted in AccountPanel.tsx; ci:undefined-css-classes must fail, and does. Restored.
+
+[ci:undefined-css-classes] FAIL — class names no stylesheet defines:
+  acct-panel-sec-t
+    client/src/concept2cure/v2/AccountPanel.tsx
+
+  These style NOTHING. The element renders unstyled and no test will say so.
+  Either use the existing vocabulary (grep the v2 styles/ folder for the
+  shape you want) or, if the class is a deliberate semantic hook with no
+  rule, add it to scripts/ci/undefined-css-classes-baseline.json WITH A REASON.

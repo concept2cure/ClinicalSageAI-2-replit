@@ -129,13 +129,15 @@ describe('ICH_M4_HEADINGS — one record with the guidance, never a copy of it',
     for (const h of ICH_M4_HEADINGS) expect(basisProblems(h.basis), h.code).toEqual([]);
   });
 
-  it('Module 3 holds only the skeleton the eCTD backbone names; the CMC lane appends the rest', () => {
+  it('Module 3 holds the backbone skeleton and parents of the exact pharmaceutical-development leaves', () => {
     expect(ICH_M4_HEADINGS.filter((h) => h.module === 3).map((h) => h.code)).toEqual([
       '3',
       '3.1',
       '3.2',
       '3.2.S',
       '3.2.P',
+      '3.2.P.2.1',
+      '3.2.P.2.2',
       '3.3',
     ]);
   });

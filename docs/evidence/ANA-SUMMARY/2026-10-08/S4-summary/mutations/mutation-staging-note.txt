@@ -1,0 +1,10 @@
+### M5 a round with no prose is noted with its staging text
+# mutation in server/services/ana/turn-timeline-emitter.ts:  if (Array.isArray(uses) && uses.length > 0) this.noteFrom(text);  ->  if (Array.isArray(uses) && uses.length > 0) this.noteFrom(text || `(Ran: ${uses.length} step(s).)`);
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > the timeline frames equal the record's sealed timeline, notes resolved
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a round with prose and tool calls yields exactly one note, before its steps; a round with none yields none
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > no note is staging text: a round with no prose is staged as "(Ran: …)" for the model, never noted
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a summarized thinking block is reasoning, never a note
+ × server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a progress-update note ProgressNotes accepts is a note; its placeholder for interrupted work is not
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > decision 3 (A): a thinking turn's tool rounds ask for notes as her words, the closing round does not
+      Tests  3 failed | 3 passed | 5 skipped (11)
+# restored: md5 OK

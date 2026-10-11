@@ -1,0 +1,193 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — geographic > flags requested regions missing from evidence 2ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — geographic > matches regions case-insensitively 1ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — population > flags a population gap when only adult evidence is present 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — population > matches an exact population label case-insensitively 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — outcome > flags requested outcome types missing from evidence 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — temporal > flags a temporal gap when newest evidence is too old 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — temporal > no temporal gap when an item is within the recency window 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — full coverage > reports complete with no gaps when everything requested is covered 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — empty evidence > reports gaps for everything requested with no evidence 1ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — empty evidence > reports no gaps for an empty query regardless of evidence 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — ordering and determinism > orders gaps stably by GAP_TYPES 1ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > detectEvidenceGaps — ordering and determinism > is deterministic across repeated identical calls 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > does not treat negated pediatric coverage as pediatric evidence 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > a broader cohort label requires applicability confirmation instead of a substring pass 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > future-dated evidence does not clear the requested recency window 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > an empty query is unassessed rather than complete 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > recency with no reference year remains unassessed 0ms
+ ✓ server/services/ana/__tests__/evidence-gap-detector.test.ts > IA: missing or incomparable coverage is not a complete evidence review > a geographic gap describes metadata coverage, not proof that evidence does not exist 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > flags same subject + metric values 0.45 vs 0.20 as numerical_mismatch major 3ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > does not flag 0.45 vs 0.46 (within default tolerance) 1ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > classifies a difference beyond tolerance but ≤ 0.25 as minor 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > respects a custom relativeTolerance 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > does not pair values across DIFFERENT metrics 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — numerical_mismatch > treats both-near-zero values as equal (no mismatch) 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — direct_conflict > flags opposite polarity (positive vs negative) as direct_conflict critical 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — direct_conflict > does not flag positive vs neutral 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — direct_conflict > matches subjects case-insensitively 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — temporal_inconsistency > reports opposite polarity + differing dates as an unresolved temporal_inconsistency 1ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — temporal_inconsistency > treats opposite polarity with identical dates as a plain direct_conflict 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — claim selection & counting > does not assess a silently reduced subset when a supplied subject is missing 1ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — claim selection & counting > uses the array index as the ref id when id is absent 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — clean & empty > returns an empty contradictions array and empty subjects when consistent 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — clean & empty > handles empty input → empty report 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — clean & empty > always carries the honest structural-only caveat in notes 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — determinism & ordering > is deterministic: same input twice deep-equals 1ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — determinism & ordering > orders findings by subject then type precedence (stable) 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > detectContradictions — determinism & ordering > orders multiple finding types within a subject by precedence 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > CONTRADICTION_TYPES > exposes the three known types in precedence order 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > does not claim that a newer dated finding replaces the older finding 1ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > does not declare 1 mg and 1000 micrograms contradictory without an explicit conversion 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > keeps a same-unit numerical mismatch and its unit provenance 1ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > does not treat efficacy benefit and a safety signal as contradictory endpoints 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > unlabelled numerical values cannot establish a mismatch of the same metric 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > a unit missing on one side does not become an assumed equal unit 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > a structural mismatch with both units unspecified carries that limitation 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > invalid dates cannot establish temporal ordering 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > scientific comparability and unresolved chronology > empty input is explicitly unassessed, not evidence of consistency 0ms
+ ✓ server/services/ana/__tests__/evidence-contradiction-detector.test.ts > preserves case-sensitive unit symbols instead of treating molar and milli symbols as equivalent 0ms
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:43:47.334Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:43:47.335Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-06T16:43:47.335Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/evidence-judgment-tools.test.ts
+{
+  "timestamp": "2026-10-06T16:43:47.341Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-06T16:43:47.342Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/evidence-judgment-tools.test.ts
+{
+  "timestamp": "2026-10-06T16:43:47.342Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/evidence-judgment-tools.test.ts
+[database] Database connection successful
+
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+Loaded 0 academic documents
+
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > registered evidence judgment tools > retains unresolved dated conflict and source provenance in the actual handler output 6ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > registered evidence judgment tools > does not declare a numerical contradiction across incompatible measurement units 1ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > registered evidence judgment tools > reports only metadata gaps across the five requested markets, preserving applicability limits 2ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > registered evidence judgment tools > does not report completeness when the caller supplies no assessment criteria 1ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > reports invalid coverage input as unassessed rather than a partial coverage verdict: {"query":{"regions":"JP"},"evidence":[]} 1ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > reports invalid coverage input as unassessed rather than a partial coverage verdict: {"query":{"regions":["US",7]},"evidence":[{"region":"US"}]} 1ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > reports invalid coverage input as unassessed rather than a partial coverage verdict: {"query":{"population":7},"evidence":[{"population":"adult"}]} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > reports invalid coverage input as unassessed rather than a partial coverage verdict: {"query":{"regions":["JP"],"markets":["US"]},"evidence":[{"region":"JP"}]} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > reports invalid coverage input as unassessed rather than a partial coverage verdict: {"query":[],"evidence":[]} 1ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > reports invalid coverage input as unassessed rather than a partial coverage verdict: {"query":{"regions":["US"]},"evidence":[{"region":"US"},null]} 1ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > reports invalid coverage input as unassessed rather than a partial coverage verdict: {"query":{"regions":["US"]},"evidence":[{"region":7}]} 1ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > reports invalid coverage input as unassessed rather than a partial coverage verdict: {"query":{"regions":["US"]},"evidence":"unavailable"} 1ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > reports invalid coverage input as unassessed rather than a partial coverage verdict: {"query":{"outcomeTypes":["approval"]},"evidence":[{"outcomeType":"approval"}]} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > reports invalid coverage input as unassessed rather than a partial coverage verdict: {"query":null,"evidence":[]} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > reports invalid coverage input as unassessed rather than a partial coverage verdict: {"evidence":[]} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > reports invalid coverage input as unassessed rather than a partial coverage verdict: {"query":{"regions":["US"]}} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > does not assess malformed claims or silently replace an invalid tolerance: {"claims":"unavailable"} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > does not assess malformed claims or silently replace an invalid tolerance: {} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > does not assess malformed claims or silently replace an invalid tolerance: {"claims":[{"subject":"product","metric":"dose","value":1},{"subject":"product","metric":7,"value":10}]} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > does not assess malformed claims or silently replace an invalid tolerance: {"claims":[{"subject":"product","polarity":"positive"},{"subject":"product","polarity":"POSITIVE"}]} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > does not assess malformed claims or silently replace an invalid tolerance: {"claims":[{"subject":"product","metric":"dose","value":"1"},{"subject":"product","metric":"dose","value":10}]} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > does not assess malformed claims or silently replace an invalid tolerance: {"claims":[{"subject":"product","metric":"dose","value":1},null]} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > does not assess malformed claims or silently replace an invalid tolerance: {"claims":[{"subject":"product","metric":"dose","value":1},{"subject":"product","metric":"dose","value":10}],"relativeTolerance":-1} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > does not assess malformed claims or silently replace an invalid tolerance: {"claims":[{"subject":"product","metric":"dose","value":1},{"subject":"product","metric":"dose","value":10}],"relativeTolerance":"0.1"} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > marks a lack of comparable pairs as unassessed: {"claims":[]} 1ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > marks a lack of comparable pairs as unassessed: {"claims":[{"subject":"product","metric":"dose","value":1}]} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > marks a lack of comparable pairs as unassessed: {"claims":[{"subject":"product","metric":"dose","value":1,"unit":"mg"},{"subject":"product","metric":"dose","value":1000,"unit":"micrograms"}]} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > marks a lack of comparable pairs as unassessed: {"claims":[{"subject":"product","metric":"efficacy","polarity":"positive"},{"subject":"product","metric":"safety","polarity":"negative"}]} 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > evidence assessment input integrity > counts a real structural comparison without claiming scientific consistency 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > distinguishes a valid empty evidence search from unavailable input 1ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > rejects a non-finite numerical tolerance instead of using the default: NaN 1ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > rejects a non-finite numerical tolerance instead of using the default: Infinity 0ms
+ ✓ server/services/ana/__tests__/evidence-judgment-tools.test.ts > retains explicit zero tolerance as a valid assessment parameter 1ms
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[AnA RI Stream] Conversation preparation failed: private database host unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[AnA RI Stream] Conversation preparation failed: private connection write failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined 34ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."} 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > an empty stored thread does not import old browser assumptions 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > a saved correction and clarification remain in the actual gateway context 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > retains the last real assistant answer instead of dropping whichever row is last 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > another turn arriving during the save cannot displace a prior clarification or duplicate the current question 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > filters stored system/tool roles before sending the transcript 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > new conversations still accept bounded user/assistant browser turns 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > names older omitted turns without presenting the window as the whole conversation 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > preserves a late market correction in a long browser turn instead of discarding the whole turn 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > bounds long stored drafts, preserving the question at their end and warning about missing text 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > an assistant-only window does not turn an existing conversation into a fresh session 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > does not announce missing history when every valid turn is included 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > passes unresolved evidence judgments to the real streaming follow-up request 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > carries unassessed evidence inputs and repair guidance into the next gateway call 5ms
+
+ Test Files  4 passed (4)
+      Tests  99 passed (99)
+   Start at  12:43:43
+   Duration  8.11s (transform 9.72s, setup 672ms, import 14.97s, tests 161ms, environment 0ms)
+

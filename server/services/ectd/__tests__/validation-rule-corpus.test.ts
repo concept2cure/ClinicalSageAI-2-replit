@@ -103,6 +103,9 @@ describe('corpus ↔ gate cross-reference invariant', () => {
       // `document`; a pin that no longer matches the stored content is its own
       // error, never a silent pass.
       { leaves: [leaf({ document: { status: 'content_changed', keyKind: 'integer', documentTable: 'coauthor_documents', documentId: 1, documentUuid: null, pinnedSha256: 'a'.repeat(64), storedSha256: 'b'.repeat(64), pin: 'mismatch', reason: null } })] },
+      // DOCUMENT_NOT_APPROVED (2026-10-08, QA j6) — the resolver's approval
+      // verdict rides in on `document`, like the pin.
+      { leaves: [leaf({ document: { status: 'resolved', keyKind: 'integer', documentTable: 'coauthor_documents', documentId: 1, documentUuid: null, pinnedSha256: 'a'.repeat(64), storedSha256: 'a'.repeat(64), pin: 'match', reason: null, notTransmittable: 'draft' } })] },
       { leaves: [leaf({ documentTable: 'coauthor_doccuments' })] }, // UNPLACEABLE_DOCUMENT_TABLE
       // EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE has NO scenario, because as of
       // 2026-09-17 it cannot be emitted: `vault_documents` was the only member
@@ -150,9 +153,9 @@ describe('corpus ↔ gate cross-reference invariant', () => {
     // floor — a rule that stops firing for any OTHER reason still trips it.
     // 9 since 2026-09-21: DOCUMENT_CONTENT_MISMATCH (a resolved document whose
     // pinned content hash no longer matches) joined the battery.
-    // 11 since 2026-10-05 (CMC-M3-GA item 21): IND_MODULE3_REQUIRED and
-    // IND_MODULE3_BY_REFERENCE joined it.
-    expect(emitted.size).toBeGreaterThanOrEqual(11);
+    // 12 since 2026-10-05: DOCUMENT_NOT_APPROVED (QA j6, 2026-10-08) and, from
+    // CMC-M3-GA item 21, IND_MODULE3_REQUIRED and IND_MODULE3_BY_REFERENCE.
+    expect(emitted.size).toBeGreaterThanOrEqual(12);
   });
 });
 

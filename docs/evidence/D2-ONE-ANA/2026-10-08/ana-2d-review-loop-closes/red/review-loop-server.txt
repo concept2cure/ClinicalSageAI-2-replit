@@ -1,0 +1,399 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an in-progress review task is completed, with its task.transition row naming the verdict
+{
+  "timestamp": "2026-10-08T06:25:37.025Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc a6235575-83cf-42b0-9d5a-365142fe1cda by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a pending review task is started, then completed: two legal moves, two ledger rows, the reviewer’s reason on each
+{
+  "timestamp": "2026-10-08T06:25:37.064Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 5f6c2538-d42f-4935-9e2d-2a67ea2c3abe by r***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an in-progress review task is completed, with its task.transition row naming the verdict 75ms
+   → expected { status: 'in-progress', …(3) } to match object { status: 'completed', …(2) }
+(1 matching property omitted from actual)
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > only this reviewer’s open review task on this document moves
+{
+  "timestamp": "2026-10-08T06:25:37.096Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 76710471-f1f1-4543-887d-d82cec198cd4 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an approval-gated task is left open: completing it is the reviewer’s signature, which a verdict is not
+{
+  "timestamp": "2026-10-08T06:25:37.114Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc a9aa7c13-8f66-4759-bd7a-693d5211614e by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a verdict with no review task is recorded exactly as before
+{
+  "timestamp": "2026-10-08T06:25:37.132Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc db8959fe-4d0c-4a68-b55b-20dc0a85a4d5 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded
+{
+  "timestamp": "2026-10-08T06:25:37.149Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 30d67ce0-1e86-4d6b-b829-fafba6cff4f5 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+{
+  "timestamp": "2026-10-08T06:25:37.173Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 5d88585a-9729-443c-9b93-9a390b143e9d by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a pending review task is started, then completed: two legal moves, two ledger rows, the reviewer’s reason on each 27ms
+   → expected 'pending' to be 'completed' // Object.is equality
+ × server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > only this reviewer’s open review task on this document moves 23ms
+   → expected 'in-progress' to be 'completed' // Object.is equality
+ × server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an approval-gated task is left open: completing it is the reviewer’s signature, which a verdict is not 19ms
+   → expected undefined to deeply equal { completed: [], …(1) }
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a verdict with no review task is recorded exactly as before 16ms
+ × server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded 22ms
+   → {"success":true,"review":{"id":"8f59c93e-cb77-402e-842b-c34b3ad26344","doc_id":"30d67ce0-1e86-4d6b-b829-fafba6cff4f5","reviewer_id":"21","reviewer_name":"reviewer@canvas.example","reviewer_email":"reviewer@canvas.example","review_status":"changes_requested","review_comments":"Section 2.5.4 cites the wrong SAP version.","reviewed_at":"2026-10-08T06:25:37.146Z","requested_at":"2026-10-08T06:25:37.146Z","requested_by":null,"tenant_id":1,"created_at":"2026-10-08T06:25:37.146Z","updated_at":"2026-10-08T06:25:37.146Z"},"message":"Document changes requested successfully"}: expected 200 to be 500 // Object.is equality
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+{
+  "timestamp": "2026-10-08T06:25:37.200Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 5d88585a-9729-443c-9b93-9a390b143e9d by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+{
+  "timestamp": "2026-10-08T06:25:37.218Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 5d88585a-9729-443c-9b93-9a390b143e9d by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+{
+  "timestamp": "2026-10-08T06:25:37.233Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc e4dd618c-fdb7-44f5-b255-fc1c5ffa1bf3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+{
+  "timestamp": "2026-10-08T06:25:37.243Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc e4dd618c-fdb7-44f5-b255-fc1c5ffa1bf3 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+{
+  "timestamp": "2026-10-08T06:25:37.255Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc e4dd618c-fdb7-44f5-b255-fc1c5ffa1bf3 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-10-08T06:25:37.275Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc c2b4b044-29ce-4402-b36d-e81e131ffd22 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-10-08T06:25:37.287Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc c2b4b044-29ce-4402-b36d-e81e131ffd22 by r***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments 65ms
+   → expected [ { …(13) } ] to deeply equal [ ObjectContaining{…} ]
+ × server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it 36ms
+   → expected undefined to deeply equal []
+ × server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second 38ms
+   → expected 'pending' to be 'completed' // Object.is equality
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T06:25:42.466Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 36e70ceb-af57-437a-a8d6-5c9cd8010359 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T06:25:42.496Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 36e70ceb-af57-437a-a8d6-5c9cd8010359 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T06:25:42.509Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 36e70ceb-af57-437a-a8d6-5c9cd8010359 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-08T06:25:42.603Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "approve",
+    "docId": "36e70ceb-af57-437a-a8d6-5c9cd8010359",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-08T06:25:42.604Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "export",
+    "docId": "36e70ceb-af57-437a-a8d6-5c9cd8010359",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign 21ms
+ × server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not 23ms
+   → expected 'Assigning a review needs an editing r…' to be 'Sending for review needs an editing r…' // Object.is equality
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a FROZEN document can still be filed to the vault — the sealed record is what filing is for 20ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial 19ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an in-progress review task is completed, with its task.transition row naming the verdict
+AssertionError: expected { status: 'in-progress', …(3) } to match object { status: 'completed', …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "last_modified_by": 21,
+-   "progress": 100,
+-   "status": "completed",
++   "last_modified_by": null,
++   "progress": 0,
++   "status": "in-progress",
+  }
+
+ ❯ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts:163:37
+    161|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    162|
+    163|     expect(await taskOf('TASK-E1')).toMatchObject({ status: 'completed…
+       |                                     ^
+    164|     expect((await taskOf('TASK-E1')).completed_at).not.toBeNull();
+    165|     const ledger = await transitionsOf('TASK-E1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a pending review task is started, then completed: two legal moves, two ledger rows, the reviewer’s reason on each
+AssertionError: expected 'pending' to be 'completed' // Object.is equality
+
+Expected: "completed"
+Received: "pending"
+
+ ❯ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts:184:46
+    182|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    183|
+    184|     expect((await taskOf('TASK-E2')).status).toBe('completed');
+       |                                              ^
+    185|     const ledger = await transitionsOf('TASK-E2');
+    186|     expect(ledger.map(r => [r.payload.from, r.payload.to])).toEqual([[…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > only this reviewer’s open review task on this document moves
+AssertionError: expected 'in-progress' to be 'completed' // Object.is equality
+
+Expected: "completed"
+Received: "in-progress"
+
+ ❯ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts:208:48
+    206|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    207|
+    208|     expect((await taskOf('TASK-MINE')).status).toBe('completed');
+       |                                                ^
+    209|     for (const id of ['TASK-THEIRS', 'TASK-ELSEWHERE', 'TASK-NOT-REVIE…
+    210|       expect((await taskOf(id)).status, id).toBe('in-progress');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an approval-gated task is left open: completing it is the reviewer’s signature, which a verdict is not
+AssertionError: expected undefined to deeply equal { completed: [], …(1) }
+
+- Expected:
+{
+  "completed": [],
+  "leftOpen": [
+    {
+      "taskId": "TASK-GATED",
+      "why": "signature-required",
+    },
+  ],
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts:224:28
+    222|     expect((await taskOf('TASK-GATED')).status).toBe('in-progress');
+    223|     expect(await transitionsOf('TASK-GATED')).toEqual([]);
+    224|     expect(res.body.tasks).toEqual({ completed: [], leftOpen: [{ taskI…
+       |                            ^
+    225|   }, T);
+    226|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded
+AssertionError: {"success":true,"review":{"id":"8f59c93e-cb77-402e-842b-c34b3ad26344","doc_id":"30d67ce0-1e86-4d6b-b829-fafba6cff4f5","reviewer_id":"21","reviewer_name":"reviewer@canvas.example","reviewer_email":"reviewer@canvas.example","review_status":"changes_requested","review_comments":"Section 2.5.4 cites the wrong SAP version.","reviewed_at":"2026-10-08T06:25:37.146Z","requested_at":"2026-10-08T06:25:37.146Z","requested_by":null,"tenant_id":1,"created_at":"2026-10-08T06:25:37.146Z","updated_at":"2026-10-08T06:25:37.146Z"},"message":"Document changes requested successfully"}: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts:246:50
+    244|       await jdb.pglite.exec('ALTER TABLE c2c_ana_actions_down RENAME T…
+    245|     }
+    246|     expect(res.status, JSON.stringify(res.body)).toBe(500);
+       |                                                  ^
+    247|     expect((await taskOf('TASK-ATOMIC')).status).toBe('in-progress');
+    248|     expect(await rows(`SELECT 1 FROM authoring_reviews WHERE doc_id = …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+AssertionError: expected [ { …(13) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "review_comments": null,
+-     "review_status": "pending",
+-     "reviewed_at": null,
++     "created_at": "2026-10-08T06:25:37.169Z",
++     "doc_id": "5d88585a-9729-443c-9b93-9a390b143e9d",
++     "id": "97bc88f1-a56c-4626-ac6b-fb4491121970",
++     "requested_at": "2026-10-08T06:25:37.214Z",
++     "requested_by": "author@canvas.example",
++     "review_comments": "Section 2.5.4 cites the wrong SAP version.",
++     "review_status": "changes_requested",
++     "reviewed_at": "2026-10-08T06:25:37.195Z",
++     "reviewer_email": null,
+      "reviewer_id": "21",
++     "reviewer_name": "Robin Reviewer",
++     "tenant_id": 1,
++     "updated_at": "2026-10-08T06:25:37.195Z",
+    },
+  ]
+
+ ❯ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts:262:32
+    260|     const again = await ask(docId);
+    261|     expect(again.status, JSON.stringify(again.body)).toBe(200);
+    262|     expect(again.body.reviews).toEqual([expect.objectContaining({ revi…
+       |                                ^
+    263|
+    264|     const read = await author(request(app).get(`/api/authoring/documen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts:286:51
+    284|     const requests = await trailOf('review_requested');
+    285|     expect(requests).toHaveLength(2);
+    286|     expect(requests[0].metadata.reopenedVerdicts).toEqual([]);
+       |                                                   ^
+    287|     expect(requests[1].metadata.reopenedVerdicts).toEqual([
+    288|       { reviewId: decided.body.review.id, reviewerId: REVIEWER.id, ver…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+AssertionError: expected 'pending' to be 'completed' // Object.is equality
+
+Expected: "completed"
+Received: "pending"
+
+ ❯ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts:297:51
+    295|     await seedTask('TASK-ROUND-1', { docId, status: 'pending' });
+    296|     await verdict(docId, { review_status: 'changes_requested', review_…
+    297|     expect((await taskOf('TASK-ROUND-1')).status).toBe('completed');
+       |                                                   ^
+    298|
+    299|     expect((await ask(docId)).body.reviews[0].review_status).toBe('pen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not
+AssertionError: expected 'Assigning a review needs an editing r…' to be 'Sending for review needs an editing r…' // Object.is equality
+
+Expected: "Sending for review needs an editing role in this organization. Your role: viewer."
+Received: "Assigning a review needs an editing role in this organization. Your role: viewer."
+
+ ❯ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts:155:40
+    153|     // The control it describes is "Send for review" (wave 2C): the se…
+    154|     // beside it names that act, not the task-only "Assigning a review…
+    155|     expect(access.assignReview.reason).toBe('Sending for review needs …
+       |                                        ^
+    156|   });
+    157|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 4 passed (13)
+   Start at  06:25:28
+   Duration  14.21s (transform 3.46s, setup 97ms, import 1.27s, tests 12.39s, environment 0ms)
+

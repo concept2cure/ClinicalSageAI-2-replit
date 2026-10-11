@@ -1,0 +1,13 @@
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > files with the artifact, the declared meaning and what was actually verified 19ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > records a second factor only when one was actually presented 6ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing with no artifact, and nothing is advanced 2ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing with no reason, and nothing is advanced 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing with a too-short reason, and nothing is advanced 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing whose re-authentication failed, before anything is advanced 5ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > has nowhere to put a client-supplied filing date 1ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > leaves every other transition unsigned and un-gated 1ms
+ × tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing by a manager 403 ESIGNATURE_NO_AUTHORITY before the password, and nothing is advanced 12ms
+ × tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > refuses a filing by a member 403 ESIGNATURE_NO_AUTHORITY before the password, and nothing is advanced 10ms
+ ✓ tests/routes/estar-submission-filing.test.ts > PATCH /submissions/:id — filing carries a signature > asks nothing of the role for a transition that is not a signature 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 9 passed (11)

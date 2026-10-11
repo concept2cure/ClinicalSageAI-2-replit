@@ -1,0 +1,18 @@
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+ ✓ server/services/__tests__/ana-recall-overlap.test.ts > conversation memory uses verified thread access > excludes unverified private summary when access is unavailable: Error: access lookup failed 1ms
+ Test Files  5 passed (5)
+      Tests  285 passed (285)

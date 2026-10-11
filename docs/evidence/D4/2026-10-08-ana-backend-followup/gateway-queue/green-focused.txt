@@ -1,0 +1,94 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts
+{
+  "timestamp": "2026-10-08T05:33:49.868Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:33:49.869Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts
+{
+  "timestamp": "2026-10-08T05:33:49.869Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=test:active req=e39089f5-131a-4d00-b327-db4cdec2884b
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+{
+  "timestamp": "2026-10-08T05:33:50.091Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/usage-recorder.ts:104:16",
+    "queryPreview": "INSERT INTO api_usage_logs (organization_id, user_id, module, endpoint, model, request_count, tokens_used, cost_cents, metadata, created_at) VALUES ($1, $2, ...",
+    "enforcement": "off"
+  }
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=8 user=- caller=test:survivor req=b4c227ad-9bd0-4a98-92dc-a5190e2a6329
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:25) AuditWarning: AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:25) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch 123ms
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=test:active req=4ffda468-897b-4b73-9d9b-6d4549f27f49
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=8 user=- caller=test:survivor req=dbd1357a-14dd-480e-88a1-d697fe8ac164
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:25) AuditWarning: AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:25) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch 107ms
+(node:38) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > rejects an already aborted signal without spending a free permit 2ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > settles a queued abort while the current caller still holds its permit 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > checks cancellation between permit handoff and the callback microtask 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > removes canceled waiters and admits live callers in FIFO order at the same cap 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > does not release an active callback early when its signal is aborted 0ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > releases a callback that throws and serves the next caller 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore abort listener lifetime > removes a queued listener on cancellation 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore abort listener lifetime > removes the queued listener when a live waiter receives its permit 1ms
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  13:33:48
+   Duration  2.07s (transform 780ms, setup 71ms, import 1.36s, tests 245ms, environment 0ms)

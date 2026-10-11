@@ -1,0 +1,143 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana/__tests__/tool-wait-cleanup.test.ts > one tool wait owns one listener > disposes a completed sibling without removing active or unrelated listeners
+Promise returned by `expect(actual).rejects.toBeInstanceOf(expected)` was not awaited. Vitest currently auto-awaits hanging assertions at the end of the test, but this will cause the test to fail in the next Vitest major. Please remember to await the assertion.
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/services/ana/__tests__/tool-wait-cleanup.test.ts:66:40
+
+stderr | server/services/ana/__tests__/tool-wait-cleanup.test.ts > one tool wait owns one listener > is idempotent and disposal does not abort the signal or another wait
+Promise returned by `expect(actual).rejects.toBeInstanceOf(expected)` was not awaited. Vitest currently auto-awaits hanging assertions at the end of the test, but this will cause the test to fail in the next Vitest major. Please remember to await the assertion.
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/services/ana/__tests__/tool-wait-cleanup.test.ts:82:36
+
+ × server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > does not accumulate listeners across sixteen successful tools on one live run 9ms
+   → expected [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, …(6) ] to deeply equal [ Array(16) ]
+ × server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > releases the listener while retaining the handler original error 2ms
+   → expected [ [Function] ] to have a length of +0 but got 1
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > does not create a cancellation wait before a synchronously throwing handler 1ms
+ × server/services/ana/__tests__/tool-wait-cleanup.test.ts > one tool wait owns one listener > disposes a completed sibling without removing active or unrelated listeners 2ms
+   → expected [ [Function Mock], [Function], …(1) ] to have a length of 2 but got 3
+ × server/services/ana/__tests__/tool-wait-cleanup.test.ts > one tool wait owns one listener > is idempotent and disposal does not abort the signal or another wait 2ms
+   → expected undefined to be type of 'function'
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > remains assignable to Promise and rejects with the existing cancellation class 1ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > rejects an already-aborted signal without registering a listener 0ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > retains never-settling no-signal behavior after disposal 0ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > observes a late handler rejection after Stop and cleans the listener 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > does not accumulate listeners across sixteen successful tools on one live run
+AssertionError: expected [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, …(6) ] to deeply equal [ Array(16) ]
+
+- Expected
++ Received
+
+  [
+-   0,
+-   0,
+-   0,
+-   0,
+-   0,
+-   0,
+-   0,
+-   0,
+-   0,
+-   0,
+-   0,
+-   0,
+-   0,
+-   0,
+-   0,
+-   0,
++   1,
++   2,
++   3,
++   4,
++   5,
++   6,
++   7,
++   8,
++   9,
++   10,
++   11,
++   12,
++   13,
++   14,
++   15,
++   16,
+  ]
+
+ ❯ server/services/ana/__tests__/tool-wait-cleanup.test.ts:36:20
+     34|     }
+     35|     expect(controller.signal.aborted).toBe(false);
+     36|     expect(counts).toEqual(Array.from({ length: 16 }, () => 0));
+       |                    ^
+     37|   });
+     38|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > releases the listener while retaining the handler original error
+AssertionError: expected [ [Function] ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/ana/__tests__/tool-wait-cleanup.test.ts:44:59
+     42|     await expect(toolWait(Promise.reject(failure), controller.signal))…
+     43|     expect(controller.signal.aborted).toBe(false);
+     44|     expect(getEventListeners(controller.signal, 'abort')).toHaveLength…
+       |                                                           ^
+     45|   });
+     46|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ana/__tests__/tool-wait-cleanup.test.ts > one tool wait owns one listener > disposes a completed sibling without removing active or unrelated listeners
+AssertionError: expected [ [Function Mock], [Function], …(1) ] to have a length of 2 but got 3
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ server/services/ana/__tests__/tool-wait-cleanup.test.ts:70:59
+     68|     first.resolve('First result');
+     69|     expect(await firstWait).toBe('First result');
+     70|     expect(getEventListeners(controller.signal, 'abort')).toHaveLength…
+       |                                                           ^
+     71|     controller.abort();
+     72|     await cancelled;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/ana/__tests__/tool-wait-cleanup.test.ts > one tool wait owns one listener > is idempotent and disposal does not abort the signal or another wait
+AssertionError: expected undefined to be type of 'function'
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/ana/__tests__/tool-wait-cleanup.test.ts:85:30
+     83|     let disposedSettled = false;
+     84|     void disposed.then(() => { disposedSettled = true; }, () => { disp…
+     85|     expect(disposed.dispose).toBeTypeOf('function');
+       |                              ^
+     86|     disposed.dispose?.();
+     87|     disposed.dispose?.();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)
+   Start at  15:18:24
+   Duration  381ms (transform 103ms, setup 69ms, import 57ms, tests 21ms, environment 0ms)

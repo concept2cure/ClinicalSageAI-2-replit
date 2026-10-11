@@ -1,0 +1,9 @@
+# GREEN — projects-create-anchor.pglite.test.ts
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a created program resolves, strict, to its own projects row with intake's values 120ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > with several workspaces, the organisation's own (marked) workspace holds the record 44ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind 60ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > an organisation with no workspace: refused, nothing left behind 87ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a failure writing the project record rolls the program back with it 32ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > every program the route created is anchored in its own organisation 2ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)

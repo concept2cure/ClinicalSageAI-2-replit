@@ -293,6 +293,21 @@ export function filingTypesForView(view: VaultViewId): VaultFilingTypeEntry[] {
   return VAULT_FILING_TYPES.filter(f => appliesToView(f.views, view));
 }
 
+/**
+ * The Vault header's name for a project's filing: its own filing type and that
+ * type's regulations ("NDA · 21 CFR 314"). It named the view's first filing
+ * type instead, so every Pharmaceutical vault read "IND · 21 CFR 312", an NDA
+ * project's included. A type the view does not list names the view: no
+ * regulation is guessed.
+ */
+export function vaultSpineLabel(view: VaultViewId, programType: string | null | undefined): string {
+  const key = String(programType ?? '').trim().toLowerCase();
+  const own = key ? filingTypesForView(view).find(f => f.value === key) : undefined;
+  if (!own) return VAULT_VIEWS.find(v => v.value === view)?.label ?? view;
+  const refs = (own as { regulatoryRefs?: string[] }).regulatoryRefs;
+  return refs && refs.length ? `${own.label} · ${refs.join(' · ')}` : own.label;
+}
+
 /** Folder taxonomy preset for a view. */
 export function foldersForView(view: VaultViewId): VaultFolderPreset[] {
   return VAULT_FOLDER_PRESETS[view];

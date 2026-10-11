@@ -544,6 +544,16 @@ const MDR_FACT_SPEC: { readonly [K in keyof Required<MdrDeviceFacts>]: FactSpec 
 /** The MDR facts the engine reads, for a caller (or AnA's tool definition) to list. */
 export const MDR_FACT_KEYS: readonly string[] = Object.freeze(Object.keys(MDR_FACT_SPEC));
 
+/** Render a fact spec as AnA's tool definition lists it: a bare key is true/false. */
+function factVocabulary(spec: Readonly<Record<string, FactSpec>>): string {
+  return Object.entries(spec)
+    .map(([k, v]) => (v === BOOL ? k : v === 'text' ? `${k} (text)` : `${k} (${v.join('|')})`))
+    .join(', ');
+}
+
+/** The MDR facts with their value kinds, for AnA's classify_device definition. */
+export const MDR_FACT_VOCABULARY: string = factVocabulary(MDR_FACT_SPEC);
+
 /**
  * Facts that qualify another fact: a rule reads them only together with it. Given true without it, the qualifier would
  * be dropped and a lower class stated — an X-ray generator described as { active, ionisingRadiation } would be Rule 13's
@@ -1006,6 +1016,9 @@ const IVDR_FACT_SPEC: { readonly [K in keyof Required<IvdrDeviceFacts>]: FactSpe
 
 /** The IVDR facts the engine reads, for a caller (or AnA's tool definition) to list. */
 export const IVDR_FACT_KEYS: readonly string[] = Object.freeze(Object.keys(IVDR_FACT_SPEC));
+
+/** The IVDR facts with their value kinds, for AnA's classify_device definition. */
+export const IVDR_FACT_VOCABULARY: string = factVocabulary(IVDR_FACT_SPEC);
 
 /** The facts with the derived properties the rules read. */
 export interface IvdrFactView extends Omit<IvdrDeviceFacts, 'rule3Points' | 'bloodGroupingMarker' | 'selfTestAnalyte'> {

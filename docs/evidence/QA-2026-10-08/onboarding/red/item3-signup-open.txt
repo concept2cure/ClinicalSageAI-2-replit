@@ -1,0 +1,25 @@
+ × client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > openWorkspaceAfterSignup > adopts the sign-up session (persistently) and opens the workspace 4ms
+   → openWorkspaceAfterSignup is not a function
+ × client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > openWorkspaceAfterSignup > a session the server does not confirm goes to sign-in 1ms
+   → openWorkspaceAfterSignup is not a function
+ × client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > openWorkspaceAfterSignup > no session (verification required, or none issued) goes to sign-in without asking the server 1ms
+   → openWorkspaceAfterSignup is not a function
+ × client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > ZenSignup source > sends nobody to the dead /ai route 3ms
+   → expected '/**\n * @fileoverview Zen Signup / Re…' not to match /['"`]\/ai[?'"`]/ai[?'"`]
+ × client/src/concept2cure/auth/__tests__/signupOpenWorkspace.test.ts > ZenSignup source > does not keep the session under the unread legacy key "token" 1ms
+   → expected '/**\n * @fileoverview Zen Signup / Re…' not to match /localStorage\.setItem\(\s*['"]token['…/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: openWorkspaceAfterSignup is not a function
+TypeError: openWorkspaceAfterSignup is not a function
+TypeError: openWorkspaceAfterSignup is not a function
+AssertionError: expected '/**\n * @fileoverview Zen Signup / Re…' not to match /['"`]\/ai[?'"`]/ai[?'"`]
+import { ApiRequestError, serverMessage } from '@/lib/queryClient';
+  const [errors, setErrors] = useState<Record<string, string>>({});
+    setErrors(prev => ({ ...prev, [field]: '' }));
+      const newErrors: Record<string, string> = {};
+        if (!formData.firstName.trim()) newErrors.firstName = t('signup.errors.firstNameRequired');
+ × client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > is read back on the next load (persistent adoption) 12ms
+   → expected false to be true // Object.is equality
+ ✓ client/src/services/portal/__tests__/authService-adopted-session-reload.test.ts > a session adopted from a hand-off > an expired stored session is still not read back 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed (2)

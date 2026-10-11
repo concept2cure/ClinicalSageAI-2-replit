@@ -1,0 +1,1612 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/2dce5675-71af-532e-b288-abcf4efad803/scratchpad/qa/head-copy
+
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > is told it is the wrong store, and never that the file is missing 5ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > a genuinely unknown vault id still says plainly that the vault does not hold it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > catalog_project_document — a chat upload id > is refused with the same honest reason, without a pointless lookup 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > files the upload through the SAME governed ingest the Vault surface uses 76ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > refuses a vault UUID — a document already in the vault needs no filing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > with no project open it guesses none: the file is not filed, and the audited adopt is named 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > relays a governed refusal with its reason, claiming nothing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > the read refusal now names a tool that exists 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > returns the comprehension record for a cataloged document 6ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > omits it entirely for a document nobody has studied 1ms
+stdout | tests/routes/estar-official-pdf.test.ts
+{
+  "timestamp": "2026-10-08T01:33:36.284Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:33:36.286Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts
+{
+  "timestamp": "2026-10-08T01:33:36.287Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > enumerates AcroForm fields into a skeleton map from inline template bytes 81ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/scaffold-field-map > fails closed (422) when no template is available to scaffold against 104ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > honest fail-closed (no template / empty map) > returns 422 with blockers and officialEstarPdf:false; never persists 7ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official > end-to-end official PDF when template + verified map present > produces a real PDF and asserts officialEstarPdf:true truthfully 23ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > not ready (no template / empty map) > reports ready:false with blockers and persists nothing 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > ready (template + verified map present) > reports ready:true with no blockers 10ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'device', descriptorId: 'pma-device' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'pma', variant: 'ivd', descriptorId: 'pma-ivd' } is accepted and fails closed 1ms
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-10-08T01:33:39.008Z",
+  "level": "error",
+  "message": "[510k-estar-routes] estar official-fields preview failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-10-08T01:33:39.009Z",
+  "level": "error",
+  "message": "[510k-estar-routes] estar official-fields preview failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-10-08T01:33:39.017Z",
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written
+{
+  "timestamp": "2026-10-08T01:33:39.021Z",
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "boom: canceling statement due to statement timeout"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > retains the delivered bytes and reports where they went
+{
+  "timestamp": "2026-10-08T01:33:39.043Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it
+{
+  "timestamp": "2026-10-08T01:33:39.051Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'q_sub', variant: 'device', descriptorId: 'q_sub-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: 'ide', variant: 'ivd', descriptorId: 'ide-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/readiness (drives the gated UI button) > accepts every eSTAR program type (PMA + PreSTAR), failing closed until vendored > readiness for { type: '513g', variant: 'device', descriptorId: '513g-prestar' } is accepted and fails closed 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > governed wins, request fills the gap, blanks + ignored keys are reported, provenance is persisted 21ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > without useProgramData the loader is never consulted and the response carries no fieldReport 10ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with useProgramData:true > with nothing governed and nothing requested no official eSTAR is produced at all 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: one row per mapped field with value + source; unsourced keys are null/null but name their declared home; no request data 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 200: the Phase 3 homes are sourced when the program and registration rows hold them 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 404 when the ident resolves to nothing in this organization — and reads no governed data 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 422 ESTAR_FIELD_MAP_NOT_POPULATED when the descriptor has no verified map 1ms
+ ✓ tests/routes/estar-official-pdf.test.ts > GET /api/510k/estar/official-fields > 400 on a bad query (missing ident / unknown variant) 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('numeric' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields' ('program uuid' ident): 500 'ESTAR_OFFICIAL_FIELDS_FAILED' — never 404 — when the read throws; nothing read or written 2ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('numeric' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 10ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official' ('program uuid' ident): 500 'GOVERNED_EXPORT_FAILED' — never 404 — when the read throws; nothing read or written 7ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'GET /official-fields': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > resolveProjectAnchor — a failed read is an error, never "not found" > 'POST /official': schema absence (42P01) is still "no row" — 404, exactly as for an unknown ident 0ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it
+{
+  "timestamp": "2026-10-08T01:33:39.057Z",
+  "level": "error",
+  "message": "[510k-estar-routes] official eSTAR export failure",
+  "context": {
+    "err": "The official eSTAR could not be retained (STORAGE_WRITE_FAILED): The document could not be stored."
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > retains the delivered bytes and reports where they went 8ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > withholds the file when the vault could not retain it 8ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — retention of the delivered artifact > says plainly when a legacy project has no vault, and still delivers 4ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > names the erased keys in the 200 body AND in the registered metadata 255ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > reports an EMPTY erased list rather than omitting it (assessed ≠ unassessed) 440ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > files the document and says where it went
+{
+  "timestamp": "2026-10-08T01:33:40.038Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 when every written value is one the form erases (P3) 226ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (verbatim path) > REFUSES 422 on the reviewer's non-string declaring entity (P1, over HTTP) 29ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official — erased values reach the caller (governed path) > says the same thing beside the fieldReport, and in the metadata 11ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > the governed record names what was filed, not only the form
+{
+  "timestamp": "2026-10-08T01:33:41.137Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > files the document and says where it went 1095ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > reads the tenant and the program from the REQUEST, never from the body
+{
+  "timestamp": "2026-10-08T01:33:42.843Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > the governed record names what was filed, not only the form 1710ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > hands the resolver a client it can actually query with
+{
+  "timestamp": "2026-10-08T01:33:44.314Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > reads the tenant and the program from the REQUEST, never from the body 1463ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses the export, with the reason, when a section is not fileable
+{
+  "timestamp": "2026-10-08T01:33:45.191Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > hands the resolver a client it can actually query with 886ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses a slot the template does not declare
+{
+  "timestamp": "2026-10-08T01:33:46.042Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses the export, with the reason, when a section is not fileable 848ms
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > does not inflate the administrative field report by one
+{
+  "timestamp": "2026-10-08T01:33:46.427Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+stderr | tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > never builds a resolver when no attachment was asked for
+{
+  "timestamp": "2026-10-08T01:33:46.904Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "510k-estar.export",
+    "err": "db.select(...).from(...).where(...).orderBy is not a function"
+  }
+}
+
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > refuses a slot the template does not declare 385ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > rejects a malformed attachment request at the schema, before any work 3ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > does not inflate the administrative field report by one 477ms
+ ✓ tests/routes/estar-official-pdf.test.ts > POST /api/510k/estar/official with attachments — the real vendored eSTAR > never builds a resolver when no attachment was asked for 204ms
+stderr | server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts
+{
+  "timestamp": "2026-10-08T01:33:49.788Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an upload nobody reviewed is not finalized 59ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version at authoring is not finalized 24ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version at in_review is not finalized 110ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at approved is finalized 17ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at placed is finalized 24ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at packaged is finalized 23ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approved current version at submitted is finalized 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > a version a later one superseded is not finalized for a new assembly 8ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > an approval for different bytes is not an approval of these 6ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > another organization's lifecycle record approves nothing here 5ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > names the leaf by its file, so the refusal says which document 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault-finalized.test.ts > a vault leaf is finalized only when its version is approved, current, and approved for these bytes > transmit, freeze and dispatch refuse it, naming the document and why 6ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > the next version (FD1: sequential majors) > is the next major, and nothing for a version that is not a number 3ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > planCheckIn without the program-hash unique index > refuses bytes the document already holds, naming the version 20ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > planCheckIn without the program-hash unique index > names the end of the chain when an older version is named 5ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > planCheckIn without the program-hash unique index > does not find another organization's version, nor a malformed id 2ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > planCheckIn without the program-hash unique index > assigns the next version to the current head 4ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > currentVersionOfCode: the head a new version is offered against (QA-2026-10-08) > is the end of the successor chain at that code 3ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > currentVersionOfCode: the head a new version is offered against (QA-2026-10-08) > is the one document at the code when nothing supersedes it 2ms
+ ✓ server/services/vault/__tests__/vault-version-checkin.pglite.test.ts > currentVersionOfCode: the head a new version is offered against (QA-2026-10-08) > is null when no document holds the code, and never another organization's document 3ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > inserts the first upload 9ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > is idempotent for identical bytes — a retry still succeeds 3ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > returns NO row for different bytes, which the route turns into a 409 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > leaves the original hash and storage key untouched 3ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > accepts the new bytes under a new version 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > raises 23505 for the same bytes under a different code 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > is handled by the route rather than falling through to INGEST_FAILED 0ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > keeps the stored copy it names, its file name, retention policy and lineage 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > a record with no storage handle takes the retry's as one unit 3ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the defect the predicate prevents is still demonstrable > WITHOUT the predicate, the same upload overwrites the recorded hash 4ms
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > is one row and one header, saying how many versions it has
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > lists every version with its SHA-256 prefix and uploader, each downloadable
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > is one row and one header, saying how many versions it has 146ms
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > says so when the versions cannot be read
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > exports the signed history of every version, and says when the role may not
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > lists every version with its SHA-256 prefix and uploader, each downloadable 84ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > says so when the versions cannot be read 58ms
+Not implemented: navigation to another Document
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > 'Upload new version' names the document and sends no document code
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > 'Upload new version' names the document and sends no document code
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > 'Upload new version' names the document and sends no document code
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > exports the signed history of every version, and says when the role may not 148ms
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > 'Upload new version' names the document and sends no document code 90ms
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end 148ms
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > an earlier version found by search says so, and shows its versions and history
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > an earlier version found by search says so, and shows its versions and history
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked 120ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > an earlier version found by search says so, and shows its versions and history 221ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > the empty state claims only what the product does 20ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > offers the exact receiver candidate formats, including raw structured text and signature-supported images 153ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > renders the filing cabinet with the upload inside its suggested folder 103ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > shows the unfiled queue and the header review count 82ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > a failed vault read is an error, never "no documents" 32ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > reports the derived pipeline stages and lists sources on demand 109ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable data room renders as a failure, never an empty room 101ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an empty data room says it is empty 68ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable branch is said, never silently omitted from the tree 35ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > labels the classifier's proposal as the classifier's, with its confidence 58ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > does not label AnA's suggestion as the classifier's 55ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > confirming a suggested filing POSTs to /file and re-reads the tree 118ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > a rejected filing (expired session) is reported as refused, never as recorded 75ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > renders a search input the human can actually use 91ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > searches on the server and shows the hits, not a substring filter 125ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches 243ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > says how many of the total are shown when the page is not all of them 114ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > states the window and the real total when the server truncated the page 102ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > says nothing when the whole cabinet fits — no note on the common case 71ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > leaves the unfiled queue alone — it is programme-wide, not a page count 45ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — placing a document into a submission > offers the action on an uploaded document and files it by BARE uuid 498ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > offers a checkbox only for sources not yet filed 175ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > files the chosen sources and answers for each one, saying the batch was not complete 355ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > a refusal of the whole request says nothing was filed, and gives the reason 183ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > a dropped connection says the outcome is not known 163ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > can select every source not yet filed in one step 124ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > a revised file refused as a conflict is offered as the next version (QA-2026-10-08) > offers the recorded document, and files the source as its next version 228ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > a revised file refused as a conflict is offered as the next version (QA-2026-10-08) > a refusal that is not a conflict offers no new version 136ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > already in the Vault names the version and what replaced it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > a source the classifier could not place says it is not in a folder yet 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > a complete batch has no caveat 0ms
+stderr | server/routes/__tests__/vault-data-room-file.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/vault-data-room-file.test.ts
+{
+  "timestamp": "2026-10-08T01:34:16.298Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/vault-data-room-file.test.ts
+{
+  "timestamp": "2026-10-08T01:34:16.821Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:34:16.833Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/vault-data-room-file.test.ts
+{
+  "timestamp": "2026-10-08T01:34:16.834Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > an unexpected failure on one source is that source’s refusal, not the batch’s
+{
+  "timestamp": "2026-10-08T01:34:16.967Z",
+  "level": "error",
+  "message": "[vault-data-room-filing] data room filing failed for one source",
+  "context": {
+    "sourceId": 1,
+    "err": "storage offline"
+  }
+}
+
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > a 503 from the scanner on the second source leaves the first filed, and the batch is not complete 35ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > an unexpected failure on one source is that source’s refusal, not the batch’s 34ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > every source filed is complete 4ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > a revised file is offered as the next version of the document it is named for (QA-2026-10-08) > a source the person names a version of is filed as a check-in to that document, and no other is 4ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > a revised file is offered as the next version of the document it is named for (QA-2026-10-08) > a refused conflict says which current version it can be added to 5ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > a revised file is offered as the next version of the document it is named for (QA-2026-10-08) > a refusal with no version to offer carries no offer 8ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > the role is checked first > a viewer is refused 403 before any source is read 4ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > one upload-to-Vault orchestration > only vault-file-upload-to-vault.ts both loads an upload and admits it 1122ms
+ ✓ server/routes/__tests__/vault-data-room-file.test.ts > one upload-to-Vault orchestration > AnA’s filing tool and the data room both call it 7ms
+ ✓ client/src/concept2cure/v2/__tests__/pdevIndNoFixtures.test.tsx > PDEV program dashboard renders real org data (no fixture) > renders the org program from the live /api/pdev/programs read 187ms
+ ✓ client/src/concept2cure/v2/__tests__/pdevIndNoFixtures.test.tsx > PDEV program dashboard — honest empty & error, not a seed/cached sample > shows an honest empty state when the org has no IND programs 66ms
+ ✓ client/src/concept2cure/v2/__tests__/pdevIndNoFixtures.test.tsx > PDEV program dashboard — honest empty & error, not a seed/cached sample > shows an honest error (not a cached sample) when the program read fails 27ms
+ ✓ client/src/concept2cure/v2/__tests__/pdevIndNoFixtures.test.tsx > PDEV AI-drafting workbench renders real metadata, never fabricated prose > renders the governed record metadata the service returns — and no section prose 666ms
+ ✓ client/src/concept2cure/v2/__tests__/pdevIndNoFixtures.test.tsx > PDEV AI-draft source carries no fabricated-preview symbols > the workbench renders real metadata fields, not the retired preview prose 1ms
+ ✓ client/src/concept2cure/v2/__tests__/pdevIndNoFixtures.test.tsx > PDEV AI-draft source carries no fabricated-preview symbols > the PdevAiDraftResult type is the metadata-only server shape 0ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes resource.json to canonical governed ingestion with caller/program identity intact 78ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes define.xml to canonical governed ingestion with caller/program identity intact 9ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes enrollment.tsv to canonical governed ingestion with caller/program identity intact 6ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes enrollment.csv to canonical governed ingestion with caller/program identity intact 11ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes enrollment.xlsx to canonical governed ingestion with caller/program identity intact 5ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes scan.png to canonical governed ingestion with caller/program identity intact 7ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes scan.jpg to canonical governed ingestion with caller/program identity intact 4ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes scan.jpeg to canonical governed ingestion with caller/program identity intact 3ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > passes scan.gif to canonical governed ingestion with caller/program identity intact 10ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses a .exe with 400 FILE_TYPE_NOT_ALLOWED and stores nothing (F-4) 10ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > retains the real 50 MB multipart limit for newly admitted raw-text sources 508ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses an upload under the wrong field name with 400, not 500 (multer LIMIT_UNEXPECTED_FILE) 9ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > still admits an allowed type to the governed ingest (the happy path is untouched) 4ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion 79ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05)
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05)
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review 60ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05) 75ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file 57ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires 5ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials 12ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > opens a signature form instead of filing on the first click 348ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > sends the artifact, the reason, the meaning and the credential — and no filing date 323ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > will not offer an empty picker when nothing has been retained 201ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > keeps the form open with the server's reason when the credential is refused 341ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each sequence and section that carries a version, with the operation 121ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > a version placed nowhere says so, and a row the server said nothing about claims nothing 33ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each official eSTAR export that attached a version, and claims nothing when there is none 139ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names the CMC records a version is evidence for, with the Module 3 sections that read them 10ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > several placements read as one list 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W1 names the submission, the sequence and its status when that sequence is not yet sent 41ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W2 says nothing when the agency already holds that sequence 20ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W3 says nothing when the only leaf is a Delete, which carries no content 26ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W4 says nothing when only an earlier version is placed 28ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — MDR > marks every required MDR Annex II/III section present for a complete file 3ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — MDR > reports missing GSPR and CER as gaps, never invents them 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR > requires analytical + clinical performance and the PER (not a CER) 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR > is ready when IVDR performance evidence is supplied 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — each slot names the leaves it matched > two leaves with one section code: the CER slot holds the CER, not the first leaf with that code 3ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — each slot names the leaves it matched > an unmatched slot names no leaf 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > stability is a required slot after the PER; software/cybersecurity and usability are optional 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > an IVDR file without II.6.3 stability is not ready; with it, it is 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > claims II.6.3 / II.6.4 / II.6.5 keys (and the stability document type) and nothing next to them 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > the MDR registry is unchanged: stability evidence stays under Annex II 6 verification and validation 3ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > MDR: a II.6.1.a report titled "Preclinical evaluation ..." is verification and validation, not the CER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > IVDR: a II.6.1.a "Analytical performance evaluation report" is analytical performance, not the PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > IVDR: the II.6.2.a scientific-validity section does not stand in for the II.6.2.c PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > a group IV leaf is claimed by no slot through its title (IVDR IV.4 SSP names "clinical performance") 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > a document type still places a keyed leaf (the CER at II.6.1.b), and the key still places it too 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a title matcher matches the phrase as words, not inside another word > "preclinical", "pre-clinical" and "non-clinical" evaluation are not a clinical evaluation 4ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a title matcher matches the phrase as words, not inside another word > an analytical or clinical performance evaluation is not the performance evaluation report 3ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > underscore- and hyphen-joined file-name titles fill the IFU, GSPR and risk slots (the HEAD result) 13ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > the electronic IFU: "eIFU" (case transition) and "eifu" / "EIFU" / "e-IFU" (the eIFU token) fill the IFU slot 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > a phrase starts a token: "ifu" / "gspr" at the end of a longer word does not match 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > file-name titles of the CER and the PER fill their slots 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > pre-/non-clinical evaluation, in any spelling, is not the CER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > a plan is not the report: the CEP is not the CER and a performance evaluation plan is not the PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > plural acronyms fill the IFU and GSPR slots 3ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > an acronym glued to a lower-case word is still the acronym; a capital run before a capitalised word still splits 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > plural and glued nouns at the end of a phrase fill their slots 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > the qualifiers still apply: a glued or plural plan is not the report, and a preclinical evaluation is not the CER 5ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the outline key is read trimmed and case-insensitively > " II.6.1.a" and "ii.6.1.a" are the outline key: placed by key, never by title 3ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the outline key is read trimmed and case-insensitively > a group IV leaf is claimed by no slot, by title or by document type (IV.4 SSCP with documentType "cer") 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a CTD-coded "Clinical_Evaluation_Report_v2" with no document type is a title-only CER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a leaf matched by its outline key or its document type is not title-only 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > 'Preclinical bench testing' at CTD 4.2.1 is a title-only V&V match (no code-prefix match) 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a slot with a keyed and a title-only leaf names only the title-only one 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > file-name stability and shelf-life titles fill the stability slot 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > specimen or sample stability is not the device stability of Annex II 6.3 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > software verification, cybersecurity and usability titles fill their optional slots 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > a complete Vault-built IVDR set (CTD codes, no document type) is ready, and without its stability report it is not 17ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > a drug CSR at 5.3.5.1 leaves 'preclinical-clinical' missing 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > drug leaves 4.2.3.2 and 5.3.6 fill no V&V slot 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > a Vault V&V file named for its test still fills the slot, by title 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a V&V plan or protocol is not V&V evidence > plans and protocols leave the slot missing 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a V&V plan or protocol is not V&V evidence > a report that names its plan or protocol still fills it 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > a v2 project open: lists that project, not the whole organization 4ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > another project's documents are refused while a project is open, and nothing is listed 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > naming the open project itself is fine 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > no project open: the organization, as today, or a program of the organization when named 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > files into the open project 5ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > never into another project while one is open: refused, and nothing is ingested 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > with no project open: refused, pointing to the audited adopt; nothing is ingested 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > read_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > catalog_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > place_project_document on another project's document is refused, and nothing is read or written 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > the by-id tools: the open project's documents only > the open project's own document is read 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_project_documents searches the open program only; with no project, the organization 18ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > search stays in the open project > search_document_passages searches the open program only; with no project, the organization 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > an open project with no program > reads nothing: not the organization, and not a named program 0ms
+stderr | server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .pdf name: 400 FILE_TYPE_MISMATCH, and nothing is stored
+{
+  "timestamp": "2026-10-08T01:34:34.222Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "report.pdf",
+    "declaredMime": "text/html",
+    "reason": "a .pdf file must be declared as application/pdf"
+  }
+}
+
+stderr | server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .txt name — a binding, not a .pdf special case
+{
+  "timestamp": "2026-10-08T01:34:34.237Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "notes.txt",
+    "declaredMime": "text/html",
+    "reason": "a .txt file must be declared as text/plain"
+  }
+}
+
+stderr | server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > admits a real PDF declared application/pdf, through to storage and a 201
+{
+  "timestamp": "2026-10-08T01:34:34.246Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "report.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > admits a real PDF declared application/pdf, through to storage and a 201
+{
+  "timestamp": "2026-10-08T01:34:34.249Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "RPT-1",
+    "size": 51,
+    "hasText": false
+  }
+}
+
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .pdf name: 400 FILE_TYPE_MISMATCH, and nothing is stored 63ms
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .txt name — a binding, not a .pdf special case 10ms
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > admits a real PDF declared application/pdf, through to storage and a 201 51ms
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project
+{
+  "timestamp": "2026-10-08T01:34:36.706Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row
+{
+  "timestamp": "2026-10-08T01:34:36.713Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row
+{
+  "timestamp": "2026-10-08T01:34:36.716Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault file persistence failed — refusing to record the document",
+  "context": {
+    "reason": "bucket unreachable",
+    "contentHash": "f3c9d586682936c8987ce11239d2d886f1b9710840ddcf4d36211f4e6a3d3398"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage
+{
+  "timestamp": "2026-10-08T01:34:36.719Z",
+  "level": "warn",
+  "message": "[vault-ingest] Vault ingest denied: program not owned by caller organization",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed
+{
+  "timestamp": "2026-10-08T01:34:36.721Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "timestamp": "2026-10-08T01:34:36.723Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused: content already recorded in this program",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "timestamp": "2026-10-08T01:34:36.723Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed
+{
+  "timestamp": "2026-10-08T01:34:36.725Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "timestamp": "2026-10-08T01:34:36.726Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "timestamp": "2026-10-08T01:34:36.727Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates
+{
+  "timestamp": "2026-10-08T01:34:36.729Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes
+{
+  "timestamp": "2026-10-08T01:34:36.731Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "timestamp": "2026-10-08T01:34:36.732Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "timestamp": "2026-10-08T01:34:36.733Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest could not remove refused bytes from storage",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal
+{
+  "timestamp": "2026-10-08T01:34:36.734Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest could not remove refused bytes from storage",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7,
+    "err": "bucket unreachable"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+{
+  "timestamp": "2026-10-08T01:34:36.736Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "connection reset"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+{
+  "timestamp": "2026-10-08T01:34:36.736Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest reported a failure, but a record holds its stored bytes — kept",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > the INSERT computes retention_until from the named, active policy, bound to the same parameter as retention_policy, and a re-upload does not restart a clock that has started
+{
+  "timestamp": "2026-10-08T01:34:36.737Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > dates from the organisation's own period, else the 25-year default, and never earlier than a named policy (ADR-0014 §6)
+{
+  "timestamp": "2026-10-08T01:34:36.741Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08) > names the current version at that code, so the screen can offer a new version of it
+{
+  "timestamp": "2026-10-08T01:34:36.742Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08) > names no document when none holds the code, and the refusal is otherwise unchanged
+{
+  "timestamp": "2026-10-08T01:34:36.743Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a check-in keeps the document it adds to: its code, title and filing (QA-2026-10-08) > the new version takes the head's code and title, not the title the data room derived from the file name
+{
+  "timestamp": "2026-10-08T01:34:36.746Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-2",
+    "code": "Protocol-Stability.pdf",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project 10ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > a viewer: 403, nothing stored, nothing written 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > no role at all: refused the same way 0ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses with no organization context at all 0ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > the INSERT computes retention_until from the named, active policy, bound to the same parameter as retention_policy, and a re-upload does not restart a clock that has started 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > dates from the organisation's own period, else the 25-year default, and never earlier than a named policy (ADR-0014 §6) 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08) > names the current version at that code, so the screen can offer a new version of it 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a different file at an occupied code is refused with the document it can be added to (QA-2026-10-08) > names no document when none holds the code, and the refusal is otherwise unchanged 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a check-in keeps the document it adds to: its code, title and filing (QA-2026-10-08) > the new version takes the head's code and title, not the title the data room derived from the file name 2ms
+ ✓ server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > refuses parentDocumentId with 400, before anything is stored 29ms
+ ✓ server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > refuses supersedesId with 400, before anything is stored 6ms
+ ✓ server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > admits an upload that names no lineage, as before 7ms
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts
+{
+  "timestamp": "2026-10-08T01:34:38.519Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:34:38.520Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts
+{
+  "timestamp": "2026-10-08T01:34:38.520Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > applies each matched policy branch: a destroy policy is refused and reported, soft-delete and skip-archive apply
+{
+  "timestamp": "2026-10-08T01:34:38.585Z",
+  "level": "warn",
+  "message": "[retention-sweep] Expired document left untouched: its policy asks for destruction, which is refused",
+  "context": {
+    "documentId": "doc-purge",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionPolicy": "purge",
+    "retentionUntil": "2020-01-01"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — failure semantics > a per-document failure rolls that document back, counts one error, and the sweep continues
+{
+  "timestamp": "2026-10-08T01:34:38.587Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "doc-bad",
+    "error": "archive insert failed for doc-bad"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns true on a clean sweep
+{
+  "timestamp": "2026-10-08T01:34:38.590Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns true on a clean sweep
+{
+  "timestamp": "2026-10-08T01:34:38.591Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "alreadyDisposed": 0,
+    "errors": 0
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred
+{
+  "timestamp": "2026-10-08T01:34:38.593Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred
+{
+  "timestamp": "2026-10-08T01:34:38.593Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "doc-bad",
+    "error": "archive insert failed for doc-bad"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred
+{
+  "timestamp": "2026-10-08T01:34:38.594Z",
+  "level": "warn",
+  "message": "[retention-sweep] Document retention sweep complete with errors",
+  "context": {
+    "scanned": 2,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "alreadyDisposed": 0,
+    "errors": 1
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > an enumeration-level failure aborts: returns false, raises the security alert, and skips notification
+{
+  "timestamp": "2026-10-08T01:34:38.595Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > an enumeration-level failure aborts: returns false, raises the security alert, and skips notification
+{
+  "timestamp": "2026-10-08T01:34:38.596Z",
+  "level": "error",
+  "message": "[retention-sweep] Document retention sweep failed",
+  "context": {
+    "error": "relation vault.documents does not exist"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-10-08T01:34:38.598Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-10-08T01:34:38.599Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "alreadyDisposed": 0,
+    "errors": 0
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-10-08T01:34:38.599Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-10-08T01:34:38.600Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — email not sent",
+  "context": {
+    "to": "a***@example.com",
+    "subject": "[Retention] 1 document(s) processed, 0 destruction(s) refused"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-10-08T01:34:38.600Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "alreadyDisposed": 0,
+    "errors": 0
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-10-08T01:34:38.601Z",
+  "level": "error",
+  "message": "[retention-sweep] Retention sweep admin notification was not delivered",
+  "context": {
+    "recipients": 1
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > emails every configured recipient with the sweep summary
+{
+  "timestamp": "2026-10-08T01:34:38.602Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > emails every configured recipient with the sweep summary
+{
+  "timestamp": "2026-10-08T01:34:38.602Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "alreadyDisposed": 0,
+    "errors": 0
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > emails every configured recipient with the sweep summary
+{
+  "timestamp": "2026-10-08T01:34:38.603Z",
+  "level": "info",
+  "message": "[email-service] Generic email sent",
+  "context": {
+    "to": "a***@example.com, q***@example.com",
+    "subject": "[Retention] 1 document(s) processed, 0 destruction(s) refused"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > recipients configured but SMTP not: nothing is sent, and the alert says the summary was not delivered
+{
+  "timestamp": "2026-10-08T01:34:38.603Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > recipients configured but SMTP not: nothing is sent, and the alert says the summary was not delivered
+{
+  "timestamp": "2026-10-08T01:34:38.604Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — email not sent",
+  "context": {
+    "to": "a***@example.com",
+    "subject": "[Retention] 1 document(s) processed, 0 destruction(s) refused"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > recipients configured but SMTP not: nothing is sent, and the alert says the summary was not delivered
+{
+  "timestamp": "2026-10-08T01:34:38.604Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "alreadyDisposed": 0,
+    "errors": 0
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > recipients configured but SMTP not: nothing is sent, and the alert says the summary was not delivered
+{
+  "timestamp": "2026-10-08T01:34:38.604Z",
+  "level": "error",
+  "message": "[retention-sweep] Retention sweep admin notification was not delivered",
+  "context": {
+    "recipients": 1
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail
+{
+  "timestamp": "2026-10-08T01:34:38.606Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail
+{
+  "timestamp": "2026-10-08T01:34:38.606Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "alreadyDisposed": 0,
+    "errors": 0
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail
+{
+  "timestamp": "2026-10-08T01:34:38.606Z",
+  "level": "error",
+  "message": "[email-service] Failed to send generic email",
+  "context": {
+    "to": "a***@example.com",
+    "subject": "[Retention] 1 document(s) processed, 0 destruction(s) refused",
+    "error": "smtp down"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail
+{
+  "timestamp": "2026-10-08T01:34:38.607Z",
+  "level": "error",
+  "message": "[retention-sweep] Retention sweep admin notification was not delivered",
+  "context": {
+    "recipients": 1
+  }
+}
+
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > a document another process already disposed of gets no second archive and no second audit row 5ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > falls back to archive + soft-delete for a document with no policy, and never hard-deletes it 11ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > uses the default (archive + soft-delete) when the named policy is unknown or inactive 1ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > applies each matched policy branch: a destroy policy is refused and reported, soft-delete and skip-archive apply 1ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — failure semantics > a per-document failure rolls that document back, counts one error, and the sweep continues 1ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — failure semantics > an enumeration-level failure makes the sweep itself throw, having disposed of nothing 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns true on a clean sweep 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > an enumeration-level failure aborts: returns false, raises the security alert, and skips notification 3ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured 3ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > emails every configured recipient with the sweep summary 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > recipients configured but SMTP not: nothing is sent, and the alert says the summary was not delivered 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > admits the delivered bytes through the canonical vault ingest 4ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > versions by content, so the same bytes are idempotent and new bytes are a new version 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > says plainly when a program has no vault to retain into 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when storage refused the bytes — an unretained submission artifact is not delivered 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the program is not ours — an unretained submission artifact is not delivered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when different bytes already hold this version — an unretained submission artifact is not delivered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the ingest itself fails, rather than reporting a retention 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the stored hash is not the delivered hash 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > reads this org only, only retained eSTARs, and only live rows 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > maps the row to what a signer needs to tell two eSTARs apart 1ms
+stdout | server/jobs/__tests__/retentionCron.legal-hold.test.ts
+{
+  "timestamp": "2026-10-08T01:34:40.327Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:34:40.328Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.legal-hold.test.ts
+{
+  "timestamp": "2026-10-08T01:34:40.329Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a DOCUMENT-scoped hold prevents the hard delete
+{
+  "timestamp": "2026-10-08T01:34:40.364Z",
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "document"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a PROGRAM-scoped hold covers every document of that program
+{
+  "timestamp": "2026-10-08T01:34:40.367Z",
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "program"
+  }
+}
+{
+  "timestamp": "2026-10-08T01:34:40.367Z",
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "other-doc",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "program"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > is checked before the policy resolves, so no archive is written either
+{
+  "timestamp": "2026-10-08T01:34:40.368Z",
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "program"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a deletion whose audit row cannot be written is rolled back and counted as an error
+{
+  "timestamp": "2026-10-08T01:34:40.377Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "error": "chain unavailable"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a document with no organisation to chain the row under is left in place (nothing is committed unaudited)
+{
+  "timestamp": "2026-10-08T01:34:40.378Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "error": "no organisation for the document: the deletion cannot be audited, so it is not made"
+  }
+}
+
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a DOCUMENT-scoped hold prevents the hard delete 4ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a PROGRAM-scoped hold covers every document of that program 2ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > is checked before the policy resolves, so no archive is written either 2ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > deletes when no hold exists — the guard is not a blanket stop 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > deletes when the only hold covers a DIFFERENT program 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > a LIFTED hold does not block — the query already excludes it 0ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > the sweep fails closed when holds cannot be read > aborts having deleted nothing, rather than proceeding as if none existed 2ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > soft delete: BEGIN, the organisation, the tombstone, the chained audit row, COMMIT — and the row names the document 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > archive then soft delete, in the same transaction, under the document's own organisation 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a deletion whose audit row cannot be written is rolled back and counted as an error 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a document with no organisation to chain the row under is left in place (nothing is committed unaudited) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows enrollment.csv through the picker and client validation 3ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows enrollment.tsv through the picker and client validation 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows enrollment.xlsx through the picker and client validation 2ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows resource.json through the picker and client validation 0ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows define.xml through the picker and client validation 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > allows notes.md through the picker and client validation 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > preserves empty, unsupported, and 25 MB refusal boundaries 1ms
+ ✓ client/src/concept2cure/v2/__tests__/documentIntakeFormats.test.ts > project/chat intake admits canonical scientific source formats > shares Vault picker candidates with its receiver while keeping limits and legacy truth explicit 4ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > the value that used to be sent > tmf_essential is not an accepted ingest type 2ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > maps "protocol" to an accepted type 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > maps "investigators_brochure" to an accepted type 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > maps "csr" to an accepted type 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > maps "sap" to an accepted type 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > maps "tmf_plan" to an accepted type 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > maps "monitoring_plan" to an accepted type 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > maps "site_signature_sheet" to an accepted type 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > maps "insurance" to an accepted type 1ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > maps "sample_icf" to an accepted type 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > maps "" to an accepted type 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > maps "a code that does not exist" to an accepted type 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > maps the codes that ARE a type to that type, not to OTHER 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > every mapped type is one the server accepts > records OTHER rather than asserting a type nobody stated 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > the surface sends what the schema requires > appends a programId resolved from the shell project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > the surface sends what the schema requires > refuses rather than posting a request that cannot succeed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > the surface sends what the schema requires > derives documentType through the mapping rather than a literal 0ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts > the zone mirror this surface renders is still the real one > carries the eleven DIA zones 0ms
+ ✓ server/services/vault/__tests__/vault-version-checkin-race.test.ts > planCheckIn under a concurrent check-in > a same-family successor that appeared between the two reads is VERSION_NOT_CURRENT 3ms
+ ✓ server/services/vault/__tests__/vault-version-checkin-race.test.ts > planCheckIn under a concurrent check-in > a successor outside the family is still VERSION_LINK_CONFLICT 1ms
+ ✓ server/services/vault/__tests__/vault-version-checkin-race.test.ts > planCheckIn under a concurrent check-in > no successor: the next major version is planned 0ms
+ ✓ server/services/vault/__tests__/vault-file-upload-to-vault.test.ts > a file is named the same whichever route admits it > the data room files it under the name the Vault upload sends, extension included 3ms
+ ✓ server/services/vault/__tests__/vault-file-upload-to-vault.test.ts > a file is named the same whichever route admits it > a name with spaces is kept as the uploader named it 1ms
+ ✓ server/services/vault/__tests__/vault-file-upload-to-vault.test.ts > a file is named the same whichever route admits it > an explicit code the caller gives is used as given 0ms
+ ✓ server/services/vault/__tests__/vault-file-upload-to-vault.test.ts > a check-in names the document it adds to > passes the named head through to the ingest, which takes the code and filing from it 0ms
+ ✓ server/services/vault/__tests__/vault-file-upload-to-vault.test.ts > a check-in names the document it adds to > a file that is not a check-in carries no head 0ms
+ ✓ shared/constants/domain/__tests__/vault-document-code.test.ts > vaultDocumentCodeForFile > keeps the extension: the code is the name the file was uploaded under 1ms
+ ✓ shared/constants/domain/__tests__/vault-document-code.test.ts > vaultDocumentCodeForFile > keeps a name with spaces as named, rather than rewriting it 0ms
+ ✓ shared/constants/domain/__tests__/vault-document-code.test.ts > vaultDocumentCodeForFile > keeps the extension, so Protocol.pdf and Protocol.docx are different codes 1ms
+ ✓ shared/constants/domain/__tests__/vault-document-code.test.ts > vaultDocumentCodeForFile > falls back only when there is no name at all 0ms
+
+ Test Files  27 passed (27)
+      Tests  323 passed (323)
+   Start at  01:33:25
+   Duration  77.29s (transform 9.98s, setup 1.86s, import 28.46s, tests 33.07s, environment 6.54s)
+

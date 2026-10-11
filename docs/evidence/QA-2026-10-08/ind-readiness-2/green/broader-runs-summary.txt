@@ -1,0 +1,181 @@
+# Broader server run (ectd, submission-service, region-profiles, ind-lifecycle, routes, gateways, golden NDA journey)
+ × tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+   → Journey step "a-leaf-placed-after-signing-invalidates-the-signature" expected a block; got success
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > GET / → 200 lists the supported form ids
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /FDA_1571/build → 200 returns a field map + missingRequired
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /nope/build → 400 for an unsupported form
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 ready for a complete, consistent IND form set
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 not ready when sponsor name diverges
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 400 without forms[]
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → 200 application/pdf with X-Form-* headers
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_356H/pdf → X-Form-Required-Blank names the required boxes still empty
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → the header is present and EMPTY when none is blank
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /nope/pdf → 400 for an unsupported form
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /1572/pdf-all → 200 returns base64 PDFs per investigator
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 returns one disclosure PDF per disclosing investigator
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 with an empty documents array when none disclose
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 200 PDF from stored sponsor
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1572/pdf-from-records → 200 with investigator records
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 404 for an unknown sponsor
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > does not load another org's sponsor (tenant scoping → 404)
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → the program record, what each form will produce, and nothing placed yet
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → 404 for a program that is not this organization's
+ × server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > returns a failed, non-blocking check and the leaf-security report with the gateway result
+   → [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on
+ × server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > reduces to the failed checks and warnings a transmit record carries; null when the guard reported nothing
+   → [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /readiness → 200 with a verdict
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /readiness → 400 on a bad filingType
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /clock → 400 without receiptDate
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /clock → 200 with receiptDate
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/lifecycle-validate → 200 allows original first; blocks amendment-first
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/lifecycle-validate → 400 without required fields
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/history-audit → 200 valid history vs flagged amendment-first
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/history-audit → 400 without sequenceTypes
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /portfolio → 200 listing the seeded IND submission
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /portfolio/drift/csv → 200 text/csv attachment
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /submission/:id/overview → 400 on a non-numeric id
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /submission/:id/overview → 404 for a missing submission
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cover-letter/pdf → 200 application/pdf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cover-letter/pdf → 400 without required fields
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr → 200 E2B(R3) elements + completeness
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr?format=xml → 200 application/xml
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr → 400 without an event
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message → 200 transmittable message + readiness
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message?format=xml → 200 application/xml
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message → 400 without gateway/senderId/messageNumber
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report, /classify, /pdf and the draft route → 400 naming each unstated field, never 500
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing → 200 with rows + tabulation
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing?format=csv → 200 text/csv attachment
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing → 400 without events/period
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa → 200 with the LOA model + m1.4.1 leaf intent
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa → 400 without the required identifiers
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa/pdf → 200 application/pdf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /right-of-reference → 200 with the m1.4.2 model
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /authorized-persons/pdf → 200 application/pdf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cross-reference-register → 200 not ready when an LOA is missing
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cross-reference-register → 400 without references[]
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /envelope → 200 application/xml
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > API discovery > GET /openapi.json → 200 with a generated OpenAPI 3.1 spec
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file → 201 creates an amendment sequence
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file → 400 without a 4-digit sequenceNumber
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /sequence/:id/dispatch-gate/snapshot → 201 then GET /snapshots → 200
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file with an ICSR → 201 also files a checksummed m5.3.5 leaf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > GET /sequence/:id/manifest → 200 with the filed leaf
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /sequence/:id/dispatch-gate → 200 with a verdict
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /sequence/:id/dispatch-gate/snapshot → 201 then GET /snapshots → 200
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/cockpit → 200 with per-sequence gates
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/dashboard → 200
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/drift → 200 with a digest
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST /submission/:id/cross-references → 201
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/cross-references/:id/file-loa → 201 files the m1.4.1 leaf and authorizes it
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/file-loa → 400 without a 4-digit sequenceNumber
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > POST /submission/:id/safety-reports → 201 drafts a tracked report
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST /submission/:id/cross-references → 201
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST /submission/:id/cross-references → 400 on a bad file type
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > GET /submission/:id/cross-references → 200 includes the record
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/cross-references/:id/file-loa → 201 files the m1.4.1 leaf and authorizes it
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/file-loa → 400 without a 4-digit sequenceNumber
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/file-loa → 404 for an unknown cross-reference
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > PATCH unknown id → 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > DELETE /cross-references/:id → 204 then absent
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > POST /submission/:id/safety-reports → 201 drafts a tracked report
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > POST /safety-reports → 422 for a non-reportable event
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports → 200 lists the draft
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports/overdue → 200 includes the unfiled past-deadline draft
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > POST /submission/:id/annual-reports → 201 drafts a tracked report with a due date
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > POST /submission/:id/amendments → 201 drafts a tracked amendment
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > POST /submission/:id/annual-reports → 201 drafts a tracked report with a due date
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > POST /annual-reports → 400 without indNumber/productName
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > GET /annual-reports → 200 lists the draft
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > GET /annual-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > POST /submission/:id/amendments → 201 drafts a tracked amendment
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > POST /amendments → 400 without indNumber/changedDocuments
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > with NO gateway configured, transmit → 503 (NOT transmitted) and the row stays prepared
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a simulated receipt handed back by the transport is never recorded as transmitted (503)
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a transport failure → 502 (NOT transmitted) and the row stays prepared
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > GET /amendments → 200 lists the draft
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > GET /amendments/:amendmentId → 200 roundtrips the draft; cross-org + unknown → 404
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > with NO gateway configured, transmit → 503 (NOT transmitted) and the row stays prepared
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a simulated receipt handed back by the transport is never recorded as transmitted (503)
+stderr | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a transport failure → 502 (NOT transmitted) and the row stays prepared
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > prepare → transmit (real gateway receipt) → acknowledge lifecycle (ready case)
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > prepare → transmit (real gateway receipt) → acknowledge lifecycle (ready case)
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > rejects transmit when the ICSR is not transmit-ready (422 with the gaps); transport never called
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > an AR acknowledgment marks a TRANSMITTED report rejected with errors
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > an AR acknowledgment marks a TRANSMITTED report rejected with errors
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses to transmit a report that is no longer prepared (409): no second send of the same message
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses to transmit a report that is no longer prepared (409): no second send of the same message
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a transport failure → 502 (NOT transmitted) and the row stays prepared
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > prepare → transmit (real gateway receipt) → acknowledge lifecycle (ready case)
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > rejects transmit when the ICSR is not transmit-ready (422 with the gaps); transport never called
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > an AR acknowledgment marks a TRANSMITTED report rejected with errors
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a study report with no study registration number is prepared but not transmit-ready
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement for a report that was never transmitted (409), and the row is unchanged
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged"
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged"
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement that names a different message number (422)
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement that names a different message number (422)
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses to transmit a report that is no longer prepared (409): no second send of the same message
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a study report with no study registration number is prepared but not transmit-ready
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement for a report that was never transmitted (409), and the row is unchanged
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged"
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement that names a different message number (422)
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > 400 without gateway; 404 transmitting an unknown id
+ ✓ server/services/submission-gateways/__tests__/fda-module1-headings.test.ts > Module 1 headings are written in section order, whatever order the package lists them in > listed [ '1.2', '1.1', '1.3.3' ] → written [ '1.1', '1.2', '1.3.3' ]
+ ✓ server/services/submission-gateways/__tests__/fda-module1-headings.test.ts > Module 1 headings are written in section order, whatever order the package lists them in > listed [ '1.14.4.1', '1.12.1', '1.2', …(2) ] → written [ '1.1', '1.2', '1.3.3', …(2) ]
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > carries the absent stylesheets from the packager into the transmit blocker
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > POSITIVE CONTROL: a complete drop-point clears the same gate
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > emits new/replace/delete with modified-file, and omits the deleted leaf from the ZIP
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > every modified-file RESOLVES to a leaf the prior sequence actually filed — Module 1 included
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > exposes a per-sequence leafManifest that round-trips into prior leaves for lifecycle diffing
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > hashes the shipped bytes for the manifest, ignoring a wrong caller-supplied leaf.md5
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > writes the ICH-required root index-md5.txt = MD5(index.xml) on the canonical packager
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > packages a bytes-less delete (empty sourcePath) without crashing and ships no file for it
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > sequence / signed → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > sequence / unsigned → true
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > sequence / awaiting → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > sequence / invalid → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > sequence / revoked → true
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > sequence / undetermined → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > orchestrator / signed → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > orchestrator / unsigned → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > orchestrator / awaiting → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > orchestrator / invalid → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > orchestrator / revoked → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > orchestrator / undetermined → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > (unreported) / signed → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > (unreported) / unsigned → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > (unreported) / awaiting → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > (unreported) / invalid → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > (unreported) / revoked → false
+ ✓ server/services/ectd/__tests__/release-signature-status.test.ts > signingNowResolvesRelease — the whole table > (unreported) / undetermined → false
+ ✓ server/services/ind-lifecycle/__tests__/e2b-icsr-composer.test.ts > composeE2bR3Icsr > maps the reporter qualification (investigator → physician)
+ ✓ server/services/submission-gateways/__tests__/ema-cesp-centralised-refusal.test.ts > EmaCespGateway.transmit — a centralised-procedure filing never reaches CESP > refuses a filing whose channel is another region's gateway (US_NDA → fda:esg)
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > no credentials → CredentialError naming the REST variables; nothing inserted, no socket
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > credentials present → typed UnverifiedTransportError, transmitted:false, no row, no socket, no identifier
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifest → lifecycle → modified-file (the full purpose) > a prior manifest drives a correct replace pointer on the next sequence
+ ✓ server/services/ectd/__tests__/sequence-manifest.test.ts > manifest → lifecycle → modified-file (the full purpose) > precise sub-sections keep distinct identity (no false replace across 3.2.S.1 vs 3.2.S.4.2)
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > canTransitionSequence > allows the forward path draft → assembling → validated → frozen → dispatched
+ ✓ server/services/submission-service/__tests__/lifecycle-rules.test.ts > canTransitionSequence > allows backward moves to rework (assembling → draft, validated → assembling)
+ ✓ server/services/ectd/__tests__/sign-payload-seal.test.ts > sign-payload-seal > is deterministic (same digest+org+key → same seal)
+ ✓ server/services/ectd/__tests__/sign-payload-seal.test.ts > sign-payload-seal > no key configured → sealing disabled (null) and an absent seal is "unsealed"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 179 passed | 1 skipped (182)
+      Tests  3 failed | 2334 passed | 2 skipped (2339)
+
+# The same two pre-existing failures on HEAD sources (before any of this change):
+ × tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey
+   → Journey step "a-leaf-placed-after-signing-invalidates-the-signature" expected a block; got success
+ × server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > returns a failed, non-blocking check and the leaf-security report with the gateway result
+   → [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on
+ × server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > reduces to the failed checks and warnings a transmit record carries; null when the guard reported nothing
+   → [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  3 failed (3)
+
+# Broader client run (every suite using the filing-target picker, dispatch / Submission Center / IND suites)
+ Test Files  47 passed (47)
+      Tests  523 passed (523)

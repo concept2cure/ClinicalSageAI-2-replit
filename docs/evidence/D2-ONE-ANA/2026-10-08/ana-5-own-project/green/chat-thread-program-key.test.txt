@@ -1,0 +1,31 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/__tests__/chat-thread-program-key.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/chat-thread-program-key.test.ts
+{
+  "timestamp": "2026-10-08T02:23:29.429Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > binds the program, lower-cased, to program_id once it is the organization's 3ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > a program of another organization, or a deleted one, is never bound: the thread is minted unbound 1ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > without an organization nothing is bound, and nothing is asked 1ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > a check that could not complete mints nothing: it is not read as "not ours" 2ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > binds nothing, and asks nothing, when no project is open or the id is not a program key 1ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > does not re-home an existing thread — continuing a conversation never rewrites its program 1ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > refuses a turn that names another project than the conversation is bound to, before anything is written 1ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > continues a conversation in its own project, whatever the case of the id 1ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > leaves an unbound conversation, and a turn that names no project, as they were 1ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > getOrCreateThread — the program key > programIdForThread accepts only a UUID 0ms
+ ✓ server/services/__tests__/chat-thread-program-key.test.ts > the stream route hands the mint its program key > passes the request's project id through programIdForThread 2ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  02:23:27
+   Duration  1.73s (transform 787ms, setup 79ms, import 1.33s, tests 17ms, environment 0ms)
+

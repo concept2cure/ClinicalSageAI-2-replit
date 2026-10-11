@@ -50,8 +50,8 @@ export function riskFromBlockers(criticalBlockerCount: number): RiskLevel {
  * (summary.regulatory.readinessScore, evaluateReadiness), or null when the run
  * evaluated none. It was the run's confidence, a blocker count clamped to
  * [25, 95], so a program with nothing in it read "25% ready" (reporting review
- * 2026-10-01). Status is still derived from confidence + critical blockers so it
- * never claims "ready" with a critical gap open. topBlockers are the
+ * 2026-10-01). Status is the evaluated readiness verdict, and never "ready"
+ * with a critical gap open. topBlockers are the
  * (non-critical) blockers surfaced for themes.
  */
 /** The run's evaluated readiness (0–100), or null when it evaluated none. */
@@ -65,20 +65,23 @@ export function toMemberInsight(
   projectId: number,
   name: string,
   computed: RunComputationResult,
-  extra?: { code?: string | null; indication?: string | null },
+  extra?: { code?: string | null; indication?: string | null; programId?: string | null },
 ): ProgramMemberInsight {
   const criticalBlockerCount = computed.criticalBlockers.length;
-  const confidence = Math.max(0, Math.min(100, Math.round(computed.confidence)));
-  const status: ProgramMemberInsight['status'] =
-    criticalBlockerCount > 0 ? 'missing'
-    : confidence >= 70 ? 'ready'
-    : confidence > 0 ? 'partial'
-    : 'missing';
+  const confidence =
+    computed.confidence == null ? null : Math.max(0, Math.min(100, Math.round(computed.confidence)));
+  /* The member's status is the run's one readiness verdict (the evaluator's
+     `submission_readiness` row). It was `confidence >= 70 ? 'ready'`, the
+     clamped blocker count, so a program whose readiness was not computed read
+     "ready" in the overview (QA 2026-10-08, j8). */
+  const verdict = computed.providers.find((p) => p.provider === 'submission_readiness')?.status ?? 'missing';
+  const status: ProgramMemberInsight['status'] = criticalBlockerCount > 0 ? 'missing' : verdict;
   return {
     projectId,
     name,
     code: extra?.code ?? null,
     indication: extra?.indication ?? null,
+    programId: extra?.programId ?? null,
     readinessScore: evaluatedReadiness(computed),
     confidence,
     status,
@@ -143,13 +146,14 @@ export async function fetchPortfolioSummary(
 /** Top-level programs (roots of the project hierarchy) for an org, capped. */
 async function fetchOrgPrograms(
   organizationId: number,
-): Promise<{ rows: Array<{ projectId: number; name: string; code: string | null; indication: string | null }>; truncated: boolean }> {
+): Promise<{ rows: Array<{ projectId: number; name: string; code: string | null; indication: string | null; programId: string | null }>; truncated: boolean }> {
   const rows = await db
     .select({
       projectId: projects.id,
       name: projects.name,
       code: projects.code,
       indication: projects.therapeuticArea,
+      programId: projects.regulatoryProgramId,
     })
     .from(projects)
     .where(
@@ -173,6 +177,7 @@ async function fetchOrgPrograms(
       name: r.name ?? `Project ${r.projectId}`,
       code: r.code ?? null,
       indication: r.indication ?? null,
+      programId: r.programId ?? null,
     })),
     truncated,
   };
@@ -222,6 +227,7 @@ export async function fetchOrgPortfolioSummary(
         insights[i] = toMemberInsight(r.projectId, r.name, computed, {
           code: r.code,
           indication: r.indication,
+          programId: r.programId,
         });
       }
     }),

@@ -27,7 +27,7 @@ import { and, eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { canonicalDocuments } from '../../../shared/schema/canonical_documents';
 import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge';
-import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
+import { getResolvedSectionBlueprint } from './sectionBlueprintCatalog';
 import type { SectionDefinition } from '../../../shared/regulatory/document-taxonomy';
 import {
   buildSignatureEvent,
@@ -53,6 +53,9 @@ export type CanonicalStoreDb = NodePgDatabase<Record<string, never>>;
  * (a savepoint) rather than opening a second connection.
  */
 export type CanonicalStoreHandle = Pick<CanonicalStoreDb, 'select' | 'update' | 'insert' | 'transaction'>;
+/** Read capability shared by schema-bearing databases and transaction handles.
+ * Readers never require the empty-schema transaction callback of the writer. */
+export type CanonicalStoreReader = Pick<CanonicalStoreHandle, 'select'>;
 
 /** sha256 over canonicalAuditPayload — the one hasher that seals the trail and verifies it. */
 export function hashLifecyclePayload(payload: string): string {
@@ -122,7 +125,7 @@ export function resolveOutlineForType(documentType: string): SectionDefinition[]
   try {
     const entry = resolveToRegistryEntry(documentType);
     if (!entry) return [];
-    return getSectionBlueprintForEntry(entry).sections ?? [];
+    return getResolvedSectionBlueprint(entry).sections ?? [];
   } catch {
     // The outline is an enhancement, never a precondition for creating a
     // governed document. If registry resolution is unavailable, create the
@@ -184,7 +187,7 @@ export async function readOutline(
  * ends.
  */
 export async function loadProjectionInput(
-  db: CanonicalStoreHandle,
+  db: CanonicalStoreReader,
   canonicalId: string,
   organizationId: number,
   opts: { forUpdate?: boolean } = {},

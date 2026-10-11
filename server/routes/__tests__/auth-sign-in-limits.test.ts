@@ -116,6 +116,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import authRoutes from '../auth';
 
 
@@ -136,13 +137,33 @@ function behindOneAddress() {
       request(a).post('/api/auth/login').set('X-Forwarded-For', address).send({ email, password }),
     verify: (challengeId: string, code: string) =>
       request(a).post('/api/auth/mfa/verify').set('X-Forwarded-For', address).send({ challengeId, code, method: 'email' }),
+    /** The signed-in person's own authenticator: confirm an enrolment, or remove it, with a code. */
+    enrolment: (door: 'enable' | 'disable', userId: number, body: Record<string, unknown>) =>
+      request(a)
+        .post(`/api/auth/mfa/${door}`)
+        .set('X-Forwarded-For', address)
+        .set('Authorization', `Bearer ${sessionOf(userId)}`)
+        .send(body),
   };
+}
+
+/** A live access token for `userId`, as /mfa/verify issues one. */
+function sessionOf(userId: number): string {
+  return jwt.sign(
+    { userId: String(userId), email: `u${userId}@acme.test`, organizationId: '1', role: 'member', type: 'access' },
+    process.env.JWT_SECRET as string,
+    { algorithm: 'HS256', expiresIn: '5m' },
+  );
 }
 
 beforeEach(() => {
   state.rows = [ACCOUNT];
   otp.verifyEmailOtp.mockReset();
   otp.verifyEmailOtp.mockImplementation(async (_u: number, c: string) => c === '123456');
+  mfa.enableMfa.mockReset();
+  mfa.enableMfa.mockImplementation(async (_u: number, c: string) => (c === '123456' ? { success: true, backupCodes: [] } : { success: false }));
+  mfa.disableMfa.mockReset();
+  mfa.disableMfa.mockImplementation(async (_u: number, c: string) => c === '123456');
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -185,6 +206,60 @@ describe('one account is still protected', () => {
     const office = behindOneAddress();
     for (let i = 0; i < SIGN_IN_LIMITS.loginFailuresPerAccount.max + 5; i++) {
       expect((await office.login('frequent@acme.test', 'right-password')).status).toBe(200);
+    }
+  });
+});
+
+/**
+ * P-25 (2026-10-08): wrong codes where a signed-in person confirms or removes
+ * their authenticator count against the account, as at /mfa/verify. Only the
+ * per-address failure bucket applied there, so a session could guess codes at
+ * /mfa/disable at the rate an office address is allowed.
+ */
+describe('confirming or removing an authenticator counts wrong codes per account', () => {
+  it('/mfa/enable: wrong codes past the per-account limit are refused, and the next account is not', async () => {
+    const office = behindOneAddress();
+    const max = SIGN_IN_LIMITS.mfaFailuresPerAccount.max;
+    for (let i = 0; i < max; i++) expect((await office.enrolment('enable', 910, { code: '000000' })).status).toBe(401);
+    const refused = await office.enrolment('enable', 910, { code: '123456' });
+    expect(refused.status, 'guessing continued past the per-account limit').toBe(429);
+    expect(refused.body.error?.code).toBe('RATE_LIMIT');
+    expect(mfa.enableMfa, 'a refused request reaches no verifier').toHaveBeenCalledTimes(max);
+    expect((await office.enrolment('enable', 911, { code: '123456' })).status).toBe(200);
+  });
+
+  it('/mfa/disable: wrong codes past the per-account limit are refused, and the next account is not', async () => {
+    const office = behindOneAddress();
+    const max = SIGN_IN_LIMITS.mfaFailuresPerAccount.max;
+    for (let i = 0; i < max; i++) expect((await office.enrolment('disable', 920, { code: '000000' })).status).toBe(401);
+    expect((await office.enrolment('disable', 920, { code: '123456' })).status).toBe(429);
+    expect((await office.enrolment('disable', 921, { code: '123456' })).status).toBe(200);
+  });
+
+  it('one allowance per account: guesses at /mfa/verify and at /mfa/disable are one count', async () => {
+    const office = behindOneAddress();
+    const max = SIGN_IN_LIMITS.mfaFailuresPerAccount.max;
+    const half = Math.floor(max / 2);
+    for (let i = 0; i < half; i++) expect((await office.verify('c-930', '000000')).status).toBe(401);
+    for (let i = half; i < max; i++) expect((await office.enrolment('disable', 930, { code: '000000' })).status).toBe(401);
+    expect((await office.enrolment('disable', 930, { code: '123456' })).status).toBe(429);
+    expect((await office.verify('c-930', '123456')).status).toBe(429);
+  });
+
+  it("a session's guesses are counted against its own account, whatever challenge the body names", async () => {
+    const office = behindOneAddress();
+    const max = SIGN_IN_LIMITS.mfaFailuresPerAccount.max;
+    // Each guess names a different account's challenge; the count stays on the session's account.
+    for (let i = 0; i < max; i++) {
+      expect((await office.enrolment('disable', 940, { code: '000000', challengeId: `c-${9400 + i}` })).status).toBe(401);
+    }
+    expect((await office.enrolment('disable', 940, { code: '123456' })).status).toBe(429);
+  });
+
+  it('a right code spends none of the allowance', async () => {
+    const office = behindOneAddress();
+    for (let i = 0; i < SIGN_IN_LIMITS.mfaFailuresPerAccount.max + 3; i++) {
+      expect((await office.enrolment('enable', 950, { code: '123456' })).status).toBe(200);
     }
   });
 });

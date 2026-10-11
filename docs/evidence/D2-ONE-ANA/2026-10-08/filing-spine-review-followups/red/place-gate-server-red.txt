@@ -1,0 +1,193 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T19:28:16.065Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T19:28:16.066Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T19:28:16.067Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T19:28:20.684Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 435aab9e-d9e4-4c58-a06b-2744761f0598 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T19:28:20.708Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 435aab9e-d9e4-4c58-a06b-2744761f0598 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T19:28:20.723Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 435aab9e-d9e4-4c58-a06b-2744761f0598 by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign 57ms
+   → expected undefined to deeply equal { allowed: true, reason: null }
+ × server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not 30ms
+   → expected undefined to deeply equal { allowed: false, …(1) }
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-08T19:28:20.933Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "approve",
+    "docId": "435aab9e-d9e4-4c58-a06b-2744761f0598",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-08T19:28:20.934Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "export",
+    "docId": "435aab9e-d9e4-4c58-a06b-2744761f0598",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-08T19:28:20.935Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "review",
+    "docId": "435aab9e-d9e4-4c58-a06b-2744761f0598",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-08T19:28:20.937Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "edit",
+    "docId": "435aab9e-d9e4-4c58-a06b-2744761f0598",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant
+{
+  "timestamp": "2026-10-08T19:28:20.981Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "7",
+    "method": "POST",
+    "path": "/authoring/documents/435aab9e-d9e4-4c58-a06b-2744761f0598/request-review",
+    "action": "edit",
+    "docId": "435aab9e-d9e4-4c58-a06b-2744761f0598",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a Reviewer grant with a signing role may apply the review signature, and still not the approval 58ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a FROZEN document can still be filed to the vault — the sealed record is what filing is for 23ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial 27ms
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through
+{
+  "timestamp": "2026-10-08T19:28:21.043Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 435aab9e-d9e4-4c58-a06b-2744761f0598 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant 42ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > on a FROZEN document even its owner is told why not 24ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through 40ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign
+AssertionError: expected undefined to deeply equal { allowed: true, reason: null }
+
+- Expected:
+{
+  "allowed": true,
+  "reason": null,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts:170:36
+    168|        meets requireRole('regulatory-author') on both of its writes; a…
+    169|        holds that role. */
+    170|     expect(access.placeIntoFiling).toEqual({ allowed: true, reason: nu…
+       |                                    ^
+    171|     /* §11.10(g): 'member' is not a signing role by default (admin, ap…
+    172|        reviewer) — the e-sign route answers ESIGNATURE_NO_AUTHORITY. */
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not
+AssertionError: expected undefined to deeply equal { allowed: false, …(1) }
+
+- Expected:
+{
+  "allowed": false,
+  "reason": "Placing into a filing needs an authoring role in this organization. Your role: viewer.",
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts:195:36
+    193|     expect(access.assignReview.reason).toBe('Sending for review needs …
+    194|     // A viewer was offered Place into filing and met a 403 after fill…
+    195|     expect(access.placeIntoFiling).toEqual({
+       |                                    ^
+    196|       allowed: false,
+    197|       reason: 'Placing into a filing needs an authoring role in this o…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  19:28:08
+   Duration  12.25s (transform 4.61s, setup 130ms, import 1.12s, tests 10.61s, environment 0ms)
+

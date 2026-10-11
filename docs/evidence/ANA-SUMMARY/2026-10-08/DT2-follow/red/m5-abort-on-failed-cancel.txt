@@ -1,0 +1,12 @@
+# m5-abort-on-failed-cancel: --config vitest.config.ts client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts -t cancel
+# exit 1
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > an admin follows with cancel scope 26ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 5. a failed cancel on a detachable turn says "Stop not confirmed. Retrying." and does not abort; a later 200 shows Stopped 94ms
+   → expected undefined to be true // Object.is equality
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > a turn that asked to drive keeps today’s Stop: a failed cancel still aborts 82ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 'leave' never cancels and never says Stopped 81ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed | 12 skipped (16)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 5. a failed cancel on a detachable turn says "Stop not confirmed. Retrying." and does not abort; a later 200 shows Stopped
+AssertionError: expected undefined to be true // Object.is equality

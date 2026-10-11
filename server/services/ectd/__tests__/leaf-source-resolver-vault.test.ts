@@ -22,7 +22,7 @@
  * is an EXPLAINED unresolved leaf rather than a silent drop.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
-import { promises as fs } from 'fs';
+import { readFileSync, promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 import { createHash } from 'crypto';
@@ -147,6 +147,9 @@ beforeAll(async () => {
       document_code TEXT
     );
   `);
+  // The real binary-availability predicate requires the existing disposition
+  // ledger; apply its canonical constraints and guards to exercise that read.
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
   await harness.pglite.query(
     `INSERT INTO regulatory_programs (id, organization_id) VALUES ($1::uuid,$2),($3::uuid,$4)
      ON CONFLICT (id) DO NOTHING`,

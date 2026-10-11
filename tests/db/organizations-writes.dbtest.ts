@@ -40,6 +40,7 @@ import {
   auth,
   provisionTwoTenantFixture,
   teardownTwoTenantFixture,
+  grantPlatformRole,
 } from './two-tenant-fixture';
 
 let app: express.Express;
@@ -67,6 +68,8 @@ beforeAll(async () => {
      VALUES ($1, $2, 'super_admin'), ($1, $3, 'admin')`,
     [ORG_A, staff, adminA]
   );
+  // Platform standing comes from a grant, never the tenant membership role.
+  await grantPlatformRole(staff, 'super_admin');
 
   app = express();
   app.use(express.json());
@@ -91,6 +94,7 @@ afterAll(async () => {
     await restoreOrgs();
     const ids = [staff, adminA].filter(Boolean);
     await owner.query('DELETE FROM organization_users WHERE user_id = ANY($1::int[])', [ids]);
+    await owner.query('DELETE FROM platform_role_grants WHERE user_id = ANY($1::int[])', [ids]);
     await owner.query('DELETE FROM users WHERE id = ANY($1::int[])', [ids]);
   }
   await teardownTwoTenantFixture();

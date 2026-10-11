@@ -71,7 +71,7 @@ export function resolveComplianceChecklist(p: ActivityProfile): ComplianceCheckl
     requiredApprovals.push({ committee: 'IRB', reason: 'Research involving human subjects requires IRB review.', citation: '45 CFR 46.103; 21 CFR 56.103' });
     requiredTraining.push({ trainingType: 'citi_human_subjects', appliesTo: 'all_personnel', citation: 'NIH human-subjects protection training requirement' });
     if (p.fundingSource !== 'internal') {
-      requiredTraining.push({ trainingType: 'citi_gcp', appliesTo: 'investigators', citation: 'ICH E6(R2) GCP; FDA/NIH GCP training' });
+      requiredTraining.push({ trainingType: 'citi_gcp', appliesTo: 'investigators', citation: 'ICH E6(R3) GCP; FDA/NIH GCP training' });
     }
   }
   if (p.involvesAnimals) {

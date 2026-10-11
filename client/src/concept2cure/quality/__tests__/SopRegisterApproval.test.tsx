@@ -158,6 +158,55 @@ describe('SopRegister — approval is a signature taken here', () => {
   });
 });
 
+/* QA walk 2026-10-08 (J8): a draft row offered Approve, whose dialog said
+   "v1.2 becomes effective when you sign" — one signature made an unreviewed
+   draft effective — and nothing anywhere routed a draft to review. The server
+   now approves only a document under review; the register offers Approve there
+   only, and a draft offers "Send for review", which is the existing PATCH
+   route with status in_review (the server's verdict shown as it says it). */
+describe('SopRegister — a draft is sent for review before it can be approved', () => {
+  const DRAFT_ROW = { ...DRAFT, id: 7, docNumber: 'WI-014', title: 'Incoming inspection', status: 'draft' };
+
+  it('offers Approve only on a document under review; a draft offers Send for review instead', () => {
+    H.docs = [DRAFT_ROW, DRAFT];
+    renderRegister();
+    const rows = Array.from(document.querySelectorAll('.qms-row')) as HTMLElement[];
+    const draftRow = rows.find((r) => r.textContent?.includes('WI-014'))!;
+    const reviewRow = rows.find((r) => r.textContent?.includes('SOP-014'))!;
+    expect(draftRow.textContent).not.toMatch(/Approve/);
+    expect(draftRow.textContent).toMatch(/Send for review/);
+    expect(reviewRow.textContent).toMatch(/Approve/);
+    expect(reviewRow.textContent).not.toMatch(/Send for review/);
+  });
+
+  it('sends the draft for review through the existing PATCH route and refreshes the register', async () => {
+    H.docs = [DRAFT_ROW];
+    H.apiRequest.mockResolvedValue({ status: 200, ok: true, json: async () => ({ data: { id: 7, status: 'in_review' } }) });
+    renderRegister();
+    fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
+    await waitFor(() => expect(H.refresh).toHaveBeenCalled());
+    expect(H.apiRequest).toHaveBeenCalledTimes(1);
+    expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/documents/7', { status: 'in_review' });
+    expect(screen.getByRole('status').textContent).toMatch(/WI-014 was sent for review/);
+  });
+
+  it('shows the server’s refusal as the server words it, and changes nothing on screen', async () => {
+    H.docs = [DRAFT_ROW];
+    H.apiRequest.mockRejectedValue(new Error('This document is effective. An approved document changes only through a revision.'));
+    renderRegister();
+    fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/changes only through a revision/));
+    expect(H.refresh).not.toHaveBeenCalled();
+  });
+
+  it('cannot send a sample row for review', () => {
+    H.docs = [DRAFT_ROW];
+    H.sample = true;
+    renderRegister();
+    expect((screen.getByRole('button', { name: /Send for review/ }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
 describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)', () => {
   beforeEach(() => { H.docs = [EFFECTIVE]; });
 

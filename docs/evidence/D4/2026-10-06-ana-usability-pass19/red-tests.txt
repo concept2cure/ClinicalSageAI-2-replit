@@ -1,0 +1,291 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > keeps HTTP 401 recovery copy visible without passing it as an assistant answer
+[useAnaChat] stream failed: Stream request failed: 401
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > keeps HTTP 429 recovery copy visible without passing it as an assistant answer
+[useAnaChat] stream failed: Stream request failed: 429
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > keeps HTTP 503 recovery copy visible without passing it as an assistant answer
+[useAnaChat] stream failed: Stream request failed: 503
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > excludes a stream refusal
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > excludes a connection-failure notice
+[useAnaChat] stream failed: connection failed
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > preserves actual partial reply text after a stream failure
+[useAnaChat] stream failed: Provider failed
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+[useAnaChat] stream failed: Refused
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > keeps HTTP 401 recovery copy visible without passing it as an assistant answer 38ms
+   → expected [ { role: 'user', …(1) }, …(1) ] to deeply equal [ { role: 'user', …(1) } ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > keeps HTTP 429 recovery copy visible without passing it as an assistant answer 5ms
+   → expected [ { role: 'user', …(1) }, …(1) ] to deeply equal [ { role: 'user', …(1) } ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > keeps HTTP 503 recovery copy visible without passing it as an assistant answer 5ms
+   → expected [ { role: 'user', …(1) }, …(1) ] to deeply equal [ { role: 'user', …(1) } ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > excludes a stream refusal 5ms
+   → expected [ { role: 'user', …(1) }, …(1) ] to deeply equal [ { role: 'user', …(1) } ]
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > excludes a connection-failure notice 4ms
+   → expected [ { role: 'user', …(1) }, …(1) ] to deeply equal [ { role: 'user', …(1) } ]
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > preserves actual partial reply text after a stream failure 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > preserves complete answers 2ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices 11ms
+   → expected [ { role: 'user', …(1) }, …(9) ] to deeply equal [ { role: 'user', …(1) }, …(9) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > keeps HTTP 401 recovery copy visible without passing it as an assistant answer
+AssertionError: expected [ { role: 'user', …(1) }, …(1) ] to deeply equal [ { role: 'user', …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "content": "Review the protocol",
+      "role": "user",
+    },
++   {
++     "content": "Your sign-in could not be verified. Sign in again to ask AnA. Prior turns are preserved.",
++     "role": "assistant",
++   },
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts:32:21
+     30|     expect(prior.text.length).toBeGreaterThan(0);
+     31|     expect(prior.interruptedWithPartialResponse).toBe(false);
+     32|     expect(history).toEqual([{ role: 'user', content: 'Review the prot…
+       |                     ^
+     33|   });
+     34|   it('excludes a stream refusal', async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > keeps HTTP 429 recovery copy visible without passing it as an assistant answer
+AssertionError: expected [ { role: 'user', …(1) }, …(1) ] to deeply equal [ { role: 'user', …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "content": "Review the protocol",
+      "role": "user",
+    },
++   {
++     "content": "Too many AnA requests in the last minute, so this one was not taken. Wait a moment and ask again. Prior turns are preserved.",
++     "role": "assistant",
++   },
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts:32:21
+     30|     expect(prior.text.length).toBeGreaterThan(0);
+     31|     expect(prior.interruptedWithPartialResponse).toBe(false);
+     32|     expect(history).toEqual([{ role: 'user', content: 'Review the prot…
+       |                     ^
+     33|   });
+     34|   it('excludes a stream refusal', async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > keeps HTTP 503 recovery copy visible without passing it as an assistant answer
+AssertionError: expected [ { role: 'user', …(1) }, …(1) ] to deeply equal [ { role: 'user', …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "content": "Review the protocol",
+      "role": "user",
+    },
++   {
++     "content": "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved.",
++     "role": "assistant",
++   },
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts:32:21
+     30|     expect(prior.text.length).toBeGreaterThan(0);
+     31|     expect(prior.interruptedWithPartialResponse).toBe(false);
+     32|     expect(history).toEqual([{ role: 'user', content: 'Review the prot…
+       |                     ^
+     33|   });
+     34|   it('excludes a stream refusal', async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > excludes a stream refusal
+AssertionError: expected [ { role: 'user', …(1) }, …(1) ] to deeply equal [ { role: 'user', …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "content": "Review the protocol",
+      "role": "user",
+    },
++   {
++     "content": "This organization has reached its weekly limit for AnA requests, so this one was not sent. An administrator can review the limit. Prior turns are preserved.",
++     "role": "assistant",
++   },
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts:36:21
+     34|   it('excludes a stream refusal', async () => {
+     35|     const { history } = await twoTurns(response([{ type: 'error', code…
+     36|     expect(history).toEqual([{ role: 'user', content: 'Review the prot…
+       |                     ^
+     37|   });
+     38|   it('excludes a connection-failure notice', async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > excludes a connection-failure notice
+AssertionError: expected [ { role: 'user', …(1) }, …(1) ] to deeply equal [ { role: 'user', …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "content": "Review the protocol",
+      "role": "user",
+    },
++   {
++     "content": "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved.",
++     "role": "assistant",
++   },
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts:40:21
+     38|   it('excludes a connection-failure notice', async () => {
+     39|     const { history } = await twoTurns(new Error('connection failed'));
+     40|     expect(history).toEqual([{ role: 'user', content: 'Review the prot…
+       |                     ^
+     41|   });
+     42|   it('preserves actual partial reply text after a stream failure', asy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices
+AssertionError: expected [ { role: 'user', …(1) }, …(9) ] to deeply equal [ { role: 'user', …(1) }, …(9) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "content": "Question 2",
++     "content": "Question 7",
+      "role": "user",
+    },
+    {
+-     "content": "Question 3",
+-     "role": "user",
++     "content": "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved.",
++     "role": "assistant",
+    },
+    {
+-     "content": "Question 4",
++     "content": "Question 8",
+      "role": "user",
+    },
+    {
+-     "content": "Question 5",
+-     "role": "user",
++     "content": "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved.",
++     "role": "assistant",
+    },
+    {
+-     "content": "Question 6",
++     "content": "Question 9",
+      "role": "user",
+    },
+    {
+-     "content": "Question 7",
+-     "role": "user",
++     "content": "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved.",
++     "role": "assistant",
+    },
+    {
+-     "content": "Question 8",
++     "content": "Question 10",
+      "role": "user",
+    },
+    {
+-     "content": "Question 9",
+-     "role": "user",
++     "content": "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved.",
++     "role": "assistant",
+    },
+    {
+-     "content": "Question 10",
++     "content": "Question 11",
+      "role": "user",
+    },
+    {
+-     "content": "Question 11",
+-     "role": "user",
++     "content": "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved.",
++     "role": "assistant",
+    },
+  ]
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts:59:21
+     57|     await act(async () => { await result.current.send('Next question')…
+     58|     const history = JSON.parse(fetchMock.mock.calls[12][1].body).conve…
+     59|     expect(history).toEqual(Array.from({ length: 10 }, (_, i) => ({ ro…
+       |                     ^
+     60|   });
+     61| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+   Start at  03:24:09
+   Duration  1.25s (transform 272ms, setup 129ms, import 327ms, tests 78ms, environment 524ms)
+

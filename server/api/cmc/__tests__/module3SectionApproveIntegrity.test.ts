@@ -22,7 +22,10 @@ const mockVerifyReauth = vi.fn(async () => ({ ok: true }));
 const mockRecordGoverned = vi.fn(async () => ({ actionId: 'act-1', auditId: 'aud-1', sha256Chain: 'chain' }));
 
 vi.mock('../../../services/cmc/project-membership', () => ({ projectBelongsToTenant: async () => true }));
-vi.mock('../cmc-signer', () => ({ refusedWithoutSigningAuthority: async () => false }));
+/* One signing-authority policy (services/part11/signing-authority-gate,
+   P-27, 2026-10-08): null admits the signer. Whether the gate itself refuses a
+   viewer, and fails closed when the role cannot be read, is its own suite's. */
+vi.mock('../../../services/part11/signing-authority-gate', () => ({ checkSigningAuthority: async () => null }));
 vi.mock('../../../routes/c2c/actions', () => ({
   verifyReauth: (...a: unknown[]) => mockVerifyReauth(...(a as [])),
   recordGovernedAction: (...a: unknown[]) => mockRecordGoverned(...(a as [])),

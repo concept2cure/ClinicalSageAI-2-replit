@@ -76,6 +76,13 @@ function makeRes(): any {
   return res;
 }
 
+/** Every set_config in one statement, by name: its $n parameter or its literal (one statement applies the whole scope, sessionScope.ts). */
+function readSetConfigs(q: { text: string; params: unknown[] }, byName: Map<string, unknown>): void {
+  for (const m of q.text.matchAll(/set_config\('([^']+)',\s*(?:\$(\d+)|'([^']*)')/g)) {
+    byName.set(m[1], m[2] ? q.params[Number(m[2]) - 1] : m[3]);
+  }
+}
+
 /** Open the scope, then force the lazy client to acquire so the session vars
  *  are actually applied — they are not until the first query. */
 async function sessionVarsFor(req: any): Promise<Map<string, unknown>> {
@@ -86,8 +93,7 @@ async function sessionVarsFor(req: any): Promise<Map<string, unknown>> {
   await req.dbClient.query('SELECT 1');
   const byName = new Map<string, unknown>();
   for (const q of issued) {
-    const m = q.text.match(/set_config\('([^']+)'/);
-    if (m) byName.set(m[1], q.params[0]);
+    readSetConfigs(q, byName);
   }
   return byName;
 }
@@ -138,12 +144,19 @@ describe('app.current_org_id on a per-user request', () => {
     const vars = await sessionVarsFor(
       makeReq({ user: { organizationId: '7', role: 'admin', organizationUuid: '3f1c9b20-0000-4000-8000-00000000cafe' } }),
     );
+    // The three tenant variables, and the isolation switches pinned in the same
+    // statement (D3, 2026-10-08): the bypass switches empty, enforcement at this
+    // deployment's mode (unset here, so empty; 'on' in production).
     expect([...vars.keys()].sort()).toEqual([
+      'app.bypass_rls',
       'app.current_org_id',
       'app.current_tenant_id',
       'app.current_user_role',
+      'app.is_admin',
+      'app.rls_enforce',
     ]);
     expect(vars.get('app.current_user_role')).toBe('admin');
+    expect([vars.get('app.bypass_rls'), vars.get('app.is_admin')]).toEqual(['', '']);
   });
 });
 
@@ -180,8 +193,7 @@ describe('org membership → tenant scope → app.current_org_id', () => {
     await req.dbClient.query('SELECT 1');
     const byName = new Map<string, unknown>();
     for (const q of issued) {
-      const m = q.text.match(/set_config\('([^']+)'/);
-      if (m) byName.set(m[1], q.params[0]);
+      readSetConfigs(q, byName);
     }
     return byName;
   }

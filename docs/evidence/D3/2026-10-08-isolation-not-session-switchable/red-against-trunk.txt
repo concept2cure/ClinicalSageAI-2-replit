@@ -1,0 +1,16 @@
+ ✓ CONTROL: a bare release does carry a session switch to the next checkout 13ms
+ ✓ each tenant sees only its own program, before anything is switched 11ms
+ × a request that turns rls_enforce off leaves the next tenant's request isolated 12ms
+   → expected 'A,B' to be 'B' // Object.is equality
+ × a request that sets app.bypass_rls and app.is_admin leaves neither for the next request 10ms
+   → expected { e: 'off', b: 'true', a: 'true' } to deeply equal { e: 'on', b: '', a: '' }
+ × a switch left on a connection by any path is pinned when the next request applies its scope 5ms
+   → expected 'A,B' to be 'B' // Object.is equality
+ × the instrumented pool's own statements run isolated on a poisoned connection 3ms
+   → expected 'A,B' to be 'B' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'A,B' to be 'B' // Object.is equality
+AssertionError: expected { e: 'off', b: 'true', a: 'true' } to deeply equal { e: 'on', b: '', a: '' }
+AssertionError: expected 'A,B' to be 'B' // Object.is equality
+AssertionError: expected 'A,B' to be 'B' // Object.is equality
+      Tests  4 failed | 2 passed (6)

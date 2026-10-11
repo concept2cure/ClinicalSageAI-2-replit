@@ -38,6 +38,7 @@ import type express from 'express';
 import { randomUUID } from 'node:crypto';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
 import { PREREQ, AUTHOR, ORG, mint, makeApp, asToken } from './_authoring-canvas-fixture';
+import { RECORDED_LINEAGE_STORES_DDL } from '../../services/document-data-disposition/__tests__/lineage-stores-fixture';
 
 type Exec = { query: (text: unknown, params?: unknown[]) => Promise<{ rows: any[]; rowCount?: number }> };
 
@@ -186,7 +187,7 @@ async function withAuditRefused<T>(op: string, run: () => Promise<T>): Promise<T
 beforeAll(async () => {
   process.env.AUTH_ENFORCE_SECTION_PERMS = '1';
   jdb = await createJourneyDb({
-    prereqSql: PREREQ,
+    prereqSql: PREREQ + RECORDED_LINEAGE_STORES_DDL,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
@@ -211,6 +212,8 @@ beforeAll(async () => {
       // cre_evidence_sources.client_program_id: a citation is judged by its source's project (PF-11).
       'migrations/20260726_cre_source_program_scope.sql',
       'migrations/20260726_authoring_citation_source_usage.sql',
+      // Citation eligibility reads this existing ledger and its write guards.
+      'migrations/20261006_document_data_dispositions.sql',
     ],
     // TEST-ONLY: refuse the audit row for any operation listed in the table.
     testOnlySql: `

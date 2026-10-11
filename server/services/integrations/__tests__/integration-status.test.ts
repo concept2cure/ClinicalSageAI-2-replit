@@ -66,6 +66,27 @@ describe('getIntegrationStatuses', () => {
     expect(conn.label).not.toContain('box'); // not configured → not listed as live
   });
 
+  it('counts only document repositories: a credential-free public source is not a connected repository (S2)', async () => {
+    // search_connected_repositories searches the five repositories only
+    // (connector-search.ts). PubMed and openFDA need no credential, so the
+    // catalog marks them configured; they must not make AnA report a
+    // repository as connected.
+    const statuses = await getIntegrationStatuses(
+      42,
+      makeDeps({}, {
+        getConnectorCatalog: vi.fn().mockResolvedValue([
+          { id: 'pubmed', configured: true, healthy: true },
+          { id: 'fda_drugs', configured: true, healthy: true },
+          { id: 'google_drive', configured: false, healthy: true },
+        ]),
+      }),
+    );
+    const conn = byId(statuses, 'document_connectors');
+    expect(conn.configured).toBe(false);
+    expect(conn.label).toContain('none connected');
+    expect(conn.label).not.toMatch(/pubmed|fda_drugs/);
+  });
+
   it('reports connectors as unknown without org context, and on catalog failure', async () => {
     const noOrg = await getIntegrationStatuses(null, makeDeps({}));
     expect(byId(noOrg, 'document_connectors').configured).toBeNull();

@@ -23,6 +23,11 @@ const USER = 42;
 
 const executed: Array<{ commands: unknown[]; ctx: Record<string, any> }> = [];
 const reverify = vi.fn(async () => ({ ok: true, authenticationMethod: 'password', secondFactorVerified: false }));
+const { signerRole } = vi.hoisted(() => ({ signerRole: vi.fn(async (): Promise<string | null> => 'approver') }));
+// §11.10(g): the signer's role, as the membership row holds it.
+vi.mock('../../../services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: (...a: unknown[]) => signerRole(...(a as [])),
+}));
 
 vi.mock('../../../db/requestDb', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -63,6 +68,8 @@ beforeAll(async () => {
 beforeEach(() => {
   executed.length = 0;
   reverify.mockClear();
+  signerRole.mockReset();
+  signerRole.mockResolvedValue('approver');
 });
 
 const REASON = 'Reviewed against the protocol; ready for filing.';
@@ -139,3 +146,43 @@ describe('Release is the meaning of a lock, not of any e-signature', () => {
   });
 });
 
+/* QA 2026-10-08 (j6 sweep): every e-signature-tier action writes a `sign`
+   ledger row and an electronic_signatures row (governed-command-signature.ts).
+   The route re-verified the signer and never asked whether their role may sign,
+   so a member's or a manager's (P-18) password approved, locked or placed under
+   a signature. The platform's one policy, after the meaning and before the
+   password; the reason and confirm tiers sign nothing and ask nothing of it. */
+describe('the e-signature tier: signing authority before the password', () => {
+  it.each([
+    ['approved', 'APPROVER', 'manager'],
+    ['locked', 'RELEASE', 'member'],
+  ])('%s, declared %s, by a %s: refused 403 ESIGNATURE_NO_AUTHORITY, no password compared, nothing run', async (status, token, role) => {
+    signerRole.mockResolvedValue(role);
+    const res = await post(status, { password: 'pw' }, token);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(JSON.stringify(res.body)).toContain('ESIGNATURE_NO_AUTHORITY');
+    expect(signerRole).toHaveBeenCalledWith(USER, ORG);
+    expect(reverify).not.toHaveBeenCalled();
+    expect(executed).toEqual([]);
+  });
+
+  it('a role lookup that cannot run refuses 503, names no cause, runs nothing', async () => {
+    signerRole.mockRejectedValue(new Error('organization_users unreadable: secret-detail'));
+    const res = await post('approved', { password: 'pw' }, 'APPROVER');
+
+    expect(res.status).toBe(503);
+    expect(JSON.stringify(res.body)).toContain('SIGNING_AUTHORITY_UNVERIFIED');
+    expect(JSON.stringify(res.body)).not.toContain('secret-detail');
+    expect(reverify).not.toHaveBeenCalled();
+    expect(executed).toEqual([]);
+  });
+
+  it('the reason tier signs nothing and does not ask for the role', async () => {
+    signerRole.mockResolvedValue('member');
+    const res = await post('review');
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(signerRole).not.toHaveBeenCalled();
+  });
+});

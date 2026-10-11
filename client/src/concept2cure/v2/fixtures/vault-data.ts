@@ -56,6 +56,9 @@ export interface VaultDoc {
   lifecycleStage?: string | null;
   /** A search hit for a version a later one supersedes (VR-09). */
   earlierVersion?: boolean;
+  /** Original bytes availability after a recorded project file decision. */
+  originalFileAvailable?: boolean;
+  disposition?: import('@shared/document-data-disposition').DocumentDispositionChoice | null;
 }
 
 export interface VaultFolder {

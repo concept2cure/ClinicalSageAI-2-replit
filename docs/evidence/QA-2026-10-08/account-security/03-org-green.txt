@@ -1,0 +1,12 @@
+# Item 1 GREEN — server/routes/auth.ts (recordedOrganizationName), Shell.tsx (no chip without a name), AuthUser.organizationName: string | null
+$ npx vitest run server/routes/__tests__/auth-session-roles.test.ts client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx client/src/concept2cure/v2/__tests__/accountPanel.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > profile > a session with no organisation says so, and names none (P-25) 25ms
+stderr | client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > names no organisation when none is known: no "Organization" placeholder (P-25)
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > names no organisation when none is known: no "Organization" placeholder (P-25) 19ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /session: a token that names no organisation is told none 4ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /session: an organisation whose record is missing is not named 9ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /session: a blank recorded name is no name 7ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /session: control, the recorded name is answered as it is 5ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > the session names no organisation it cannot read (P-25) > GET /me: an organisation whose record is missing is not named either 4ms
+ Test Files  3 passed (3)
+      Tests  42 passed (42)

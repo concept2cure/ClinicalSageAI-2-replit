@@ -12,7 +12,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createHash } from 'crypto';
-import { promises as fs } from 'fs';
+import { readFileSync, promises as fs } from 'fs';
 import JSZip from 'jszip';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
@@ -85,6 +85,9 @@ beforeAll(async () => {
       (1, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 100, NULL, ${ORG}, ${USER}),
       (1, 'm5.3.5.1', 'CSR 201', 'new', 'vault_documents', NULL, '${VAULT_DOC}', ${ORG}, ${USER});
   `);
+  // The real binary-availability predicate requires the existing disposition
+  // ledger; apply its canonical constraints and guards to exercise that read.
+  await harness.pglite.exec(readFileSync(new URL('../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
 });
 
 afterAll(async () => {

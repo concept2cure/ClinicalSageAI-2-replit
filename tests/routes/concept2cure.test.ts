@@ -255,6 +255,14 @@ vi.mock('../../server/services/part11/reverify-signer-deps', () => ({
   loadPasswordHash: async () => 'stored-hash',
 }));
 
+/* §11.10(g): the signing route asks the platform's one policy
+   (checkSigningAuthority, P-27), which reads the signer's role from the
+   membership row. User 1 is an admin of org 1, as the session says. */
+vi.mock('../../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async (userId: number, organizationId: number) =>
+    userId === 1 && organizationId === 1 ? 'admin' : null,
+}));
+
 vi.mock('../../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_req: any, _res: any, next: any) => next(),
 }));

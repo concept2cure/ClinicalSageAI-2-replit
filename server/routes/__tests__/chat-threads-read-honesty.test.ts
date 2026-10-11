@@ -17,7 +17,10 @@ const query = vi.fn();
 vi.mock('../../db.js', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
 
 const getThreadMessages = vi.fn();
-vi.mock('../../services/chat-thread-helpers.js', () => ({
+// The store is resolved by the helper itself (resolveThreadStore, through the
+// mocked pool above); only the transcript read is replaced.
+vi.mock('../../services/chat-thread-helpers.js', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   getThreadMessages: (...a: unknown[]) => getThreadMessages(...a),
 }));
 
@@ -27,6 +30,8 @@ function appWith(org: number | null) {
   const app = express();
   app.use((req: Request, _res: Response, next: NextFunction) => {
     if (org !== null) (req as unknown as { tenantId: unknown }).tenantId = org;
+    // A signed-in caller: the lists are the caller's own (ONE_ANA_ONE_CANVAS.md, slice 3).
+    (req as unknown as { user: unknown }).user = { id: 41 };
     next();
   });
   app.get('/api/chat/threads', listThreads);

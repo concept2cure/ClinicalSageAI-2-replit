@@ -29,9 +29,9 @@
  * A result over 8000 characters is cut in its middle before the model reads it
  * (agentic-loop.ts capToolResultForModel), and a ROUND whose results total
  * over 24000 has every result squeezed to an even share
- * (budgetToolResultsForModel, stream.ts 2441). A model walking a dossier calls
+ * (budgetToolResultsForModel). A model walking a dossier calls
  * read_authoring_section several times in parallel, so each result is held to
- * RESULT_BUDGET = 5000 as JSON.stringify produces it — escapes counted — which
+ * RESULT_BUDGET (5000, agentic-loop.ts) as JSON.stringify produces it — escapes counted — which
  * lets four parallel reads (20000) pass the round untouched with room left for
  * a fifth small result. Every handler measures what it built and shrinks the
  * page (fewer outline entries, a shorter window, fewer hits) rather than let
@@ -51,6 +51,9 @@ import type { ToolContext } from './AnaToolExecutor.js';
 import type { RegisterFn } from './document-tools-shared.js';
 import { resolveOpenProgram } from '../c2c/program-access';
 import { createScopedLogger } from '../../utils/logger';
+// The most any one result may weigh, serialized: one budget for every windowed read (P-24). See "Size" above.
+import { RESULT_BUDGET } from './agentic-loop.js';
+import { fitReadWindow } from './read-receipts.js';
 import {
   PROPOSAL_CLOSE as CLOSE,
   PROPOSAL_OPEN as OPEN,
@@ -79,8 +82,6 @@ export const AUTHORING_READ_NO_PROJECT = (tool: string): string =>
   `${tool} needs an open project — AnA reads authoring documents only from the project this conversation is in. ` +
   'Open or select a project, then ask again.';
 
-/** The most any one result may weigh, serialized. See "Size" above. */
-const RESULT_BUDGET = 5000;
 /** Outline entries (documents and sections) per page as the model sees it, and the most it may ask for. */
 const OUTLINE_TOOL_DEFAULT = 15;
 const OUTLINE_TOOL_MAX = 40;
@@ -255,31 +256,13 @@ async function readOne(pool: AuthoringReadQueryable, scope: ProgramScope, input:
   if (!sectionId) return JSON.stringify({ error: 'section_id is required: take it from list_authoring_outline or search_authoring_sections.' });
   const loaded = await loadSection(pool, { ...scope, sectionId });
   if (!loaded.ok) return refusal(loaded);
-  // Quotes, backslashes, newlines and control characters grow when serialized
-  // (a control character to six bytes), so a full window of such text can
-  // overrun the budget. The window is then the largest that fits, found by
-  // bisecting its size; cutting one character per byte over, as this did,
-  // dropped a control-character-heavy section to 1-character windows.
-  // nextOffset is computed from the window actually delivered, so nothing the
-  // shrink left out is skipped — the next call starts there.
+  // The window is the largest whose serialized result fits RESULT_BUDGET
+  // (fitReadWindow, shared with read_project_document: escapes make a window
+  // weigh more than its length). nextOffset is computed from the window
+  // actually delivered, so nothing the shrink left out is skipped — the next
+  // call starts there. A window of 1 always delivers (at least one code point).
   const asked = Math.min(READ_MAX_CHARS, Math.max(1, Math.floor(optionalNumber(input.max_chars) ?? READ_MAX_CHARS)));
-  const at = (size: number): string => renderWindow(sectionWindow(loaded.value, optionalNumber(input.offset), size));
-  const full = at(asked);
-  if (full.length <= RESULT_BUDGET) return full;
-  // A window of 1 always delivers (at least one code point), even in the unreachable case that it does not fit.
-  let lo = 1;
-  let best = at(1);
-  if (best.length > RESULT_BUDGET) return best;
-  let hi = asked - 1;
-  while (lo < hi) {
-    const mid = Math.ceil((lo + hi) / 2);
-    const out = at(mid);
-    if (out.length <= RESULT_BUDGET) {
-      lo = mid;
-      best = out;
-    } else hi = mid - 1;
-  }
-  return best;
+  return fitReadWindow(size => renderWindow(sectionWindow(loaded.value, optionalNumber(input.offset), size)), asked).result;
 }
 
 function renderSearch(r: SectionSearch, hitCount: number): string {

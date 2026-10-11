@@ -1,0 +1,6 @@
+Two owned fixture suites after annotations.
+["npx", "eslint", "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts", "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts"]
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+PROCESS_EXIT_CODE=0

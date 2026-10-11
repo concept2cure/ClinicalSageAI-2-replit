@@ -1,0 +1,181 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the documentation level is determined, never assumed > a program with no lifecycle items is undetermined with no percentage, not 0% against Basic 98ms
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the documentation level is determined, never assumed > items recorded at both levels are undetermined — one Basic item does not shrink the Enhanced denominator 10ms
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the documentation level is determined, never assumed > a superseded item at the old level does not make the level undetermined 18ms
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the documentation level is determined, never assumed > carries the Documentation Level basis, with FDA 2023 guidance as regulator text 16ms
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > Basic requires a system_test record and not unit_test or integration_test records 83ms
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > every matrix row names the FDA documentation item it evidences 47ms
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > unit/integration records do not count toward Basic completeness 32ms
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > Enhanced adds the SDS and the unit and integration test records 3ms
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: the required set is FDA_SOFTWARE_DOCUMENTATION_SET > names the required documentation no lifecycle item kind records, instead of dropping it silently 16ms
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: cybersecurity follows cyber-device status (§524B), not the level > a non-cyber device is not asked for SBOM, OTS list, threat model, pentest or cybersecurity label 10ms
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: cybersecurity follows cyber-device status (§524B), not the level > a cyber device at Basic is asked for SBOM, threat model and cybersecurity testing 7ms
+ ✓ server/routes/__tests__/mdx-software-summary.test.ts > software-summary: cybersecurity follows cyber-device status (§524B), not the level > an unrecorded cyber-device status gives no percentage 7ms
+stdout | server/services/pathway-engines/estar/__tests__/program-device-flags.test.ts
+{
+  "timestamp": "2026-10-05T12:53:16.012Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T12:53:16.014Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/pathway-engines/estar/__tests__/program-device-flags.test.ts
+{
+  "timestamp": "2026-10-05T12:53:16.014Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/pathway-engines/estar/__tests__/program-device-flags.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/pathway-engines/estar/__tests__/program-device-flags.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/pathway-engines/estar/__tests__/program-device-flags.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/pathway-engines/estar/__tests__/program-device-flags.test.ts > deviceFlagsFromMetadata > expands an answered list to every question, false where not listed 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/program-device-flags.test.ts > deviceFlagsFromMetadata > an answered-but-empty list means none apply — every question false, none undetermined 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/program-device-flags.test.ts > deviceFlagsFromMetadata > never asked stays undefined: no deviceFlags key, a non-array, or no metadata at all 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/program-device-flags.test.ts > deviceFlagsFromMetadata — the shapes a driver actually returns > an id the mapper does not know is not a question, and cannot answer one on its own 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/program-device-flags.test.ts > deviceFlagsFromMetadata — the shapes a driver actually returns > answers exactly the seven questions and no others 0ms
+stderr | tests/mdx-beta-surfaces-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts
+{
+  "timestamp": "2026-10-05T12:53:17.095Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-10-05T12:53:17.314Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] mdx.udi.issue udi_record",
+  "context": {
+    "tenantId": 99,
+    "resourceId": "99"
+  }
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-10-05T12:53:17.315Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-10-05T12:53:17.316Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row
+{
+  "timestamp": "2026-10-05T12:53:17.316Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "mdx.udi.issue",
+    "resourceType": "udi_record",
+    "resourceId": "99",
+    "reason": "Cannot read properties of undefined (reading 'release')"
+  }
+}
+
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > mdx beta routes — auth gate > AnA review queue returns 403 without org context 30ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > mdx beta routes — auth gate > UDI list returns 403 without org context 6ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > mdx beta routes — auth gate > Risk items list returns 403 without org context 7ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > mdx beta routes — auth gate > Software list returns 403 without org context 4ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/ana-drafts > returns the canonical envelope with the card list 8ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/ana-drafts > rejects an invalid pathway value 7ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/ana-drafts > rejects an out-of-range limit 4ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/ana-drafts > surfaces a 409 when the draft_source column is missing 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/vault > lists artifacts and groups by family 6ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/vault > rejects an invalid program_id UUID 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > GET /api/mdx/udi returns the canonical list envelope 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi rejects missing required fields 9ms
+stdout | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-10-05T12:53:17.335Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] mdx.udi.submit_gudid udi_record",
+  "context": {
+    "tenantId": 99,
+    "resourceId": "1"
+  }
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-10-05T12:53:17.336Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-10-05T12:53:17.337Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+stderr | tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status
+{
+  "timestamp": "2026-10-05T12:53:17.337Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "mdx.udi.submit_gudid",
+    "resourceType": "udi_record",
+    "resourceId": "1",
+    "reason": "Cannot read properties of undefined (reading 'release')"
+  }
+}
+
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi returns 201 with the created row 14ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi surfaces a 409 on duplicate UDI-DI 7ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > UDI records routes > POST /api/mdx/udi/:id/submit-gudid flips status 4ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > POST validates severity in [1..5] 12ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > POST computes initial_risk = severity × probability 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > GET /risk-summary/:programId requires UUID 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > risk-items routes > POST /risk-items/:id/controls 404s on cross-tenant id 10ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > software lifecycle routes > POST rejects unknown item_kind 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > software lifecycle routes > POST rejects unknown doc_level 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > software lifecycle routes > GET /software-summary requires UUID 6ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > software lifecycle routes > GET /software-summary returns matrix + completion % 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > rejects non-UUID program 4ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > 404s when program not in tenant 3ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > returns the panel shape the useEngineering hook destructures 2ms
+ ✓ tests/mdx-beta-surfaces-routes.test.ts > GET /api/mdx/engineering/:programId > derives DHF completion over required sections only 7ms
+
+ Test Files  3 passed (3)
+      Tests  44 passed (44)
+   Start at  12:53:10
+   Duration  6.83s (transform 3.92s, setup 960ms, import 10.80s, tests 553ms, environment 0ms)
+

@@ -1,0 +1,13 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > opens the shared signing dialog in place and sends the signed transition, never sending the signer to the Task board 828ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > the confirmation shows the signature the server recorded: its printed name and its time 175ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > a success that does not carry the recorded signature is not shown as one, and closing re-reads the task 143ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewTaskSignsOnDocument.test.tsx > Review tasks — an approval-gated completion is signed on the document > closing the dialog without signing changes nothing and claims nothing 78ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  05:53:10
+   Duration  3.69s (transform 739ms, setup 357ms, import 824ms, tests 1.23s, environment 904ms)
+

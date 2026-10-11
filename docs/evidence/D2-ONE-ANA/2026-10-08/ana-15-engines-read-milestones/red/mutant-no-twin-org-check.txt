@@ -1,0 +1,52 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > scores a linked project and lists its overdue milestone as a critical gap 18ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > scores a project with no linked program: no milestones, not an error 7ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > milestones feed the gap list only: the figure is the same with or without them 14ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — milestones come from the project’s linked program > reads nothing for another organization, or for a soft-deleted program 15ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > turns the linked program’s overdue and due-soon milestones into recommendations 9ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > a project with no linked program yields no milestone recommendations, and no failure 4ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > generateRecommendations — the milestone generator runs > reads nothing for another organization, or for a soft-deleted program 7ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > without a twin assessment, quality, consistency and compliance are null (they were 65, 70, 80) 13ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > an empty project scores 0, not 46 from the placeholders 7ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > the overall score covers only what was measured: document completeness 9ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > the trend is unknown with no recorded scores, not stable with a delta of 0 6ms
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > a twin assessment supplies what it recorded; a column it left empty stays null 11ms
+ × server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > another organization reads no twin assessment for a program it does not own 15ms
+   → expected { completeness: +0, quality: 80, …(2) } to deeply equal { completeness: +0, …(3) }
+ ✓ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > with all four dimensions measured the overall score is the original weighted formula 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts > computeReadinessScore — a dimension nobody measured is null, not a placeholder > another organization reads no twin assessment for a program it does not own
+AssertionError: expected { completeness: +0, quality: 80, …(2) } to deeply equal { completeness: +0, …(3) }
+
+- Expected
++ Received
+
+  {
+    "completeness": 0,
+-   "compliance": null,
++   "compliance": 90,
+    "consistency": null,
+-   "quality": null,
++   "quality": 80,
+  }
+
+ ❯ server/services/intelligence/__tests__/engines-read-milestones.pglite.test.ts:266:30
+    264|   it('another organization reads no twin assessment for a program it d…
+    265|     const score = await computeReadinessScore({ organizationId: OTHER_…
+    266|     expect(score.dimensions).toEqual({ completeness: 0, quality: null,…
+       |                              ^
+    267|     expect(score.scoreBasis.source).toBe('no_assessment_on_record');
+    268|     expect(score.predictions.basis).toBe('no_assessment_on_record');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+   Start at  07:38:44
+   Duration  6.44s (transform 1.20s, setup 118ms, import 2.03s, tests 3.87s, environment 0ms)
+

@@ -1,0 +1,38 @@
+# The one-line re-point for the three Insights test files outside this slice, proved on temporary copies (zzTmpF6_*.test.tsx, deleted after the run), against the final Insights.tsx.
+## client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx
+110c110
+<   fireEvent.click(screen.getByLabelText('Send'));
+---
+>   fireEvent.click(screen.getByRole('button', { name: 'Find' }));
+## client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx
+95c95
+<     fireEvent.click(screen.getByLabelText('Send'));
+---
+>     fireEvent.click(screen.getByRole('button', { name: 'Find' }));
+## client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx
+106c106
+<   fireEvent.click(screen.getByLabelText('Send'));
+---
+>   fireEvent.click(screen.getByRole('button', { name: 'Find' }));
+# $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/zzTmpF6_*.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/zzTmpF6_insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > offers the meanings a finalize can carry, sends reason, meaning and the password, and shows the manifestation 628ms
+ ✓ client/src/concept2cure/v2/__tests__/zzTmpF6_insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a member, who writes reports but may not finalize them, is offered Export and no Finalize 137ms
+ ✓ client/src/concept2cure/v2/__tests__/zzTmpF6_insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a report the gate holds below final is refused with its reasons, and nothing is shown as sealed 256ms
+ ✓ client/src/concept2cure/v2/__tests__/zzTmpF6_insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a password the server does not accept is said in the dialog, and nothing is sealed 238ms
+ ✓ client/src/concept2cure/v2/__tests__/zzTmpF6_insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > separation of duties: an approval by the run's requester is refused with the server's sentence 120ms
+ ✓ client/src/concept2cure/v2/__tests__/zzTmpF6_insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a role without signing authority is refused with the server's sentence, and nothing is sealed 126ms
+ ✓ client/src/concept2cure/v2/__tests__/zzTmpF6_insightsExportProducesFile.test.tsx > Insights — Export produces a file and finalizes nothing > fetches the governed PDF for the run, hands the bytes to downloadBlob, and sends no finalize 443ms
+ ✓ client/src/concept2cure/v2/__tests__/zzTmpF6_insightsExportProducesFile.test.tsx > Insights — Export produces a file and finalizes nothing > exports a report the truthfulness gate holds below final as it stands, without sealing it 103ms
+ ✓ client/src/concept2cure/v2/__tests__/zzTmpF6_insightsExportProducesFile.test.tsx > Insights — Export produces a file and finalizes nothing > hands over NO file when the export is refused, and reports it as a failure 94ms
+ ✓ client/src/concept2cure/v2/__tests__/zzTmpF6_insightsExportProducesFile.test.tsx > Insights — Export produces a file and finalizes nothing > reports a browser that refuses the download rather than claiming a saved file 79ms
+ ✓ client/src/concept2cure/v2/__tests__/zzTmpF6_insightsCanvasAccessible.test.tsx > a failed canvas load > offers a retry that reads again, in plain words 226ms
+ ✓ client/src/concept2cure/v2/__tests__/zzTmpF6_insightsCanvasAccessible.test.tsx > a report's tables and sources > a report table is a table with column headers, and a source is a disclosure, not a hover 161ms
+
+ Test Files  3 passed (3)
+      Tests  12 passed (12)
+   Start at  07:55:07
+   Duration  6.57s (transform 588ms, setup 353ms, import 1.13s, tests 2.63s, environment 1.87s)
+

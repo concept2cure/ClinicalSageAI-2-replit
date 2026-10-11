@@ -278,17 +278,18 @@ const HOLDS: Record<Exclude<FigureKind, 'ci'>, (fig: Figure, value: string, o: N
 };
 
 /** Both bounds of an interval in one source: near each other, one of them beside CI. */
-function holdsInterval(fig: Figure, index: NumberIndex): boolean {
+/** The interval's lower bound where both bounds stand together beside CI, or null. */
+function intervalAt(fig: Figure, index: NumberIndex): NumberSeen | null {
   const [lo, hi] = fig.values;
   for (const a of index.get(lo) ?? NONE) {
     for (const b of index.get(hi) ?? NONE) {
       if (b === a || b.group !== a.group) continue;
       const gap = b.pos - a.pos;
       const close = a.field && b.field ? Math.abs(gap) <= 3 : gap > 0 && gap <= 30;
-      if (close && (CI_WORDS.test(`${a.before} ${a.key}`) || CI_WORDS.test(`${b.before} ${b.key}`))) return true;
+      if (close && (CI_WORDS.test(`${a.before} ${a.key}`) || CI_WORDS.test(`${b.before} ${b.key}`))) return a;
     }
   }
-  return false;
+  return null;
 }
 
 /**
@@ -320,10 +321,29 @@ function candidates(fig: Figure, value: string, index: NumberIndex): readonly Nu
   return asProportion.length === 0 ? same : [...same, ...asProportion];
 }
 
+/**
+ * Where the figure stands among the indexed numbers: its first number, held
+ * with its own measure, when every number of the figure is held; else null.
+ * The one rule figureHeld and the drafted-figure check (S5a,
+ * authoring/draft-figure-check.ts) both apply, so a locator is never found by
+ * a looser test than the verdict.
+ */
+export function figureFoundAt(fig: Figure, index: NumberIndex): NumberSeen | null {
+  if (index.size === 0) return null;
+  if (fig.kind === 'ci') return intervalAt(fig, index);
+  const held = HOLDS[fig.kind];
+  let first: NumberSeen | null = null;
+  for (const value of fig.values) {
+    const at = candidates(fig, value, index).find((o) => held(fig, value, o));
+    if (!at) return null;
+    first ??= at;
+  }
+  return first;
+}
+
 /** Every number of the figure, held with its measure, among the indexed numbers. */
 export function figureHeld(fig: Figure, index: NumberIndex): boolean {
-  if (index.size === 0) return false;
-  if (fig.kind === 'ci') return holdsInterval(fig, index);
-  const held = HOLDS[fig.kind];
-  return fig.values.every((value) => candidates(fig, value, index).some((o) => held(fig, value, o)));
+  // A figure with no number is held by any non-empty index, as before.
+  if (fig.values.length === 0) return index.size > 0;
+  return figureFoundAt(fig, index) !== null;
 }

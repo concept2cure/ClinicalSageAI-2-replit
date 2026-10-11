@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 import { ApiRequestError, serverMessage } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
 import { SignupVerifyStep } from './SignupVerifyStep';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -130,6 +131,26 @@ const USE_CASES = [
   { value: 'multiple', label: 'Multiple Regulatory Activities' },
 ];
 
+/**
+ * Where "Open Concept2Cure" goes after sign-up (QA 2026-10-08, j9 finding 3).
+ *
+ * It went to the path /ai, which the client router does not have, with the new session
+ * kept only under the legacy key `token`, which nothing reads, so the person
+ * was bounced to sign-in. The sign-up's session is adopted as every other
+ * hand-off is (authService.adoptSession: the server confirms it, then it is
+ * stored where the app reads it), and the workspace opens. A session the server
+ * does not confirm, or none at all, goes to sign-in — never to a dead route.
+ */
+export async function openWorkspaceAfterSignup(
+  token: string | null,
+  adopt: (token: string, persistent: boolean) => Promise<unknown> = (tk, persistent) =>
+    authService.adoptSession(tk, persistent),
+): Promise<string> {
+  if (!token) return '/concept2cure/login';
+  const user = await adopt(token, true);
+  return user ? '/concept2cure' : '/concept2cure/login';
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -140,6 +161,11 @@ export const ZenSignup: React.FC = () => {
 
   const [step, setStep] = useState<SignupStep>('info');
   const [isLoading, setIsLoading] = useState(false);
+  /* The session the sign-up issued, held until "Open Concept2Cure" adopts it.
+     Adopting it here would sign the person in under the AuthRoute wrapping this
+     page, which leaves for the workspace before "Account created" is read. */
+  const [signupToken, setSignupToken] = useState<string | null>(null);
+  const [opening, setOpening] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState<FormData>({
@@ -314,9 +340,9 @@ export const ZenSignup: React.FC = () => {
         return;
       }
 
-      // Store the token for immediate login
-      if (data.token) {
-        localStorage.setItem('token', data.token);
+      // The session the sign-up issued; adopted by "Open Concept2Cure".
+      if (typeof data.token === 'string' && data.token) {
+        setSignupToken(data.token);
       }
 
       // If paid plan selected, redirect to Stripe checkout
@@ -332,12 +358,15 @@ export const ZenSignup: React.FC = () => {
               organizationId: data.organizationId,
               tier: formData.selectedPlan,
               billingCycle: 'monthly',
-              successUrl: `${window.location.origin}/ai?welcome=true`,
+              successUrl: `${window.location.origin}/concept2cure?welcome=true`,
               cancelUrl: `${window.location.origin}/signup`,
             }),
           });
           const checkout = await checkoutRes.json();
-          if (checkout.url && checkout.url !== window.location.origin + '/ai?welcome=true') {
+          if (checkout.url && checkout.url !== window.location.origin + '/concept2cure?welcome=true') {
+            // Checkout returns to the workspace, so the session must outlive
+            // this page: adopted (and stored) before the hand-off.
+            if (typeof data.token === 'string' && data.token) await authService.adoptSession(data.token, true);
             window.location.href = checkout.url;
             return;
           }
@@ -1021,7 +1050,13 @@ export const ZenSignup: React.FC = () => {
       </div>
 
       <button
-        onClick={() => setLocation('/ai')}
+        disabled={opening}
+        onClick={() => {
+          setOpening(true);
+          void openWorkspaceAfterSignup(signupToken)
+            .then(setLocation)
+            .finally(() => setOpening(false));
+        }}
         className={`
           w-full py-3 px-4
           text-base font-medium text-white

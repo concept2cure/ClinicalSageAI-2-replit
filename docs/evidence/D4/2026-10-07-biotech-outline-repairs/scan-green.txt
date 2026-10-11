@@ -1,0 +1,37 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/routes/__tests__/authoringDeficiencyScan.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringDeficiencyScan.test.ts
+{
+  "timestamp": "2026-10-07T02:21:02.935Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDeficiencyScan.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > never reports a negative percentage, however bad the section 39ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > publishes the denominator, so the percentage is not taken on trust 8ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > applies the CTD element check migrated off the deleted endpoint 6ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not count a CTD check it has no expectations for 10ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for CTIS Form/MSC 6ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for CTIS Part I 4ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for CTIS Part II 3ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for Notification 5ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for Amendment 5ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for Document 4ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for Unknown module 3ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > still applies the existing keyword profile to supported CTD modules 3ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > frames its output as a signal, never as a compliance determination 4ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /ai/validate-compliance > is gone — it answered PASS for every section it never examined 5ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  22:21:00
+   Duration  6.00s (transform 3.05s, setup 155ms, import 5.31s, tests 109ms, environment 0ms)

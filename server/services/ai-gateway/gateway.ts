@@ -1572,7 +1572,7 @@ export class AIGateway {
       try {
         log.debug(`[AI Gateway] Falling back to ${fallback.provider}/${fallback.model}`);
         const response = await this.retryWithBackoff(
-          () => this.executeProvider(fallback, request, requestId, startTime), 1, 1000, overloadPolicy
+          () => this.executeProvider(fallback, request, requestId, startTime), primaryRetries, 1000, overloadPolicy
         );
         this.recordSuccess(fallback.provider, response.latencyMs);
         this.recordTenantUsage(request, response, true);
@@ -1954,8 +1954,13 @@ export class AIGateway {
     // for every provider invocation (primary + fallback paths), so wrapping it
     // here caps outbound concurrency without touching the retry / circuit-
     // breaker / timeout logic, which all run inside the provider executors.
+    // Waiting for capacity must stop too, without ever starting a provider.
+    let dispatchStarted = false;
     const response = await this.outboundLimiter
-      .run(() => this.dispatchProvider(modelConfig, governed.request, requestId, startTime))
+      .run(() => {
+        dispatchStarted = true;
+        return this.dispatchProvider(modelConfig, governed.request, requestId, startTime);
+      }, request.signal)
       .catch((error: unknown) => {
         /* A cancel that lands WHILE the call is in flight is still a cancel.
 
@@ -1976,7 +1981,7 @@ export class AIGateway {
            retry loop, so the retry loop and both route() catches all see the
            terminal type they already honour. */
         if (request.signal?.aborted && !(error instanceof GatewayAbortedError)) {
-          throw new GatewayAbortedError('in_flight');
+          throw new GatewayAbortedError(dispatchStarted ? 'in_flight' : 'pre_call');
         }
         throw error;
       });
@@ -2324,15 +2329,17 @@ export class AIGateway {
     request: GatewayRequest
   ): void {
     if (modelConfig.thinkingMode === 'adaptive') {
-      if (request.thinking?.enabled) {
+      if (wantsProgressUpdates(modelConfig, request)) {
+        // Its notes between tool calls come back as thinking blocks, empty
+        // under the default display (progress-updates.ts) — and, on a call
+        // that asked for its notes over its reasoning (notesBetweenTools,
+        // ANA-SUMMARY decision 3, A), in place of the summary.
+        params.thinking = { type: 'adaptive', display: 'updates' };
+      } else if (request.thinking?.enabled) {
         // Adaptive thinking self-budgets — the resolver's budgetTokens is a hint
         // that only the legacy surface below consumes. Summarized display keeps
         // the reasoning stream visible to the client on the SSE path.
         params.thinking = { type: 'adaptive', display: 'summarized' };
-      } else if (wantsProgressUpdates(modelConfig, request)) {
-        // Its notes between tool calls come back as thinking blocks, empty
-        // under the default display (progress-updates.ts).
-        params.thinking = { type: 'adaptive', display: 'updates' };
       }
       return;
     }
@@ -4331,7 +4338,9 @@ export class AIGateway {
     const openaiConfig = this.config.providers.find(p => p.name === 'openai');
     if (openaiConfig?.enabled && openaiConfig.apiKey) {
       try {
-        this.openaiClient = new OpenAI({ apiKey: openaiConfig.apiKey });
+        // The gateway owns retries. SDK defaults would silently multiply each
+        // attempt (including streaming calls that must not be replayed).
+        this.openaiClient = new OpenAI({ apiKey: openaiConfig.apiKey, maxRetries: 0 });
         log.debug('  ✅ OpenAI provider ready');
       } catch (e: any) {
         log.warn(`  ⚠️ OpenAI provider init failed: ${e.message}`);
@@ -4342,7 +4351,7 @@ export class AIGateway {
     const anthropicConfig = this.config.providers.find(p => p.name === 'anthropic');
     if (anthropicConfig?.enabled && anthropicConfig.apiKey) {
       try {
-        this.anthropicClient = new Anthropic({ apiKey: anthropicConfig.apiKey });
+        this.anthropicClient = new Anthropic({ apiKey: anthropicConfig.apiKey, maxRetries: 0 });
         log.debug('  ✅ Anthropic provider ready');
       } catch (e: any) {
         log.warn(`  ⚠️ Anthropic provider init failed: ${e.message}`);
@@ -4356,6 +4365,7 @@ export class AIGateway {
         this.moonshotClient = new OpenAI({
           apiKey: moonshotConfig.apiKey,
           baseURL: moonshotConfig.baseUrl || 'https://api.moonshot.ai/v1',
+          maxRetries: 0,
         });
         log.debug('  ✅ Moonshot/Kimi provider ready');
       } catch (e: any) {

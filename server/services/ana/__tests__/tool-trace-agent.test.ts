@@ -62,11 +62,13 @@ describe('formatTraceForContext', () => {
 
 describe('the run_agent step label (D21)', () => {
   it('a quote inside the objective cannot open a second quoted span', async () => {
+    // ANA-SUMMARY S3: the objective is the step's preview, never part of its
+    // label, and a double quote in it is shown as a single one.
     const { describeToolPlan } = await import('../agentic-loop');
+    const { presentStep } = await import('../step-presentation');
     const [step] = describeToolPlan([{ id: 'c', name: 'run_agent', input: { role: 'verify', objective: 'check the "N=305" claim' } }]);
-    expect(step.label).toBe(`Running a verification agent - "check the 'N=305' claim"`);
-    expect(step.label.split('"')).toHaveLength(3);
-    const [research] = describeToolPlan([{ id: 'c', name: 'run_agent', input: { role: 'research', objective: 'trials' } }]);
-    expect(research.label).toBe('Running an agent - "trials"');
+    expect(step.label).toBe('Running an agent');
+    expect(presentStep('run_agent', { role: 'verify', objective: 'check the "N=305" claim' }).preview).toBe("check the 'N=305' claim");
+    expect(presentStep('run_agent', { role: 'research', objective: 'trials' }).preview).toBe('trials');
   });
 });

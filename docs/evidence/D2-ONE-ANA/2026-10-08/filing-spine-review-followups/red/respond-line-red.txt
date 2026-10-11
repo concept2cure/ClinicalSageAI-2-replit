@@ -1,0 +1,130 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond stage offers no locked tool, and names what comes later in words 132ms
+   → expected <section class="pj-sec">…(3)</section> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Submit stage offers no locked tool, and names what comes later in words 56ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry 205ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's document in that module, not the locked dossier map 46ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond stage offers no locked tool, and names what comes later in words
+AssertionError: expected <section class="pj-sec">…(3)</section> to be null
+
+- Expected:
+null
+
++ Received:
+<section
+  class="pj-sec"
+>
+  <div
+    class="pj-sec-h"
+  >
+    <h2>
+      Respond
+    </h2>
+    <span
+      class="sec-sub"
+    >
+      Draft responses to agency letters
+    </span>
+  </div>
+  <div
+    class="pj-tools"
+  >
+    <button
+      class="pj-tool"
+    >
+      <span
+        class="pj-tool-ico"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-pen-line"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 20h9"
+          />
+          <path
+            d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+          />
+        </svg>
+      </span>
+      <span
+        class="pj-tool-b"
+      >
+        <span
+          class="pj-tool-t"
+        >
+          Response authoring
+        </span>
+        <span
+          class="pj-tool-d"
+        >
+          Draft governed responses with AnA
+        </span>
+      </span>
+      <span
+        class="pj-tool-go"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-right"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m9 18 6-6-6-6"
+          />
+        </svg>
+      </span>
+    </button>
+  </div>
+  <p
+    class="pj-desc pj-later"
+    data-testid="pj-coming-later"
+  >
+    <b>
+      Coming later:
+    </b>
+     
+    Question-by-question tracking of agency letters, agency meetings and precedent responses.
+  </p>
+</section>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx:86:70
+     84|     // The same bare line on both stages: Respond's sat inside its too…
+     85|     // (filing-spine design review, open item 10, 2026-10-08).
+     86|     expect(screen.getByTestId('pj-coming-later').closest('.pj-sec')).t…
+       |                                                                      ^
+     87|     // The removed Plan stage pointed at meetings, eTMF and grants "ab…
+     88|     expect(screen.queryByText('Meetings, eTMF and grants open in their…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  21:28:32
+   Duration  2.41s (transform 928ms, setup 173ms, import 1.12s, tests 443ms, environment 484ms)
+

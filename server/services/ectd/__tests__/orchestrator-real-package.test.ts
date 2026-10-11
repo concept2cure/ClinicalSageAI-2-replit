@@ -17,7 +17,13 @@ function section(sectionKey: string, narrative: string, tables: ComposedSection[
   };
 }
 
-const CTX = { region: 'US' as const, applicationNumber: 'IND-123', sequenceNumber: '0000', submissionType: 'IND' };  // an APPLICATION type, which is what this ctx field holds
+// submissionType holds an APPLICATION type, which is what this ctx field holds.
+// The applicant is the caller's to give since 2026-10-08 (P-27): the module no
+// longer fills it with its own placeholder.
+const CTX = {
+  region: 'US' as const, applicationNumber: 'IND-123', sequenceNumber: '0000', submissionType: 'IND',
+  applicantId: 'UNASSIGNED-ORG-1', sponsorName: 'Concept2Cure Therapeutics',
+};
 
 describe('composedSectionBlocks', () => {
   it('lays a section out as its narrative, then each table under its title', () => {

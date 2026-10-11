@@ -78,14 +78,25 @@ describe('the turn record status over a real stream', () => {
 });
 
 describe('a turn that ended here before the server spoke for it', () => {
-  it('after Stop, asks for the record by run id and shows what the server filed', async () => {
+  /* Since AnA detach DT2 the ask is the run's own read (GET /runs/:id/events,
+     §4.3): "what became of run X" has one path. It names the record, which is
+     read through its Summary for the hash. */
+  it('after Stop, asks the run for its record and shows what the server filed', async () => {
     let ctl!: ReadableStreamDefaultController<Uint8Array>;
     const body = new ReadableStream<Uint8Array>({ start(c) { ctl = c; } });
     const lookups: string[] = [];
     fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
-      if (String(url).includes('/api/ana-ri/turn-records')) {
+      if (String(url).includes('/api/ana-ri/runs/run_42/events')) {
         lookups.push(String(url));
-        return { ok: true, status: 200, json: async () => ({ success: true, data: { records: [{ id: 'rec-stopped', recordSha256: SHA }] } }) };
+        const sealed = { recordId: 'rec-stopped', assistantMessageId: null };
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ runId: 'run_42', status: 'cancelled', serverNow: new Date().toISOString(), events: [], controls: [], sealed, releasedAt: null }),
+        };
+      }
+      if (String(url).includes('/api/ana-ri/turn-records/rec-stopped/summary')) {
+        return { ok: true, status: 200, json: async () => ({ success: true, data: { recordSha256: SHA } }) };
       }
       if (String(url).includes('/control')) return { ok: true, status: 200, json: async () => ({ ok: true }) };
       const signal = init?.signal;
@@ -115,10 +126,11 @@ describe('a turn that ended here before the server spoke for it', () => {
     const turn = () => [...result.current.messages].reverse().find((m) => m.role === 'assistant')!;
     // Nothing is claimed while the server has not said.
     expect(turn().turnRecord).toEqual({ status: 'unconfirmed' });
+    expect(turn().recordConfirming).toBe(true);
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 1_700));
+      await new Promise((r) => setTimeout(r, 2_150));
     });
-    expect(lookups[0]).toContain('run_id=run_42');
+    expect(lookups[0]).toContain('/runs/run_42/events');
     expect(turn().turnRecord).toEqual({ status: 'recorded', id: 'rec-stopped', sha256: SHA });
   });
 });

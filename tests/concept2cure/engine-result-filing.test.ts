@@ -85,4 +85,69 @@ describe('engine result → authored section → export', () => {
     expect(stamp.startsWith('<p><i>')).toBe(true);
     expect(stamp).toContain(FULL_HASH);
   });
+
+  it('carries structured tables, heterogeneous columns and exact values through both export branches', async () => {
+    const html = engineResultToHtml({
+      title: 'OC — engine result',
+      rows: [['Type I error', 0.025]],
+      tables: [{
+        label: 'Operating characteristics',
+        columns: [{ key: 'drift', label: 'Drift' }, { key: 'power', label: 'Power' }],
+        rows: [
+          { drift: 0, power: 0.0250000000000123 },
+          { drift: 2, power: 0.876543210987654, stoppedEarly: false, bounds: { lower: null, upper: 3.14 } },
+          null,
+        ],
+      }],
+      provenance: PROV,
+    });
+    const blocks = sectionContentToBlocks(html);
+    const tables = blocks.filter((b) => b.kind === 'table');
+    expect(tables).toHaveLength(2);
+    const flat = JSON.stringify(blocks);
+    for (const expected of ['Operating characteristics', 'Drift', 'Power', 'stoppedEarly', 'bounds', '0.0250000000000123', '0.876543210987654', '{"lower":null,"upper":3.14}', FULL_HASH]) {
+      expect(flat).toContain(expected.replaceAll('"', '\\"'));
+    }
+    expect(html).toContain('<td>no</td>');
+    expect(html).toContain('<td>—</td>');
+    const exportedHtml = blocksToHtml(blocks);
+    expect((exportedHtml.match(/<table/g) ?? [])).toHaveLength(2);
+    expect(exportedHtml).toContain('0.876543210987654');
+    expect(exportedHtml).toContain(FULL_HASH);
+    const xml = await toDocumentXml(html);
+    expect((xml.match(/<w:tbl>/g) ?? [])).toHaveLength(2);
+    expect(xml).toContain('0.876543210987654');
+    expect(xml).toContain('stoppedEarly');
+    expect(xml).toContain(FULL_HASH);
+  });
+
+  it('escapes every structured-table label and cell as text, including nested values', () => {
+    const html = engineResultToHtml({
+      title: '<img src=x onerror=alert(1)>',
+      rows: [],
+      tables: [{
+        label: '<script>table</script>',
+        columns: [{ key: 'value', label: '<svg onload=alert(2)> & value' }],
+        rows: [{ value: '<img src=x onerror=alert(3)>', extra: { note: '<script>alert(4)</script>' } }],
+      }],
+      provenance: { ...PROV, method: '<script>method</script>' },
+    });
+    expect(html).not.toMatch(/<(script|img|svg)\b/);
+    for (const text of ['&lt;img src=x onerror=alert(1)&gt;', '&lt;script&gt;table&lt;/script&gt;', '&lt;svg onload=alert(2)&gt; &amp; value', '&lt;img src=x onerror=alert(3)&gt;', '&lt;script&gt;alert(4)&lt;/script&gt;']) {
+      expect(html).toContain(text);
+    }
+    const exportedHtml = blocksToHtml(sectionContentToBlocks(html));
+    expect(exportedHtml).not.toMatch(/<(script|img|svg)\b/);
+    expect(exportedHtml).toContain('&lt;img src=x onerror=alert(3)&gt;');
+  });
+
+  it('does not truncate a structured table at the screen preview limit', () => {
+    const html = engineResultToHtml({
+      title: 'OC', rows: [], provenance: PROV,
+      tables: [{ label: 'Grid', rows: Array.from({ length: 65 }, (_, i) => ({ drift: i, power: i / 100 })) }],
+    });
+    expect(html).toContain('<td>64</td><td>0.64</td>');
+    expect((html.match(/<td>/g) ?? [])).toHaveLength(130);
+    expect(html).toContain(FULL_HASH);
+  });
 });

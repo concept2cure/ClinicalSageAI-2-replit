@@ -1,0 +1,778 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+·············································stderr | server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:30:46.253Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+·····stderr | server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:30:49.199Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+-------········································stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+{
+  "timestamp": "2026-10-07T16:31:09.391Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+{
+  "timestamp": "2026-10-07T16:31:09.547Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T16:31:09.548Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+{
+  "timestamp": "2026-10-07T16:31:09.548Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+······stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > rolls back capture and audit when the capture seam fails
+{
+  "timestamp": "2026-10-07T16:31:15.950Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "e843306d-70d8-4342-99c9-b95fe33c1a5f",
+    "err": "capture test seam failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+·stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > rolls back capture and audit when the audit seam fails
+{
+  "timestamp": "2026-10-07T16:31:15.991Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "2cf6d99e-fc37-4414-8499-35cf0cf1d2c7",
+    "err": "audit seal test seam failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture bytes altered after the recorded upload digest
+{
+  "timestamp": "2026-10-07T16:31:16.017Z",
+  "level": "error",
+  "message": "[ana-uploaded-files] upload integrity check FAILED — stored bytes do not match the recorded digest",
+  "context": {
+    "fileId": "d254d5da-2046-4f36-ae4a-fddf62051d63",
+    "orgId": 1010,
+    "storagePath": "uploads/org-1010/d254d5da-2046-4f36-ae4a-fddf62051d63",
+    "recordedSha256": "71f499bb9714f91faaa2e6d74ebd67a6d7fa438d52365cd9c7ca45c1c843b0fd",
+    "actualSha256": "daae6d0f6649a3b05d956576f480532de9f095273c0f9558f11444c93f8fc463",
+    "recordedSize": 26,
+    "actualSize": 21
+  }
+}
+
+······stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/org-99999/foreign
+{
+  "timestamp": "2026-10-07T16:31:16.192Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "16682661-8b4b-4ad2-ac8b-48bbb2e9dba5",
+    "orgId": 1015
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/unscoped/ownerless
+{
+  "timestamp": "2026-10-07T16:31:16.216Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "0c3981d8-81ca-4d73-a864-91330f521156",
+    "orgId": 1016
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/org-ORG/../org-99999/foreign
+{
+  "timestamp": "2026-10-07T16:31:16.248Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "b8955a4a-75ad-4df0-ab0f-4a06c23ef8da",
+    "orgId": 1017
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/org-ORG/
+{
+  "timestamp": "2026-10-07T16:31:16.276Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "9f8685f8-5de3-410a-acec-1fc2128c27da",
+    "orgId": 1018
+  }
+}
+
+············stderr | server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:31:22.122Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+························stderr | server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:31:26.669Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+····················stdout | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:31:35.925Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T16:31:35.927Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:31:35.927Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/drafting-source-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:31:36.065Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+···········stderr | server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:31:53.937Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+····································stderr | server/services/clinical-regulatory-evidence/__tests__/facade-convergence.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/facade-convergence.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:31:58.133Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+·················stderr | server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:32:02.396Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+·········stderr | server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:32:06.448Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+·············stderr | server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:32:13.041Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+·····stderr | server/services/ana/__tests__/enrich-chunks-evidence-source.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/enrich-chunks-evidence-source.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-07T16:32:16.995Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+····stderr | server/routes/c2c/__tests__/projects-adoption.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts
+{
+  "timestamp": "2026-10-07T16:32:21.856Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-adoption.test.ts
+{
+  "timestamp": "2026-10-07T16:32:21.957Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T16:32:21.957Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts
+{
+  "timestamp": "2026-10-07T16:32:21.958Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses altered bytes without capture or unsafe storage details
+{
+  "timestamp": "2026-10-07T16:32:22.476Z",
+  "level": "error",
+  "message": "[ana-uploaded-files] upload integrity check FAILED — stored bytes do not match the recorded digest",
+  "context": {
+    "fileId": "file_adopt",
+    "orgId": 7,
+    "storagePath": "uploads/org-7/file_adopt",
+    "recordedSha256": "d553e3e49acd6d7477a793fe455929d342172853b4a87bd02dcb22d10164c2b0",
+    "actualSha256": "4aa009153649a0a7c1425387f3da9c72330ad069ea9f69ce1640abe46f92a83b",
+    "recordedSize": 31,
+    "actualSize": 7
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption verifies current owned bytes before capture > refuses foreign path without capture or unsafe storage details
+{
+  "timestamp": "2026-10-07T16:32:22.487Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_adopt",
+    "orgId": 7
+  }
+}
+
+··········stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when source fails
+{
+  "timestamp": "2026-10-07T16:32:22.581Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "err": "source insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when capture fails
+{
+  "timestamp": "2026-10-07T16:32:22.585Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "err": "audit insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption protects the database handoff > rolls back source and both audit writes when adopt fails
+{
+  "timestamp": "2026-10-07T16:32:22.590Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "b6d3e141-7abb-4f1d-9b8b-f0f334604a05",
+    "err": "audit insert failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption.test.ts > adoption preserves authorization and historical idempotency > an altered duplicate is not reported successfully adopted or already available
+{
+  "timestamp": "2026-10-07T16:32:22.603Z",
+  "level": "error",
+  "message": "[ana-uploaded-files] upload integrity check FAILED — stored bytes do not match the recorded digest",
+  "context": {
+    "fileId": "file_adopt",
+    "orgId": 7,
+    "storagePath": "uploads/org-7/file_adopt",
+    "recordedSha256": "d553e3e49acd6d7477a793fe455929d342172853b4a87bd02dcb22d10164c2b0",
+    "actualSha256": "4aa009153649a0a7c1425387f3da9c72330ad069ea9f69ce1640abe46f92a83b",
+    "recordedSize": 31,
+    "actualSize": 7
+  }
+}
+
+···············stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-9/file_1 for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-07T16:32:24.761Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../unscoped/file_1 for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-07T16:32:24.766Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../../outside for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-07T16:32:24.767Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-70/file_1 for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-07T16:32:24.768Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/. for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-07T16:32:24.769Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/org-7/../org-9/file_1 for caller 7, including pre-migration rows
+{
+  "timestamp": "2026-10-07T16:32:24.769Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../org-7/file_1 for caller null, including pre-migration rows
+{
+  "timestamp": "2026-10-07T16:32:24.770Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../file_legacy for caller null, including pre-migration rows
+{
+  "timestamp": "2026-10-07T16:32:24.770Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/../../outside for caller null, including pre-migration rows
+{
+  "timestamp": "2026-10-07T16:32:24.771Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical metadata reader — resolved namespace containment > hides uploads/unscoped/. for caller null, including pre-migration rows
+{
+  "timestamp": "2026-10-07T16:32:24.772Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-9/file_1 for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-07T16:32:24.780Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../unscoped/file_1 for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-07T16:32:24.781Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../../outside for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-07T16:32:24.782Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-70/file_1 for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-07T16:32:24.783Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/. for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-07T16:32:24.785Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/org-7/../org-9/file_1 for caller 7 as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-07T16:32:24.785Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../org-7/file_1 for caller null as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-07T16:32:24.786Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": null
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../file_legacy for caller null as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-07T16:32:24.787Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": null
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/../../outside for caller null as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-07T16:32:24.787Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": null
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > refuses uploads/unscoped/. for caller null as an indistinguishable missing upload
+{
+  "timestamp": "2026-10-07T16:32:24.790Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_1",
+    "orgId": null
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-path-containment.test.ts > canonical byte reader — resolved namespace containment and integrity > preserves the digest-mismatch refusal for an otherwise contained path
+{
+  "timestamp": "2026-10-07T16:32:24.807Z",
+  "level": "error",
+  "message": "[ana-uploaded-files] upload integrity check FAILED — stored bytes do not match the recorded digest",
+  "context": {
+    "fileId": "file_1",
+    "orgId": 7,
+    "storagePath": "uploads/org-7/file_1",
+    "recordedSha256": "0cf2b41e3f24e0a4a61aa8ba7a2846062fdd2e563ce7b69721bc541968b13566",
+    "actualSha256": "a0bc30835b2409ff84d7ddc1a4fbca79b5d553fdd20dcb2a3fa5cffecabc95da",
+    "recordedSize": 25,
+    "actualSize": 23
+  }
+}
+
+·································stderr | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > hides a foreign upload before deriving any bytes
+{
+  "timestamp": "2026-10-07T16:32:25.307Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "file_original",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/ana/__tests__/derived-spreadsheet-capture.test.ts > derived spreadsheet failures and legacy compatibility > leaves the pre-existing authoring image save contract intact
+{
+  "timestamp": "2026-10-07T16:32:25.311Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1791390745311_48tf1x",
+    "bytes": 5
+  }
+}
+
+··············stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > hides another organization's file even when the id is known
+{
+  "timestamp": "2026-10-07T16:32:26.014Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 9,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > denies a row whose org column and storage path disagree
+{
+  "timestamp": "2026-10-07T16:32:26.016Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 9,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > denies a row whose org column and storage path disagree
+{
+  "timestamp": "2026-10-07T16:32:26.017Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > does not let a tenant claim an ownerless upload
+{
+  "timestamp": "2026-10-07T16:32:26.018Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > lets an unscoped caller read only ownerless uploads
+{
+  "timestamp": "2026-10-07T16:32:26.022Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": null,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > treats legacy flat paths as ownerless rather than tenant-owned
+{
+  "timestamp": "2026-10-07T16:32:26.023Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > falls back to the path prefix on a database without the org column
+{
+  "timestamp": "2026-10-07T16:32:26.025Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 9,
+    "requested": 1,
+    "denied": 1
+  }
+}
+
+stderr | server/services/ana/__tests__/uploaded-file-access-tenancy.test.ts > loadUploadedFileMetadata — tenancy > returns only the owned subset of a mixed batch
+{
+  "timestamp": "2026-10-07T16:32:26.026Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped attachment access denied",
+  "context": {
+    "orgId": 7,
+    "requested": 2,
+    "denied": 1
+  }
+}
+
+························
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts [ server/services/document-data-disposition/__tests__/citation-writes.pglite.integration.test.ts ]
+error: column "client_program_id" of relation "authoring_documents" already exists
+ ❯ pe.Le node_modules/@electric-sql/pg-protocol/src/parser.ts:423:39
+ ❯ pe.Xe node_modules/@electric-sql/pg-protocol/src/parser.ts:208:8
+ ❯ pe.parse node_modules/@electric-sql/pg-protocol/src/parser.ts:99:38
+ ❯ O.qe node_modules/@electric-sql/pglite/src/pglite.ts:753:25
+ ❯ node_modules/@electric-sql/pglite/src/pglite.ts:706:13
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 28 passed (29)
+      Tests  350 passed | 7 skipped (357)
+   Start at  12:30:21
+   Duration  125.46s (transform 9.57s, setup 1.21s, import 25.24s, tests 89.44s, environment 4ms)

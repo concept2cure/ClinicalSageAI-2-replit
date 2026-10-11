@@ -24,6 +24,12 @@ const h = vi.hoisted(() => ({
   compare: vi.fn(),
   failures: vi.fn(),
   account: { mfa: false, locked: false, active: true },
+  signerRole: vi.fn(),
+}));
+
+// §11.10(g): the signer's role, as the membership row holds it.
+vi.mock('../../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: (...a: unknown[]) => h.signerRole(...a),
 }));
 
 vi.mock('../../server/middleware/auth', () => ({
@@ -86,6 +92,8 @@ beforeEach(() => {
   h.failures.mockReset();
   h.failures.mockResolvedValue(undefined);
   h.account = { mfa: false, locked: false, active: true };
+  h.signerRole.mockReset();
+  h.signerRole.mockResolvedValue('approver');
 });
 
 describe('apply-rewrite: a signature is a re-verified signer, not a claim', () => {
@@ -142,5 +150,29 @@ describe('apply-rewrite: a signature is a re-verified signer, not a claim', () =
     expect(res.status).toBe(200);
     expect(h.compare).not.toHaveBeenCalled();
     expect((h.applyRewrite.mock.calls[0][0] as { signature: unknown }).signature).toBeNull();
+  });
+});
+
+/* QA 2026-10-08 (j6 sweep): a signed rewrite writes a concept2cure_signatures
+   row. The route re-verified the signer and never asked whether their role may
+   sign, so a member's (or a manager's, P-18) password signed a regulated text.
+   The platform's one policy, before the password; an unsigned rewrite asks
+   nothing of the role. */
+describe('apply-rewrite: signing authority before the password', () => {
+  it.each(['manager', 'member'])('a %s signing is refused 403 ESIGNATURE_NO_AUTHORITY; no password is compared, nothing applied', async (role) => {
+    h.signerRole.mockResolvedValue(role);
+    const res = await applyWith({ signature: { meaning: MEANING, password: 'right-password' } });
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(res.body.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(h.signerRole).toHaveBeenCalledWith(7, 3);
+    expect(h.compare).not.toHaveBeenCalled();
+    expect(h.applyRewrite).not.toHaveBeenCalled();
+  });
+
+  it('an unsigned rewrite does not ask for the role', async () => {
+    h.signerRole.mockResolvedValue('member');
+    const res = await applyWith({});
+    expect(res.status).toBe(200);
+    expect(h.signerRole).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,18 @@
+[
+  {
+    "program": "BX-256",
+    "programId": "099991d1-dac8-43c5-b88a-8baab26194ee",
+    "scheduleOfEventsStatus": 404,
+    "saysNoScheduleRecord": true,
+    "schedulePanelExcerpt": "schedule of events is kept on the program's project record, and this program has none, so no milestones can be shown or generated for it here. Plan Strategy, precedent, agency meetings & timeline Regulatory intelligence Pathways, precedent ",
+    "screenshot": "01-BX-256-project-home.png"
+  },
+  {
+    "program": "Vorelinib (BX-512)",
+    "programId": "50c41bb6-5796-4dc6-a848-72e4d1246ebd",
+    "scheduleOfEventsStatus": 404,
+    "saysNoScheduleRecord": true,
+    "schedulePanelExcerpt": "schedule of events is kept on the program's project record, and this program has none, so no milestones can be shown or generated for it here. Plan Strategy, precedent, agency meetings & timeline Regulatory intelligence Pathways, precedent ",
+    "screenshot": "02-Vorelinib-BX-512--project-home.png"
+  }
+]

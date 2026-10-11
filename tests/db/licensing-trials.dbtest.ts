@@ -117,6 +117,7 @@ let owner: Pool;
 let scratch: ScratchSchema;
 let app: express.Express;
 let savedAppDatabaseUrl: string | undefined;
+let savedPlatformEmails: string | undefined;
 let serverPool: { end: () => Promise<void> } | null = null;
 
 type DbModule = typeof import('../../server/db');
@@ -206,6 +207,10 @@ const key = (t: { organizationId: number; moduleId: string }) => `${t.organizati
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
 beforeAll(async () => {
+  // Tenant super_admin membership is not platform standing. This suite's
+  // authenticated identity stub uses the exact local owner bootstrap path.
+  savedPlatformEmails = process.env.PLATFORM_ADMIN_EMAILS;
+  process.env.PLATFORM_ADMIN_EMAILS = ADMIN_EMAIL;
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
 
   scratch = await createScratchSchema(databaseUrl);
@@ -297,6 +302,8 @@ afterAll(async () => {
   try {
     if (owner) await cleanupLaneRows();
   } finally {
+    if (savedPlatformEmails === undefined) delete process.env.PLATFORM_ADMIN_EMAILS;
+    else process.env.PLATFORM_ADMIN_EMAILS = savedPlatformEmails;
     if (serverPool) await serverPool.end().catch(() => {});
     if (scratch) await scratch.destroy();
     if (owner) await owner.end().catch(() => {});

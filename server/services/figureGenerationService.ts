@@ -139,12 +139,12 @@ const FIGURE_TYPE_CONFIG: Record<
     preferredFormat: 'chartjs',
     promptTemplate: 'Generate a line chart specification',
     regulatoryGuidance:
-      'Include confidence intervals. Mark significant time points. Show visit numbers per ICH.',
+      'Plot confidence intervals only when the source data carries them. Show visit numbers per ICH.',
   },
   scatter_plot: {
     preferredFormat: 'chartjs',
     promptTemplate: 'Generate a scatter plot specification',
-    regulatoryGuidance: 'Include regression line if applicable. Show correlation coefficient.',
+    regulatoryGuidance: 'Plot the points as supplied. Show a regression line or correlation coefficient only when the source data carries it.',
   },
   kaplan_meier: {
     preferredFormat: 'chartjs',
@@ -178,7 +178,7 @@ const FIGURE_TYPE_CONFIG: Record<
   org_chart: {
     preferredFormat: 'mermaid',
     promptTemplate: 'Generate an organizational chart',
-    regulatoryGuidance: 'Include reporting lines, key roles per ICH E6(R2).',
+    regulatoryGuidance: 'Include reporting lines, key roles per ICH E6(R3) Principle 10 (roles, tasks and responsibilities clear and documented).',
   },
   gantt_chart: {
     preferredFormat: 'mermaid',
@@ -247,6 +247,22 @@ const FIGURE_TYPE_CONFIG: Record<
  * artifact that document export includes. A linked document with no extracted
  * data points is no data either.
  */
+/**
+ * Figure types whose content is a statistical estimate — Kaplan-Meier survival
+ * probabilities, hazard ratios, pooled effects with confidence intervals — and
+ * so cannot be drawn by a model from raw rows without the model computing
+ * them (CLAUDE.md Rule 2; until 2026-10-05 the prompt asked it to "Show HR
+ * and 95% CI"). They are drawn from engine output, not generated here.
+ */
+const STATISTICAL_ESTIMATE_FIGURES: ReadonlySet<FigureType> = new Set<FigureType>(['kaplan_meier', 'forest_plot']);
+
+const ESTIMATE_FIGURE_REFUSED: FigureGenerationResult = {
+  success: false,
+  error:
+    'Kaplan-Meier curves and forest plots show statistical estimates, which come from the statistics engine, not from a model. ' +
+    'No figure was generated.',
+};
+
 const NO_SOURCE_DATA: FigureGenerationResult = {
   success: false,
   error: 'No source data was supplied, so no figure was generated. Link the data the figure should show.',
@@ -264,6 +280,8 @@ export async function generateFigure(
 ): Promise<FigureGenerationResult> {
   const startTime = Date.now();
   const figureId = `fig-${crypto.randomUUID().slice(0, 8)}`;
+
+  if (STATISTICAL_ESTIMATE_FIGURES.has(request.figureType)) return ESTIMATE_FIGURE_REFUSED;
 
   try {
     // 1. Resolve source data from Data Room if references provided
@@ -552,7 +570,7 @@ ${typeConfig.regulatoryGuidance}
 
 Rules:
 1. Output ONLY the figure specification — no explanatory text, no markdown fences
-2. All data must be accurately represented — no fabrication
+2. All data must be accurately represented — no fabrication. Plot only values present in the source data; compute no statistic (no mean, interval, ratio, p-value or coefficient) that is not in it
 3. Include proper labels, legends, and units
 4. Follow regulatory conventions for this figure type
 5. Use professional color schemes suitable for regulatory submissions

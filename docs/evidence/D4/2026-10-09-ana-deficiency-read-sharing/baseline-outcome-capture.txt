@@ -1,0 +1,95 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > captures original deficiency outcome fixtures
+{
+  "timestamp": "2026-10-09T03:25:10.556Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "memory threw"
+  }
+}
+{
+  "timestamp": "2026-10-09T03:25:10.556Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "memory threw"
+  }
+}
+{
+  "timestamp": "2026-10-09T03:25:10.556Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "memory threw"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > captures original deficiency outcome fixtures
+{
+  "timestamp": "2026-10-09T03:25:10.556Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "memory rejected"
+  }
+}
+{
+  "timestamp": "2026-10-09T03:25:10.556Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "memory rejected"
+  }
+}
+{
+  "timestamp": "2026-10-09T03:25:10.556Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "memory rejected"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > captures original deficiency outcome fixtures
+{
+  "timestamp": "2026-10-09T03:25:10.556Z",
+  "level": "warn",
+  "message": "[enrichment] Live CRLRTF patterns failed",
+  "context": {
+    "error": "live patterns threw"
+  }
+}
+{
+  "timestamp": "2026-10-09T03:25:10.556Z",
+  "level": "warn",
+  "message": "[enrichment] Live CRLRTF patterns failed",
+  "context": {
+    "error": "live patterns threw"
+  }
+}
+{
+  "timestamp": "2026-10-09T03:25:10.556Z",
+  "level": "warn",
+  "message": "[enrichment] Live CRLRTF patterns failed",
+  "context": {
+    "error": "live patterns threw"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts > captures original deficiency outcome fixtures 53ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  23:25:06
+   Duration  4.53s (transform 3.11s, setup 59ms, import 4.18s, tests 58ms, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-deficiency-read-sharing/baseline-outcome-capture.json

@@ -26,6 +26,32 @@ export async function projectsInOrg(organizationId: number, projectIds: number[]
   return new Set(rows.map(row => row.id));
 }
 
+/**
+ * One project of `organizationId`, with what to call it, or null when it is not
+ * this organisation's. A report names its scope by this (QA 2026-10-08, j8: the
+ * digest read "for project 1").
+ */
+export async function projectInOrg(
+  organizationId: number,
+  projectId: number,
+): Promise<{ id: number; code: string | null; name: string | null } | null> {
+  if (!Number.isSafeInteger(projectId)) return null;
+  const [row] = await db
+    .select({ id: projects.id, code: projects.code, name: projects.name })
+    .from(projects)
+    .where(and(eq(projects.organizationId, organizationId), eq(projects.id, projectId)))
+    .limit(1);
+  return row ? { id: row.id, code: row.code ?? null, name: row.name ?? null } : null;
+}
+
+/** What a report calls a project: its name, else its code; never its row id. */
+export function projectScopeLabel(project: { code: string | null; name: string | null }): string | null {
+  const name = project.name?.trim();
+  if (name) return name;
+  const code = project.code?.trim();
+  return code || null;
+}
+
 /** Whether `submissionId` is a submission of `projectId` in `organizationId`. */
 export async function submissionInProject(
   organizationId: number,

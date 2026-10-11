@@ -1,0 +1,277 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-08T17:29:07.175Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T17:29:07.177Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-08T17:29:07.177Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (maa, EMA) → Flat Module 1, no channel 3ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, FDA) → Structured Module 1 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nds, Health_Canada) → No outline, no channel 0ms
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, ANVISA) → Not supported 8ms
+   → expected 'Unmapped' to be 'Not supported' // Object.is equality
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > a market is named by its agency, its region code or its submission region alike 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > FDA: transmit is wired but not proven, and the line says why 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA MAA: flat Module 1, and the applicant uploads it 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA CTA goes through the CTIS portal only 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > Health Canada: no outline; its adapter posts to an endpoint written from no agency source, so no channel 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > NMPA, MFDS and TGA: no outline; no channel. NMPA and MFDS are gate-checked, TGA is not 1ms
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > MHRA "IND" is not offered: the UK has no IND, and the ind:mhra pack is mislabelled 2ms
+   → expected 'Not offered: the UK has no IND, and t…' to be 'Not offered: the UK has no IND applic…' // Object.is equality
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > an unmapped agency is not supported: no outline or channel, and no refusal is claimed 1ms
+   → ANVISA: expected 'Unmapped' to be 'Not supported' // Object.is equality
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no line names a rule pack, an adapter or a signature format 2ms
+   → ind:MHRA: expected 'Not offered: the UK has no IND, and t…' not to match /rule pack|adapter|ind:mhra|ema:|PKCS|…/
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no pack is borrowed from another agency: an FDA NDA pack does not give Health Canada an outline 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > module1ShapeForAgency is the backbone classification, by agency 0ms
+ × server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (510k, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 1ms
+   → expected true to be false // Object.is equality
+ × server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (pma, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 1ms
+   → expected true to be false // Object.is equality
+ × server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (de_novo, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+   → expected true to be false // Object.is equality
+ × server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (ide, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 1ms
+   → expected true to be false // Object.is equality
+ × server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (mdr, EMA): not buildable, and no eCTD Module 1 or transmit is claimed 1ms
+   → expected 'Flat Module 1, no channel' to match /, no package$/
+ × server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (cer, EMA): not buildable, and no eCTD Module 1 or transmit is claimed 1ms
+   → expected 'Flat Module 1, no channel' to match /, no package$/
+ × server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > a 510(k) has its outline: outline only, no package 1ms
+   → expected 'Structured Module 1' to be 'Outline only, no package' // Object.is equality
+ × server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > a DMF has the ICH Module 3 outline the scaffolder gives its project 1ms
+   → expected 'no_outline' to be 'outline' // Object.is equality
+ × server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport fails closed on an empty rule-pack read > no active pack at all is a failed read, not "No outline" for every market 3ms
+   → promise resolved "[ { applicationType: 'nda', …(11) } ]" instead of rejecting
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport reads the active packs once, from c2c_rule_packs > asks only for packs not superseded, and composes every requested market from that one read 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > EMA and PMDA are no longer reported buildable; FDA is 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > PMDA is not reported submit-supported while its adapter refuses every transmit 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > the coverage matrix agrees with the plan 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, ANVISA) → Not supported
+AssertionError: expected 'Unmapped' to be 'Not supported' // Object.is equality
+
+Expected: "Not supported"
+Received: "Unmapped"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:49:71
+     47|     ['nda', 'ANVISA', 'Not supported'],
+     48|   ])('(%s, %s) → %s', (applicationType, market, summary) => {
+     49|     expect(marketSupport({ applicationType, market }, packs).summary).…
+       |                                                                       ^
+     50|   });
+     51|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > MHRA "IND" is not offered: the UK has no IND, and the ind:mhra pack is mislabelled
+AssertionError: expected 'Not offered: the UK has no IND, and t…' to be 'Not offered: the UK has no IND applic…' // Object.is equality
+
+Expected: "Not offered: the UK has no IND application type"
+Received: "Not offered: the UK has no IND, and the ind:mhra rule pack is mislabelled"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:115:20
+    113|     expect(s.summary).toBe('Not offered');
+    114|     expect(s.offered).toBe(false);
+    115|     expect(s.line).toBe('Not offered: the UK has no IND application ty…
+       |                    ^
+    116|   });
+    117|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > an unmapped agency is not supported: no outline or channel, and no refusal is claimed
+AssertionError: ANVISA: expected 'Unmapped' to be 'Not supported' // Object.is equality
+
+Expected: "Not supported"
+Received: "Unmapped"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:126:33
+    124|     for (const market of ['ANVISA', 'Swissmedic', 'CDSCO', 'HSA', 'br'…
+    125|       const s = marketSupport({ applicationType: 'nda', market }, pack…
+    126|       expect(s.summary, market).toBe('Not supported');
+       |                                 ^
+    127|       expect(s.offered, market).toBe(false);
+    128|       expect(s.line, market).toMatch(/^Not supported: the platform has…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no line names a rule pack, an adapter or a signature format
+AssertionError: ind:MHRA: expected 'Not offered: the UK has no IND, and t…' not to match /rule pack|adapter|ind:mhra|ema:|PKCS|…/
+
+- Expected:
+/rule pack|adapter|ind:mhra|ema:|PKCS|AS2/
+
++ Received:
+"Not offered: the UK has no IND, and the ind:mhra rule pack is mislabelled"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:137:58
+    135|     for (const [applicationType, market] of [['ind', 'MHRA'], ['maa', …
+    136|       const s = marketSupport({ applicationType, market }, packs);
+    137|       expect(s.line, `${applicationType}:${market}`).not.toMatch(/rule…
+       |                                                          ^
+    138|     }
+    139|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (510k, FDA): not buildable, and no eCTD Module 1 or transmit is claimed
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (pma, FDA): not buildable, and no eCTD Module 1 or transmit is claimed
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (de_novo, FDA): not buildable, and no eCTD Module 1 or transmit is claimed
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (ide, FDA): not buildable, and no eCTD Module 1 or transmit is claimed
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:166:25
+    164|   ])('(%s, %s): not buildable, and no eCTD Module 1 or transmit is cla…
+    165|     const s = marketSupport({ applicationType, market }, packs);
+    166|     expect(s.buildable).toBe(false);
+       |                         ^
+    167|     expect(s.summary).toMatch(/, no package$/);
+    168|     expect(s.line).toMatch(/device filings are not eCTD, and the platf…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (mdr, EMA): not buildable, and no eCTD Module 1 or transmit is claimed
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (cer, EMA): not buildable, and no eCTD Module 1 or transmit is claimed
+AssertionError: expected 'Flat Module 1, no channel' to match /, no package$/
+
+- Expected:
+/, no package$/
+
++ Received:
+"Flat Module 1, no channel"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:167:23
+    165|     const s = marketSupport({ applicationType, market }, packs);
+    166|     expect(s.buildable).toBe(false);
+    167|     expect(s.summary).toMatch(/, no package$/);
+       |                       ^
+    168|     expect(s.line).toMatch(/device filings are not eCTD, and the platf…
+    169|     expect(`${s.summary} ${s.line}`).not.toMatch(/Module 1|Transmit no…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > a 510(k) has its outline: outline only, no package
+AssertionError: expected 'Structured Module 1' to be 'Outline only, no package' // Object.is equality
+
+Expected: "Outline only, no package"
+Received: "Structured Module 1"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:173:86
+    171|
+    172|   it('a 510(k) has its outline: outline only, no package', () => {
+    173|     expect(marketSupport({ applicationType: '510k', market: 'FDA' }, p…
+       |                                                                                      ^
+    174|   });
+    175|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > a DMF has the ICH Module 3 outline the scaffolder gives its project
+AssertionError: expected 'no_outline' to be 'outline' // Object.is equality
+
+Expected: "outline"
+Received: "no_outline"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:178:29
+    176|   it("a DMF has the ICH Module 3 outline the scaffolder gives its proj…
+    177|     const s = marketSupport({ applicationType: 'dmf', market: 'FDA' },…
+    178|     expect(s.outline.state).toBe('outline');
+       |                             ^
+    179|     expect(s.outline.pack?.label).toBe('mod3:ich');
+    180|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport fails closed on an empty rule-pack read > no active pack at all is a failed read, not "No outline" for every market
+AssertionError: promise resolved "[ { applicationType: 'nda', …(11) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "agency": "FDA",
+    "applicationType": "nda",
+    "buildable": false,
+    "channel": {
+      "detail": "the ESG transmission is not signed as FDA requires, so FDA would reject it, and no ESG account, DTDs or accepted test sequence are in place",
+      "state": "unproven",
+    },
+    "line": "No outline; Transmit not proven: the ESG transmission is not signed as FDA requires, so FDA would reject it, and no ESG account, DTDs or accepted test sequence are in place",
+    "market": "FDA",
+    "module1": {
+      "detail": "Module 1 is built to the agency's own headings",
+      "state": "structured",
+    },
+    "offered": true,
+    "outline": {
+      "detail": "no rule pack defines 'nda' for 'fda'",
+      "pack": null,
+      "state": "no_outline",
+    },
+    "region": "US",
+    "regionProfile": true,
+    "summary": "No outline",
+  },
+]
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:186:87
+    184|   it('no active pack at all is a failed read, not "No outline" for eve…
+    185|     const empty = { query: async () => ({ rows: [] }) };
+    186|     await expect(readMarketSupport(empty, [{ applicationType: 'nda', m…
+       |                                                                                       ^
+    187|   });
+    188| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 16 passed (29)
+   Start at  17:29:04
+   Duration  3.82s (transform 2.20s, setup 128ms, import 3.28s, tests 40ms, environment 0ms)
+

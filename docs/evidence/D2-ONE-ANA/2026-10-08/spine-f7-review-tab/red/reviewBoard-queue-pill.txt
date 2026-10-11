@@ -1,0 +1,12 @@
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'approved' } reads "Reviewers approved, sign-off pending", never the raw code 42ms
+   → expected 'approved' to be 'Reviewers approved, sign-off pending' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'APPROVED', state: 'approved' } reads "Approved", never the raw code 37ms
+   → expected 'approved' to be 'Approved' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'changes-requested' } reads "Changes requested", never the raw code 32ms
+   → expected 'changes-requested' to be 'Changes requested' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'rejected' } reads "Declined", never the raw code 42ms
+   → expected 'rejected' to be 'Declined' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — the queue pill says where the document stands > { docStatus: 'IN_REVIEW', state: 'in-review' } reads "In review", never the raw code 32ms
+   → expected 'in-review' to be 'In review' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'approved' to be 'Reviewers approved, sign-off pending' // Object.is equality

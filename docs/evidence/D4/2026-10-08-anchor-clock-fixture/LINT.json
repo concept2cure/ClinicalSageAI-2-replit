@@ -1,0 +1,12 @@
+{
+  "paths": [
+    "server/services/audit/__tests__/chain-anchor.dbtest.ts",
+    "server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts",
+    "docs/evidence/D4/2026-10-08-anchor-clock-fixture/check-source-identity.cjs"
+  ],
+  "command": "npx eslint server/services/audit/__tests__/chain-anchor.dbtest.ts server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts docs/evidence/D4/2026-10-08-anchor-clock-fixture/check-source-identity.cjs",
+  "exitCode": 0,
+  "errors": 0,
+  "warnings": 0,
+  "baselineUnchanged": true
+}

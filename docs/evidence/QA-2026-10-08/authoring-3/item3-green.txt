@@ -1,0 +1,22 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the Document view says the sections are being read, never "no sections yet", while the read is in flight 131ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the masthead never prints "0 sections" over a failed sections read 78ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the tree header never prints "0 documents" over a failed documents read 58ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the History rail says it is reading, never "No prior revisions", while its read is in flight 504ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a rename refused with a 401 changes nothing and never says "Section renamed" 1088ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > the filing outline does not call every part "not started" while the sections read has failed 119ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > with no document open, the outline says so — never that sections are being read 79ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > while the project’s documents are still being read, the outline says that — not that a document’s sections are 78ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > switching documents clears the previous document’s comment threads instead of leaving them live 521ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a citation removal the server refuses is reported with the server’s reason, not silently dropped 360ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a failed filing-outline read is said in the tree header, not degraded silently to the document list 84ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > switching sections never shows the previous section’s sources under the next section’s header 478ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx > DocumentAuthoring — unsettled reads are not rendered as facts > a thrown error carrying internal text never reaches the user — the fallback sentence does 301ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  13:47:05
+   Duration  7.99s (transform 2.19s, setup 221ms, import 2.76s, tests 3.88s, environment 880ms)
+

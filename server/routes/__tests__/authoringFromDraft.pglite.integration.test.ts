@@ -245,6 +245,18 @@ describe('a program holds many documents (control tower, 2026-09-21)', () => {
     const titles = listed.body.documents.map((d: { title: string }) => d.title);
     expect(titles).toEqual(expect.arrayContaining(['IB — Investigator Brochure', 'Protocol synopsis', 'Module 2.5 draft #2']));
 
+    // Each listed document says which filing it is the editing copy of, so the
+    // outline offers "start this section" only in that copy (FILING_SPINE F4).
+    const bindingOf = (docs: Array<{ title: string; c2c_document_id: string | null }>, title: string) =>
+      docs.find(d => d.title === title)?.c2c_document_id;
+    expect(bindingOf(listed.body.documents, 'IB — Investigator Brochure')).toBe(FILING_B);
+    expect(bindingOf(listed.body.documents, 'Protocol synopsis')).toBeNull();
+    expect(bindingOf(listed.body.documents, 'Module 2.5 draft #2')).toBeNull();
+    const firstGot = await author(request(app).get(`/api/authoring/docs/${first.body.document.id}`));
+    expect(firstGot.body.document.c2c_document_id).toBe(FILING_B);
+    const thirdGot = await author(request(app).get(`/api/authoring/docs/${third.body.data.doc.id}`));
+    expect(thirdGot.body.document.c2c_document_id).toBeNull();
+
     // Another program's documents stay out of it.
     const other = await author(request(app).get('/api/authoring/docs').query({ programId: OTHER_PROGRAM }));
     expect(other.body.documents.map((d: { title: string }) => d.title)).not.toContain('Protocol synopsis');

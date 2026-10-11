@@ -1,0 +1,15 @@
+{
+  "node": "v22.23.3",
+  "typescript": "5.6.3",
+  "helper": "docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/c2c-ts-prewarm.cjs",
+  "helper_git_blob": "9866391314b83ebb762720141b584f350ecdace2",
+  "source_checkpoint": "99255b3c2cf617ccabada513bf6fea81a63932f4",
+  "mode_sequence": "seed, then native semantic diagnostic batches until pendingAfter=0",
+  "heap_mb": 6656,
+  "maximum_files_per_batch": 3000,
+  "soft_rss_boundary_mb": 6200,
+  "cache": "node_modules/.cache/typecheck-no-regression/tsconfig.tsbuildinfo",
+  "compiler_options_or_gate_changed": false,
+  "preparation_is_not_typecheck_verdict": true,
+  "no_concurrent_cache_writers": true
+}

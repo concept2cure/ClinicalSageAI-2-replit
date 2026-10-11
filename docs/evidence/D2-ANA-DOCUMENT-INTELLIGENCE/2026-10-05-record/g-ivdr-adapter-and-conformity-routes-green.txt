@@ -1,0 +1,69 @@
+# g-ivdr-adapter-and-conformity-routes — green, 2026-10-05
+## step tests
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > device-classification framework catalog > models all three regions 3ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > device-classification framework catalog > FDA has classes I/II/III 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > device-classification framework catalog > EU_MDR has classes I/IIa/IIb/III 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > device-classification framework catalog > EU_IVDR has classes A/B/C/D 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — FDA > Class II → 510(k) 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — FDA > Class III → PMA 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — FDA > Class II notes mention De Novo and 513(g) 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — FDA > Class I is 510(k)-exempt and mentions De Novo 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — EU MDR > Class III → Notified Body required 1ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — EU MDR > Class I → Notified Body not required 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — EU MDR > Class IIa / IIb → Notified Body required 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — EU IVDR > Class D → Notified Body required 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — EU IVDR > Class A → Notified Body not required 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > IVDR typicalPathway and citation read IVDR_CONFORMITY_ROUTES 1ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > IVDR Class B is not offered Annex X or Annex XI 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > IVDR Class D offers Annex X coupled with Annex XI 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > MDR Class III is Annex IX, or Annex X coupled with Annex XI 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — errors + determinism > throws for an unmodeled region 1ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — errors + determinism > throws for an invalid class in a valid region 0ms
+ ✓ server/services/global-ri/__tests__/device-classification.test.ts > classifyDevicePathway — errors + determinism > is deterministic 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > blood-screening transmissible-agent test is Class D (Rule 1, first indent) 4ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > companion diagnostic is Class C under Rule 3(f), not "Rule 3a" 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > cancer detection is Class C under Rule 3(h); genetic testing under Rule 3(i) 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a self-test is Class C when its analyte is not an enumerated Rule 4(a) exception 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > riskToPatient no longer decides the Rule 4(a) exception, and the result says so 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a urine-glucose self-test is Class B (Rule 4(a) exception), whatever the risk given 2ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a self-test with any analyte outside the exceptions is Class C, and an unread analyte is named 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > near-patient testing sets no class of its own (Rule 4(b)) — Rule 6 gives B 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > a device matching no rule is Class B by Rule 6, and needs a notified body 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > never awards Class A, and explains that Rule 5 is the manufacturer's to assert 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — delegates to the canonical EU_IVDR_RULES table > highest applicable class wins (CDx + cancer + near-patient → C) 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — Rule 2 markers, fail-closed cases and the trace > blood grouping of a listed marker is Class D (Rule 2) 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — Rule 2 markers, fail-closed cases and the trace > blood grouping of a marker that is not listed is Class C (Rule 2), not D 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — Rule 2 markers, fail-closed cases and the trace > blood grouping that names no marker is not classified (fails closed, no class stated) 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — Rule 2 markers, fail-closed cases and the trace > a transmissible-agent test that is not blood screening is not classified from these inputs 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — Rule 2 markers, fail-closed cases and the trace > the trace enumerates every row of the canonical table, each with its basis 2ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII — Rule 2 markers, fail-closed cases and the trace > every knowledge ref resolves to a real corpus entry 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > replaces CONFORMITY_ROUTE_BY_CLASS 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class B has Annex IX Chapters I and III with a representative device per category — no Annex X or XI 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class C offers Annex IX (generic device group) or Annex X coupled with Annex XI 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class D offers Annex IX Chapters I, II (except section 5) and III, or Annex X coupled with Annex XI, plus the EU reference laboratory 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class A self-declares; sterile Class A involves a notified body for the sterility aspects via Annex IX or XI 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > a companion diagnostic result adds the medicines-authority consultation 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > every route carries a recall basis pointing at the IVDR on EUR-Lex 1ms
+ Test Files  2 passed (2)
+      Tests  44 passed (44)
+
+## importers (13 files: drift-detection, executive-brief, simulation-enhancements, program-plan, pmda-shonin, report-authoring, ivdr-program-scoping, export-governance-guard, ivdr-classification-reconciliation contract, ivdr-submission-package-scope, market-specs device-classification, plus the two step tests)
+ Test Files  13 passed (13)
+      Tests  218 passed (218)
+
+## mutation: Class B offered 'Annex X+XI' again in IVDR_CONFORMITY_ROUTES (file restored after)
+ × server/services/global-ri/__tests__/device-classification.test.ts > EU conformity routes — read from the one Article 48 table > IVDR Class B is not offered Annex X or Annex XI 6ms
+ × server/services/regulatory/__tests__/ivdr-classification.test.ts > IVDR_CONFORMITY_ROUTES — Article 48, held once > Class B has Annex IX Chapters I and III with a representative device per category — no Annex X or XI 14ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 42 passed (44)
+
+## probe (npx tsx)
+HIV self-test → THROWS VALIDATION IVDR class not determined from these inputs: whether Rule 1 (second or third indent: a life-threatening agent with a high risk of propagation, or an infectious load) or a Rule 3 sub-point (a)–(e) appl
+ABO/RhD blood grouping card → D Rule 2 high | 
+HLA tissue typing for transplant → C Rule 2 high | 
+A blood grouping reagent → D Rule 2 high | 
+cholesterol home test → B Rule 4(a) moderate | 
+urine strip → C Rule 4(a) moderate | Rule 4(a): "nitrite" not recognised as a Class B exception (pregnancy, fertility, cholesterol, urine_glucose, urine_erythrocytes, urine_leucocytes, urine_bacter
+CDx → C Rule 3(f) high | 
+prenatal → C Rule 3 high | Pre-natal screening is Rule 3(d) (immune status towards transmissible agents) or Rule 3(l) (congenital disorders in the embryo or foetus); both are Class C — re
+Notified body: Annex IX Chapters I and III (quality management system), with assessment of the technical documentation of at least one representative device per generic device group; or Notified body: Annex X coupled with Annex XI (EU type-examination, then production quality assurance). Self-testing and near-patient devices: the notified body also assesses the technical documentation under Annex IX section 5.1. Companion diagnostics: the notified body consults a medicines authority (a national competent authority under Directive 2001/83/EC, or the EMA) under Annex IX section 5.2 or Annex X section 3(k).

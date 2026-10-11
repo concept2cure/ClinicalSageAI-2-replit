@@ -1,0 +1,34 @@
+{
+  "files": 2,
+  "exit_code": 0,
+  "errors": 0,
+  "warnings": 2,
+  "per_file": [
+    {
+      "path": "scripts/ci/__tests__/unbacked-tables-strings.test.mjs",
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": false,
+          "severity": 1,
+          "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+        }
+      ]
+    },
+    {
+      "path": "scripts/ci/check-unbacked-tables.mjs",
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": false,
+          "severity": 1,
+          "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+        }
+      ]
+    }
+  ]
+}

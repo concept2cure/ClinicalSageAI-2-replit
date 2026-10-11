@@ -1,0 +1,206 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-10-08T01:38:42.421Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:38:42.422Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-10-08T01:38:42.422Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-cabinet.test.ts
+{
+  "timestamp": "2026-10-08T01:38:42.786Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a suggested upload renders inside its taxonomy folder 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > an unfiled upload renders in the Unfiled queue — visible, never dropped 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > every preset folder of the view renders even when empty 2ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a confirmed upload counts as placed, and its leaf carries real provenance only 3ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > filingCabinet — uploads appear in the tree they were uploaded into > a row with a folder but unfiled status stays in the queue (placement wins over stale folder) 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > uploadLeaf carries the file type the filing action decides on > projects mime_type as mimeType 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > an upload has no authoring completion, and says so > projects pct as null, not 0 0ms
+ × server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > an edited type wins over the classifier kind the upload arrived with 13ms
+   → expected 'Test reports' to be 'Protocol' // Object.is equality
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > a recorded type shows when the classifier recorded no kind 1ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > the classifier kind is the label while the type is the OTHER "not told" value 4ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > the classifier kind is the label when no type was recorded at all 0ms
+ ✓ server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > a file with neither a type nor a kind reads as File 0ms
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+{
+  "timestamp": "2026-10-08T01:38:44.555Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+{
+  "timestamp": "2026-10-08T01:38:44.801Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:38:44.802Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts
+{
+  "timestamp": "2026-10-08T01:38:44.802Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > the filed leaf shows the type Edit details recorded, not the classifier kind
+{
+  "timestamp": "2026-10-08T01:38:44.864Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Database operation blocked because tenant scope is missing",
+  "context": {
+    "op": "pool.query",
+    "caller": "unknown",
+    "queryPreview": "select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\"....",
+    "enforcement": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > the filed leaf shows the type Edit details recorded, not the classifier kind
+{
+  "timestamp": "2026-10-08T01:38:44.865Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "cmc-artifact-spine",
+    "err": "Failed query: select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\".\"id\" asc limit $3\nparams: 11111111-2222-3333-4444-555555555555,7,2"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > an unfiled document in the Unfiled queue shows the same label
+{
+  "timestamp": "2026-10-08T01:38:44.885Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "cmc-artifact-spine",
+    "err": "Failed query: select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\".\"id\" asc limit $3\nparams: 11111111-2222-3333-4444-555555555555,7,2"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > a document never re-typed keeps the classifier kind as its label
+{
+  "timestamp": "2026-10-08T01:38:44.892Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program anchor lookup failed; treating the program as unanchored",
+  "context": {
+    "context": "cmc-artifact-spine",
+    "err": "Failed query: select \"id\", \"client_workspace_id\" from \"projects\" where (\"projects\".\"regulatory_program_id\" = $1 and \"projects\".\"organization_id\" = $2) order by \"projects\".\"id\" asc limit $3\nparams: 11111111-2222-3333-4444-555555555555,7,2"
+  }
+}
+
+ × server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > the filed leaf shows the type Edit details recorded, not the classifier kind 40ms
+   → expected 'Test reports' to be 'Protocol' // Object.is equality
+ × server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > an unfiled document in the Unfiled queue shows the same label 8ms
+   → expected 'CMC' to be 'Module 3 · quality' // Object.is equality
+ ✓ server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > a document never re-typed keeps the classifier kind as its label 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/project-vault-cabinet.test.ts > the type a leaf shows is the document type the document carries > an edited type wins over the classifier kind the upload arrived with
+AssertionError: expected 'Test reports' to be 'Protocol' // Object.is equality
+
+Expected: "Protocol"
+Received: "Test reports"
+
+ ❯ server/routes/c2c/__tests__/project-vault-cabinet.test.ts:146:23
+    144|   it('an edited type wins over the classifier kind the upload arrived …
+    145|     const leaf = uploadLeaf('pharma', row({ document_type: 'PROTOCOL',…
+    146|     expect(leaf.type).toBe('Protocol');
+       |                       ^
+    147|     expect(leaf.filing?.evidenceKind).toBe('report');
+    148|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > the filed leaf shows the type Edit details recorded, not the classifier kind
+AssertionError: expected 'Test reports' to be 'Protocol' // Object.is equality
+
+Expected: "Protocol"
+Received: "Test reports"
+
+ ❯ server/routes/c2c/__tests__/project-vault-edited-type.test.ts:83:24
+     81|     const leaf = findLeaf(res.body.data.tree, `up-${DOC}`);
+     82|     expect(leaf, 'the uploaded document is a leaf of the tree').toBeTr…
+     83|     expect(leaf!.type).toBe('Protocol');
+       |                        ^
+     84|     // The classifier's kind is still what the "Looks like" line reads.
+     85|     expect(leaf!.filing?.evidenceKind).toBe('report');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/c2c/__tests__/project-vault-edited-type.test.ts > GET /api/c2c/project-vault/:id: the label a document shows is its recorded type > an unfiled document in the Unfiled queue shows the same label
+AssertionError: expected 'CMC' to be 'Module 3 · quality' // Object.is equality
+
+Expected: "Module 3 · quality"
+Received: "CMC"
+
+ ❯ server/routes/c2c/__tests__/project-vault-edited-type.test.ts:93:24
+     91|     expect(res.status).toBe(200);
+     92|     const leaf = findLeaf(res.body.data.tree, `up-${OTHER_DOC}`);
+     93|     expect(leaf!.type).toBe('Module 3 · quality');
+       |                        ^
+     94|   });
+     95|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 12 passed (15)
+   Start at  01:38:39
+   Duration  4.96s (transform 1.92s, setup 159ms, import 4.08s, tests 94ms, environment 0ms)
+

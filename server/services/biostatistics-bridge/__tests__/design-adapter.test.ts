@@ -15,6 +15,7 @@ import type { StudyDesign } from '../../study-design/study-design-types';
 import { projectSap } from '../../study-design/sap-projection';
 import {
   applyPlanPatch,
+  clientTrackForProduct,
   computationToPlanPatch,
   phaseLabel,
   regulatoryBodyForRegions,
@@ -194,11 +195,22 @@ describe('studyDesignToStatisticalInput — honest gaps', () => {
     expect(regulatoryBodyForRegions(['Mars'])).toBeUndefined();
     expect(phaseLabel('2b')).toBe('Phase IIb');
     expect(phaseLabel('FIH')).toContain('first-in-human');
+    // An IVD design no longer yields an engine input — it is blocked on its
+    // accuracy targets (next case) — so the vocabulary is checked directly.
+    expect(clientTrackForProduct('ivd')).toBe('diagnostics_ivd');
+  });
+
+  // 2026-10-05: the engine refuses to size a diagnostic study without target
+  // sensitivity/specificity, prevalence and margin, which the design schema does
+  // not record. The bridge names that as a blocking gap rather than letting the
+  // engine assume them (it used to fill them with defaults).
+  it('reports an IVD design as blocked on the accuracy targets the design does not record', () => {
     const ivd = completeDesign();
     ivd.productType = 'ivd';
-    ivd.statisticalPlan.powerAssumptions = {};
-    const { input } = studyDesignToStatisticalInput(ivd);
-    expect(input).toMatchObject({ clientTrack: 'diagnostics_ivd', studyType: 'diagnostic_accuracy', endpointType: 'sensitivity_specificity' });
+    const { gaps } = studyDesignToStatisticalInput(ivd);
+    expect(gaps).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: 'sensitivity', severity: 'blocking' })]),
+    );
   });
 });
 

@@ -1,0 +1,10 @@
+ × server/routes/__tests__/mdx-admin-honesty.test.ts > member state says whether the account can sign in > invited (setup link not redeemed), active, disabled — and the KPI counts only active 9ms
+   → expected { 'Ann Active': 'active', …(3) } to deeply equal { 'Ann Active': 'active', …(3) }
+ × server/routes/__tests__/mdx-admin-honesty.test.ts > member state says whether the account can sign in > reads the invitation from the hash prefix in SQL and never returns the hash 3ms
+   → expected 'SELECT ou.user_id, u.name, u.email, o…' to match /password_hash LIKE \$2/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 12 passed (14)
+ × client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > invited members are not counted as active > the Members KPI reads "1 active · 1 invited", and the Invited filter lists the invitee 31ms
+   → expected { value: '2', meta: '1 active' } to deeply equal { value: '2', …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)

@@ -9,8 +9,9 @@
  * draft_nonclinical_overview_m2_4…) was no longer offered, and the follow-up
  * was answered without it. The platform bridge does not reach a typed tool:
  * execute_platform_command dispatches only to the command registry. (Three
- * record tools the persona orders her to call are always on since df30b4bbd;
- * every other tool needs the carry.)
+ * clinical record tools the persona orders her to call have been always on
+ * since df30b4bbd; the three CMC record tools now have the same standing.
+ * Other tools still need the carry.)
  *
  * Pinned on the production shape — the launch-scoped catalog, the self-drive
  * pins, an IND — and on fixtures where a rule needs an exact answer.
@@ -41,13 +42,11 @@ const select = (message: string, carriedTools?: string[], projectType: string | 
 describe('a follow-up keeps the tool the previous turn ran', () => {
   /** A follow-up, and the tool its first question selects first (what that turn ran). */
   const FOLLOW_UPS = [
-    ['and for the EU?', 'get_cmc_requirements'],
     ['and as a victim?', 'assess_ddi_risk'],
     ['what about with itraconazole?', 'assess_ddi_risk'],
     ['and with 80% power?', 'estimate_sample_size'],
     ['and for the drug product?', 'design_stability_study'],
     ['now the toxicology part', 'draft_nonclinical_overview_m2_4'],
-    ['go on', 'explain_cmc_topic'],
   ] as const;
 
   it.each(FOLLOW_UPS)('"%s" is still offered %s', (followUp, tool) => {
@@ -57,10 +56,22 @@ describe('a follow-up keeps the tool the previous turn ran', () => {
     expect(select(followUp, [tool], null)).toContain(tool);
   });
 
+  // CMC record reads now have the persona-required core standing, like the
+  // clinical records. Their follow-ups no longer depend on a prior tool call.
+  it.each([
+    ['and for the EU?', 'get_cmc_requirements'],
+    ['go on', 'explain_cmc_topic'],
+  ])('"%s" keeps required CMC record %s without needing the carry', (followUp, tool) => {
+    expect(select(followUp)).toContain(tool);
+    expect(select(followUp, [tool])).toContain(tool);
+    expect(select(followUp, [tool], null)).toContain(tool);
+    expect(select(followUp, [tool]).filter(name => name === tool)).toHaveLength(1);
+  });
+
   it('a bare continuation is offered the carried tool first, right after the always-on core and the pins', () => {
-    const sel = select('continue', ['get_cmc_requirements']);
+    const sel = select('continue', ['assess_ddi_risk']);
     const fixed = sel.filter((n) => FIXED.has(n)).length;
-    expect(sel[fixed]).toBe('get_cmc_requirements');
+    expect(sel[fixed]).toBe('assess_ddi_risk');
   });
 });
 
@@ -79,8 +90,8 @@ describe('what the carry may not do', () => {
   });
 
   it('carried tools never cost a question its own tools near the end of its slots', () => {
-    // A stability question ranks get_cmc_requirements 24th and explain_cmc_topic
-    // 25th of its 29 relevance slots: four carried tools leave both, eight would not.
+    // CMC references stay available with a full carry, under the same budget.
+    // The topic-change eval below still guards every non-core question tool.
     const Q5C = 'what does ICH Q5C say about stability testing of biotechnological products';
     const own = select(Q5C, undefined, null);
     const others = names(LAUNCH).filter((n) => !FIXED.has(n) && !own.includes(n)).slice(0, 2 * MAX_CARRIED_TOOLS);

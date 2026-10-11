@@ -17,6 +17,8 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
+/** The title of the document a data-room file is checked in to (its head), not the file's derived title. */
+const HEAD_TITLE = 'Stability protocol';
 
 const { query } = vi.hoisted(() => ({ query: vi.fn() }));
 vi.mock('../../db.js', () => ({ pool: { query, connect: vi.fn() } }));
@@ -59,9 +61,10 @@ const post = (role: string, sourceIds: number[]) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
-  query.mockImplementation(async (sql: string) =>
-    /FROM regulatory_programs WHERE id = \$1/.test(String(sql)) ? { rows: [{ id: PROGRAM }] } : { rows: [] },
-  );
+  query.mockImplementation(async (sql: string) => {
+    if (/SELECT document_title FROM vault\.documents/.test(String(sql))) return { rows: [{ document_title: HEAD_TITLE }] };
+    return /FROM regulatory_programs WHERE id = \$1/.test(String(sql)) ? { rows: [{ id: PROGRAM }] } : { rows: [] };
+  });
   readSourceUploads.mockResolvedValue([source(1), source(2)]);
 });
 
@@ -101,6 +104,49 @@ describe('each source is filed on its own', () => {
   it('every source filed is complete', async () => {
     fileUploadIntoVault.mockResolvedValueOnce(filed('doc-1')).mockResolvedValueOnce(filed('doc-2'));
     expect((await post('admin', [1, 2])).body.complete).toBe(true);
+  });
+});
+
+describe('a revised file is offered as the next version of the document it is named for (QA-2026-10-08)', () => {
+  const HEAD = '44444444-4444-4444-8444-444444444444';
+  const CONFLICT = 'A different document is already recorded at code "Protocol-Stability.pdf" version "1.0" for this program. Nothing was changed. Add it as a new version of that document instead of replacing the recorded one.';
+
+  it('a source the person names a version of is filed as a check-in to that document, and no other is', async () => {
+    fileUploadIntoVault.mockResolvedValueOnce(filed('doc-1')).mockResolvedValueOnce(filed('doc-2'));
+    const res = await request(app('admin'))
+      .post(`/api/c2c/project-vault/${PROGRAM}/data-room/file`)
+      .send({ sourceIds: [1, 2], newVersionOf: { '1': HEAD } });
+    expect(res.status).toBe(200);
+    expect(fileUploadIntoVault.mock.calls.map(([a]) => a.supersedesDocumentId)).toEqual([HEAD, undefined]);
+  });
+
+  it('a file checked in as a new version keeps its document’s title; a new document keeps the one derived from its name', async () => {
+    fileUploadIntoVault.mockResolvedValueOnce(filed('doc-1')).mockResolvedValueOnce(filed('doc-2'));
+    await request(app('admin'))
+      .post(`/api/c2c/project-vault/${PROGRAM}/data-room/file`)
+      .send({ sourceIds: [1, 2], newVersionOf: { '1': HEAD } });
+    const [checkIn, newDocument] = fileUploadIntoVault.mock.calls.map(([a]) => a);
+    // source(1) is titled "Report 1.pdf": a check-in takes the head's title, a new document the derived one.
+    expect(checkIn).toMatchObject({ supersedesDocumentId: HEAD, documentTitle: HEAD_TITLE });
+    expect(newDocument).toMatchObject({ supersedesDocumentId: undefined, documentTitle: 'Report 2' });
+  });
+
+  it('a refused conflict says which current version it can be added to', async () => {
+    fileUploadIntoVault
+      .mockResolvedValueOnce({ ok: false, status: 409, code: 'VERSION_CONTENT_CONFLICT', message: CONFLICT, headDocumentId: HEAD, headVersion: '2.0' })
+      .mockResolvedValueOnce(filed('doc-2'));
+    const res = await post('admin', [1, 2]);
+    expect(res.body.items[0]).toEqual({
+      sourceId: 1, outcome: 'refused', code: 'VERSION_CONTENT_CONFLICT', message: CONFLICT, headDocumentId: HEAD, headVersion: '2.0',
+    });
+    expect(res.body.complete).toBe(false);
+  });
+
+  it('a refusal with no version to offer carries no offer', async () => {
+    fileUploadIntoVault.mockResolvedValueOnce({ ok: false, status: 409, code: 'SOURCE_BYTES_CHANGED', message: 'Capture the file again.' })
+      .mockResolvedValueOnce(filed('doc-2'));
+    const res = await post('admin', [1, 2]);
+    expect(res.body.items[0]).not.toHaveProperty('headDocumentId');
   });
 });
 

@@ -355,7 +355,8 @@ router.get('/:tenantId/users', async (req, res) => {
  *         unmet (no export evidence, retention window still open). The caller
  *         can retry the same request once it satisfies the precondition.
  *   409 — the organization is in a state that conflicts with the request
- *         (already purged, not scheduled for deletion). Retrying will not help.
+ *         (already purged, not scheduled for deletion, or retained document
+ *         lineage blocks erasure). Review the governed records before retrying.
  *   403 — the purge cannot be attributed to a person (no user id on the
  *         request). The purge's audit row names who purged; a purge by nobody
  *         is refused.

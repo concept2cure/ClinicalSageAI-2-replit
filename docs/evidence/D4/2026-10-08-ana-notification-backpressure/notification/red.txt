@@ -1,0 +1,176 @@
+(node:8) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:8) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > keeps one pending SELECT across slow ticks, then polls again and delivers cancellation 10ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > logs a genuine failed read and releases admission for the next tick 3ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > logs a synchronous query failure without stranding poll admission 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > does not query with no local runs or after the last local run is released 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > run-control fallback backpressure > executes each admitted poll under actual system scope across tenant requests 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > ignores an old pending poll result after stop/restart while the new poll remains pending 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > returns a late old connection without replacing or leaking the restarted client 3ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > ignores late old connection failure without releasing the restarted client or arming old polling 4ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > does not let a released client error rearm the obsolete pool after restart 2ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > obsolete listener lifecycle > does not dispatch notifications from an obsolete released client into a restarted lifecycle 5ms
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > coalesces a notification burst to one pending read and one successor 14ms
+   → expected [ …(100) ] to have a length of 1 but got 100
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > does not lose Stop notified while an older running snapshot is pending 2ms
+   → expected [ { promise: Promise{…}, …(2) }, …(1) ] to have a length of 1 but got 2
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > lets another run deliver cancellation while the first run read stays pending 2ms
+   → expected [ { promise: Promise{…}, …(2) }, …(2) ] to have a length of 2 but got 3
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > logs rejection and drains the pending successor without stranding admission 2ms
+   → expected [ { promise: Promise{…}, …(2) }, …(1) ] to have a length of 1 but got 2
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > discards a queued successor after its local run has been released 2ms
+   → expected [ { promise: Promise{…}, …(2) }, …(1) ] to have a length of 1 but got 2
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > isolates pending results and queued work across listener stop and restart 2ms
+   → expected [ { promise: Promise{…}, …(2) }, …(1) ] to have a length of 1 but got 2
+ × server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > runs admitted and successor reads in actual system scope across tenant requests 2ms
+   → expected [ { promise: Promise{…}, …(2) }, …(2) ] to have a length of 2 but got 3
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > ignores unrelated channels, missing payloads and runs owned elsewhere 1ms
+ ✓ server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > logs synchronous query failure and admits the next notification 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > coalesces a notification burst to one pending read and one successor
+AssertionError: expected [ …(100) ] to have a length of 1 but got 100
+
+- Expected
++ Received
+
+- 1
++ 100
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:236:24
+    234|     const { fake, run, notify } = await listening();
+    235|     for (let i = 0; i < 100; i++) notify();
+    236|     expect(fake.reads).toHaveLength(1);
+       |                        ^
+    237|     fake.reads[0].resolve({ rows: [{ id: run.runId, status: 'running' …
+    238|     await flush();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > does not lose Stop notified while an older running snapshot is pending
+AssertionError: expected [ { promise: Promise{…}, …(2) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:249:24
+    247|     notify();
+    248|     notify();
+    249|     expect(fake.reads).toHaveLength(1);
+       |                        ^
+    250|     fake.reads[0].resolve({ rows: [{ id: run.runId, status: 'running' …
+    251|     await flush();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > lets another run deliver cancellation while the first run read stays pending
+AssertionError: expected [ { promise: Promise{…}, …(2) }, …(2) ] to have a length of 2 but got 3
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:265:24
+    263|     notify();
+    264|     notify(second.runId);
+    265|     expect(fake.reads).toHaveLength(2);
+       |                        ^
+    266|     fake.reads[1].resolve({ rows: [{ id: second.runId, status: 'cancel…
+    267|     await flush();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > logs rejection and drains the pending successor without stranding admission
+AssertionError: expected [ { promise: Promise{…}, …(2) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:276:24
+    274|     notify();
+    275|     notify();
+    276|     expect(fake.reads).toHaveLength(1);
+       |                        ^
+    277|     fake.reads[0].reject(new Error('notification database unavailable'…
+    278|     await flush();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > discards a queued successor after its local run has been released
+AssertionError: expected [ { promise: Promise{…}, …(2) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:294:24
+    292|     fake.reads[0].resolve({ rows: [{ id: run.runId, status: 'cancelled…
+    293|     await flush();
+    294|     expect(fake.reads).toHaveLength(1);
+       |                        ^
+    295|     expect(run.handle.cancelSignal.aborted).toBe(false);
+    296|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > isolates pending results and queued work across listener stop and restart
+AssertionError: expected [ { promise: Promise{…}, …(2) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:310:28
+    308|     old.fake.reads[0].resolve({ rows: [{ id: old.run.runId, status: 'c…
+    309|     await flush();
+    310|     expect(old.fake.reads).toHaveLength(1);
+       |                            ^
+    311|     expect(old.run.handle.cancelSignal.aborted).toBe(false);
+    312|     current.reads[0].resolve({ rows: [{ id: old.run.runId, status: 'ca…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/ana/__tests__/run-control-poll-backpressure.test.ts > notification backpressure > runs admitted and successor reads in actual system scope across tenant requests
+AssertionError: expected [ { promise: Promise{…}, …(2) }, …(2) ] to have a length of 2 but got 3
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ server/services/ana/__tests__/run-control-poll-backpressure.test.ts:322:24
+    320|     const scope = { tenantId: '7', role: 'member', source: 'request', …
+    321|     runWithTenantScope(scope, () => { notify(); notify(); notify(secon…
+    322|     expect(fake.reads).toHaveLength(2);
+       |                        ^
+    323|     fake.reads[0].resolve({ rows: [{ id: run.runId, status: 'running' …
+    324|     await flush();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 12 passed (19)
+   Start at  21:44:03
+   Duration  589ms (transform 150ms, setup 76ms, import 107ms, tests 65ms, environment 0ms)

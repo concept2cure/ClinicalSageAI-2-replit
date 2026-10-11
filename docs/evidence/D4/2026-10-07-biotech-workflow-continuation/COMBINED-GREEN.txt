@@ -1,0 +1,1662 @@
+Requested manifest: 39 files, COMBINED-MANIFEST.txt
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+···stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+{
+  "timestamp": "2026-10-07T14:43:44.016Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > the content, its revision, its trail row and the chained row are written on the transaction’s client, between BEGIN and COMMIT
+{
+  "timestamp": "2026-10-07T14:43:47.685Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+    at Object.query (/workspace/scratch/bd36ee581acd/concept2cure/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at writeAuthoringAuditTrail (/workspace/scratch/bd36ee581acd/concept2cure/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/scratch/bd36ee581acd/concept2cure/server/routes/authoring.router.ts:709:9)
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/routes/authoring.router.ts:3792:13
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-07T14:43:47.773Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "0905c2de-7a7f-485f-9b56-1fc8be3bbacd",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO authoring_audit_trail failed"
+  }
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-07T14:43:47.817Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+·stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+Error creating revision: Error: injected: INSERT INTO doc_revisions failed
+    at Object.query (/workspace/scratch/bd36ee581acd/concept2cure/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at createRevision (/workspace/scratch/bd36ee581acd/concept2cure/server/services/authoring/authoring-evidence.ts:399:20)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/routes/authoring.router.ts:3791:7
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-07T14:43:47.874Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "771cb31e-8297-43aa-b309-5b01db1ca46d",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO doc_revisions failed"
+  }
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-07T14:43:47.926Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+·stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an edited draft: generated_draft is the candidate text and generated_draft_sha256 its hash; the row verifies against its chain
+{
+  "timestamp": "2026-10-07T14:43:47.971Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content sent equal to the candidate): generated_draft is absent, its hash is recorded
+{
+  "timestamp": "2026-10-07T14:43:48.034Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+··stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content omitted): generated_draft is absent, its hash is recorded
+{
+  "timestamp": "2026-10-07T14:43:48.077Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+···············································stderr | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-10-07T14:44:11.442Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6350c372-ac61-4fba-bbc1-4cfa8a7e5fe2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-10-07T14:44:11.463Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6350c372-ac61-4fba-bbc1-4cfa8a7e5fe2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-10-07T14:44:11.482Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6350c372-ac61-4fba-bbc1-4cfa8a7e5fe2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-10-07T14:44:11.592Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Module_2_5_Clinical_Overview___to_file.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-10-07T14:44:11.594Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-10-07T14:44:11.622Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "11991e58-02d0-4ba3-b2c2-9cd5913175b6",
+    "code": "authoring-6350c372-ac61-4fba-bbc1-4cfa8a7e5fe2",
+    "type": "MODULE_2",
+    "size": 4027,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256
+{
+  "timestamp": "2026-10-07T14:44:11.644Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 6350c372-ac61-4fba-bbc1-4cfa8a7e5fe2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status
+{
+  "timestamp": "2026-10-07T14:44:11.761Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6d91010b-6a78-4025-861e-fa47236b66de by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status
+{
+  "timestamp": "2026-10-07T14:44:11.777Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6d91010b-6a78-4025-861e-fa47236b66de by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status
+{
+  "timestamp": "2026-10-07T14:44:11.789Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6d91010b-6a78-4025-861e-fa47236b66de by a***@canvas.example",
+  "context": {}
+}
+
+··stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not
+{
+  "timestamp": "2026-10-07T14:44:11.842Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f39171f4-565f-4790-890a-451e08080548 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not
+{
+  "timestamp": "2026-10-07T14:44:11.854Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f39171f4-565f-4790-890a-451e08080548 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not
+{
+  "timestamp": "2026-10-07T14:44:11.864Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f39171f4-565f-4790-890a-451e08080548 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 400 on a format it does not file
+{
+  "timestamp": "2026-10-07T14:44:11.923Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8d7fb4bc-007b-4451-acd9-c1b95d8b023a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 400 on a format it does not file
+{
+  "timestamp": "2026-10-07T14:44:11.936Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8d7fb4bc-007b-4451-acd9-c1b95d8b023a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 400 on a format it does not file
+{
+  "timestamp": "2026-10-07T14:44:11.947Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8d7fb4bc-007b-4451-acd9-c1b95d8b023a by a***@canvas.example",
+  "context": {}
+}
+
+··stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-10-07T14:44:11.999Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1141218f-0f1f-4e74-adda-21534794960f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-10-07T14:44:12.016Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1141218f-0f1f-4e74-adda-21534794960f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-10-07T14:44:12.037Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1141218f-0f1f-4e74-adda-21534794960f by a***@canvas.example",
+  "context": {}
+}
+
+·stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-10-07T14:44:12.153Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Module_2_5___docx.docx",
+    "declaredMime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-10-07T14:44:12.153Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-10-07T14:44:12.162Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "302e7af9-2389-49c4-9144-1d33b4e1f9eb",
+    "code": "authoring-1141218f-0f1f-4e74-adda-21534794960f",
+    "type": "MODULE_2",
+    "size": 9190,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder
+{
+  "timestamp": "2026-10-07T14:44:12.179Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 1141218f-0f1f-4e74-adda-21534794960f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-10-07T14:44:12.222Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3c4b7baa-100d-4d82-9654-8e88d901a0b6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-10-07T14:44:12.235Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3c4b7baa-100d-4d82-9654-8e88d901a0b6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-10-07T14:44:12.248Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3c4b7baa-100d-4d82-9654-8e88d901a0b6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-10-07T14:44:12.272Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Compensation_case.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-10-07T14:44:12.272Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-10-07T14:44:12.282Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8b513b68-dc55-4638-8051-c2ca3647f1a9",
+    "code": "authoring-3c4b7baa-100d-4d82-9654-8e88d901a0b6",
+    "type": "MODULE_2",
+    "size": 4004,
+    "hasText": true
+  }
+}
+
+stderr | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500
+{
+  "timestamp": "2026-10-07T14:44:12.296Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "3c4b7baa-100d-4d82-9654-8e88d901a0b6",
+    "why": "relation \"authoring_export_history\" does not exist"
+  }
+}
+
+·stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+{
+  "timestamp": "2026-10-07T14:44:12.336Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d49bfb6f-b58e-4f78-a330-7650186ac765 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+{
+  "timestamp": "2026-10-07T14:44:12.347Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d49bfb6f-b58e-4f78-a330-7650186ac765 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+{
+  "timestamp": "2026-10-07T14:44:12.358Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d49bfb6f-b58e-4f78-a330-7650186ac765 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+{
+  "timestamp": "2026-10-07T14:44:12.384Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Module_2_5___placement_throws.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+{
+  "timestamp": "2026-10-07T14:44:12.384Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+{
+  "timestamp": "2026-10-07T14:44:12.392Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "b22a372f-c90c-404b-b2f2-07a0027ac1ab",
+    "code": "authoring-d49bfb6f-b58e-4f78-a330-7650186ac765",
+    "type": "MODULE_2",
+    "size": 4018,
+    "hasText": true
+  }
+}
+
+stderr | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9)
+File-to-vault error: Error: placement exploded
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts:304:57
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+{
+  "timestamp": "2026-10-07T14:44:12.405Z",
+  "level": "error",
+  "message": "[authoring-router] filing to vault failed",
+  "context": {
+    "docId": "d49bfb6f-b58e-4f78-a330-7650186ac765",
+    "err": "placement exploded",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+·stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-10-07T14:44:12.434Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e43b772a-da28-47a7-931e-54ed0d54b6a6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-10-07T14:44:12.451Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e43b772a-da28-47a7-931e-54ed0d54b6a6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-10-07T14:44:12.462Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e43b772a-da28-47a7-931e-54ed0d54b6a6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-10-07T14:44:12.483Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Untyped_AnA_draft.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-10-07T14:44:12.483Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-10-07T14:44:12.493Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "d2a40153-8ddb-44ea-bcba-5591f008e020",
+    "code": "authoring-e43b772a-da28-47a7-931e-54ed0d54b6a6",
+    "type": "MODULE_2",
+    "size": 4004,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13)
+{
+  "timestamp": "2026-10-07T14:44:12.498Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc e43b772a-da28-47a7-931e-54ed0d54b6a6 by a***@canvas.example",
+  "context": {}
+}
+
+··stdout | server/routes/__tests__/authoringSavedSourcesExport.pglite.integration.test.ts
+✅ Template tables initialized
+
+······stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status content drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-07T14:44:21.869Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "d9bc71b7-a3f7-455d-b1cc-7756c1b48292",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status title drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-07T14:44:21.931Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "76c0a824-2da1-4b7f-9586-58707a8e95c5",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status order drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-07T14:44:21.979Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "40f5c532-1f37-4050-af3c-5835d9348323",
+    "why": "document sections changed during filing"
+  }
+}
+
+··stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status added section drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-07T14:44:22.026Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "ceb85321-b915-49ea-a4e6-2f1b288fb5d5",
+    "why": "document sections changed during filing"
+  }
+}
+
+···stderr | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-07T14:44:26.901Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 387e40c8-def6-4497-b64f-95918b850b90 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-07T14:44:26.920Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 387e40c8-def6-4497-b64f-95918b850b90 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-07T14:44:26.935Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 387e40c8-def6-4497-b64f-95918b850b90 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-07T14:44:26.998Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "CSR_carried.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-07T14:44:27.000Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-07T14:44:27.022Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e9692ea0-1722-4b39-89cc-3b1de488c0e6",
+    "code": "authoring-387e40c8-def6-4497-b64f-95918b850b90",
+    "type": "MODULE_2",
+    "size": 4620,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by two other members: the Vault version is approved, naming those signatures, bound to the file
+{
+  "timestamp": "2026-10-07T14:44:27.041Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 387e40c8-def6-4497-b64f-95918b850b90 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.156Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e4eb266d-0bdc-44ea-b377-a385fe314610 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.173Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e4eb266d-0bdc-44ea-b377-a385fe314610 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.185Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e4eb266d-0bdc-44ea-b377-a385fe314610 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.214Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__a_working_draft.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.215Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.223Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "7fa3891a-d10a-4084-af86-9ab6e8d563e5",
+    "code": "authoring-e4eb266d-0bdc-44ea-b377-a385fe314610",
+    "type": "MODULE_2",
+    "size": 4825,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a working draft: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.236Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc e4eb266d-0bdc-44ea-b377-a385fe314610 by a***@canvas.example",
+  "context": {}
+}
+
+·stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.283Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3689d152-f22a-4379-9e06-e91379254386 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.295Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3689d152-f22a-4379-9e06-e91379254386 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.309Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3689d152-f22a-4379-9e06-e91379254386 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.334Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__frozen__never_approved.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.334Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.342Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "bbcb14c5-a432-4440-a779-b1eded9a7250",
+    "code": "authoring-3689d152-f22a-4379-9e06-e91379254386",
+    "type": "MODULE_2",
+    "size": 4204,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > frozen, never approved: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.353Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 3689d152-f22a-4379-9e06-e91379254386 by a***@canvas.example",
+  "context": {}
+}
+
+·stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.390Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 00b19b0b-9861-4610-af18-0384df616a35 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.402Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 00b19b0b-9861-4610-af18-0384df616a35 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.417Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 00b19b0b-9861-4610-af18-0384df616a35 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.446Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__approved_with_no_review.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.447Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.455Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "13e50b62-cae4-4f25-9926-72188388fc47",
+    "code": "authoring-00b19b0b-9861-4610-af18-0384df616a35",
+    "type": "MODULE_2",
+    "size": 4207,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved with no review: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.469Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 00b19b0b-9861-4610-af18-0384df616a35 by a***@canvas.example",
+  "context": {}
+}
+
+·stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.509Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 60f87080-3f16-48c2-aeff-af973dbe0568 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.524Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 60f87080-3f16-48c2-aeff-af973dbe0568 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.538Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 60f87080-3f16-48c2-aeff-af973dbe0568 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.562Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__reviewed_after_the_approval.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.562Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.575Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "79400e48-c395-4e99-90ce-83aaa21e5ad6",
+    "code": "authoring-60f87080-3f16-48c2-aeff-af973dbe0568",
+    "type": "MODULE_2",
+    "size": 4649,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed after the approval: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.586Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 60f87080-3f16-48c2-aeff-af973dbe0568 by a***@canvas.example",
+  "context": {}
+}
+
+·stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.623Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2f8c9fec-4b61-4c06-acd0-8675f057c424 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.635Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2f8c9fec-4b61-4c06-acd0-8675f057c424 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.646Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2f8c9fec-4b61-4c06-acd0-8675f057c424 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.670Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__reviewed_and_approved_by_one_person.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.670Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.677Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "eec60342-22ab-43dd-9769-ccdddf7ff3da",
+    "code": "authoring-2f8c9fec-4b61-4c06-acd0-8675f057c424",
+    "type": "MODULE_2",
+    "size": 4657,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed and approved by one person: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.687Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 2f8c9fec-4b61-4c06-acd0-8675f057c424 by a***@canvas.example",
+  "context": {}
+}
+
+·stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.722Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cd839b5f-fc7d-4c31-994b-bf244f46c072 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.734Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cd839b5f-fc7d-4c31-994b-bf244f46c072 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.745Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc cd839b5f-fc7d-4c31-994b-bf244f46c072 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.779Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__approved_by_its_author.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.780Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.787Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "9f42123b-9b4b-40b7-985c-9172ab707981",
+    "code": "authoring-cd839b5f-fc7d-4c31-994b-bf244f46c072",
+    "type": "MODULE_2",
+    "size": 4647,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > approved by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.798Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc cd839b5f-fc7d-4c31-994b-bf244f46c072 by a***@canvas.example",
+  "context": {}
+}
+
+·stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.836Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c53691e9-3fe4-4111-80b7-a67aec6883fb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.847Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c53691e9-3fe4-4111-80b7-a67aec6883fb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.857Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c53691e9-3fe4-4111-80b7-a67aec6883fb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.880Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__reviewed_by_its_author.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.881Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.887Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "36b3af57-3e5d-4f1b-b663-1624510f97a8",
+    "code": "authoring-c53691e9-3fe4-4111-80b7-a67aec6883fb",
+    "type": "MODULE_2",
+    "size": 4647,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > reviewed by its author: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.898Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc c53691e9-3fe4-4111-80b7-a67aec6883fb by a***@canvas.example",
+  "context": {}
+}
+
+·stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.937Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 664106a9-7de1-4a52-babc-a9123f3ff643 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.949Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 664106a9-7de1-4a52-babc-a9123f3ff643 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.961Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 664106a9-7de1-4a52-babc-a9123f3ff643 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.985Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__a_signer_outside_the_organization.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.985Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:27.993Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "30baabb8-2761-44aa-85b3-e89cd9fdec22",
+    "code": "authoring-664106a9-7de1-4a52-babc-a9123f3ff643",
+    "type": "MODULE_2",
+    "size": 4656,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > a signer outside the organization: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:28.005Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 664106a9-7de1-4a52-babc-a9123f3ff643 by a***@canvas.example",
+  "context": {}
+}
+
+·stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:28.051Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 50fb147b-4fe1-49a9-98d1-86b927d4fae6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:28.062Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 50fb147b-4fe1-49a9-98d1-86b927d4fae6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:28.073Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 50fb147b-4fe1-49a9-98d1-86b927d4fae6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:28.095Z",
+  "level": "info",
+  "message": "[upload-safety] Content scan skipped for platform-generated bytes",
+  "context": {
+    "filename": "Not_carried__an_approval_of_other_content.pdf",
+    "declaredMime": "application/pdf"
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:28.095Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 33,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:28.103Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "927e179c-f2c0-4395-a248-47946dda4c05",
+    "code": "authoring-50fb147b-4fe1-49a9-98d1-86b927d4fae6",
+    "type": "MODULE_2",
+    "size": 4787,
+    "hasText": true
+  }
+}
+
+stdout | server/routes/__tests__/authoringFileToVaultApprovalCarry.pglite.integration.test.ts > FD5 (c): a sealed Authoring approval carries to its Vault copy > an approval of other content: nothing carries, the editor is told why, and the version is not reviewed
+{
+  "timestamp": "2026-10-07T14:44:28.115Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 50fb147b-4fe1-49a9-98d1-86b927d4fae6 by a***@canvas.example",
+  "context": {}
+}
+
+····················stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-07T14:44:38.536Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5dbcafcd-4990-44b1-a0c3-8a3e4f2e1b8e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-07T14:44:38.556Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5dbcafcd-4990-44b1-a0c3-8a3e4f2e1b8e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-07T14:44:38.575Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 5dbcafcd-4990-44b1-a0c3-8a3e4f2e1b8e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store
+{
+  "timestamp": "2026-10-07T14:44:38.648Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 2f77bbca-3c1c-4f87-b3cc-31dfac2235e8 by a***@canvas.example",
+  "context": {}
+}
+
+·······stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-07T14:44:38.754Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f076a756-bced-4e25-be99-c81c1d54a917 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-07T14:44:38.767Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f076a756-bced-4e25-be99-c81c1d54a917 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-07T14:44:38.779Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f076a756-bced-4e25-be99-c81c1d54a917 by a***@canvas.example",
+  "context": {}
+}
+
+·stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-07T14:44:38.842Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ed2a2a10-992b-486b-ab51-dbb7c25a2588 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-07T14:44:38.856Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ed2a2a10-992b-486b-ab51-dbb7c25a2588 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-10-07T14:44:38.868Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ed2a2a10-992b-486b-ab51-dbb7c25a2588 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft's section that held only an image is stored empty (a gap), not as <p></p>
+{
+  "timestamp": "2026-10-07T14:44:38.896Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fa43dd11-ac8e-4c5b-a740-bef2b4aef75d by a***@canvas.example",
+  "context": {}
+}
+
+··stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > an imported draft keeps its governed figure (a person placed it)
+{
+  "timestamp": "2026-10-07T14:44:38.934Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ede876e2-a106-4db3-8aa2-d6aa6132c550 by a***@canvas.example",
+  "context": {}
+}
+
+··stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+{
+  "timestamp": "2026-10-07T14:44:40.077Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a gateway refusal is filed as a failed turn
+{
+  "timestamp": "2026-10-07T14:44:44.202Z",
+  "level": "warn",
+  "message": "[authoring-router] ai/draft refused: the AI gateway declined the request",
+  "context": {
+    "code": "PROVIDER_UNAVAILABLE",
+    "sectionId": "e474aa1e-c511-44d2-9a09-deef09bfc995"
+  }
+}
+
+··stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a provider that answers with no draft is filed as a failed turn holding the prompt it was sent
+{
+  "timestamp": "2026-10-07T14:44:44.239Z",
+  "level": "warn",
+  "message": "[authoring-router] ai/draft refused: the provider returned no draft content",
+  "context": {
+    "sectionId": "bd7c48c1-8a54-43af-8319-46035f37e46b",
+    "model": "claude-opus-5-5"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence
+{
+  "timestamp": "2026-10-07T14:44:44.271Z",
+  "level": "error",
+  "message": "[authoring-router] drafting AI failed",
+  "context": {
+    "err": "socket hang up at 10.0.0.xxx",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence
+Error generating AI draft: TypeError: Cannot read properties of null (reading 'content')
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/routes/authoring.router.ts:3475:37
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > a draft from sources is a recorded turn > a fault of ours, in the model call or after it, is filed as a failed turn in a fixed sentence
+{
+  "timestamp": "2026-10-07T14:44:44.307Z",
+  "level": "error",
+  "message": "[authoring-router] drafting AI failed",
+  "context": {
+    "err": "Cannot read properties of null (reading 'content')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+···stderr | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the draft is checked against what the model was shown > a failed retrieval consulted nothing: every claim unchecked, none not found, and the record says why in the fixed sentence
+[Authoring] Data Room retrieval failed (non-fatal): connect ECONNREFUSED 10.0.0.1:5432
+
+·····stdout | server/routes/__tests__/authoring-ai-draft-record.pglite.test.ts > the record follows the draft to its accept > the accept’s trail row names the turn record and the gateway request the draft came from
+{
+  "timestamp": "2026-10-07T14:44:44.540Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ad-0000-4000-8000-0000000000ad by a***@canvas.example",
+  "context": {}
+}
+
+······················stdout | server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > composes the open program’s QOS from that program’s recorded sources, names included
+{
+  "timestamp": "2026-10-07T14:44:51.004Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T14:44:51.010Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > composes the open program’s QOS from that program’s recorded sources, names included
+{
+  "timestamp": "2026-10-07T14:44:51.011Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > composes the open program’s QOS from that program’s recorded sources, names included
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/cmc-quality-summary-tool.test.ts > draft_quality_overall_summary_m2_3 > reports a failed read as a failure, never as a summary
+{
+  "timestamp": "2026-10-07T14:44:51.145Z",
+  "level": "error",
+  "message": "[cmc-quality-summary-tool] draft_quality_overall_summary_m2_3 failed",
+  "context": {
+    "err": "program ownership check could not be run: relation \"cmc_source_objects\" does not exist"
+  }
+}
+
+······································································stderr | server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts
+{
+  "timestamp": "2026-10-07T14:44:58.802Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts
+{
+  "timestamp": "2026-10-07T14:44:58.931Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T14:44:58.932Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/api/cmc/__tests__/stabilityPoolabilityRoute.test.ts
+{
+  "timestamp": "2026-10-07T14:44:58.932Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+·····························································································································································································································································································································································································································································································································································································stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F2 — POST /docs/:id/sign auto-freezes when the final step approves the document > writes a frozen_documents row on the transaction client, between BEGIN and COMMIT
+{
+  "timestamp": "2026-10-07T14:45:02.797Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by a***@test.co",
+  "context": {}
+}
+
+·stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+{
+  "timestamp": "2026-10-07T14:45:02.845Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+{
+  "timestamp": "2026-10-07T14:45:02.845Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+·······················································································stdout | server/services/ana/__tests__/shelf-life-tool.test.ts
+{
+  "timestamp": "2026-10-07T14:45:07.525Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T14:45:07.526Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/shelf-life-tool.test.ts
+{
+  "timestamp": "2026-10-07T14:45:07.526Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/shelf-life-tool.test.ts
+[database] Database connection successful
+
+·····················stdout | server/services/__tests__/cmc-qc-batch-analyses.test.ts
+{
+  "timestamp": "2026-10-07T14:45:13.981Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T14:45:13.983Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/cmc-qc-batch-analyses.test.ts
+{
+  "timestamp": "2026-10-07T14:45:13.983Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/cmc-qc-batch-analyses.test.ts
+[database] Database connection successful
+
+······················stdout | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-07T14:45:16.659Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T14:45:16.662Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-07T14:45:16.662Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/draft-source-references.test.ts
+[database] Database connection successful
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-07T14:45:16.710Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+···················
+
+ Test Files  39 passed (39)
+      Tests  939 passed (939)
+   Start at  10:43:33
+   Duration  103.47s (transform 8.98s, setup 1.01s, import 22.53s, tests 70.16s, environment 832ms)

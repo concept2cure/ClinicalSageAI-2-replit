@@ -43,6 +43,8 @@ export interface DeviceReadinessScorecard {
 
 export interface ScorecardInput {
   classificationKnown: boolean;
+  /** When the classification could not be determined: the facts the engine needs to state a class. */
+  classificationMissingFacts?: string[];
   /** Required-document coverage, when assessed. */
   requirements?: { present: number; total: number };
   /** Per evidence module: applicable, and (when assessed) ready + present/total. */
@@ -86,7 +88,12 @@ export function computeDeviceReadinessScorecard(input: ScorecardInput): DeviceRe
     score: input.classificationKnown ? 100 : 0,
     status: input.classificationKnown ? 'ready' : 'not_started',
   });
-  if (!input.classificationKnown) topGaps.push('Risk classification not yet determined.');
+  if (!input.classificationKnown) {
+    const missing = input.classificationMissingFacts ?? [];
+    topGaps.push(missing.length
+      ? `Risk classification not yet determined: supply ${missing.join(', ')}.`
+      : 'Risk classification not yet determined.');
+  }
 
   // Required documents (weight 30) — only when assessed.
   if (input.requirements && input.requirements.total > 0) {
@@ -131,6 +138,25 @@ function moduleReadiness(detail: unknown): { ready?: boolean; present?: number; 
   return out;
 }
 
+/**
+ * Whether the blueprint's classification states a class. The MDR/IVDR engine
+ * returns `class: null` with `missingFacts` when a deciding fact was not supplied;
+ * that object exists but determines nothing, so it is never scored as determined
+ * (2026-10-05, after the engine began failing closed in 963c2167). An FDA
+ * pathway recommendation has no `class` field and counts when present.
+ */
+function classificationStanding(cls: unknown): { classificationKnown: boolean; classificationMissingFacts?: string[] } {
+  if (cls === undefined || cls === null) return { classificationKnown: false };
+  if (typeof cls === 'object' && 'class' in cls) {
+    const c = cls as { class: unknown; missingFacts?: unknown };
+    if (c.class === null || c.class === undefined) {
+      const missing = Array.isArray(c.missingFacts) ? c.missingFacts.filter((f): f is string => typeof f === 'string') : [];
+      return { classificationKnown: false, classificationMissingFacts: missing };
+    }
+  }
+  return { classificationKnown: true };
+}
+
 /** Build the scorecard from a device blueprint + an optional requirements assessment. */
 export function scorecardFromBlueprint(
   blueprint: DeviceBlueprint,
@@ -142,7 +168,7 @@ export function scorecardFromBlueprint(
     .map((m) => ({ id: m.id, label: m.title, applicable: m.applicable, ...moduleReadiness(m.detail) }));
 
   return computeDeviceReadinessScorecard({
-    classificationKnown: blueprint.classification !== undefined && blueprint.classification !== null,
+    ...classificationStanding(blueprint.classification),
     requirements: requirementsAssessment ? { present: requirementsAssessment.presentRequiredCount, total: requirementsAssessment.totalRequiredCount } : undefined,
     evidence,
   });

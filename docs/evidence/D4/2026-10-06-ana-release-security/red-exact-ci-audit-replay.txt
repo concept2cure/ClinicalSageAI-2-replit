@@ -1,0 +1,1 @@
+Dependency risk gate: unreviewed Critical/High finding(s): @jest/core, @jest/expect, @jest/globals, @jest/reporters, @jest/transform, babel-jest, compression, create-jest, jest, jest-circus, jest-cli, jest-config, jest-resolve-dependencies, jest-runner, jest-runtime, jest-snapshot, proxy-addr, shell-quote, source-map-js

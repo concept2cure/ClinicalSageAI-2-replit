@@ -1,0 +1,104 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown-cache.test.ts > AnA markdown cache > keeps a frequently read answer cached across 600 new streaming prefixes 1112ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown-cache.test.ts > AnA markdown cache > evicts an unread answer when a 201st distinct entry arrives 346ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown-cache.test.ts > AnA markdown cache > returns sanitized HTML on cache hits for malicious input 15ms
+(node:49) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > renders sanitized prose and keeps a governed figure, resolved to displayable bytes 65ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > states a failed reference instead of leaving a broken glyph 19ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > refuses a reference OUTSIDE the governed images route — no authenticated fetch fires 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/../../tenant-export/full 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/%2e%2e/%2e%2e/users/me 14ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/..\..\tenant-export\full 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a/../../../compliance/gdpr/7/data-subject/42/export 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never fetches a reference that walks out of the image store: /api/authoring/images/file_1_a?download=1 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: https://collector.example/p.png?d=secret 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: //collector.example/p.png 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: data:image/svg+xml;base64,PHN2Zz4= 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > never displays a src that is not a figure, and says it must be uploaded: data:image/webp;base64,UklGRg== 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoredHtml.test.tsx > AuthoredHtml > displays an inline PNG as it is, with no request and no statement 3ms
+(node:57) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > renders ordinary markdown into HTML 25ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > returns empty string for empty input 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > strips <script> tags inside raw HTML 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > strips inline event handlers 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > strips javascript: URLs from anchors 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > strips <iframe> and <object> entirely 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > strips <style> tags (CSS injection vector) 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > keeps safe formatting tags from the allowlist 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > keeps href on <a> but strips other attributes 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > renderSafeMarkdown > caches identical inputs (idempotent return value) 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeChatHtml > returns empty string for empty input 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeChatHtml > strips <script> tags from HTML input 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeChatHtml > strips inline event handlers from HTML input 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeChatHtml > still strips <img> — chat stays image-free by design 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > returns empty string for empty input 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > keeps a governed figure reference, moved off src so injection cannot fire an unauthenticated request 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves a same-app API src OUTSIDE the governed images route on a live src 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves an external address on a live src 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves a protocol-relative address on a live src 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves an inline SVG on a live src 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves an inline HTML document on a live src 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves an inline WebP, which the Word export cannot file on a live src 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > never leaves a reference that walks out of the image store on a live src 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > keeps an inline PNG on src: nothing is fetched, and the export files it as it is 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > keeps figure/figcaption structure 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > keeps merged-cell and track-change markup the editor serializes 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > strips script, event handlers, and javascript: src exactly like the chat path 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts > sanitizeAuthoringHtml > does not leak the img allowance back into the chat config (hook is scoped) 2ms
+(node:65) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is the store route followed by an id in the shape the store mints 1ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not dot segments 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not dot segments after a valid id 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a trailing dot segment 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not percent-encoded dot segments 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not upper-case percent-encoding 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a half-encoded dot segment 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not backslash segments 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not an extra segment 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a query 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a fragment 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not leading whitespace 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a trailing newline 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a tab inside the id 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not an absolute URL to the route 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a protocol-relative URL 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not a doubled slash 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not an id the store does not mint 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not an upper-case id 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not the bare route 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > a governed figure reference > is not another API route 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is a base64 PNG, JPEG or GIF: the formats both export branches file 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not WebP, which Word cannot hold 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not SVG, a script container 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not SVG as text 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not HTML 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not image/jpg, which the export does not embed 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not a payload that is not base64 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not a payload carrying markup 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > an inline figure > is not an empty payload 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "https://collector.example/p.png?d=secret" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "http://example.com/fig.png" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "javascript:alert(1)" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "blob:https://app.example/0b3c" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "x.png" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > is not a figure: "" 0ms
+ ✓ shared/__tests__/figure-refs.test.ts > anything else > a value that is not a string is not a figure 0ms
+
+ Test Files  4 passed (4)
+      Tests  81 passed (81)
+   Start at  11:07:05
+   Duration  8.35s (transform 849ms, setup 954ms, import 705ms, tests 1.76s, environment 3.62s)

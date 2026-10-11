@@ -28,7 +28,13 @@ export const PROGRAM = {
   name: 'BX-204 Program',
   product_name: 'Examplinib',
   program_type: 'ind',
+  // The number FDA assigned, as the project records it: what a package names as
+  // its application (package-identity.ts). Never the code above.
+  application_number: '000204',
 };
+
+/** The organisation's recorded name: the applicant a package names. */
+export const SPONSOR = 'Examplinib Therapeutics Inc.';
 
 /** Placed leaves covering M2 + M3; one points at an unresolvable source. */
 export const LEAVES = [
@@ -48,6 +54,8 @@ export interface SpineOpts {
   history?: unknown[];
   /** The sequence the spine resolves to (default the original, 0000). */
   sequenceNumber?: string;
+  /** The organisation's recorded name (default SPONSOR); null for none on record. */
+  organizationName?: string | null;
 }
 
 /** The spine's reads, answered from `opts`, on the test file's hoisted pool mock. */
@@ -55,6 +63,8 @@ export function mockSpineOn(poolQuery: Mock) {
   return (opts: SpineOpts = {}) => {
     const leaves = opts.leaves ?? LEAVES;
     const program = opts.program ?? PROGRAM;
+    const organizationName = opts.organizationName === undefined ? SPONSOR : opts.organizationName;
+    const organizationRows = organizationName === null ? [] : [{ name: organizationName }];
     poolQuery.mockReset();
     poolQuery.mockImplementation(async (sql: string) => {
       if (opts.failInsert && /INSERT INTO ectd_compilations/i.test(sql)) {
@@ -67,6 +77,7 @@ export function mockSpineOn(poolQuery: Mock) {
       if (/FROM c2c_rule_packs/i.test(sql)) {
         return { rows: opts.pack ? [{ version: 'v2.3-test', required_sections: opts.pack }] : [] };
       }
+      if (/FROM organizations/i.test(sql)) return { rows: organizationRows };
       if (/FROM regulatory_programs/i.test(sql)) return { rows: [program] };
       // The program's own submission, anchored to it (submissions.program_id,
       // LX-22): resolveSubmissionSpine takes an anchored row as the program's.

@@ -37,7 +37,6 @@ const SUBMISSION_TOOLS = [
   'run_shadow_review',
   'plan_submission',
   'explain_validation_findings',
-  'cross_region_gap_analysis',
   'dispatch_qc_check',
   'trace_provenance',
   'check_consistency',
@@ -201,18 +200,28 @@ describe('convert_to_rps_v4 (pure)', () => {
 });
 
 describe('generate_stf (pure)', () => {
-  it('produces one stf.xml per study', async () => {
+  it('produces one stf-<study-id>.xml per study, pointing at index.xml leaf IDs', async () => {
     const handler = getToolHandler('generate_stf')!;
     const out = JSON.parse(
       await handler({
         leaves: [
-          { study_id: 'S-1', file_tag: 'study-report-body', ctd_section: '5.3.5.1', href: 'm5/s1/body.pdf', title: 'Body', operation: 'new' },
+          { study_id: 'S-1', file_tag: 'study-report', ctd_section: '5.3.5.1', href: 'm5/5-3-5-1/s-1/body.pdf', title: 'Body', operation: 'new', index_leaf_id: 'leaf-5-3-5-1-body', index_rel_path: '../../../index.xml' },
         ],
       })
     );
     expect(out.ok).toBe(true);
     expect(out.summary.studies).toBe(1);
+    expect(out.files[0].fileName).toBe('stf-s-1.xml');
     expect(out.files[0].xml).toContain('<study-id>S-1</study-id>');
+    expect(out.files[0].xml).toContain('<doc-content xlink:href="../../../index.xml#leaf-5-3-5-1-body">');
+  });
+
+  it('returns a structured error when a leaf has no index.xml leaf ID', async () => {
+    const handler = getToolHandler('generate_stf')!;
+    const out = JSON.parse(
+      await handler({ leaves: [{ study_id: 'S-1', file_tag: 'study-report', ctd_section: '5.3.5.1', href: 'h.pdf', title: 't', operation: 'new' }] })
+    );
+    expect(out.error).toMatch(/index\.xml leaf ID/);
   });
 
   it('returns a structured error when a tagged leaf is missing its file-tag', async () => {
@@ -278,11 +287,6 @@ describe('submission AI tasks — tenant + input guards', () => {
     const handler = getToolHandler('explain_validation_findings')!;
     const out = JSON.parse(await handler({ region: 'fda', findings: [{ severity: 'error', message: 'x' }] }, { humanConfirmed: true } as ToolContext));
     expect(out.error).toMatch(/tenant context/);
-  });
-  it('cross_region_gap_analysis validates required inputs', async () => {
-    const handler = getToolHandler('cross_region_gap_analysis')!;
-    const out = JSON.parse(await handler({ source_region: 'fda' }, { organizationId: 1, userId: 2, humanConfirmed: true } as ToolContext));
-    expect(out.error).toMatch(/target_regions|application_type/);
   });
   it('dispatch_qc_check refuses without org/user context', async () => {
     const handler = getToolHandler('dispatch_qc_check')!;

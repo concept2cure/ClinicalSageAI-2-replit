@@ -1,0 +1,171 @@
+{
+  "head_sha": "7fa964baf87fea7856e5c6307d7705c9d1e68ded",
+  "runs": [
+    {
+      "name": "CI",
+      "id": 37903997941,
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37903997941"
+    },
+    {
+      "name": "Repo Health Baseline Refresh",
+      "id": 37903997631,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37903997631"
+    },
+    {
+      "name": "CodeQL",
+      "id": 37903997464,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37903997464"
+    },
+    {
+      "name": "Tier 5 Browser Smoke",
+      "id": 37903997468,
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37903997468"
+    },
+    {
+      "name": "Semgrep",
+      "id": 37903997462,
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37903997462"
+    },
+    {
+      "name": "C2C Agent — Validate & Audit",
+      "id": 37903997502,
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37903997502"
+    }
+  ],
+  "main_jobs": [
+    {
+      "name": "Security Contract Tests",
+      "id": 113732939056,
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "name": "Lint",
+      "id": 113732939230,
+      "conclusion": "failure",
+      "failed_steps": [
+        "Proof tier — schema contracts + golden journeys + export contracts",
+        "No hand-rolled error-envelope reads",
+        "Guardrails — every in-scope AnA tool reads from its register entry (with selftest)",
+        "Guardrails — tenant-isolation in raw SQL (no regressions)",
+        "Guardrails — requestDb (RLS) adoption (no regressions)"
+      ]
+    },
+    {
+      "name": "Security Scan",
+      "id": 113732939285,
+      "conclusion": "failure",
+      "failed_steps": [
+        "Run lockfile audit and dependency-risk ledger gate"
+      ]
+    },
+    {
+      "name": "Secret scan (full history)",
+      "id": 113732939294,
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "name": "Nightly Governance Strict",
+      "id": 113732940683,
+      "conclusion": "skipped",
+      "failed_steps": []
+    },
+    {
+      "name": "Test",
+      "id": 113755685312,
+      "conclusion": "failure",
+      "failed_steps": [
+        "Run tests"
+      ]
+    },
+    {
+      "name": "Production Boot Smoke (RLS on, non-superuser role)",
+      "id": 113755685329,
+      "conclusion": "failure",
+      "failed_steps": [
+        "Provision the schema from scratch (owner connection)"
+      ]
+    },
+    {
+      "name": "Coverage (ratchet)",
+      "id": 113755685330,
+      "conclusion": "failure",
+      "failed_steps": [
+        "Coverage may not go down"
+      ]
+    },
+    {
+      "name": "Production Image Boot (built image, empty database, sign-in)",
+      "id": 113755685399,
+      "conclusion": "failure",
+      "failed_steps": [
+        "Provision the empty database with the provision image"
+      ]
+    },
+    {
+      "name": "AIOS Audit Assets",
+      "id": 113755685403,
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "name": "AnA Readiness Tests",
+      "id": 113755685425,
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "name": "Integration Tests",
+      "id": 113755685466,
+      "conclusion": "failure",
+      "failed_steps": [
+        "Provision a deploy-shaped database for the real-database tests",
+        "Run integration tests"
+      ]
+    },
+    {
+      "name": "Blank DB Provisioning + Deploy Migration",
+      "id": 113755685496,
+      "conclusion": "failure",
+      "failed_steps": [
+        "Provision from scratch"
+      ]
+    },
+    {
+      "name": "Build",
+      "id": 113803477999,
+      "conclusion": "skipped",
+      "failed_steps": []
+    },
+    {
+      "name": "Assemble Release Evidence",
+      "id": 113803478270,
+      "conclusion": "skipped",
+      "failed_steps": []
+    },
+    {
+      "name": "Release evidence gate",
+      "id": 113803478506,
+      "conclusion": "skipped",
+      "failed_steps": []
+    }
+  ],
+  "known_log_findings": {
+    "browser_provisioning": "Missing relations during empty-database provisioning; browser assertions did not run.",
+    "semgrep": "Five blocking delta findings outside this delivery's production paths; no scanner waiver added."
+  },
+  "scope": "Status of starting commit, not this delivery's qualification. Full CI remains open."
+}

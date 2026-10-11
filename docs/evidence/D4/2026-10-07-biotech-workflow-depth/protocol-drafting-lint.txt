@@ -1,0 +1,16 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana/AnaDocumentDraftingService.ts
+   23:3   warning  'GatewayResponse' is defined but never used            @typescript-eslint/no-unused-vars
+   27:3   warning  'ExtendedThinkingConfig' is defined but never used     @typescript-eslint/no-unused-vars
+   28:3   warning  'AnaTool' is defined but never used                    @typescript-eslint/no-unused-vars
+   29:3   warning  'AnaToolResult' is defined but never used              @typescript-eslint/no-unused-vars
+   30:3   warning  'TaskType' is defined but never used                   @typescript-eslint/no-unused-vars
+  750:11  warning  'startTime' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  767:1   warning  File has too many lines (806). Maximum allowed is 500  max-lines
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/ind/ctd/lifecycle-document-types.ts
+  586:1  warning  File has too many lines (3274). Maximum allowed is 500  max-lines
+
+✖ 8 problems (0 errors, 8 warnings)
+

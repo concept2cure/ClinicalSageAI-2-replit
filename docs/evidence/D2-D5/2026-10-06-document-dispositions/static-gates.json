@@ -1,0 +1,102 @@
+[
+  {
+    "script": "ci:ectd-stubs",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:risk-codes",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:migration-set-order",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:migration-drop-safety",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:migration-deploy-path",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:column-reachability",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:runtime-ddl",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:json-operator-types",
+    "exitCode": 0
+  },
+  {
+    "script": "db:sync-manifest:check",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:drizzle-tenant-scope",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:undefined-css-classes",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:unauthenticated-fetch",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:session-scoped-rls-bypass",
+    "exitCode": 0
+  },
+  {
+    "script": "check:catalog-copy",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:fixture-fallback",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:no-mock-in-prod-routes",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:fabricated-identity",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:program-ownership-single-source:selftest",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:program-ownership-single-source",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:discarded-audit-write",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:client-ip-single-source",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:sign-ceremony",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:upload-guards",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:trivyignore-hygiene",
+    "exitCode": 0
+  },
+  {
+    "script": "ci:server-error-leaks",
+    "exitCode": 0
+  }
+]

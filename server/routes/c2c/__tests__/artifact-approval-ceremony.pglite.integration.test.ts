@@ -107,7 +107,14 @@ vi.mock('../../../services/intelligence/rim-interceptors.js', () => ({
 
 import artifactRouter from '../artifacts';
 import { db } from '../../../db';
-import { commitSignedArtifactAct } from '../../../services/artifact-signed-act';
+import {
+  ArtifactActConflictError,
+  ArtifactActContractError,
+  commitSignedArtifactAct,
+} from '../../../services/artifact-signed-act';
+import { artifactStatusUpdate } from '../../../services/artifact-approval-act';
+import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
+import { eq } from 'drizzle-orm';
 
 const BASELINE = 'migrations/0000_sweet_joseph.sql';
 const DDL = [
@@ -178,13 +185,13 @@ async function seed(status: 'review' | 'approved', opts: { versionRow?: boolean 
   await run(
     `INSERT INTO concept2cure_artifacts
        (artifact_id, organization_id, project_id, type, category, title, content, content_hash, version, status, approved_version_id)
-     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', 'sha-v2', 2, $4, $5)`,
+     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', 2, $4, $5)`,
     [ARTIFACT, ORG, PROJECT, status, status === 'approved' ? 2 : null],
   );
   if (opts.versionRow !== false) {
     await run(
       `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash)
-       SELECT id, organization_id, 2, 'body', 'sha-v2' FROM concept2cure_artifacts WHERE artifact_id = $1`,
+       SELECT id, organization_id, 2, 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5' FROM concept2cure_artifacts WHERE artifact_id = $1`,
       [ARTIFACT],
     );
   }
@@ -362,7 +369,7 @@ describe('locking an approved artifact is an electronic signature', () => {
     ]);
     expect(await ledger()).toEqual([{ command: 'lock', target: `artifact:${ARTIFACT}` }]);
     const [snap] = (await run(`SELECT approved_version_id, content_hash FROM concept2cure_submission_snapshots`)).rows;
-    expect(snap, 'the snapshot binds the hash the signature binds').toEqual({ approved_version_id: 2, content_hash: 'sha-v2' });
+    expect(snap, 'the snapshot binds the hash the signature binds').toEqual({ approved_version_id: 2, content_hash: '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5' });
   });
 });
 
@@ -375,17 +382,11 @@ describe('the signed act commits only from the state the signer was shown', () =
   ) =>
     db.transaction(tx =>
       commitSignedArtifactAct(tx, {
-        artifact: {
-          ...read,
-          artifactId: read.artifact_id,
-          approvedVersionId: read.approved_version_id,
-          contentHash: read.content_hash,
-          createdById: read.created_by_id,
-        } as never,
-        version: { ...version, contentHash: version.content_hash } as never,
+        artifact: read as never,
+        version: version as never,
         status,
         previousStatus,
-        updateData: status === 'approved' ? { status, approvedVersionId: read.version } : { status, publishedVersionId: read.version },
+        updateData: artifactStatusUpdate({ version: read.version }, previousStatus, status, USER),
         organizationId: ORG,
         userId: USER,
         userRole: 'admin',
@@ -396,8 +397,8 @@ describe('the signed act commits only from the state the signer was shown', () =
       }),
     );
   const readArtifact = async () =>
-    (await run(`SELECT * FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows[0];
-  const readVersion = async () => (await run(`SELECT * FROM concept2cure_artifact_versions`)).rows[0];
+    (await db.select().from(concept2cureArtifacts).where(eq(concept2cureArtifacts.artifactId, ARTIFACT)).limit(1))[0];
+  const readVersion = async () => (await db.select().from(concept2cureArtifactVersions).limit(1))[0];
 
   it.each([
     ['approved in between (a second approval racing the first)', 'review', 'approved', `UPDATE concept2cure_artifacts SET status = 'approved', approved_version_id = 2 WHERE artifact_id = '${ARTIFACT}'`],
@@ -413,5 +414,78 @@ describe('the signed act commits only from the state the signer was shown', () =
     expect(await signatures()).toEqual([]);
     expect(await ledger()).toEqual([]);
     expect(await snapshots()).toEqual([]);
+  });
+});
+
+/**
+ * The act writes exactly the canonical approval/lock columns. A caller that
+ * hands it any other set is the server disagreeing with itself, and must never
+ * be reported to a signer as "the document changed".
+ *
+ * 2026-10-11: the status route added one extra key (`metadata`) to that set and
+ * every approve and lock answered 409 ARTIFACT_CHANGED — a sentence that was
+ * not true, shown to users, for a mismatch between two of our own modules. The
+ * metadata is now its own input, and a wrong column set is a contract error.
+ */
+describe('the column set the signed act accepts', () => {
+  const act = async (over: Record<string, unknown>) => {
+    const [artifact] = (await run(`SELECT * FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows;
+    const [version] = (await run(`SELECT * FROM concept2cure_artifact_versions`)).rows;
+    const read = {
+      ...artifact,
+      artifactId: artifact.artifact_id,
+      approvedVersionId: artifact.approved_version_id,
+      contentHash: artifact.content_hash,
+      createdById: artifact.created_by_id,
+      projectId: artifact.project_id,
+      organizationId: artifact.organization_id,
+      updatedAt: artifact.updated_at,
+    };
+    return db.transaction(tx =>
+      commitSignedArtifactAct(tx, {
+        artifact: read as never,
+        version: { ...version, contentHash: version.content_hash } as never,
+        status: 'approved',
+        previousStatus: 'review',
+        updateData: artifactStatusUpdate(read as never, 'review', 'approved', USER) as never,
+        organizationId: ORG,
+        userId: USER,
+        userRole: 'admin',
+        attestationText: 'I approve this document as reviewed.',
+        reason: null,
+        secondFactorVerified: false,
+        ipAddress: null,
+        ...over,
+      }),
+    );
+  };
+
+  it('the harness metadata the route republishes is written by the act, through the route', async () => {
+    await seed('review');
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const { metadata } = (await run(`SELECT metadata FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows[0];
+    expect(metadata?.harness, 'the status change did not republish the harness block').toBeTruthy();
+    expect(await signatures()).toHaveLength(1);
+  });
+
+  it.each([
+    ['an extra column', { metadata: { a: 1 } }],
+    ['a column it must write, removed', {}],
+  ])('%s is a contract error, never "the document changed", and nothing is written', async (_label, extra) => {
+    await seed('review');
+    const [artifact] = (await run(`SELECT * FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows;
+    const canonical = artifactStatusUpdate({ version: artifact.version } as never, 'review', 'approved', USER);
+    const updateData = 'metadata' in extra ? { ...canonical, ...extra } : Object.fromEntries(Object.entries(canonical).slice(1));
+
+    const err = await act({ updateData: updateData as never }).catch((e: unknown) => e);
+
+    expect(err, 'a wrong column set was reported as a conflict').toBeInstanceOf(ArtifactActContractError);
+    expect(err).not.toBeInstanceOf(ArtifactActConflictError);
+    expect(String((err as Error).message)).not.toMatch(/document changed/i);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+    expect(await ledger()).toEqual([]);
   });
 });

@@ -78,6 +78,9 @@ export interface RenderedReport {
   reportTypeId: string;
   scopeType: string;
   scopeId: string;
+  /** The scope by name (a project's name or code), stored at run creation.
+   *  Absent on runs created before it was stored. */
+  scopeLabel?: string;
   generatedAt: string;
   status: ReportRunStatus;
   sections: ReportSection[];

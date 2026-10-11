@@ -59,10 +59,10 @@
       "tool-panel": { "path": "client/src/concept2cure/components/ToolPanel.tsx", "status": "deleted" }
     },
     "destinations": {
-      "chats": { "status": "active", "railTarget": "conversation-thread", "note": "Explore › Conversation, plus the Home composer and the AnA rail" },
+      "chats": { "status": "active", "railTarget": "conversation-thread", "note": "the nav's Conversation entry (the conversation in progress, until Recents), New conversation (Home), and every Ask AnA" },
       "projects": { "status": "active", "railTarget": "projects" },
       "communication-center": { "status": "active", "railTarget": null, "note": "not a rail item by the 2026-07-28 decision; reachable via ⌘K, deep link, project home, AnA navigate_to" },
-      "apps": { "status": "active", "railTarget": "apps" },
+      "apps": { "status": "active", "accountMenu": ["Apps catalog"], "note": "the account menu, since the nav lists only the places (docs/design/ONE_ANA_ONE_CANVAS.md §5)" },
       "settings": { "status": "active", "railTarget": null, "accountMenu": ["Admin", "Licensing", "Access requests", "Usage & limits", "Billing", "View all plans", "Set up a workspace", "Log out"] }
     }
   },

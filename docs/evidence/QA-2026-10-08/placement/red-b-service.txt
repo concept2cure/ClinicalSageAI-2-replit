@@ -1,0 +1,27 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/submission-service/__tests__/list-submissions-program-scope.pglite.test.ts > the submission list, scoped to a program > returns only the program's own submissions when a programId is given 32ms
+   → expected [ 3, 2, 1 ] to not include 2
+ ✓ server/services/submission-service/__tests__/list-submissions-program-scope.pglite.test.ts > the submission list, scoped to a program > with no programId, every submission of the organization is listed, as the Submission Center reads it 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/list-submissions-program-scope.pglite.test.ts > the submission list, scoped to a program > returns only the program's own submissions when a programId is given
+AssertionError: expected [ 3, 2, 1 ] to not include 2
+ ❯ server/services/submission-service/__tests__/list-submissions-program-scope.pglite.test.ts:66:21
+     64|     const ids = rows.map((r) => Number(r.id));
+     65|     expect(ids).toContain(own);
+     66|     expect(ids).not.toContain(other);
+       |                     ^
+     67|     expect(ids).not.toContain(unanchored);
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  01:22:24
+   Duration  8.97s (transform 2.57s, setup 105ms, import 3.51s, tests 4.75s, environment 0ms)
+

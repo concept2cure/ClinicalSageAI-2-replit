@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-05T00:53:49.658Z",
+  "generatedAt": "2026-10-09T20:09:07.786Z",
   "scanner": {
     "name": "npm audit",
-    "npmVersion": "10.9.7",
+    "npmVersion": "11.9.0",
     "command": "npm audit --audit-level=high --json",
     "input": "package-lock.json",
     "resultArtifact": "dependency-audit-results.json"
   },
   "lockfileVersion": 3,
-  "lockfileSha256": "35931d2ae5265c2b863407d51e2eb41c756b14ad3dc9b38d65252ff15d50d2c1",
+  "lockfileSha256": "529a8e5889cf500959484df70c561d27746437aa3a4c7d043cd70a5c551e3961",
   "rootPackageVersion": "1.0.0",
   "findings": [
     {

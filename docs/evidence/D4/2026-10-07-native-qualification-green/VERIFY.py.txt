@@ -1,0 +1,96 @@
+from pathlib import Path
+import argparse, collections, copy, hashlib, json, subprocess, sys
+
+directory = Path(__file__).resolve().parent
+repo = directory.parents[3]
+qualified = '6a54db14cc6a41727c5f46103afbab2ac9609047'
+scope = json.loads((directory / 'SCOPE.json').read_text())
+receipt = json.loads((directory / 'REMOTE-RECEIPT.json').read_text())
+
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=repo, text=True).strip()
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+def relative(path):
+    prefix = '/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/'
+    require(path.startswith(prefix), 'unexpected runner path')
+    return path[len(prefix):]
+
+def verify(report, remote, manifest):
+    files = report['testResults']
+    paths = [relative(s['name']) for s in files]
+    require(len(paths) == 150 and len(set(paths)) == 150, 'missing or duplicate native file')
+    require(sorted(paths) == manifest['nativePhysicalFilePopulation'], 'native file population differs')
+    cases = [a for s in files for a in s['assertionResults']]
+    require(len(cases) == 1582, 'native case population differs')
+    require(all(s['status'] == 'passed' for s in files), 'native file did not pass')
+    require(all(a['status'] == 'passed' for a in cases), 'native case failed or did not run')
+    require(all(not a.get('failureMessages') for a in cases), 'case carries a failure')
+    require(report['success'] is True, 'native success flag false')
+    for key, expected in {'numTotalTests':1582,'numPassedTests':1582,'numFailedTests':0,
+                          'numPendingTests':0,'numTodoTests':0,'numTotalTestSuites':594,
+                          'numPassedTestSuites':594,'numFailedTestSuites':0,'numPendingTestSuites':0}.items():
+        require(report[key] == expected, 'native counter differs: ' + key)
+    require(remote['run']['id'] == 37697288645 and remote['run']['run_attempt'] == 1,
+            'wrong CI run or attempt')
+    require(remote['run']['head_sha'] == qualified and remote['run']['head_branch'] == 'concept2cure-v2',
+            'wrong CI source')
+    artifact = remote['artifact']
+    require(artifact['id'] == 11516976694 and artifact['name'] == 'real-database-test-results',
+            'wrong native artifact')
+    require(artifact['workflow_run']['head_sha'] == qualified and artifact['workflow_run']['id'] == 37697288645,
+            'artifact does not bind the qualified source')
+    require(artifact['digest'] == 'sha256:' + manifest['archiveSha256'], 'archive digest mismatch')
+    jobs = {j['name']:j for j in remote['jobs']}
+    for name in ['Lint','Integration Tests']:
+        require(jobs[name]['head_sha'] == qualified, 'job does not bind the qualified source')
+    for job_name, step_names in {
+        'Lint':['Run TypeScript check (no regression vs baseline)','Run beta-slice TypeScript check'],
+        'Integration Tests':['Smoke — apply RLS rollout migrations (0019/0020/0021)',
+                             'Provision a deploy-shaped database for the real-database tests',
+                             'Run real-database tests (unmocked pg, RLS_ENFORCE=on)',
+                             'Upload real-database test results']}.items():
+        steps = {s['name']:s for s in jobs[job_name]['steps']}
+        for name in step_names:
+            require(steps[name]['status'] == 'completed' and steps[name]['conclusion'] == 'success',
+                    'required CI step did not pass: ' + name)
+    for pin in manifest['unchangedSourceAndGuardObjects']:
+        require(git('rev-parse', qualified + ':' + pin['path']) == pin['gitObject'], 'changed qualified source pin')
+        require(git('rev-parse', 'HEAD:' + pin['path']) == pin['gitObject'], 'current source differs')
+    require(manifest['wholeWorkflowReady'] is False, 'whole workflow readiness overclaim')
+    return {'physicalFiles':len(files),'cases':len(cases),'passed':len(cases),'failed':0,'pending':0,
+            'sourceObjectsVerified':len(manifest['unchangedSourceAndGuardObjects'])}
+
+def selftest(report):
+    controls = [{'control':'valid exact native report','accepted':True,'result':verify(report,receipt,scope)}]
+    mutants = []
+    r=copy.deepcopy(report);r['testResults'].pop();mutants.append(('missing file',r,receipt,scope))
+    r=copy.deepcopy(report);r['testResults'][0]['assertionResults'].pop();mutants.append(('missing case',r,receipt,scope))
+    r=copy.deepcopy(report);r['testResults'][0]['assertionResults'][0]['status']='failed';mutants.append(('failing case',r,receipt,scope))
+    r=copy.deepcopy(report);r['testResults'][0]['assertionResults'][0]['status']='pending';mutants.append(('pending case',r,receipt,scope))
+    r=copy.deepcopy(report);r['numPassedTests']=1583;mutants.append(('forged count',r,receipt,scope))
+    c=copy.deepcopy(receipt);c['run']['head_sha']='0'*40;mutants.append(('wrong CI source',report,c,scope))
+    c=copy.deepcopy(receipt);next(s for j in c['jobs'] if j['name']=='Lint' for s in j['steps'] if s['name']=='Run beta-slice TypeScript check')['conclusion']='failure';mutants.append(('failed compiler',report,c,scope))
+    m=copy.deepcopy(scope);m['unchangedSourceAndGuardObjects'][0]['gitObject']='0'*40;mutants.append(('changed source pin',report,receipt,m))
+    for name,r,c,m in mutants:
+        try:verify(r,c,m)
+        except ValueError as e:controls.append({'control':name,'accepted':False,'reason':str(e)})
+        else:raise RuntimeError('invalid evidence accepted: '+name)
+    return {'success':True,'controls':len(controls),'records':controls}
+
+parser=argparse.ArgumentParser()
+parser.add_argument('--report',type=Path)
+parser.add_argument('--selftest',action='store_true')
+args=parser.parse_args()
+path=args.report or directory/'NATIVE-VITEST.json'
+try:
+    raw=path.read_bytes();report=json.loads(raw)
+    result=selftest(report) if args.selftest else verify(report,receipt,scope)
+    if not args.report:
+        require(hashlib.sha256(raw).hexdigest()==scope['rawReportSha256'],'archived report bytes changed')
+    print(json.dumps(result,indent=2))
+except (ValueError,KeyError) as e:
+    print(json.dumps({'success':False,'reason':str(e)}));sys.exit(1)

@@ -1,0 +1,6 @@
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(23,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/mdx/lib/sampleMode.ts(37,24): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+client/src/concept2cure/v2/Shell.tsx(20,23): error TS2307: Cannot find module '@/assets/concept2cure-icon.svg' or its corresponding type declarations.
+client/src/concept2cure/v2/surfaceActions.ts(305,19): error TS2339: Property 'env' does not exist on type 'ImportMeta'.

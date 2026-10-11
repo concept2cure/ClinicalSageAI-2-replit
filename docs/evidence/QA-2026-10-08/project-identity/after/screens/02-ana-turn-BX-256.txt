@@ -1,0 +1,49 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+LJ
+Concept2Cure.RI
+›
+Conversation
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+Project
+New conversation
+Conversation
+AnA
+New conversation
+Progress
+· AnA's progress
+✻
+Talk to AnA
+
+Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.
+
+What can you help me with in this workspace?
+What does this workspace hold so far?
+How does a regulatory submission come together here?
+AnA drives: on
+Demos
+Between steps
+Manual
+AnA takes one step, then waits for you to run the next, change it or stop. If nobody answers within 10 minutes, or the page is closed, she stops there. A demonstration you start runs through without stopping.
+Auto
+AnA keeps going, step after step, until she judges the task done — for up to 20 rounds whichever engine you chose, 15 minutes of work or 40 minutes in all. Anything that changes a record waits for you; if nobody answers within 10 minutes, it does not happen and she stops.
+She keeps going: up to 20 rounds, 15 minutes of work.
+Engine: Balanced
+Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.
+Progress
+
+AnA has not started a turn in this conversation. Ask something and her plan and steps appear here as she works.
+
+Used in this session
+Project
+BX-256

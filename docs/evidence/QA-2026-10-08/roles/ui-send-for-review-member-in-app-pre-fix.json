@@ -1,0 +1,36 @@
+{
+  "email": "emily.watson@concept2cure.pro",
+  "roleMessage": null,
+  "controlsBefore": [
+    {
+      "text": "Send for review",
+      "label": "Send for review: Vorelinib-DS-Specification-J3-r2 v1.0",
+      "disabled": false
+    }
+  ],
+  "confirmAlerts": [
+    "Module 3 (CMC): This program has no PM-spine anchor (projects.regulatory_program_id), so the governed artifact registry cannot be addressed for it. CMC capture, compile and provenance still work; artifacts stay unplaced until the program is anchored.",
+    "The version was not sent for review. Something went wrong while handling the document lifecycle request. The problem has been logged. Quote the reference below if you contact support.",
+    "Version 1.0 is placed in 1 sequence not yet transmitted: Vorelinib · KIT-mutant GIST (IND), sequence 0000 (draft). Once a new version is added, this version can no longer be transmitted from them. A draft sequence can take the new version after it is approved. A frozen or dispatched sequence cannot "
+  ],
+  "traffic": [
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "POST",
+      "path": "/api/regulatory/documents",
+      "status": 500,
+      "body": "{\"error\":\"INTERNAL_ERROR\",\"message\":\"Something went wrong while handling the document lifecycle request. The problem has been logged. Quote the reference below if you contact support.\",\"correlationId\":\"d981a0e5-baa1-4b50-90d3-d7435c887a79\"}"
+    }
+  ]
+}

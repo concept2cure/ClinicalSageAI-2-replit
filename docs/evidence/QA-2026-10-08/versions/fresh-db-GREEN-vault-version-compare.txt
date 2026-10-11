@@ -1,0 +1,108 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-08T01:41:23.980Z","pid":15984,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T01:41:23.981Z","pid":15984,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T01:41:23.981Z","pid":15984,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-version-compare.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-08T01:41:24.105Z', poolSize: 1 }
+
+stdout | tests/db/vault-version-compare.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-version-compare.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-08T01:41:25.193Z","pid":15984,"hostname":"vm","context":{"filename":"stability-protocol.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:15984) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-version-compare.dbtest.ts
+{
+  "timestamp": "2026-10-08T01:41:25.325Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 1741,
+    "wordCount": 280,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-compare.dbtest.ts
+{
+  "timestamp": "2026-10-08T01:41:25.436Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "68eb4ad7-b3ae-4ebb-990f-70686a896cff",
+    "code": "DBTEST-VCMP-DOC",
+    "type": "OTHER",
+    "size": 1741,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-08T01:41:25.463Z","pid":15984,"hostname":"vm","context":{"filename":"stability-protocol.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-compare.dbtest.ts
+{
+  "timestamp": "2026-10-08T01:41:25.475Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 1783,
+    "wordCount": 291,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-compare.dbtest.ts
+{
+  "timestamp": "2026-10-08T01:41:25.496Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "dc691776-321b-4f9e-9a47-d6938205ec1e",
+    "code": "DBTEST-VCMP-DOC",
+    "type": "OTHER",
+    "size": 1784,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-08T01:41:25.515Z","pid":15984,"hostname":"vm","context":{"filename":"memo.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-compare.dbtest.ts
+{
+  "timestamp": "2026-10-08T01:41:25.516Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 18,
+    "wordCount": 3,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-compare.dbtest.ts
+{
+  "timestamp": "2026-10-08T01:41:25.536Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c8e0ece8-14e3-464b-afc5-f038d1cf4e5e",
+    "code": "DBTEST-VCMP-OTHER",
+    "type": "OTHER",
+    "size": 19,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > names both sides and returns the changed lines and details, unchanged runs collapsed 46ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > the earlier version is always the one compared from 50ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > refuses a version of another document, and another organisation's document reads as not found 46ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > a version with no extracted text gets no text comparison, and the answer says which 19ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:41:20
+   Duration  4.96s (transform 2.62s, setup 100ms, import 193ms, tests 4.31s, environment 0ms)
+

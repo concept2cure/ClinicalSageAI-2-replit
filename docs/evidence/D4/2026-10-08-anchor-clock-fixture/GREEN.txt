@@ -1,0 +1,64 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > the exact native callback passes with a database ledger later within the same JavaScript millisecond 1753ms
+ ✓ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > a verifier strictly after the ledger yields archived/unverifiable, never verified 1375ms
+ ✓ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger at the anchor 1252ms
+ ✓ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger after the verifier 1240ms
+ ✓ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger cutoff in the hot window 1231ms
+ ✓ server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts > the archive fixture states verification after the ledger (DP-68) > unchanged verifier refuses a ledger insufficient deletion budget 1233ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > a plain DELETE as the runtime role is refused with the IMMUTABILITY_VIOLATION shape 10ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > SET LOCAL app.audit_archive_bypass = 'on' no longer opens the door for the runtime role (Phase A §9) 3ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the GUC does not open the door for the superuser session either 2ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service statement deletes an old, archived batch and writes the archive record 11ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch containing a row newer than the cutoff, and writes no record 4ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a cutoff inside the 24-month hot window even for old rows 4ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses an empty locator, an empty checksum and a checksum that is not a sha256 5ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch naming a row that is not in audit_logs, and an empty batch 3ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > EXECUTE is not public: a role without the grant cannot open the door 3ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the door is owned by audit_archiver, is SECURITY DEFINER, and audit_archiver cannot log in 1ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the archive record is itself append-only 6ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > UPDATE and TRUNCATE on audit_logs stay refused 2ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the migration replays cleanly (Rule 1): a second apply changes nothing and the door still works 15ms
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service issues only the door call: no bypass GUC, no raw DELETE, in its code 1ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > resolveAuditAnchorStore > is null — not configured — without AUDIT_ANCHOR_BUCKET, or with a blank one 1ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > resolveAuditAnchorStore > names the bucket and the anchors/ prefix the task role is granted 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > puts one JSON object under the dated key, with an integrity checksum and the bucket default encryption 3ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > writes each key once: the put is conditional (If-None-Match *), so it never replaces an existing anchor 2ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > latest() follows the listing to its last page and returns the newest anchor 16ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > latest() is null when nothing has been anchored 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > a refused listing is an error, never "no anchor" 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the S3 anchor store > keys sort in time order, so the lexically last key is the newest anchor 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > accepts the document the writer produces 1ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses not JSON 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses another format 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses another store 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses no time 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses heads not a list 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses a hash that is not sha-256 hex 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses a row id that is not a uuid 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses a chain_seq that is not a whole number 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses a row count of zero 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > parseAuditChainAnchor > refuses an organisation twice 0ms
+ ✓ server/services/audit/__tests__/chain-anchor.test.ts > the archive hot window the verifier excuses nothing inside (DP-68) > is the archive door's own floor, so the verifier and the door cannot drift apart 0ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > archives rows past cutoff and removes them from hot through the door 9ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > calls the door once per batch with the ids, the sink locator, the stored checksum and the cutoff, after the sink confirmed 2ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > never opens the trigger with a session setting and never issues a raw DELETE 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > a refusal by the door aborts the batch, is counted and reported, and leaves the rows in hot 3ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > a door that reports a count other than the batch size is treated as a refusal 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > works on a Pool-shaped client without checking out a dedicated connection 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > does NOT call the door when the sink reports a checksum mismatch 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > aborts on sink throw and leaves rows in hot 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > chunks large datasets into multiple batches, one door call each 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > respects maxBatches as a time-box 1ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > returns zero work when nothing past cutoff 0ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > the default cutoff is never inside the 24-month floor the door enforces 0ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > computeBatchHash > produces the same hash for the same rows regardless of key order 0ms
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > computeBatchHash > produces different hashes for different content 0ms
+
+ Test Files  4 passed (4)
+      Tests  54 passed (54)
+   Start at  09:15:43
+   Duration  10.92s (transform 270ms, setup 99ms, import 571ms, tests 9.66s, environment 0ms)
+

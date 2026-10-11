@@ -59,6 +59,12 @@ afterAll(teardownTwoTenantFixture);
 // eslint-disable-next-line max-lines-per-function
 describe('Report OS takes the tenant from the session, never the request (L184, D3)', () => {
   const TYPE_ID = `${TAG}.fixture_status`;
+  /* A run is computed only for a type an engine computes
+     (server/services/report-os/report-engine.ts, QA 2026-10-08 j8): the fixture
+     type is refused 422 REPORT_TYPE_NOT_COMPUTED, as every engine-less type is.
+     The run cases use the seeded Executive Readiness Digest, which the registry
+     seed writes to every provisioned database (report-os-registry-seed.dbtest.ts). */
+  const RUN_TYPE_ID = 'readiness.executive_digest';
   let ro: express.Express;
   let runA: number;
   let runB: number;
@@ -150,7 +156,7 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
         organizationId: ORG_A,
         scopeType: 'project',
         scopeId: ids.B.projects,
-        reportTypeId: TYPE_ID,
+        reportTypeId: RUN_TYPE_ID,
         requestedBy: userA,
       });
     expect(
@@ -173,7 +179,7 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
         organizationId: ORG_A,
         scopeType: 'project',
         scopeId: ids.A.projects,
-        reportTypeId: TYPE_ID,
+        reportTypeId: RUN_TYPE_ID,
       });
     expect(await count('report_runs', ORG_A), 'nothing may land in tenant A').toBe(runsInA);
     expect(JSON.stringify(overForeign.body)).not.toContain('fixture-body-A');

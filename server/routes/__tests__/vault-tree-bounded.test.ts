@@ -214,7 +214,10 @@ describe("a source's filed stage is answered by the database, not by the page", 
     wireStore({ total: 500, unfiled: 137, filedHashes: [HASH_BEYOND_PAGE] });
     const res = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
     expect(res.body.data.dataRoom.sources[0].stage).toBe('filed');
-    expect(res.body.data.dataRoom.filed).toBe(1);
+    // The Filed COUNT is one aggregate over the whole project since 2026-10-08
+    // (countDataRoomStages), proven on PostgreSQL in data-room-processing.dbtest.ts.
+    const counted = query.mock.calls.find(([sql]) => /AS needs_review/.test(String(sql)));
+    expect(counted?.[1]).toEqual([PROGRAM, 7]);
   });
 
   it('still reports not-filed when the database says the checksum is absent', async () => {
@@ -222,7 +225,6 @@ describe("a source's filed stage is answered by the database, not by the page", 
     wireStore({ total: 500, unfiled: 137, filedHashes: [] });
     const res = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
     expect(res.body.data.dataRoom.sources[0].stage).not.toBe('filed');
-    expect(res.body.data.dataRoom.filed).toBe(0);
   });
 
   it('probes only the checksums it actually holds, scoped to program and tenant', async () => {

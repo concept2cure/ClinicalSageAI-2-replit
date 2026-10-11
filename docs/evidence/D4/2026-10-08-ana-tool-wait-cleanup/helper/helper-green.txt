@@ -1,0 +1,23 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > does not accumulate listeners across sixteen successful tools on one live run 3ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > releases the listener while retaining the handler original error 2ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > listeners after a tool completes > does not create a cancellation wait before a synchronously throwing handler 1ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > one tool wait owns one listener > disposes a completed sibling without removing active or unrelated listeners 1ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > one tool wait owns one listener > is idempotent and disposal does not abort the signal or another wait 1ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > remains assignable to Promise and rejects with the existing cancellation class 0ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > rejects an already-aborted signal without registering a listener 0ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > retains never-settling no-signal behavior after disposal 0ms
+ ✓ server/services/ana/__tests__/tool-wait-cleanup.test.ts > the existing cancellation promise contract > observes a late handler rejection after Stop and cleans the listener 1ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  15:20:45
+   Duration  341ms (transform 90ms, setup 68ms, import 45ms, tests 12ms, environment 0ms)

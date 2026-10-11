@@ -1,0 +1,28 @@
+{
+  "kpiMembers": {
+    "value": "12",
+    "meta": "12 active"
+  },
+  "rows": [
+    "DK | David Kim | david.kim@concept2cure.pro | Member | local | email | Oct 8, 2026, 2:21 AM",
+    "EW | Emily Watson | emily.watson@concept2cure.pro | Member | local | email | Oct 8, 2026, 3:24 AM",
+    "JS | JM Smith | jonmichaelpsmith@gmail.com | Admin | local | email | —",
+    "JS | JM Smith | jm.smith@concept2cure.pro | Admin | local | email | Oct 8, 2026, 5:16 AM",
+    "LJ | Lisa Johnson | lisa.johnson@concept2cure.pro | Member | local | email | Oct 8, 2026, 5:14 AM",
+    "MB | Michael Brown | michael.brown@concept2cure.pro | Member | local | email | Oct 8, 2026, 3:24 AM",
+    "NP | New Person | newperson@concept2cure.pro | Member | local | email | Oct 8, 2026, 3:13 AM",
+    "PP | Pat Pending | pat.pending@concept2cure.pro | Manager | local | email | —",
+    "QS | QA Second Admin | qa.second.admin@concept2cure.pro | Admin | local | email | —",
+    "RP | Raj Patel | raj.patel@concept2cure.pro | Manager | local | email | Oct 8, 2026, 5:15 AM",
+    "SC | Sarah Chen | sarah.chen@concept2cure.pro | Manager | local | email | Oct 8, 2026, 3:24 AM",
+    "VV | Vera Viewer | newviewer@concept2cure.pro | Viewer | local | email | Oct 8, 2026, 3:12 AM"
+  ],
+  "patDrawer": "PP | Pat Pending | pat.pending@concept2cure.pro | ROLE | Manager | STATE | Active | SSO | Local | SECOND FACTOR | Emailed code | LAST SEEN | — | GROUPS | — | ROLE SCOPES | PROGRAM ACCESS | ALL PROGRAMS | view | granted Org manager | GRANT ACCESS | AUDIT ACTIVITY",
+  "patDrawerButtons": [
+    "GRANT ACCESS",
+    "AUDIT ACTIVITY"
+  ],
+  "invitedFilter": "Members | All | Active | Invited | Disabled | No members match this filter.",
+  "roles": "Member | 5 members | Org-level role derived from live membership. | EDIT SCOPES | Admin | 3 members | Org-level role derived from live membership. | EDIT SCOPES | Manager | 3 members | Org-level role derived from live membership. | EDIT SCOPES | Viewer | 1 member | Org-level role derived from live membership. | EDIT SCOPES",
+  "httpErrors": []
+}

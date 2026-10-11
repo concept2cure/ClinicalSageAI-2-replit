@@ -1,0 +1,17 @@
+--- a/client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx	2026-10-08 17:16:19.967454555 +0000
++++ b/client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx	2026-10-08 17:16:19.983613582 +0000
+@@ -211,8 +211,12 @@
+ /* The transmit form's options carry the route's keys as values and a name as
+    the label — it offered the raw keys ("pmda_gateway") and lowercase region
+    slugs ("fda") as the choices themselves. */
+-const REGIONS = ['fda', 'ema', 'pmda', 'ca'].map((value) => ({ value, label: value.toUpperCase() }));
+-const GATEWAYS = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'].map((value) => ({ value, label: gatewayLabel(value) }));
++/* 2026-10-08 (F19b): PMDA (2026-10-05) and Health Canada (2026-10-08) refuse
++   every transmit before the wire (pmda-gateway.ts, health-canada-gateway.ts:
++   no transport taken from an agency source). A form that offers them asks for
++   a §11 re-authentication for a send that cannot happen, so neither is offered. */
++const REGIONS = ['fda', 'ema'].map((value) => ({ value, label: value.toUpperCase() }));
++const GATEWAYS = ['esg', 'cesp', 'eudamed'].map((value) => ({ value, label: gatewayLabel(value) }));
+ 
+ async function readData<T = any>(method: 'GET' | 'POST' | 'PUT', path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: T | null; raw: any }> {
+   try {

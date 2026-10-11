@@ -1,8 +1,8 @@
 /**
  * Audit immutability trigger check — against the REAL catalog, in-process.
  *
- * Boots PGlite, creates the four audit stores with minimal DDL, applies the
- * four real trigger migrations from db/migrations (the same files
+ * Boots PGlite, creates the expected audit stores with minimal DDL, applies
+ * prerequisite and real registered trigger migrations (the same files
  * deploy-migrate replays on every deploy), and drives the catalog probe
  * through the states the startup gate exists to catch: all present, a trigger
  * dropped, a trigger disabled, a table absent. The fake-client cases live in
@@ -45,13 +45,19 @@ CREATE TABLE IF NOT EXISTS concept2cure_thread_comments (id SERIAL PRIMARY KEY, 
 CREATE SCHEMA IF NOT EXISTS vault;
 CREATE TABLE IF NOT EXISTS vault.documents (id SERIAL PRIMARY KEY, content_hash TEXT);
 CREATE TABLE IF NOT EXISTS cre_evidence_sources (id SERIAL PRIMARY KEY, organization_id INTEGER, checksum TEXT, is_current BOOLEAN DEFAULT TRUE);
+CREATE TABLE IF NOT EXISTS cmc_module3_section_versions (id SERIAL PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS cmc_provenance_events (id SERIAL PRIMARY KEY);
 `;
 
 const TRIGGER_MIGRATIONS = Array.from(new Set(EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS.map((t) => t.source)));
 /* The authoring trigger files amend tables the authoring subsystem unit
    creates first (scripts/db/authoring-subsystem.mjs applies this file before
    them); applied here in the same order. */
-const PREREQUISITES = ['db/migrations/20260725_authoring_document_loop_tables.sql'];
+const PREREQUISITES = [
+  'db/migrations/20260725_authoring_document_loop_tables.sql',
+  // The registered Module 3 history guards reuse this existing domain function.
+  'migrations/20261001_domain_history_append_only.sql',
+];
 /* The authoring trigger files, named literally as well as derived from the
    registry: the ALTER-closure contract (tests/schema-contract/
    authoring-migration-list-closure.contract.test.ts) reads this file's text,
@@ -72,7 +78,7 @@ async function provision(): Promise<void> {
   await pglite.exec('DROP SCHEMA IF EXISTS audit CASCADE;');
   await pglite.exec('DROP SCHEMA IF EXISTS vault CASCADE;');
   await pglite.exec(
-    'DROP TABLE IF EXISTS audit_logs, audit_events, electronic_signatures, concept2cure_signatures, concept2cure_submission_snapshots, concept2cure_thread_comments CASCADE;',
+    'DROP TABLE IF EXISTS audit_logs, audit_events, electronic_signatures, concept2cure_signatures, concept2cure_submission_snapshots, concept2cure_thread_comments, cmc_module3_section_versions, cmc_provenance_events CASCADE;',
   );
   await pglite.exec(
     'DROP TABLE IF EXISTS authoring_audit_trail, authoring_comments, doc_revisions, authoring_sections, authoring_documents CASCADE;',
@@ -114,6 +120,13 @@ describe('assertAuditImmutabilityTriggers against PGlite', () => {
     for (const file of TRIGGER_MIGRATIONS) await pglite.exec(migration(file));
     const report = await assertAuditImmutabilityTriggers(catalog());
     expect(report.ok).toBe(true);
+  }, 60_000);
+
+  it('refuses the Module 3 history migration when its real domain-function prerequisite is missing', async () => {
+    await pglite.exec('DROP FUNCTION public.domain_history_append_only() CASCADE;');
+    await expect(pglite.exec(migration('migrations/20261005c_cmc_module3_history_append_only.sql')))
+      .rejects.toThrow(/domain_history_append_only.*missing/);
+    expect((await assertAuditImmutabilityTriggers(catalog())).ok).toBe(false);
   }, 60_000);
 
   it('names a dropped trigger', async () => {

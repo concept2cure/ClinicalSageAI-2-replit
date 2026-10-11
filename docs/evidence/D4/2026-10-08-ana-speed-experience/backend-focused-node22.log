@@ -1,0 +1,233 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-08T03:08:12.978Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T03:08:12.979Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+{
+  "timestamp": "2026-10-08T03:08:12.979Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."}
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[AnA RI Stream] Conversation preparation failed: private database host unavailable
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded
+[turn-record] could not write the turn record: no dedicated client in this test
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[AnA RI Stream] Conversation preparation failed: private connection write failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback undefined 81ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > blocks before model or tools, even with browser fallback {"role":"assistant","content":"Browser says the product is approved."} 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed thread resolution never answers from the browser as if the named conversation loaded 5ms
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[AnA RI Stream] Conversation preparation failed: private chat_messages read failed
+
+stderr | server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question
+[turn-record] could not write the turn record: no dedicated client in this test
+
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > failed question persistence blocks model and tools, with a static retryable error 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > a failed conversation read is not an empty conversation > a retry after a history failure does not leave an extra unanswered question 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > an empty stored thread does not import old browser assumptions 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > a saved correction and clarification remain in the actual gateway context 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > retains the last real assistant answer instead of dropping whichever row is last 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > another turn arriving during the save cannot displace a prior clarification or duplicate the current question 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > filters stored system/tool roles before sending the transcript 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > stored conversation is authoritative for a named thread > new conversations still accept bounded user/assistant browser turns 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > names older omitted turns without presenting the window as the whole conversation 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > preserves a late market correction in a long browser turn instead of discarding the whole turn 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > bounds long stored drafts, preserving the question at their end and warning about missing text 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > an assistant-only window does not turn an existing conversation into a fresh session 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > Anna knows which conversation context was omitted > does not announce missing history when every valid turn is included 2ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > passes unresolved evidence judgments to the real streaming follow-up request 25ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-awareness.test.ts > carries unassessed evidence inputs and repair guidance into the next gateway call 16ms
+(node:48) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/routes/ana-ri/__tests__/stream-context-latency.test.ts
+{
+  "timestamp": "2026-10-08T03:08:19.199Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T03:08:19.199Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-context-latency.test.ts
+{
+  "timestamp": "2026-10-08T03:08:19.200Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-context-latency.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > starts admitted memory before optional route prefetch finishes and waits for both before the model 37ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > awaits slow memory when optional route context has already returned 5ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > does not start memory or optional context when conversation resolve fails 4ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > does not start memory or optional context when conversation history fails 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > does not start memory or optional context when conversation save fails 3ms
+ ✓ server/routes/ana-ri/__tests__/stream-context-latency.test.ts > memory startup on the client streaming door > handles an early memory rejection while optional context is pending 3ms
+(node:64) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/__tests__/ana-prefetch-deadline.test.ts
+{
+  "timestamp": "2026-10-08T03:08:21.113Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T03:08:21.114Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ana-prefetch-deadline.test.ts
+{
+  "timestamp": "2026-10-08T03:08:21.114Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-prefetch-deadline.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/ana-prefetch-deadline.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-prefetch-deadline.test.ts
+{
+  "timestamp": "2026-10-08T03:08:21.449Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-prefetch-deadline.test.ts
+Loaded 0 academic documents
+
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled feedback source and keeps healthy context 9ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled profile source and keeps healthy context 2ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled rim source and keeps healthy context 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled relational source and keeps healthy context 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > bounds a stalled external source and keeps healthy context 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > starts independent reads together and uses one 3s wait when several stall 2ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > does not report healthy empty results as unavailable and clears the deadline timers 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > reports rejection and the existing 1.5s proactive deadline without blocking other context 4ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > ignores a late source after the turn has received its bounded snapshot 1ms
+ ✓ server/services/__tests__/ana-prefetch-deadline.test.ts > optional route prefetch deadlines > does not start project or org reads when their scope is absent 1ms
+(node:80) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/__tests__/ana-prefetch-timeout.test.ts
+{
+  "timestamp": "2026-10-08T03:08:27.713Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T03:08:27.715Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ana-prefetch-timeout.test.ts
+{
+  "timestamp": "2026-10-08T03:08:27.715Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-prefetch-timeout.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/ana-prefetch-timeout.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-prefetch-timeout.test.ts
+{
+  "timestamp": "2026-10-08T03:08:27.921Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-prefetch-timeout.test.ts
+Loaded 0 academic documents
+
+ ✓ server/services/__tests__/ana-prefetch-timeout.test.ts > withTimeout (prefetch latency guard) > returns the resolved value when it settles before the timeout 4ms
+ ✓ server/services/__tests__/ana-prefetch-timeout.test.ts > withTimeout (prefetch latency guard) > returns the fallback when the work exceeds the timeout 6ms
+ ✓ server/services/__tests__/ana-prefetch-timeout.test.ts > withTimeout (prefetch latency guard) > propagates the fallback shape for the proactive-block union 6ms
+(node:96) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > starts scoped memory while optional route context remains pending and retains both 5ms
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > never reads a named thread before the caller-scoped admission resolves 2ms
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > memory startup in the canonical chat context builder > awaits memory after optional context has completed 1ms
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > chat memory admission and latency safeguards > uses no private thread memory when access is refused 1ms
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > chat memory admission and latency safeguards > uses no private thread memory when access is missing 1ms
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > chat memory admission and latency safeguards > uses no private thread memory when access is unnamed 1ms
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > chat memory admission and latency safeguards > handles an early memory rejection while route context remains pending 1ms
+ ✓ server/services/ana-ri/__tests__/chat-context-latency.test.ts > chat memory admission and latency safeguards > benchmarks controlled context latency: 180 ms route plus 120 ms memory completes in 180 ms 4ms
+
+ Test Files  5 passed (5)
+      Tests  45 passed (45)
+   Start at  11:08:07
+   Duration  34.74s (transform 9.10s, setup 112ms, import 33.30s, tests 320ms, environment 0ms)

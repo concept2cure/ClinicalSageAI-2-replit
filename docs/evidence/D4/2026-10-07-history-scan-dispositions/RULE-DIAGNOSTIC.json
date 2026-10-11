@@ -1,0 +1,153 @@
+{
+  "diagnosticOnly": true,
+  "engine": "Python re with scoped RE2-inline-flag normalization",
+  "base": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+  "head": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+  "compiledRulesIncludingRepositoryOverrides": 219,
+  "patternErrors": [],
+  "scopedFlagControls": 6,
+  "unrecordedFindingCandidates": 5,
+  "perCommit": [
+    {
+      "commit": "3d4da223de0fe799f1850b30d867fc765882172a",
+      "parent": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+      "changed_files": 12,
+      "unignored_candidates": 0,
+      "excluded_candidates": 17
+    },
+    {
+      "commit": "4d1252fde561c663ef6b018f65c918bd087ce91e",
+      "parent": "3d4da223de0fe799f1850b30d867fc765882172a",
+      "changed_files": 12,
+      "unignored_candidates": 0,
+      "excluded_candidates": 0
+    },
+    {
+      "commit": "db89074184a2b59e228fb311babf23e0a7c6cbeb",
+      "parent": "4d1252fde561c663ef6b018f65c918bd087ce91e",
+      "changed_files": 12,
+      "unignored_candidates": 1,
+      "excluded_candidates": 0
+    },
+    {
+      "commit": "0cc794720c3a0b38d10d95dcb7928347b91b11dd",
+      "parent": "db89074184a2b59e228fb311babf23e0a7c6cbeb",
+      "changed_files": 11,
+      "unignored_candidates": 2,
+      "excluded_candidates": 0
+    },
+    {
+      "commit": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+      "parent": "0cc794720c3a0b38d10d95dcb7928347b91b11dd",
+      "changed_files": 14,
+      "unignored_candidates": 2,
+      "excluded_candidates": 0
+    }
+  ],
+  "candidates": [
+    {
+      "fingerprint": "db89074184a2b59e228fb311babf23e0a7c6cbeb:docs/evidence/D4/2026-10-07-native-admin-fixtures/SCOPE.json:generic-api-key:54",
+      "originCommit": "db89074184a2b59e228fb311babf23e0a7c6cbeb",
+      "manifestPath": "docs/evidence/D4/2026-10-07-native-admin-fixtures/SCOPE.json",
+      "line": 54,
+      "rule": "generic-api-key",
+      "matchedCharacters": 40,
+      "matchedValueDigest": "d0e4b20baaa21df3e3c205b9cffff6f19b486d651a65b8894450f56aa19cd3f8",
+      "entropy": 3.7873,
+      "sourceReferences": [
+        {
+          "reference_path": "server/routes/module-access-requests.ts",
+          "reference_commit": "db89074184a2b59e228fb311babf23e0a7c6cbeb",
+          "algorithm": "git-blob-sha1",
+          "independently_equal": true,
+          "json_pointer": "/unchangedSourceAndGuardGitBlobs/server/routes/module-access-requests.ts"
+        }
+      ]
+    },
+    {
+      "fingerprint": "0cc794720c3a0b38d10d95dcb7928347b91b11dd:docs/evidence/D4/2026-10-07-report-registry-order/SCOPE.json:generic-api-key:44",
+      "originCommit": "0cc794720c3a0b38d10d95dcb7928347b91b11dd",
+      "manifestPath": "docs/evidence/D4/2026-10-07-report-registry-order/SCOPE.json",
+      "line": 44,
+      "rule": "generic-api-key",
+      "matchedCharacters": 40,
+      "matchedValueDigest": "d0e4b20baaa21df3e3c205b9cffff6f19b486d651a65b8894450f56aa19cd3f8",
+      "entropy": 3.7873,
+      "sourceReferences": [
+        {
+          "reference_path": "server/routes/module-access-requests.ts",
+          "reference_commit": "0cc794720c3a0b38d10d95dcb7928347b91b11dd",
+          "algorithm": "git-blob-sha1",
+          "independently_equal": true,
+          "json_pointer": "/unchangedSourceAndGuardGitBlobs/server/routes/module-access-requests.ts"
+        }
+      ]
+    },
+    {
+      "fingerprint": "0cc794720c3a0b38d10d95dcb7928347b91b11dd:docs/evidence/D4/2026-10-07-report-registry-order/SCOPE.json:generic-api-key:49",
+      "originCommit": "0cc794720c3a0b38d10d95dcb7928347b91b11dd",
+      "manifestPath": "docs/evidence/D4/2026-10-07-report-registry-order/SCOPE.json",
+      "line": 49,
+      "rule": "generic-api-key",
+      "matchedCharacters": 40,
+      "matchedValueDigest": "eb0a1b247ad706cab52a028c1b54e9c6c2f230ef2d2904eb0d7ffcc639edf0e4",
+      "entropy": 3.824,
+      "sourceReferences": [
+        {
+          "reference_path": "tests/db/module-access-requests.dbtest.ts",
+          "reference_commit": "0cc794720c3a0b38d10d95dcb7928347b91b11dd",
+          "algorithm": "git-blob-sha1",
+          "independently_equal": true,
+          "json_pointer": "/unchangedSourceAndGuardGitBlobs/tests/db/module-access-requests.dbtest.ts"
+        }
+      ]
+    },
+    {
+      "fingerprint": "6a54db14cc6a41727c5f46103afbab2ac9609047:docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json:generic-api-key:52",
+      "originCommit": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+      "manifestPath": "docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json",
+      "line": 52,
+      "rule": "generic-api-key",
+      "matchedCharacters": 40,
+      "matchedValueDigest": "d0e4b20baaa21df3e3c205b9cffff6f19b486d651a65b8894450f56aa19cd3f8",
+      "entropy": 3.7873,
+      "sourceReferences": [
+        {
+          "reference_path": "server/routes/module-access-requests.ts",
+          "reference_commit": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+          "algorithm": "git-blob-sha1",
+          "independently_equal": true,
+          "json_pointer": "/unchangedSourceAndGuardGitBlobs/server/routes/module-access-requests.ts"
+        }
+      ]
+    },
+    {
+      "fingerprint": "6a54db14cc6a41727c5f46103afbab2ac9609047:docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json:generic-api-key:56",
+      "originCommit": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+      "manifestPath": "docs/evidence/D4/2026-10-07-export-column-inventory/SCOPE.json",
+      "line": 56,
+      "rule": "generic-api-key",
+      "matchedCharacters": 40,
+      "matchedValueDigest": "eb0a1b247ad706cab52a028c1b54e9c6c2f230ef2d2904eb0d7ffcc639edf0e4",
+      "entropy": 3.824,
+      "sourceReferences": [
+        {
+          "reference_path": "tests/db/module-access-requests.dbtest.ts",
+          "reference_commit": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+          "algorithm": "git-blob-sha1",
+          "independently_equal": true,
+          "json_pointer": "/unchangedSourceAndGuardGitBlobs/tests/db/module-access-requests.dbtest.ts"
+        }
+      ]
+    }
+  ],
+  "newEvidenceUnrecordedFindingCandidates": 0,
+  "limitations": [
+    "Not native gitleaks proof. Python Unicode/regex, capture and diff-context behavior can differ from Go RE2/gitleaks.",
+    "Scans matches touching added/changed lines in each canonical first-parent commit, not the full older history.",
+    "Native count at 0cc was 3; root reports exact-head native count at 6a54 is 5. Count agreement is diagnostic corroboration only."
+  ],
+  "newEvidenceScope": "all nine evidence files plus appended ignore block, before adding these numeric verification fields",
+  "pinnedUpstreamConfigurationEquivalent": true,
+  "upstreamComparison": "Pinned official v8.28.0 contents match apart from terminal blank lines stripped by retrieval."
+}

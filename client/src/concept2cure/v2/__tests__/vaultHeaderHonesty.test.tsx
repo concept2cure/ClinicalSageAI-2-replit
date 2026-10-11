@@ -81,6 +81,56 @@ describe('Vault — header document count', () => {
   });
 });
 
+/* QA 2026-10-08 (j1, "Vault shows '1 document' for a new project with zero
+   files"): a program the wizard had just created read "1 document" over lanes
+   saying "0 uploaded files" and "Captured 0". The one was the IND build the
+   wizard scaffolds — an authored document with every section not started — and
+   the header did not say so. The read already names its parts
+   (documentCounts); the header now states them. */
+describe('Vault — the header names what its count is made of', () => {
+  const vaultOf = (documentCounts: unknown, documentCount: number) =>
+    ok({
+      success: true,
+      data: {
+        program: 'HLV-333', spine: 'IND · 21 CFR 312', standard: 'pharma', documentCount, documentCounts,
+        tree: [{ id: 'vaultdoc-1', code: 'IND', label: 'IND build', children: [{ id: 's1', num: '1.1.1', title: 'Form FDA 1571', status: 'not_started', src: 'authored' }] }],
+      },
+    });
+
+  it('an authored build with no files reads as one authored document and no uploads', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'HLV-333' };
+    vaultWith(() => vaultOf({ authored: 1, cmcArtifacts: 0, uploads: 0 }, 1));
+    render(<Vault {...props()} />);
+    await waitFor(() => expect(headerText()).toMatch(/1 authored document/));
+    expect(headerText()).toMatch(/0 uploaded files/);
+    expect(headerText(), 'a bare "1 document" reads as a file').not.toMatch(/(^|[^d] )1 document\b/);
+  });
+
+  /* The same screen showed "Required sections: 0 of 36 have a confirmed
+     document" and, on the build's folder, a bare "0/72". They count different
+     things — required CTD headings with a confirmed filing, and the authored
+     build's own sections that are settled — and the bare fraction said neither. */
+  it('a folder count says what it counts', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'HLV-333' };
+    vaultWith(() => vaultOf({ authored: 1, cmcArtifacts: 0, uploads: 0 }, 1));
+    render(<Vault {...props()} />);
+    await waitFor(() => expect(document.querySelector('.vd-fcount')).not.toBeNull());
+    const count = document.querySelector('.vd-fcount') as HTMLElement;
+    expect(count.textContent).toBe('0/1');
+    expect(count.getAttribute('aria-label')).toBe('0 of 1 settled — approved, final or reviewed');
+    expect(count.getAttribute('title')).toBe(count.getAttribute('aria-label'));
+  });
+
+  it('names Module 3 artifacts only when there are some, and claims no upload count it could not read', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'HLV-333' };
+    vaultWith(() => vaultOf({ authored: 2, cmcArtifacts: 3, uploads: null }, 5));
+    render(<Vault {...props()} />);
+    await waitFor(() => expect(headerText()).toMatch(/2 authored documents/));
+    expect(headerText()).toMatch(/3 Module 3 artifacts/);
+    expect(headerText()).not.toMatch(/uploaded file/);
+  });
+});
+
 describe('Vault — a refused read is a refusal', () => {
   it('a 403 says access was refused, not that the store did not respond', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-301' };

@@ -1,0 +1,158 @@
+TAP version 13
+# Subtest: passes a reviewed unreachable advisory
+ok 1 - passes a reviewed unreachable advisory
+  ---
+  duration_ms: 49.924302
+  type: 'test'
+  ...
+# Subtest: passes the npm transitive wrapper for a reviewed advisory
+ok 2 - passes the npm transitive wrapper for a reviewed advisory
+  ---
+  duration_ms: 34.9918
+  type: 'test'
+  ...
+# Subtest: passes a diamond: two wrappers sharing one reviewed transitive
+ok 3 - passes a diamond: two wrappers sharing one reviewed transitive
+  ---
+  duration_ms: 35.983564
+  type: 'test'
+  ...
+# Subtest: passes a reviewed high cause alongside a separately reported moderate-only branch
+ok 4 - passes a reviewed high cause alongside a separately reported moderate-only branch
+  ---
+  duration_ms: 36.30466
+  type: 'test'
+  ...
+# Subtest: blocks an uncovered high cause even when its wrapper claims moderate severity
+ok 5 - blocks an uncovered high cause even when its wrapper claims moderate severity
+  ---
+  duration_ms: 43.560474
+  type: 'test'
+  ...
+# Subtest: blocks a truncated moderate branch beside a reviewed high cause
+ok 6 - blocks a truncated moderate branch beside a reviewed high cause
+  ---
+  duration_ms: 31.791031
+  type: 'test'
+  ...
+# Subtest: blocks a cycle in a moderate branch beside a reviewed high cause
+ok 7 - blocks a cycle in a moderate branch beside a reviewed high cause
+  ---
+  duration_ms: 34.853081
+  type: 'test'
+  ...
+# Subtest: blocks malformed advisory metadata in a moderate branch
+ok 8 - blocks malformed advisory metadata in a moderate branch
+  ---
+  duration_ms: 39.094898
+  type: 'test'
+  ...
+# Subtest: blocks a high wrapper with no reported high or critical cause
+ok 9 - blocks a high wrapper with no reported high or critical cause
+  ---
+  duration_ms: 35.741835
+  type: 'test'
+  ...
+# Subtest: fails closed on a true via cycle
+ok 10 - fails closed on a true via cycle
+  ---
+  duration_ms: 42.369903
+  type: 'test'
+  ...
+# Subtest: fails closed on a via-string naming a package absent from the report
+ok 11 - fails closed on a via-string naming a package absent from the report
+  ---
+  duration_ms: 38.734253
+  type: 'test'
+  ...
+# Subtest: fails closed on a new high advisory
+ok 12 - fails closed on a new high advisory
+  ---
+  duration_ms: 34.32371
+  type: 'test'
+  ...
+# Subtest: fails closed when the scanner is unavailable
+ok 13 - fails closed when the scanner is unavailable
+  ---
+  duration_ms: 31.408213
+  type: 'test'
+  ...
+# Subtest: fails closed on an expired exception
+ok 14 - fails closed on an expired exception
+  ---
+  duration_ms: 35.90746
+  type: 'test'
+  ...
+# Subtest: fails closed when the ledger seal does not match the lockfile
+ok 15 - fails closed when the ledger seal does not match the lockfile
+  ---
+  duration_ms: 32.80548
+  type: 'test'
+  ...
+# Subtest: reseal refuses a new advisory and writes nothing
+ok 16 - reseal refuses a new advisory and writes nothing
+  ---
+  duration_ms: 117.454945
+  type: 'test'
+  ...
+# Subtest: reseal refuses when a covered finding vanishes from the audit
+ok 17 - reseal refuses when a covered finding vanishes from the audit
+  ---
+  duration_ms: 116.629141
+  type: 'test'
+  ...
+# Subtest: reseal refuses when a covered finding's installed version changed
+ok 18 - reseal refuses when a covered finding's installed version changed
+  ---
+  duration_ms: 113.558193
+  type: 'test'
+  ...
+# Subtest: reseal refuses when the scanner is unavailable
+ok 19 - reseal refuses when the scanner is unavailable
+  ---
+  duration_ms: 119.952637
+  type: 'test'
+  ...
+# Subtest: reseal rebinds an unchanged finding set and the gate passes again
+ok 20 - reseal rebinds an unchanged finding set and the gate passes again
+  ---
+  duration_ms: 214.621479
+  type: 'test'
+  ...
+# Subtest: integration: committed ledger seals the committed package-lock.json
+not ok 21 - integration: committed ledger seals the committed package-lock.json
+  ---
+  duration_ms: 49.997891
+  type: 'test'
+  location: '/workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/dependency-risk-gate.test.mjs:344:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Dependency risk gate: ledger lockfileSha256 is stale
+    
+    The committed ledger no longer seals the committed lockfile; run: npm run ci:dependency-risk:reseal
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/dependency-risk-gate.test.mjs:368:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 20
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1378.07103

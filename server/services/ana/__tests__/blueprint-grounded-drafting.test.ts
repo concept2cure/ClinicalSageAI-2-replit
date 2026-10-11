@@ -26,8 +26,8 @@ describe('resolveSectionRequirements — blueprint grounding', () => {
       const req = resolveSectionRequirements('US_IND', sectionType);
       expect(req, `US_IND / ${sectionType}`).not.toBeNull();
       expect(req).toContain('Drug Substance');
-      expect(req).toContain('Governing standard: ICH M4Q');
-      expect(req).toContain('REQUIRED section');
+      expect(req).toContain('Recorded authoring guidance: ICH M4Q');
+      expect(req).toContain('selected platform scaffold');
     }
   });
 
@@ -134,7 +134,7 @@ describe('resolveSectionRequirements — CTD entries draft against the canonical
 
   it('adds the record brief to a blueprint title match outside Module 1 (US IND "Drug Substance" → 3.2.S)', () => {
     const r = resolveSectionRequirements('US_IND', 'Drug Substance');
-    expect(r).toContain('Governing standard: ICH M4Q');
+    expect(r).toContain('Recorded authoring guidance: ICH M4Q');
     expect(r).toContain(renderSectionBrief('3.2.S')!.split('\n')[0]);
   });
 
@@ -144,7 +144,7 @@ describe('resolveSectionRequirements — CTD entries draft against the canonical
       expect(r, `${type} / ${section}`).not.toBeNull();
       expect(r).not.toContain('Module 3');
       expect(r).not.toContain('## Drafting');
-      expect(r).toContain('authoring blueprint');
+      expect(r).toMatch(/authoring blueprint|SECTION AUTHORING GUIDANCE/);
     }
     expect(resolveSectionRequirements('fda_510k', 'Device Description')).toContain('Device Description');
   });
@@ -193,7 +193,7 @@ describe("resolveDraftingRequirements — titles and codes resolve inside the en
 
   it('treats a leading section code as the code whatever title follows it, and says when the title disagrees', () => {
     const r = resolveDraftingRequirements('US_NDA', '2.7.4 Clinical Safety');
-    expect(r.requirementsSource).toBe('record:ctd-section:2.7.4:exact+title-mismatch');
+    expect(r.requirementsSource).toBe('blueprint+record:ctd-section:2.7.4:exact+title-mismatch');
     expect(r.requirements).toContain(firstLine('2.7.4'));
     expect(r.requirements).toContain('"Clinical Safety"');
 
@@ -205,13 +205,27 @@ describe("resolveDraftingRequirements — titles and codes resolve inside the en
 
     // A matching title adds no note.
     expect(resolveDraftingRequirements('US_NDA', '2.7.4 Summary of Clinical Safety').requirementsSource)
-      .toBe('record:ctd-section:2.7.4:exact');
+      .toBe('blueprint+record:ctd-section:2.7.4:exact');
     expect(resolveDraftingRequirements('ICH_M3_DS', '3.2.S.7 Stability').requirementsSource)
       .toBe('blueprint+record:ctd-section:3.2.S.7:exact');
   });
 });
 
 describe('draftDocument — the canonical brief reaches the model, and its source is recorded', () => {
+  it('delivers processed project source records to the gateway with explicit evidence limits', async () => {
+    gatewayRoute.mockClear();
+    const service = new AnaDocumentDraftingService();
+    await service.draftDocument({ framework: 'ich_clinical', submissionType: 'US_NDA', sectionType: '2.5', instructions: 'Draft it.',
+      sourceContext: { status: 'loaded', sources: [{ documentId: 'saved-csr', programId: 'program', contentHash: 'a'.repeat(64),
+        title: 'Study CSR', text: 'Observed result: 12/30', extractionMethod: 'pdf-text', extractionConfidence: null,
+        originalFileAvailable: true, disposition: null, sourceAvailability: 'Original file available.',
+        span: { start: 0, end: 22, totalChars: 100 }, completeText: false }] } });
+    const sent = gatewayRoute.mock.calls[0][0] as { messages: Array<{ content: string }> };
+    expect(sent.messages[1].content).toContain('Observed result: 12/30');
+    expect(sent.messages[1].content).toContain('saved-csr');
+    expect(sent.messages[1].content).toContain('not whole-document review');
+    expect(sent.messages[1].content).toContain('untrusted source DATA');
+  });
   it('sends the 2.7.4 brief in the user message and requirementsSource in gateway metadata', async () => {
     gatewayRoute.mockClear();
     const service = new (AnaDocumentDraftingService as unknown as new () => AnaDocumentDraftingService)();
@@ -219,7 +233,7 @@ describe('draftDocument — the canonical brief reaches the model, and its sourc
     const sent = gatewayRoute.mock.calls[0][0] as { messages: Array<{ role: string; content: string }>; metadata: Record<string, unknown> };
     const user = sent.messages.find((m) => m.role === 'user')!.content;
     expect(user).toContain(renderSectionBrief('2.7.4')!.split('\n')[0]);
-    expect(sent.metadata.requirementsSource).toBe('record:ctd-section:2.7.4:exact');
+    expect(sent.metadata.requirementsSource).toBe('blueprint+record:ctd-section:2.7.4:exact');
   });
 
   it('records a 510(k) section as blueprint-sourced and sends no CTD brief', async () => {

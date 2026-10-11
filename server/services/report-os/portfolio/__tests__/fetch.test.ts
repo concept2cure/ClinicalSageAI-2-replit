@@ -24,8 +24,15 @@ describe('riskFromBlockers', () => {
 });
 
 describe('toMemberInsight', () => {
+  /* Status is the evaluator's verdict (the run's submission_readiness row), not
+     `confidence >= 70` (QA 2026-10-08, j8: a program whose readiness was not
+     computed read "ready"). */
+  const readiness = (status: 'ready' | 'partial' | 'missing') => [
+    { provider: 'submission_readiness', observedAt: '2026-10-08T00:00:00Z', status },
+  ];
+
   it('maps a healthy run to a ready member, readiness from the evaluation, not the confidence', () => {
-    const m = toMemberInsight(7, 'BX-204', computed({ confidence: 85, summary: { regulatory: { readinessScore: 72 } } }));
+    const m = toMemberInsight(7, 'BX-204', computed({ confidence: 85, providers: readiness('ready'), summary: { regulatory: { readinessScore: 72 } } }));
     expect(m).toMatchObject({
       projectId: 7,
       name: 'BX-204',
@@ -44,8 +51,18 @@ describe('toMemberInsight', () => {
     expect(m.riskLevel).toBe('medium');
   });
 
-  it('maps mid confidence with no critical blockers to partial', () => {
-    expect(toMemberInsight(1, 'P', computed({ confidence: 40 })).status).toBe('partial');
+  it('maps a partial evaluation with no critical blockers to partial', () => {
+    expect(toMemberInsight(1, 'P', computed({ confidence: 40, providers: readiness('partial') })).status).toBe('partial');
+  });
+
+  it('is not "ready" when readiness was not computed, whatever the confidence says', () => {
+    const m = toMemberInsight(1, 'C2C-001', computed({ confidence: 75, providers: readiness('missing') }));
+    expect(m.status).toBe('missing');
+    expect(toMemberInsight(1, 'No row', computed({ confidence: 95 })).status).toBe('missing');
+  });
+
+  it('carries no confidence when the run measured none', () => {
+    expect(toMemberInsight(1, 'P', computed({ confidence: null })).confidence).toBeNull();
   });
 
   it('clamps confidence and readiness into 0..100 and surfaces up to 3 blocker themes', () => {

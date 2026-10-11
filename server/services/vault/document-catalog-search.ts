@@ -2,7 +2,7 @@
  * Semantic search over the document catalog — "which of the client's files
  * speaks to X?", answered from the comprehension records AnA has written.
  *
- * Searches ONLY cataloged documents: the embedding indexes the comprehension
+ * Searches ONLY current cataloged versions: the embedding indexes the comprehension
  * tier (kind + purpose + summary + key data written after a full read), so a
  * hit is a claim AnA has actually earned. Uncataloged documents are absent by
  * construction — discovery of those is list_project_documents' job, and the
@@ -17,6 +17,8 @@
  */
 
 import { pool } from '../../db.js';
+import { vaultDataEligibleSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
+import { supersededSql } from './vault-version-family.js';
 
 export class CatalogSearchUnavailableError extends Error {
   constructor(reason: string) {
@@ -26,6 +28,7 @@ export class CatalogSearchUnavailableError extends Error {
 }
 
 export interface CatalogSearchHit {
+  originalFileAvailable: boolean;
   documentId: string;
   programId: string;
   programName: string | null;
@@ -50,9 +53,9 @@ export interface CatalogSearchHit {
 
 export interface CatalogSearchResult {
   hits: CatalogSearchHit[];
-  /** Cataloged documents searched (embedding present). */
+  /** Current cataloged versions searched (embedding present). */
   searchedCount: number;
-  /** Documents that exist but are NOT searchable yet (uncataloged / failed / unembedded). */
+  /** Current versions NOT searchable yet (uncataloged / failed / unembedded). */
   unsearchableCount: number;
 }
 
@@ -91,8 +94,9 @@ export async function searchCatalog(
          COUNT(*) FILTER (WHERE c.embedding IS NULL OR c.catalog_status IS DISTINCT FROM 'cataloged') AS unsearchable
        FROM vault.documents d
        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
-       LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE d.deleted_at IS NULL
+       LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
+      WHERE d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
+        AND NOT ${supersededSql('d')}
         AND ($2::uuid IS NULL OR d.program_id = $2::uuid)`,
       [organizationId, programId],
     );
@@ -100,11 +104,14 @@ export async function searchCatalog(
       `SELECT d.id, d.program_id, rp.name AS program_name, d.file_name, d.document_title,
               d.folder_id, d.ctd_section, d.placement_status,
               c.document_kind, c.purpose, c.summary, c.key_data,
+              ${vaultBinaryAvailableSql('d')} AS original_file_available,
               1 - (c.embedding <=> $2::vector) AS similarity
          FROM vault.document_catalog c
-         JOIN vault.documents d ON d.id = c.document_id AND d.deleted_at IS NULL
+         JOIN vault.documents d ON d.id = c.document_id AND d.deleted_at IS NULL AND c.content_hash = d.content_hash
          JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
         WHERE c.embedding IS NOT NULL AND c.catalog_status = 'cataloged'
+          AND ${vaultDataEligibleSql('d')}
+          AND NOT ${supersededSql('d')}
           AND 1 - (c.embedding <=> $2::vector) >= $3
           AND ($5::uuid IS NULL OR d.program_id = $5::uuid)
         ORDER BY c.embedding <=> $2::vector
@@ -113,6 +120,7 @@ export async function searchCatalog(
     );
     return {
       hits: res.rows.map((r: any) => ({
+        originalFileAvailable: r.original_file_available ?? true,
         documentId: r.id,
         programId: r.program_id,
         programName: r.program_name,

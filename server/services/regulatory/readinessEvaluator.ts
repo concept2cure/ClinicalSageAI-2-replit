@@ -8,11 +8,11 @@
  * @module server/services/regulatory/readinessEvaluator
  */
 
+import { evidenceIsApproved, evidenceIsRetired, groupSubmissionEvidence, submissionEvidenceState } from './submissionEvidenceStatus.js';
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
-import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap.js';
+import { getResolvedSectionBlueprint, getSectionBlueprintContext, requiresSectionApplicabilityAssessment } from './sectionBlueprintCatalog.js';
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
 import {
-  getRequiredArtifacts,
   getMandatoryArtifacts,
   hasArtifactMatrix,
   type ArtifactRequirement,
@@ -68,6 +68,8 @@ export interface ReadinessResult {
     approved: number;
     missing: string[];
     completionPercent: number;
+    /** Present requirements still awaiting approval of every current record. */
+    unapproved?: string[];
     /**
      * False when no artifact matrix is defined for this filing type, so
      * `completionPercent` here is not a measurement and must not be rendered as
@@ -103,8 +105,7 @@ export function evaluateReadiness(input: ReadinessInput): ReadinessResult {
     return buildFallbackResult(input);
   }
 
-  const sectionBlueprint = getSectionBlueprintForEntry(entry);
-  const requiredArtifacts = getMandatoryArtifacts(registryId);
+  const sectionBlueprint = getResolvedSectionBlueprint(entry);
 
   /* NOTHING ASSESSED IS NOT ASSESSED-AND-CLEAR.
      `getMandatoryArtifacts` returns [] both for a filing type whose matrix lists
@@ -117,7 +118,11 @@ export function evaluateReadiness(input: ReadinessInput): ReadinessResult {
      buildFallbackResult below already refuses to do this for an UNRESOLVED
      registry id and says why; this is the same failure one branch over, where
      the id resolves but the requirements are unknown. */
-  const artifactsAssessed = hasArtifactMatrix(registryId);
+  const artifactMatrixKnown = hasArtifactMatrix(registryId);
+  const applicabilityUnassessed = requiresSectionApplicabilityAssessment(registryId);
+  // A baseline matrix cannot decide eligible alternatives or conditional trial scope.
+  const artifactsAssessed = artifactMatrixKnown && !applicabilityUnassessed;
+  const requiredArtifacts = artifactsAssessed ? getMandatoryArtifacts(registryId) : [];
 
   // Evaluate sections
   const sectionReadiness = evaluateSections(sectionBlueprint.sections, input.sections);
@@ -141,14 +146,21 @@ export function evaluateReadiness(input: ReadinessInput): ReadinessResult {
   if (!artifactsAssessed) {
     gaps.push({
       type: 'artifact',
-      code: 'ARTIFACT_REQUIREMENTS_NOT_MODELLED',
+      code: artifactMatrixKnown ? 'ARTIFACT_APPLICABILITY_NOT_ASSESSED' : 'ARTIFACT_REQUIREMENTS_NOT_MODELLED',
       title: 'Artifact requirements not assessed',
       severity: 'critical',
       message:
-        `No required-artifact matrix is defined for "${entry.displayName}" (${registryId}), ` +
+        (artifactMatrixKnown
+          ? `The baseline artifact matrix for "${entry.displayName}" (${registryId}) does not resolve conditional scope or permitted alternatives, `
+          : `No required-artifact matrix is defined for "${entry.displayName}" (${registryId}), `) +
         'so no artifact was checked against a known requirement set. This score reflects ' +
         'section completeness only — treat the artifact half as unassessed, not as complete.',
     });
+  }
+
+  if (requiresSectionApplicabilityAssessment(registryId)) {
+    gaps.push({ type: 'section', code: 'SECTION_APPLICABILITY_NOT_ASSESSED', title: 'Conditional filing scope not assessed', severity: 'critical',
+      message: 'Baseline scaffold completion does not resolve product, amendment, attachment or local applicability. Review the selected scope and source evidence through the applicable governed workflow before treating this filing as ready.' });
   }
 
   // Regional warnings
@@ -156,7 +168,8 @@ export function evaluateReadiness(input: ReadinessInput): ReadinessResult {
 
   return {
     score: overallScore,
-    level: scoreToLevel(overallScore),
+    level: gaps.some(g => g.severity === 'critical') ? 'not_ready'
+      : gaps.length > 0 && overallScore === 100 ? 'nearly_ready' : scoreToLevel(overallScore),
     applicationDisplayName: entry.displayName,
     dossierStandard: entry.dossierStandard,
     sectionReadiness,
@@ -168,22 +181,28 @@ export function evaluateReadiness(input: ReadinessInput): ReadinessResult {
 
 // ─── Internal Functions ───────────────────────────────────────────────────────
 
+function sectionEvidenceState(records: SectionStatus[]): ReturnType<typeof submissionEvidenceState> {
+  return submissionEvidenceState(records.filter(s => !evidenceIsRetired(s.status))
+    .map(s => s.artifactCount > 0 ? s.status : 'missing'));
+}
+
 function evaluateSections(
   expected: SectionDefinition[],
   actual: SectionStatus[]
 ): ReadinessResult['sectionReadiness'] {
   const requiredSections = expected.filter(s => s.required);
-  const actualMap = new Map(actual.map(s => [s.code, s]));
+  const actualMap = groupSubmissionEvidence(actual, s => s.code);
 
   let completed = 0;
   let inProgress = 0;
   let notStarted = 0;
 
   for (const req of requiredSections) {
-    const sect = actualMap.get(req.code);
-    if (!sect || sect.status === 'not_started') {
+    const records = actualMap.get(req.code) ?? [];
+    const state = sectionEvidenceState(records);
+    if (state === 'missing') {
       notStarted++;
-    } else if (['approved', 'locked', 'signed'].includes(sect.status)) {
+    } else if (evidenceIsApproved(state)) {
       completed++;
     } else {
       inProgress++;
@@ -206,23 +225,17 @@ function evaluateArtifacts(
   required: ArtifactRequirement[],
   actual: ArtifactStatus[]
 ): ReadinessResult['artifactReadiness'] {
-  const actualTypes = new Set(actual.map(a => a.type));
-  const approvedTypes = new Set(
-    actual.filter(a => ['approved', 'locked', 'signed'].includes(a.status)).map(a => a.type)
-  );
-
-  const missing = required
-    .filter(r => !actualTypes.has(r.artifactType))
-    .map(r => r.label);
-
+  const groups = groupSubmissionEvidence(actual, a => a.type);
+  const state = (type: string) => submissionEvidenceState((groups.get(type) ?? []).map(a => a.status));
+  const present = required.filter(r => state(r.artifactType) !== 'missing');
+  const approved = required.filter(r => evidenceIsApproved(state(r.artifactType)));
   return {
     required: required.length,
-    present: required.filter(r => actualTypes.has(r.artifactType)).length,
-    approved: required.filter(r => approvedTypes.has(r.artifactType)).length,
-    missing,
-    completionPercent: required.length > 0
-      ? Math.round((required.filter(r => actualTypes.has(r.artifactType)).length / required.length) * 100)
-      : 100,
+    present: present.length,
+    approved: approved.length,
+    missing: required.filter(r => state(r.artifactType) === 'missing').map(r => r.label),
+    unapproved: present.filter(r => !evidenceIsApproved(state(r.artifactType))).map(r => r.label),
+    completionPercent: required.length > 0 ? Math.round(approved.length / required.length * 100) : 100,
   };
 }
 
@@ -233,33 +246,39 @@ function identifyGaps(
   actualArtifacts: ArtifactStatus[]
 ): ReadinessGap[] {
   const gaps: ReadinessGap[] = [];
-  const actualSectionMap = new Map(actualSections.map(s => [s.code, s]));
-  const actualArtifactTypes = new Set(actualArtifacts.map(a => a.type));
+  const actualSectionMap = groupSubmissionEvidence(actualSections, s => s.code);
+  const actualArtifactMap = groupSubmissionEvidence(actualArtifacts, a => a.type);
 
   // Section gaps
   for (const sect of expectedSections) {
     if (!sect.required) continue;
-    const actual = actualSectionMap.get(sect.code);
-    if (!actual || actual.status === 'not_started') {
+    const actual = actualSectionMap.get(sect.code) ?? [];
+    const state = sectionEvidenceState(actual);
+    if (!evidenceIsApproved(state)) {
       gaps.push({
         type: 'section',
         code: sect.code,
         title: sect.title,
-        severity: 'critical',
-        message: `Required section "${sect.title}" (${sect.code}) has not been started`,
+        severity: state === 'missing' ? 'critical' : 'important',
+        message: state === 'missing'
+          ? `Required section "${sect.title}" (${sect.code}) has no usable current evidence`
+          : `Required section "${sect.title}" (${sect.code}) still needs review and approval`,
       });
     }
   }
 
   // Artifact gaps
   for (const art of requiredArtifacts) {
-    if (!actualArtifactTypes.has(art.artifactType)) {
+    const state = submissionEvidenceState((actualArtifactMap.get(art.artifactType) ?? []).map(a => a.status));
+    if (!evidenceIsApproved(state)) {
       gaps.push({
         type: 'artifact',
         code: art.artifactType,
         title: art.label,
-        severity: 'critical',
-        message: `Required artifact "${art.label}" is missing`,
+        severity: state === 'missing' ? 'critical' : 'important',
+        message: state === 'missing'
+          ? `Required artifact "${art.label}" is missing or has no usable current state`
+          : `Required artifact "${art.label}" is present but every current record must be reviewed and approved`,
       });
     }
   }
@@ -271,7 +290,10 @@ function getRegionalWarnings(
   entry: RegulatoryApplicationType,
   input: ReadinessInput
 ): string[] {
-  const warnings: string[] = [];
+  const warnings: string[] = [...getSectionBlueprintContext(entry.id).limitations];
+  if (requiresSectionApplicabilityAssessment(entry.id)) {
+    return warnings;
+  }
 
   if (entry.region === 'EU' && !input.artifacts.some(a => a.type === 'rmp')) {
     warnings.push('EU submissions typically require a Risk Management Plan (RMP)');
@@ -289,7 +311,7 @@ function getRegionalWarnings(
 }
 
 function scoreToLevel(score: number): ReadinessResult['level'] {
-  if (score >= 90) return 'ready';
+  if (score === 100) return 'ready';
   if (score >= 70) return 'nearly_ready';
   if (score >= 40) return 'in_progress';
   if (score >= 10) return 'early';

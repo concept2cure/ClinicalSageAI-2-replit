@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/root/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/routes/ana-ri/__tests__/stream-context-latency.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-08-ana-direct-answer-prefetch/final-red.json"
+  ],
+  "method": "Run final regression file against original source bytes, restore candidate in finally; no branch switch."
+}

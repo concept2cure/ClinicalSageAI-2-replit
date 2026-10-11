@@ -1,0 +1,217 @@
+{
+  "overflow": {
+    "scrollWidth": 390,
+    "clientWidth": 390
+  },
+  "turns": [
+    {
+      "role": "dialog",
+      "modal": "true",
+      "title": "Summary",
+      "rect": {
+        "top": 48,
+        "height": 796,
+        "width": 390
+      },
+      "head": "3 steps · 1 source · 3s\nNarrated by anthropic · claude-sonnet-5",
+      "rows": [
+        "I will look in the Vault for the stability reports first. Then I will read each one in turn. Then I will list the shelf-life claims they make. AnA's words",
+        "Searched the Vault 1.3s Vault · stability",
+        "Added task Find the stability reports",
+        "Started Find the stability reports",
+        "Added task Read each report",
+        "Added task List the shelf-life claims",
+        "Listed the Vault documents 34 ms Vault",
+        "Reading the stability report now. AnA's words",
+        "Read \"Vorelinib-Stability-Protocol-STB-0042\" 11 ms Vault",
+        "Completed Find the stability reports",
+        "Started Read each report",
+        "The report is read; listing what it claims. AnA's words",
+        "Completed Read each report",
+        "Completed List the shelf-life claims",
+        "Answered."
+      ],
+      "foot": [
+        "Recorded a2598715789e"
+      ],
+      "dockShown": false,
+      "closedByEscape": true
+    },
+    {
+      "role": "dialog",
+      "modal": "true",
+      "title": "Summary",
+      "rect": {
+        "top": 48,
+        "height": 796,
+        "width": 390
+      },
+      "head": "3 steps · 1 source · 3s\nNarrated by anthropic · claude-sonnet-5",
+      "rows": [
+        "I will look in the Vault for the stability reports first. Then I will read each one in turn. Then I will list the shelf-life claims they make. AnA's words",
+        "Searched the Vault 1.4s Vault · stability",
+        "Added task Find the stability reports",
+        "Started Find the stability reports",
+        "Added task Read each report",
+        "Added task List the shelf-life claims",
+        "Listed the Vault documents 33 ms Vault",
+        "Reading the stability report now. AnA's words",
+        "Read \"Vorelinib-Stability-Protocol-STB-0042\" 10 ms Vault",
+        "Completed Find the stability reports",
+        "Started Read each report",
+        "The report is read; listing what it claims. AnA's words",
+        "Completed Read each report",
+        "Completed List the shelf-life claims",
+        "Answered."
+      ],
+      "foot": [
+        "Recorded e937ed4ebe2e"
+      ],
+      "dockShown": false,
+      "closedByEscape": true
+    },
+    {
+      "role": "dialog",
+      "modal": "true",
+      "title": "Summary",
+      "rect": {
+        "top": 48,
+        "height": 796,
+        "width": 390
+      },
+      "head": "3 steps · 1 source · 3s\nNarrated by anthropic · claude-opus-5-5",
+      "rows": [
+        "I will look in the Vault for the stability reports first. AnA's words",
+        "Searched the Vault 1.3s Vault · stability",
+        "Added task Find the stability reports",
+        "Started Find the stability reports",
+        "Added task Read each report",
+        "Added task List the shelf-life claims",
+        "Listed the Vault documents 45 ms Vault",
+        "Reading the stability report now. AnA's words",
+        "Read \"Vorelinib-Stability-Protocol-STB-0042\" 10 ms Vault",
+        "Completed Find the stability reports",
+        "Started Read each report",
+        "The report is read; listing what it claims. AnA's words",
+        "Completed Read each report",
+        "Completed List the shelf-life claims",
+        "Answered."
+      ],
+      "foot": [
+        "Recorded 08e9b6c6e99a"
+      ],
+      "dockShown": false,
+      "closedByEscape": true
+    },
+    {
+      "role": "dialog",
+      "modal": "true",
+      "title": "Summary",
+      "rect": {
+        "top": 48,
+        "height": 796,
+        "width": 390
+      },
+      "head": "1 step · 1 source · 3s\nNarrated by anthropic · claude-sonnet-5",
+      "rows": [
+        "Searching the Vault before the literature. AnA's words · not checked",
+        "Searched the Vault 1.4s Vault · stability",
+        "You stopped the run",
+        "Stopped."
+      ],
+      "foot": [
+        "Recorded fe5b8c00c888 SHA-256 fe5b8c00c8882b144a53e40c37e191229f2fb8c55f129c79935e90bd83d5c50e Download the record for inspection"
+      ],
+      "dockShown": false,
+      "closedByEscape": true
+    },
+    {
+      "role": "dialog",
+      "modal": "true",
+      "title": "Summary",
+      "rect": {
+        "top": 48,
+        "height": 796,
+        "width": 390
+      },
+      "head": "1 step · 1 source · 2s\nNarrated by anthropic · claude-sonnet-5",
+      "rows": [
+        "Searching the Vault before the literature. AnA's words · not checked",
+        "Searched the Vault 1.2s Vault · stability",
+        "Stopped: this page lost its connection."
+      ],
+      "foot": [
+        "Recorded 5101a10a9227 SHA-256 5101a10a922769d69d2fca0f3472a0750eb8679e0c49f808c75eac8ce19733f4 Download the record for inspection"
+      ],
+      "dockShown": false,
+      "closedByEscape": true
+    },
+    {
+      "role": "dialog",
+      "modal": "true",
+      "title": "Summary",
+      "rect": {
+        "top": 48,
+        "height": 796,
+        "width": 390
+      },
+      "head": "1 step · 1 source · 2s\nNarrated by anthropic · claude-sonnet-5",
+      "rows": [
+        "Searching the Vault before the literature. AnA's words · not checked",
+        "Searched the Vault 1.5s Vault · stability",
+        "Stopped: this page lost its connection. Continue"
+      ],
+      "foot": [
+        "Recorded 8b3b57a73746 SHA-256 8b3b57a73746cee52606cf4d9bc5e3545c012155ea21f1c2bb58fe010c4fc1f9 Download the record for inspection"
+      ],
+      "dockShown": false,
+      "closedByEscape": true
+    }
+  ],
+  "chip": {
+    "role": "dialog",
+    "modal": "true",
+    "title": "Summary",
+    "rect": {
+      "top": 48,
+      "height": 796,
+      "width": 390
+    },
+    "head": "1 step · 1 source · 2s\nNarrated by anthropic · claude-sonnet-5",
+    "rows": [
+      "Searching the Vault before the literature. AnA's words · not checked",
+      "Searched the Vault 1.5s Vault · stability",
+      "Stopped: this page lost its connection. Continue"
+    ],
+    "foot": [
+      "Recorded 8b3b57a73746"
+    ],
+    "dockShown": false
+  },
+  "reopenedStop": [
+    "The run was stopped before AnA finished.",
+    "This page lost its connection, so the run was stopped before AnA finished. Continue picks it up.",
+    "This page lost its connection, so the run was stopped before AnA finished. Continue picks it up.",
+    "This page lost its connection, so the run was stopped before AnA finished. Continue picks it up. Continue"
+  ],
+  "lostConnection": {
+    "role": "dialog",
+    "modal": "true",
+    "title": "Summary",
+    "rect": {
+      "top": 48,
+      "height": 796,
+      "width": 390
+    },
+    "head": "1 step · 1 source · 2s\nNarrated by anthropic · claude-sonnet-5",
+    "rows": [
+      "Searching the Vault before the literature. AnA's words · not checked",
+      "Searched the Vault 1.3s Vault · stability",
+      "Stopped: this page lost its connection. Continue"
+    ],
+    "foot": [
+      "Recorded 54c89a7352fc"
+    ],
+    "dockShown": false
+  }
+}

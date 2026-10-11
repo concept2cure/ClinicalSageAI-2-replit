@@ -1,0 +1,577 @@
+{
+  "source": "4d1252fde561c663ef6b018f65c918bd087ce91e",
+  "run": 37683490033,
+  "job": 113013183853,
+  "artifact": 11511776693,
+  "artifact_sha256": "a3ad2a08dc62bbfc76e83622e907cc7bb7028bdd75138313093aa12ad72a49a5",
+  "physical_files": 150,
+  "total": 1582,
+  "passed": 1544,
+  "failed": 38,
+  "pending": 0,
+  "success": false,
+  "failed_suites": [
+    {
+      "file": "tests/db/licensing-trials.dbtest.ts",
+      "assertions": [
+        {
+          "ancestorTitles": [
+            "posture"
+          ],
+          "fullName": "posture the router runs as the non-superuser runtime role, RLS enforcing, under the SYSTEM scope",
+          "status": "failed",
+          "title": "the router runs as the non-superuser runtime role, RLS enforcing, under the SYSTEM scope",
+          "duration": 26.476636999999982,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:313:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "POST /licensing/trials"
+          ],
+          "fullName": "POST /licensing/trials stores the end-of-day UTC instant the client sends, and it round-trips exactly",
+          "status": "failed",
+          "title": "stores the end-of-day UTC instant the client sends, and it round-trips exactly",
+          "duration": 10.991919999999936,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:362:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "POST /licensing/trials"
+          ],
+          "fullName": "POST /licensing/trials moving the end date reports the previous one and stores the new one",
+          "status": "failed",
+          "title": "moving the end date reports the previous one and stores the new one",
+          "duration": 4.5021600000000035,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:395:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "POST /licensing/trials"
+          ],
+          "fullName": "POST /licensing/trials a past end date is refused with 400 and writes nothing \u2014 new grant or existing one",
+          "status": "failed",
+          "title": "a past end date is refused with 400 and writes nothing \u2014 new grant or existing one",
+          "duration": 4.793451999999888,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 400 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:407:26\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GET /licensing/trials"
+          ],
+          "fullName": "GET /licensing/trials lists live and lapsed grants together; revocations and perpetual grants are not trials",
+          "status": "failed",
+          "title": "lists live and lapsed grants together; revocations and perpetual grants are not trials",
+          "duration": 4.754764000000023,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:453:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GET /licensing/trials"
+          ],
+          "fullName": "GET /licensing/trials coveredByPlan follows the catalog's tier metadata and the org's real tier",
+          "status": "failed",
+          "title": "coveredByPlan follows the catalog's tier metadata and the org's real tier",
+          "duration": 4.041798999999855,
+          "failureMessages": [
+            "TypeError: Cannot read properties of undefined (reading 'filter')\n    at laneTrials (/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:203:26)\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:487:20\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GET /licensing/trials"
+          ],
+          "fullName": "GET /licensing/trials coveredByPlan says what the customer's own resolution says \u2014 for every lane row",
+          "status": "failed",
+          "title": "coveredByPlan says what the customer's own resolution says \u2014 for every lane row",
+          "duration": 4.443624,
+          "failureMessages": [
+            "TypeError: Cannot read properties of undefined (reading 'filter')\n    at laneTrials (/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:203:26)\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:513:18\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "POST /licensing/trials/convert"
+          ],
+          "fullName": "POST /licensing/trials/convert makes an already-lapsed grant perpetual: expiry cleared, still enabled, access restored",
+          "status": "failed",
+          "title": "makes an already-lapsed grant perpetual: expiry cleared, still enabled, access restored",
+          "duration": 19.548418999999967,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:547:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "POST /licensing/trials/end"
+          ],
+          "fullName": "POST /licensing/trials/end keeps enabled = true and moves the expiry to now; resolution reads it as no override (not revoked)",
+          "status": "failed",
+          "title": "keeps enabled = true and moves the expiry to now; resolution reads it as no override (not revoked)",
+          "duration": 7.529749000000038,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at openThenEnd (/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:579:27)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:593:31\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "POST /licensing/trials/end"
+          ],
+          "fullName": "POST /licensing/trials/end on a module the plan includes, the customer KEEPS it \u2014 which a revocation would have taken",
+          "status": "failed",
+          "title": "on a module the plan includes, the customer KEEPS it \u2014 which a revocation would have taken",
+          "duration": 11.244744000000082,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at openThenEnd (/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:579:27)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:623:5\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "end and convert act only on a grant that carries an end date"
+          ],
+          "fullName": "end and convert act only on a grant that carries an end date refuses to end or convert a REVOCATION, and leaves it revoked",
+          "status": "failed",
+          "title": "refuses to end or convert a REVOCATION, and leaves it revoked",
+          "duration": 11.221395999999913,
+          "failureMessages": [
+            "AssertionError: end on a revocation of dbtc_mod_open: expected 403 to be 409 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:659:70\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "end and convert act only on a grant that carries an end date"
+          ],
+          "fullName": "end and convert act only on a grant that carries an end date refuses to end or convert where no grant exists, and creates none",
+          "status": "failed",
+          "title": "refuses to end or convert where no grant exists, and creates none",
+          "duration": 3.9186869999998635,
+          "failureMessages": [
+            "AssertionError: end with no grant: expected 403 to be 409 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:675:51\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "end and convert act only on a grant that carries an end date"
+          ],
+          "fullName": "end and convert act only on a grant that carries an end date refuses to end or convert a PERPETUAL grant (a converted trial), and leaves it perpetual",
+          "status": "failed",
+          "title": "refuses to end or convert a PERPETUAL grant (a converted trial), and leaves it perpetual",
+          "duration": 4.187795000000051,
+          "failureMessages": [
+            "AssertionError: end on a perpetual grant: expected 403 to be 409 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:688:58\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "audit trail"
+          ],
+          "fullName": "audit trail tenant.trial_set \u2014 for the open and for the moved end date",
+          "status": "failed",
+          "title": "tenant.trial_set \u2014 for the open and for the moved end date",
+          "duration": 2.249977999999828,
+          "failureMessages": [
+            "AssertionError: audit rows for \"dbtc-4014-muylb0p5 open ent\": expected [] to have a length of 1 but got +0\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1389:20)\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/chai/index.js:1700:25)\n    at oneAuditRow (/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:703:45)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:720:20\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "audit trail"
+          ],
+          "fullName": "audit trail tenant.trial_converted \u2014 carrying the end date it removed",
+          "status": "failed",
+          "title": "tenant.trial_converted \u2014 carrying the end date it removed",
+          "duration": 1.0573339999998552,
+          "failureMessages": [
+            "AssertionError: audit rows for \"dbtc-4014-muylb0p5 convert pro\": expected [] to have a length of 1 but got +0\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1389:20)\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/chai/index.js:1700:25)\n    at oneAuditRow (/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:703:45)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:729:17\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "audit trail"
+          ],
+          "fullName": "audit trail tenant.trial_ended \u2014 carrying the instant the grant now ends",
+          "status": "failed",
+          "title": "tenant.trial_ended \u2014 carrying the instant the grant now ends",
+          "duration": 1.0283010000000559,
+          "failureMessages": [
+            "AssertionError: audit rows for \"dbtc-4014-muylb0p5 end pro\": expected [] to have a length of 1 but got +0\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1389:20)\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/chai/index.js:1700:25)\n    at oneAuditRow (/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:703:45)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:734:17\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "audit trail"
+          ],
+          "fullName": "audit trail the tenant reads its own record through the audit service, under its own scope",
+          "status": "failed",
+          "title": "the tenant reads its own record through the audit service, under its own scope",
+          "duration": 6.998373000000129,
+          "failureMessages": [
+            "AssertionError: expected [] to deeply equal [ 'tenant.trial_ended', \u2026(1) ]\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:753:21\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "an unknown tenant or module is a 404 and writes nothing"
+          ],
+          "fullName": "an unknown tenant or module is a 404 and writes nothing unknown tenant",
+          "status": "failed",
+          "title": "unknown tenant",
+          "duration": 3.332896000000119,
+          "failureMessages": [
+            "AssertionError: POST trials: expected 403 to be 404 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:769:48\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "an unknown tenant or module is a 404 and writes nothing"
+          ],
+          "fullName": "an unknown tenant or module is a 404 and writes nothing unknown module",
+          "status": "failed",
+          "title": "unknown module",
+          "duration": 2.997944999999845,
+          "failureMessages": [
+            "AssertionError: POST trials: expected 403 to be 404 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:780:48\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "a write without a target or a reason is a 400 and writes nothing"
+          ],
+          "fullName": "a write without a target or a reason is a 400 and writes nothing no reason, a blank one, or one under 3 characters: 400, nothing written, nothing audited",
+          "status": "failed",
+          "title": "no reason, a blank one, or one under 3 characters: 400, nothing written, nothing audited",
+          "duration": 4.063111000000163,
+          "failureMessages": [
+            "AssertionError: POST trials with reason undefined: expected 403 to be 400 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:840:85\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "a write without a target or a reason is a 400 and writes nothing"
+          ],
+          "fullName": "a write without a target or a reason is a 400 and writes nothing no tenant, no module, or a tenant id that is not a number: 400, nothing written",
+          "status": "failed",
+          "title": "no tenant, no module, or a tenant id that is not a number: 400, nothing written",
+          "duration": 3.3435770000000957,
+          "failureMessages": [
+            "AssertionError: POST trials with {\"moduleId\":\"dbtc_mod_open\"}: expected 403 to be 400 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:861:81\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "a write without a target or a reason is a 400 and writes nothing"
+          ],
+          "fullName": "a write without a target or a reason is a 400 and writes nothing a fractional tenant id is refused and writes nothing",
+          "status": "failed",
+          "title": "a fractional tenant id is refused and writes nothing",
+          "duration": 3.767742999999882,
+          "failureMessages": [
+            "AssertionError: POST trials with organizationId 91304.5: expected [ 400, 500 ] to include 403\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1319:15)\n    at Proxy.<anonymous> (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/expect/dist/index.js:1156:15)\n    at Proxy.methodWrapper (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/chai/index.js:1700:25)\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/licensing-trials.dbtest.ts:892:81\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        }
+      ]
+    },
+    {
+      "file": "tests/db/master-enterprise-requests.dbtest.ts",
+      "assertions": [
+        {
+          "ancestorTitles": [
+            "GET /api/admin/master/enterprise-requests \u2014 the platform owner"
+          ],
+          "fullName": "GET /api/admin/master/enterprise-requests \u2014 the platform owner lists pending requests by default, and not reviewed ones",
+          "status": "failed",
+          "title": "lists pending requests by default, and not reviewed ones",
+          "duration": 74.28660000000013,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/master-enterprise-requests.dbtest.ts:158:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GET /api/admin/master/enterprise-requests \u2014 the platform owner"
+          ],
+          "fullName": "GET /api/admin/master/enterprise-requests \u2014 the platform owner lists reviewed ones too with ?status=all",
+          "status": "failed",
+          "title": "lists reviewed ones too with ?status=all",
+          "duration": 11.098927000000003,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/master-enterprise-requests.dbtest.ts:172:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "GET /api/admin/master/enterprise-requests \u2014 the platform owner"
+          ],
+          "fullName": "GET /api/admin/master/enterprise-requests \u2014 the platform owner refuses an unknown status filter rather than guessing",
+          "status": "failed",
+          "title": "refuses an unknown status filter rather than guessing",
+          "duration": 9.774779999999964,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 400 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/master-enterprise-requests.dbtest.ts:178:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "a read that fails is never shown as \"no requests\""
+          ],
+          "fullName": "a read that fails is never shown as \"no requests\" answers 500 with no list when the store cannot be read",
+          "status": "failed",
+          "title": "answers 500 with no list when the store cannot be read",
+          "duration": 10.668751000000157,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 500 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/master-enterprise-requests.dbtest.ts:200:26\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        }
+      ]
+    },
+    {
+      "file": "tests/db/module-access-requests.dbtest.ts",
+      "assertions": [
+        {
+          "ancestorTitles": [
+            "posture"
+          ],
+          "fullName": "posture the platform owner on the Master Administration prefix runs under the system scope, still as the runtime role",
+          "status": "failed",
+          "title": "the platform owner on the Master Administration prefix runs under the system scope, still as the runtime role",
+          "duration": 20.48641600000019,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/module-access-requests.dbtest.ts:338:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "platform owner across workspaces (system-scoped mount)"
+          ],
+          "fullName": "platform owner across workspaces (system-scoped mount) H1: the owner's queue holds every workspace's open requests, not only the owner's own",
+          "status": "failed",
+          "title": "H1: the owner's queue holds every workspace's open requests, not only the owner's own",
+          "duration": 9.10193500000014,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/module-access-requests.dbtest.ts:734:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "platform owner across workspaces (system-scoped mount)"
+          ],
+          "fullName": "platform owner across workspaces (system-scoped mount) the per-user route refuses the every-workspace read outright instead of narrowing it",
+          "status": "failed",
+          "title": "the per-user route refuses the every-workspace read outright instead of narrowing it",
+          "duration": 14.623253000000204,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/module-access-requests.dbtest.ts:760:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "platform owner across workspaces (system-scoped mount)"
+          ],
+          "fullName": "platform owner across workspaces (system-scoped mount) H2: the owner approving org B's request writes org B's grant, records it and audits it under org B",
+          "status": "failed",
+          "title": "H2: the owner approving org B's request writes org B's grant, records it and audits it under org B",
+          "duration": 8.724404999999933,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/module-access-requests.dbtest.ts:772:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "platform owner across workspaces (system-scoped mount)"
+          ],
+          "fullName": "platform owner across workspaces (system-scoped mount) the owner declining org B's request records the reason and grants nothing",
+          "status": "failed",
+          "title": "the owner declining org B's request records the reason and grants nothing",
+          "duration": 9.272017000000233,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/module-access-requests.dbtest.ts:809:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "queue filters, a long queue, input limits and the owner in their own workspace"
+          ],
+          "fullName": "queue filters, a long queue, input limits and the owner in their own workspace status=approved and status=declined return exactly the workspace's rows in that state",
+          "status": "failed",
+          "title": "status=approved and status=declined return exactly the workspace's rows in that state",
+          "duration": 1.1932950000000346,
+          "failureMessages": [
+            "AssertionError: expected 0 to be greater than 0\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/module-access-requests.dbtest.ts:910:38\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "queue filters, a long queue, input limits and the owner in their own workspace"
+          ],
+          "fullName": "queue filters, a long queue, input limits and the owner in their own workspace the owner answering their own workspace's request is not audited as a cross-workspace decision",
+          "status": "failed",
+          "title": "the owner answering their own workspace's request is not audited as a cross-workspace decision",
+          "duration": 10.162993999999799,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/module-access-requests.dbtest.ts:1039:24\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        }
+      ]
+    },
+    {
+      "file": "tests/db/organizations-writes.dbtest.ts",
+      "assertions": [
+        {
+          "ancestorTitles": [
+            "an organization's row is written by that organization or the platform (D3)"
+          ],
+          "fullName": "an organization's row is written by that organization or the platform (D3) platform staff edit another organization's settings, and the change is really there",
+          "status": "failed",
+          "title": "platform staff edit another organization's settings, and the change is really there",
+          "duration": 25.042760000000044,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/organizations-writes.dbtest.ts:150:26\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "an organization's row is written by that organization or the platform (D3)"
+          ],
+          "fullName": "an organization's row is written by that organization or the platform (D3) platform staff edit another organization's profile",
+          "status": "failed",
+          "title": "platform staff edit another organization's profile",
+          "duration": 14.902137999999923,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/organizations-writes.dbtest.ts:169:26\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        },
+        {
+          "ancestorTitles": [
+            "an organization's row is written by that organization or the platform (D3)"
+          ],
+          "fullName": "an organization's row is written by that organization or the platform (D3) platform staff update another tenant's configuration through tenant-config",
+          "status": "failed",
+          "title": "platform staff update another tenant's configuration through tenant-config",
+          "duration": 17.674924999999803,
+          "failureMessages": [
+            "AssertionError: expected 403 to be 200 // Object.is equality\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/organizations-writes.dbtest.ts:183:26\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        }
+      ]
+    },
+    {
+      "file": "tests/db/report-os-registry-seed.dbtest.ts",
+      "assertions": [
+        {
+          "ancestorTitles": [
+            "report type registry seed (D2)"
+          ],
+          "fullName": "report type registry seed (D2) applies to the provisioned database and registers every in-code type, column for column",
+          "status": "failed",
+          "title": "applies to the provisioned database and registers every in-code type, column for column",
+          "duration": 15.739328000000114,
+          "failureMessages": [
+            "AssertionError: expected [ \u2026(61) ] to deeply equal [ \u2026(61) ]\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/report-os-registry-seed.dbtest.ts:129:40\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+          ],
+          "meta": {},
+          "tags": []
+        }
+      ]
+    },
+    {
+      "file": "tests/db/tenant-export-withheld-columns.dbtest.ts",
+      "assertions": [
+        {
+          "ancestorTitles": [
+            "the tenant export decides every secret-shaped column it reads"
+          ],
+          "fullName": "the tenant export decides every secret-shaped column it reads every text-like secret-shaped column is withheld or recorded as not a secret",
+          "status": "failed",
+          "title": "every text-like secret-shaped column is withheld or recorded as not a secret",
+          "duration": 8.709554000000026,
+          "failureMessages": [
+            "AssertionError: add each to EXPORT_WITHHELD_COLUMNS or, with a reason, EXPORT_COLUMNS_NOT_SECRET: expected [ 'stab_exports.tokens (jsonb)', \u2026(3) ] to deeply equal []\n    at /home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/tests/db/tenant-export-withheld-columns.dbtest.ts:67:107\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64"
+          ],
+          "meta": {},
+          "tags": []
+        }
+      ]
+    }
+  ]
+}

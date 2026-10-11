@@ -1,0 +1,95 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+import { execFileSync } from 'node:child_process';
+
+const repo=process.env.C2C_REPO ?? process.cwd();
+const require=createRequire(`${repo}/package.json`);
+const { PGlite }=require('@electric-sql/pglite');
+const { require: tsxRequire }=require('tsx/cjs/api');
+const ts=require('typescript');
+const { expect }=require('expect');
+const { REPORT_TYPE_REGISTRY_SEED: seed, REPORT_TYPE_REGISTRY_SEED_FILE: migration }=tsxRequire(`${repo}/scripts/db/generate-report-type-registry-seed.ts`,import.meta.url);
+const { applyMigrationFiles }=await import(pathToFileURL(`${repo}/scripts/db/migration-set.mjs`));
+const base='db89074184a2b59e228fb311babf23e0a7c6cbeb';
+const nativePath='tests/db/report-os-registry-seed.dbtest.ts';
+const source=process.argv.includes('--red')
+ ?execFileSync('git',['show',`${base}:${nativePath}`],{cwd:repo,encoding:'utf8'})
+ :fs.readFileSync(`${repo}/${nativePath}`,'utf8');
+const ast=ts.createSourceFile('report-os-registry-seed.dbtest.ts',source,ts.ScriptTarget.Latest,true);
+assert.deepEqual(ast.parseDiagnostics,[]);
+let callback,reader;
+const visit=node=>{
+ if(ts.isFunctionDeclaration(node)&&node.name?.text==='seededRows'){
+  const find=n=>{
+   if(ts.isCallExpression(n)&&ts.isPropertyAccessExpression(n.expression)&&n.expression.name.text==='query'&&ts.isNoSubstitutionTemplateLiteral(n.arguments[0]))reader=n.arguments[0].text;
+   ts.forEachChild(n,find);
+  };find(node);
+ }
+ if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='it'&&node.arguments[0]?.text==='applies to the provisioned database and registers every in-code type, column for column')callback=node.arguments[1].getText(ast);
+ ts.forEachChild(node,visit);
+};visit(ast);
+assert.ok(callback&&reader,'native callback and actual reader must both exist');
+const compiled=ts.transpileModule(`const nativeCase = ${callback};`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+const ids=seed.map(t=>t.typeId);
+const nativeCase=(applySeed,seededRows)=>new Function('applySeed','seededRows','expect','SEEDED_IDS','REPORT_TYPE_REGISTRY_SEED',compiled+'\nreturn nativeCase;')(applySeed,seededRows,expect,ids,seed);
+const db=await PGlite.create();
+const records=[];
+let status=0;
+try{
+ // Isolated registry only; no tenant/RLS/route qualification is implied.
+ await db.exec(`CREATE TABLE report_type_registry (
+   id SERIAL PRIMARY KEY, type_id TEXT NOT NULL UNIQUE, label TEXT NOT NULL, family TEXT NOT NULL,
+   allowed_scopes JSON NOT NULL, allowed_personas JSON, allowed_client_segments JSON,
+   data_dependencies JSON, artifact_dependencies JSON, workflow_dependencies JSON, ana_modules JSON,
+   export_template TEXT, governance_requirements JSON, truthfulness_rules JSON,
+   enabled BOOLEAN NOT NULL DEFAULT true, updated_at TIMESTAMP NOT NULL DEFAULT now()
+ )`);
+ const client={query:async(sql,params)=>{
+  if(params?.length)return db.query(sql,params);
+  const results=await db.exec(sql);return results.at(-1)??{rows:[]};
+ }};
+ const applySeed=async()=>{
+  const result=await applyMigrationFiles(client,repo,[migration],{stopOnFirstFailure:true});
+  assert.deepEqual(result.failures,[]);assert.deepEqual(result.applied,[migration]);
+ };
+ const read=async()=> (await db.query(reader,[ids])).rows;
+ const originalSeed=JSON.stringify(seed);
+ const run=async(name,transform=x=>x,shouldRefuse=false)=>{
+  let presented;
+  const test=nativeCase(applySeed,async()=>{
+   presented=transform(structuredClone(await read()));return presented;
+  });
+  if(shouldRefuse){await assert.rejects(test);records.push({name,result:'refused corruption'});}
+  else {await test();records.push({name,result:'passed'});}
+  assert.equal(JSON.stringify(seed),originalSeed,'source seed was mutated');
+  if(presented)assert.equal(presented.length,transform(structuredClone(await read())).length);
+ };
+ if(process.argv.includes('--red')){
+  // This is the unchanged native callback, not a reimplemented projection.
+  await run('complete unchanged database rows in reverse presentation order',rows=>rows.reverse());
+  throw new Error('Expected original assertion to reject alternate row order');
+ }
+ await run('all 61 seeded rows with every metadata field');
+ await run('complete unchanged rows reversed',rows=>rows.reverse());
+ await run('complete unchanged rows rotated',rows=>[...rows.slice(1),rows[0]]);
+ await run('one seeded ID missing',rows=>rows.slice(1),true);
+ await run('extra duplicate ID',rows=>[...rows,structuredClone(rows[0])],true);
+ await run('same-count duplicate replacing a missing ID',rows=>[...rows.slice(1),structuredClone(rows[1])],true);
+ await run('same-count unknown replacement ID',rows=>rows.map((r,i)=>i? r:{...r,type_id:'unknown.fixture_type'}),true);
+ for(const column of ['label','family','allowed_scopes','allowed_personas','allowed_client_segments','data_dependencies','artifact_dependencies','workflow_dependencies','ana_modules','export_template','governance_requirements','truthfulness_rules']){
+  await run(`changed ${column}`,rows=>rows.map((r,i)=>i? r:{...r,[column]:`${r[column]} changed`}),true);
+ }
+ await db.query('UPDATE report_type_registry SET enabled=false,label=$2 WHERE type_id=$1',[ids[1],'operator-edited label']);
+ await applySeed();
+ const disabled=(await db.query('SELECT enabled,label FROM report_type_registry WHERE type_id=$1',[ids[1]])).rows[0];
+ assert.deepEqual(disabled,{enabled:false,label:seed[1].label});
+ records.push({name:'seed replay restores metadata and preserves operator disable',result:'passed'});
+ console.log(JSON.stringify({success:true,controls:records.length,rows:ids.length,actualNativeCallbackExecuted:true,actualMigrationApplierExecuted:true,mode:'isolated PGlite; native PostgreSQL/RLS/route rerun remains required',records},null,2));
+}catch(error){
+ status=1;
+ console.error(JSON.stringify({success:false,records,mode:process.argv.includes('--red')?'original assertion alternate-order RED':'verification failure',error:String(error.message)},null,2));
+}finally{await db.close();}
+// PGlite close may reset process.exitCode; set the actual verdict afterward.
+process.exitCode=status;

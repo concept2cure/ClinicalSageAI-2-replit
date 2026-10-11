@@ -1,0 +1,5283 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a draft document: "Filed as draft. Freeze will refuse it until you re-place it after approval." 288ms
+   → Unable to find an element by: [data-testid="apf-copy-status"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Cancel
+          </button>
+          <button
+            class="de-btn primary"
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a document in review is filed as a draft too 56ms
+   → Unable to find an element by: [data-testid="apf-copy-status"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Cancel
+          </button>
+          <button
+            class="de-btn primary"
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a frozen, unsigned document is filed as finalized, which freeze also refuses 47ms
+   → Unable to find an element by: [data-testid="apf-copy-status"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Cancel
+          </button>
+          <button
+            class="de-btn primary"
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an approved document: filed as approved, with no refusal 44ms
+   → Unable to find an element by: [data-testid="apf-copy-status"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Cancel
+          </button>
+          <button
+            class="de-btn primary"
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an unknown state claims neither: it states the rule 43ms
+   → Unable to find an element by: [data-testid="apf-copy-status"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Cancel
+          </button>
+          <button
+            class="de-btn primary"
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > after placing, the server's copy status is stated, and a draft copy carries the refusal 69ms
+   → expected ' Place into filingAuthoring → filingP…' to match /The filing copy is a draft\. Freeze w…/
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed, and the copy is now approved: "Re-place approved version" rewrites the same leaf by id 5063ms
+   → Unable to find role="button" and name "Re-place approved version"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            disabled=""
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+          <div
+            class="de-gov"
+            role="status"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              Already placed: leaf #77 at 2.7.3 in sequence 0000 · original holds this document (Authored document #501). Nothing was written.
+            </span>
+          </div>
+          <div
+            class="de-field"
+          >
+            <button
+              class="btn ghost"
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               
+              Open in Submission Center
+            </button>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Close
+          </button>
+          <button
+            class="de-btn primary"
+            disabled=""
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            disabled=""
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+          <div
+            class="de-gov"
+            role="status"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              Already placed: leaf #77 at 2.7.3 in sequence 0000 · original holds this document (Authored document #501). Nothing was written.
+            </span>
+          </div>
+          <div
+            class="de-field"
+          >
+            <button
+              class="btn ghost"
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               
+              Open in Submission Center
+            </button>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Close
+          </button>
+          <button
+            class="de-btn primary"
+            disabled=""
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed with a draft copy: no re-place is offered, and the refusal is stated 74ms
+   → expected ' Place into filingAuthoring → filingP…' to match /The filing copy is a draft\./
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a draft document: "Filed as draft. Freeze will refuse it until you re-place it after approval."
+TestingLibraryElementError: Unable to find an element by: [data-testid="apf-copy-status"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Cancel
+          </button>
+          <button
+            class="de-btn primary"
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ copyLine client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:92:31
+     90| }
+     91|
+     92| const copyLine = () => screen.getByTestId('apf-copy-status').textConte…
+       |                               ^
+     93|
+     94| beforeEach(() => apiRequest.mockReset());
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:102:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a document in review is filed as a draft too
+TestingLibraryElementError: Unable to find an element by: [data-testid="apf-copy-status"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Cancel
+          </button>
+          <button
+            class="de-btn primary"
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ copyLine client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:92:31
+     90| }
+     91|
+     92| const copyLine = () => screen.getByTestId('apf-copy-status').textConte…
+       |                               ^
+     93|
+     94| beforeEach(() => apiRequest.mockReset());
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:109:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a frozen, unsigned document is filed as finalized, which freeze also refuses
+TestingLibraryElementError: Unable to find an element by: [data-testid="apf-copy-status"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Cancel
+          </button>
+          <button
+            class="de-btn primary"
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ copyLine client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:92:31
+     90| }
+     91|
+     92| const copyLine = () => screen.getByTestId('apf-copy-status').textConte…
+       |                               ^
+     93|
+     94| beforeEach(() => apiRequest.mockReset());
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:116:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an approved document: filed as approved, with no refusal
+TestingLibraryElementError: Unable to find an element by: [data-testid="apf-copy-status"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Cancel
+          </button>
+          <button
+            class="de-btn primary"
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ copyLine client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:92:31
+     90| }
+     91|
+     92| const copyLine = () => screen.getByTestId('apf-copy-status').textConte…
+       |                               ^
+     93|
+     94| beforeEach(() => apiRequest.mockReset());
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:123:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an unknown state claims neither: it states the rule
+TestingLibraryElementError: Unable to find an element by: [data-testid="apf-copy-status"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Cancel
+          </button>
+          <button
+            class="de-btn primary"
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ copyLine client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:92:31
+     90| }
+     91|
+     92| const copyLine = () => screen.getByTestId('apf-copy-status').textConte…
+       |                               ^
+     93|
+     94| beforeEach(() => apiRequest.mockReset());
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:131:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > after placing, the server's copy status is stated, and a draft copy carries the refusal
+AssertionError: expected ' Place into filingAuthoring → filingP…' to match /The filing copy is a draft\. Freeze w…/
+
+- Expected:
+/The filing copy is a draft\. Freeze will refuse it until you re-place it after approval\./
+
++ Received:
+" Place into filingAuthoring → filingPlace into filingThe submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.Target submissionChoose a submission…ZX-9 First-in-Human · IND · FDASequenceChoose a sequence…0000 · original · DraftSection code*Prefilled from the open section; edit to file elsewhere.Files as 2.7.3 at m2/2-7-3/.Lifecycle operationNewReplaceAppendDeleteReason for this placement*Clinical summary approved for sequence 0000Required, at least 8 characters. Recorded with the placement in the audit trail.The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.Placed as leaf 2.7.3 in sequence 0000 · original — server-confirmed (leaf #77, from Authored document #501). Open in Submission CenterClose Place leaf in the sequence"
+
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:141:39
+    139|     fireEvent.click(screen.getByRole('button', { name: /Place leaf/ })…
+    140|     await waitFor(() => expect(document.body.textContent).toContain('s…
+    141|     expect(document.body.textContent).toMatch(/The filing copy is a dr…
+       |                                       ^
+    142|   });
+    143|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed, and the copy is now approved: "Re-place approved version" rewrites the same leaf by id
+TestingLibraryElementError: Unable to find role="button" and name "Re-place approved version"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            disabled=""
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+          <div
+            class="de-gov"
+            role="status"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              Already placed: leaf #77 at 2.7.3 in sequence 0000 · original holds this document (Authored document #501). Nothing was written.
+            </span>
+          </div>
+          <div
+            class="de-field"
+          >
+            <button
+              class="btn ghost"
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               
+              Open in Submission Center
+            </button>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Close
+          </button>
+          <button
+            class="de-btn primary"
+            disabled=""
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <button
+      class="btn ghost"
+      style="height: 30px;"
+      title="Place this document into an eCTD sequence of the submission core"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Place into filing
+    </button>
+    <div
+      class="de-bd"
+    >
+      <div
+        aria-labelledby="apf-title"
+        aria-modal="true"
+        class="de"
+        role="dialog"
+        tabindex="-1"
+      >
+        <div
+          class="de-h"
+        >
+          <div>
+            <div
+              class="de-h-eye"
+            >
+              Authoring → filing
+            </div>
+            <div
+              class="de-h-t"
+              id="apf-title"
+            >
+              Place into filing
+            </div>
+            <div
+              class="de-h-s"
+            >
+              The submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.
+            </div>
+          </div>
+          <button
+            aria-label="Close"
+            class="de-x"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-x"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6 6 18"
+              />
+              <path
+                d="m6 6 12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="de-body"
+        >
+          <fieldset
+            disabled=""
+            style="border: 0px; margin: 0px; padding: 0px; min-width: 0;"
+          >
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-sub"
+              >
+                Target submission
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-sub"
+              >
+                <option
+                  value=""
+                >
+                  Choose a submission…
+                </option>
+                <option
+                  value="9"
+                >
+                  ZX-9 First-in-Human
+                   · 
+                  IND
+                   · 
+                  FDA
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-seq"
+              >
+                Sequence
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-seq"
+              >
+                <option
+                  value=""
+                >
+                  Choose a sequence…
+                </option>
+                <option
+                  value="31"
+                >
+                  0000
+                   · 
+                  original
+                   · 
+                  Draft
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-section"
+              >
+                Section code
+                <span
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="de-desc"
+              >
+                Prefilled from the open section; edit to file elsewhere.
+              </div>
+              <input
+                aria-describedby="apf-section-note"
+                class="c2c-input"
+                id="apf-section"
+                placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
+                type="text"
+                value="2.7.3"
+              />
+              <div
+                class="de-desc"
+                id="apf-section-note"
+                role="status"
+                style="margin-top: 4px;"
+              >
+                Files as 2.7.3 at m2/2-7-3/.
+              </div>
+            </div>
+            <div
+              class="de-field half"
+            >
+              <label
+                class="de-label"
+                for="apf-op"
+              >
+                Lifecycle operation
+              </label>
+              <select
+                class="c2c-input"
+                id="apf-op"
+              >
+                <option
+                  value="new"
+                >
+                  New
+                </option>
+                <option
+                  value="replace"
+                >
+                  Replace
+                </option>
+                <option
+                  value="append"
+                >
+                  Append
+                </option>
+                <option
+                  value="delete"
+                >
+                  Delete
+                </option>
+              </select>
+            </div>
+            <div
+              class="de-field"
+            >
+              <label
+                class="de-label"
+                for="apf-reason"
+              >
+                Reason for this placement
+                <span
+                  aria-hidden="true"
+                  class="req"
+                >
+                  *
+                </span>
+              </label>
+              <textarea
+                aria-describedby="apf-reason-note"
+                aria-required="true"
+                class="c2c-input"
+                id="apf-reason"
+                placeholder="e.g. Final clinical overview, approved for this sequence"
+                rows="2"
+              >
+                Clinical summary approved for sequence 0000
+              </textarea>
+              <div
+                class="de-desc"
+                id="apf-reason-note"
+              >
+                Required, at least 8 characters. Recorded with the placement in the audit trail.
+              </div>
+            </div>
+          </fieldset>
+          <div
+            class="de-gov"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-lock"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="11"
+                  rx="2"
+                  ry="2"
+                  width="18"
+                  x="3"
+                  y="11"
+                />
+                <path
+                  d="M7 11V7a5 5 0 0 1 10 0v4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.
+            </span>
+          </div>
+          <div
+            class="de-gov"
+            role="status"
+          >
+            <span
+              class="ico"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-circle-check-big"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21.801 10A10 10 0 1 1 17 3.335"
+                />
+                <path
+                  d="m9 11 3 3L22 4"
+                />
+              </svg>
+            </span>
+            <span
+              class="de-gov-t"
+            >
+              Already placed: leaf #77 at 2.7.3 in sequence 0000 · original holds this document (Authored document #501). Nothing was written.
+            </span>
+          </div>
+          <div
+            class="de-field"
+          >
+            <button
+              class="btn ghost"
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               
+              Open in Submission Center
+            </button>
+          </div>
+        </div>
+        <div
+          class="de-f"
+        >
+          <button
+            class="de-btn ghost"
+          >
+            Close
+          </button>
+          <button
+            class="de-btn primary"
+            disabled=""
+            title="Snapshot the saved document and place it as a leaf"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-layers"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+              />
+              <path
+                d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+              />
+              <path
+                d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+              />
+            </svg>
+             
+            Place leaf in the sequence
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:151:34
+    149|     await waitFor(() => expect(document.body.textContent).toContain('A…
+    150|
+    151|     fireEvent.click(await screen.findByRole('button', { name: 'Re-plac…
+       |                                  ^
+    152|     await waitFor(() => expect(document.body.textContent).toMatch(/Re-…
+    153|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed with a draft copy: no re-place is offered, and the refusal is stated
+AssertionError: expected ' Place into filingAuthoring → filingP…' to match /The filing copy is a draft\./
+
+- Expected:
+/The filing copy is a draft\./
+
++ Received:
+" Place into filingAuthoring → filingPlace into filingThe submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.Target submissionChoose a submission…ZX-9 First-in-Human · IND · FDASequenceChoose a sequence…0000 · original · DraftSection code*Prefilled from the open section; edit to file elsewhere.Files as 2.7.3 at m2/2-7-3/.Lifecycle operationNewReplaceAppendDeleteReason for this placement*Clinical summary approved for sequence 0000Required, at least 8 characters. Recorded with the placement in the audit trail.The server reports placement and audit outcomes for your organization. A frozen or dispatched sequence cannot be changed.Already placed: leaf #77 at 2.7.3 in sequence 0000 · original holds this document (Authored document #501). Nothing was written. Open in Submission CenterClose Place leaf in the sequence"
+
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:174:39
+    172|     await waitFor(() => expect(document.body.textContent).toContain('A…
+    173|     expect(screen.queryByRole('button', { name: 'Re-place approved ver…
+    174|     expect(document.body.textContent).toMatch(/The filing copy is a dr…
+       |                                       ^
+    175|   });
+    176| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  12:54:00
+   Duration  7.59s (transform 723ms, setup 180ms, import 890ms, tests 5.69s, environment 645ms)
+

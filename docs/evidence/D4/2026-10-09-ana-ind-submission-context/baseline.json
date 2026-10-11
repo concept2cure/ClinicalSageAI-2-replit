@@ -1,0 +1,10 @@
+{
+  "base": "d2f0b73714bbc3a2966108966ffafd98cb1d4a97",
+  "base_tree": "b6170be76a86ca64b222222f4af54ae0fa691852",
+  "branch": "concept2cure-v2",
+  "client_tree": "f4a50c306387585250e354c68e08a099362e3823",
+  "workstream": "W3",
+  "row": "D4",
+  "scope": "Missing batch filing context recovery from owned open program; IND audit/plan.",
+  "original_base": "6071cce1821115faff223dd84fa7ceacf7d01656"
+}

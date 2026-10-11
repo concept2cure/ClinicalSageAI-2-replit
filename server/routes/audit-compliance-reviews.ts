@@ -39,9 +39,8 @@ import {
   reviewStatus,
   signReviewAct,
 } from '../services/audit/compliance-reviews.js';
-import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate.js';
 import { REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings.js';
-import { isSigningAuthorized } from '../services/part11/signing-authority.js';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context.js';
 import { resolveUserId } from '../types/auth-request.js';
 import { clientIpOf } from '../utils/client-ip.js';
@@ -69,10 +68,16 @@ function reviewIdOr404(req: Request, res: Response): number | null {
   return null;
 }
 
-/** Whether this member's role carries signing authority, from the membership row (§11.10(g)). */
+/**
+ * Whether this member's role carries signing authority (§11.10(g)), by the
+ * platform's one policy (checkSigningAuthority, P-27). A role that cannot be
+ * read throws, as it did, so a failed lookup is never shown as "cannot sign".
+ */
 async function canSign(req: Request, orgId: number): Promise<boolean> {
   const userId = Number(resolveUserId(req));
-  return isSigningAuthorized(await resolveSignerOrgRole(userId, orgId));
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority?.code === 'SIGNING_AUTHORITY_UNVERIFIED') throw new Error('signing authority could not be read');
+  return authority === null;
 }
 
 async function list(pool: Pool, req: Request, res: Response, orgId: number): Promise<void> {

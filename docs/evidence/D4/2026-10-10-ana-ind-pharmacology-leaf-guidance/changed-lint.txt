@@ -1,0 +1,11 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+/workspace/scratch/324dc668b968/concept2cure-v2/server/services/ind/ctd/authoring-guidance.ts
+  519:1  warning  File has too many lines (6180). Maximum allowed is 500  max-lines
+
+✖ 1 problem (0 errors, 1 warning)
+

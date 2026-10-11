@@ -1,0 +1,37 @@
+✖ OAuth credentials never reach a different authorization server (2.770761ms)
+✔ credentials still work with their bound authorization server (3.220218ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 169.538674
+
+✖ failing tests:
+
+test at ../../../../tmp/anna-mcp-before/before.test.mjs:15:1
+✖ OAuth credentials never reach a different authorization server (2.770761ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /bound to authorization server/. Input:
+  
+  'Error: credential egress'
+  
+      at async TestContext.<anonymous> (file:///tmp/anna-mcp-before/before.test.mjs:17:3)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: credential egress
+        at fetchFn (file:///tmp/anna-mcp-before/before.test.mjs:18:46)
+        at executeTokenRequest (file:///tmp/anna-mcp-before/package/dist/esm/client/auth.js:770:46)
+        at fetchToken (file:///tmp/anna-mcp-before/package/dist/esm/client/auth.js:876:12)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///tmp/anna-mcp-before/before.test.mjs:17:3)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3),
+    expected: /bound to authorization server/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

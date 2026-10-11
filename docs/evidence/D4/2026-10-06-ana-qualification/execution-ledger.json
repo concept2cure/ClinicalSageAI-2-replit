@@ -1,0 +1,46 @@
+[
+  {
+    "check": "preflight",
+    "exitCode": 0,
+    "expectedExit": 0,
+    "output": "preflight-output.txt",
+    "expectedResult": true
+  },
+  {
+    "check": "keyless-ia-attempt",
+    "exitCode": 1,
+    "expectedExit": 1,
+    "output": "keyless-attempt-output.txt",
+    "expectedResult": true
+  },
+  {
+    "check": "keyless-pq-attempt",
+    "exitCode": 1,
+    "expectedExit": 1,
+    "output": "keyless-pq-attempt-output.txt",
+    "expectedResult": true
+  },
+  {
+    "check": "ia-unit-tests",
+    "exitCode": 0,
+    "expectedExit": 0,
+    "output": "ia-capture-tests.txt",
+    "expectedResult": true
+  },
+  {
+    "check": "pq-regression-tests",
+    "exitCode": 0,
+    "expectedExit": 0,
+    "output": "pq-regression-tests.txt",
+    "expectedResult": true
+  },
+  {
+    "check": "targeted-lint",
+    "exitCode": 0,
+    "expectedExit": 0,
+    "output": "targeted-lint.json",
+    "expectedResult": true,
+    "errors": 0,
+    "warnings": 0
+  }
+]

@@ -52,6 +52,12 @@ describe('readProgramAnchorRow', () => {
     expect(await resolveProgramProjectAnchor(db, { programId: PROGRAM, orgId: 7, context: 'test', strict: true })).toBe(12);
   });
 
+  it('raw SQL uses the same ordered reader and can require an unambiguous anchor', async () => {
+    expect(await readProgramAnchorRow(pg, { programId: PROGRAM, orgId: 7, context: 'raw' })).toEqual({ id: 12, clientWorkspaceId: 2 });
+    expect(await readProgramAnchorRow(pg, { programId: PROGRAM, orgId: 7, context: 'raw', requireUnique: true })).toBeNull();
+    expect(await readProgramAnchorRow(pg, { programId: LONE, orgId: 7, context: 'raw', requireUnique: true })).toEqual({ id: 30, clientWorkspaceId: 3 });
+  });
+
   it("another organization's anchor is never read: project 5 is the lowest id but organization 8's", async () => {
     expect(await read(PROGRAM, 8)).toEqual({ id: 5, clientWorkspaceId: 9 });
     expect(await read(PROGRAM, 9)).toBeNull();

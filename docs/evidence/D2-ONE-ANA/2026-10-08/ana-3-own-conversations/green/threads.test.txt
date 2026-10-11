@@ -1,0 +1,53 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 503s when the thread store is not provisioned — never a 200 empty list
+[AnA] Thread listing failed: conversation store not provisioned
+
+stderr | server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s on any other read failure — never a 200 empty list
+[AnA] Thread listing failed: connection reset
+
+stderr | server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s when the PROJECT-scoped ai_threads read fails (previously swallowed)
+[AnA] Thread listing failed: ai_threads join blew up
+
+stderr | server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 500s when the transcript read fails — an unreadable thread is not an empty one
+[AnA] Thread messages failed: connection reset
+
+stderr | server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 503s when the message store is not provisioned
+[AnA] Thread messages failed: message store not provisioned
+
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > returns the org rows on a healthy read 23ms
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 503s when the thread store is not provisioned — never a 200 empty list 6ms
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s on any other read failure — never a 200 empty list 4ms
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s when the PROJECT-scoped ai_threads read fails (previously swallowed) 4ms
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 500s when the transcript read fails — an unreadable thread is not an empty one 5ms
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 404s only when the thread genuinely resolves to no store 3ms
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 503s when the message store is not provisioned 3ms
+stderr | server/routes/chat/__tests__/threads-program-list.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/chat/__tests__/threads-program-list.test.ts
+{
+  "timestamp": "2026-10-08T01:14:22.735Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > reports a failed read as a failure, not as no threads
+[AnA] Thread listing failed: conversation store not provisioned
+
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > programIdForThread > accepts a UUID (normalised to lower case) and nothing else 3ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > lists the org's threads bound to the program, newest first, with the first user message as title 2ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > refuses a program id that is not a UUID rather than querying with it 1ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > returns nothing without an organization — never a cross-tenant list 1ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > reports a failed read as a failure, not as no threads 1ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > scopes the recents list to the signed-in person 1ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > scopes the project list to the signed-in person 1ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > lists nothing for a caller it cannot identify, rather than the organisation's 1ms
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  01:14:20
+   Duration  2.38s (transform 975ms, setup 117ms, import 1.67s, tests 147ms, environment 0ms)
+

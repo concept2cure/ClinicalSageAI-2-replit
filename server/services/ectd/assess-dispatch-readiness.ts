@@ -8,11 +8,16 @@
  * input to the hard gate is therefore computed from server state — a client can
  * no longer pass `validationErrors: 0` to talk the gate out of a blocker.
  *
- * Required-section context comes from the region profile (Module-1), used only
- * for non-blocking warnings. The one exception is Module 3 of an original US
- * IND: its required headings come from the IND profile
- * (required-sections.requiredSectionProfileFor), and a heading with no leaf and
- * no cross-reference covered by a Letter of Authorization blocks
+ * Required-section context: for an original sequence of an application kind
+ * the regional Module 1 record models, the record's requirement — a missing
+ * section is an error; for a continuing US IND, NDA, BLA or ANDA sequence, its
+ * 1.1 application form, as an error; otherwise the region profile's list, as
+ * non-blocking warnings (readinessOptionsForSequence).
+ *
+ * Module 3 of an original US IND is asked separately, because the Module 1
+ * record does not model it: its required headings come from the IND profile
+ * (required-sections.requiredSectionProfileFor), and a heading with no leaf
+ * and no cross-reference covered by a Letter of Authorization blocks
  * (IND_MODULE3_REQUIRED; see originalModule3Requirement).
  *
  * Tenant-scoped + DB-bound. Running it needs a database.
@@ -29,6 +34,7 @@ import { indCrossReferences } from '../../../shared/schema/ind-cross-references'
 import {
   getSubmissionRegionProfile,
   requiredModule1CodesForRegion,
+  regulationRequiredModule1,
 } from '../region-profiles/region-profile-service';
 import { moduleOfSectionKey, requiredSectionProfileFor } from './required-sections';
 import { ichHeadingTitle } from '../ind/ctd/ich-m4-headings';
@@ -43,6 +49,7 @@ import {
 import { resolveLeafDocuments } from './leaf-document-resolver';
 import {
   evaluateDispatchGate,
+  evaluateReleaseApprovalGate,
   mergeDispatchGates,
   evaluateReleaseSignatureGate,
   type DispatchGateResult,
@@ -87,21 +94,79 @@ export function dispatchAsOfDate(now: Date = new Date()): string {
 }
 
 /**
+ * The Module 1 heading (1.1 Forms) every US submission's application form is
+ * filed under, and the form a continuing sequence of each kind carries: a
+ * Form FDA 1571 for an IND (21 CFR 312), a Form FDA 356h for an NDA, BLA or
+ * ANDA (21 CFR 314 and 601). An original is held to its kind's whole list,
+ * which includes 1.1, so this is read for continuing sequences only.
+ */
+const US_APPLICATION_FORM_SECTION = '1.1';
+const US_CONTINUING_FORM: Readonly<Record<string, string>> = Object.freeze({
+  ind: 'Every IND submission carries a Form FDA 1571 (21 CFR 312)',
+  nda: 'Every submission to an NDA carries a Form FDA 356h (21 CFR 314)',
+  bla: 'Every submission to a BLA carries a Form FDA 356h (21 CFR 601)',
+  anda: 'Every submission to an ANDA carries a Form FDA 356h (21 CFR 314)',
+});
+
+/**
  * The validator options for one stored sequence. The region and as-of date go
  * through so a date-effective, region-scoped acceptance rule can be judged;
  * until 2026-10-05 (g-jp-ectd-v4-dispatch-blocker) neither did, and a new
  * Japanese application in eCTD v3.2.2 read dispatch-clear after PMDA stopped
  * receiving that format for new applications.
+ *
+ * Required sections, decided per sequence (QA 2026-10-08, j7):
+ *   - an ORIGINAL sequence is the application itself, so for an application
+ *     kind the regional Module 1 record models (US ind/nda/bla/anda, EU maa,
+ *     JP jnda) every heading the record requires of that kind must carry a
+ *     leaf, and a missing one is an error (`requiredByRegulation`);
+ *   - a CONTINUING sequence of a modelled kind is not held to the
+ *     application's requirements: an IND amendment does not re-file the
+ *     Investigator's Brochure or the general investigational plan, and the
+ *     record makes no per-sequence claim, so nothing is reported as missing
+ *     (it used to say "Required section 1.20 has no leaf" of every amendment);
+ *   - except its application form: every IND submission carries a Form FDA
+ *     1571 (21 CFR 312; P-20 follow-up), and every submission to an NDA, BLA
+ *     or ANDA a Form FDA 356h ("Form 356h" follow-up decision; both in
+ *     docs/LAUNCH_DEFINITION_OF_DONE.md), so a continuing US sequence of those
+ *     kinds is held to the 1.1 form, as an error, and to nothing else.
+ *     d155ef099 exempted continuing sequences from every requirement, which let
+ *     an amendment or supplement with no form clear the structural gate;
+ *   - an unmodelled region or kind keeps the region profile's list as
+ *     informative warnings, as before.
  */
 export function readinessOptionsForSequence(
   sequence: { region: string; type: string | null; sequenceNumber: string },
   applicationType: string | null,
   asOf: string,
 ): ComputeReadinessOptions {
+  // An original is type 'original' or sequence number '0000'.
+  const isOriginalSequence = sequence.type === 'original' || sequence.sequenceNumber === '0000';
+  const regulated = regulationRequiredModule1(sequence.region, applicationType);
+  const sections: Pick<ComputeReadinessOptions, 'requiredSections' | 'requiredByRegulation'> = !regulated
+    ? { requiredSections: requiredModule1Codes(sequence.region, applicationType) }
+    : isOriginalSequence
+      ? {
+          requiredByRegulation: {
+            codes: regulated.codes,
+            basis:
+              `The regional Module 1 record (${regulated.jurisdiction}) requires it in an original ` +
+              `${regulated.kind.toUpperCase()} application, so this sequence cannot be validated, frozen or dispatched without it.`,
+          },
+        }
+      : regulated.jurisdiction === 'US' && US_CONTINUING_FORM[regulated.kind]
+        ? {
+            requiredByRegulation: {
+              codes: [US_APPLICATION_FORM_SECTION],
+              basis:
+                `${US_CONTINUING_FORM[regulated.kind]}, filed under 1.1 (Forms), so this ` +
+                'sequence cannot be validated, frozen or dispatched without it.',
+            },
+          }
+        : {};
   return {
-    requiredSections: requiredModule1Codes(sequence.region, applicationType),
-    // An original is type 'original' or sequence number '0000'.
-    isOriginalSequence: sequence.type === 'original' || sequence.sequenceNumber === '0000',
+    ...sections,
+    isOriginalSequence,
     sequenceNumber: sequence.sequenceNumber,
     region: sequence.region,
     asOf,
@@ -163,10 +228,50 @@ export function withRules<F extends ReadinessFinding>(findings: F[]): Array<F & 
   return findings.map((f) => ({ ...f, rule: ruleView(f.code) }));
 }
 
+/**
+ * Whether a sequence recorded as Validated still is, by the validation the
+ * assessment just ran. Null for any other status.
+ *
+ * QA 2026-10-08 (j7, finding 20): sequence 0000 showed the stored stage
+ * VALIDATED beside a dispatch-blocked gate. Since 0e50993c5, Validated is
+ * reached only through a validation with no error, recorded as
+ * validation_status 'passed', and a leaf change returns the sequence to
+ * Assembling. A stage stored before that (no verdict), or one whose validation
+ * now finds an error a leaf write did not cause (a document emptied in place, a
+ * requirement decided since), is the stored label and nothing more: every
+ * surface says so from this one answer rather than deriving its own.
+ */
+export type ValidatedStage =
+  | { holds: true; verdictRecorded: boolean }
+  | { holds: false; verdictRecorded: boolean; errors: number; reason: string };
+
+/** Pure: the Validated-stage verdict from the stored row and the current error count. */
+export function validatedStageOf(
+  sequence: { status: string; validationStatus: string | null; sequenceNumber: string },
+  errors: number,
+): ValidatedStage | null {
+  if (sequence.status !== 'validated') return null;
+  const verdictRecorded = sequence.validationStatus === 'passed';
+  if (Number.isFinite(errors) && errors === 0) return { holds: true, verdictRecorded };
+  const n = Number.isFinite(errors) ? errors : NaN;
+  const count = Number.isNaN(n) ? 'an undetermined number of errors' : `${n} ${n === 1 ? 'error' : 'errors'}`;
+  return {
+    holds: false,
+    verdictRecorded,
+    errors: n,
+    reason:
+      `Sequence ${sequence.sequenceNumber} is recorded as Validated, but its validation now finds ${count}` +
+      `${verdictRecorded ? '' : ', and no validation verdict was recorded when it was marked'}. ` +
+      'Validated means the validation found no error: return it to Assembling, resolve the errors and validate again. Freeze refuses it until then.',
+  };
+}
+
 export interface DispatchReadinessAssessment {
   sequenceId: number;
   region: string;
   sequenceStatus: string;
+  /** For a sequence recorded as Validated, whether that still holds; null otherwise. */
+  validatedStage: ValidatedStage | null;
   /** Authoritative, server-computed gate inputs. */
   validationErrors: number;
   unacknowledgedShadowCriticals: number;
@@ -667,11 +772,18 @@ export async function assessSequenceDispatchReadiness(
     environment: resolveDispatchEnvironment(process.env.NODE_ENV),
   });
 
-  // 6. Hard gate over the server-computed inputs, composed with the external gate.
-  const structuralGate = evaluateDispatchGate({
-    validationErrors: readiness.errors,
-    unacknowledgedShadowCriticals,
-  });
+  // 6. Hard gate over the server-computed inputs, composed with the external
+  //    gate. P-22 (2026-10-08): a leaf whose document is not yet approved is a
+  //    validation WARNING, and a release blocker — the structural verdict every
+  //    release step reads (freeze, dispatch, transmit) refuses it by its own
+  //    blocker, never by counting it as an error.
+  const structuralGate = mergeDispatchGates(
+    evaluateDispatchGate({
+      validationErrors: readiness.errors,
+      unacknowledgedShadowCriticals,
+    }),
+    evaluateReleaseApprovalGate(readiness.releaseBlockers),
+  );
 
   // 6b. Never-Shadow-Reviewed is not clean, it is UNASSESSED. A sequence with
   //     zero completed Shadow Review runs has zero open criticals for the same
@@ -753,6 +865,7 @@ export async function assessSequenceDispatchReadiness(
     sequenceId,
     region: sequence.region,
     sequenceStatus: sequence.status,
+    validatedStage: validatedStageOf(sequence, readiness.errors),
     validationErrors: readiness.errors,
     unacknowledgedShadowCriticals,
     shadowReviewRunCount,

@@ -1,0 +1,92 @@
+{
+  "email": "emily.watson@concept2cure.pro",
+  "roleMessage": "Your role does not send, review or approve documents.",
+  "controlsBefore": [
+    {
+      "text": "Send for review",
+      "label": "Send for review: Vorelinib-DS-Specification-J3-r2 v1.0",
+      "disabled": true
+    }
+  ],
+  "confirmAlerts": null,
+  "traffic": [
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "status": 200,
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"4\",\"email\":\"emily.watson@concept2cure.pro\",\"firstName\":\"Emily\",\"lastName\":\"Watson\",\"displayName\":\"Emily Watson\",\"roles\":[\"user\"],\"permissions\":[\"governed:write\"],\"organizationId\":\"1\",\"organizationName\":\"C"
+    }
+  ]
+}

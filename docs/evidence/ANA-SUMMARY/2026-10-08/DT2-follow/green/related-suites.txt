@@ -1,0 +1,964 @@
+# RLS_ENFORCE=off npx vitest run --config vitest.config.ts <every client suite importing a module DT2 changed, the DT2 suites, and runs-read.pglite.test.ts>
+# files:
+#   client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts
+#   client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx
+#   client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts
+#   client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+#   client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx
+#   client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx
+#   client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx
+#   client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-incomplete-trace.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-plan.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-context.test.ts
+#   client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts
+#   client/src/concept2cure/components/ana/__tests__/verification-parse.test.ts
+#   client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaActivity.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts
+#   client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts
+#   client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaMessageWarnings.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx
+#   client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx
+#   client/src/concept2cure/v2/__tests__/appMentions.test.tsx
+#   client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts
+#   client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts
+#   client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx
+#   client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx
+#   client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx
+#   client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx
+#   client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx
+#   client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx
+#   client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx
+#   client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx
+#   client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx
+#   client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx
+#   client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx
+#   client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx
+#   client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx
+#   client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx
+#   client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx
+#   client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx
+#   client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx
+#   client/src/concept2cure/v2/__tests__/engineChoices.test.tsx
+#   client/src/concept2cure/v2/__tests__/homeEngine.test.tsx
+#   client/src/concept2cure/v2/__tests__/liveDriveBackToConversation.test.tsx
+#   client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx
+#   client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx
+#   client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx
+#   client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx
+#   client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx
+#   client/src/concept2cure/v2/__tests__/shellWiring.test.tsx
+#   client/src/concept2cure/v2/__tests__/turnSummary.test.tsx
+#   client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx
+#   client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts
+#   server/routes/ana-ri/__tests__/runs-read.pglite.test.ts
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > mounts DocumentCanvas beneath a turn whose draft carries authoringDocId, read from the store 123ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > puts what was checked directly under the answer, above the canvas whose drafted figures it does not check 42ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > keeps a document-backed draft OUT of the side-panel artifact list, and a legacy draft IN it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > a turn without a document gets no canvas 44ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > finds the document in a rehydrated turn’s tool trace, and never in prose 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > hides the side column while a canvas is expanded, and Open full editor mounts the one workbench in place 183ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays 335ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the canvas keeps up with AnA (2026-10-01) > re-reads the document when AnA’s turn ends 176ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > offers no insert while no document is open 200ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > inserts a settled answer into the open section as an AnA suggestion, naming its turn record 725ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > when the editor closes, the offer reopens it: the suggestion still lands where the person sees it 1039ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > an answer a model not approved for regulatory drafting wrote: the offer is disabled, says why, and inserts nothing 652ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > an answer whose record does not name its models: the offer is disabled, failing closed 656ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA knows the document open beside the conversation (2026-10-01) > sends the open document and section with the turn, and nothing once the editor closes 334ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a sealed document is known to AnA, and takes no insert (2026-10-01) > names the frozen document on the turn but offers no insert into it 251ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a section not yet drafted is one ask away (2026-10-01) > opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section 945ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates the document from the draft, split at its headings, and opens it beside the conversation 283ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > opens the document already made from that turn instead of creating a second copy 225ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates nothing when it cannot check for an earlier copy, and says so 150ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed 20ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM 19ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > switches a live drive to a demonstration, keeping the turn and its queued moves 1111ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > does not re-arm a drive the person took over 191ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > does not re-arm a drive the person switched off 108ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > A — a mid-turn promotion is a mode change, never a fresh enable > a turn that begins driving after the switch went off does not engage 119ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > C / D — a move that did not land is reported to the run that made it, as an observation > reports through reportScreen, never as a human steer 121ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > C / D — a move that did not land is reported to the run that made it, as an observation > a pending move cancelled by a newer turn is reported to ITS turn, not the newer one 132ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move that lands is settled as landed, by its id — navigation or operation 386ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move the screen refuses is settled as not made, with the screen’s reason and its id 75ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move refused on arrival is still settled, with why — never silently dropped 65ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a pending action and the move behind it are both settled as not made when cleared 151ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > every move is settled back to the run that made it, exactly once > a move is settled once, even when reporting its landing fails 120ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > a new turn that begins driving drops the moves still queued from the last one 143ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > starting a tour over a running answer drops that answer’s queued moves 291ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > starting a tour over a running answer also refuses the moves still on their way from it 276ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > the strip’s Stop refuses the moves still on their way from the run it stopped 172ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > the driving chat’s own Stop halts the drive, queued moves and ones still arriving 154ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > D — a turn’s leftover moves do not play into the next > stopping an older turn’s chat does not end the drive a newer turn began 67ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a navigation queued behind another move is not shown as made until it lands 392ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a move from the previous turn that lands after a new turn began is not claimed for it 917ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > F / G — the strip names a screen only once it has opened, and words a failure by its kind > a navigation that cannot be made is worded as a screen that did not open 55ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveShell.test.tsx > one box: the drive strip draws no steer field on the conversation screen > while the shell’s own turn drives 48ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > reopened with no card in the transcript, the right column lists them, read by conversation id 152ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > Open puts the document in the one editor, beside the conversation 372ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a document whose card is in the transcript opens through that card: no second editor 394ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > an open document reaches the list from its bar, "← Documents (2)", and focus lands on the list 284ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > closing a document the list opened hands focus back to its row 247ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > "This project" lists what AnA built in the open project 111ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a row offers "Download working copy", with working copies only, marked as uncontrolled 183ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a failed read is an error with a retry, never an empty list 100ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a document the list opened whose record does not read says so beside the conversation, with a retry 144ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > empty is said in words, and the column stays closed until asked 44ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > at 1100px and narrower it never takes the screen by itself; the header opens it 49ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > closed by the person, it stays closed, and focus returns to the header control 80ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > is read again when an AnA turn ends 57ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > "Back to conversation" shows the conversation, and focus goes to the header's Documents 256ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > Escape does the same 230ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > an ask from the editor lands in the composer, on screen, not behind the list 275ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > beside the conversation (wider than 1100px), closing it still hands focus back to its row in the list 238ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > a draft that is not an authoring document keeps the side column on screen; the header still opens the list 52ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > a turn still running keeps AnA's progress on screen; the list shows by itself once it ends 47ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > with the side column closed by the person, the list shows by itself even beside a type-B draft 29ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The count beside "Documents" is of the list it opens > after "This project", an open document's "← Documents" counts the project's list 261ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > A document the list opened says its status > a draft opened with no card in the transcript shows "Draft" in the editor's bar 145ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 1. a reloaded thread whose last question has a live run renders a followed turn after it, with the plan and the phase line 30ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > a new conversation’s first turn is rejoined the same way: by its stamped thread and question 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 3. a sealed run hands over to its record: the stored answer takes the turn’s place, under the same id 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. a stale owner says how long it has been silent; the reader’s own network says it is retrying, and the rows stay 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 6. the reader backs off 2, 4, 8 … s while its network fails 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 7. with no record: "Recording…" while the owner is still trying, then the run’s reason, its rows and "Not recorded" 13ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > 7. …or after 30 s from its end, when the owner never releases it 12ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > a colleague’s read is refused in the server’s words, and nothing is followed 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > following a run after a reload (fake clock) > an admin follows with cancel scope 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 2. overlapping SSE frames and polled rows render once 112ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 5. a failed cancel on a detachable turn says "Stop not confirmed. Retrying." and does not abort; a later 200 shows Stopped 2258ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 5. a 409 (already stopped) shows Stopped 79ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > a turn that asked to drive keeps today’s Stop: a failed cancel still aborts 82ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > 'leave' never cancels and never says Stopped 80ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > RUN_IN_PROGRESS: the refusal is said in the design’s words, and the run that holds the conversation is followed after its question 141ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-follow.test.ts > the originating page (real clock) > RUN_LIMIT: the refusal is said in the design’s words, and nothing is followed 89ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > the asker: 200, with the run, its rows, its plan and its controls 55ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > an admin: 200, with approval null and cancel-only control 17ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > the asker sees their own pending approval, as the approval_required frame carries it 16ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > a colleague who can read the transcript: 403, with the sentence 13ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > another organisation: 404, even for its admin 12ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. who may read a live run (D-1(b)) > a run with no person: 403 for a member, 200 for an admin 23ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 9. the listings apply the same rule > the conversation listing: the asker and admins see its runs, a colleague none 50ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the recording window (DT2, flagged by DT1 as (b)) > lists a terminal run that is not yet released and has no record 9ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the recording window (DT2, flagged by DT1 as (b)) > does not list a terminal, unreleased run whose record already exists 27ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the recording window (DT2, flagged by DT1 as (b)) > applies the same person rule: a colleague sees none of it 19ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the hand-over > a sealed run names its record 18ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 6. a gap is visible > a dropped batch shows as missing seqs in events and as highWater above the last row 26ms
+ ✓ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > 10. nothing excluded leaks > sentinels in every excluded column appear in no payload, for the asker or an admin 44ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > the shell rail is drawn only where it can be seen > renders no rail on a work screen (slice 9) 85ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > the shell rail is drawn only where it can be seen > does not render the rail on a surface that owns its conversation 28ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > seeds the conversation surface and goes there, instead of arming a hidden rail 574ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that owns its conversation > re-seeds when the user is already on the conversation surface 108ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > a seeded conversation carries its files > sends the seeding composer's uploads by id, so the stream can open them 58ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > ⌘K on a surface that keeps the rail > goes to the conversation and sends there, naming the screen it was asked from 99ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > lands in the conversation composer, unsent, from that screen; Enter sends it with the screen named 941ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > an "Ask AnA" button on a work screen > "Back to" returns to the screen it was asked from 273ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > vault has no AnA column and no seam 34ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > projects has no AnA column and no seam 19ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > submission-center has no AnA column and no seam 23ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > home has no AnA column and no seam 41ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > crl-library has no AnA column and no seam 33ms
+ ✓ client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx > no screen draws a right rail (ONE_ANA_ONE_CANVAS.md, slice 9) > ⌘\ opens nothing and persists nothing: there is no rail to toggle 32ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a recorded turn carries its id and hash from post_done 107ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a turn that was not recorded carries the reason 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a failed turn keeps the status the error event carried 58ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > the turn record status over a real stream > a server that says nothing leaves nothing on the turn 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > a turn that ended here before the server spoke for it > after Stop, asks the run for its record and shows what the server filed 2242ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord > drops anything it cannot read, and never reads it as recorded 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord > keeps an unexplained refusal as a refusal 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > keeps a well-formed list, in order, and the status as before 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > drops the whole list when any entry cannot be read, so it reads as unknown, never as approved 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts > readTurnRecord: the models that wrote the turn (AnA reasoning round 11) > carries the list from post_done onto the turn 55ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders the REAL eCTD tree + selected document content 284ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > derives tree-footer KPIs from the real rows (not hardcoded) 101ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders REAL server validation findings when Validation is opened 137ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > renders the REAL ICH M4 compliance score when Compliance is opened 175ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — real documents render per panel (no fixture) > answers in its own pane and never writes to the rail this screen hides 189ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — honest empty state > shows an EmptyState — never a fixture — when the org has no documents 36ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — honest error state > shows an error EmptyState — never a fixture — when the read fails 23ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — tree search really filters (no dead input) > filters by title and section number, says so on no match, and clears 158ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — no fabricated validation or compliance results > reports validation as unavailable rather than inventing findings 91ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — no fabricated validation or compliance results > reports compliance as unavailable rather than inventing a score 96ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — the Co-Author can AUTHOR > mounts the ONE canonical editor over the document and saves through the store’s own PUT 162ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — a save states its reason (2026-10-01, D5, P11-B-1) > ⌘S in the canvas without a reason is refused at the field, which takes focus; nothing is sent 125ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — a save states its reason (2026-10-01, D5, P11-B-1) > a reason belongs to its document: opening another clears it 151ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx > EctdCoauthor — a save states its reason (2026-10-01, D5, P11-B-1) > ⌘S in the reason field saves the document, not the web page 103ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > a draft survives a history read, and is sent once the conversation is back > typed while history loads, it is held, then sent after loading 395ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > a draft survives a history read, and is sent once the conversation is back > typed while history failed, it is held through the retry and sent after recovery 104ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > an executed action is shown as a record — not a button, not a sample 73ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a non-signature governed command shows the reason-for-change sign-off 34ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a navigation chip that cannot say where it goes is a record, not a control 59ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a "Start demonstration" chip that cannot name its script is never a button 55ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > a "Start demonstration" chip is inert when the shell gives no demo starter 55ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's real actions, never a fabricated result card > never rewrites what the person typed, with Live Drive on 46ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the person's turn stays the person's > a user turn is shown as typed and grows no work record 33ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > why a turn stopped reaches the conversation > a turn the round limit cut short says so under it, with the rounds it ran 46ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > why a turn stopped reaches the conversation > a turn she ended herself claims no stop 48ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual enrollment.csv bytes, scoped to the open project 52ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual enrollment.xlsx bytes, scoped to the open project 40ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual resource.json bytes, scoped to the open project 37ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > sends the actual define.xml bytes, scoped to the open project 38ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer uploads the file itself > POSTs the real File to /api/chat/upload, not just its name 35ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > names the uploaded file in the turn once it is ready, and sends it by id 74ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > does NOT claim an attachment when the upload failed 63ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > refuses to send at all when only a failed upload is present 46ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > does not send while an upload is still in flight 53ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > the chip says how the file was read once it was 36ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > the chip gives the failure reason rather than a bare filename 37ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the composer never claims a file it did not send > rejects an unsupported type without a network call 29ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > shows the panel with the live turn by default 62ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > renders a turn as every host does: her work, then the answer 45ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > the header chip opens and closes the panel, names it, and remembers the choice 85ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > counts her declared plan on the chip, and only that 84ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > AnA's progress beside the conversation > styles the open chip by aria-expanded — the attribute the component sets — never aria-pressed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the steers AnA accepted are under the answer they shaped > shows each accepted steer as the person’s, in order 32ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the steers AnA accepted are under the answer they shaped > adds no steer furniture to a turn that was never steered 31ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > mounts the panel for a turn that produced one, each risk bound to its precedent 38ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > offers no export the conversation cannot perform 34ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx > the CRL/RTF pre-mortem is on the conversation > adds no pre-mortem furniture to a turn that produced none 24ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > offers recovery only for an interrupted partial: timeout 399ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > offers recovery only for an interrupted partial: stop 108ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > does not label an unfinished tool as a network failure when the server reports an error 54ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request 200ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > marks partial text incomplete when the stream closes without post_done 71ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > keeps the existing repeated-step explanation and offers no Continue 60ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue 39ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue 34ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue 37ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > leaves a completed text response without an interruption note or Continue 35ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 401 } 36ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 403 } 36ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { status: 429 } 35ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'internal limiter details' } } 29ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'GATEWAY_UNAVAILABLE' } 25ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for { code: 'THREAD_FORBIDDEN' } 22ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery guidance > shows safe recovery guidance after partial text for {} 25ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation final activity reconciliation > closes an unconfirmed search_documents without changing received results or the finished answer 41ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation final activity reconciliation > closes an unconfirmed update_plan without changing received results or the finished answer 49ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > the registry says which surfaces claim the rail column > the four fixed surfaces no longer hide the rail they were writing to 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > "Invite member" opens the invite form rather than asking the rail 234ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > a member-level grant is a governed ask, not a local mutation 125ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > csr-workflow — its section rows reach the rail > opens a section through the shell conversation 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > protocol-dev — "Ask AnA" reaches the rail > hands the completeness question to the shell conversation 891ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > insights — no button hands a question to a rail it hides > renders the canvas with no "Ask AnA about this report" affordance 17ms
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > locked for the workspace: the conversation shows the offer as a record, not a button 862ms
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > not locked: the same offer is a button that starts the demonstration 209ms
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > choosing a client type from the account menu > lands on that type’s default screen, which is in this release 99ms
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > choosing a client type from the account menu > choosing the type already chosen leaves the person where they are 84ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn says it reports every move back > declared when the turn asks to drive and its events reach the shell 20ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn says it reports every move back > not declared by a chat whose drive events reach no one, or a turn that does not drive 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > a mode changed after mount is the mode sent (no stale closure) 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > per-call overrides win over the hook options for that turn 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive settings reach the request > without Live Drive neither field is sent, whatever the mode 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > screens closed to this person ride every turn > sends locked_screens when the shell has published some 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > screens closed to this person ride every turn > omits the field entirely when nothing is locked 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > is NOT aborted when the hosting panel unmounts mid-drive 84ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > an ordinary turn IS aborted on unmount (no orphaned generation) 53ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn survives the unmount its own navigation causes > a turn the server declined to drive (drive_state disabled) is still aborted on unmount 53ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > emits drive_turn_end, with the run controls, once the driving stream ends 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > a turn that never drove never emits drive_turn_end 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the driving chat reports its own end > a turn the server declined to drive never emits drive_turn_end 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > IS aborted when the panel unmounts, and still releases the shell’s drive 56ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > an operation performed on screen exempts it, not only a navigation 78ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn that is allowed to drive but has not moved > the move is marked before the shell applies it — the unmount it causes finds the turn driving 78ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > moveLanded settles a move by its id, and a report can name the move it is about 78ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > reportScreen sends a screen_report to this turn’s run, and queues no steer 80ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a steer typed into the drive strip is the person’s, queued as pending like the composer’s 79ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a report about an earlier turn never reaches a newer run 105ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > with no run to address — before run_started, or once the turn ended — it resolves false, sending nothing 55ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > the drive controls a turn hands the shell > a steer accepted as the run ends is not left pending into the next turn 80ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn ended from its own chat > Stop tells the shell before the cancel is answered, with this turn’s controls 80ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn ended from its own chat > a new conversation replacing it halts the drive too 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a driving turn ended from its own chat > a turn the server did not let drive has no drive to halt 79ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > a rate limit reads as one, not as an unreachable network 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > the weekly usage cap reads as the organization’s limit 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts > a turn the stream route refuses says why > no provider configured says so, and an unexplained failure does not invent a cause 3ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > no C2C_CONVO at all (a first visit, or AnA’s own navigation here): AnA's running turn is kept, and on screen 103ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > { id: "new" } with no seed: AnA's running turn is kept, and on screen 34ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > "Open full thread" with an empty box: AnA's running turn is kept, and on screen 40ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an unseeded ask to draft: AnA's running turn is kept, and on screen 35ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an idle conversation is kept too — arriving is not a request to start over 38ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > arriving with nothing to ask shows the conversation in progress > an empty conversation in progress is titled as the new conversation it is 41ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > a question sent here while AnA is still answering > neither aborts her nor vanishes: it waits in the composer, and the person is told 45ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > a question sent here while AnA is still answering > when she is idle, the question starts its new conversation and is sent 32ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > another conversation, asked for by id > is not loaded over a turn that is still running — the person is told to open it again 39ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > another conversation, asked for by id > once loaded, is the conversation in progress — the next arrival does not load it again 64ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > New conversation resets the shell’s chat 192ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > can replace a pending history read with a new conversation and keeps the draft 77ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > starting over is a person’s decision > is not offered mid-turn — a reset would abort AnA where she stands 64ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > keeps the reply draft while history is loading 62ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > keeps the reply draft while history is failed 70ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx > history loading and recovery > shows the failed history with retry for that same thread and an explicit new conversation control 68ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > sends run_policy from the options 42ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > a send's own policy wins for that turn 28ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the request carries the policy the person chose > is absent when nothing chose one, so the turn is today’s 28ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > paused with reason manual becomes runHold with the next steps; resumed clears it 108ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a person's pause is a person's, with nothing next 82ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > hold_expired ends the run on the client too, and says what did not run 107ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a steer that replaced the held step says which step 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a Manual hold is kept, and cleared > a finished turn leaves the run as it was (no stop to clear) 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > budget_exhausted 56ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > approval_timeout 56ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > hold_expired 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > hold_unavailable 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > the run-policy stop reasons are read, now that the server produces them > ignores an unknown policy and a malformed step list 56ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > a reopened thread > restores the policy and the steps a stop left unrun 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > knows the policy of the turn in flight — what it sent, not the preference now 28ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > Manual's unavailable warning is said once — by the turn's stopped note, not again in its warnings 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts > review follow-through > a reopened thread shows the steps a steer replaced (from the stored holds) 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > pauses the run 319ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > offers Resume, not Pause, once paused 81ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > stops the run 61ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > does not double-send while the first steer is still in flight 55ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > refuses to send an empty steer 42ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > pause never promises an instant stop 48ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > stop does not borrow pause's promise — it cuts the step in flight 31ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > mid-run control reaches the conversation > never claims stopped before the server has said so 34ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > KEEPS the text, says it was not sent, and marks the box invalid 62ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > treats a thrown handler as a refusal, not a send 53ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > treats a handler that reports nothing as accepted (unchanged contract) 61ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx > a steer the server refused says so, and keeps the text > clears the refusal once the person edits the text again 43ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx > The canvas opens while AnA builds > a document named by the turn being written opens beside the conversation, with no click 194ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx > The canvas opens while AnA builds > a conversation reopened from history opens nothing by itself 44ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx > The canvas opens while AnA builds > at 1100px or narrower it is offered, not opened over the conversation 323ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx > The canvas opens while AnA builds > never takes the pane from a document the person has open 242ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx > The canvas opens while AnA builds > closed by the person, it stays closed 199ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveBackToConversation.test.tsx > a reply that finishes off the conversation screen > leaves a strip with the end of her reply and the way back, which opens the conversation 426ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveBackToConversation.test.tsx > a reply that finishes off the conversation screen > can be dismissed 169ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveBackToConversation.test.tsx > a reply that finishes on the conversation screen > leaves nothing: the reply is in front of the person 73ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveBackToConversation.test.tsx > while AnA drives the person off the conversation > the drive strip offers the way back 209ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > describes the sub-tab in view, and follows the user to another 335ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > gives AnA a vocabulary for driving the screen 22ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > publishes MEASURED readiness once the endpoint resolves 69ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > says the gate would pass when it would 68ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > publishes NO measured fact when the readiness read fails 21ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > publishes no measured fact without a project either 31ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > withdraws its context on unmount, so the next surface inherits nothing 21ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSurfaceContext.test.tsx > CMC publishes what the screen is showing > shapes onto the wire without empty keys 18ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > pulls only well-formed PART11 blocks and reads the tier flag 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > returns [] for missing / non-array input 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > surfaces an agent's proposal (HUMAN_CONFIRMATION_REQUIRED) with its tier — the confirm tier asks for no reason 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > asks for neither a reason nor credentials, and says what AnA proposed 62ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > confirming posts { confirm: true } with the command and params, and no reason or password 181ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > the reason tier still needs its reason before the button enables 20ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > reason-only tier shows no password field 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact tier requires a password field 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact tier presents the §11.50 meaning enum (AUTHOR/REVIEWER/APPROVER) 26ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact tier states the 11.100(b) attestation and re-auth-at-signing 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > renders as a modal dialog naming the action and consequence 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > Escape cancels the dialog 14ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > associates the reason error via aria-invalid + aria-describedby when too short 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > submits the reason + command to the governed-action route and reports outcome 67ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > high-impact submit requires reason + re-auth + meaning and forwards them 83ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff > keeps Confirm disabled until the reason is long enough 20ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — a proposed reason > shows what AnA proposed and its reason whole, but leaves the reason field empty 27ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — a proposed reason > adopting AnA's wording is an act of the person, and that is what is sent 40ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — a proposed reason > the person's own words are sent when they write them 23ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — declining > on a live prompt, Cancel tells the waiting run 63ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — declining > Escape on a live prompt declines too 58ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — declining > on a finished turn there is nothing waiting, and nothing is sent 17ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > says she is waiting, names the next step, and offers the three answers 370ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > a hold that ran out says so, with nothing to press 44ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > offers only Stop before the run is controllable, as the rail does 82ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the conversation screen answers a Manual hold > no strip when nothing is running 31ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the strip on its own > lists at most three next steps, then how many more 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > the strip on its own > a person's pause is unchanged: Paused after this step, Resume, Steer 25ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > announces the hold once to assistive technology, with the step, and says when it ends 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > Run this step and Do this instead are described by the step they act on 24ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > while a Manual turn is working, the steer box says a steer replaces her next step 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > …and says nothing of the kind under Auto 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > review follow-through: the hold is announced, timed and tied to its step > the conversation screen passes the turn policy to the strip, and the hold to its chip 72ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx > one strip in the codebase > only AnaWorkSections.tsx defines .ana-runctl markup 25ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 1. after its question: the rows, the plan rail and the follower phase line 287ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 4. a Manual hold renders from `hold`, and its answers send controls 240ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 6. a stale owner is said beside the rows, with Stop offered 77ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 3. a sealed run hands over, and its rows read the same before and after 56ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 7. ended without a record: the run’s reason, the saved rows and "Not recorded" 42ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > a gap in the mirror is said once, never in place of the rows 27ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > is a named radiogroup with Manual and Auto, the current one checked 259ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > choosing Manual sets the preference 73ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > arrow keys move the choice, as a radiogroup does 68ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the conversation's composer foot: a separate 'Between steps' switch > "AnA drives" still switches Live Drive, and does not touch the policy 55ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > Auto is the product copy, with every ceiling from the shared constants — rounds whichever engine, and the wall clock 1ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > Manual says what she does, and the three ways a hold ends without the person 1ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > Quick ask says what Auto does to it, where the engine is chosen 1ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > menu: each radio is named by its label and described by its description 28ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > foot: each radio is named by its label and described by its description 15ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > the foot shows, in words on screen, what the chosen policy does 5ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > the checked option is marked by more than colour: a check mark 15ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > the switch does not animate under reduced motion 2ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > says a change applies to the next message while one is running 9ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the words > renders nothing outside the shell 1ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > Home, beside AnA drives 46ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > the same switch where people type > the conversation screen, in its composer foot 54ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > V2App sends the preference as the shell chat’s run policy > passes runPolicy: prefs.anaRunPolicy into the shell useAnaChat 0ms
+ ✓ client/src/concept2cure/v2/__tests__/runPolicySwitch.test.tsx > V2App sends the preference as the shell chat’s run policy > defaults the preference to Auto and provides the switch its context 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > keeps a round-limit stop and the round count on the turn, through post_done 81ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > keeps a repeated-step stop 57ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > keeps a cut-off answer — a turn that must not read "Finished" 57ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > ignores a reason it does not know, and a round count that is not a count 166ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > accepts the run-policy reasons now that the server produces them and every surface has words for them 217ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > the done frame says why the turn stopped — behavioural > a turn with no stop reason on done is left without one 53ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > a reopened thread > restores why each turn stopped, and its rounds, from the persisted metadata 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts > a reopened thread > keeps an empty answer the server saved as stopped, and drops other empty rows 6ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > does not call the draft absent from the governed record while its turn is still running 134ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > states only that no stored version was reported once the turn has finished 51ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > ConversationThread — the un-routable draft states what was reported > still routes a draft the server DID report a stored version for 75ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > does not report a clean validation class when no document carries a validation result 252ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > still reports the rules class clear in that same render 72ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > reports the validation class clear once documents carry validation results 47ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > reports neither class clear when the evaluation inventoried nothing 35ms
+ ✓ client/src/concept2cure/v2/__tests__/emptyStateBatchA.test.tsx > Orchestration — a findings class with nothing behind it is not a pass > shows the class its findings when the assessment produced some 28ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names each tool AnA actually ran, under its real label 97ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > announces status through exactly one polite region 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > keeps the live region mounted when there is nothing to say 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > speaks the outcomes, not just the phase 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > points the disclosure at the region it controls 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > separates the rounds so going back for more reads as exactly that 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names no rounds when she declared a plan — the plan is the structure 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > says a draft once when the step that wrote it already names it 15ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > states how the question was read 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > reports the deliverable it produced, without needing to be expanded 139ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > names the deliverable as a step too once the record is open 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > shows the newest stretch of her reasoning while she is still thinking 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > shows her reasoning verbatim, never a summary of it 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > lets a keyboard reach the reasoning it has to scroll to read 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > does not add an empty tab stop for the live thought, which does not scroll 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > cuts a long live thought at a word boundary and marks the cut 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the work is visible while it happens > is open while streaming and collapsed once the answer has landed 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > renders nothing at all for a settled turn that did no reportable work 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > renders nothing while streaming when there is no phase and nothing to report 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > shows a failed step as failed instead of dropping it 19ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > reports a failed step in the words the server wrote, not the raw payload 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — it never claims work that did not happen > counts only settled steps as run, never the one still in flight 21ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the clock > runs a clock beside the live phase and freezes the recorded duration once settled 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — the clock > claims no duration for a settled turn with no recorded end 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — each row opens in place, like the work it records > puts a step's facts behind that step's own chevron — never the inputs she passed (ANA-SUMMARY S3) 31ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — each row opens in place, like the work it records > records her plan once as "Planned N steps", with the steps behind the chevron 27ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > does not say the plan twice: the folded line counts the work, the first row is the plan 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > says "Plan", not "Planned", for a reopened thread that kept only the final list 15ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > keeps a FAILED plan call as a failed row — a failure is never folded away 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > claims no duration for a settled step whose end was never recorded 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > says on the folded line when a fallback provider answered 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > is fed by one mapping from the turn, which carries the plan and the fallback 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — her plan, live and reopened > splits a label at the argument the server quoted, and leaves the rest whole 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > a recorded turn carries one quiet row with the start of its hash, and the whole of it behind the row 26ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > a turn that was not recorded says so under the turn, unfolded, with the reason 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > says it even for a turn with nothing else to report 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > claims nothing while the turn is in flight, or when the server said nothing 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — whether the turn was recorded > activityPropsFor carries the status from the turn 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a round-limit stop is a note outside the folded body, with Continue, and Continue sends once 13ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > says the limit without a number when the round count is unknown 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a cut-off answer says so, outside the folded body, and offers Continue 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a repeated-step stop says so, and offers no Continue — continuing would repeat it 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a stop the person made says so under the turn, and offers no Continue 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > a turn she ended herself carries no note 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > offers Continue only where the host offers it — the latest settled turn 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > says nothing about a stop while the turn is still in flight 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > says it even for a turn with nothing else to report 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivity.test.tsx > AnaActivity — a turn the loop cut short says so, unfolded > keeps the open-while-streaming, folded-after pin 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > numbers the phases the turn actually reported and marks the one in flight 185ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > runs a clock while the turn is live and stops it when the turn ends 25ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > says a turn that timed out or lost its connection did not finish — never "Finished" 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > says a turn that failed before its first phase did not finish 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > lists no outputs — the conversation shows each one where it happened 21ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > says a stopped turn was stopped, never finished 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > shows the paused state with its clock 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > leaves tool durations and inputs to the transcript, never repeats them here 25ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — the work is visible while it happens > shows steers waiting for the next round 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > says a turn stopped at the round limit stopped there — never "Finished" 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > says a turn whose answer was cut off stopped — never "Finished" 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > says a turn stopped for repeating a step stopped there 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > a server-side stop whose stream then dropped did not finish — the stop does not outrank the lost connection 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > the person's own Stop still reads as a stop, even when the stream then dropped 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > says a run that was stopped at a round boundary was stopped, even when the stream closed cleanly 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > says it for a reopened turn too, which has no clock to show 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — a turn the loop cut short > still says "Finished" for a turn she ended herself 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — her plan > shows her declared plan on the rail, the current step marked, and counts nothing she did not declare 19ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — her plan > never shows an unfinished step as done once the turn has ended 13ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — nothing is shown that did not happen > renders no phases for a turn that reported none, and no fabricated steps 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — nothing is shown that did not happen > is honest before the first turn 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — nothing is shown that did not happen > reports a failed queue read as a failure, not an empty queue 35ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — nothing is shown that did not happen > renders the background queue the server reported, stalled runs included 16ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — nothing is shown that did not happen > adds no Background section when no read was wired, or the queue is empty 20ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — used in this session > says what the session used — only what reached the model, and a failed read as failed 17ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — used in this session > names the effort only when it differs from the engine she was given 15ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — used in this session > says memory could not be read rather than that nothing matched 10ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — used in this session > counts a file once however many turns it rode, at the best read it got 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — used in this session > says nothing about memory when no turn reported what it read 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — structure and announcements > is one h2 over h3 sections, each present only when it has something to say 16ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — structure and announcements > offers a close only when the host asks for one 17ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — structure and announcements > speaks the same placeholder the list shows before the first phase arrives 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx > AnaWorkPanel — structure and announcements > owns a single polite live region only when asked to announce 15ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > the conversation URL > names a conversation by id under the conversation screen, and nothing else 9ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > a fresh page load on the conversation URL loads that conversation 81ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > the URL names the conversation the screen shows, once it has an id 68ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > keeps the shell's query (the open program) when it writes the conversation id 37ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > a thread id that arrives mid-turn is written to the URL as it arrives 86ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > never rewrites the URL of a screen AnA has already moved the person to 51ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx > a reload reopens the conversation on screen > starting a new conversation drops the id from the URL 224ms
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > shows the mode its host gives it, not a local default 209ms
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > reports a choice to its host instead of keeping it 41ms
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > follows the host when the host changes the mode 42ms
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > without a host binding, still renders and switches on local state 29ms
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > a mode with no setter is not a binding: the menu still works (review objection 17) 33ms
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > Home — the engine pill is the engine the turn runs on > sends the question to the conversation screen, not through onAsk 16ms
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > the shell chat, `anaChat`, sends effortForMode(prefs.anaMode) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > the conversation screen is mounted on that chat (review objection 4) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/homeEngine.test.tsx > V2App hands Home the preference the shell chat sends — carriage > Home is rendered with mode={prefs.anaMode} and setMode writing anaMode 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > says so, and offers one way out: a new conversation in the open project 297ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > starts a new conversation and asks the same question again in it 68ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > is not offered while AnA is answering 62ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > offers nothing for another refusal 38ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > offers nothing for no code 38ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 1. (client half) the same rows live and from the record > rows built from the live frames equal the rows built from the /summary payload 116ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Recorded", with the hash and Download, only for a verdict that passed on this read 58ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Record could not be verified" for a verdict that failed, never "Recorded" 26ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Not recorded" with no record 16ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Recording…" while the confirm waits run, so "Not recorded" never flashes 16ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > declined 6ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > no answer 5ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > authorised, then failed 5ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > a step a sealed timeline announced and never finished says so 12ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > the record's end: cancelled steps keep their sentence, and the turn closes on "Stopped." 5ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > a lost connection reads "Stopped: this page lost its connection." with Continue 136ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > a turn the round limit stopped closes on its stop line, with Continue 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > the record's own end, when it says the page left, reads the same 0ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > notes and the live view > a note reads "AnA's words" once the answer is checked, and is never counted 15ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > notes and the live view > while she works, a running step reads running and "Working…" closes the list 8ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > her plan > a plan update that went through is its task rows, not a step row 0ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > her plan > a plan update that failed stays a row, with its sentence 0ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > her plan > a live turn before its first event is working, not a turn that ran nothing 5ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > a turn's Summary button opens it, beside the folded line and beside the live phase 44ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > a host that shows no Summary has no button 15ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > on a phone it is a modal dialog titled "Summary" that Escape closes 36ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > two calls, paired by id 71ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > three calls, paired by id — the first and last were the ones that swapped 56ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > keeps the id on the row, so a later correlation can use it 55ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids (an older server), still pairs correctly — the fallback is first-in, not last-in 55ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > without ids, a call an earlier step left running does not take a later step's result 82ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > a result whose id matches no call does not steal a sibling that has its own id 82ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > same-tool results land on the call that produced them > every call settles — none is left running 55ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the round's tool_use announcement carries toolUseId 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the server-run steps (web search / fetch) carry their own id on both events 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts > the server sends the id the client pairs on — carriage > the round's tool_result carries toolUseId 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > says a turn timed out, instead of showing the partial text as final 104ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > surfaces a degraded-mode warning from the server 44ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > shows every caveat, not just the first 38ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > does not need the disclosure opened — a caveat you must hunt for is hidden 37ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > never states a caveat in colour alone 35ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > a clean turn gets no caveat furniture at all 33ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx > an answer carries its own caveats > an empty warnings array is not a caveat 41ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > shows the client-type welcome, and a starter starts a conversation with it 245ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the first-run welcome is on Home > is not shown once dismissed 10ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > Home's quick actions > offer no destination this release does not carry 11ms
+ ✓ client/src/concept2cure/v2/__tests__/railPiecesRehomed.test.tsx > the conversation's composer carries the engine > shows the engine its turns run on, and a choice goes to the shell 96ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > mentionTokenAt / insertMention > sees an app token only when the caret is inside an @word at the start or after whitespace 3ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > mentionTokenAt / insertMention > sees a command token only as the first word of the draft — where the server reads it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > mentionTokenAt / insertMention > inserts the label with a trailing space and reports the caret after it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > typing @ opens the app list and Enter inserts the highlighted app instead of sending 169ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > arrow keys move the highlight and Escape closes without inserting 65ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > typing / at the start lists the commands the server parses and Enter inserts one 17ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > useAppMentions in a composer > an unknown query offers nothing and Enter sends as usual 4ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > every composer host is wired to the one hook > surfaces/ConversationThread.tsx uses useAppMentions and renders AppMentionMenu on its textarea 1ms
+ ✓ client/src/concept2cure/v2/__tests__/appMentions.test.tsx > every composer host is wired to the one hook > surfaces/Surfaces.tsx uses useAppMentions and renders AppMentionMenu on its textarea 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > NO_PENDING_APPROVAL, confirmed by the poll: the line, and the dialog closes 242ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > STALE_APPROVAL, confirmed by the poll (the run waits on another step): the same 42ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > a refusal the poll does not confirm keeps today’s error, and the dialog 59ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > checked before the signing step: an approval already decided is never submitted 49ms
+ ✓ client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > Home's engine pill > names the popup it opens and points at it 204ms
+ ✓ client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > Home's engine pill > holds a radio group of the modes, the current one checked 37ms
+ ✓ client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > Home's engine pill > a choice goes to the host and focus returns to the trigger 47ms
+ ✓ client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > Home's engine menu is not clipped by the composer (end-to-end finding F3) > opens fixed, placed from the pill 27ms
+ ✓ client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > EngineChoices (the one implementation both pickers render) > is a named radio group, the current mode checked, and reports a choice 15ms
+ ✓ client/src/concept2cure/v2/__tests__/engineChoices.test.tsx > the conversation's engine pill > names the popup it opens, and holds the same engine radio group 75ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — navigate > is a button that stashes the params and navigates to the target 169ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — navigate > opens the program the chip names BEFORE navigating to its screen 14ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — navigate > without the shell navigation it is an inert record, not a dead button 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — surface_action > is a button that re-validates against the registry, then hands the registry copy to the bus 11ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — surface_action > performs nothing when the registry refuses the payload (fail closed) 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — start_demo > is a button only when a demo starter is provided, and starts that demo 15ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — start_demo > falls back to the chip label when the script title is absent 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — start_demo > without a demo starter it stays inert 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChips — anything else is a record > renders a governed/executed action as an inert span with its error state 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > the conversation thread renders AnA’s actions as controls > a navigate chip in a thread turn is a button that navigates 69ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > the conversation thread renders AnA’s actions as controls > a start_demo chip in an ordinary thread turn is a button that starts the demo 36ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > every chat that shows AnA’s actions uses the one renderer > ConversationThread.tsx imports and renders AnaActionChips/AnaActionChip 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > every chat that shows AnA’s actions uses the one renderer > DocumentWorkbench.tsx imports and renders AnaActionChips/AnaActionChip 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > every chat that shows AnA’s actions uses the one renderer > EctdCoauthor.tsx imports and renders AnaActionChips/AnaActionChip 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > every chat that shows AnA’s actions uses the one renderer > RbmSurfaces.tsx imports and renders AnaActionChips/AnaActionChip 0ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > has no Stop (until DT3 accepts it), no Pause, and a composer that says only the asker can steer 244ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadAdminFollow.test.tsx > 9. an admin following a colleague’s turn > the asker following their own turn keeps every control, and the composer steers 101ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > keeps every phase in order, times the steps, and closes on post_done 103ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > records a stopped turn as stopped in the phase it was cut short 83ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > holds a steer as pending from acceptance until the server confirms it landed 85ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > drops a steer the run never reached when the run ends 57ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > reopening a conversation restores the work record > maps the persisted tool trace and steers back onto the turn 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > reopening a conversation restores the work record > hydrates nothing from a turn that has no trace 0ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — 21 CFR Part 11 signature gate > draws the signature prompt for a turn the server blocked pending sign-off 288ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — 21 CFR Part 11 signature gate > draws no prompt for an ordinary answer 33ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — the turn's work record reaches the thread > in flight: the phase line and the tool row are in the thread, on one turn, with no dots 35ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx > ConversationThread — the turn's work record reaches the thread > settled: the record survives the answer, collapsed to its summary 23ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > budget_exhausted → Stopped at the time limit · 1m 30s 32ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > approval_timeout → Stopped: an approval was not answered · 1m 30s 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > hold_expired → Stopped waiting for you · 1m 30s 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > hold_unavailable → Stopped: Manual was unavailable · 1m 30s 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > a reopened stopped turn says so without a clock 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > while Manual holds, she is waiting for the person — not paused 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the work panel never reads Finished for a policy stop > the panel reads the hold it is given 9ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > the time limit names both ceilings, from the shared constants 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > an unanswered approval: the change was not made 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > a Manual hold nobody answered names the step it did not run 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > Manual that could not hold says why and what to do — switch to Auto, then Continue; never "try again" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > budget_exhausted: an always-visible note, Continue on the latest turn, and never dropped 145ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > approval_timeout: an always-visible note, Continue on the latest turn, and never dropped 20ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > hold_expired: an always-visible note, Continue on the latest turn, and never dropped 25ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > the transcript says why, under the turn, with Continue > hold_unavailable: an always-visible note, Continue on the latest turn, and never dropped 23ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > a turn carries its policy and the steps it did not run to its record > activityPropsFor 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > between hold_expired and done the state line says she stopped waiting, not "Still working" 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > the progress chip — what shows with the panel closed — says she is waiting, or paused 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > a Stop at a hold names the step it left unrun (a reload must not read as a plain Stop) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx > review follow-through: every surface says what the hold is doing > a step replaced by a steer is shown as not run, beside the turn 6ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > conversationArtifacts — the panel reads real drafts, and invents nothing > lists a turn's generatedDraft with its durable id and version 2ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > conversationArtifacts — the panel reads real drafts, and invents nothing > marks a draft the server did not persist as out of the record 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > conversationArtifacts — the panel reads real drafts, and invents nothing > ignores turns that produced no draft 0ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > ConversationThread artifact panel — the controls complete their chain > .docx POSTs the draft to the export route and hands the file to downloadBlob 134ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > ConversationThread artifact panel — the controls complete their chain > Route to review PUTs the governed transition and adopts the new status 61ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > ConversationThread artifact panel — the controls complete their chain > leaves the status alone when the server refuses the transition, and says so 72ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > ConversationThread artifact panel — the controls complete their chain > cannot route a draft the server never persisted, and gives the reason 36ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx > ConversationThread artifact panel — the controls complete their chain > cannot route when no program is open — the workflow is scoped to one 46ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > end of turn: extractPendingSignoffs keeps it 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > live: pendingSignoffFromApproval keeps it 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > the proposal carries the meaning the act fixes > a value that is not a meaning the dialog has is dropped, not offered 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > offers that meaning only, already chosen 164ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > signs with it: the reason and the password are all that is asked for 90ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > an act that fixes none still offers the three, and no Release 18ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx > GovernedActionSignoff — an act that fixes its meaning > shows the statement of intent the server records with the signature 6ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 1 — redaction: no id in a step's opened details > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} shows no uuid anywhere 61ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 3 — no tool names on screen > a step with no label reads "Ran a step" in its row and its details, never "sentinel" 140ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 3 — no tool names on screen > a running step with no label reads "Running a step" 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 — the row: the server's label on line one, the preview muted beneath > reads "Searched the Vault" with "shelf life" beneath it, and opens to the facts 33ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 — the row: the server's label on line one, the preview muted beneath > a step that did not succeed shows the server's sentence, never folded 21ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > a step whose handler made a generation has no engine glyph, and says a model wrote part of it 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > control: the same step whose capture saw no model shows the engine glyph 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx > S3 test 6 — the engine glyph needs the capture to have seen no model > shows only for a successful engine step whose capture saw none; unknown is not none 0ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a task completed while both of its steps failed carries "none of its 2 steps succeeded" 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with no steps carries "No steps recorded for this task", not the failure fact 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with one step that failed and one that succeeded carries neither 0ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > Added and Started rows carry no fact 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > the fact is visible on the row, without opening it 72ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > lists the plan as it stood at that moment, and the steps attributed to the task 181ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > each task row lists only the steps attributed to that task 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > keeps a live line while the tools are running 76ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > the tool rows are still captured — the phase does not replace them 56ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > without a round status, the previous phase would stand over work it does not describe 56ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the phase line during a tool round — behavioural > once she is answering, the answer is the status 54ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the round emits the status — carriage > executeTools announces the round before the step event 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the round emits the status — carriage > the announced counts are read off the real round, never hardcoded 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts > the round emits the status — carriage > the round says so when it finishes, rather than leaving "Running…" standing 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > a turn stopped here before the server said why is mapped as the same stop 9ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > stopped here before AnA wrote anything: the note, not an empty mark 119ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > reopened from the saved conversation: the same note 36ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx > a stopped turn says it was stopped > what she had written before the stop stays, above the note 59ms
+ ✓ client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > speaks the stop in the one polite region 57ms
+ ✓ client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > speaks the stop when a turn with nothing to report settles — the polite region stays mounted 20ms
+ ✓ client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > names what Continue answers: the button is described by the stop sentence 130ms
+ ✓ client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx > AnaActivity — the stop note is spoken, and Continue keeps its place > keeps keyboard focus in place when Continue unmounts itself 29ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > which turn, and which stops > the hosts pick the latest settled assistant turn, and none while a turn is in flight 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > which turn, and which stops > isContinuable follows the table, and Continue sends one fixed sentence 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > offers Continue on the latest settled turn only, and sends it on the same conversation 172ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > offers nothing while a turn is in flight 61ms
+ ✓ client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx > the conversation screen > keeps keyboard focus in the transcript when the send withdraws Continue 80ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > renders the paperclip as a real button, not a span 51ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > opens a file picker when clicked 23ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > hands a chosen file to the upload transport 21ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'ConversationThread' composer attach > accepts more than one file, because regulatory sources come in sets 19ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > renders the paperclip as a real button, not a span 37ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > opens a file picker when clicked 26ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > hands a chosen file to the upload transport 26ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachWorks.test.tsx > 'EctdCoauthor' composer attach > accepts more than one file, because regulatory sources come in sets 22ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 3: a frame with no label reads "Running a step", never the tool's name 78ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 3: the finished frame's "Ran a step" replaces the announced label 57ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > live frames > S3 test 4: a live step reads in the doing form and the finished one in the done form, with its facts 86ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > a reopened trace > S3 test 3: an entry with no label reads "Ran a step", never the tool's name 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts > a reopened trace > carries the presentation the server recorded, and its sentence for a step that did not succeed 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx > BriefingBookPanel — rendering > renders anticipated challenges grouped under each sponsor question 44ms
+ ✓ client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx > BriefingBookPanel — rendering > is a polite live region labelled for assistive tech 171ms
+ ✓ client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx > BriefingBookPanel — rendering > honesty: always frames pushback as anticipated, never an actual FDA position 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx > BriefingBookPanel — rendering > honesty: sample data is marked not assessed and non-exportable 15ms
+ ✓ client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx > BriefingBookPanel — rendering > does not show the sample notice for assessed live data 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx > BriefingBookPanel — rendering > carries the severity as a text label (not colour alone) 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx > BriefingBookPanel — rendering > frames the overall risk as anticipated, never an actual position 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx > mapBriefingPremortem — SSE parse + honesty guard > maps a fixture tool result, forcing anticipated and preserving non-sealable 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx > mapBriefingPremortem — SSE parse + honesty guard > never upgrades a non-true sealable flag to sealable 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx > mapBriefingPremortem — SSE parse + honesty guard > returns null for an error envelope or a result with no premortem 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx > flag-gating — ENABLE_ANA_DOCUMENT_STUDIO (client flag deleted) > an unknown flag reads as disabled, and cannot be enabled 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > AnA final completion releases the composer > finishes without waiting for EOF and accepts the next question 83ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > AnA final completion releases the composer > ignores late frames after completion in the same network chunk 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > AnA final completion releases the composer > does not let a stalled transport cancellation hold the completed turn open 57ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts > completed reply transport cleanup > keeps a completed reply complete when cancelling the transport rejects 56ms
+ ✓ client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > there is exactly one place to type to AnA, and it steers the run 128ms
+ ✓ client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > a refused steer keeps its text and says so 53ms
+ ✓ client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > under a Manual hold it is "Do this instead": the step shown will not run 29ms
+ ✓ client/src/concept2cure/v2/__tests__/oneBoxDuringRun.test.tsx > during a run, one box > when AnA is idle it is the ordinary composer again 19ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-plan.test.ts > the declared plan over a real stream > keeps the latest plan and every change, in order 110ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-plan.test.ts > the declared plan over a real stream > a turn that declares no plan has none 31ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-plan.test.ts > a turn that never got going > is marked interrupted when the connection fails before any phase arrives 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-plan.test.ts > a reopened thread > restores her last plan from the persisted metadata, and invents no plan changes 11ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-plan.test.ts > plan helpers > planPosition counts only what she declared 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-plan.test.ts > plan helpers > diffPlan reports additions, starts, completions and removals by title 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-plan.test.ts > plan helpers > refuses malformed steps and context payloads 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageWarnings.test.tsx > the conversation screen > shows a turn's warnings, as a note, under the answer 103ms
+ ✓ client/src/concept2cure/v2/__tests__/anaMessageWarnings.test.tsx > the conversation screen > shows nothing when the turn has no warning 36ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > does not call a file "read" when no text was extracted from it 53ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > ConversationThread attachment chip > still says how much text was extracted, without claiming AnA read it 13ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > does not call a file "read" when no text was extracted from it 27ms
+ ✓ client/src/concept2cure/v2/__tests__/composerAttachmentChip.test.tsx > EctdCoauthor attachment chip > still says how much text was extracted, without claiming AnA read it 12ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx > ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (biopharma) 62ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx > ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (medtech) 15ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx > ConversationThread — starter chips presuppose nothing about the workspace > offers starters that assume no product, section or milestone (cro) 19ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx > ConversationThread — starter chips presuppose nothing about the workspace > sends exactly the starter the person pressed 17ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts > 4. reload joins each record to its message by id > keeps each message's server id, and attaches the record that names it 23ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts > 4. reload joins each record to its message by id > never attaches a record by position: a record naming no message here is attached to none 30ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts > a live turn keeps its timeline frames > keeps each event once, in the order the server numbered them 25ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > does not queue an already-landed steer when its SSE receipt arrives before HTTP success 26ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > shows accepted work waiting when HTTP succeeds first, then clears it on SSE confirmation 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > never shows an unaccepted steer after a control refusal 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > never shows an unaccepted steer after a control timeout 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > reconciles one duplicate receipt with success and refusal in failure-first order 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > reconciles one duplicate receipt with success and refusal in success-first order 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipts across HTTP and SSE ordering > keeps exactly one duplicate pending after one receipt and out-of-order HTTP successes 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > does not use an earlier same-text receipt to confirm a later submission 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > does not transfer a refused earlier attempt receipt to a later same-text submission 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > does not save an unmatched same-text echo as confirmation for a future request 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > does not consume unrelated pending work on an unmatched external echo 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > matches whitespace and character-cap normalization in echo-first order 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > matches whitespace and character-cap normalization in response-first order 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > matches the real queue and drain cap-boundary echo in echo-first order 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > matches the real queue and drain cap-boundary echo in response-first order 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts > AnA steering receipt eligibility and run isolation > preserves accepted-but-abandoned acknowledgment without affecting a replacement run 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > keeps HTTP 401 recovery copy visible without passing it as an assistant answer 34ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > keeps HTTP 429 recovery copy visible without passing it as an assistant answer 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > keeps HTTP 503 recovery copy visible without passing it as an assistant answer 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > excludes a stream refusal 16ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > excludes a connection-failure notice 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > preserves actual partial reply text after a stream failure 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > preserves complete answers 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts > follow-up model context after client failures > applies the history cap after excluding recovery notices 20ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > reads it with the strip's own reader 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > a malformed check is no check, and the prompt still opens 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > a frame with no check opens the prompt with none 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > an end-of-turn proposal carries the check too > reads the check from a HUMAN_CONFIRMATION_REQUIRED envelope in post_done, and drops a malformed one 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > quotes what was not found in this turn's sources, and names the verdict 74ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > shows no check when the proposal carried none 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > shows a list by its items' titles, not as "N items" 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps the latest selected thread when an older response arrives last 31ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps loading and refuses send while the newer history is still pending 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > refuses a same-tick send and ignores a superseded response still reading its body 18ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > ignores an obsolete load failure without surfacing an error on the newer selection 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > reset cancels pending history so it cannot replace a newly asked conversation 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > unmount cancels a history read and ignores its late result 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > clears the previous transcript on switch and blocks a failed selection until retry succeeds 15ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > allows an explicit new conversation after a failed history read 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — attachment handoff > sends the server file id of an attached upload 21ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — attachment handoff > sends every attached file id, in order 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — attachment handoff > omits file_ids entirely when nothing is attached 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — attachment handoff > drops attachments that have no server file id yet 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — attachment handoff > omits file_ids when no attachment finished uploading 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — pinned data-room sources > sends the pinned source ids 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — pinned data-room sources > omits source_ids when nothing is pinned 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — pinned data-room sources > shell handoff via window.C2C_SOURCE_PINS > sends sources the Data Room pinned on the window 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — pinned data-room sources > shell handoff via window.C2C_SOURCE_PINS > consumes the pin so a later, unrelated turn is not silently grounded on it 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — pinned data-room sources > shell handoff via window.C2C_SOURCE_PINS > lets an explicit prop win over the window handoff 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts > useAnaChat — pinned data-room sources > carries pinned sources alongside a fresh attachment 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores headers that arrive after a reset 22ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores remaining events in a chunk when a drive callback resets the conversation 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores queued events after a conversation reset 15ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > aborted stream isolation > ignores queued events after a conversation switch 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > turn identities > gives two turns in the same millisecond distinct message identities 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts > turn identities > looks up the interrupted turn record using its own run, even after a new run starts 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after reset > clears pause, hold, policy and steering state before the old stream settles 38ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after reset > does not address the abandoned run through current-conversation controls 10ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after reset > ignores an old control acknowledgment after the conversation changes 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after switch > clears pause, hold, policy and steering state before the old stream settles 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after switch > does not address the abandoned run through current-conversation controls 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after switch > ignores an old control acknowledgment after the conversation changes 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > does not present an incomplete response as empty history: {} 24ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > does not present an incomplete response as empty history: { messages: null } 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > does not present an incomplete response as empty history: { messages: 'unavailable' } 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > does not present an incomplete response as empty history: { error: { message: 'internal failure details' } } 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation response integrity > accepts an explicitly empty list and clears a prior failed read on retry 7ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 401 without exposing server details 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 403 without exposing server details 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 404 without exposing server details 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts > saved conversation recovery instructions > explains recovery for HTTP 429 without exposing server details 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts > a drive Stop belongs to the turn that handed it out > does not stop a newer reply after the earlier turn is complete 29ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts > a drive Stop belongs to the turn that handed it out > does not stop a newer reply after the earlier turn is reset 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts > a drive Stop belongs to the turn that handed it out > still stops its active stream when a run ID is available: false 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts > a drive Stop belongs to the turn that handed it out > still stops its active stream when a run ID is available: true 11ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > times out a request that never receives response headers and releases the composer 23ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > bounds a stalled server cancellation so Stop and a replacement demo can finish 8ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts > AnA network wait limits > a delayed cancellation for an ended turn never aborts a replacement demo 15ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a follow-up in the same conversation carries the turns before it 37ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a new conversation started and asked in one tick carries none of the last one 9ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts > conversation_history > a conversation loaded and asked in one tick carries its own turns, not the one it replaced 12ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > releases a stalled headers read and ignores its late result 22ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > releases a stalled body read and ignores its late result 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > clears the deadline after a successful read 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-context.test.ts > a turn names the document open beside the conversation > sends the turn’s authoring context as authoring_context and in the route context 21ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-context.test.ts > a turn names the document open beside the conversation > a turn without one sends the host’s context, not the previous turn’s 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-context.test.ts > a turn names the document open beside the conversation > the turn’s context wins over the host’s own 5ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > waitingForPerson > is an approval when an action waits for a person 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > waitingForPerson > is a hold under Manual 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > waitingForPerson > is nothing while she is working, or once the turn has settled 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > the work panel line > says she is waiting for your approval, not "Still working" 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > the work panel line > control: working is still working 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > the Live Drive strip > says AnA is waiting for you while she is held 27ms
+ ✓ client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx > the Live Drive strip > control: says she is driving when she is 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'THREAD_FORBIDDEN' } 31ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'GATEWAY_UNAVAILABLE' } 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'WEEKLY_LIMIT_EXCEEDED' } 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'THREAD_FORBIDDEN', message: 'Refused' } } 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { error: { code: 'WEEKLY_LIMIT_EXCEEDED', message: 'Refused' } } 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 401 } 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 429 } 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts > the effort a user chose reaches the request > sends thorough when Deep research is selected 21ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts > the effort a user chose reaches the request > sends fast when Quick ask is selected 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts > the effort a user chose reaches the request > omits the field entirely when no mode resolves, rather than guessing 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts > the composer wires its mode into that request > passes the mode-derived effort into useAnaChat 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > says the conversation belongs to another project and that nothing was sent 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > the stream’s refusal becomes that text, with the code recorded on the message 27ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts > THREAD_PROJECT_MISMATCH > a refusal with no code records none 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > unattended_limit reads "Stopped: nobody was watching for 15 minutes." 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > session_ended reads "Stopped: the session that started this turn ended." 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > server_shutdown reads "Stopped: the server restarted for an update." 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > orphaned reads "Stopped: the server handling this turn stopped responding." 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > error reads "Stopped: the turn ended with an error." 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > admin_cancelled reads "Stopped by an administrator." 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > unattended_limit is continuable 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > session_ended is continuable 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > server_shutdown is continuable 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > orphaned is continuable 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > cancelled is not: a decision, or an error to look at 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > admin_cancelled is not: a decision, or an error to look at 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.10, §5.3: the run row’s stop lines > error is not: a decision, or an error to look at 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > the phase line counts announced steps, not plan updates, and reads the server’s clock 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > an admin sees who is being waited on, not the work 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > nothing once the run has ended 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > a stale owner after four missed beats (60 s), in whole minutes 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §5.1: the follower’s lines > the alert line, most urgent first 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > one held-back step 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §2.7, §5.3: the closing row counts the steps that were not authorised > the count, and nothing at zero 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > a missing seq is a gap 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > a released run whose owner emitted more than was mirrored is a gap 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaFollowLines.test.ts > §3.5, §3.6: what the mirror could not show > the cap says so 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > carries the command, the params and the tier 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > carries the routing pair — without it the decision cannot reach her 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > carries the confirm tier the server names, and derives the tier when an older server names none 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > is the reason-only tier when no signature is demanded 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > defaults params rather than leaving them undefined 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > falls back to honest copy when the server sent none 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a frame that could not be answered raises no prompt > no runId — the answer would have nowhere to go 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a frame that could not be answered raises no prompt > no toolUseId — the decision could not be bound to a proposal 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a frame that could not be answered raises no prompt > no command — nothing to describe to the person 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a frame that could not be answered raises no prompt > no data at all 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a frame that could not be answered raises no prompt > non-string routing values are refused, not coerced 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > advanceProgress — phases in the order they happened > appends a new phase and closes the previous one at the same instant 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > advanceProgress — phases in the order they happened > does not duplicate the active phase when the same event repeats 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > advanceProgress — phases in the order they happened > treats a second tool round as a new phase — she went back for more 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > advanceProgress — phases in the order they happened > never mutates the record it was given 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > closeProgress — the outcome is recorded, not assumed > marks the active phase done at the end 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > closeProgress — the outcome is recorded, not assumed > marks a cut-short phase stopped, not done 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > closeProgress — the outcome is recorded, not assumed > is a no-op on an empty or already-closed record 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > durations > formats elapsed time in whole units 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > durations > formats a step in ms under a second and seconds above 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > tool tallies and the summary line > counts what ran, what failed and how many rounds 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > tool tallies and the summary line > summarises from the real labels and says nothing for no tools 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > tool tallies and the summary line > finds the step in flight, latest first 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > settleRunningCalls — a step the turn never heard back from did not complete > closes running steps with the given reason and leaves settled ones alone 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > settleRunningCalls — a step the turn never heard back from did not complete > returns the same array when nothing is running (no needless re-render) 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts > byRound — one grouping for the record and the dock > groups by round in order and defaults an unrounded call to the first pass 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/verification-parse.test.ts > mapVerificationResult > maps a passing verification 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/verification-parse.test.ts > mapVerificationResult > maps a failing verification with missing strings and divergence 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/verification-parse.test.ts > mapVerificationResult > returns null for an error envelope 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/verification-parse.test.ts > mapVerificationResult > returns null for null / non-object input 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/verification-parse.test.ts > mapVerificationResult > is defensive: tolerates missing/garbage fields 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts > mapConsistencyResult — verdict tiers > maps a clean verdict with no divergences 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts > mapConsistencyResult — verdict tiers > maps a minor_issues verdict 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts > mapConsistencyResult — verdict tiers > maps a needs_review verdict with a high-severity divergence 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts > mapConsistencyResult — verdict tiers > maps a blocker verdict with a critical divergence 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts > mapConsistencyResult — divergence shape + defensiveness > falls back divergenceCount to the surfaced divergences length when absent 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts > mapConsistencyResult — divergence shape + defensiveness > an unknown verdict is no result, never clean 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts > mapConsistencyResult — divergence shape + defensiveness > a missing verdict is no result, never clean 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts > mapConsistencyResult — divergence shape + defensiveness > a known verdict keeps an unknown severity, as medium (a divergence is never dropped) 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts > mapConsistencyResult — divergence shape + defensiveness > tolerates a missing bySeverity / garbage divergences array 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts > mapConsistencyResult — divergence shape + defensiveness > flags sample-derived drafts via isSample / is_sample 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts > mapConsistencyResult — divergence shape + defensiveness > returns null for an error envelope 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts > mapConsistencyResult — divergence shape + defensiveness > returns null for null / non-object input 0ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > finding 47 — one meaning for .ct-head > is defined only as the table grid header 4ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > finding 47 — one meaning for .ct-head > is not the conversation thread header 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > findings 53 and 54 — the audit trail and Apps catalog in words > cites § sections, never "ss11.10(e)" or "ss11.50", and never writes "entry(ies)" 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > findings 53 and 54 — the audit trail and Apps catalog in words > shows no API route as the Apps catalog eyebrow 0ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > finding 129 — no empty breadcrumb > draws the tier crumb and its separator only when there is a tier 0ms
+ ✓ client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts > askAnaToDraftPrompt names no stored value (SEC-C-4 class) > leaves a planted program name out of the prompt 2ms
+ ✓ client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts > askAnaToDraftPrompt names no stored value (SEC-C-4 class) > sends the same fixed sentence with a program name or without one 0ms
+ ✓ client/src/concept2cure/v2/__tests__/askAnaToDraftPrompt.test.ts > askAnaToDraftPrompt names no stored value (SEC-C-4 class) > seeds the new conversation with the fixed sentence only 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > admits an answer every model of which may write governed content 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses an answer a model not approved for regulatory drafting wrote, naming it and the remedy 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses when any one of the models that wrote it is not admitted, and says it wrote part 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses an approved model whose PQ has not passed, without offering a remedy that cannot work 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses a model the record does not name, even one marked qualified 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > fails closed on everything that does not say which models wrote it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts > every offered mode buys the effort its label promises > Deep research asks for the deepest loop 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts > every offered mode buys the effort its label promises > Quick ask asks for the shallowest 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts > every offered mode buys the effort its label promises > Standard asks for the middle 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts > every offered mode buys the effort its label promises > every mode the composer offers declares an effort 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts > every offered mode buys the effort its label promises > distinct modes do not collapse onto one effort 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts > every offered mode buys the effort its label promises > an unknown mode resolves to null rather than guessing 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > gives a sign-in recovery for HTTP 401 without blaming the network 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > gives an access recovery for HTTP 403 without blaming the network 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > does not invent a cause for an unexplained failure 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > does not invent a cause for an unexplained failure 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > keeps the specific explanation for { status: 503, code: 'GATEWAY_UNAVAILABLE' } 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > keeps the specific explanation for { status: 429, code: 'WEEKLY_LIMIT_EXCEEDED' } 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts > AnA refusal recovery > keeps the specific explanation for { status: 429 } 0ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-incomplete-trace.test.ts > hydrateToolTrace > an incomplete agent says its result is incomplete, with the trace's summary 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-incomplete-trace.test.ts > hydrateToolTrace > control: an error still reads as not finished 0ms
+ Test Files  88 passed (88)
+      Tests  872 passed (872)

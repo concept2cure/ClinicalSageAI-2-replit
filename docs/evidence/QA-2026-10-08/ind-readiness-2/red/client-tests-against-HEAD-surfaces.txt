@@ -1,0 +1,68 @@
+ × client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — regulated choices on the File cards start unstated (P-21) > the meeting type and the referenced file types start on "Not stated — choose" and send nothing until chosen
+   → Pre-IND Briefing Book: expected 'pre_ind' to be '' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > amendment: category and change kind start unstated, are never sent untouched, and the planner's refusal is shown
+   → Content category: expected 'protocol' to be '' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: an onset stated as unknown goes up as "unknown", never as a blank
+   → Unable to find a label with the text of: Onset date unknown
+          value="expected"
+          value="unexpected"
+          Unexpected (not listed in RSI)
+ × client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: a NOT_DETERMINED verdict reads "not determined: expectedness not assessed" and offers nothing to file
+   → expected 'Not assessed (no expedited clock star…' to be 'Not assessed — the expedited verdict …' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > builds with only the entered metadata and renders the server missingRequired verdict
+   → expected { sponsorName: 'ACME Bio', …(1) } to not have property "studyPhase"
+ × client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a program UUID project takes the audited-unplaced path and the note says exactly that
+   → expected "vi.fn()" to be called with arguments: [ StringMatching{…}, 'error' ]
+              unexpected response shape
+ × client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > names the program on every build so the server fills from the record, and never echoes the record back
+   → expected { studyPhase: 'Phase 1', …(1) } to not have property "studyPhase"
+ × client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > the phase and the IND type start on "Not stated — choose", offer the registry's options, and send nothing until chosen
+   → Unable to find a label with the text of: IND type
+ × client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > with a program open, the sponsor address and IND type have inputs and go up where the build reads them
+   → Unable to find a label with the text of: Sponsor address
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > an IND whose submission names no program is never matched to the open program by name
+   → Unable to find an element with the text: No IND checklist yet. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a BLA program is told its own type, and is not shown a same-named legacy IND
+   → Unable to find an element with the text: No IND checklist yet. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx > Submission Center: the stored Validated stage and the current validation agree > a Validated stage stored with no verdict says so in the Sequences list and the working-sequence picker
+   → expected undefined to be 'no validation recorded' // Object.is equality
+              draft → assembling → validated → frozen → dispatched
+ × client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx > Submission Center: the stored Validated stage and the current validation agree > the Validation and Dispatch tabs carry the server's reason when the stage no longer holds
+   → expected undefined to be 'Sequence 0000 is recorded as Validate…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx > Dispatch readiness surface: the same answer > names a stored Validated stage the validation no longer supports
+   → expected undefined to be ' — Sequence 0000 is recorded as Valid…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/filingTargetPreselect.test.tsx > the filing picker chooses a sequence only when there is no choice to make > with two open sequences (0000 and a draft 0001) nothing is chosen until the person chooses
+   → expected '61' to be '' // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/filingTargetPreselect.test.tsx > the filing picker chooses a sequence only when there is no choice to make > with two open sequences (0000 and a draft 0001) nothing is chosen until the person chooses
+AssertionError: expected '61' to be '' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > builds with only the entered metadata and renders the server missingRequired verdict
+AssertionError: expected { sponsorName: 'ACME Bio', …(1) } to not have property "studyPhase"
+ FAIL  client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a program UUID project takes the audited-unplaced path and the note says exactly that
+AssertionError: expected "vi.fn()" to be called with arguments: [ StringMatching{…}, 'error' ]
+              unexpected response shape
+ FAIL  client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > names the program on every build so the server fills from the record, and never echoes the record back
+AssertionError: expected { studyPhase: 'Phase 1', …(1) } to not have property "studyPhase"
+ FAIL  client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > the phase and the IND type start on "Not stated — choose", offer the registry's options, and send nothing until chosen
+ FAIL  client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > with a program open, the sponsor address and IND type have inputs and go up where the build reads them
+ FAIL  client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — regulated choices on the File cards start unstated (P-21) > the meeting type and the referenced file types start on "Not stated — choose" and send nothing until chosen
+AssertionError: Pre-IND Briefing Book: expected 'pre_ind' to be '' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > amendment: category and change kind start unstated, are never sent untouched, and the planner's refusal is shown
+AssertionError: Content category: expected 'protocol' to be '' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: an onset stated as unknown goes up as "unknown", never as a blank
+          value="expected"
+          value="unexpected"
+          Unexpected (not listed in RSI)
+ FAIL  client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: a NOT_DETERMINED verdict reads "not determined: expectedness not assessed" and offers nothing to file
+AssertionError: expected 'Not assessed (no expedited clock star…' to be 'Not assessed — the expedited verdict …' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > an IND whose submission names no program is never matched to the open program by name
+ FAIL  client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx > IndLifecycle — program scoping > a BLA program is told its own type, and is not shown a same-named legacy IND
+ FAIL  client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx > Submission Center: the stored Validated stage and the current validation agree > a Validated stage stored with no verdict says so in the Sequences list and the working-sequence picker
+AssertionError: expected undefined to be 'no validation recorded' // Object.is equality
+              draft → assembling → validated → frozen → dispatched
+ FAIL  client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx > Submission Center: the stored Validated stage and the current validation agree > the Validation and Dispatch tabs carry the server's reason when the stage no longer holds
+AssertionError: expected undefined to be 'Sequence 0000 is recorded as Validate…' // Object.is equality
+ FAIL  client/src/concept2cure/v2/__tests__/submissionValidatedStage.test.tsx > Dispatch readiness surface: the same answer > names a stored Validated stage the validation no longer supports
+AssertionError: expected undefined to be ' — Sequence 0000 is recorded as Valid…' // Object.is equality
+ Test Files  5 failed (5)
+      Tests  15 failed | 46 passed (61)

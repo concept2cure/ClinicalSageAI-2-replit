@@ -28,6 +28,7 @@ import type { PoolClient } from 'pg';
 import { and, asc, eq } from 'drizzle-orm';
 import { projects } from '../../../shared/schema';
 import type { RequestDb } from '../../db/requestDb';
+import { looksLikeProgramUuid, parseIntegerProjectId } from '../../lib/project-id.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { DEFAULT_WORKSPACE_MARKER } from './organization-default-workspace';
 
@@ -58,7 +59,7 @@ export interface AnchorResult {
   /** True when this call inserted the row; false when one already existed. */
   created: boolean;
   skipped?: AnchorSkip;
-  /** Human-readable reason, surfaced in the 201 body so a skip is never silent. */
+  /** Why, for the operator's log. Intake refuses on a skip (requireProgramProjectAnchor). */
   detail?: string;
 }
 
@@ -76,6 +77,13 @@ export interface EnsureAnchorInput {
   code: string | null;
   /** regulatory_programs.priority, verbatim. */
   priority: string;
+  /**
+   * `projects.metadata` for the new row: the registry context the readiness
+   * engine reads (services/c2c/program-registry-context.ts), or null when the
+   * program names none. Written only on insert; an existing anchor keeps its
+   * own (its context comes from migrations/20261008c, Rule 1).
+   */
+  metadata?: Record<string, unknown> | null;
 }
 
 interface PreflightRow {
@@ -132,19 +140,19 @@ interface PreflightRow {
  *      in it.
  *
  * With none, or with more than one and none of them the organisation's own, the
- * anchor is SKIPPED and the reason is reported. This is the same standard the
- * migration's backfill holds itself to: link on the unambiguous case, leave the
- * rest NULL, never guess.
+ * anchor is SKIPPED and the reason is returned. This is the same standard the
+ * migrations' backfills hold themselves to (20260814 links, 20261008 inserts):
+ * act on the unambiguous case, leave the rest, never guess.
  *
- * A skip is not a failure. The program, its scaffold, its submission spine and
- * its audit row are all still created — only the PM-spine anchor is absent, and
- * the governed-export and Vault surfaces keep the honest degradations they have
- * today. What must never happen is a fabricated workspace assignment, and what
- * must never happen quietly is any of this: the reason travels in the 201 body
- * and in the sealed audit payload.
+ * Intake does not accept a skip (P-19, 2026-10-08): it calls
+ * requireProgramProjectAnchor below, which turns the skip into a refusal that
+ * rolls the whole creation back. Until then a skip still created the program,
+ * and the program answered "no record" on the schedule, unified work, AnA's
+ * project context and the Vault for good. A fabricated workspace is still never
+ * the way out; refusing the program is.
  */
 export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Promise<AnchorResult> {
-  const { client, orgId, userId, programId, name, code, priority } = input;
+  const { client, orgId, userId, programId, name, code, priority, metadata } = input;
 
   // One round trip for both preconditions. The column presence check comes
   // FIRST and is read from the catalog rather than discovered by a failed
@@ -189,7 +197,7 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
       detail:
         'projects.regulatory_program_id is not present in this database ' +
         '(migrations/20260814_projects_regulatory_program_anchor.sql has not been applied). ' +
-        'The program was created; it carries no PM-spine anchor.',
+        'A program cannot be created without its PM-spine anchor.',
     };
   }
 
@@ -212,7 +220,7 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
       projectId: null, created: false, skipped: 'NO_CLIENT_WORKSPACE',
       detail:
         'This organization has no client workspace, and projects.client_workspace_id is NOT NULL. ' +
-        'The program was created; it carries no PM-spine anchor until a workspace exists.',
+        'A program cannot be created without its PM-spine anchor until a workspace exists.',
     };
   }
   if (workspaceCount > 1 && defaultWorkspaceId === null) {
@@ -222,7 +230,7 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
         `This organization has ${workspaceCount} client workspaces, none of them marked as the ` +
         'organization\u2019s own, and the program names none of them. ' +
         'projects.client_workspace_id decides who can see a project, so it is not defaulted. ' +
-        'The program was created; it carries no PM-spine anchor.',
+        'A program cannot be created without its PM-spine anchor.',
     };
   }
 
@@ -231,15 +239,52 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
   // unmaterialized path as a supported state (it falls back to the bare id in
   // its prefix scans and can recompute on demand). Writing a path here would
   // assert a hierarchy position nothing established.
+  // `metadata` carries the registry context the readiness engine reads
+  // (projects.metadata.registryId / submissionType, report-os orchestrator).
+  // Intake wrote none, so no program's readiness could ever be computed there
+  // (QA 2026-10-08, j8). NULL when the program names no registry entry.
   const inserted = await client.query<{ id: number | string }>(
     `INSERT INTO projects
        (organization_id, client_workspace_id, name, code, type, status, priority,
-        created_by_id, owner_id, regulatory_program_id)
-     VALUES ($1, $2, $3, $4, 'regulatory', 'active', $5, $6, $6, $7)
+        created_by_id, owner_id, regulatory_program_id, metadata)
+     VALUES ($1, $2, $3, $4, 'regulatory', 'active', $5, $6, $6, $7, $8::json)
      RETURNING id`,
-    [orgId, workspaceId, name, code, priority, userId, programId],
+    [orgId, workspaceId, name, code, priority, userId, programId, metadata ? JSON.stringify(metadata) : null],
   );
   return { projectId: Number(inserted.rows[0].id), created: true };
+}
+
+/**
+ * The program could not be given its project record, so it must not be created
+ * (P-19). Thrown inside the caller's transaction, so the caller's rollback takes
+ * the program, its scaffold, its submission spine and its audit row with it.
+ * `detail` is for the operator's log, not the screen: it names schema objects.
+ */
+export class ProgramAnchorUnavailableError extends Error {
+  readonly code = 'PROJECT_RECORD_UNAVAILABLE';
+
+  constructor(
+    readonly reason: AnchorSkip,
+    readonly detail: string,
+  ) {
+    super(`The program's project record could not be written (${reason})`);
+    this.name = 'ProgramAnchorUnavailableError';
+  }
+}
+
+/**
+ * Intake's form of ensureProgramProjectAnchor: the anchor, or a throw. Every
+ * program a client can open has its project record, so a program that cannot
+ * have one is refused rather than created without it.
+ */
+export async function requireProgramProjectAnchor(
+  input: EnsureAnchorInput,
+): Promise<{ projectId: number; created: boolean }> {
+  const result = await ensureProgramProjectAnchor(input);
+  if (result.projectId === null) {
+    throw new ProgramAnchorUnavailableError(result.skipped ?? 'PENDING_ANCHOR_COLUMN', result.detail ?? '');
+  }
+  return { projectId: result.projectId, created: result.created };
 }
 
 export interface ProgramAnchorRow {
@@ -258,25 +303,33 @@ export interface ProgramAnchorRow {
  * is held by the partial unique index projects_one_anchor_per_program
  * (migrations/20261001b) wherever the data allowed it.
  *
+ * Raw-SQL callers use the same reader on their own connection. requireUnique
+ * refuses duplicate anchors; other existing callers retain lowest-id behavior.
+ *
  * Throws when the read cannot complete; an absent anchor column is the
  * caller's to judge (isMissingAnchorColumn).
  */
 export async function readProgramAnchorRow(
-  db: RequestDb,
-  params: { programId: string; orgId: number; context: string },
+  db: RequestDb | { query(text: string, params?: unknown[]): Promise<{ rows: ProgramAnchorRow[] }> },
+  params: { programId: string; orgId: number; context: string; requireUnique?: boolean },
 ): Promise<ProgramAnchorRow | null> {
-  const rows = await db
+  const rows = 'select' in db ? await db
     .select({ id: projects.id, clientWorkspaceId: projects.clientWorkspaceId })
     .from(projects)
     .where(and(eq(projects.regulatoryProgramId, params.programId), eq(projects.organizationId, params.orgId)))
     .orderBy(asc(projects.id))
-    .limit(2);
+    .limit(2) : (await db.query(
+      `SELECT id, client_workspace_id AS "clientWorkspaceId" FROM projects
+       WHERE regulatory_program_id = $1 AND organization_id = $2 ORDER BY id LIMIT 2`,
+      [params.programId, params.orgId],
+    )).rows;
   if ((rows?.length ?? 0) > 1) {
-    logger.warn('Program has more than one anchor row; reading the lowest id, the row intake links', {
+    logger.warn(params.requireUnique ? 'Program has more than one anchor row; unique anchor required' : 'Program has more than one anchor row; reading the lowest id, the row intake links', {
       context: params.context,
       programId: params.programId,
       projectIds: rows.map((r) => r.id),
     });
+    if (params.requireUnique) return null;
   }
   const row = rows?.[0];
   if (!row) return null;
@@ -323,4 +376,45 @@ export async function resolveProgramProjectAnchor(
     });
     return null;
   }
+}
+
+/**
+ * The integer `projects.id` a project ref names, for a reader that must tell
+ * "no linked project" from "could not tell" (ana-14, 2026-10-08).
+ *
+ * The same answer as integerProjectForRef (services/c2c/project-ref.ts): an
+ * integer (parseIntegerProjectId, fail-closed) is itself, a program UUID is
+ * its anchor row (resolveProgramProjectAnchor, the lowest id, org-scoped), and
+ * anything else is null. One difference: this is strict. A lookup that could
+ * not complete THROWS, where integerProjectForRef logs it and answers null.
+ *
+ * project-ref.ts is not strict on purpose (its callers are best-effort, and a
+ * wrong project is worse than none), and it directs a caller that must fail on
+ * "could not tell" to pass strict to resolveProgramProjectAnchor itself. AnA's
+ * turn is such a caller: null lets it treat the program as having no project
+ * records, while a failed lookup must be reported, never read as "nothing
+ * recorded". This is that call, in one place, for the stream route and context
+ * enrichment. An absent anchor column is still null (no anchor can exist), as
+ * in resolveProgramProjectAnchor.
+ */
+export async function strictProjectRowForRef(
+  /** The db, or a loader for it: only a program UUID needs a read. */
+  db: RequestDb | (() => Promise<RequestDb>),
+  params: { ref: unknown; orgId: number; context: string },
+): Promise<number | null> {
+  const asInteger = parseIntegerProjectId(params.ref);
+  if (asInteger !== null) return asInteger;
+  if (!looksLikeProgramUuid(params.ref)) return null;
+  // A program is read inside its organization. With none, the lookup cannot be
+  // made, which is "could not tell", not "no linked project".
+  if (!Number.isSafeInteger(params.orgId) || params.orgId <= 0) {
+    throw new Error('no organization to scope the program lookup');
+  }
+  const handle = typeof db === 'function' ? await db() : db;
+  return resolveProgramProjectAnchor(handle, {
+    programId: String(params.ref).trim().toLowerCase(),
+    orgId: params.orgId,
+    context: params.context,
+    strict: true,
+  });
 }

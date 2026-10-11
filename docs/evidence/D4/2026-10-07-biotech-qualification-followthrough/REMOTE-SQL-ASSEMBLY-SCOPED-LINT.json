@@ -1,0 +1,30 @@
+{
+  "exit_code": 0,
+  "files": [
+    {
+      "path": "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/document-data-disposition/derived-impact.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/document-data-disposition/recorded-lineage.ts",
+      "errors": 0,
+      "warnings": 0,
+      "messages": []
+    }
+  ],
+  "stderr": ""
+}

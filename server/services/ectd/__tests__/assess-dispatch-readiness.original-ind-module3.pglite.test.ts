@@ -37,7 +37,7 @@ vi.mock('../release-signature-status', async (importOriginal) => ({
   signingNowResolvesRelease: (await importOriginal<typeof import('../release-signature-status')>()).signingNowResolvesRelease,
 }));
 
-import { assessSequenceDispatchReadiness } from '../assess-dispatch-readiness';
+import { assessSequenceDispatchReadiness, readinessOptionsForSequence } from '../assess-dispatch-readiness';
 
 let harness: IndPgliteDb;
 const ORG = 52;
@@ -81,9 +81,20 @@ async function placeLeaf(sequenceId: number, sectionCode: string, title: string)
   );
 }
 
+/**
+ * Every Module 1 section the regional record requires of an original FDA IND,
+ * read from the same function the assessor uses, so the only findings these
+ * cases leave are Module 3's. A missing required Module 1 section became an
+ * error in its own lane (QA 2026-10-08), and a fixture that placed only the
+ * 1571 and the cover letter would leave those errors standing — so "the gate
+ * opens" below would be measuring the wrong thing.
+ */
 async function placeModule1(sequenceId: number): Promise<void> {
-  await placeLeaf(sequenceId, 'm1.1', 'Form FDA 1571');
-  await placeLeaf(sequenceId, 'm1.2', 'Cover Letter');
+  const required =
+    readinessOptionsForSequence({ region: 'fda', type: 'original', sequenceNumber: '0000' }, 'ind', '2026-10-05')
+      .requiredByRegulation?.codes ?? [];
+  expect(required, 'the record names no required Module 1 section for an original FDA IND').not.toEqual([]);
+  for (const code of required) await placeLeaf(sequenceId, `m${code}`, `Module ${code}`);
 }
 
 async function recordCrossReference(

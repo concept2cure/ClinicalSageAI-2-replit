@@ -1,0 +1,27 @@
+# Rerun after the final ana-features edit
+## npm run ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.
+[ci:sign-ceremony] OK — every signer re-verification asks signing authority in its handler; 5 baselined re-authentication(s) sign nothing, exactly as baselined.
+exit 0
+## npm run ci:sign-ceremony:selftest
+  ✓ an authority check in another handler does not count for this one
+  ✓ a declaration of the primitive is not a call; a commented check is not a check
+  ✓ an authority baseline entry is a ceiling with a written reason, as the sign baseline is
+[ci:sign-ceremony:selftest] 25 passed — the gate fails on what it exists to catch.
+exit 0
+## npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit 0
+## npm run ci:untracked-imports
+# Its 4 findings are the AnA S4 worker's uncommitted files (stream.ts, turn-records.ts, run-control.ts,
+# turn-timeline-emitter.ts -> run-events.js / record-access.js), none of this change. This change's two new
+# modules (signing-authority-gate.ts, package-identity.ts) must be added in the same commit as their importers.
+
+  This builds for you and for nobody else. The usual cause is a .gitignore
+  pattern matching a source directory — check `git check-ignore -v <path>`,
+  and anchor the pattern with a leading slash if it names a root directory.
+exit 1
+## npm run ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 110 site(s), all baselined; 17 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 17 fix(es).
+exit 0

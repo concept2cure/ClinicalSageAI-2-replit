@@ -1,0 +1,11 @@
+GET /api/module-subscriptions/navigation on 5086 (LAUNCH_SCOPE_ENFORCE=on), status 200
+launchScope {'enforced': True} resolved True
+{"id": "submission-center", "label": "Submission Center", "requiredTier": "standard", "entitled": true, "source": "included"}
+{"id": "dispatch-readiness", "label": "Dispatch readiness", "requiredTier": "standard", "entitled": true, "source": "included"}
+{"id": "crl-library", "label": "FDA CRL library", "requiredTier": null, "entitled": false, "source": "launch-scope"}
+{"id": "lifecycle-mgmt", "label": "Lifecycle management", "requiredTier": null, "entitled": false, "source": "launch-scope"}
+{"id": "program-journey", "label": "Program journey", "requiredTier": null, "entitled": false, "source": "launch-scope"}
+{"id": "ind-checklist", "label": "IND lifecycle", "requiredTier": null, "entitled": false, "source": "launch-scope"}
+{"id": "nda-cockpit", "label": "NDA / BLA filing", "requiredTier": null, "entitled": false, "source": "launch-scope"}
+{"id": "pdev", "label": "Product development (PDEV \u2192 IND)", "requiredTier": null, "entitled": false, "source": "launch-scope"}
+{"id": "projects", "label": "Projects", "requiredTier": "free", "entitled": true, "source": "included"}

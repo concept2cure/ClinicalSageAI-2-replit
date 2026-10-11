@@ -19,6 +19,7 @@ import { describe, it, expect } from 'vitest';
 
 import {
   describeServerToolStep,
+  serverToolStepFields,
   summariseServerToolResult,
   serverToolEvidence,
   MAX_LISTED_SOURCES,
@@ -26,16 +27,25 @@ import {
 } from '../server-tool-steps.js';
 
 describe('the label says what was actually done', () => {
-  it('names the query a web search used', () => {
-    expect(describeServerToolStep({ name: 'web_search', input: { query: 'FDA Q8(R2) 2026' } })).toBe(
-      'Searching the web for "FDA Q8(R2) 2026"',
-    );
+  // ANA-SUMMARY S3: the same closed verb table as AnA's own tools, source
+  // `web`; the query is the preview, never part of the label.
+  it('names the work a web search did, in both tenses, with the query as its preview', () => {
+    const step = { name: 'web_search', input: { query: 'FDA Q8(R2) 2026' } };
+    expect(describeServerToolStep(step)).toBe('Searching the web');
+    expect(describeServerToolStep(step, 'done')).toBe('Searched the web');
+    const shown = serverToolStepFields({ ...step, result: [{ url: 'https://fda.gov/q8', title: 'Q8' }] });
+    expect(shown.announced).toMatchObject({ source: 'web', label: 'Searching the web', preview: 'FDA Q8(R2) 2026' });
+    expect(shown.finished).toMatchObject({ source: 'web', label: 'Searched the web', preview: 'FDA Q8(R2) 2026' });
+    expect(shown.finished.facts).toEqual([
+      { name: 'Searched for', value: 'FDA Q8(R2) 2026' },
+      { name: 'Found', value: '1 source' },
+    ]);
   });
 
-  it('names the page a web fetch read', () => {
-    expect(describeServerToolStep({ name: 'web_fetch', input: { url: 'https://fda.gov/q8' } })).toBe(
-      'Reading https://fda.gov/q8',
-    );
+  it('names the page a web fetch read as its preview', () => {
+    const step = { name: 'web_fetch', input: { url: 'https://fda.gov/q8' } };
+    expect(describeServerToolStep(step)).toBe('Reading a web page');
+    expect(serverToolStepFields(step).announced.preview).toBe('https://fda.gov/q8');
   });
 
   it('does NOT invent a query it was never given', () => {
@@ -44,12 +54,20 @@ describe('the label says what was actually done', () => {
     // all. "Searching the web for undefined" — or worse, a guessed term — would
     // be a fabricated record.
     expect(describeServerToolStep({ name: 'web_search' })).toBe('Searching the web');
-    expect(describeServerToolStep({ name: 'web_search', input: { query: '   ' } })).toBe('Searching the web');
+    expect(serverToolStepFields({ name: 'web_search' }).announced.preview).toBeNull();
+    expect(serverToolStepFields({ name: 'web_search', input: { query: '   ' } }).announced.preview).toBeNull();
     expect(describeServerToolStep({ name: 'web_fetch', input: {} })).toBe('Reading a web page');
   });
 
-  it('describes an unfamiliar server tool plainly rather than guessing at it', () => {
-    expect(describeServerToolStep({ name: 'code_execution' })).toBe('Running code_execution');
+  it('describes an unfamiliar server tool plainly, never by its name', () => {
+    expect(describeServerToolStep({ name: 'code_execution' })).toBe('Running a step');
+    expect(describeServerToolStep({ name: 'code_execution' }, 'done')).toBe('Ran a step');
+  });
+
+  it('a failed search keeps the doing form, with the one status sentence', () => {
+    const shown = serverToolStepFields({ name: 'web_search', input: { query: 'x' }, isError: true, result: { error_code: 'unavailable' } });
+    expect(shown.finished.label).toBe('Searching the web');
+    expect(shown.finished.message).toBe("AnA couldn't finish searching the web and continued without it.");
   });
 });
 

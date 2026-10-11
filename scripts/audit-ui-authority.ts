@@ -121,7 +121,7 @@ const railIds = (name: string) => {
   const m = model.match(new RegExp(`export const ${name} = \\[([\\s\\S]*?)\\];`));
   return m ? [...m[1].matchAll(/id:\s*'([^']+)'/g)].map((x) => x[1]) : null;
 };
-const groups = ['RAIL_CORE', 'RAIL_SPECIALIST', 'RAIL_EXPLORE', 'RAIL_QUICK'];
+const groups = ['RAIL_CORE'];
 const rail: string[] = [];
 for (const g of groups) {
   const ids = railIds(g);

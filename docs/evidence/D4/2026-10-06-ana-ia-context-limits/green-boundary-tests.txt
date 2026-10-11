@@ -1,0 +1,27 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > keeps a clarification and later correction, including their metadata, without mutating the transcript 3ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > counts answers dropped at the edge of an unanswered-turn window as omitted 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > non-conversation and malformed rows cannot become system instructions or count as missing conversation 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > shortens a long draft while retaining its qualification and metadata 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > a non-positive or invalid window size 0 does not accidentally include the whole transcript 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > a non-positive or invalid window size -1 does not accidentally include the whole transcript 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > a non-positive or invalid window size NaN does not accidentally include the whole transcript 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > a non-positive or invalid window size Infinity does not accidentally include the whole transcript 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > an assistant-only transcript contributes no invalid opening but explicitly counts what was omitted 1ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > conversation windows preserve context without claiming complete recall > a complete transcript produces no blanket follow-up requirement 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > does not append the whole input when the tail budget is zero 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > keeps exact-boundary turns unchanged 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > rejects invalid excerpt limits 0 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > rejects invalid excerpt limits -1 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > rejects invalid excerpt limits 1.5 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > rejects invalid excerpt limits NaN 0ms
+ ✓ server/services/ana/__tests__/history-window.test.ts > the shared turn excerpt never conceals its missing middle > rejects invalid excerpt limits Infinity 0ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  12:24:09
+   Duration  361ms (transform 78ms, setup 78ms, import 25ms, tests 9ms, environment 0ms)
+

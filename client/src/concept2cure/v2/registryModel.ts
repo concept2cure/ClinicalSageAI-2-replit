@@ -5,12 +5,18 @@
  * The SURFACES themselves live in shared/constants/ui-surface-registry.ts
  * (reconciled with the kit ids in the same change — deep links depend on the
  * ids staying identical). This module carries everything AROUND the surfaces:
- * the rail model (client categories · core · specialist · explore · quick),
+ * the rail's list of places (RAIL_CORE) and the client types it offers,
  * client segmentation, per-segment workspace modules, AnA modes / co-author
  * context / surface-scoped actions, and the governed AI-action taxonomy.
  *
- * GENERATED from the kit registry (scripts in the design package) — edit the
- * kit first, then re-port, so design and code cannot drift.
+ * The NAVIGATION is not generated from the kit any more. Which places the rail
+ * lists, and where each client type lands, is decided in
+ * docs/design/ONE_ANA_ONE_CANVAS.md §5 from the places of
+ * docs/SURFACE_DECISIONS_2026-10-08.md (founder delegation of 2026-10-07), and
+ * edited here. A re-port of the kit's rail arrays would bring back sections
+ * that list screens outside this release; __tests__/shellNav.test.tsx fails if
+ * one does. The rest of this file (segments, modules, AnA context and actions)
+ * still follows the kit.
  *
  * The ANA_* co-author/context objects are REFERENCE CONFIG, not data. They were
  * the kit's offline fixture shapes and carried invented per-programme values —
@@ -91,41 +97,56 @@ export const NAV_GROUP_OF: Record<string, string> = {
 // as a second hand-authored literal here is exactly what let the rail and the
 // TopBar drift onto two different segment axes. See the derivation just after
 // PRIMARY_SEGMENTS / getSegment.
-/** Core workspace — the same central solution for every client type */
+/**
+ * The places, top to bottom — the whole of the rail's list, the same for every
+ * client type (docs/design/ONE_ANA_ONE_CANVAS.md §5). An entry outside the
+ * release is absent, not shown locked; every destination here is in
+ * shared/constants/launch-scope.ts.
+ *
+ * What left, 2026-10-08, and where each went:
+ *  - "Science & intelligence" (CMC / Module 3, Risk-based monitoring, FDA CRL
+ *    library): all three are outside this release. CMC and RBM return as
+ *    features of Project home and clinical operations; the CRL library's
+ *    precedents reach AnA in the conversation.
+ *  - "Explore": AnA Command and AnA memory are locked (SURFACE_DECISIONS:
+ *    scrap / later); Apps catalog is in the account menu; Artifacts Center's
+ *    list moves to the conversation's canvas (slice 25) and stays reachable
+ *    meanwhile from ⌘K, the Apps catalog, and Live Drive, which opens it when
+ *    AnA saves a draft (V2App followWork). "Conversation" stays, last, as the
+ *    stand-in for Recents (§5 item 10, slice 3) until Recents is built: it
+ *    opens the conversation in progress. "New conversation" opens Home, which
+ *    starts a new conversation and does not lead back to the one in progress.
+ *  - "Quick access": "My Tasks" is My work below; "Recent Documents" opened
+ *    the editor, which opens from any document in Vault and from a project.
+ *  - Quality had no entry (it sat in NAV_HIDDEN); it is a place.
+ *  - "Client categories" is the account menu's "Client type".
+ *
+ * Where this list still differs from §5, and why:
+ *  - The labels are the registered surface names ("Vault", "Submission
+ *    Center", "Reporting & analytics"), so the rail, the breadcrumb, the page
+ *    title and ⌘K name a place one way; CLAUDE.md Rule 2's launch catalog uses
+ *    the same names. §5's "Documents" (with Protocols as its child row),
+ *    "Submissions" and "Records & reports" (the audit trail as the place, with
+ *    Reports, Compliance and Integrity as its tabs) rename and regroup
+ *    surfaces, which is the surface registry's change, not this list's.
+ *  - "Search ⌘K" is the top bar's search button, not a row here.
+ *  - My work has no count yet (GET /api/task-management/my-work, §5 item 9).
+ *
+ * `target` is the screen an entry opens when it is not its own id. `applies`
+ * is a screen action the entry asks of that screen as it opens it, through the
+ * same validated bus AnA's moves use (surfaceActions.applySurfaceAction): My
+ * work opens the task board on the signed-in person's own tasks, which is what
+ * its name says (the board alone opens on everyone's).
+ */
 export const RAIL_CORE = [
-  { id: 'projects', label: 'Project management', icon: 'folder' },
+  { id: 'new-conversation', label: 'New conversation', icon: 'plus', target: 'home' },
+  { id: 'projects', label: 'Projects', icon: 'folder' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
   { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
-  { id: 'tasks', label: 'Tasking', icon: 'checkSquare' },
+  { id: 'quality', label: 'Quality', icon: 'shieldCheck' },
   { id: 'insights', label: 'Reporting & analytics', icon: 'barChart' },
-];
-/** Specialist science apps promoted to the rail (also in the Apps catalog) */
-export const RAIL_SPECIALIST = [
-  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker' },
-  { id: 'rbm', label: 'Risk-based monitoring', icon: 'shieldCheck' },
-  { id: 'crl-library', label: 'FDA CRL library', icon: 'gavel' },
-];
-/** Explore section */
-export const RAIL_EXPLORE = [
-  { id: 'ana-command', label: 'AnA Command', icon: 'sparkles', badge: 'AnA' },
-  { id: 'ana-memory', label: 'AnA memory', icon: 'database', badge: 'AnA' },
-  { id: 'apps', label: 'Apps catalog', icon: 'grid' },
-  { id: 'artifacts-center', label: 'Artifacts Center', icon: 'sparkles' },
-  { id: 'conversation-thread', label: 'Conversation', icon: 'messageSquare', badge: 'AnA' },
-];
-/** Quick access (targets resolve to surface ids) */
-export const RAIL_QUICK = [
-  { id: 'recent', label: 'Recent Documents', icon: 'clock', target: 'document-authoring' },
-  // No hardcoded count — the live "what needs me" number lives in the top-bar
-  // Task Tray (GET /api/task-management/my-work), never a constant (D40).
-  { id: 'tasks', label: 'My Tasks', icon: 'checkSquare', target: 'tasks' },
-  /* No "Starred Items". The entry (ported from the kit, 2026-07) opened the
-     full Projects list: nothing in the product can be starred — no star state
-     on any surface, no route, no column — so its label promised a list that
-     does not exist, and on Projects it marked itself current alongside
-     "Project management". The one thing it actually did, open Projects, is
-     RAIL_CORE's `projects` entry above. If starring is ever built, the entry
-     comes back pointed at the starred list, not at Projects. */
+  { id: 'tasks', label: 'My work', icon: 'checkSquare', applies: { actionId: 'tasking.filter', params: { mine: 'true' } } },
+  { id: 'conversation-thread', label: 'Conversation', icon: 'messageSquare' },
 ];
 /** Surfaces reachable via ⌘K/deep-link but intentionally not rail entries */
 export const NAV_HIDDEN: ReadonlySet<string> = new Set([
@@ -161,7 +182,6 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'human-factors',
   'regulatory-workspace',
   'labeling-pi',
-  'quality',
 ]);
 /** Client segmentation — canonical UI axis organizations.client_type; see kit registry notes */
 export const SEGMENTS = [
@@ -171,7 +191,10 @@ export const SEGMENTS = [
     primary: true,
     icon: 'stethoscope',
     pathways: ['510(k)', 'De Novo', 'PMA', 'IVDR'],
-    defaultSurface: 'device-workstream',
+    /* Was 'device-workstream', outside this release: choosing this client type
+       opened a "Not in this release" panel. Projects is where a client's work
+       starts (docs/SURFACE_DECISIONS_2026-10-08.md, build step 6). */
+    defaultSurface: 'projects',
     focus: [
       'device-workstream',
       'labeling',
@@ -188,7 +211,10 @@ export const SEGMENTS = [
     primary: true,
     icon: 'microscope',
     pathways: ['IVDR', 'CDx', '510(k)', 'De Novo'],
-    defaultSurface: 'device-diagnostics',
+    /* Was 'device-diagnostics', outside this release: choosing this client type
+       opened a "Not in this release" panel. Projects is where a client's work
+       starts (docs/SURFACE_DECISIONS_2026-10-08.md, build step 6). */
+    defaultSurface: 'projects',
     focus: [
       'device-diagnostics',
       'ivd-completeness',
@@ -211,7 +237,10 @@ export const SEGMENTS = [
     primary: true,
     icon: 'atom',
     pathways: ['IND', 'NDA', 'BLA', 'MAA', 'J-NDA', 'Lifecycle'],
-    defaultSurface: 'ind-checklist',
+    /* Was 'ind-checklist', outside this release: choosing this client type
+       opened a "Not in this release" panel. Projects is where a client's work
+       starts (docs/SURFACE_DECISIONS_2026-10-08.md, build step 6). */
+    defaultSurface: 'projects',
     focus: [
       'ind-checklist',
       'nda-cockpit',
@@ -230,7 +259,10 @@ export const SEGMENTS = [
     icon: 'network',
     multiSponsor: true,
     pathways: ['Multi-sponsor: CER / 510K / IND / NDA / BLA / PMA / De Novo'],
-    defaultSurface: 'cro-portfolio',
+    /* Was 'cro-portfolio', outside this release: choosing this client type
+       opened a "Not in this release" panel. Projects is where a client's work
+       starts (docs/SURFACE_DECISIONS_2026-10-08.md, build step 6). */
+    defaultSurface: 'projects',
     focus: [
       'cro-portfolio',
       'protocol-dev',

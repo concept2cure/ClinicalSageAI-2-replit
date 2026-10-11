@@ -111,7 +111,8 @@ describe('aggregatePortfolio', () => {
     const summary = aggregatePortfolio(9, []);
     expect(summary.memberCount).toBe(0);
     expect(summary.avgReadiness).toBeNull();
-    expect(summary.avgConfidence).toBe(0);
+    // No member, no measured confidence: null, never a 0 average.
+    expect(summary.avgConfidence).toBeNull();
     expect(summary.worstRisk).toBe('low');
     expect(summary.readyCount).toBe(0);
     expect(summary.partialCount).toBe(0);

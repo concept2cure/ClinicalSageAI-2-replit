@@ -12,8 +12,8 @@
  * @module client/src/concept2cure/components/ana/useGovernedAction
  */
 
-import { useState, useCallback } from 'react';
-import { extractApiError } from '@/lib/queryClient';
+import { useState, useCallback, useRef } from 'react';
+import { errorCodeOf, extractApiError } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../../utils/authToken';
 import { readAnswerCheck, type AnswerCheckView } from './anaAnswerCheck';
 
@@ -223,10 +223,15 @@ export interface GovernedActionResult {
 export function useGovernedAction() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /* The code of the last refusal (NO_PENDING_APPROVAL, STALE_APPROVAL, …), read
+     at once by the caller that just awaited `submit` — state would still hold
+     the previous render's value there. */
+  const errorCodeRef = useRef<string | undefined>(undefined);
 
   const submit = useCallback(async (args: SubmitSignoffArgs): Promise<GovernedActionResult | null> => {
     setSubmitting(true);
     setError(null);
+    errorCodeRef.current = undefined;
     try {
       // /api/ana-ri is mounted behind Bearer-only authenticateToken — cookies
       // alone never authenticate it, so the Authorization header is required
@@ -251,6 +256,7 @@ export function useGovernedAction() {
         // different thing entirely — a control-flow branch on an AnA stream
         // event, not display copy — and is deliberately left as it is.
         setError(extractApiError(payload, res.status).message);
+        errorCodeRef.current = errorCodeOf(payload);
         return null;
       }
       // The route returns the underlying CommandResult under `data`.
@@ -290,5 +296,8 @@ export function useGovernedAction() {
     }
   }, []);
 
-  return { submit, decline, submitting, error };
+  const clearError = useCallback(() => setError(null), []);
+  const lastErrorCode = useCallback(() => errorCodeRef.current, []);
+
+  return { submit, decline, submitting, error, clearError, lastErrorCode };
 }

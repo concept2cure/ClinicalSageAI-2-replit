@@ -1,0 +1,41 @@
+{
+  "sourceCommit": "b9a87ab1704b5a59e1293070748b3e99c940d5c1",
+  "command": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana/__tests__/verified-seal-scope.test.ts",
+    "server/routes/ana-ri/__tests__/seal-verified-scope.test.ts",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-seal-verification-scope/focused-green-report.json"
+  ],
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "exitCode": 0,
+  "elapsedSeconds": 3.635,
+  "sourceFiles": {
+    "server/routes/ana-ri/seal-verified.ts": {
+      "blob": "fbcac5b6e236e63daaac6f5d3aaec791d91739b1",
+      "sha256": "fdb3b3c3bff80455ac3b40359ded3a794ce109c8a1d280cb69a3f54ffc5c9765",
+      "bytes": 6421
+    },
+    "server/services/ana/verifiedSealService.ts": {
+      "blob": "82ecebfda7cb518562c69e6c811846895226e334",
+      "sha256": "74704b692a670850359c98c91b67c2fbd34756f1ce22c003e801a6ded920fe94",
+      "bytes": 20910
+    },
+    "server/services/ana/__tests__/verified-seal-scope.test.ts": {
+      "blob": "13e1d5d0deb297b47bf54e0b7a27c059e37bb5df",
+      "sha256": "44d11b2e033088ee98c16914705ea5b9b11994004647ea6d34fca540e9463fd8",
+      "bytes": 4536
+    },
+    "server/routes/ana-ri/__tests__/seal-verified-scope.test.ts": {
+      "blob": "8799f9d42f6718fc764426cd546e8efdf133cb97",
+      "sha256": "1bf3c3a8fe2d72be4499410881cbbbefdcf153b90d5354b062b5b318e45d087b",
+      "bytes": 5464
+    }
+  }
+}

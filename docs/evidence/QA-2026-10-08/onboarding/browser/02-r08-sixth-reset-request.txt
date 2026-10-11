@@ -1,0 +1,29 @@
+Concept2Cure.RI
+English
+Français
+Deutsch
+日本語
+中文
+한국어
+Español
+Português
+Italiano
+Nederlands
+Polski
+Svenska
+Dansk
+Suomi
+Čeština
+Ελληνικά
+Magyar
+Română
+✻
+Reset your password
+
+Enter your account email and we will send a reset link.
+
+Too many password reset requests from this network. Try again in 60 minutes.
+Account email
+Send reset link
+Back to sign in
+FDAEMAPMDAHEALTH CANADAMHRA

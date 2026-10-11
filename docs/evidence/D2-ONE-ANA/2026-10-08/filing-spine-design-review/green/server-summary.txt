@@ -1,0 +1,8 @@
+# Affected server suites, final tree, 2026-10-08
+# dirs: server/services/{regulatory,submission-service,ana,c2c,vault} server/routes/__tests__ server/routes/c2c tests/services/regulatory
+# pass 1 (stopped by its 1700 s timeout after 744 files; every result it printed passed):
+#   test files passed: 744, tests passed: 9637, failed: 0
+# pass 2 (the 196 files pass 1 did not reach):
+ Test Files  194 passed | 2 skipped (196)
+      Tests  1300 passed | 10 skipped (1310)
+   Duration  302.51s (transform 26.08s, setup 4.35s, import 249.08s, tests 8.72s, environment 25ms)

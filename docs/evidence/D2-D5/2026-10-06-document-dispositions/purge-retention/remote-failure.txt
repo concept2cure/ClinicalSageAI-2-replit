@@ -1,0 +1,15 @@
+Source: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37516686442/job/112455839052
+
+2026-10-06T19:20:45.9226467Z > concept2cure-riai@1.0.0 ci:purge-coverage
+2026-10-06T19:20:45.9227038Z > node scripts/ci/check-purge-coverage.mjs
+2026-10-06T19:20:45.9227247Z 
+2026-10-06T19:20:45.9919903Z    note: 2 schema-qualified purge entr(y/ies) are OUTSIDE this gate's scope (it measures public.* only): vault.document_chunks, vault.documents
+2026-10-06T19:20:46.0238385Z ❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+2026-10-06T19:20:46.0239255Z   - document_data_dispositions
+2026-10-06T19:20:46.0239973Z 
+2026-10-06T19:20:46.0240497Z Either add it to PURGE_CHILD_TABLES (FK-safe order) or give it an ON DELETE
+2026-10-06T19:20:46.0241549Z CASCADE path from a table already there. A tenant that asks to be erased
+2026-10-06T19:20:46.0242387Z must not keep rows in a table nobody remembered to list.
+2026-10-06T19:20:46.0372861Z ##[error]Process completed with exit code 1.
+2026-10-06T19:20:46.0485538Z Post job cleanup.
+

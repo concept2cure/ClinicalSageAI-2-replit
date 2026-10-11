@@ -35,6 +35,7 @@ import {
   buildContradictionWatchBlock,
 } from '../ana/contradiction-watch.js';
 import { getSessionBriefing } from '../ana/session-briefing.js';
+import { parseIntegerProjectId } from '../../lib/project-id.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -89,6 +90,9 @@ export interface PrefetchedRouteIntelligenceContext {
    * blocked promotion were invisible in chat.
    */
   contradictionWatchBlock: string;
+  /** Optional reads that failed or exceeded their deadline; never a clean empty result. */
+  unavailableSources?: string[];
+  contextAvailabilityBlock?: string;
 }
 
 // The route and authoring context blocks live in context-blocks.ts.
@@ -114,6 +118,8 @@ export function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<
 
 /** Max wait for the optional proactive block (deadline radar / session briefing). */
 const PROACTIVE_PREFETCH_TIMEOUT_MS = 1500;
+/** Narrative recall is optional; execution/approval policy reads remain outside this budget. */
+const OPTIONAL_PREFETCH_TIMEOUT_MS = 3000;
 
 type ProactiveBlock = { kind: 'briefing' | 'deadline' | 'none'; block: string };
 
@@ -125,6 +131,12 @@ type ProjectPrefetchResults = [
 
 export async function prefetchRouteIntelligenceContext(params: {
   projectId?: string | number | null;
+  /**
+   * The integer projects.id the route resolved from `projectId` (a program UUID
+   * through its linked projects row, services/c2c/project-ref.ts). Omitted:
+   * only an integer `projectId` names a project here.
+   */
+  projectIdNumber?: number | null;
   organizationId?: number | null;
   authoringContext?: Record<string, unknown>;
   /** Numeric user id — enables AnA's per-user relational personality overlay. */
@@ -136,7 +148,30 @@ export async function prefetchRouteIntelligenceContext(params: {
 }): Promise<PrefetchedRouteIntelligenceContext> {
   const { projectId, organizationId, authoringContext, userId, targetAgency, sessionStart } =
     params;
-  const projectIdNumber = projectId != null ? Number(projectId) : null;
+  /* Number(projectId) was NaN for a program UUID (ana-14): the project reads
+     below were skipped, and the relational overlay and session briefing were
+     sent NaN and failed. parseIntegerProjectId is fail-closed: never NaN, and
+     never the integer a UUID's leading digits spell. */
+  const projectIdNumber = params.projectIdNumber !== undefined
+    ? params.projectIdNumber
+    : parseIntegerProjectId(projectId);
+  const unavailable = new Set<string>();
+  const bounded = async <T>(source: string, load: () => Promise<T>, ms = OPTIONAL_PREFETCH_TIMEOUT_MS): Promise<T> => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        Promise.resolve().then(load),
+        new Promise<never>((_resolve, reject) => {
+          timer = setTimeout(() => reject(new Error('Optional context deadline exceeded')), ms);
+        }),
+      ]);
+    } catch (error) {
+      unavailable.add(source);
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 
   let feedbackContext: OrchestratorInput['_feedbackContext'] = null;
   let projectProfile: OrchestratorInput['_projectIntelligenceProfile'] = null;
@@ -152,10 +187,10 @@ export async function prefetchRouteIntelligenceContext(params: {
     organizationId &&
     Number.isFinite(organizationId)
       ? (Promise.allSettled([
-          getFeedbackSummary(projectIdNumber, organizationId),
-          prefetchProjectIntelligence(projectIdNumber, organizationId),
+          bounded('project feedback', () => getFeedbackSummary(projectIdNumber, organizationId)),
+          bounded('project intelligence', () => prefetchProjectIntelligence(projectIdNumber, organizationId)),
           authoringContext?.sectionCode || authoringContext?.artifactId
-            ? preloadRIMContext(String(projectIdNumber), organizationId)
+            ? bounded('regulatory snapshot', () => preloadRIMContext(String(projectIdNumber), organizationId))
             : Promise.resolve(''),
         ]) as Promise<ProjectPrefetchResults>)
       : Promise.resolve([
@@ -171,19 +206,20 @@ export async function prefetchRouteIntelligenceContext(params: {
     projectResults,
   ] = await Promise.all([
     Promise.allSettled([
-      loadRelationalOverlay({
+      bounded('conversation preferences', () => loadRelationalOverlay({
         organizationId: organizationId ?? null,
         userId: userId ?? null,
         projectId: projectIdNumber,
-      }),
-      buildExternalIntelBlock(targetAgency ?? null),
+      })),
+      bounded('external intelligence', () => buildExternalIntelBlock(targetAgency ?? null)),
       // Proactive risk surfacing — org-scoped, fail-soft. On the FIRST turn of a
       // session, surface the full situational briefing (deadlines + recent
       // decisions); on later turns, just the deadline block (overdue + due-soon).
       // Only one is non-empty per turn, so deadlines are never duplicated.
       organizationId && Number.isFinite(organizationId)
-        ? withTimeout<ProactiveBlock>(
-            sessionStart
+        ? bounded<ProactiveBlock>(
+            sessionStart ? 'session briefing' : 'deadlines',
+            () => sessionStart
               ? getSessionBriefing({ organizationId, projectId: projectIdNumber }).then(r => ({
                   kind: 'briefing' as const,
                   block: r.block,
@@ -192,18 +228,17 @@ export async function prefetchRouteIntelligenceContext(params: {
                   kind: 'deadline' as const,
                   block: buildDeadlineRadarBlock(r),
                 })),
-            PROACTIVE_PREFETCH_TIMEOUT_MS,
-            { kind: 'none' as const, block: '' }
+            PROACTIVE_PREFETCH_TIMEOUT_MS
           )
         : Promise.resolve({ kind: 'none' as const, block: '' }),
       // Open contradiction findings stay live on every turn until resolved.
       organizationId && Number.isFinite(organizationId)
-        ? withTimeout<string>(
-            getOpenContradictionsForOrg(organizationId).then(items =>
+        ? bounded<string>(
+            'open contradictions',
+            () => getOpenContradictionsForOrg(organizationId).then(items =>
               buildContradictionWatchBlock(items)
             ),
-            PROACTIVE_PREFETCH_TIMEOUT_MS,
-            ''
+            PROACTIVE_PREFETCH_TIMEOUT_MS
           )
         : Promise.resolve(''),
     ]),
@@ -261,6 +296,7 @@ export async function prefetchRouteIntelligenceContext(params: {
       });
     } catch {
       // Non-blocking — decision context is optional enrichment.
+      unavailable.add('project decisions');
     }
   }
 
@@ -279,6 +315,12 @@ export async function prefetchRouteIntelligenceContext(params: {
     }
   }
 
+  const unavailableSources = [...unavailable].sort();
+  const contextAvailabilityBlock = unavailableSources.length > 0
+    ? `\n\n## Context availability\nOptional context unavailable this turn: ${unavailableSources.join(', ')}. ` +
+      'Do not infer that missing context, prior decisions, deadlines, or unresolved findings do not exist. ' +
+      'Check the relevant records before relying on their absence or claiming the project has no blockers.\n'
+    : '';
   return {
     projectIdNumber,
     feedbackContext,
@@ -291,6 +333,8 @@ export async function prefetchRouteIntelligenceContext(params: {
     deadlineRadarBlock,
     sessionBriefingBlock,
     contradictionWatchBlock,
+    unavailableSources,
+    contextAvailabilityBlock,
   };
 }
 
@@ -366,6 +410,26 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   // Build authoring context
   const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
 
+  // Org/project intelligence does not depend on route prefetch. Attach its
+  // failure handler immediately so an early rejection is always handled.
+  const intelligencePrefixPromise = getIntelligencePrefix(numericOrgId ?? undefined, projectId).catch(() => '');
+
+  // Private conversation memory and history share one caller-scoped access check.
+  const accessibleThreadPromise = thread_id
+    ? resolveAccessibleThread(thread_id, numericOrgId, userId).catch(() => null)
+    : Promise.resolve(null);
+  // Start recall behind the same access check while independent route context
+  // loads. Attach the fallback now to contain an early rejection, and keep
+  // awaiting the result below before constructing the model's prompt.
+  const memoryContextPromise = accessibleThreadPromise.then(accessible => buildMemoryContextForChat({
+    threadId: accessible?.id ?? '',
+    organizationId: numericOrgId ?? undefined,
+    projectId: projectId != null ? Number(projectId) : undefined,
+    query: message,
+    limitPerLayer: 4,
+    maxChars: 3500,
+  })).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null }));
+
   const prefetchedContext = await prefetchRouteIntelligenceContext({
     projectId,
     organizationId: numericOrgId,
@@ -397,6 +461,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     _contradictionWatchBlock: prefetchedContext.contradictionWatchBlock,
   };
   const orchestration = orchestrate(orchestratorInput);
+  orchestration.systemPrompt += prefetchedContext.contextAvailabilityBlock ?? '';
 
   // Inject authoring context
   if (authoringContextBlock) {
@@ -414,15 +479,8 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
 
   // Intelligence prefix + memory + enrichment (parallel)
   const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
-    getIntelligencePrefix(numericOrgId ?? undefined, projectId).catch(() => ''),
-    buildMemoryContextForChat({
-      threadId: thread_id || undefined,
-      organizationId: numericOrgId ?? undefined,
-      projectId: projectId != null ? Number(projectId) : undefined,
-      query: message,
-      limitPerLayer: 4,
-      maxChars: 3500,
-    }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null })),
+    intelligencePrefixPromise,
+    memoryContextPromise,
     enrichContextForChat({
       message,
       projectId,
@@ -553,7 +611,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   let historyLoaded = false;
   if (thread_id) {
     try {
-      const accessible = await resolveAccessibleThread(thread_id, numericOrgId, userId);
+      const accessible = await accessibleThreadPromise;
       const serverHistory = accessible ? await getThreadMessages(accessible.id) : [];
       if (serverHistory.length > 0) {
         for (const msg of serverHistory.slice(-20)) {

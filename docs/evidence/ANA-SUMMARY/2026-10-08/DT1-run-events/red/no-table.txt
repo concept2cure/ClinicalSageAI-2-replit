@@ -1,0 +1,6 @@
+# absence: migrations/20261008f_ana_run_events.sql emptied (no table, no guard, no doors) — the state before DT1
+ FAIL  server/services/ana/__tests__/run-events.pglite.test.ts [ server/services/ana/__tests__/run-events.pglite.test.ts ]
+error: relation "ana_run_events" does not exist
+Serialized Error: { length: 112, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'namespace.c', routine: 'RangeVarGetRelidExtended', query: '\n    GRANT SELECT, INSERT, UPDATE, DELETE ON ana_runs, ana_run_events TO app_service;\n    GRANT SELECT, INSERT ON ana_turn_records, ana_record_blobs TO app_service;\n  ', params: undefined, queryOptions: undefined }
+ Test Files  1 failed (1)
+      Tests  16 skipped (16)

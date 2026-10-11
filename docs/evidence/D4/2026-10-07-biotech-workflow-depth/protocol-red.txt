@@ -1,0 +1,140 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > has unique ids and at least one section per template 17ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — consistency > every template requires at least one section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > Clinical Overview matches the ICH M4E 2.5.1–2.5.6 spine 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > 510(k) Summary carries the 21 CFR 807.92 elements incl. substantial equivalence 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > SmPC has the 10 top-level sections 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — canonical structures > GSPR checklist maps to MDR Annex I chapters I–III 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no template serves both eu_mdr and eu_ivdr under one Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > no eu_ivdr template cites MDR Annex I numbering 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > gspr_checklist is the MDR checklist: MDR only, MDR Annex I basis, recall-labelled 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > ivdr_gspr_checklist cites IVDR Annex I: Ch I §1–8, Ch II §9–19, Ch III §20 (label 20.2, IFU 20.4) 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR checklist's Chapter III and the IVD labelling record cite the same section 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > each EU device submission type points its GSPR row at its own regulation's checklist 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the IVDR technical-file assembler places a leaf typed ivdr_gspr_checklist in the GSPR slot 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — one GSPR checklist per EU device regulation > the MDR technical-file assembler does not take the IVDR checklist as its GSPR by type 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > filters by family 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > resolves a template by CTD section 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — lookups > returns undefined for an unknown id 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > statistical_analysis_plan reads the existing ICH_SAP project blueprint rather than another heading tree 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > informed_consent reads the existing ICH_ICF project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_substance reads the existing ICH_M3_DS project blueprint rather than another heading tree 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > drug_product reads the existing ICH_M3_DP project blueprint rather than another heading tree 0ms
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > the protocol projects the current M11 retained headings including estimands, immunogenicity and quality management 9ms
+   → expected 'Trial Objectives and Purpose' to be 'TRIAL OBJECTIVES AND ASSOCIATED ESTIM…' // Object.is equality
+ × server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > clinical overview and summary registry ids share their existing component sections 6ms
+   → expected [ { number: '2.2', …(3) }, …(5) ] to be [ { number: '2.5.1', …(3) }, …(5) ] // Object.is equality
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > aliases for existing IB and RMP resolve the very same template and never add a second outline 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > DSUR reads the corrected E2F record including all 20 numbered sections and the unnumbered front/back matter 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > registry requests reuse the named canonical clinical and quality outlines 0ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > a registry outline prefers the dedicated existing regional blueprint and labels its required flags as platform scaffolding 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > unknown or missing blueprints never fall back to a full CTD dossier 3ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact EU_CTA scaffold with its scope limitations 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact CA_CTA scaffold with its scope limitations 2ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact CA_CTA_A scaffold with its scope limitations 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact JP_CTN scaffold with its scope limitations 5ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact ICH_NONCLIN_SUMMARY scaffold with its scope limitations 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > exposes the corrected exact US_IND_AMENDMENT scaffold with its scope limitations 1ms
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > coverage lists every active biotech entry once and says explicitly which outlines remain unavailable 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > the protocol projects the current M11 retained headings including estimands, immunogenicity and quality management
+AssertionError: expected 'Trial Objectives and Purpose' to be 'TRIAL OBJECTIVES AND ASSOCIATED ESTIM…' // Object.is equality
+
+Expected: "TRIAL OBJECTIVES AND ASSOCIATED ESTIMANDS"
+Received: "Trial Objectives and Purpose"
+
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:222:63
+    220|     const t = getDocumentTemplate('protocol')!;
+    221|     expect(t, 'protocol').toBeDefined();
+    222|     expect(t.sections.find((s) => s.number === '3')?.heading).toBe('TR…
+       |                                                               ^
+    223|     expect(t.sections.find((s) => s.number === '8.7')?.heading).toBe('…
+    224|     expect(t.sections.find((s) => s.number === '11.6')?.heading).toBe(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/market-specs/__tests__/document-template-library.test.ts > document template library — existing biotech structures are reachable honestly > clinical overview and summary registry ids share their existing component sections
+AssertionError: expected [ { number: '2.2', …(3) }, …(5) ] to be [ { number: '2.5.1', …(3) }, …(5) ] // Object.is equality
+
+- Expected
++ Received
+
+  [
+    {
+-     "heading": "Product Development Rationale",
+-     "number": "2.5.1",
+-     "purpose": "Scientific rationale and the development program’s logic.",
++     "heading": "Introduction",
++     "number": "2.2",
++     "purpose": "Introduction. The existing scaffold cites ICH M4; confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+-     "heading": "Overview of Biopharmaceutics",
+-     "number": "2.5.2",
+-     "purpose": "Critical analysis of formulation/biopharmaceutic data.",
++     "heading": "Quality Overall Summary",
++     "number": "2.3",
++     "purpose": "Quality Overall Summary. The existing scaffold cites ICH M4Q(R1); confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+-     "heading": "Overview of Clinical Pharmacology",
+-     "number": "2.5.3",
+-     "purpose": "PK, PD, exposure-response, and special-population pharmacology.",
++     "heading": "Nonclinical Overview",
++     "number": "2.4",
++     "purpose": "Nonclinical Overview. The existing scaffold cites ICH M4S(R2); confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+-     "heading": "Overview of Efficacy",
+-     "number": "2.5.4",
+-     "purpose": "Critical analysis of efficacy across the relevant studies and endpoints.",
++     "heading": "Clinical Overview",
++     "number": "2.5",
++     "purpose": "Clinical Overview. The existing scaffold cites ICH M4E(R2); confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+-     "heading": "Overview of Safety",
+-     "number": "2.5.5",
+-     "purpose": "Critical analysis of the safety database, exposure, and key risks.",
++     "heading": "Nonclinical Summaries",
++     "number": "2.6",
++     "purpose": "Nonclinical Summaries. The existing scaffold cites ICH M4S(R2); confirm the current applicable guidance and populate from sponsor source records.",
+      "required": true,
+    },
+    {
+-     "heading": "Benefits and Risks Conclusions",
+-     "number": "2.5.6",
+-     "purpose": "Integrated benefit-risk assessment supporting the indication.",
+-     "required": true,
++     "heading": "Clinical Summary",
++     "number": "2.7",
++     "purpose": "Clinical Summary. The existing scaffold cites ICH M4E(R2); confirm the current applicable guidance and populate from sponsor source records.",
++     "required": false,
+    },
+  ]
+
+ ❯ server/services/market-specs/__tests__/document-template-library.test.ts:234:80
+    232|
+    233|   it('clinical overview and summary registry ids share their existing …
+    234|     expect((await getRegistryDocumentTemplate('ICH_CLIN_OVERVIEW'))?.s…
+       |                                                                                ^
+    235|     expect((await getRegistryDocumentTemplate('ICH_CLIN_SUMMARY'))?.se…
+    236|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 33 passed (35)
+   Start at  22:46:25
+   Duration  1.55s (transform 1.01s, setup 82ms, import 1.08s, tests 70ms, environment 0ms)
+

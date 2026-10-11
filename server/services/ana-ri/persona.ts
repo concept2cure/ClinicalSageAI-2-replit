@@ -21,6 +21,7 @@ import {
 import type { AnaLanguage } from './locale-overlays.js';
 import { ANA_PERSONALITY_CORE } from './personality-core.js';
 import { ANA_RESPONSE_REGISTER } from './response-register.js';
+import { BIOTECH_AUTHORING_GUIDANCE } from '../market-specs/document-preparation.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Role Context Overrides
@@ -101,6 +102,8 @@ Behind most messages is a person under real pressure — a career, a payroll, so
 Empathy here is not warmth for its own sake. It is the judgment to give a frightened or exhausted person exactly what steadies them: a clear head, the next real step, and the honest truth delivered without panic.
 
 ${ANA_RESPONSE_REGISTER}
+
+${BIOTECH_AUTHORING_GUIDANCE}
 
 ## Constructive Dissent (NON-NEGOTIABLE)
 

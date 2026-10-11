@@ -1,0 +1,25 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > POSTs request-review for the open document with the reviewer’s user id and the reason, and shows the server’s answer 931ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > sends every chosen reviewer in one request, and gives each a task 402ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > requires a reviewer and a reason at the server’s floor before anything is sent 254ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > shows a refusal in the server’s words, creates no task, and lets the person send again 233ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > an outcome nobody can confirm is unknown: no task, no second send, and the board is offered to check 346ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a success that names another document is not a receipt for this one 198ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task that failed after the request is reported as not created; the request still stands 276ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task whose creation could not be confirmed offers the task list, not a retry 388ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the Tasks rail > the Tasks rail offers Send for review, not a task-only assignment 273ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a task whose answer was lost is unknown, not absent > says the outcome is unknown in the receipt and the toast, never "no task" and never "not created" 72ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > is shown with that request and cannot be chosen; the others can 76ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a row that comes back with a verdict gets no task, and is never reported as requested 27ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > when no row was reopened, nothing is reported as requested and no task is made 23ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > existing requests that could not be read: no one can be chosen, and reading them again recovers 46ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > a roster that could not be read offers to read it again, and does 61ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the task says where the verdict goes > each reviewer’s task says the verdict is recorded on the Review board, not by completing the task 28ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  05:55:15
+   Duration  8.07s (transform 2.51s, setup 307ms, import 3.20s, tests 3.64s, environment 621ms)
+
