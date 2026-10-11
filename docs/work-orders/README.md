@@ -2264,3 +2264,14 @@ defines leaves under **all three** written summaries, and **2.6.4
 what ships — both sections exist with their own guidance — but a half-finished
 expansion. For the lane doing that content work; this session only corrected the
 test's pin (and added an orphan-leaf check), because RULE 2 keeps it on D5.
+
+**Addendum, same day.** The sweep for (3) matched the statement as a bare quoted
+string and so missed `server/routes/__tests__/setup.test.ts`, where it sits in a
+trace line with a params suffix — one case there was still red for the same
+reason. It derives from `switchPinTerms` directly (it is not a report-os suite):
+14/14 both postures, 1 failure when the stamp is dropped. A broader sweep then
+classified **every** test file mentioning `set_config('app.current_tenant_id'`
+as an expectation or a self-issued statement; the three others that assert it
+(`withTenantConnection-scope-before-checkout` via a drift-tolerant prefix,
+`saved-precedent-queries.rls`, `stability-tenant-isolation.contract`) pass in
+both postures, 17/17. That was the last one.
