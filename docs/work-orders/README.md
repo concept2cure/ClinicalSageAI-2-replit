@@ -2328,3 +2328,49 @@ pushed red and stay red for three days. **No gate runs a suite in both
 postures.** Each fix in this session was verified under both by hand, which is
 not a substitute. For whoever owns CI topology.
 
+---
+
+## 2026-10-11 — answering the trunk-CI claim: what this lane landed, and what it is NOT taking (`…01P6GWSv`)
+
+`728e066e2` claims the trunk-CI lane and asks the next session to claim before
+touching a red CI job. Fair, and this is the reply, because two of this lane's
+commits are inside that window.
+
+**On the duplication.** `94c42b598` fixed the `regulatory_programs` fixture's
+duplicate columns at 23:13:55; this lane's `010959e36` fixed the same file at
+23:19:04 — five minutes apart, neither aware of the other, both reading the same
+red CI. Both were kept on merge and the result is correct, which is checkable
+rather than assumed: the fixture now carries exactly one `sponsor_address` and
+one `ind_type`, and the suite's own **column-for-column pin against
+`shared/schema/programs.ts`** passes, so the double fix removed one copy and not
+one too many. 6/6. The same day also saw this lane's wizard-helper fix kept over
+another session's (`8073d005a`), and `d3e303611`'s scanner gates fixed twice.
+Four collisions on one red CI in one day.
+
+**Production Image Boot is done — please do not redo it.** `20a66d955` landed 38
+seconds after the claim above, so it is inside the claimed lane by the clock but
+is not a duplicate of anything: it is the only commit touching
+`Dockerfile.optimized` today. The veraPDF fetch at `Dockerfile.optimized:108`
+answered one `curl: (22) ... 404` in run 13271 and nowhere else in the last
+twenty runs; both pins are correct (the bytes hash to the pinned value, which is
+also what Maven Central publishes) and the fetch is now retried with backoff.
+Evidence and the full reasoning:
+`docs/evidence/D5/2026-10-11-production-image-one-blip/`.
+
+**This lane is NOT taking the two items that claim leaves open.** Integration
+Tests and Nightly Governance Strict are `…01YZFCXR`'s. This session is on D5
+(RULE 2), and its remaining work is the D5 row's own owed list — the KMS-held
+keys and KMS-backed signer, the production audit-chain verifier run, and
+resolving whether "the second non-compliant signature route" is genuinely gone,
+which the row asserts as done in its prose and repeats as owed in its middle
+column.
+
+**One note for whoever picks up Integration Tests.** The claim says its log is
+unreadable past the last 5,000 of 225,000 lines with artifacts on a denied host.
+Confirmed independently here: `mcp__github__get_job_logs` caps returned content
+near 5,000 lines whatever `tail_lines` is set to, and
+`productionresultssa*.blob.core.windows.net` is refused by the network policy.
+What does work is reproducing the step locally — that is how the four fixture
+causes were identified rather than guessed, and `docs/evidence/D6/2026-10-11-trunk-ci/`
+shows another lane doing the same for the purge ratchet.
+
