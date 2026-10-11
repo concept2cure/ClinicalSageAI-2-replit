@@ -1,0 +1,16 @@
+npm run test:db on a database provisioned the way the CI job does
+(install-fresh.mjs + deploy-migrate.mjs as the postgres superuser, app_service
+with APP_SERVICE_DB_PASSWORD), RLS_ENFORCE=on — BEFORE the toggle test followed
+the founder decision of 2026-10-08:
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/document-catalog-toggles.dbtest.ts > the toggle rows the deployment never had > creates both, disabled, each described
+ FAIL  tests/db/document-catalog-toggles.dbtest.ts > the key written is the key read > enabling the row turns the capability on for an organization
+ FAIL  tests/db/document-catalog-toggles.dbtest.ts > the key written is the key read > a per-organization enablement works without turning it on globally
+ Test Files  1 failed | 158 passed (159)
+      Tests  3 failed | 1645 passed (1648)
+
+The three assertions, verbatim:
+  expect(r.enabled).toBe(false)                      -> received true
+  expect(await isDocumentCatalogEnabled(orgId))      -> received true, expected false
+  expect(await isDocumentCatalogEnabled(orgId+999999)) -> received true, expected false
