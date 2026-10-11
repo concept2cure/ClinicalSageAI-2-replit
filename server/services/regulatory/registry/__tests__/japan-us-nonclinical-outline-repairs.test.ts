@@ -66,7 +66,18 @@ describe('Nonclinical summaries — only the canonical CTD 2.6 subtree', () => {
     const canonical = Object.values(CTD_AUTHORING_GUIDANCE).filter(s => s.code.startsWith('2.6.'));
     expect(outline.id).toBe(getApplicationType('ICH_NONCLIN_SUMMARY')!.defaultSectionBlueprint);
     expect(outline.sections.map(s => [s.code, s.title, s.contentType])).toEqual(canonical.map(s => [s.code, s.title, s.contentType]));
-    expect(outline.sections.map(s => s.code)).toEqual(['2.6.1', '2.6.2', '2.6.3', '2.6.4', '2.6.5', '2.6.6', '2.6.7']);
+    // The invariant, not a frozen list. This pinned exactly the seven top-level
+    // 2.6.x codes until 88fa1606 added the ICH M4S Pharmacology Written Summary
+    // sub-headings 2.6.2.1-2.6.2.7 to the record; the blueprint projects whatever
+    // the record defines, so a legitimate deepening turned it red. What this test
+    // exists to catch is the outline reaching OUTSIDE 2.6 (all of Module 2, or a
+    // second heading tree) — and, below, a top-level summary going missing.
+    for (const code of outline.sections.map(s => s.code)) {
+      expect(code === '2.6' || code.startsWith('2.6.'), `${code} is outside the 2.6 subtree`).toBe(true);
+    }
+    for (const code of ['2.6.1', '2.6.2', '2.6.3', '2.6.4', '2.6.5', '2.6.6', '2.6.7']) {
+      expect(outline.sections.some(s => s.code === code), `${code} is missing`).toBe(true);
+    }
     expect(outline.sections.every(s => s.module === 2)).toBe(true);
   });
 });
