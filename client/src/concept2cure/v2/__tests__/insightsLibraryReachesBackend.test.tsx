@@ -32,6 +32,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { InsightsCanvas } from '../surfaces/Insights';
 import { CANVAS_REPORT_TYPES } from './_insights-catalog-fixture';
+import { RUNS_WINDOW, runsSearchCaveat } from '../surfaces/insightsLibraryModel';
+import { RunsPanel } from '../surfaces/InsightsRunsPanel';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
 const ok = (obj: unknown) => ({ ok: true, status: 200, json: async () => obj }) as unknown as Response;
@@ -392,5 +394,83 @@ describe('Report catalog', () => {
     await openTab(/Report catalog/);
     fireEvent.click((await screen.findAllByRole('button', { name: /Run/ }))[0]);
     await waitFor(() => expect(calls('POST', '/api/report-os/runs').length).toBe(1));
+  });
+});
+
+describe('the run search does not present a truncated answer as a complete one', () => {
+  /* GET /runs applies `search` and `sortBy` IN MEMORY, AFTER the SQL LIMIT
+     (report-os.ts: .limit(limit) then .filter() then .sort()). So a search
+     reaches only the rows already fetched. The panel asks for the route's
+     maximum window and, when that window is full, says what the answer
+     covered — CLAUDE.md: no silent caps. */
+
+  it('asks for the widest window the route serves, so the search reaches as far as it can', async () => {
+    await renderCanvas();
+    await openTab(/Run history/);
+    await waitFor(() =>
+      expect(calls('GET', '/api/report-os/runs').some(([, u]) => String(u).includes(`limit=${RUNS_WINDOW}`))).toBe(true),
+    );
+  });
+
+  it('says nothing when the window came back unfilled — the search really was complete', async () => {
+    await renderCanvas();
+    await openTab(/Run history/);
+    await screen.findByRole('table');
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'etmf' } });
+    // Two rows came back, far below the window: every run was searched.
+    await waitFor(() =>
+      expect(calls('GET', '/api/report-os/runs').some(([, u]) => String(u).includes('search=etmf'))).toBe(true),
+    );
+    expect(screen.queryByTestId('rl-runs-caveat')).toBeNull();
+  });
+
+  /* Mounts RunsPanel directly rather than the whole canvas. A full window is
+     RUNS_WINDOW table rows, and rendering that inside the canvas tree once
+     starved a neighbouring suite's 5s waitFor on a 4-core box — a latent flake
+     worth not leaving behind. The panel alone is the cheapest render that
+     still proves the sentence reaches the DOM; runsSearchCaveat's own test
+     below covers the boundary logic. */
+  it('says what the search covered when the window came back full', async () => {
+    const many = Array.from({ length: RUNS_WINDOW }, (_, i) => ({ ...RUNS[0], id: 1000 + i }));
+    apiRequest.mockImplementation(async () => ok({ data: many }));
+    render(
+      <RunsPanel types={[]} onOpen={() => {}} onBundle={() => {}} canBundle={false} />,
+    );
+    fireEvent.change(await screen.findByLabelText('Search'), { target: { value: 'readiness' } });
+    const caveat = await screen.findByTestId('rl-runs-caveat');
+    expect(caveat.textContent ?? '').toMatch(new RegExp(`${RUNS_WINDOW} most recent runs only`));
+    expect(caveat.textContent ?? '').toMatch(/an older run that matches is not shown/);
+  });
+
+  it('runsSearchCaveat is silent unless a search or sort could actually be partial', () => {
+    expect(runsSearchCaveat(RUNS_WINDOW, { searching: false, sorted: false })).toBeNull();
+    expect(runsSearchCaveat(10, { searching: true, sorted: false })).toBeNull();
+    expect(runsSearchCaveat(RUNS_WINDOW, { searching: true, sorted: false })).toMatch(/most recent runs only/);
+    expect(runsSearchCaveat(RUNS_WINDOW, { searching: false, sorted: true })).toMatch(/This ordering covers/);
+  });
+});
+
+describe("a bundle's PDF is named for what it is", () => {
+  /* pdf/bundle-pdf.ts prints ONE LINE per report and says so in the document:
+     "Each report's own PDF carries its signature and seal." Offering it as the
+     reports themselves would hand an inspector an index where they expected
+     the evidence. */
+
+  it('says the PDF is a manifest and where the sealed documents are', async () => {
+    await renderCanvas();
+    await openTab(/Bundles/);
+    const note = await screen.findByTestId('rl-bundle-manifest-note');
+    expect(note.textContent ?? '').toMatch(/manifest/);
+    expect(note.textContent ?? '').toMatch(/does not contain the reports themselves/);
+    expect(note.textContent ?? '').toMatch(/exported from Run history/);
+  });
+
+  it('never offers the manifest as the reports', async () => {
+    await renderCanvas();
+    await openTab(/Bundles/);
+    await screen.findByText('Pre-approval inspection pack');
+    const pane = document.querySelector('.rc-canvas')!;
+    expect(pane.textContent ?? '').not.toMatch(/download all reports|all reports as one|the reports as one PDF/i);
+    expect(screen.getByRole('button', { name: /Export manifest PDF/ })).toBeTruthy();
   });
 });

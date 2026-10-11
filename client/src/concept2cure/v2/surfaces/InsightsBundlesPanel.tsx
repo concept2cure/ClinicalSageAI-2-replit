@@ -21,7 +21,13 @@ import React, { useMemo, useState } from 'react';
 
 import { EmptyState, ErrorState, useLiveData } from '../dataConnect';
 import { I } from '../icons';
-import { BUNDLE_NEEDS_PROJECT_NOTE, createBundle, whenText, type BundleRow } from './insightsLibraryModel';
+import {
+  BUNDLE_NEEDS_PROJECT_NOTE,
+  BUNDLE_PDF_IS_A_MANIFEST,
+  createBundle,
+  whenText,
+  type BundleRow,
+} from './insightsLibraryModel';
 import { PanelAlert, PanelHead, StatusTag, rowsOf } from './insightsLibraryShared';
 
 function BundleCard({ bundle, onExport }: { bundle: BundleRow; onExport: () => void }) {
@@ -38,9 +44,9 @@ function BundleCard({ bundle, onExport }: { bundle: BundleRow; onExport: () => v
           </li>
         ))}
       </ul>
-      <div className="rl-card-meta">Status shown is the status at bundling; the PDF prints it beside the status at export.</div>
+      <div className="rl-card-meta">Status shown is the status at bundling; the manifest prints it beside the status at export.</div>
       <button type="button" className="rl-card-run" onClick={onExport}>
-        {I.download} Export PDF
+        {I.download} Export manifest PDF
       </button>
     </div>
   );
@@ -128,11 +134,11 @@ export function BundlesPanel({
     <div className="rl">
       <PanelHead
         title="Bundles"
-        sub="Several governed reports packaged as one paginated PDF — what an inspector or a reviewer is handed."
+        sub="A named set of governed reports, with a manifest PDF listing each one and its status."
       />
 
-      <div className="ro-dash-note" role="note">
-        {I.info} {BUNDLE_NEEDS_PROJECT_NOTE}
+      <div className="ro-dash-note" role="note" data-testid="rl-bundle-manifest-note">
+        {I.info} {BUNDLE_PDF_IS_A_MANIFEST} {BUNDLE_NEEDS_PROJECT_NOTE}
       </div>
 
       <PanelAlert note={note} />
@@ -161,7 +167,7 @@ export function BundlesPanel({
         <EmptyState
           icon={I.layers}
           title="No bundles yet"
-          hint="Choose reports in Run history, then name a bundle here. The pack is produced as one governed PDF with an export id on every page."
+          hint="Choose reports in Run history, then name a bundle here. The manifest PDF carries an export id on every page and is recorded on the audit chain."
           testId="rl-bundles-empty"
         />
       ) : (

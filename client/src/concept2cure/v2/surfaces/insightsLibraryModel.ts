@@ -101,6 +101,43 @@ export interface RunQuery {
 }
 
 /**
+ * The largest window `GET /runs` will serve (`listRunsSchema`: limit max 500).
+ *
+ * This is not a display preference, it is the honest bound on search. The
+ * route applies `search` and `sortBy` IN MEMORY, AFTER the SQL `LIMIT`
+ * (report-os.ts: `.limit(limit)` then `.filter(...)` then `.sort(...)`), so a
+ * search only ever matches within the rows already fetched and a sort only
+ * orders those rows. Asking for the maximum makes that window as wide as the
+ * route allows; {@link runsSearchCaveat} is how the UI says so instead of
+ * presenting a partial search as a complete one. The proper fix is server-side
+ * — filter and sort in SQL before the limit — and is not a client's to make.
+ */
+export const RUNS_WINDOW = 500;
+
+/**
+ * What a reader must be told when a search or a non-default sort is in play,
+ * or null when the answer is complete.
+ *
+ * `loaded` is how many rows came back. When it is below the window the route
+ * returned everything it had, so the search really did cover every run and
+ * there is nothing to qualify. When it equals the window, older runs exist
+ * that were never searched — and saying nothing would present a truncated
+ * answer as the whole one (CLAUDE.md: no silent caps).
+ */
+export function runsSearchCaveat(
+  loaded: number,
+  opts: { searching: boolean; sorted: boolean },
+): string | null {
+  if (!opts.searching && !opts.sorted) return null;
+  if (loaded < RUNS_WINDOW) return null;
+  const what = opts.searching && opts.sorted ? 'This search and ordering cover' : opts.searching ? 'This search covers' : 'This ordering covers';
+  return (
+    `${what} the ${RUNS_WINDOW} most recent runs only. The report engine filters and orders within that ` +
+    'window, so an older run that matches is not shown. Narrow by status or report type to bring it inside.'
+  );
+}
+
+/**
  * The run-history URL for a query, or null when there is nothing to ask for.
  * PURE, so the query building is testable without a DOM or a server.
  */
@@ -390,6 +427,21 @@ export interface BundleRow {
 export const BUNDLE_NEEDS_PROJECT_NOTE =
   'A bundle is filed against the projects its reports belong to. Reports that belong to no project ' +
   'cannot be bundled.';
+
+/**
+ * What a bundle's PDF actually is.
+ *
+ * It is a MANIFEST, not the reports: `pdf/bundle-pdf.ts` prints one line per
+ * report — id, label, scope, status now, status at bundling, confidence — and
+ * states in the document itself that "Each report's own PDF carries its
+ * signature and seal". Offering it as "the reports as one PDF" would hand an
+ * inspector an index where they expected the evidence, so the UI names it a
+ * manifest and says where the sealed documents are.
+ */
+export const BUNDLE_PDF_IS_A_MANIFEST =
+  "A bundle's PDF is a manifest: one line per report with its status at export beside the status it was " +
+  "bundled at, and how many are final. It does not contain the reports themselves — each report's own " +
+  'PDF carries its document, signature and seal, and is exported from Run history.';
 
 /* ══════════════════════════════════════════════════════════════════
    Writes

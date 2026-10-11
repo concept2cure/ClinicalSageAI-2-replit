@@ -18,7 +18,15 @@ import React, { useMemo, useState } from 'react';
 
 import { EmptyState, ErrorState, useLiveData } from '../dataConnect';
 import { I } from '../icons';
-import { RUN_STATUS_LABEL, confidenceText, runsUrl, whenText, type ReportRunRow } from './insightsLibraryModel';
+import {
+  RUNS_WINDOW,
+  RUN_STATUS_LABEL,
+  confidenceText,
+  runsSearchCaveat,
+  runsUrl,
+  whenText,
+  type ReportRunRow,
+} from './insightsLibraryModel';
 import { PanelHead, StatusTag, rowsOf, type LibraryReportType } from './insightsLibraryShared';
 
 /** The filter bar. Every control maps to a parameter the route accepts. */
@@ -141,11 +149,16 @@ export function RunsPanel({
     ...(search.trim() ? { search } : {}),
     sortBy: 'createdAt',
     sortOrder: 'desc',
-    limit: 100,
+    // The widest window the route serves: it filters and sorts in memory after
+    // the SQL limit, so the window IS the search's reach (see RUNS_WINDOW).
+    limit: RUNS_WINDOW,
   });
   const runs = useLiveData<unknown>(url, [url, attempt]);
   const rows = useMemo(() => rowsOf<ReportRunRow>(runs.data), [runs.data]);
   const filtered = Boolean(status || typeId || search.trim());
+  /* A truncated search presented as a complete one is a silent cap, so the
+     panel says what the answer covered whenever it could be partial. */
+  const caveat = runsSearchCaveat(rows.length, { searching: Boolean(search.trim()), sorted: false });
 
   const toggle = (id: number) =>
     setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
@@ -173,6 +186,12 @@ export function RunsPanel({
         search={search}
         setSearch={setSearch}
       />
+
+      {caveat && (
+        <div className="ro-dash-note" role="status" data-testid="rl-runs-caveat">
+          {I.info} {caveat}
+        </div>
+      )}
 
       <RunsBody
         loading={runs.loading}
