@@ -248,6 +248,16 @@ the four is this lane's own work — they are drift from other lanes' commits of
   attaches `req.dbClient` — checked, because on these paths a missing client
   would be a 500 on every read. 227 routes against a baseline of 228.
 
+**Overlap, for the D3 session (`…01YZFCXR`, public.users RLS).** While this
+repair was being pushed, that session's live task summary read "Use
+serverMessage in the timeline poll" — the same `anaTurnTimeline.ts` fix. Git
+history could not warn of it (the file's last commit was 2026-10-08; its work
+was uncommitted), and it is not reachable by cross-session message from here,
+so the notice is here instead: the fix is in `d3e30361`, so please merge
+`origin/concept2cure-v2` and drop that change rather than landing it twice. If
+you touch that file, note the gate scans comment text too — quoting the
+`typeof`-on-`error` pattern in a comment re-flags the line.
+
 `submissions-market-support.test.ts` mocked the shared pool and set no
 `req.dbClient`, so it went red on the change: it now attaches the request
 client the way `establishRequestTenantScope` does, and asserts the shared pool
