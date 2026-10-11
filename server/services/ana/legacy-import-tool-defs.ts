@@ -643,7 +643,7 @@ export const DRAFT_510K_SUBSTANTIAL_EQUIVALENCE: AnaTool = {
 export const DRAFT_CLINICAL_OVERVIEW_M2_5: AnaTool = {
   name: 'draft_clinical_overview_m2_5',
   description:
-    "Draft the ICH M4E(R2) Clinical Overview (Module 2.5) — the critical benefit-risk assessment. Two modes: (1) when called with csrs[] (the program's clinical studies), it composes the data-driven overview through the platform's deterministic buildM25ClinicalOverview — the 2.5.1–2.5.6 narrative, the pivotal-efficacy and benefit-risk tables, completeness, and gaps — the same engine the submission package uses, parity with draft_nonclinical_overview_m2_4 / draft_clinical_summary_m2_7; (2) without csrs[], it returns the six-subsection outline with drafting guidance and (with project_id) the project's artifacts for citation. Prefer mode 1 when clinical study data exists; report completeness and gaps honestly.",
+    "Draft the ICH M4E(R2) Clinical Overview (Module 2.5) — the critical benefit-risk assessment. When the program has completed clinical study reports, it composes the data-driven overview from those records through the platform's deterministic buildM25ClinicalOverview — the 2.5.1–2.5.6 narrative, the pivotal-efficacy and benefit-risk tables, completeness and gaps — the engine the submission package uses. Otherwise it returns the six-subsection outline with drafting guidance and the program's artifacts for citation. Its figures come from the program's records only: do not pass results, counts or rates, and do not add any to the draft. Report completeness and gaps honestly.",
   input_schema: {
     type: 'object',
     properties: {
@@ -655,31 +655,11 @@ export const DRAFT_CLINICAL_OVERVIEW_M2_5: AnaTool = {
         type: 'string',
         description: 'Target indication.',
       },
-      csrs: {
-        type: 'array',
-        description: 'Clinical study summaries — when supplied, the Clinical Overview is composed from them (data-driven mode).',
-        items: {
-          type: 'object',
-          properties: {
-            studyId: { type: 'string' },
-            protocolNumber: { type: 'string' },
-            phase: { type: 'string' },
-            studyDesign: { type: 'string' },
-            primaryEndpoint: { type: 'string' },
-            primaryResult: { type: 'string' },
-            sampleSize: { type: 'number' },
-            ittPopulation: { type: 'number' },
-            saeCount: { type: 'number' },
-            deathCount: { type: 'number' },
-          },
-          required: ['protocolNumber', 'phase'],
-        },
-      },
-      development_rationale: { type: 'string', description: 'Disease background / unmet need for 2.5.1 (optional, data-driven mode).' },
+      development_rationale: { type: 'string', description: 'Disease background / unmet need for 2.5.1 (optional).' },
       project_id: {
         type: 'number',
         description:
-          'Project ID — in outline mode, returns up to 50 existing artifacts so you can pick citations.',
+          "Program (project) id whose completed CSRs the overview is composed from; defaults to the open program. In outline mode, also returns up to 50 of its artifacts for citation.",
       },
     },
     required: ['product_name', 'indication'],

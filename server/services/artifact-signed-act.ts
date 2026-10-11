@@ -64,6 +64,18 @@ export interface SignedArtifactActInput {
    * act; the commit derives its own write instead of accepting arbitrary fields.
    */
   updateData: Partial<ArtifactRow>;
+  /**
+   * The artifact's `metadata` as this act should leave it — the governance
+   * harness block the status route recomputes for the new lifecycle state.
+   *
+   * 2026-10-11: it is named here rather than carried inside `updateData`.
+   * `validatedStatusChanges` admits only the canonical approval/lock columns,
+   * so a route that put `metadata` on `updateData` failed the key-set check and
+   * EVERY approve and lock answered 409 ARTIFACT_CHANGED. It is not part of the
+   * signed state (`sameSignedTarget` does not compare it) and it cannot bring
+   * another column with it: only this one key is merged.
+   */
+  metadata?: unknown;
   organizationId: number;
   userId: number;
   userRole: string;
@@ -105,9 +117,28 @@ export class ArtifactActConflictError extends Error {
 }
 
 /**
+ * The caller handed this act a column set that is not the canonical one for an
+ * approve or a lock. That is the server disagreeing with itself, not the
+ * document moving, and it must never be reported as a conflict: on 2026-10-11
+ * the status route added one extra key (`metadata`) and every approve and lock
+ * answered 409 "The document changed while it was being signed" — a sentence
+ * that was not true, sent to users, for a mismatch between two of our own
+ * modules. The route answers 500 and logs this; it is a defect to fix, not a
+ * state for a signer to retry.
+ */
+export class ArtifactActContractError extends Error {
+  readonly code = 'ARTIFACT_ACT_CONTRACT' as const;
+  constructor(readonly detail: string) {
+    super(`The signed act was given a column set it does not accept: ${detail}`);
+    this.name = 'ArtifactActContractError';
+  }
+}
+
+/**
  * Commit the act on `tx`. The caller has already refused a wrong meaning and
  * re-authenticated the signer. Throws ArtifactActConflictError when the
- * artifact is no longer in the state the caller read.
+ * artifact is no longer in the state the caller read, and
+ * ArtifactActContractError when the caller's column set is not the canonical one.
  */
 export async function commitSignedArtifactAct(
   tx: ArtifactTx,
@@ -192,11 +223,20 @@ function validatedStatusChanges(input: SignedArtifactActInput): Partial<Artifact
 
   const expected = artifactStatusUpdate(artifact, input.previousStatus, input.status, input.userId);
   const supplied = input.updateData;
-  if (!supplied || Object.keys(supplied).length !== Object.keys(expected).length ||
-    Object.entries(supplied).some(([key, value]) => !Object.prototype.hasOwnProperty.call(expected, key) ||
-      (expected[key] instanceof Date
-        ? !(value instanceof Date) || !Number.isFinite(value.getTime())
-        : value !== expected[key]))) {
+  if (!supplied) throw new ArtifactActContractError('no columns were supplied');
+  const extra = Object.keys(supplied).filter(k => !Object.prototype.hasOwnProperty.call(expected, k));
+  const missing = Object.keys(expected).filter(k => !Object.prototype.hasOwnProperty.call(supplied, k));
+  if (extra.length || missing.length) {
+    throw new ArtifactActContractError(
+      `${extra.length ? `columns it does not write: ${extra.join(', ')}. ` : ''}${missing.length ? `columns it must write: ${missing.join(', ')}.` : ''}`.trim(),
+    );
+  }
+  // Same columns, different values: the row moved under the caller, which IS a
+  // conflict and is the signer's to retry.
+  if (Object.entries(supplied).some(([key, value]) =>
+    expected[key] instanceof Date
+      ? !(value instanceof Date) || !Number.isFinite(value.getTime())
+      : value !== expected[key])) {
     throw new ArtifactActConflictError();
   }
   return expected as Partial<ArtifactRow>;
@@ -271,7 +311,7 @@ async function updateFromStateAsRead(tx: ArtifactTx, input: SignedArtifactActInp
   const { artifact } = input;
   const [row] = await tx
     .update(concept2cureArtifacts)
-    .set(input.updateData)
+    .set(input.metadata === undefined ? input.updateData : { ...input.updateData, metadata: input.metadata })
     .where(
       and(
         eq(concept2cureArtifacts.id, artifact.id),

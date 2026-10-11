@@ -218,6 +218,85 @@ Items in this lane's own code are fixed in this lane, not listed here.
 - ~~The vault passage tool refuses on two AnA entry points that never pass `organizationUuid`.~~ **Done 2026-09-24:** `executeAgenticLoop` fills it from the same-tenant request scope, which covers deep investigations. The realtime `/ana` namespace opens no tenant scope at all and has no client; that is reported, not fixed. Evidence: `docs/evidence/D4/2026-09-24-passage-search-entry-points/`.
 - ~~AnA's Vault screen context reports uploaded files as "0% complete" (the surface itself was fixed to show no percentage, `28324fdf`).~~ **Done 2026-09-24:** an upload's `pct` is `null` on the server and in the client type, and the published context says `percentComplete: null` for an upload. Evidence: `docs/evidence/D4/2026-09-24-vault-upload-completion/`. (`…01KnUGoX` had fixed the same defect locally in `3b525ea9` without re-reading this claim; it yielded to this change at merge. What it adds: a search-hit selection is pinned too, in `vaultSurfaceLabels.test.tsx`.)
 
+**D5 — approving and locking were refused for EVERY caller since `c91dba52`,
+fixed 2026-10-11 (`…01P6GWSv`).** Found triaging trunk run 13267: 8 of the Test
+job's 25 failures were this lane's. `validatedStatusChanges` (the commit-time
+signature hardening) admits only the canonical approval/lock columns, and the
+status route adds one more — `metadata`, the harness block it republishes. The
+key-set check therefore threw before any lock was taken, and `review →
+approved` and `approved → locked` answered **409 ARTIFACT_CHANGED** to every
+caller: the signed approval path was dead on trunk. Worse, the sentence sent to
+the signer — "The document changed while it was being signed. Reload it and
+sign again." — was untrue; two of our own modules disagreed about a column, and
+reloading could never help.
+
+Fixed: `metadata` is a named input of the act (so the hardening's invariant
+holds — no other column can ride in), and a non-canonical column set is now
+`ArtifactActContractError` / 500 with the detail logged, not a conflict a
+signer is told to retry. Red 8/8 as trunk produces them; green 18/18 in the
+ceremony suite and 297/297 across the 16 suites touching the act, the approval
+act or the status route; the two new contract cases shown failing against the
+old error. Evidence:
+`docs/evidence/D5/2026-10-11-approve-lock-refused-every-caller/`.
+
+**For the lane that wrote the hardening:** it is kept, and it is right. What
+let it fail closed against its own caller is that the canonical set is defined
+in one module and assembled in another, with the route-level suites that caught
+it left red at push time.
+
+**Trunk CI: the four scanner gates repaired, 2026-10-11 (`…01P6GWSv`).** Run
+13267 (head `275707c7`, 2026-10-10) was red in Lint, Test, Integration Tests,
+Coverage and Blank DB. Four Lint guardrails reproduce with no database and are
+fixed here; every file was last touched 2026-10-08, outside any hold. None of
+the four is this lane's own work — they are drift from other lanes' commits of
+2026-10-08, fixed at the cause rather than baselined:
+
+- `ci:error-envelope`: `client/src/concept2cure/components/ana/anaTurnTimeline.ts`
+  read the 403 envelope by hand, so an enum token or an internal string could
+  reach the live-progress panel as the reason a viewer was refused. It reads
+  through `serverMessage` now. (Baseline 0, and it stays 0.)
+- `ci:step-presentation`: `review_sop_requirements` (added 2026-10-08) had no
+  `present` block, so its steps would have read "Ran a step". It is
+  `review` / "the SOP against its topic's requirements" / `authoring`, with the
+  topic as its preview. 608 in-scope tools, all present; selftest 20/20.
+- `ci:tenant-isolation:no-regression`: the chunking backfill's candidate filter
+  (`server/services/vault/document-chunking-backfill.service.ts`) reads
+  `vault.document_chunks` in an EXISTS correlated on `d.id`, where `d` is the
+  outer query's row restricted by `p.organization_id = $1`. That is safe and
+  now carries the inline justification the gate asks for. 7 candidates against
+  a baseline of 8.
+- `ci:requestdb-coverage`: two routes of 2026-10-08 reached for the shared
+  pool. `server/routes/submissions.ts` `/market-support` dynamically imported
+  `pool`; it uses `requestPgClient(req)`. `server/routes/ana-ri/runs.ts`
+  defaulted its test seam to `getPool()`; the seam now takes the request and
+  defaults to `requestPgClient(req)`. Both routers are mounted behind
+  `authenticateToken`, which calls `establishRequestTenantScope` and so
+  attaches `req.dbClient` — checked, because on these paths a missing client
+  would be a 500 on every read. 227 routes against a baseline of 228.
+
+**Overlap, for the D3 session (`…01YZFCXR`, public.users RLS).** While this
+repair was being pushed, that session's live task summary read "Use
+serverMessage in the timeline poll" — the same `anaTurnTimeline.ts` fix. Git
+history could not warn of it (the file's last commit was 2026-10-08; its work
+was uncommitted), and it is not reachable by cross-session message from here,
+so the notice is here instead: the fix is in `d3e30361`, so please merge
+`origin/concept2cure-v2` and drop that change rather than landing it twice. If
+you touch that file, note the gate scans comment text too — quoting the
+`typeof`-on-`error` pattern in a comment re-flags the line.
+
+`submissions-market-support.test.ts` mocked the shared pool and set no
+`req.dbClient`, so it went red on the change: it now attaches the request
+client the way `establishRequestTenantScope` does, and asserts the shared pool
+is never touched. Shown failing both ways — with no request client the route
+answers 500, and with the route on the shared pool the request client goes
+unused. 25 covering suites: 245 tests, all passing. No changed file gained an
+ESLint warning; the scoped typecheck is clean.
+
+**Still red at `275707c7`, not this lane's and not fixed here:** the Test,
+Integration Tests, Coverage and Proof-tier failures, and the Blank DB purge
+ratchet. They need a database or the full suite; they are being read from the
+run's logs and will be reported or taken separately.
+
 **Trunk CI repaired, 2026-09-26 (`…01DiJJAk`).** Run 36222133624 was red in Lint and Test. Lint's failures were guardrail steps, not ESLint or typecheck. All were caused by other lanes' commits, and each is fixed at the cause (`6ce7c30b5`, `9ef1514e8`, and the test-drift commit after them):
 - `ci:audit-logs-fixture`: the LX-22 anchor test's `audit_logs` now uses `AUDIT_LOGS_PGLITE_DDL`.
 - `ci:unkeyed-request-tables`: `drafting_tasks` recorded as **derived** (through `regulatory_programs`, both P1-8 readers filter on it). **→ P1-8 lane:** a real `organization_id` needs a new applier migration; `0008_ga_hardening.sql` reaches fresh installs only.

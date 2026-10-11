@@ -955,6 +955,14 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      rendered_leaf_files holds version ids with no recorded provider. */
   'vault.document_chunks',
   'vault.documents',
+  /* One row per deterministic engine run whose figure a tenant's document or
+     report cites: its inputs, its outputs and their hashes
+     (migrations/20261008f_stats_computation_runs.sql). Customer content — the
+     inputs are the tenant's own study and program data. Its organization_id FK
+     carries no CASCADE, and its program and study FKs are ON DELETE SET NULL,
+     so nothing erased it: a purged tenant kept every run here. Before
+     regulatory_programs and cdisc_prm_studies, the two it references. */
+  'stats_computation_runs',
   'regulatory_programs',
   'file_uploads',
   // Digital-twin simulations. Customer content: each row stores the tenant's

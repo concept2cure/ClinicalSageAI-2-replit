@@ -98,6 +98,12 @@ function candidateFilter(embed: boolean, retryFailed: boolean): string {
   return [
     'c.chunk_status IS NULL',
     ...(retryFailed ? [`c.chunk_status = 'chunk_failed'`] : []),
+    // The EXISTS below is correlated on ch.document_id = d.id, and `d` is the
+    // outer query's vault.documents row, which that query restricts to the
+    // caller's organization (p.organization_id = $1, through
+    // regulatory_programs). vault.document_chunks carries no org column of its
+    // own, so the correlation is what bounds it.
+    // tenant-isolation-safe: correlated on d.id — a document the outer query has already restricted to the caller's organization.
     ...(embed
       ? [`(c.chunk_status = 'chunked'${retryFailed ? '' : ' AND c.chunk_error IS NULL'}
             AND EXISTS (SELECT 1 FROM vault.document_chunks ch

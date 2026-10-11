@@ -3415,19 +3415,28 @@ export async function assessDefensibility(
       };
     }
 
-    const result: any = await mod.statisticalDefensibilityService.assessDefensibility({
+    // The deterministic engine judges a design from its statistical inputs
+    // (endpointType, effectSize, alpha, powerTarget, attritionRate, …), passed
+    // as this command's params. Without them it names what is missing; until
+    // 2026-10-05 this passed ids only, and the model-backed service threw.
+    const result = await mod.statisticalDefensibilityService.assessDefensibility({
+      ...params,
       projectId: Number(projectId),
-      organizationId: ctx.organizationId,
-      artifactId: params.artifactId as number | undefined,
-    } as any);
+    });
 
+    if (result.status !== 'assessed') {
+      return {
+        success: false,
+        action: 'assess_defensibility',
+        data: result,
+        message: result.message,
+      };
+    }
     return {
       success: true,
       action: 'assess_defensibility',
       data: result,
-      message: `Defensibility score: ${result?.overallScore || 'N/A'}/100. ${
-        result?.summary || 'Assessment complete.'
-      }`,
+      message: `Defensibility: ${result.judgment.overallVerdict} (${result.judgment.overallRisk} risk); recommended action: ${result.judgment.actionRecommendation}.`,
     };
   } catch (err: unknown) {
     return {

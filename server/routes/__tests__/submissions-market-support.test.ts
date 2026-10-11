@@ -11,9 +11,15 @@ vi.hoisted(() => {
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'submissions-market-support-secret-32ch';
 });
 
+/* The request's own pinned client, as establishRequestTenantScope attaches it
+   (2026-10-11): the route reads the active packs through requestPgClient(req),
+   not the shared pool. `sharedPool` stands in for the shared pool and must stay
+   untouched — a second path to the database is what ci:requestdb-coverage
+   exists to prevent. */
 const db = vi.hoisted(() => ({ query: vi.fn() }));
-vi.mock('../../db.js', async (importOriginal) => ({ ...(await importOriginal<object>()), pool: db }));
-vi.mock('../../db', async (importOriginal) => ({ ...(await importOriginal<object>()), pool: db }));
+const sharedPool = vi.hoisted(() => ({ query: vi.fn() }));
+vi.mock('../../db.js', async (importOriginal) => ({ ...(await importOriginal<object>()), pool: sharedPool }));
+vi.mock('../../db', async (importOriginal) => ({ ...(await importOriginal<object>()), pool: sharedPool }));
 
 import request from 'supertest';
 import express from 'express';
@@ -24,6 +30,7 @@ const app = express();
 app.use(express.json());
 app.use((req: any, _res, next) => {
   req.user = { id: 3, userId: 3, organizationId: 7, role: 'member', roles: expandRoleClaims('member', undefined) };
+  req.dbClient = db;
   next();
 });
 app.use('/api/submissions', submissionsRouter);
@@ -35,6 +42,7 @@ const PACKS = ['nda:fda', 'maa:ema', 'jnda:pmda'].map((k) => {
 
 beforeEach(() => {
   db.query.mockReset();
+  sharedPool.query.mockReset();
   db.query.mockResolvedValue({ rows: PACKS });
 });
 
@@ -51,6 +59,7 @@ describe('GET /api/submissions/market-support', () => {
     expect(by.BR).toBe('Not supported');
     expect(db.query).toHaveBeenCalledTimes(1);
     expect(String(db.query.mock.calls[0][0])).toMatch(/superseded_by IS NULL/);
+    expect(sharedPool.query, 'the route reached for the shared pool').not.toHaveBeenCalled();
   });
 
   it('with a market, states that one', async () => {

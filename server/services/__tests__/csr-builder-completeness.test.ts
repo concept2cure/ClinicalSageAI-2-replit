@@ -150,14 +150,31 @@ describe('generateCSRSections — section status', () => {
 
   it('marks a section with fully-resolved content "drafted"', async () => {
     completeMock.mockResolvedValue(
+      'The study was conducted in accordance with the Declaration of Helsinki and ICH GCP.'
+    );
+    const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
+    const generated = await generateCSRSections(sections, makeRequest());
+
+    const s5 = flattenICHE3Sections(generated).find(s => s.number === '5')!;
+    expect(s5.status).toBe('drafted');
+    expect(s5.needsData).toBeFalsy();
+  });
+
+  // Until 2026-10-05 this file asserted that a §12.3 model draft reading "312
+  // deaths … 47 serious adverse events" — counts nobody supplied — was stored
+  // as 'drafted'. That is the fabrication csr/unsupplied-statistics.ts now
+  // refuses (CLAUDE.md Rule 2): the section falls back to its template and
+  // needs data.
+  it('does not mark a results section drafted from statistics nobody supplied', async () => {
+    completeMock.mockResolvedValue(
       'A total of 312 deaths occurred during the study. 47 serious adverse events were reported.'
     );
     const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
     const generated = await generateCSRSections(sections, makeRequest());
 
     const s123 = flattenICHE3Sections(generated).find(s => s.number === '12.3')!;
-    expect(s123.status).toBe('drafted');
-    expect(s123.needsData).toBeFalsy();
+    expect(s123.content).not.toContain('312');
+    expect(s123.status).toBe('needs_data');
   });
 
   it('marks a section with no content "empty" (unchanged behavior)', async () => {

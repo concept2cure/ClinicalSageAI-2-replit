@@ -16,7 +16,7 @@ import { and, eq } from 'drizzle-orm';
 import { requireRole } from '../middleware/auth';
 import { isUuid } from '../middleware/uuidParam';
 import { ok } from '../lib/api-response';
-import { requestDb } from '../db/requestDb';
+import { requestDb, requestPgClient } from '../db/requestDb';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import {
@@ -337,14 +337,22 @@ router.get('/market-support', limiter, requireRole(AUTHOR), async (req, res) => 
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'applicationType is required (at most 64 characters); market, when given, is at most 64.' } });
   }
   try {
-    const [{ readMarketSupport }, { REGION_IDENTITY }, { pool }] = await Promise.all([
+    const [{ readMarketSupport }, { REGION_IDENTITY }] = await Promise.all([
       import('../services/regulatory/market-support.js'),
       import('../../shared/regulatory/region-identity.js'),
-      import('../db.js'),
     ]);
     const markets = market ? [market] : Object.keys(REGION_IDENTITY);
     const asOf = new Date().toISOString().slice(0, 10);
-    const out = await readMarketSupport(pool, markets.map((m) => ({ applicationType, market: m })), asOf);
+    /* The request's own pinned connection, not the shared pool
+       (ci:requestdb-coverage). readMarketSupport reads the platform's active
+       rule packs — reference data, not this tenant's rows — but it reads them
+       on the caller's request scope like every other read in this router, so
+       the route holds no second path to the database. */
+    const out = await readMarketSupport(
+      requestPgClient(req),
+      markets.map((m) => ({ applicationType, market: m })),
+      asOf,
+    );
     res.json({ applicationType, asOf, markets: out });
   } catch (err) {
     fail(res, err);

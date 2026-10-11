@@ -129,6 +129,9 @@ router.post('/jobs/:id/stop', async (req: Request, res: Response) => {
 router.get('/jobs/:id/stream', async (req: Request, res: Response) => {
   const jobId = parseInt(String(req.params.id), 10);
   const streamOrgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
+  // Refused before the stream opens and before any read, as GET /jobs/:id is:
+  // without an organisation there is no job to stream (D3, 2026-10-11).
+  if (!streamOrgId) return res.status(400).json({ error: 'Organization context required' });
 
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -138,7 +141,7 @@ router.get('/jobs/:id/stream', async (req: Request, res: Response) => {
 
   // Send initial status (org-scoped: a foreign-tenant job id reads as not found)
   try {
-    const job = await getJobStatus(jobId, streamOrgId ? Number(streamOrgId) : undefined);
+    const job = await getJobStatus(jobId, Number(streamOrgId));
     res.write(`data: ${JSON.stringify({ progress: job.progress, status: job.status })}\n\n`);
 
     if (job.status === 'complete' || job.status === 'failed') {
