@@ -1,0 +1,76 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — completeness on the section-approval table > shows each section's completeness, names the missing inputs, and withholds approval from an incomplete one 305ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — completeness on the section-approval table > a 409 shows the server's own reason — 409 no longer means only "contradictions" 326ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > shows the composed narrative and tables BEFORE the signature form appears 194ms
+stderr | client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > sends the content hash the signer actually read with the signature
+An update to CmOverview inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CmOverview inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CmOverview inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > sends the content hash the signer actually read with the signature 311ms
+   → expected undefined to be 'abc123def4567890' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > offers NO signature when the section could not be read 177ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > warns when the section is stale or its tables are unknown 130ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > sectionsUnreadable renders the failed-read copy and not "No Module 3 sections yet" 39ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > portfolioUnreadable renders the failed-read copy and not "No submissions yet" 31ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > says Not export ready with the gate's reasons when every section is approved but one is incomplete 44ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > says Export ready only when the gate does 35ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > renders a failed readiness read as a failed read, not as ready and not as not-ready 33ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > sends the content hash the signer actually read with the signature
+AssertionError: expected undefined to be 'abc123def4567890' // Object.is equality
+
+- Expected:
+"abc123def4567890"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx:248:31
+    246|     const body = (apiRequest.mock.calls as Array<[string, string, Reco…
+    247|       .find((c) => c[0] === 'POST' && APPROVE.test(c[1]))![2];
+    248|     expect(body.compiledHash).toBe('abc123def4567890');
+       |                               ^
+    249|     expect(body.reason).toBe('Reviewed against the CoA and the execute…
+    250|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  22:13:57
+   Duration  3.74s (transform 1.03s, setup 160ms, import 1.24s, tests 1.63s, environment 494ms)
+

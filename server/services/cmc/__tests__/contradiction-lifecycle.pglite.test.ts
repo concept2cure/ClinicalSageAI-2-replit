@@ -124,7 +124,7 @@ describe('resolving a finding is a governed act', () => {
 
   it('records the status, the provenance and a chained audit row, under the person who resolved it', async () => {
     const id = await open();
-    const out = await resolveContradiction({ organizationId: ORG, userId: 42, contradictionId: id, reason: NOTE });
+    const out = await resolveContradiction({ organizationId: ORG, userId: 42, signingAuthority: true, contradictionId: id, reason: NOTE });
     expect(out).toEqual({ ok: true, projectId: P });
     expect(await rows()).toEqual([{ details: SPEC.details, status: 'resolved' }]);
     const prov = (await pg.query<any>(`SELECT event_type, event_payload, created_by FROM cmc_provenance_events`)).rows;
@@ -138,19 +138,29 @@ describe('resolving a finding is a governed act', () => {
   it('refuses a resolution with no stated reason, and changes nothing', async () => {
     const id = await open();
     for (const reason of [undefined, '', 'ok']) {
-      const out = await resolveContradiction({ organizationId: ORG, userId: 42, contradictionId: id, reason });
+      const out = await resolveContradiction({ organizationId: ORG, userId: 42, signingAuthority: true, contradictionId: id, reason });
       expect(out).toMatchObject({ ok: false, status: 422, code: 'REASON_REQUIRED' });
     }
     expect(await rows()).toEqual([{ details: SPEC.details, status: 'open' }]);
     expect(h.audit).toEqual([]);
   });
 
+  /* GA plan item 4 (separation of duties): a critical finding blocks every
+     section approval, so clearing it is a signer's decision. */
+  it('refuses a critical finding to a resolver without signing authority, and changes nothing', async () => {
+    const id = await open();
+    const out = await resolveContradiction({ organizationId: ORG, userId: 42, signingAuthority: false, contradictionId: id, reason: NOTE });
+    expect(out).toMatchObject({ ok: false, status: 403, code: 'ESIGNATURE_NO_AUTHORITY' });
+    expect(await rows()).toEqual([{ details: SPEC.details, status: 'open' }]);
+    expect(h.audit).toEqual([]);
+  });
+
   it('refuses one already resolved, and another organisation’s', async () => {
     const id = await open();
-    await resolveContradiction({ organizationId: ORG, userId: 42, contradictionId: id, reason: NOTE });
-    expect(await resolveContradiction({ organizationId: ORG, userId: 42, contradictionId: id, reason: NOTE }))
+    await resolveContradiction({ organizationId: ORG, userId: 42, signingAuthority: true, contradictionId: id, reason: NOTE });
+    expect(await resolveContradiction({ organizationId: ORG, userId: 42, signingAuthority: true, contradictionId: id, reason: NOTE }))
       .toMatchObject({ ok: false, status: 409, code: 'ALREADY_RESOLVED' });
-    expect(await resolveContradiction({ organizationId: ORG + 1, userId: 42, contradictionId: id, reason: NOTE }))
+    expect(await resolveContradiction({ organizationId: ORG + 1, userId: 42, signingAuthority: true, contradictionId: id, reason: NOTE }))
       .toMatchObject({ ok: false, status: 404 });
   });
 });

@@ -134,23 +134,6 @@ describe('GET /build-state/:projectId — artifact spine resolution', () => {
       expect(q.params[1]).toBe(1234);
     }
   });
-
-  it('uploaded-sources takes the same translation and degrades honestly', async () => {
-    resolveCmcArtifactProject.mockResolvedValue({
-      state: 'unanchored',
-      artifactProjectId: null,
-      detail: 'This program has no PM-spine anchor.',
-    });
-
-    const res = await request(makeApp()).get(
-      `/api/cmc/module3-os/uploaded-sources/${PROGRAM_UUID}`,
-    );
-
-    expect(res.status).toBe(200);
-    expect(res.body.data).toEqual([]);
-    expect(res.body.artifactRegistry.state).toBe('unanchored');
-    expect(queries.filter((q) => q.sql.includes('concept2cure_artifacts'))).toHaveLength(0);
-  });
 });
 
 describe('build-state derives its source rules from the composer (anti-drift)', () => {
@@ -224,7 +207,7 @@ describe('build-state reads completeness from the canonical status, not from a s
 });
 
 describe('a failed read answers 500 without naming what broke (D6 / IAM-18, P1-17 paydown)', () => {
-  /* Both handlers used to send `error.message` verbatim on the 500 path — for a
+  /* The handlers here used to send `error.message` verbatim on the 500 path — for a
      missing relation that is the relation's name, the class of disclosure
      ci:server-error-leaks exists to end. They answer through serverError()
      now: a static envelope plus a correlation id, the detail in the log. */
@@ -252,7 +235,7 @@ describe('a failed read answers 500 without naming what broke (D6 / IAM-18, P1-1
     resolveCmcArtifactProject.mockRejectedValue(undefinedTable('cmc_source_objects'));
   });
 
-  for (const path of ['build-state', 'uploaded-sources'] as const) {
+  for (const path of ['build-state'] as const) {
     it(`${path}: the relation name stays in the log, the client gets the envelope`, async () => {
       const res = await request(makeAppWithRequestId()).get(
         `/api/cmc/module3-os/${path}/${PROGRAM_UUID}`,

@@ -90,12 +90,13 @@ async function create(): Promise<Record<string, unknown>> {
     json: async () => ({ data: { id: '8a11b987-ac2d-4748-9e9c-5dc40c082662', title: 'x', code: 'TOLV' }, meta: {} }),
   });
   fireEvent.click(await screen.findByRole('button', { name: /create project/i }));
-  /* The body of the CREATE, found by its method and path rather than taken from
-     the first call: since a3dd2889b the wizard also reads
-     GET /api/submissions/market-support, which arrives first. */
-  const posted = () => apiRequest.mock.calls.find((c: unknown[]) => c[0] === 'POST' && c[1] === '/api/c2c/projects');
-  await vi.waitFor(() => expect(posted(), 'the project was never POSTed').toBeDefined());
-  return posted()![2] as Record<string, unknown>;
+  /* The create call, found by method and path rather than by position: step 2
+     asks the server which markets support the filing, so the wizard's first
+     apiRequest is that GET and its body argument is undefined. Selecting the
+     POST also pins where the project is created. */
+  const createCall = () => apiRequest.mock.calls.find((c: unknown[]) => c[0] === 'POST' && c[1] === '/api/c2c/projects');
+  await vi.waitFor(() => expect(createCall(), 'the wizard never posted the project').toBeDefined());
+  return createCall()![2] as Record<string, unknown>;
 }
 
 afterEach(() => {

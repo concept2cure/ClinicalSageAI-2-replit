@@ -337,7 +337,10 @@ interface CmcSectionRead {
 function CmcSectionReview({
   projectId, section, onCancel, onSign,
 }: {
-  projectId: string; section: CmcSection; onCancel: () => void; onSign: () => void;
+  /* onSign carries the content hash THIS panel displayed, so the signature is
+     refused if the section is recompiled between the read and the signing
+     (the server's SECTION_CHANGED). */
+  projectId: string; section: CmcSection; onCancel: () => void; onSign: (compiledHash: string | null) => void;
 }) {
   const read = useLiveData<CmcSectionRead>(
     projectId ? `/api/cmc/module3-os/sections/${encodeURIComponent(projectId)}/${encodeURIComponent(section.key)}` : null,
@@ -405,7 +408,7 @@ function CmcSectionReview({
             className="de-btn primary"
             disabled={!d}
             title={d ? 'Open the signature form for this section' : 'The section must be readable before it can be signed'}
-            onClick={onSign}
+            onClick={() => onSign(d?.compiledHash ?? null)}
           >{I.lock} Sign & approve</button>
         </div>
       </div>
@@ -427,7 +430,7 @@ function signForm(target: string): C2CFormConfig {
         { value: 'responsibility', label: 'Responsibility' },
         { value: 'authorship', label: 'Authorship' },
       ], default: 'approval', required: true },
-      { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Reason for this approval...', required: true },
+      { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Reason for this approval...', required: true, desc: `At least ${GOVERNED_REASON_MIN} characters. It is recorded with the signature exactly as written.` },
       { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
       { key: 'totp', label: 'Authenticator', type: 'text', placeholder: '6-digit code', half: true },
     ],
@@ -542,6 +545,8 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
     setSecs((liveSections ?? []).map((s) => ({ ...s })));
   }, [liveSections]);
   const [sign, setSign] = useState<CmcSection | null>(null);
+  /** The content hash the signer read in the review panel, sent with the signature. */
+  const [signHash, setSignHash] = useState<string | null>(null);
   /* The section being READ before it is signed. "Approve section" opens this;
      the signature form opens from inside it, never directly. */
   const [review, setReview] = useState<CmcSection | null>(null);
@@ -625,6 +630,10 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           // §11.50(a)(3) — the meaning the signer chose, recorded with the
           // signature rather than collected and dropped.
           meaning: v.meaning,
+          /* What was read is what is signed: the hash the review panel showed.
+             The server refuses (409 SECTION_CHANGED) if the section was
+             recompiled since. */
+          compiledHash: signHash,
           reauth: { password: v.password, totp: v.totp || undefined },
         },
       );
@@ -916,7 +925,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           projectId={ctxProjectId || ''}
           section={review}
           onCancel={() => setReview(null)}
-          onSign={() => { setSign(review); setReview(null); }}
+          onSign={(compiledHash) => { setSignHash(compiledHash); setSign(review); setReview(null); }}
         />
       )}
       {sign && <C2CForm config={signForm('Section ' + sign.key + ' — ' + sign.path)} onCancel={() => setSign(null)} onSubmit={doSign} />}      <C2CToast msg={toast} />
