@@ -121,6 +121,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import setupRouter from '../setup';
 import { DEFAULT_IDLE_MINUTES, openSession } from '../../services/session-inactivity';
+import { switchPinTerms } from '../../db/sessionScope';
 
 function makeApp() {
   const app = express();
@@ -216,7 +217,9 @@ describe('first-run setup — /api/setup', () => {
       'insert organization_users',
       // The new organisation becomes the tenant BEFORE the workspace is
       // counted or written — the count must not read through another tenant.
-      `execute SELECT set_config('app.current_tenant_id', $1, true) ["1"]`,
+      // The stamp as the server writes it (switchPinTerms: ac688076e pins the
+      // isolation switches in the same statement).
+      `execute SELECT set_config('app.current_tenant_id', $1, true), ${switchPinTerms(true)} ["1"]`,
       'select client_workspaces',
       'insert client_workspaces',
     ]);

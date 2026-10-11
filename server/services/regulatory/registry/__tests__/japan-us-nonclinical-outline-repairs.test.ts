@@ -66,7 +66,15 @@ describe('Nonclinical summaries — only the canonical CTD 2.6 subtree', () => {
     const canonical = Object.values(CTD_AUTHORING_GUIDANCE).filter(s => s.code.startsWith('2.6.'));
     expect(outline.id).toBe(getApplicationType('ICH_NONCLIN_SUMMARY')!.defaultSectionBlueprint);
     expect(outline.sections.map(s => [s.code, s.title, s.contentType])).toEqual(canonical.map(s => [s.code, s.title, s.contentType]));
-    expect(outline.sections.map(s => s.code)).toEqual(['2.6.1', '2.6.2', '2.6.3', '2.6.4', '2.6.5', '2.6.6', '2.6.7']);
+    /* The top-level headings, and only those seven: this is what catches "all of
+       Module 2" or a second heading tree. The canonical subtree legitimately has
+       depth — 88fa1606c promoted the seven M4S pharmacology leaves (2.6.2.x)
+       into the authoring guidance after primary-source review — so the depth is
+       read from the guidance above rather than pinned to a flat list here. */
+    expect(outline.sections.filter(s => s.code.split('.').length === 3).map(s => s.code)).toEqual([
+      '2.6.1', '2.6.2', '2.6.3', '2.6.4', '2.6.5', '2.6.6', '2.6.7',
+    ]);
+    expect(outline.sections.every(s => /^2\.6(\.\d+)+$/.test(s.code))).toBe(true);
     expect(outline.sections.every(s => s.module === 2)).toBe(true);
   });
 });

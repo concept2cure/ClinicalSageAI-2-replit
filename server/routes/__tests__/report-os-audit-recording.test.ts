@@ -74,6 +74,7 @@ import { buildSealedRecord } from '../../services/report-os/sealing/seal';
 import type { RenderedReport } from '../../services/report-os/render/types';
 import { deriveChainHash } from '../../services/audit/chain';
 import { reportRuns, reportSnapshots } from '@shared/schema/report-os';
+import { switchPinTerms } from '../../db/sessionScope';
 
 const app = express();
 app.use(express.json());
@@ -87,7 +88,11 @@ app.use((req, _res, next) => {
 });
 app.use('/api/report-os', reportOsRouter);
 
-const STAMP = "SELECT set_config('app.current_tenant_id', $1, true)";
+/* The tenant stamp as the server writes it, read from its own source rather
+   than spelled out here: ac688076e (D3, 2026-10-08) pins the isolation
+   switches in the same statement, so a hard-coded single set_config went
+   stale the day enforcement stopped being session-switchable. */
+const STAMP = `SELECT set_config('app.current_tenant_id', $1, true), ${switchPinTerms(true)}`;
 const TYPE = { typeId: 'readiness.executive_digest', label: 'Executive Readiness Digest', family: 'readiness', allowedScopes: ['program', 'project', 'submission'] };
 const RUN = {
   id: 41, runUuid: '00000000-0000-4000-8000-000000000041', organizationId: 7, scopeType: 'submission', scopeId: 'sub-1',

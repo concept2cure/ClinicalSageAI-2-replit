@@ -1,0 +1,5 @@
+vitest run, the ten files the Test job failed on (2026-10-11):
+
+ Test Files  10 passed (10)
+      Tests  144 passed (144)
+   Duration  29.22s (transform 4.09s, setup 310ms, import 12.33s, tests 14.30s, environment 555ms)

@@ -128,6 +128,7 @@ vi.mock('../../services/auditService', async (importOriginal) => ({
 
 import reportOsRouter from '../report-os';
 import logger from '../../utils/logger';
+import { switchPinTerms } from '../../db/sessionScope';
 
 /** Every line handed to the logger, whichever scoped logger sent it (DP-67). */
 const logs: Array<{ level: string; message: string; context: unknown }> = [];
@@ -149,7 +150,11 @@ app.use((req, _res, next) => {
 });
 app.use('/api/report-os', reportOsRouter);
 
-const STAMP = "SELECT set_config('app.current_tenant_id', $1, true)";
+/* The tenant stamp as the server writes it, read from its own source rather
+   than spelled out here: ac688076e (D3, 2026-10-08) pins the isolation
+   switches in the same statement, so a hard-coded single set_config went
+   stale the day enforcement stopped being session-switchable. */
+const STAMP = `SELECT set_config('app.current_tenant_id', $1, true), ${switchPinTerms(true)}`;
 const SUBMISSION = '00000000-0000-4000-8000-0000000000aa';
 const BUNDLE_ID = '11111111-1111-4111-8111-111111111111';
 const run = (status: string, over: Record<string, unknown> = {}) => ({
