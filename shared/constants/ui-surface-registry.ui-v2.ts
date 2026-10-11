@@ -852,7 +852,24 @@ export const UI_V2_SURFACES: UiSurface[] = [
     // POST /runs/:id/finalize, GET /runs/:id/export.pdf) and its bootstrap;
     // /api/report-os/portfolio is AnA Command's. The rest stay unmapped, which
     // production refuses, until a screen needs one.
-    apiPrefixes: ['/api/report-os/runs', '/api/insights-canvas'],
+    //
+    // 2026-10-11: two of them now have a screen. The reporting library
+    // (surfaces/InsightsLibrary.tsx) adds a Run history, Schedules and Bundles
+    // tab to the artifact pane, so the surface claims the two prefixes those
+    // tabs call and nothing more:
+    //   - /api/report-os/bundles      GET list, POST create, GET :id/export.pdf
+    //   - /api/insights/subscriptions GET list, POST create, PATCH :id enable
+    // The claim stays per-prefix rather than '/api/insights', which is the
+    // breadth the review removed: /api/insights/quality and
+    // /api/insights/predictions still have no screen and stay unmapped, as do
+    // program groups, deliveries and /health. The Report catalog tab needs no
+    // new claim — it renders the `reportTypes` the bootstrap already returns.
+    apiPrefixes: [
+      '/api/report-os/runs',
+      '/api/report-os/bundles',
+      '/api/insights-canvas',
+      '/api/insights/subscriptions',
+    ],
     anaToolFamilies: ['list_report_types', 'generate_report', 'portfolio_readiness', 'compare_regions', 'explain_blockers'],
     sharedContract: null,
     discoveryCatalog: null,
