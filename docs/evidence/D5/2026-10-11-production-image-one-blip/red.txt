@@ -1,0 +1,40 @@
+# CI run 13271 (run id 38181293653), head 56ceff4e.
+# Job: Production Image Boot (built image, empty database, sign-in)  [job 114598624388]
+# Step: Build the provision and production images (as deploy-aws.yml does)
+
+#14 naming to docker.io/library/c2c-provision:ci done        <- --target provision OK
+
+#15 [production  6/22] RUN set -eu;     mkdir -p /opt/verapdf;     curl -fsSL -o /opt/verapdf/verapdf-cli.jar       "https://repo1.maven.org/maven2/org/verapdf/apps/cli/1.30.2/cli-1.30.2.jar";     echo "287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332  /opt/verapdf/verapdf-cli.jar" | sha256sum -c -; ...
+#15 0.167 curl: (22) The requested URL returned error: 404
+#15 ERROR: process "/bin/sh -c set -eu; ... " did not complete successfully: exit code: 22
+------
+Dockerfile.optimized:108
+--------------------
+ 107 |     ARG VERAPDF_SHA256=287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332
+ 108 | >>> RUN set -eu; \
+ ...
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c set -eu; ... " did not complete successfully: exit code: 22
+##[error]Process completed with exit code 1.
+
+# Reproduced locally with the PRE-CHANGE fragment, against a server that
+# answers 404 once and then serves the real jar:
+#
+#   curl: (22) The requested URL returned error: 404
+#   sha256sum: out.jar: No such file or directory
+#   out.jar: FAILED open or read
+#   RESULT exit=1
+#
+# i.e. one refusal is enough to fail the image, and the job then never runs the
+# boot check it exists for.
+
+# Frequency, over the 20 most recent completed CI runs on concept2cure-v2:
+#   13272  2274cf03  success   build step 232s   started 22:57:36Z
+#   13271  56ceff4e  FAILURE   build step 150s   started 22:39:34Z  <- the only one
+#   13270  de0fceff  success   build step 307s   started 22:23:30Z
+#   13269..13259      success  (13 consecutive passes of this job)
+#   13258..13254      failure at a DIFFERENT step ("Provision the empty
+#                     database with the provision image"); build step passed in
+#                     all five. Fixed by 13259 (a17157f3), another lane's.
+#
+# The pin is byte-identical at de0fceff, 56ceff4e, 2274cf03 and 275707c7.

@@ -2276,3 +2276,101 @@ as an expectation or a self-issued statement; the three others that assert it
 (`withTenantConnection-scope-before-checkout` via a drift-tolerant prefix,
 `saved-precedent-queries.rls`, `stability-tenant-isolation.contract`) pass in
 both postures, 17/17. That was the last one.
+
+---
+
+## 2026-10-11 — one upstream blip had switched off the production-boot gate (`…01P6GWSv`)
+
+CI run 13271's "Production Image Boot" job failed at the image build, on the
+veraPDF download: `curl: (22) The requested URL returned error: 404`
+(`Dockerfile.optimized:108`). **It is one run out of the last twenty** — the
+build passed 16 minutes before (13270) and 18 minutes after (13272), with
+`VERAPDF_VERSION` and `VERAPDF_SHA256` byte-identical at all three heads. From
+this container the URL serves 200 and the bytes hash to exactly the pinned
+value, which is also the checksum Maven Central publishes. Both pins are
+correct; one HTTP GET failed.
+
+Worth fixing rather than re-running, because when the image build dies the job
+**never reaches the check it exists for** — whether the shipped build boots
+under `RLS_ENFORCE=on`, the thing that once threw `[tenant-rls] FAIL-CLOSED`
+with no job noticing. Same shape as a gate that cannot load.
+
+The fetch is now retried; version, checksum, URL and the `sha256sum -c`
+verification are untouched. `--retry-all-errors` because 404 is not in curl's
+retryable set and 404 is what was served; **no `--retry-delay`**, because giving
+one replaces curl's exponential backoff with a fixed wait — the first attempt at
+this used `--retry 5 --retry-delay 2` and burned all five attempts in ~10s
+inside a sustained 429, failing just as the unretried fetch did. Proven with the
+shipped flags: a transient 404x3 recovers and verifies (7s); a payload that is
+not the pinned artifact still fails `sha256sum -c`; a permanently absent
+artifact gives up at 255s and fails the build. Retrying buys more chances at the
+pinned bytes and nothing else. Evidence:
+`docs/evidence/D5/2026-10-11-production-image-one-blip/`.
+
+### Two items closed as already-done by other lanes, so nobody re-diagnoses them
+
+- **The purge ratchet on `stats_computation_runs`** (red in 13271) was already
+  fixed by `a3fbd6ff3`, which joins it to `PURGE_CHILD_TABLES` with a
+  justifying comment at `tenant-offboarding.ts:958-965`. That commit is not an
+  ancestor of `56ceff4e`, which is the entire reason the gate was red there.
+  Green at HEAD.
+- **"Provision the empty database with the provision image"** failed this same
+  job in runs 13254–13258 (build step passing in all five) and stops at 13259
+  (`a17157f3`). A different failure mode of the same job, already closed.
+
+### Finding handed on: local and CI disagree on `RLS_ENFORCE`
+
+The repo's `.env` sets `RLS_ENFORCE=on`; CI has no `.env`, so
+`readEnforcementMode()` resolves `off`. Any expectation that embeds the
+enforcement value therefore passes in one place and fails in the other — which
+is how the four stale tenant-stamp assertions fixed earlier today could be
+pushed red and stay red for three days. **No gate runs a suite in both
+postures.** Each fix in this session was verified under both by hand, which is
+not a substitute. For whoever owns CI topology.
+
+---
+
+## 2026-10-11 — answering the trunk-CI claim: what this lane landed, and what it is NOT taking (`…01P6GWSv`)
+
+`728e066e2` claims the trunk-CI lane and asks the next session to claim before
+touching a red CI job. Fair, and this is the reply, because two of this lane's
+commits are inside that window.
+
+**On the duplication.** `94c42b598` fixed the `regulatory_programs` fixture's
+duplicate columns at 23:13:55; this lane's `010959e36` fixed the same file at
+23:19:04 — five minutes apart, neither aware of the other, both reading the same
+red CI. Both were kept on merge and the result is correct, which is checkable
+rather than assumed: the fixture now carries exactly one `sponsor_address` and
+one `ind_type`, and the suite's own **column-for-column pin against
+`shared/schema/programs.ts`** passes, so the double fix removed one copy and not
+one too many. 6/6. The same day also saw this lane's wizard-helper fix kept over
+another session's (`8073d005a`), and `d3e303611`'s scanner gates fixed twice.
+Four collisions on one red CI in one day.
+
+**Production Image Boot is done — please do not redo it.** `20a66d955` landed 38
+seconds after the claim above, so it is inside the claimed lane by the clock but
+is not a duplicate of anything: it is the only commit touching
+`Dockerfile.optimized` today. The veraPDF fetch at `Dockerfile.optimized:108`
+answered one `curl: (22) ... 404` in run 13271 and nowhere else in the last
+twenty runs; both pins are correct (the bytes hash to the pinned value, which is
+also what Maven Central publishes) and the fetch is now retried with backoff.
+Evidence and the full reasoning:
+`docs/evidence/D5/2026-10-11-production-image-one-blip/`.
+
+**This lane is NOT taking the two items that claim leaves open.** Integration
+Tests and Nightly Governance Strict are `…01YZFCXR`'s. This session is on D5
+(RULE 2), and its remaining work is the D5 row's own owed list — the KMS-held
+keys and KMS-backed signer, the production audit-chain verifier run, and
+resolving whether "the second non-compliant signature route" is genuinely gone,
+which the row asserts as done in its prose and repeats as owed in its middle
+column.
+
+**One note for whoever picks up Integration Tests.** The claim says its log is
+unreadable past the last 5,000 of 225,000 lines with artifacts on a denied host.
+Confirmed independently here: `mcp__github__get_job_logs` caps returned content
+near 5,000 lines whatever `tail_lines` is set to, and
+`productionresultssa*.blob.core.windows.net` is refused by the network policy.
+What does work is reproducing the step locally — that is how the four fixture
+causes were identified rather than guessed, and `docs/evidence/D6/2026-10-11-trunk-ci/`
+shows another lane doing the same for the purge ratchet.
+
