@@ -1,0 +1,44 @@
+# g-device-chat-cer-per-projection green — 2026-10-05T13:43:09Z
+## step test
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'CER' is CER_SECTIONS: 12 sections, same order and required flags 3ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'CER' carries equivalence, appraisal, evaluator qualification and references 2ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'CER' no longer files the PMCF plan as a CER section 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'IVDR' is PER_SECTIONS, not an empty list 2ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > the equivalence section applies only when equivalence is claimed 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > codes are keyed on the record id, never a retired numeric CER.n code 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > guidance comes from the record, not a restated citation 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > getDeviceSectionByCode resolves a projected section 0ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > the 510(k), PMA and De Novo outlines are untouched by this step 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > isDeviceSubmissionType knows CER and IVDR and nothing it cannot answer for 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the CER block lists all 12 sections and marks equivalence as conditional 2ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the IVDR block lists the PER outline and does not pass it off as the whole IVDR file 6ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > an unknown type renders nothing 0ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > IVDR returns the PER sections 50ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > an artifact saved under a retired CER.n code does not mark a new section drafted 9ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > refuses a type it does not know with 400, before reading artifacts 4ms
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+
+## the step test plus every test file importing the changed files (15 files)
+ Test Files  1 failed | 14 passed (15)
+      Tests  1 failed | 248 passed (249)
+ × server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat 10016ms
+smoke.test.ts 'rejects invalid JWT on POST /api/cortex/chat' timed out at 10s under host load in that combined run; rerun alone (three runs, host load average ~11.5):
+ run 1: Test Files 1 passed (1); Tests 18 passed (18)
+ run 2: Tests 1 failed | 17 passed (18) — same test, 'Test timed out in 10000ms'
+ run 3: Tests 1 failed | 17 passed (18) — same test, 'Test timed out in 10000ms'
+The test dynamically imports server/routes/cortex-unified.ts, which imports none of the changed files directly (grep for send-message, device-section, ind-generation: no match). It is an import-time timeout under load, not a result of this change.
+
+## mutation runs (each restored after)
+M1 numeric CER codes:
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > codes are keyed on the record id, never a retired numeric CER.n code 10ms
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > getDeviceSectionByCode resolves a projected section 1ms
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > an artifact saved under a retired CER.n code does not mark a new section drafted 5ms
+      Tests  3 failed | 13 passed (16)
+M2 equivalence rendered optional:
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > the equivalence section applies only when equivalence is claimed 6ms
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the CER block lists all 12 sections and marks equivalence as conditional 2ms
+      Tests  2 failed | 14 passed (16)
+M3 PER passed off as whole IVDR file:
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the IVDR block lists the PER outline and does not pass it off as the whole IVDR file 10ms
+      Tests  1 failed | 15 passed (16)
