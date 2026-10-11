@@ -90,8 +90,12 @@ async function create(): Promise<Record<string, unknown>> {
     json: async () => ({ data: { id: '8a11b987-ac2d-4748-9e9c-5dc40c082662', title: 'x', code: 'TOLV' }, meta: {} }),
   });
   fireEvent.click(await screen.findByRole('button', { name: /create project/i }));
-  await vi.waitFor(() => expect(apiRequest).toHaveBeenCalled());
-  return apiRequest.mock.calls[0][2] as Record<string, unknown>;
+  /* The create is found by what it is, not by call order: the Configure step
+     also reads what the platform can carry for the chosen market (F19), so the
+     POST is not call 0. Same pattern as newProjectWizardName.test.tsx. */
+  const createCall = () => apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/c2c/projects');
+  await vi.waitFor(() => expect(createCall()).toBeTruthy());
+  return createCall()![2] as Record<string, unknown>;
 }
 
 afterEach(() => {

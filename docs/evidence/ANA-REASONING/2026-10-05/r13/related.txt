@@ -1,23 +1,99 @@
-The whole client suite on the final tree.
-Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run client/src/concept2cure/v2/ client/src/concept2cure/components/ana/
+The whole client suite on the final tree, and what became of every red in it.
 
-This run was still in progress when the round was committed, so no total is claimed here.
-What it had reported by then: exactly four failures, all in one file, none of them this round's:
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+  client/src/concept2cure/v2/ client/src/concept2cure/components/ana/
 
- × client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends no indication when none was typed, and the review says it is not stated 222ms
- × client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends exactly the indication the person typed 293ms
- × client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > records the class that was chosen, and the review shows it 161ms
- × client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — a filing type that fixes the class asks nothing > an NDA is recorded as a drug with no product-type question 146ms
+ Test Files  2 failed | 542 passed (544)
+      Tests  6 failed | 5658 passed (5664)
 
-Attribution: client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx
-fails with "Cannot read properties of undefined (reading 'indication')" and "… (reading 'productType')".
-It arrived with 4f53d90f3 (intake and readiness, another lane, 2026-10-08) and imports only
-surfaces/Projects — none of the files round 13 touches, directly or transitively through the
-imports checked. That is the basis for the attribution: the round's changes were NOT reverted
-to reproduce it, so this is reasoning from the dependency graph, not a bisect. Handed on in
-docs/work-orders/README.md rather than fixed here, since it is another lane's workstream.
+ × newProjectWizardRegulatedChoices.test.tsx > sends no indication when none was typed, and the review says it is not stated
+ × newProjectWizardRegulatedChoices.test.tsx > sends exactly the indication the person typed
+ × newProjectWizardRegulatedChoices.test.tsx > records the class that was chosen, and the review shows it
+ × newProjectWizardRegulatedChoices.test.tsx > an NDA is recorded as a drug with no product-type question
+ × biostatWorkbench.test.tsx > sends the engine its inputs and renders the deterministic verdict
+ × biostatWorkbench.test.tsx > shows the engine’s own sentence when it cannot judge the design, and no verdict
 
-An earlier complete run of the same command, before the design-review fixes, was:
-  Test Files  2 failed | 542 passed (544)
-  Tests       8 failed | 5652 passed (5660)
-— the four above, plus four trackedChangeDecisions pins that this round then updated.
+Neither file is this round's. Both were then read from source rather than
+attributed by assertion, and the two files turned out to be different cases.
+
+-- biostatWorkbench.test.tsx: NOT a red. The sweep caught a transient tree. ----
+
+Re-run at the merged HEAD: 59 passed (59). It also passes in the same process as
+the wizard file (66 tests, only the wizard's 4 failing), so it is not order
+dependent.
+
+The two messages were "Unable to find a label with the text of: /^Effect size/"
+and "Unable to find an element with the text: /Missing or invalid: effectSize/".
+Those assertions exist only in the test as of dec8fa906 (another lane,
+2026-10-11T22:07:39, "Rule 2: statistical defensibility is judged by the
+deterministic engine, not a model"), and they need that commit's surface, which
+renames the field to 'Effect size (standardized)' and adds the 422
+NEEDS_PARAMETERS path. Every commit touching either path was checked (60, all
+refs): no commit anywhere pairs the new test with the old source. So the state
+that produced these two messages was a working tree mid-merge -- the new test
+file on disk, the old surface still beside it -- during the sweep that is this
+file's run. HEAD's content for both files is byte-identical to the origin parent
+(2274cf036), so the merge took that lane's matched pair whole.
+
+Recorded because the sweep printed it: it is neither a stale test nor a defect,
+and nothing is handed on for it.
+
+-- newProjectWizardRegulatedChoices.test.tsx: a real trunk red, and FIXED here --
+
+The four failures are TypeErrors, not assertion mismatches: "Cannot read
+properties of undefined (reading 'indication' / 'productType')". The cause is
+the test's own helper, at its line 94: `apiRequest.mock.calls[0][2]`.
+
+At HEAD the wizard makes two calls, in this order:
+  calls[0]  GET  /api/submissions/market-support?...   (2 args, no body)
+  calls[1]  POST /api/c2c/projects                     (3 args, the body)
+so `calls[0][2]` is undefined and every property read on it throws. The POST
+body itself is correct: productType is the chosen class, and a blank indication
+sends no indication key at all.
+
+Cross-lane semantic merge, neither side wrong on its own:
+  test  4f53d90f3  2026-10-08T15:41  intake and readiness (…session_01DiJJAk…)
+  src   2ca6f29d4  2026-10-08T17:33  the wizard follows the market verdict (…session_01T2wooC…)
+  met at merge 8a7017907  2026-10-08T19:50
+At 4f53d90f3 the surface contained no MarketSupportLine, so the POST *was* call 0
+and that lane's own evidence (docs/evidence/QA-2026-10-08/intake-readiness/green/
+1-wizard-client.txt) shows all 7 cases passing. 2ca6f29d4 added the step-1 market
+read, and 4f53d90f3 is not its ancestor, so neither commit could see the other.
+It has been red on trunk for three days; two lanes noted it and handed it on, and
+nothing in CI catches "a test keyed to call 0 plus a surface that adds an earlier
+read" at merge time. Corroboration that it predates this round:
+docs/evidence/D4/2026-10-10-ana-ind-pharmacology-leaf-guidance/PRIOR_HEAD_CI.md:30
+lists the same 4 failures at remote HEAD 26b187705, which does not contain this
+round's commits.
+
+Fixed here rather than handed on a third time: the helper now finds the create by
+what it is, not by call order -- the pattern the sibling newProjectWizardName.
+test.tsx already uses at its line 117, which is why that file never broke. Four
+lines, test file only, in a file three days cold; the product source is unchanged.
+7 passed (7).
+
+That the repair restores coverage instead of hiding a defect was checked by
+mutating the product, not the test:
+  productType: recordedClass  ->  'biologic'          2 of 7 fail
+  (savedIndication || undefined) -> (|| 'oncology')   1 of 7 fail
+Both killed; Projects.tsx restored (git diff empty).
+
+-- a correction to this round's own claim -------------------------------------
+
+An earlier version of this file, and the work-orders row, said round 13 "touches
+nothing it imports". Traced properly (577 modules), that is false: the wizard's
+surface reaches six of this round's files through the surfaceViews.ts barrel --
+ConversationThread.tsx, DocumentAuthoring.tsx, fixtures/conversation-thread-data.ts,
+editor/DocumentWorkbench.tsx (via DocumentCanvas), editor/suggestions.ts and
+editor/anaInsertGate.ts (via RichSectionEditor), lineage/palette.ts (via
+DataOriginsPanel), and styles/surfaces-v2.css.
+
+What is true, and what the attribution actually rests on: none of them is
+rendered by the wizard and none issues a request -- with this round present there
+are exactly two apiRequest calls, both from Projects.tsx -- and the identical four
+failures are on the CI record at a HEAD without this round's commits. The round's
+changes were still not reverted to reproduce either file, so this remains
+reasoning from the dependency graph plus that CI record, not a bisect.
+
+The claim as first written was checkable and wrong, and is corrected here rather
+than left standing because it read as stronger evidence than the lane had.
