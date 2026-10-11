@@ -304,7 +304,7 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
     sourceUrl: 'https://www.ema.europa.eu/en/ich-e6-good-clinical-practice-scientific-guideline',
     appliesTo: ['pharma', 'biotech'],
     note:
-      'In the EU, ICH E6(R3) Good Clinical Practice — the Principles and Annex 1 — came into effect on 2025-07-23 (EMA), replacing E6(R2) for EU trials. That is the EU date; the ICH Step 4 date (2025-01-06, ich-e6r3-gcp-step4) is ICH adoption, not EU effect. Annex 2 has its own EU date: see eu-e6r3-annex2-effective.',
+      'In the EU, ICH E6(R3) Good Clinical Practice — the Principles and Annex 1 — came into effect on 2025-07-23 (EMA), superseding E6(R2) for EU trials. That is the EU date; the ICH Step 4 date (2025-01-06, ich-e6r3-gcp-step4) is ICH adoption, not EU effect. Annex 2 has its own EU date: see eu-e6r3-annex2-effective.',
     keywords: ['E6(R3)', 'GCP', 'good clinical practice', 'EMA', 'quality by design'],
   },
   {
