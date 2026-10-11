@@ -1,0 +1,18 @@
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (a) a hosting turn > asks for run_agent, offers it, and lends the call a host 53ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (b) no run row > does not host: not offered, and no host if the model names it anyway 17ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (c) a tenant that denies run_agent > lends no host when the model names it 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (d) only run_agent is lent a host > another tool in the same step gets none, and no context carries a confirmation 12ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (e) the view, the record and provenance > the client and the next model call read no trace; provenance comes from the child 15ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (e) the view, the record and provenance > a failed agent adds no provenance (intended) 8ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > the child's report is not evidence; its tool results are 46ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > the checks' echo of the parent's own text is not evidence 10ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > a kept child result is exactly what the child read: budgeted over its whole round 14ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (g) agent frames > go out as agent_event under the call's id, whatever the frame says, before the call's result 7ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (h) a child's pause > names the parent's round 7ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (i) a run row of another organization > does not host 7ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (j) incomplete is said plainly, and is not a failure for the model to work around 6ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (k) an incomplete agent keeps its provenance, and its telemetry row says the call ran 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (l) a completed verify is a success whatever its verdict 5ms
+ × server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts > run_agent, real, through the stream > the child's model call is governed and linked to the parent run, and its finished frame precedes the result 81ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  12 failed | 4 passed (16)

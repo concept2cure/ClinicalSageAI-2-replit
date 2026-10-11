@@ -138,7 +138,13 @@ it because master §2 warns against surface sprawl and this is ~15 mounted
 prefixes of it.
 
 ### 3.6 Experimental / AI-platform — *candidates for quarantine*
-`/api/agent-swarm` · `/api/ana-cortex` · `/api/ana-cortex-ft` ·
+> `/api/agent-swarm` was retired on 2026-10-11 (row 74, S5c). AnA's own
+> sub-agents replace the "several agents at once" claim (`run_agent`,
+> `server/services/ana/sub-agent.ts`, reached from the AnA stream); multi-role
+> drafting is `convene_drafting_council`. The retired route could not be
+> replaced like for like: `run_agent` only reads.
+
+`/api/ana-cortex` · `/api/ana-cortex-ft` ·
 `/api/ana-1-0-ri-cortex` · `/api/gcc` · `/api/snowglobe` · `/api/sentinel` ·
 `/api/foresight` · `/api/foresight-ai` · `/api/foresight-feedback` ·
 `/api/graphrag` · `/api/grdhe` · `/api/biotech-rag` · `/api/mission-control` ·
