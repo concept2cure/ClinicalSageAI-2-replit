@@ -84,9 +84,57 @@ export class ComputationEngine {
         return this.computeBinary(input, assumptions);
       case 'time_to_event':
         return this.computeSurvival(input, assumptions);
+      // An accuracy endpoint is sized as one whatever the sponsor's track: a
+      // pharma company running a diagnostic sub-study gets the diagnostic
+      // formula, not the continuous one.
+      case 'sensitivity_specificity':
+        return this.computeDiagnostic(input);
+      case 'agreement':
+        throw this.kappaRefusal();
+      case 'auc_roc':
+        return this.computeDiagnostic(input);
+      // ordinal | count | composite | patient_reported: no closed form here, so
+      // the continuous normal approximation stands in — and SAYS SO, in the
+      // method and in the assumptions, so the caveat travels with the number.
+      //
+      // Until 2026-10-11 this switch ended in a bare `default: computeContinuous`.
+      // Six endpoint types — these, plus agreement, sensitivity/specificity and
+      // AUC on every track but diagnostics_ivd — were sized by the two-sample
+      // t-test on a standardized effect with nothing in the result to say the
+      // endpoint type had been ignored: an agreement (kappa) study for a pharma
+      // sponsor came back as 64 per group, because the kappa refusal fired only
+      // for the IVD track. The three accuracy types now route to the method
+      // that fits them, agreement refuses, and the approximation that remains
+      // is disclosed where it is computed rather than only by the one caller
+      // (biostatistics-bridge/design-adapter.ts) that happened to add a note.
       default:
-        return this.computeContinuous(input, assumptions);
+        return this.approximatedAsContinuous(input, assumptions);
     }
+  }
+
+  /**
+   * An endpoint with no closed form here, sized by the continuous
+   * approximation and labelled as that. The label is what a reader sees
+   * beside the number, so it names the endpoint type that was approximated.
+   */
+  private approximatedAsContinuous(
+    input: StatisticalInput,
+    assumptions: ComputationAssumption[],
+  ): ComputationResult {
+    const endpoint = String(input.endpointType).replace(/_/g, ' ');
+    const result = this.computeContinuous(input, [
+      ...assumptions,
+      {
+        parameter: 'endpoint_distribution',
+        value: `${endpoint} sized by the continuous normal approximation — no closed form for this endpoint type`,
+        source: 'derived',
+        sensitivity: 'high',
+      },
+    ]);
+    return {
+      ...result,
+      method: `${result.method} — continuous approximation for a ${endpoint} endpoint (indicative; this engine has no closed form for it)`,
+    };
   }
 
   private computeContinuous(input: StatisticalInput, assumptions: ComputationAssumption[]): ComputationResult {

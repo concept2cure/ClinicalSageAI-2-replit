@@ -233,8 +233,8 @@ export function studyDesignToStatisticalInput(design: StudyDesign): DesignAdapte
   if (primary && (primary.type === 'ordinal' || primary.type === 'count' || primary.type === 'composite')) {
     gaps.push({
       field: 'endpointType',
-      message: `The engine has no closed-form for a ${primary.type} endpoint and will fall back to a continuous approximation. Treat the result as indicative only.`,
-      severity: 'note',
+      message: `The engine has no closed-form for a ${primary.type} endpoint and sizes it by the continuous normal approximation. The result is indicative: it ignores the endpoint's distribution. The computation says so in its method and assumptions too (computation-engine.ts approximatedAsContinuous), so the caveat travels with the number wherever it is rendered.`,
+      severity: 'defaulted',
       designPath: `endpoints["${primary.name}"].type`,
     });
   }
