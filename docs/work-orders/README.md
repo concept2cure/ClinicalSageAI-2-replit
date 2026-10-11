@@ -2275,3 +2275,55 @@ as an expectation or a self-issued statement; the three others that assert it
 (`withTenantConnection-scope-before-checkout` via a drift-tolerant prefix,
 `saved-precedent-queries.rls`, `stability-tenant-isolation.contract`) pass in
 both postures, 17/17. That was the last one.
+
+---
+
+## 2026-10-11 — one upstream blip had switched off the production-boot gate (`…01P6GWSv`)
+
+CI run 13271's "Production Image Boot" job failed at the image build, on the
+veraPDF download: `curl: (22) The requested URL returned error: 404`
+(`Dockerfile.optimized:108`). **It is one run out of the last twenty** — the
+build passed 16 minutes before (13270) and 18 minutes after (13272), with
+`VERAPDF_VERSION` and `VERAPDF_SHA256` byte-identical at all three heads. From
+this container the URL serves 200 and the bytes hash to exactly the pinned
+value, which is also the checksum Maven Central publishes. Both pins are
+correct; one HTTP GET failed.
+
+Worth fixing rather than re-running, because when the image build dies the job
+**never reaches the check it exists for** — whether the shipped build boots
+under `RLS_ENFORCE=on`, the thing that once threw `[tenant-rls] FAIL-CLOSED`
+with no job noticing. Same shape as a gate that cannot load.
+
+The fetch is now retried; version, checksum, URL and the `sha256sum -c`
+verification are untouched. `--retry-all-errors` because 404 is not in curl's
+retryable set and 404 is what was served; **no `--retry-delay`**, because giving
+one replaces curl's exponential backoff with a fixed wait — the first attempt at
+this used `--retry 5 --retry-delay 2` and burned all five attempts in ~10s
+inside a sustained 429, failing just as the unretried fetch did. Proven with the
+shipped flags: a transient 404x3 recovers and verifies (7s); a payload that is
+not the pinned artifact still fails `sha256sum -c`; a permanently absent
+artifact gives up at 255s and fails the build. Retrying buys more chances at the
+pinned bytes and nothing else. Evidence:
+`docs/evidence/D5/2026-10-11-production-image-one-blip/`.
+
+### Two items closed as already-done by other lanes, so nobody re-diagnoses them
+
+- **The purge ratchet on `stats_computation_runs`** (red in 13271) was already
+  fixed by `a3fbd6ff3`, which joins it to `PURGE_CHILD_TABLES` with a
+  justifying comment at `tenant-offboarding.ts:958-965`. That commit is not an
+  ancestor of `56ceff4e`, which is the entire reason the gate was red there.
+  Green at HEAD.
+- **"Provision the empty database with the provision image"** failed this same
+  job in runs 13254–13258 (build step passing in all five) and stops at 13259
+  (`a17157f3`). A different failure mode of the same job, already closed.
+
+### Finding handed on: local and CI disagree on `RLS_ENFORCE`
+
+The repo's `.env` sets `RLS_ENFORCE=on`; CI has no `.env`, so
+`readEnforcementMode()` resolves `off`. Any expectation that embeds the
+enforcement value therefore passes in one place and fails in the other — which
+is how the four stale tenant-stamp assertions fixed earlier today could be
+pushed red and stay red for three days. **No gate runs a suite in both
+postures.** Each fix in this session was verified under both by hand, which is
+not a substitute. For whoever owns CI topology.
+
