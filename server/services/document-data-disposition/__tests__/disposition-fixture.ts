@@ -19,8 +19,20 @@ const HASH = 'a'.repeat(64);
 const NEXT_HASH = 'd'.repeat(64);
 export const DISPOSITION_TEST_CLOCK = new Date('2026-10-06T17:00:00.000Z');
 const SECRET = 'document-disposition-test-secret-at-least-32-characters';
-const migration = fs.readFileSync(
-  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../migrations/20261006_document_data_dispositions.sql'), 'utf8',
+const migrationsDir = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)), '../../../../migrations',
+);
+const migration = fs.readFileSync(path.join(migrationsDir, '20261006_document_data_dispositions.sql'), 'utf8');
+/**
+ * The catalog attribution columns the catalog service reads (`catalog_state`,
+ * `confirmed_by`, `confirmed_at`, …). Read from the migration rather than
+ * transcribed into DDL above: the hand-written `document_catalog` ALTER in the
+ * consumers test fell behind this file the day it landed, and every consumer
+ * case failed on `column c.catalog_state does not exist` while the production
+ * query was correct. A fixture built from the migration cannot drift from it.
+ */
+const catalogAttribution = fs.readFileSync(
+  path.join(migrationsDir, '20261008e_document_catalog_attribution.sql'), 'utf8',
 );
 
 const DDL = `
@@ -83,6 +95,10 @@ export async function createDispositionHarness() {
   await pg.exec(DDL);
   await pg.exec(migration);
   await pg.exec(migration);
+  // Twice, as above: both files are replayed on every deploy (RULE 1), so the
+  // fixture applying each one twice is what proves they are replay-safe.
+  await pg.exec(catalogAttribution);
+  await pg.exec(catalogAttribution);
   async function seed(options: { enabled?: boolean; auditFails?: boolean; invalidAudit?: boolean; auditInput?: (entry: DispositionAuditEntry) => void } = {}) {
     const org = ++orgCounter;
     const program = randomUUID();
