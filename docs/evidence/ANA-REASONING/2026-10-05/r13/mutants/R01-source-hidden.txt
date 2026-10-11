@@ -1,0 +1,21 @@
+Mutant R01-source-hidden: the rail shows no AnA turn for a decided change
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- if (Array.isArray(metadata.changes)) return describeBulkSource(metadata.changes);
++ if (true) return null;
+  if (Array.isArray(metadata.changes)) return describeBulkSource(metadata.changes);
+
+Tests run: client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > says the turn served the words, never that a model wrote them 7ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > names each reason RULE 2 gives, in the words the insert gate uses 1ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a model the record does not name gets no verdict, because there is nothing to judge 1ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a row that recorded no model list is not a record that names none 1ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a turn that did not answer says so: the rail holds what the gate could only guess at 1ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a named turn that does not vouch for the words says so, and why 1ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a bulk decision counts the changes, the ones a model may not write, and the ones that do not verify 1ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > one change from one turn reads as one, not as a plural 0ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — the AnA turn a decided change came from > the bulk decision line stays the decision; its turns are the second line 1ms
+      Tests  9 failed | 26 passed (35)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯

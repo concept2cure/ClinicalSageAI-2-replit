@@ -1,0 +1,12 @@
+Mutant S05-deletion-turn-carried: a pasted deletion’s turn is credited with words AnA only proposed striking
+
+--- client/src/concept2cure/v2/editor/suggestions.ts
+- const turn = node.marks.find((m) => m.type.name === 'insertion')?.attrs.sourceRecord;
++ const turn = node.marks.find((m) => m.type.name === 'insertion' || m.type.name === 'deletion')?.attrs.sourceRecord;
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes on: a pasted AnA deletion is the person’s insertion with no turn: AnA proposed striking those words, not writing them 29ms
+      Tests  1 failed | 6 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
