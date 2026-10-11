@@ -246,6 +246,11 @@ const sampleSizeSchema = z.object({
   useCsrEvidence: z.boolean().optional(),
   targetPower: z.number().min(0.5).max(0.999).optional(),
   targetAssurance: z.number().min(0.05).max(0.999).optional(),
+  // Binary: the control-arm proportion; time-to-event: the probability a
+  // subject has an event over follow-up. Without them the solver falls back to
+  // the design's powerAssumptions.eventRate, and refuses or sizes events only.
+  controlEventRate: z.number().gt(0).lt(1).optional(),
+  eventProbability: z.number().gt(0).lte(1).optional(),
 });
 
 router.post('/sample-size', async (req: Request, res: Response) => {
@@ -274,6 +279,8 @@ router.post('/sample-size', async (req: Request, res: Response) => {
     const report = solveSampleSize(design, resolved.prior, {
       targetPower: p.targetPower,
       targetAssurance: p.targetAssurance,
+      controlEventRate: p.controlEventRate,
+      eventProbability: p.eventProbability,
     });
     return res.json({
       sampleSize: report,

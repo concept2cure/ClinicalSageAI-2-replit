@@ -529,38 +529,18 @@ export const ASSESS_DDI_RISK: AnaTool = {
 export const DRAFT_CLINICAL_SUMMARY_M2_7: AnaTool = {
   name: 'draft_clinical_summary_m2_7',
   description:
-    "Draft the Module 2.7 Clinical Summary (ICH M4E) from the program's clinical study reports using the platform's deterministic composer — the integrated summary of biopharmaceutics (2.7.1), clinical pharmacology (2.7.2), efficacy (2.7.3), and safety (2.7.4). Returns a draft (a starting point the author promotes through the governed authoring flow), with gap-flagging. Use this for Module 2.7 / clinical-summary authoring requests. Report the safety counts and gaps honestly; do not invent studies or events that were not supplied.",
+    "Draft the Module 2.7 Clinical Summary (ICH M4E) from the program's completed clinical study reports, using the platform's deterministic composer — the integrated summary of biopharmaceutics (2.7.1), clinical pharmacology (2.7.2), efficacy (2.7.3) and safety (2.7.4). Returns a draft (a starting point the author promotes through the governed authoring flow), with gap-flagging. Its figures come from the program's CSR records only: do not pass results, counts or rates. If the program has no completed CSR, say so.",
   input_schema: {
     type: 'object',
     properties: {
-      csrs: {
-        type: 'array',
-        description: 'Clinical study reports feeding the summary (one per study).',
-        items: {
-          type: 'object',
-          properties: {
-            studyId: { type: 'string' },
-            protocolNumber: { type: 'string' },
-            phase: { type: 'string', description: 'e.g. "1", "2", "3".' },
-            studyDesign: { type: 'string' },
-            primaryEndpoint: { type: 'string' },
-            primaryResult: { type: 'string' },
-            sampleSize: { type: 'number' },
-            ittPopulation: { type: 'number' },
-            saeCount: { type: 'number' },
-            deathCount: { type: 'number' },
-            topAEs: {
-              type: 'array',
-              items: { type: 'object', properties: { pt: { type: 'string' }, rate: { type: 'string' }, severity: { type: 'string' } }, required: ['pt', 'rate'] },
-            },
-          },
-          required: ['studyId', 'phase', 'primaryEndpoint', 'primaryResult', 'sampleSize'],
-        },
+      project_id: {
+        type: 'number',
+        description: "Program (project) id whose completed CSRs the summary is composed from; defaults to the open program.",
       },
       indication: { type: 'string' },
       investigationalProduct: { type: 'string' },
     },
-    required: ['csrs', 'indication', 'investigationalProduct'],
+    required: ['indication', 'investigationalProduct'],
   },
 };
 
