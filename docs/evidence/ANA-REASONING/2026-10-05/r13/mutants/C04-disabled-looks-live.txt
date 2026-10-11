@@ -1,0 +1,12 @@
+Mutant C04-disabled-looks-live: a refused offer looks and points like a live one
+
+--- client/src/concept2cure/v2/styles/app-v2.css
+- .c2c-v2 .ct-ref:disabled{opacity:.5;cursor:not-allowed;}
++ 
+
+Tests run: client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s refused inserts > the reason reads at the repo’s own contrast for why a control is off, and the button looks off 729ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

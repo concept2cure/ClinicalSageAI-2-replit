@@ -68,6 +68,33 @@ describe('generateFigure', () => {
     expect(r.figure?.metadata.modelUsed).toBe('claude-opus-5');
   });
 
+  // 2026-10-05 (CLAUDE.md Rule 2): a Kaplan-Meier curve or forest plot is a
+  // statistical estimate; drawing one from raw rows means the model computes
+  // the survival probabilities, hazard ratio and intervals.
+  it.each(['kaplan_meier', 'forest_plot'] as const)(
+    'refuses a %s even with data, asks no model and stores nothing',
+    async (figureType) => {
+      const r = await generateFigure({
+        ...BASE,
+        figureType,
+        rawData: [{ time: 3, event: 1, arm: 'treatment' }, { time: 7, event: 0, arm: 'placebo' }],
+      });
+      expect(r.success).toBe(false);
+      expect(r.error).toMatch(/statistics engine/);
+      expect(S.chat).not.toHaveBeenCalled();
+      expect(S.inserts).toEqual([]);
+    },
+  );
+
+  it('tells the model to compute no statistic that is not in the data', async () => {
+    S.chat.mockResolvedValue({ content: 'graph TD\n A --> B', model: 'claude-opus-5' });
+    await generateFigure({ ...BASE, figureType: 'scatter_plot', rawData: [{ x: 1, y: 2 }] });
+    const [req] = S.chat.mock.calls[0];
+    const system = req.messages.find((m: { role: string }) => m.role === 'system').content as string;
+    expect(system).toMatch(/compute no statistic/);
+    expect(system).not.toMatch(/Show correlation coefficient\./);
+  });
+
   it('an empty draft is not stored', async () => {
     S.chat.mockResolvedValue({ content: '', model: 'claude-opus-5' });
     const r = await generateFigure({ ...BASE, rawData: [{ arm: 'treatment', orr: 0.42 }] });

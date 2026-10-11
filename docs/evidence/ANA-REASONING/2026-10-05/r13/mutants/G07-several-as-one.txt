@@ -1,0 +1,13 @@
+Mutant G07-several-as-one: an answer several models worked on reads as written by the one refused
+
+--- client/src/concept2cure/v2/editor/anaInsertGate.ts
+- refused ? modelRefusal(refused, served.length > 1) : null
++ refused ? modelRefusal(refused, false) : null
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses when any one of the models that worked on it is not admitted, without saying which words it wrote 7ms
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses a model the record does not name, even one marked qualified, one model or several 1ms
+      Tests  2 failed | 9 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

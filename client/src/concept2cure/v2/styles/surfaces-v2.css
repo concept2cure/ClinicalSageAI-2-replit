@@ -311,7 +311,14 @@
 .c2c-v2 .cmt[data-ai="true"] .cmt-av{background:var(--ai-muted);color:var(--ai);}
 .c2c-v2 .cmt-meta b{font-weight:600;font-size:12px;}
 .c2c-v2 .cmt-role{color:var(--text-400);}
-.c2c-v2 .cmt-when{color:var(--text-500);}
+/* An event's time is content, not ornament. --text-500 measures 2.11:1 on
+   --bg-000 at 11px, and the token-contrast exception that admits what is left
+   on --text-500 is written for text that is "genuinely disabled or
+   ornamental" — which an audit row's timestamp is not. --text-400 is what the
+   sibling .cmt-role already uses and lands 4.71:1 light / 4.86:1 dark under
+   the .ed-comments ramp (AnA reasoning round 13, found by the first capture
+   that put the audit rail under real Chromium). */
+.c2c-v2 .cmt-when{color:var(--text-400);}
 .c2c-v2 .cmt-body{font-size:12.5px;line-height:1.55;color:var(--text-200);}
 .c2c-v2 .cmt-actions{display:flex;gap:6px;margin-top:9px;}
 /* Threaded replies: indented under the head comment, joined by a rail line so

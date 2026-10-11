@@ -14,6 +14,7 @@
  * - Literature search services
  */
 
+import { toBiostatsInput as mapToBiostatsInput } from '../ana-biostats/request-input.js';
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
 import { frameToolOutput } from './tool-output-frame.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
@@ -5283,50 +5284,7 @@ registerToolHandler('check_numerical_integrity', async (input: Record<string, un
 // Shared parser: map a raw tool-input record onto the engine's StatisticalInput
 // shape. Used by every biostats tool so they speak the same parameter language.
 function toBiostatsInput(input: Record<string, unknown>, ctx?: ToolContext): Record<string, unknown> {
-  const num = (v: unknown): number | undefined => {
-    if (v === undefined || v === null || v === '') return undefined;
-    const n = Number(v);
-    return Number.isFinite(n) ? n : undefined;
-  };
-  const str = (v: unknown): string | undefined =>
-    typeof v === 'string' && v.length > 0 ? v : undefined;
-
-  return {
-    clientTrack: str(input.clientTrack),
-    studyType: str(input.studyType),
-    objectiveType: str(input.objectiveType),
-    endpointType: str(input.endpointType),
-    effectSize: num(input.effectSize),
-    controlRate: num(input.controlRate),
-    treatmentRate: num(input.treatmentRate),
-    alpha: num(input.alpha),
-    powerTarget: num(input.powerTarget),
-    attritionRate: num(input.attritionRate),
-    allocationRatio: num(input.allocationRatio),
-    nonInferiorityMargin: num(input.nonInferiorityMargin),
-    equivalenceMargin: num(input.equivalenceMargin),
-    comparatorType: str(input.comparatorType),
-    numberOfGroups: num(input.numberOfGroups),
-    followUpDuration: num(input.followUpDuration),
-    interimAnalyses: num(input.interimAnalyses),
-    sensitivity: num(input.sensitivity),
-    specificity: num(input.specificity),
-    prevalence: num(input.prevalence),
-    aucTarget: num(input.aucTarget),
-    aucNull: num(input.aucNull),
-    agreementTarget: num(input.agreementTarget),
-    crossoverPeriods: num(input.crossoverPeriods),
-    withinSubjectCorrelation: num(input.withinSubjectCorrelation),
-    numberOfEndpoints: num(input.numberOfEndpoints),
-    multiplicityMethod: str(input.multiplicityMethod),
-    estimandStrategy: str(input.estimandStrategy),
-    missingDataMethod: str(input.missingDataMethod),
-    expectedMissingRate: num(input.expectedMissingRate),
-    regulatoryBody: str(input.regulatoryBody),
-    indication: str(input.indication),
-    phase: str(input.phase),
-    projectId: num(input.projectId) ?? (ctx?.projectId ?? undefined),
-  };
+  return mapToBiostatsInput(input, ctx?.projectId ?? null);
 }
 
 const NEEDS_PARAMS_MESSAGE =
@@ -5803,29 +5761,31 @@ registerToolHandler('assess_ddi_risk', async (input: Record<string, unknown>) =>
 });
 
 // Draft M2.7 Clinical Summary — deterministic composer
-registerToolHandler('draft_clinical_summary_m2_7', async (input: Record<string, unknown>) => {
+registerToolHandler('draft_clinical_summary_m2_7', async (input: Record<string, unknown>, ctx) => {
   try {
-    const csrs = input.csrs;
-    if (!Array.isArray(csrs) || csrs.length === 0) {
-      return JSON.stringify({ status: 'needs_parameters', message: 'csrs[] is required to draft the M2.7 summary.' });
-    }
+    // Rule 2: the figures come from the program's completed CSRs, never from
+    // the tool input the model writes (ana/module2-csr-inputs.ts).
+    const { loadModule2CsrInputs } = await import('./module2-csr-inputs.js');
+    const sourced = await loadModule2CsrInputs(input, ctx, '2.7');
+    if (!sourced.ok) return JSON.stringify(sourced);
     const { buildM27ClinicalSummary } = await import('../m2-summary-builders.js');
     const summary = buildM27ClinicalSummary({
-       
-      csrs: csrs as any,
+      csrs: sourced.csrs,
       indication: (input.indication as string) ?? '',
       investigationalProduct: (input.investigationalProduct as string) ?? '',
     });
     return JSON.stringify({
       status: 'drafted',
       engine: 'deterministic',
+      source: { csrBuildJobsForProject: sourced.projectId, studies: sourced.csrs.length },
+      ignoredSuppliedFigures: sourced.ignoredSuppliedFigures,
       sectionKey: summary.sectionKey,
       title: summary.title,
       content: summary.narrative,
       completeness: summary.completeness,
       gaps: summary.gaps,
       instruction:
-        'This is a draft the author promotes through the governed authoring flow. State the completeness and gaps honestly; do not invent studies or events.',
+        'This is a draft the author promotes through the governed authoring flow. Its figures are the program\'s CSR records. State the completeness and gaps honestly; do not add studies, events or figures.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `M2.7 summary drafting failed: ${err?.message || 'unknown error'}` });
@@ -15423,6 +15383,28 @@ registerToolHandler('draft_510k_substantial_equivalence', async (input) => {
   });
 });
 
+/** The program's artifacts for M2.5 citation suggestions, or why they could not be read. */
+async function readProgramArtifacts(
+  projectId: number | undefined,
+  organizationId: number | null | undefined,
+): Promise<{ rows: any[]; unavailable: string | null }> {
+  if (!projectId || !organizationId) return { rows: [], unavailable: null };
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `SELECT artifact_id, title, ctd_section, type, status
+         FROM concept2cure_artifacts
+         WHERE project_id = $1 AND organization_id = $2 AND status != 'archived'
+         ORDER BY ctd_section
+         LIMIT 50`,
+      [projectId, organizationId]
+    );
+    return { rows, unavailable: null };
+  } catch {
+    return { rows: [], unavailable: "The program's artifacts could not be read, so none are suggested as citations." };
+  }
+}
+
 registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
   const productName = input.product_name as string;
   const indication = input.indication as string;
@@ -15433,13 +15415,18 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
     });
   }
 
-  // Data-driven mode: when clinical studies are supplied, compose the Clinical
-  // Overview through the same deterministic engine the submission package uses.
-  if (Array.isArray(input.csrs) && input.csrs.length > 0) {
+  // Data-driven mode: when the program has completed CSRs, compose the
+  // Clinical Overview from them through the deterministic engine the
+  // submission package uses. Rule 2: never from figures in the tool input,
+  // which the model writes (ana/module2-csr-inputs.ts).
+  const { loadModule2CsrInputs } = await import('./module2-csr-inputs.js');
+  const sourced = await loadModule2CsrInputs(input, ctx, '2.5');
+  if (!sourced.ok && sourced.ignoredSuppliedFigures) return JSON.stringify(sourced);
+  if (sourced.ok) {
     try {
       const { buildM25ClinicalOverview } = await import('../m2-summary-builders.js');
       const summary = buildM25ClinicalOverview({
-        csrs: input.csrs as any,
+        csrs: sourced.csrs,
         indication,
         investigationalProduct: productName,
         developmentRationale: typeof input.development_rationale === 'string' ? input.development_rationale : undefined,
@@ -15447,6 +15434,7 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
       return JSON.stringify({
         status: 'drafted',
         engine: 'deterministic',
+        source: { csrBuildJobsForProject: sourced.projectId, studies: sourced.csrs.length },
         sectionKey: summary.sectionKey,
         title: summary.title,
         content: summary.narrative,
@@ -15461,27 +15449,12 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
     }
   }
 
-  // Best-effort: pull project artifacts to suggest citations. Skip silently if
-  // tenant context is missing or DB is unavailable — the structure response
-  // is still useful without it.
-  let projectArtifacts: any[] = [];
-  if (projectId && ctx?.organizationId) {
-    try {
-      const { getPool } = await import('../../db.js');
-      const pool = getPool();
-      const { rows } = await pool.query(
-        `SELECT artifact_id, title, ctd_section, type, status
-           FROM concept2cure_artifacts
-           WHERE project_id = $1 AND organization_id = $2 AND status != 'archived'
-           ORDER BY ctd_section
-           LIMIT 50`,
-        [projectId, ctx.organizationId]
-      );
-      projectArtifacts = rows;
-    } catch {
-      /* best-effort — structure response stands without artifact list */
-    }
-  }
+  // Pull the program's artifacts to suggest citations. A failed read is
+  // reported as one, never as a program with no artifacts.
+  const { rows: projectArtifacts, unavailable: artifactsUnavailable } = await readProgramArtifacts(
+    projectId,
+    ctx?.organizationId,
+  );
 
   return JSON.stringify({
     structure: {
@@ -15531,6 +15504,8 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
       ],
     },
     project_artifacts: projectArtifacts,
+    ...(artifactsUnavailable ? { project_artifacts_unavailable: artifactsUnavailable } : {}),
+    ...(!sourced.ok ? { clinical_data: { status: sourced.status, message: sourced.message } } : {}),
     next_step:
       'Use this outline to draft each subsection inline. The cite_from_module field in each section indicates which Module 2.7 summary should be referenced. If project_artifacts is populated, suggest specific artifact_ids to cite in each section based on their ctd_section values.',
   });

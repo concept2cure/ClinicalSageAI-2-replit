@@ -123,6 +123,31 @@ describe('POST /api/study-design/sample-size', () => {
     expect(typeof ss.assuranceCeiling).toBe('number');
   });
 
+  // 2026-10-05: the route forwards the binary control rate and the
+  // time-to-event probability the solver now needs (study-design/sample-size.ts).
+  function binaryDesign() {
+    const d = design();
+    d.endpoints = [{ name: 'Primary', role: 'primary', type: 'binary', definition: 'response at week 24' }] as any;
+    d.statisticalPlan = { ...d.statisticalPlan, oneSided: false } as any;
+    return d;
+  }
+
+  it('sizes a binary endpoint from the control rate it is given (Fleiss, 0.5 vs 0.7 → 93 per arm)', async () => {
+    const res = await request(authedApp())
+      .post('/api/study-design/sample-size')
+      .send({ design: binaryDesign(), plannedEffect: 0.2, controlEventRate: 0.5, targetPower: 0.8 });
+    expect(res.status).toBe(200);
+    expect(res.body.sampleSize.nPerArmForPower).toBe(93);
+  });
+
+  it('refuses a binary endpoint with no control rate rather than guessing one', async () => {
+    const res = await request(authedApp())
+      .post('/api/study-design/sample-size')
+      .send({ design: binaryDesign(), plannedEffect: 0.2, targetPower: 0.8 });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('CANNOT_SIZE');
+  });
+
   it('rejects sizing without an authenticated tenant', async () => {
     const res = await request(anonApp())
       .post('/api/study-design/sample-size')

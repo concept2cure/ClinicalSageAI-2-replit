@@ -1,0 +1,12 @@
+Mutant P01-frozen-offered: a frozen document is offered an insert that fails on the click
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- if (docSealed) return 'This document is frozen
++ if (false && docSealed) return 'This document is frozen
+
+Tests run: client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > a frozen document takes no insert, and the offer says so rather than failing on the click 5355ms
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,13 @@
+Mutant G02-interrupted-finished: an answer whose stream failed counts as finished
+
+--- client/src/concept2cure/v2/editor/anaInsertGate.ts
+- turn.interrupted === true ||
++ 
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > answerUnfinished > a stop, a failed stream, a cut-short phase, a cancelled run or an answer cut off is unfinished text 7ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s refused inserts > an answer that did not finish is refused, whoever wrote it 1420ms
+      Tests  2 failed | 12 passed (14)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

@@ -73,7 +73,11 @@ const REGULATORY_PROGRAMS_DDL = `
     indication text,
     application_number text,
     -- Form FDA 1571's sponsor address and IND type, on the program (aac603a1b,
-    -- migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql).
+    -- migrations/20261008b_regulatory_programs_sponsor_address_ind_type.sql),
+    -- in the position shared/schema/programs.ts gives them. Two sessions added
+    -- this pair on 2026-10-08 and the merge kept both, so the fixture's CREATE
+    -- TABLE named each column twice and every case in this file failed to load
+    -- with 42701 (2026-10-11).
     sponsor_address text,
     ind_type text,
     intended_use text,
@@ -88,10 +92,6 @@ const REGULATORY_PROGRAMS_DDL = `
     associated_product_codes text,
     indications_for_use_citation text,
     equivalent_devices json,
-    -- The sponsor address and the IND type Form FDA 1571 carries
-    -- (20261008b_regulatory_programs_sponsor_address_ind_type.sql).
-    sponsor_address text,
-    ind_type text,
     status text NOT NULL,
     phase text,
     priority text,
