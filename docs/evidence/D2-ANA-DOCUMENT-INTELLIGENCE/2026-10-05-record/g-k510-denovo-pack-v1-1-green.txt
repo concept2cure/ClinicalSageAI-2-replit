@@ -1,0 +1,152 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+{
+  "timestamp": "2026-10-05T13:16:27.926Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T13:16:27.927Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+{
+  "timestamp": "2026-10-05T13:16:27.927Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > a fully authored 510k outline is not missing a slot the outline cannot supply 14ms
+ ✓ tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > a fully authored de_novo outline is not missing a slot the outline cannot supply 6ms
+ ✓ tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > records exactly which required slots the shipped outlines cannot supply 7ms
+ ✓ tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the 510k financial-disclosure section does not satisfy performance testing 17ms
+ ✓ tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the de_novo financial-disclosure section does not satisfy performance testing 1ms
+ ✓ tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the 510k node-to-slot map is exactly this 3ms
+ ✓ tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the de_novo node-to-slot map is exactly this 6ms
+ ✓ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510: after two deploys v1.1 is the one live pack and the chain is 2024 → v1.0 → v1.1 6065ms
+ ✓ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo: after two deploys v1.1 is the one live pack and the chain is 2024 → v1.0 → v1.1 3482ms
+ ✓ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > a third deploy changes nothing 3498ms
+ ✓ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > 510(k) v1.1 is v1.0 plus A9 (user fee, mandatory) and D6 (risk management, optional), in outline order 2826ms
+ ✓ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > De Novo v1.1 is v1.0 plus A7 (user fee, mandatory), in outline order 2485ms
+ ✓ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510 v1.1 carries its provenance from the first deploy, naming the eSTAR template and Form FDA 3601 2420ms
+ ✓ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo v1.1 carries its provenance from the first deploy, naming the eSTAR template and Form FDA 3601 1941ms
+ ✓ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510: the content assertion fails the deploy when a truncated v1.1 row already holds the key 2105ms
+ ✓ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo: the content assertion fails the deploy when a truncated v1.1 row already holds the key 1991ms
+
+ Test Files  2 passed (2)
+      Tests  16 passed (16)
+   Start at  13:16:22
+   Duration  27.80s (transform 2.81s, setup 341ms, import 4.87s, tests 26.89s, environment 0ms)
+
+=== npm run ci:migration-set-order ===
+
+> concept2cure-riai@1.0.0 ci:migration-set-order
+> node scripts/ci/check-migration-set-order.mjs
+
+[ci:migration-set-order] OK — 361 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+exit=0
+=== npm run ci:migration-drop-safety ===
+
+> concept2cure-riai@1.0.0 ci:migration-drop-safety
+> node scripts/ci/check-migration-drop-safety.mjs
+
+[ci:migration-drop-safety] OK — 361 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+
+=== Importers / readers of migration-set.mjs and the k510/denovo outlines (vitest) ===
+     80  ✓ server/services/regulatory-correspondence/__tests__/device-issue-taxonomy.test.ts
+      6  ✓ tests/regulatory/jnda-rule-pack-module1.test.ts
+      6  ✓ tests/schema-contract/c2c-apply-path.contract.test.ts
+     39  ✓ tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+      6  ✓ tests/schema-contract/check-constraint-replay.pglite.test.ts
+    376  ✓ tests/schema-contract/deploy-migration-mechanism.contract.test.ts
+      5  ✓ tests/schema-contract/known-unlisted-reason-holds.contract.test.ts
+      6  ✓ tests/schema-contract/pma-outline-v1-1-replay.contract.test.ts
+     18  ✓ tests/schema-contract/reachability-debt-cleared.contract.test.ts
+     19  ✓ tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+     10  ✓ tests/schema-contract/uuid-tenant-isolation.contract.test.ts
+ Test Files  11 passed (11)
+      Tests  571 passed (571)
+=== node --test tests/ops/apply-c2c-migrations-manifest.test.mjs ===
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9357.701955
+
+=== Verify by making it fail: mutations of the change, each restored afterwards ===
+=== MUTATION 1: k510 supersede UPDATE removed (v1.0 stays live) ===
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510: after two deploys v1.1 is the one live pack and the chain is 2024 → v1.0 → v1.1 4536ms
+   → k510/denovo:fda must have exactly one live pack (v1.1) each; also live: k510:fda-estar-510k-v1.0
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo: after two deploys v1.1 is the one live pack and the chain is 2024 → v1.0 → v1.1 2261ms
+   → k510/denovo:fda must have exactly one live pack (v1.1) each; also live: k510:fda-estar-510k-v1.0
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > a third deploy changes nothing 2307ms
+   → k510/denovo:fda must have exactly one live pack (v1.1) each; also live: k510:fda-estar-510k-v1.0
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > 510(k) v1.1 is v1.0 plus A9 (user fee, mandatory) and D6 (risk management, optional), in outline order 2176ms
+   → k510/denovo:fda must have exactly one live pack (v1.1) each; also live: k510:fda-estar-510k-v1.0
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > De Novo v1.1 is v1.0 plus A7 (user fee, mandatory), in outline order 1960ms
+   → k510/denovo:fda must have exactly one live pack (v1.1) each; also live: k510:fda-estar-510k-v1.0
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510 v1.1 carries its provenance from the first deploy, naming the eSTAR template and Form FDA 3601 1892ms
+   → k510/denovo:fda must have exactly one live pack (v1.1) each; also live: k510:fda-estar-510k-v1.0
+=== MUTATION 2: provenance UPDATEs removed ===
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510 v1.1 carries its provenance from the first deploy, naming the eSTAR template and Form FDA 3601 1960ms
+   → expected 'undeclared' to be 'guidance_transcription' // Object.is equality
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo v1.1 carries its provenance from the first deploy, naming the eSTAR template and Form FDA 3601 1736ms
+   → expected 'undeclared' to be 'guidance_transcription' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'undeclared' to be 'guidance_transcription' // Object.is equality
+Expected: "guidance_transcription"
+      Tests  2 failed | 14 passed (16)
+=== MUTATION 3: user-fee label says 'cover sheet' (lights the cover-letter slot too) ===
+ × tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the 510k node-to-slot map is exactly this 26ms
+   → expected { Object (A, A1, ...) } to deeply equal { Object (A, A1, ...) }
+ × tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the de_novo node-to-slot map is exactly this 12ms
+   → expected { Object (A, A1, ...) } to deeply equal { Object (A, A1, ...) }
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > 510(k) v1.1 is v1.0 plus A9 (user fee, mandatory) and D6 (risk management, optional), in outline order 1692ms
+   → expected { key: 'A9', …(4) } to deeply equal { key: 'A9', parent_key: 'A', …(3) }
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > De Novo v1.1 is v1.0 plus A7 (user fee, mandatory), in outline order 1908ms
+   → expected { key: 'A7', …(4) } to deeply equal { key: 'A7', parent_key: 'A', …(3) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { Object (A, A1, ...) } to deeply equal { Object (A, A1, ...) }
+- Expected
+    206|     expect(measured).toEqual(expected);
+=== MUTATION 4 (not a defect, recorded for honesty): this file's own denovo supersede widened to `version <> 'fda-estar-denovo-v1.1'`
+2 lines matched (the supersede and the pre-existing live check); 16/16 still pass. Widening the NEWEST file's supersede only retires older rows
+into v1.1 — the replay hazard lives in the OLDER creator's supersede (the 20260810 PMA shape), which mutation 5 exercises.
+=== MUTATION 5 (temporary, restored): 20260901b's k510 supersede written the 20260810 way — version <> 'fda-estar-510k-v1.0' AND superseded_by IS NULL ===
+1
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510: after two deploys v1.1 is the one live pack and the chain is 2024 → v1.0 → v1.1 4099ms
+   → k510/denovo:fda v1.1 must both be live after this file
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo: after two deploys v1.1 is the one live pack and the chain is 2024 → v1.0 → v1.1 2802ms
+   → k510/denovo:fda v1.1 must both be live after this file
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > a third deploy changes nothing 2614ms
+   → k510/denovo:fda v1.1 must both be live after this file
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510: after two deploys v1.1 is the one live pack and the chain is 2024 → v1.0 → v1.1
+ FAIL  tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo: after two deploys v1.1 is the one live pack and the chain is 2024 → v1.0 → v1.1
+      Tests  3 failed | 6 passed (9)

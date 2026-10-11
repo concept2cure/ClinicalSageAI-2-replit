@@ -35,7 +35,10 @@ import {
 } from '../../server/services/pathway-engines/estar/estar-content-leaves';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const OUTLINES = path.join(REPO_ROOT, 'migrations/20260901b_estar_510k_denovo_outlines.sql');
+/* The packs a client scaffolds today: fda-estar-510k-v1.1 / fda-estar-denovo-v1.1
+   (2026-10-05). v1.0 is kept below only as the record of the gap v1.1 closed. */
+const OUTLINES = path.join(REPO_ROOT, 'migrations/20261005c_k510_denovo_estar_outline_v1_1.sql');
+const OUTLINES_V1_0 = path.join(REPO_ROOT, 'migrations/20260901b_estar_510k_denovo_outlines.sql');
 
 /** Every node of a shipped rule pack, flattened in outline order. */
 function packNodes(pack: unknown): Array<{ key?: string; label?: string }> {
@@ -46,9 +49,9 @@ function packNodes(pack: unknown): Array<{ key?: string; label?: string }> {
   return out;
 }
 
-/** The shipped packs, in file order: [0] k510, [1] denovo. */
-function shippedPacks() {
-  const sql = fs.readFileSync(OUTLINES, 'utf8');
+/** The shipped packs, in file order: [0] k510, [1] denovo. Default: the live v1.1. */
+function shippedPacks(file: string = OUTLINES) {
+  const sql = fs.readFileSync(file, 'utf8');
   const blobs = [...sql.matchAll(/\$pack\$([\s\S]*?)\$pack\$/g)].map((m) => JSON.parse(m[1]));
   expect(blobs, 'the outlines migration no longer carries two $pack$ blobs').toHaveLength(2);
   return blobs;
@@ -100,17 +103,23 @@ describe('eSTAR slot registry vs the shipped rule packs', () => {
     expect(result.summary.missingRequired).not.toContain('truthful-accurate-statement');
   });
 
-  /* Not an aspiration — a ledger. Two required slots still have no section in
-     the shipped k510 outline, so a finished dossier cannot yet score complete.
-     Closing that needs a NEW rule-pack version (the packs are seeded
-     ON CONFLICT DO NOTHING and cannot be corrected in place — CLAUDE.md RULE 1),
-     not a change here. This asserts the CURRENT gap exactly, so it fails the
-     moment that lands and this file is updated with it. */
-  it('records exactly which required slots the shipped outlines still cannot supply', () => {
+  /* Not an aspiration — a ledger. v1.0 had no section for two required slots
+     (risk management, the MDUFA user-fee cover sheet FDA 3601), so a finished
+     governed 510(k) could never score complete. The packs are seeded
+     ON CONFLICT DO NOTHING and cannot be corrected in place (CLAUDE.md RULE 1),
+     so the fix is the NEW version 20261005c mints. The live packs now leave
+     nothing unsuppliable; v1.0's gap stays recorded so the reason for v1.1 is
+     visible, and documents still bound to v1.0 (decision 6) carry it. */
+  it('records exactly which required slots the shipped outlines cannot supply', () => {
     const k510 = scoreFullyAuthored(shippedPacks()[0], '510k').result;
     const denovo = scoreFullyAuthored(shippedPacks()[1], 'de_novo').result;
-    expect(k510.summary.missingRequired.sort()).toEqual(['risk-management', 'user-fee-cover-sheet']);
-    expect(denovo.summary.missingRequired.sort()).toEqual(['user-fee-cover-sheet']);
+    expect(k510.summary.missingRequired.sort()).toEqual([]);
+    expect(denovo.summary.missingRequired.sort()).toEqual([]);
+
+    const k510v10 = scoreFullyAuthored(shippedPacks(OUTLINES_V1_0)[0], '510k').result;
+    const denovoV10 = scoreFullyAuthored(shippedPacks(OUTLINES_V1_0)[1], 'de_novo').result;
+    expect(k510v10.summary.missingRequired.sort()).toEqual(['risk-management', 'user-fee-cover-sheet']);
+    expect(denovoV10.summary.missingRequired.sort()).toEqual(['user-fee-cover-sheet']);
   });
 
   /**
@@ -162,10 +171,11 @@ describe('eSTAR slot registry vs the shipped rule packs', () => {
         A: [], A1: ['cover-letter'], A2: [], A3: [], A4: ['standards-conformance'],
         A5: ['510k-summary-or-statement'], A6: ['truthful-accurate-statement'],
         A7: ['class-iii-certification'], A8: ['clinical-financial-disclosure'],
+        A9: ['user-fee-cover-sheet'],
         B: ['device-description'], B1: ['device-description'], B2: ['indications-for-use'], B3: [],
         C: ['substantial-equivalence'], C1: ['substantial-equivalence'], C2: ['substantial-equivalence'],
         D: ['proposed-labeling'], D1: [], D2: ['proposed-labeling'], D3: ['reprocessing'],
-        D4: ['sterilization'], D5: ['sterilization'],
+        D4: ['sterilization'], D5: ['sterilization'], D6: ['risk-management'],
         E: [], E1: ['biocompatibility'], E2: ['software'], E3: ['cybersecurity'],
         E4: ['emc-electrical'], E5: ['performance-testing'], E6: ['performance-testing'],
         E7: ['performance-testing'], E8: ['human-factors'],
@@ -178,7 +188,7 @@ describe('eSTAR slot registry vs the shipped rule packs', () => {
       {
         A: [], A1: ['cover-letter'], A2: ['indications-for-use'], A3: [],
         A4: ['truthful-accurate-statement'], A5: ['clinical-financial-disclosure'],
-        A6: ['standards-conformance'],
+        A6: ['standards-conformance'], A7: ['user-fee-cover-sheet'],
         B: ['device-description'], B1: ['device-description'], B2: [], B3: [],
         C: [], C1: ['classification-request'], C2: [], C3: ['special-controls'], C4: [],
         D: ['performance-testing'], D1: ['performance-testing'], D2: ['biocompatibility'],
