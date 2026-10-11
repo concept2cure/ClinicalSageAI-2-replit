@@ -16,12 +16,23 @@
  * was not told (not recorded, unconfirmed, loaded from history, an older
  * server), cannot go in as AnA's text.
  *
- * Where it is applied (round 13): in the browser only, at the pane's offer,
- * the conversation's offer and the editor bridge. The section save does not
- * yet check it, so a client that skips this module is not refused; the
- * server's check at save is its own change (SEC-A-7 on round 11's review).
- * The decision on each suggestion is recorded against its turn on the server
- * (round 10), so what such a save let in is on the record.
+ * Where it is applied, and where it is NOT. This module runs in the browser
+ * only, at the pane's offer, the conversation's offer and the editor bridge.
+ * These do not enforce it: `PATCH /sections/:sectionId` (the section save),
+ * `POST /docs/from-draft`, a section revert, and `EditorBridge.propose`. So a
+ * client that skips this module, an older bundle, or a save that carries text
+ * with no pending AnA mark is not refused. The server's check is its own
+ * change (SEC-A-7 on round 11's review).
+ *
+ * Nor does the record close that gap by itself, and an earlier draft of this
+ * note said it did. A decision row naming the turn is written only when a
+ * person accepts or rejects a pending AnA SUGGESTION, by this same client,
+ * after the edit is applied; text typed or plain-pasted into the section
+ * carries no mark and produces no such row, and a decision POST that fails
+ * leaves the content in place with only a toast. What the record does give is
+ * narrower and worth stating exactly: where a decision row IS written, the
+ * server verifies the decided words against the named turn and records every
+ * model that served it (round 10).
  *
  * What a refusal says (round 13, round 11's UI review). It names no control
  * the pane or the conversation does not draw: neither can set the effort a
@@ -40,7 +51,14 @@ import { progressCutShort } from '../anaWorkModel';
 /** The author id AnA's drafts carry on a suggestion (suggestions.ts SuggestionAuthor). */
 export const ANA_SUGGESTION_AUTHOR_ID = 'ana';
 
-const ASK_AGAIN = 'Ask again to get a new answer.';
+/* What asking again actually gets you. It is offered only where the RECORD is
+   what is missing, so a fresh turn genuinely fixes it. It deliberately does
+   not promise the answer will then be insertable: in production no model has
+   passed performance qualification, so a new answer meets the model refusal
+   instead. Round 13 removed "Ask again with Thorough effort" for naming a
+   control neither host draws; a remedy that names no control but still
+   promises an outcome it cannot deliver is the same defect in quieter words. */
+const ASK_AGAIN = 'Ask again to get an answer with its own record.';
 const CANT_INSERT = 'so the answer can’t be inserted';
 
 /**
@@ -79,9 +97,13 @@ function modelRefusal(m: AnaServedModel, several: boolean): string {
  * Why AnA's answer may not go into a document as her suggestion, or null when
  * it may: it finished, every model that worked on it is named, and the rule
  * admits each.
+ *
+ * `unfinished` is required rather than defaulting: the rule is fail closed,
+ * and a default of "it finished" is the one shape that silently admits an
+ * answer the person stopped or a stream that died.
  */
-export function anaInsertRefusal(record: AnaTurnRecordStatus | null | undefined, unfinished = false): string | null {
-  if (unfinished) return `This answer did not finish, so it can’t be inserted. ${ASK_AGAIN}`;
+export function anaInsertRefusal(record: AnaTurnRecordStatus | null | undefined, unfinished: boolean): string | null {
+  if (unfinished) return 'This answer did not finish, so it can’t be inserted. Ask again to get a complete answer.';
   if (record?.status === 'not_recorded') {
     return `This answer was not recorded, so the model that wrote it can’t be checked and the answer can’t be inserted. ${ASK_AGAIN}`;
   }
@@ -89,7 +111,10 @@ export function anaInsertRefusal(record: AnaTurnRecordStatus | null | undefined,
     return `This answer’s record is not confirmed, so the model that wrote it can’t be checked and the answer can’t be inserted. ${ASK_AGAIN}`;
   }
   const served = record?.servedBy;
-  if (!served) return `The model that wrote this answer can’t be checked, ${CANT_INSERT}. ${ASK_AGAIN}`;
+  /* This page was not told (a reopened conversation, a run-recovered record, an
+     older server). The record exists on the server; saying the model "can't be
+     checked" would report this view's limit as a fact about the record. */
+  if (!served) return `This page has no record of which model wrote this answer, ${CANT_INSERT}. ${ASK_AGAIN}`;
   if (served.length === 0) return `This answer’s record names no model, ${CANT_INSERT}. ${ASK_AGAIN}`;
   const refused = served.find((m) => m.model === null || !m.qualified);
   return refused ? modelRefusal(refused, served.length > 1) : null;

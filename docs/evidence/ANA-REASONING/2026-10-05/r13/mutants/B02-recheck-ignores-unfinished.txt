@@ -1,0 +1,12 @@
+Mutant B02-recheck-ignores-unfinished: the bridge’s own check ignores an unfinished answer
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- if (author.id === ANA_SUGGESTION_AUTHOR_ID && anaInsertRefusal(record, unfinished)) return false;
++ if (author.id === ANA_SUGGESTION_AUTHOR_ID && anaInsertRefusal(record, false)) return false;
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.insert — AnA’s answer goes in only under the governed-write rule (round 11) > refuses an AnA answer that did not finish, even one the rule admits (round 13) 311ms
+      Tests  1 failed | 43 passed (44)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

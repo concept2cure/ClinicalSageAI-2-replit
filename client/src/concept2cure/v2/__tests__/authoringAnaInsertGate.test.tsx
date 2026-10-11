@@ -49,10 +49,9 @@ function anaStream(turnRecord: unknown, done: Record<string, unknown> = {}): Rea
   });
 }
 
-const DOCS = {
-  success: true,
-  documents: [{ id: 'D1', title: 'Quality Overall Summary', module: 'M3', product_code: 'ABC', status: 'draft', updated_at: '2026-07-20T10:00:00Z', section_count: 1 }],
-};
+const doc = (status: string) => ({ id: 'D1', title: 'Quality Overall Summary', module: 'M3', product_code: 'ABC', status, updated_at: '2026-07-20T10:00:00Z', section_count: 1 });
+const docStatus = { current: 'draft' };
+const DOCS = { success: true, get documents() { return [doc(docStatus.current)]; } };
 const SECTIONS = {
   success: true,
   sections: [{
@@ -69,6 +68,7 @@ const props = () => ({
 });
 
 beforeEach(() => {
+  docStatus.current = 'draft';
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
@@ -119,16 +119,35 @@ describe('the pane’s insert follows the governed-write rule', () => {
     expect(anaSuggestion()).toBeNull();
   });
 
+  it('a frozen document takes no insert, and the offer says so rather than failing on the click', async () => {
+    docStatus.current = 'FROZEN';
+    const { insert } = await answeredWith({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy: [OPUS] });
+    await waitFor(() => expect(insert.disabled).toBe(true));
+    // The product's own word for this state, as the sibling "Draft from sources" control uses it.
+    expect(describedBy(insert)).toBe('This document is frozen — its content cannot be edited, so nothing can be inserted into it.');
+    fireEvent.click(insert);
+    expect(anaSuggestion()).toBeNull();
+  });
+
+  it('document view edits no section, so the offer says so instead of failing on the click', async () => {
+    const { pane, insert } = await answeredWith({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy: [OPUS] });
+    expect(insert.disabled).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: /Document$/ }));
+    const offer = (await within(pane).findByRole('button', { name: 'Insert into 3.2.S.1 as tracked suggestion' })) as HTMLButtonElement;
+    await waitFor(() => expect(offer.disabled).toBe(true));
+    expect(describedBy(offer)).toBe('Document view assembles sections for reading. Switch to Section view to insert into 3.2.S.1.');
+  });
+
   it('an answer cut off before it finished: disabled, whoever wrote it', async () => {
     const { insert } = await answeredWith({ status: 'recorded', id: 'rec-1', sha256: SHA, servedBy: [OPUS] }, { stoppedReason: 'answer_cut_off' });
     await waitFor(() => expect(insert.disabled).toBe(true));
-    expect(describedBy(insert)).toBe('This answer did not finish, so it can’t be inserted. Ask again to get a new answer.');
+    expect(describedBy(insert)).toBe('This answer did not finish, so it can’t be inserted. Ask again to get a complete answer.');
   });
 
   it('an answer whose models the record does not give: disabled, failing closed', async () => {
     const { insert } = await answeredWith({ status: 'recorded', id: 'rec-1', sha256: SHA });
     await waitFor(() => expect(insert.disabled).toBe(true));
-    expect(describedBy(insert)).toBe('The model that wrote this answer can’t be checked, so the answer can’t be inserted. Ask again to get a new answer.');
+    expect(describedBy(insert)).toBe('This page has no record of which model wrote this answer, so the answer can’t be inserted. Ask again to get an answer with its own record.');
   });
 
   it('an answer every model of which may write governed content is inserted, naming its turn (negative control)', async () => {

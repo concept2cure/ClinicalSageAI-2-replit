@@ -124,7 +124,7 @@ describe('the conversation’s refused inserts', () => {
     expect(document.querySelectorAll('[id^="ct-insert-refusal"]')).toHaveLength(4);
     buttons.forEach((b, i) => {
       expect(b.disabled).toBe(true);
-      expect(reasonOf(b)?.textContent).toBe(anaInsertRefusal(turns[i].turnRecord));
+      expect(reasonOf(b)?.textContent).toBe(anaInsertRefusal(turns[i].turnRecord, false));
     });
   });
 
@@ -139,7 +139,7 @@ describe('the conversation’s refused inserts', () => {
     ];
     const [insert] = await offers();
     expect(insert.disabled).toBe(true);
-    expect(reasonOf(insert)?.textContent).toBe('This answer did not finish, so it can’t be inserted. Ask again to get a new answer.');
+    expect(reasonOf(insert)?.textContent).toBe('This answer did not finish, so it can’t be inserted. Ask again to get a complete answer.');
   });
 
   it('the reason reads at the repo’s own contrast for why a control is off, and the button looks off', async () => {

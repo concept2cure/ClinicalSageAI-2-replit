@@ -365,7 +365,7 @@ describe('ConversationThread — AnA\u2019s answers go into the open document (2
     const insert = (await screen.findByRole('button', { name: 'Insert into 2.5.1 as tracked suggestion' }, { timeout: 4000 })) as HTMLButtonElement;
     expect(insert.disabled).toBe(true);
     expect(document.getElementById(insert.getAttribute('aria-describedby') ?? '')?.textContent).toMatch(
-      /^The model that wrote this answer can’t be checked, so the answer can’t be inserted\./,
+      /^This page has no record of which model wrote this answer, so the answer can’t be inserted\./,
     );
   });
 });

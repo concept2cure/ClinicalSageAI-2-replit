@@ -1,4 +1,4 @@
-# A refused insert says only what is true, in its own words, and a pasted AnA suggestion keeps the turn it came from
+# A refused insert says only what is true, a pasted AnA suggestion keeps the turn it came from, and the rail shows the turn behind a decided change
 
 Round 13 of the founder-directed AnA reasoning lane (founder, 2026-10-04:
 *"Enhance the reasoning layer of ANA"*). Board row: "AnA's reasoning is checked
@@ -6,98 +6,110 @@ by an engine, and the check is what the reviewer sees and the record keeps"
 (`docs/work-orders/README.md`).
 
 It supports two launch rows:
-- **D5, the Part 11 record.** AnA's words stay attributable through the paste
-  door, and the audit rail shows what the decision row keeps.
-- **D2, the launch catalog.** Authoring's refused offers are accessible and
-  truthful.
 
-It answers round 11's four-lens UI review (microcopy, a11y, Part 11 UX, honest
-state) of the insert gate (`../r11/`).
+- **D5, the Part 11 record.** AnA's words stay attributable through the paste
+  door, and the audit rail shows what the decision row has recorded since
+  round 10.
+- **D2, the launch catalog.** Authoring's refused offers are accessible,
+  legible and truthful.
+
+It answers round 11's four-lens UI review of the insert gate (`../r11/`), and
+then its own six-lens design review, which is filed separately under
+`.design/ana-insert-gate/DESIGN_REVIEW.md` with the screenshots.
 
 ## What was wrong
 
 **The refusal sent the person to a control that does not exist.** "Ask again
-with Thorough effort to have an approved model write it" names an effort
-control neither the editor's AnA pane nor the conversation draws. In
-production no approved model has passed performance qualification yet, so
-asking again ended in a second refusal.
+with Thorough effort" names an effort control neither host draws, and in
+production no approved model has passed performance qualification, so asking
+again ended in a second refusal.
 
-**Refusals stated things the record does not say.**
-- "Written in part by X" asserts which words X wrote; the record shows only
-  that X served a call in the turn.
-- "This answer's record does not say which model wrote it" was shown for a
-  reopened conversation, whose record exists on the server; this view was only
-  not told.
+**Refusals stated things the record does not say.** "Written in part by X"
+asserts which words X wrote; the record says only that X served a call.
+"This answer's record does not say which model wrote it" was shown for a
+reopened conversation, whose record exists on the server — this view was only
+not told.
 
 **An answer that did not finish could be inserted.** A turn the person
 stopped, whose stream failed, or whose answer was cut off was offered as a
-finished one. That includes the "AnA is unreachable…" error sentence of a
-failed turn, under an approved model.
+finished one — including the "AnA is unreachable…" sentence of a failed turn.
 
-**Refusals were hard to read, see or tell apart.**
-- Every conversation turn without a record id shared one element id. In a
-  reopened conversation every refused button was described by the FIRST
-  turn's reason.
-- The refused button kept the live look and hover.
-- Its reason sat at 4.50:1, the bare minimum.
+**Refusals were hard to read, see or tell apart.** Every conversation turn
+without a record id shared one element id, so in a reopened conversation every
+refused button was described by the FIRST turn's reason. The refused button
+kept the live look and hover. Its reason sat at 4.50:1, the bare minimum.
 
 **A pasted AnA suggestion lost the turn it came from.** The paste door made it
-the pasting person's and dropped its turn. The decision then filed AnA's words
-as the person's own, with no source: the defect the editor's own lineage
-comment names ("the audit trail says a human authored words a model
-produced"). A pasted AnA *deletion* kept her name. With track changes on, a
-paste lost the turn whoever wrote it.
+the pasting person's and dropped its turn, so the decision filed AnA's words as
+the person's own with no source — the defect the editor's own lineage comment
+names. A pasted AnA *deletion* kept her name.
 
 **The audit rail showed none of what the decision row keeps.** Since round 10
 the row records the AnA turn a decided change came from, verified against the
-words, and every model that wrote them with RULE 2's verdict. An inspector
-could not see that an accepted AnA insertion came from a model not approved to
-write governed text.
+words, and every model that served it with RULE 2's verdict.
 
 ## What changed
 
 | Where | What |
 |---|---|
-| `client/src/concept2cure/v2/editor/anaInsertGate.ts` | **Every refusal rewritten to say only what this view knows, in the activity strip's words.**<br>• No remedy the screen cannot carry out.<br>• "More than one model worked on this answer, including X", never "written in part by".<br>• "The model that wrote this answer can't be checked" when this view was not told; "This answer's record names no model" only for a list the server sent empty.<br>• "…has not passed performance qualification… Asking again will not change that."<br>**`answerUnfinished`**: a stop, a failed stream, a cut-short phase, a cancelled run, or an answer cut off. `anaInsertRefusal(record, unfinished)` refuses an unfinished answer first. An answer the round limit forced to an end is whole text, and is not refused for it.<br>**The header states where the rule is applied:** in the browser only, until the server checks it at save (SEC-A-7, its own round). |
-| `client/src/concept2cure/v2/surfaces/ConversationThread.tsx` (another lane's window: added lines, and round 11's own lines) | **One id per refused offer** (`React.useId`, above the early returns).<br>• Whether the answer finished is carried on the turn and passed to the gate and the bridge.<br>• The reason is at `var(--text-300)`, 12px. |
-| `client/src/concept2cure/v2/fixtures/conversation-thread-data.ts` (another lane's window: one added field) | `CtTurn.unfinished`. |
-| `client/src/concept2cure/v2/editor/DocumentWorkbench.tsx` | **The pane's offer.**<br>• Gets `useId` and the same contrast.<br>• Passes whether the answer finished.<br>• The bridge's `insert` takes it too, and re-checks it.<br>**The toasts.** They name the section the text went into and say why an insert failed.<br>**The audit rail** (`describeAuditMetadata`):<br>• each decision's AnA turn, verified or not and why, with the models that wrote the words and RULE 2's verdict on each;<br>• "verified against its turn record" for a proposer the record vouches for;<br>• a bulk decision's count of changes from AnA turns, and how many of them a model that may not write governed text wrote;<br>• an accepted AI draft's turn record (round 12). |
-| `client/src/concept2cure/v2/editor/suggestions.ts` | **The paste door keeps the turn.**<br>• A pasted AnA suggestion the host does not admit becomes the pasting person's, still naming its turn, so the decision names it and the server verifies the words (round 10).<br>• A pasted AnA deletion is swapped as an insertion is.<br>• With track changes on, a paste or a drop is the person's insertion still naming each pasted insertion's turn; text the person types carries none, and a pasted deletion's turn is not credited with the words it struck. |
-| `client/src/concept2cure/v2/styles/app-v2.css` (another lane's window: added rules) | **A refused offer looks and hovers like the off control it is**, as `.ct-head-open` does. |
+| `editor/anaInsertGate.ts` | **Every refusal says only what this view knows.** No remedy the screen cannot carry out. "More than one model worked on this answer, including X", never "written in part by". "This page has no record of which model wrote this answer" (this view's limit) told apart from "This answer's record names no model" (a fact about the record). New **`answerUnfinished`** — a stop, a failed stream, a cut-short phase, a cancelled run, an answer cut off — refused first; an answer the round limit forced to an end is whole text. The `unfinished` flag is **required**, because a default of "it finished" is the one shape that silently admits a stopped answer. The header names the doors that do **not** enforce the rule, and states exactly what the decision record does and does not give. |
+| `surfaces/ConversationThread.tsx` | One id per refused offer (`React.useId`, above the early returns). Carries whether the answer finished. Reason at `var(--text-300)`, 12px. The "Ask again in a new conversation" offer, which `.ct-ref:disabled` now dims, gets its reason as visible text instead of a `title`. |
+| `editor/DocumentWorkbench.tsx` | The pane's offer gets the same id and contrast, and **the host's own refusals come first**: a frozen document and document view are refused with a reason instead of failing on the click. `EditorBridge.insert` takes the flag and re-checks it. The toasts name the section and use the product's words ("source mode", "frozen"). **The audit rail** gains `describeAuditSource` — the AnA turn each decided change came from, on its own line: verified or not and why, the models that **served** the turn with RULE 2's verdict, the turn's outcome when it did not answer, and, for a bulk row, how many changes came from AnA turns, how many were served by a model that may not write regulatory text, and how many name a turn that does not verify. A proposer is called verified only when the turn vouched for those words *and* the row carries the model list round 10 records. Every row now carries the instant it happened (`GovernedTimestamp`), not only "3 h ago". |
+| `editor/suggestions.ts` | **The paste door keeps the turn.** A pasted AnA suggestion the host does not admit becomes the pasting person's but still names its turn, so the decision names it and the server verifies the words against it. A pasted AnA deletion is swapped as an insertion is. With track changes on, a paste or a drop keeps each pasted insertion's turn; typed text carries none. |
+| `styles/app-v2.css`, `styles/surface-text-ramp.css` | A refused offer looks and hovers like the off control it is. The generated ramp sheets are regenerated for the new tinted-surface rule — without that, `ci:surface-text-ramp` fails. |
+| `styles/surfaces-v2.css` | An audit row's timestamp moves from `--text-500` (2.11:1 light) to `--text-400` (4.71:1 / 4.86:1), the token its sibling `.cmt-role` already uses. |
+| `lineage/palette.ts` | The Data Origins status colours become the canonical `--success` / `--warning` tokens. The hexes were measured for light mode only and read 2.5:1 and 3.02:1 in dark. |
+| `scripts/visual-qa/dump-insert-gate.spec.tsx` (new) | **The refused state is now measured by a gate.** Round 13's own contrast test asserted `style.color === 'var(--text-300)'`, which restates the implementation and cannot fail on a real regression. This capture puts the state under the shipped stylesheets in real Chromium, where `visual-qa:contrast` and `visual-qa:a11y` measure it. |
 
 ## Decisions made here, as this lane's PM
 
 - **A pasted AnA suggestion stays insertable as the person's, with its turn.**
-  Refusing it would push the person to copy the rendered answer instead,
-  which carries no mark and no turn: the record would lose the origin
-  entirely. Kept, the decision names the turn, and the rail shows the model
-  and RULE 2's verdict. Whether the server should refuse such text at save
-  is decided with SEC-A-7.
-- **With track changes on, a moved AnA suggestion is the person's insertion,
-  naming AnA's turn**, as a move is in any tracked editor. The words keep their
-  origin; the proposer is who placed them.
-- **No effort control was added to bring the "Thorough" remedy back.** In
+  Refusing it would push the person to copy the rendered answer instead, which
+  carries no mark and no turn, and the record would lose the origin entirely.
+- **With track changes on, a moved AnA suggestion is the person's insertion
+  naming AnA's turn**, as a move is in any tracked editor: the words keep their
+  origin, the proposer is who placed them.
+- **The rail says "served by", where the gate says "written by".** The gate
+  speaks to an author about their own answer; the rail speaks to an inspector
+  about a record, where the only supportable claim is that these models served
+  that turn — and where "written by" would be plainly wrong on a deletion.
+- **No effort control was added** to make the old "Thorough" remedy real. In
   production it would end in the PQ refusal. Whether drafting-surface turns
-  should run on an approved model is a routing decision with a cost. Round 7
-  narrowed it deliberately (its biology-classifier and cost reasons), so it is
-  its own row.
+  should run on an approved model is a routing decision with a cost, and round
+  7 narrowed it deliberately.
 
 ## Not done here
 
-- **`EditorBridge.propose` is not gated yet.** It has no production caller. Its
-  test file is inside another lane's window until 2026-10-05T21:26Z, and the
-  gate needs every one of its calls changed: next.
-- **The server does not check the rule at `PATCH /sections/:id` or at
-  `from-draft`** (SEC-A-7): its own round. Until then the gate's header says it
-  is browser-only.
-- **Admission after a reload.** A turn admitted in an earlier session is not
-  admitted after a reload; this needs a server read of `servedBy` by turn id
-  that a reviewer may call.
-- **The revision's lineage records an adopted AnA suggestion as the person's
-  text.** The decision row names its turn. Recording it as machine text is
-  decided with SEC-A-7.
+- **The server does not enforce the rule** at `PATCH /sections/:sectionId`, at
+  `POST /docs/from-draft`, on a section revert, or in `EditorBridge.propose`
+  (SEC-A-7, its own round). The gate's header now says so precisely.
+- **One shared refusal-note component.** Six sibling notes are still
+  11.5px/`--text-400`; round 13's two are the right values and the siblings are
+  what should move, in one pass.
+- **The two hosts remain different kinds of control** — a bordered chip and a
+  link-shaped one. Changing that means changing a shared class across the
+  editor.
+- **A disabled button leaves the tab order**, so its reason is not reachable by
+  Tab. `aria-disabled` would fix it for the whole GE-P-3 family at once.
+- **Admission does not survive a reload**, and the full turn id and hashes are
+  not reachable from the rail.
+- **Responsive behaviour at 768 and 375 is not covered** by the review: the
+  static capture harness does not run the shell's responsive logic, and the
+  dev-server capture path is not available in this session.
 
 ## Proof
 
-Filed beside this README: `red.txt`, `green.txt`, `related.txt`, `mutants/`,
-`lint.txt`, `tsc.txt`, and the review (`review.md`).
+Filed beside this README:
+
+- `red.txt` — round 13's tests against trunk's code, before any source change:
+  27 of 71 fail, each on the defect it was written for.
+- `green.txt` — every suite, green.
+- `related.txt` — the full client suite on the merged tree, with the one red
+  that is **not** this round's, attributed.
+- `mutants/` — every mutant and its verdict.
+- `lint.txt` — no file gains a warning.
+- `tsc.txt` — exit 0.
+- `gates.txt` — the repo's own gates, including the one that was failing.
+- `review.md` — the six-lens design review's findings and what was done with
+  each; the review itself, with screenshots, is at
+  `.design/ana-insert-gate/DESIGN_REVIEW.md`.

@@ -1,0 +1,12 @@
+Mutant R07-bulk-plural-always: one change from one turn reads as a plural
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- `${verified.length} ${verified.length === 1 ? 'change from an AnA turn' : 'changes from AnA turns'}.`
++ `${verified.length} changes from AnA turns.`
+
+Tests run: client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > one change from one turn reads as one, not as a plural 7ms
+      Tests  1 failed | 34 passed (35)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

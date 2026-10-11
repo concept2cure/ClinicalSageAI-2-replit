@@ -1,0 +1,12 @@
+Mutant G09-pq-remedy-restored: the PQ refusal offers a remedy that cannot work
+
+--- client/src/concept2cure/v2/editor/anaInsertGate.ts
+- Asking again will not change that.
++ Ask again to get an answer that can be inserted.
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses an approved model whose performance qualification has not passed, and says asking again will not change that 9ms
+      Tests  1 failed | 10 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

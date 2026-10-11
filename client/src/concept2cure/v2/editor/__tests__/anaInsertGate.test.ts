@@ -27,28 +27,35 @@ const SONNET: AnaServedModel = { provider: 'anthropic', model: 'claude-sonnet-5'
 const OPUS_PQ_PENDING: AnaServedModel = { ...OPUS, qualified: false, pq: 'pending' };
 const UNNAMED: AnaServedModel = { provider: 'anthropic', model: null, qualified: false, approvedForHighRisk: null, pq: null };
 const recorded = (servedBy?: AnaServedModel[]): AnaTurnRecordStatus => ({ status: 'recorded', id: 'rec-1', sha256: SHA, ...(servedBy ? { servedBy } : {}) });
-const ASK_AGAIN = 'Ask again to get a new answer.';
+const ASK_AGAIN = 'Ask again to get an answer with its own record.';
 
 describe('anaInsertRefusal', () => {
   it('admits a finished answer every model of which may write governed content', () => {
-    expect(anaInsertRefusal(recorded([OPUS]))).toBeNull();
     expect(anaInsertRefusal(recorded([OPUS]), false)).toBeNull();
   });
 
+  it('a caller must say whether the answer finished, rather than getting "it did" by default', () => {
+    /* A compile-time assertion: this line type-checks only while the flag is
+       REQUIRED. The rule is fail closed, and an optional flag defaulting to
+       "finished" is the one shape that silently admits an unfinished answer. */
+    // @ts-expect-error the second argument is required.
+    anaInsertRefusal(recorded([OPUS]));
+  });
+
   it('refuses an answer a model not approved for regulatory drafting wrote, naming it, with no remedy the screen cannot carry out', () => {
-    const why = anaInsertRefusal(recorded([SONNET]));
+    const why = anaInsertRefusal(recorded([SONNET]), false);
     expect(why).toBe('This answer was written by claude-sonnet-5, which is not approved for regulatory drafting, so the answer can’t be inserted.');
     expect(why).not.toMatch(/Thorough|effort/);
   });
 
   it('refuses when any one of the models that worked on it is not admitted, without saying which words it wrote', () => {
-    expect(anaInsertRefusal(recorded([OPUS, SONNET]))).toBe(
+    expect(anaInsertRefusal(recorded([OPUS, SONNET]), false)).toBe(
       'More than one model worked on this answer, including claude-sonnet-5, which is not approved for regulatory drafting, so the answer can’t be inserted.',
     );
   });
 
   it('refuses an approved model whose performance qualification has not passed, and says asking again will not change that', () => {
-    const why = anaInsertRefusal(recorded([OPUS_PQ_PENDING]));
+    const why = anaInsertRefusal(recorded([OPUS_PQ_PENDING]), false);
     expect(why).toBe(
       'This answer was written by claude-opus-5-5, which has not passed performance qualification, so the answer can’t be inserted. Asking again will not change that.',
     );
@@ -56,32 +63,34 @@ describe('anaInsertRefusal', () => {
   });
 
   it('refuses a model the record does not name, even one marked qualified, one model or several', () => {
-    expect(anaInsertRefusal(recorded([UNNAMED]))).toBe(
+    expect(anaInsertRefusal(recorded([UNNAMED]), false)).toBe(
       `The record does not name the model that wrote this answer, so the answer can’t be inserted. ${ASK_AGAIN}`,
     );
     const several = `The record does not name one of the models that worked on this answer, so the answer can’t be inserted. ${ASK_AGAIN}`;
-    expect(anaInsertRefusal(recorded([OPUS, UNNAMED]))).toBe(several);
-    expect(anaInsertRefusal(recorded([OPUS, { ...UNNAMED, qualified: true }]))).toBe(several);
+    expect(anaInsertRefusal(recorded([OPUS, UNNAMED]), false)).toBe(several);
+    expect(anaInsertRefusal(recorded([OPUS, { ...UNNAMED, qualified: true }]), false)).toBe(several);
   });
 
   it('says what this view was not told apart from what the record says: no list is not an empty one', () => {
-    const notTold = `The model that wrote this answer can’t be checked, so the answer can’t be inserted. ${ASK_AGAIN}`;
-    expect(anaInsertRefusal(undefined)).toBe(notTold);
-    expect(anaInsertRefusal(recorded())).toBe(notTold);
-    expect(anaInsertRefusal(recorded([]))).toBe(`This answer’s record names no model, so the answer can’t be inserted. ${ASK_AGAIN}`);
+    // Not told is this PAGE's limit, not a fact about the record: the server holds it.
+    const notTold = `This page has no record of which model wrote this answer, so the answer can’t be inserted. ${ASK_AGAIN}`;
+    expect(anaInsertRefusal(undefined, false)).toBe(notTold);
+    expect(anaInsertRefusal(recorded(), false)).toBe(notTold);
+    // An empty list IS a fact about the record, and reads as one.
+    expect(anaInsertRefusal(recorded([]), false)).toBe(`This answer’s record names no model, so the answer can’t be inserted. ${ASK_AGAIN}`);
   });
 
   it('fails closed on a record that was not made or not confirmed, in the activity strip’s own words', () => {
-    expect(anaInsertRefusal({ status: 'not_recorded', reason: 'x' })).toBe(
+    expect(anaInsertRefusal({ status: 'not_recorded', reason: 'x' }, false)).toBe(
       `This answer was not recorded, so the model that wrote it can’t be checked and the answer can’t be inserted. ${ASK_AGAIN}`,
     );
-    expect(anaInsertRefusal({ status: 'unconfirmed' })).toBe(
+    expect(anaInsertRefusal({ status: 'unconfirmed' }, false)).toBe(
       `This answer’s record is not confirmed, so the model that wrote it can’t be checked and the answer can’t be inserted. ${ASK_AGAIN}`,
     );
   });
 
   it('refuses an answer that did not finish before anything else, however it was recorded', () => {
-    const why = `This answer did not finish, so it can’t be inserted. ${ASK_AGAIN}`;
+    const why = 'This answer did not finish, so it can’t be inserted. Ask again to get a complete answer.';
     expect(anaInsertRefusal(recorded([OPUS]), true)).toBe(why);
     expect(anaInsertRefusal(recorded([SONNET]), true)).toBe(why);
     expect(anaInsertRefusal(undefined, true)).toBe(why);

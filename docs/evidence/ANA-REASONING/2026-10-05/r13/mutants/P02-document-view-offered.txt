@@ -1,0 +1,12 @@
+Mutant P02-document-view-offered: document view, which edits nothing, is offered an insert
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- if (viewMode === 'document') return `Document view
++ if (false) return `Document view
+
+Tests run: client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > document view edits no section, so the offer says so instead of failing on the click 5527ms
+      Tests  1 failed | 6 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -47,7 +47,8 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
-import { useAnaChat } from '../../components/ana/useAnaChat';
+import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
+import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { AnaActivity, activityPropsFor } from '../AnaActivity';
 import { useHostSummary } from '../TurnSummary';
@@ -303,6 +304,29 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
  * Unrecognised metadata is left alone rather than dumped as JSON: a rail is a
  * reading surface, and raw payloads are not read.
  */
+/**
+ * Whether the rail may call a proposer verified.
+ *
+ * It needs the turn record to have vouched for THESE WORDS, not merely a
+ * machine author id on the request, and not merely a turn that exists.
+ *
+ * The trail is append-only, and "verified" has not always meant the same
+ * thing. Under DP-43 it was a bare "this turn is in this organization" lookup;
+ * round 10 made it "this turn holds the words decided" and began recording
+ * `servedBy` alongside it. Rows from before that are still in the trail,
+ * including the case round 10 was written for — a person typing inside AnA's
+ * pending insertion with track changes off, the database default, whose words
+ * were filed as AnA's verified words. Those rows carry `verified: true` and no
+ * model list, so the presence of the list is what distinguishes a round-10
+ * verification from its namesake. Without that test the rail would put round
+ * 10's claim on exactly the rows round 10 exists to catch.
+ */
+function proposerVouched(metadata: Record<string, unknown>): boolean {
+  if (metadata.proposedByVerified !== true) return false;
+  const src = metadata.source as { verified?: unknown; servedBy?: unknown } | null | undefined;
+  return !!src && typeof src === 'object' && src.verified === true && Array.isArray(src.servedBy);
+}
+
 export function describeAuditMetadata(
   eventType: string | null,
   metadata: Record<string, unknown> | null,
@@ -330,11 +354,13 @@ export function describeAuditMetadata(
        read as the audit trail's finding; the qualifier keeps the two apart.
        Only a machine proposer whose turn record holds the words decided is
        verified (DP-43, round 10), and then the rail says so (round 13). */
-    const vouched = metadata.proposedByVerified === true;
     const by = proposedBy
-      ? ` (proposed by ${proposedBy}, ${vouched ? 'verified against its turn record' : 'as recorded by the editing client'})`
+      ? ` (proposed by ${proposedBy}, ${proposerVouched(metadata) ? 'verified against its turn record' : 'as recorded by the editing client'})`
       : '';
-    return `${verb} ${what}${by}${describeDecisionSource(metadata.source)}${quoted}`;
+    /* The turn this came from is its own line (describeAuditSource): packed in
+       here it made one run-on span in which the fact that matters most — a
+       model that may not write regulatory text — sat mid-sentence. */
+    return `${verb} ${what}${by}${quoted}`;
   }
 
   if (eventType === 'tracked_change_bulk_decision') {
@@ -362,8 +388,7 @@ export function describeAuditMetadata(
     return (
       `${verb} ${count} tracked change${count === 1 ? '' : 's'} in one action` +
       (sample.length > 0 ? ` — including ${sample.join(', ')}` : '') +
-      (omitted > 0 ? ` (${omitted} more not summarised on this row)` : '') +
-      describeBulkSources(changes)
+      (omitted > 0 ? ` (${omitted} more not summarised on this row)` : '')
     );
   }
 
@@ -428,53 +453,120 @@ function servedModelRefusal(m: RecordedServedModel): string | null {
   return m.approvedForHighRisk === true ? 'has not passed performance qualification' : 'is not approved for regulatory drafting';
 }
 
-const modelName = (m: RecordedServedModel): string => (typeof m.model === 'string' && m.model ? m.model : 'an unnamed model');
-
 /** "a", "a and b", "a, b and c". */
 function listed(names: string[]): string {
   return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
 /**
- * The AnA turn a decided change came from, as the server recorded it on the
- * decision (round 10, resolveTurnRecordSources): verified against the words
- * decided, with every model that wrote them and RULE 2's verdict on each, or
- * named but not vouching for them, and why. The rail showed none of it, so an
- * inspector could not see that an accepted AnA insertion came from a model
- * not approved to write governed text (round 13, round 11's UI review).
- * Empty when the change names no turn.
+ * The AnA turn a decided change came from — its own line under the decision.
+ *
+ * The server records this on every tracked-change decision (round 10,
+ * resolveTurnRecordSources): the turn verified against the WORDS decided, its
+ * outcome, and every model that served it with RULE 2's verdict on each. The
+ * rail showed none of it, so an inspector could not see that an accepted AnA
+ * insertion came from a model that may not write regulatory text.
+ *
+ * ── "Served by", not "written by" ───────────────────────────────────────────
+ * `servedBy` is every model that served ANY call in the turn
+ * (services/ana/turn-record-models.ts). It does not say which model wrote the
+ * decided words. The insert gate refuses to say "written in part by" for
+ * exactly that reason, and a rail that said "written by A and B" would claim
+ * more than the record holds — and would be plainly wrong on a DELETION, where
+ * the words struck are not AnA's at all. "Served by" is what the row supports,
+ * in one phrase that is true of every case.
+ *
+ * Null when the change names no turn, so the rail draws no second line.
+ *
+ * @param metadata a decision row's metadata — one change, or a bulk row
  */
-function describeDecisionSource(source: unknown): string {
-  if (!source || typeof source !== 'object') return '';
-  const s = source as Record<string, unknown>;
-  if (s.verified === false && typeof s.claimed === 'string') {
-    return ` — names AnA turn record ${s.claimed.slice(0, 8)}, not verified${typeof s.why === 'string' ? `: ${s.why}` : ''}`;
-  }
-  if (s.verified !== true || typeof s.turnRecordId !== 'string') return '';
-  const served = Array.isArray(s.servedBy) ? (s.servedBy as RecordedServedModel[]) : [];
-  const from = ` — from AnA turn record ${s.turnRecordId.slice(0, 8)}`;
-  if (served.length === 0) return `${from}, which names no model`;
-  if (served.length === 1) {
-    const why = servedModelRefusal(served[0]);
-    return `${from}, written by ${modelName(served[0])}${why ? `, which ${why}` : ''}`;
-  }
-  const refusals = served.flatMap((m) => {
-    const why = servedModelRefusal(m);
-    return why ? [`${modelName(m)} ${why}`] : [];
-  });
-  return `${from}, written by ${listed(served.map(modelName))}${refusals.length ? `; ${refusals.join('; ')}` : ''}`;
+export function describeAuditSource(metadata: Record<string, unknown> | null | undefined): string | null {
+  if (!metadata || typeof metadata !== 'object') return null;
+  if (Array.isArray(metadata.changes)) return describeBulkSource(metadata.changes);
+  return describeOneSource(metadata.source);
 }
 
-/** How many of a bulk decision's changes came from AnA turns, and how many of those a model RULE 2 does not admit wrote. */
-function describeBulkSources(changes: unknown[]): string {
+/** The models a turn was served by, and what RULE 2 says of them. */
+function servedClause(served: RecordedServedModel[]): string {
+  if (served.length === 0) return ', whose record names no model.';
+  const unnamed = served.filter((m) => !(typeof m.model === 'string' && m.model));
+  if (unnamed.length > 0) {
+    /* An unnamed model is not an unapproved one: there is nothing to judge, and
+       the gate says so rather than returning a verdict. */
+    return served.length === 1
+      ? '; the record does not name the model that served it.'
+      : '; the record does not name one of the models that served it.';
+  }
+  const names = served.map((m) => String(m.model));
+  const refusals = served.flatMap((m) => {
+    const why = servedModelRefusal(m);
+    return why ? [`${String(m.model)} ${why}.`] : [];
+  });
+  return `, served by ${listed(names)}.${refusals.length ? ` ${refusals.join(' ')}` : ''}`;
+}
+
+/** One change's source line. */
+function describeOneSource(source: unknown): string | null {
+  if (!source || typeof source !== 'object') return null;
+  const s = source as Record<string, unknown>;
+  if (s.verified === false && typeof s.claimed === 'string') {
+    return `Names AnA turn record ${s.claimed.slice(0, 8)}, not verified${typeof s.why === 'string' ? `: ${s.why}` : ''}.`;
+  }
+  if (s.verified !== true || typeof s.turnRecordId !== 'string') return null;
+  const from = `From AnA turn record ${s.turnRecordId.slice(0, 8)}`;
+  /* Absent and empty are different facts, and the gate draws the same line: a
+     row that recorded no list cannot be reported as a record that names none. */
+  const clause = Array.isArray(s.servedBy)
+    ? servedClause(s.servedBy as RecordedServedModel[])
+    : '; the models that served it were not recorded with this decision.';
+  /* The turn's own outcome. The insert gate can only read whether the answer
+     finished from live client state, which a reopened page does not have; the
+     decision row keeps it, so the rail is the one place it survives. */
+  const outcome = typeof s.outcome === 'string' && s.outcome !== 'answered' ? ` That turn ended: ${s.outcome}.` : '';
+  return `${from}${clause}${outcome}`;
+}
+
+/** A bulk row: how many changes came from AnA turns, and what is wrong with them. */
+function describeBulkSource(changes: unknown[]): string | null {
   const sources = changes
     .map((c) => (c && typeof c === 'object' ? (c as { source?: unknown }).source : null))
-    .filter((src): src is Record<string, unknown> => !!src && typeof src === 'object' && (src as { verified?: unknown }).verified === true);
-  if (sources.length === 0) return '';
-  const refused = sources.filter((src) => (Array.isArray(src.servedBy) ? (src.servedBy as RecordedServedModel[]) : []).some((m) => servedModelRefusal(m)));
+    .filter((src): src is Record<string, unknown> => !!src && typeof src === 'object');
+  const verified = sources.filter((src) => src.verified === true);
+  /* Counted, not dropped. A change whose named turn did NOT verify is the one
+     an inspector most needs to see, and the single-decision line says so; a
+     bulk row that silently kept only the verified ones hid it. */
+  const unverified = sources.filter((src) => src.verified === false && typeof src.claimed === 'string');
+  if (verified.length === 0 && unverified.length === 0) return null;
+  const refused = verified.filter((src) =>
+    (Array.isArray(src.servedBy) ? (src.servedBy as RecordedServedModel[]) : []).some(
+      (m) => typeof m.model === 'string' && m.model && servedModelRefusal(m),
+    ),
+  );
+  const parts: string[] = [];
+  if (verified.length > 0) {
+    parts.push(`${verified.length} ${verified.length === 1 ? 'change from an AnA turn' : 'changes from AnA turns'}.`);
+  }
+  if (refused.length > 0) {
+    parts.push(`${refused.length} of them ${refused.length === 1 ? 'was' : 'were'} served by a model that is not allowed to write regulatory text.`);
+  }
+  if (unverified.length > 0) {
+    parts.push(`${unverified.length} ${verified.length > 0 ? 'more ' : ''}${unverified.length === 1 ? 'names' : 'name'} a turn that does not verify.`);
+  }
+  return parts.join(' ');
+}
+
+/**
+ * The AnA turn a decided change came from, on its own line under the decision.
+ * It is the part an inspector looks for, and packed into the sentence above it
+ * read as one more clause in a run-on.
+ */
+function AuditSourceLine({ metadata }: { metadata: Record<string, unknown> | null }) {
+  const source = describeAuditSource(metadata);
+  if (!source) return null;
   return (
-    ` — ${sources.length} from AnA turn${sources.length === 1 ? '' : 's'}` +
-    (refused.length ? `, ${refused.length} of them written by a model that may not write governed text` : '')
+    <span style={{ fontSize: 12, color: 'var(--text-300)' }} data-testid="audit-source">
+      {source}
+    </span>
   );
 }
 
@@ -960,6 +1052,29 @@ function AuthoringSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
       doneClassName="cmt-body"
     />
   );
+}
+
+/**
+ * Why this editor cannot take an insert at all, whoever wrote the answer; null
+ * when it can.
+ *
+ * These are the HOST's refusals and they come before the governed-write rule:
+ * a frozen document takes no edit, and document view assembles sections for
+ * reading and edits none of them. The sibling "Draft from sources" control
+ * refuses both the same way, in these words. The offer used to be drawn live
+ * in both states and fail on the click — the discovery-by-failure that the
+ * disabled-with-a-reason pattern exists to replace. The conversation host has
+ * never had the bug: it withdraws the offer when the bridge is not editable.
+ */
+function paneInsertRefusal(
+  docSealed: boolean,
+  viewMode: 'section' | 'document',
+  sectionCode: string,
+  turn: AnaChatMessage,
+): string | null {
+  if (docSealed) return 'This document is frozen — its content cannot be edited, so nothing can be inserted into it.';
+  if (viewMode === 'document') return `Document view assembles sections for reading. Switch to Section view to insert into ${sectionCode}.`;
+  return anaInsertRefusal(turn.turnRecord, answerUnfinished(turn));
 }
 
 /**
@@ -4871,7 +4986,7 @@ export function DocumentWorkbench({
                     {!m.streaming && m.text && activeSection && (
                       <AnaInsertOffer
                         sectionCode={activeSection.code}
-                        refusal={anaInsertRefusal(m.turnRecord, answerUnfinished(m))}
+                        refusal={paneInsertRefusal(docSealed, viewMode, activeSection.code, m)}
                         onInsert={() => {
                           const ok = insertAnaText(
                             m.text,
@@ -4893,7 +5008,12 @@ export function DocumentWorkbench({
                             );
                           } else {
                             fireToast(
-                              'Couldn’t insert — the editor is not editable right now (source view, or the document is locked).',
+                              /* The product's own words for these states: "source
+                                 mode" and "frozen", as the sibling citation insert
+                                 says them (ProjectFilesPanel.tsx). A frozen
+                                 document is refused above, so what is left here is
+                                 a section the suggestion door cannot edit. */
+                              `Couldn’t insert into ${activeSection.code} — the editor is not editable right now (source mode, or a frozen document).`,
                               'error'
                             );
                           }
@@ -5244,7 +5364,15 @@ export function DocumentWorkbench({
                       {ev.actor ?? 'Unknown actor'}
                     </b>
                     {ev.actor_role && <span className="cmt-role">{ev.actor_role}</span>}
+                    {/* The instant, not only "3 h ago". This rail now prints
+                        as-of claims — whether a model was allowed to write
+                        regulatory text, how the turn ended — and relTime caps
+                        at "N d ago", so an inspector diffing a screenshot
+                        against the trail had no date to diff against. The
+                        signatures and exports rails already use the governed
+                        stamp; this was the Part 11 rail that did not. */}
                     <span className="cmt-when">· {relTime(ev.created_at)}</span>
+                    <GovernedTimestamp value={ev.created_at} layout="inline" className="cmt-when" />
                   </div>
                   <div className="cmt-body" style={{ display: 'grid', gap: 3 }}>
                     <span>
@@ -5276,15 +5404,20 @@ export function DocumentWorkbench({
                         </span>
                       ) : null;
                     })()}
+                    <AuditSourceLine metadata={ev.metadata} />
                     {ev.change_reason && (
                       <span style={{ fontSize: 12, opacity: 0.85 }}>{ev.change_reason}</span>
                     )}
                     {(ev.content_hash_before || ev.content_hash_after) && (
                       <span
+                        /* --text-400 rather than opacity: text-200 at .7 over
+                           the rail composites to 4.36:1, just under AA at this
+                           size, and the token keeps its own contrast in both
+                           themes instead of depending on what is behind it. */
                         style={{
                           fontFamily: 'var(--font-mono, monospace)',
                           fontSize: 10.5,
-                          opacity: 0.7,
+                          color: 'var(--text-400)',
                         }}
                         title={`Content hash before: ${ev.content_hash_before ?? '—'}\nContent hash after: ${ev.content_hash_after ?? '—'}`}
                       >

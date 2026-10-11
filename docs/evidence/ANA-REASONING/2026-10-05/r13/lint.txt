@@ -1,0 +1,10 @@
+ESLint warnings/errors per file round 13 touches, on the final tree, against the same file at HEAD (the merge of round 13's commit 8c75defca with trunk 275707c7a).
+Command: npx eslint --no-warn-ignored -f json <file> <the HEAD copy of the file beside it>
+No file gains a warning. DocumentWorkbench.tsx went to 17 mid-round and was brought back to 14 by extracting paneInsertRefusal, AuditSourceLine and proposerVouched; a test gained an unused-binding warning and was rewritten.
+CSS files and client/src/concept2cure/* outside v2/ are outside ESLint's scope, as they were (eslint.config.js).
+
+client/src/concept2cure/v2/editor/DocumentWorkbench.tsx                                              now=14/0     trunk=14/0
+client/src/concept2cure/v2/surfaces/ConversationThread.tsx                                           now=6/0      trunk=6/0
+client/src/concept2cure/v2/editor/anaInsertGate.ts                                                   now=0/0      trunk=0/0
+client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx                                     now=0/0      trunk=0/0
+client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts                                  now=0/0      trunk=0/0

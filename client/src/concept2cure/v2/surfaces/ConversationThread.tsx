@@ -212,7 +212,7 @@ function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: Insert
   /* The governed-write rule (anaInsertGate.ts, round 11): an answer a model it
      does not admit wrote is not offered as an insert. The offer stays, disabled,
      with the reason beside it (GE-P-3); the bridge checks again. */
-  const refusal = anaInsertRefusal(turn.turnRecord, turn.unfinished);
+  const refusal = anaInsertRefusal(turn.turnRecord, turn.unfinished === true);
   const insert = () => {
     if (refusal) return;
     /* A suggestion lands only where the person can see it: a closed editor is
@@ -227,7 +227,7 @@ function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: Insert
     );
     fireToast(ok
       ? `Inserted into ${bridge.sectionCode} as tracked suggestions — review each edit in the editor, then save.`
-      : 'Couldn\u2019t insert — the editor is not editable right now (source view, or the document is locked).', ok ? 'ok' : 'error');
+      : `Couldn\u2019t insert into ${bridge.sectionCode} — the editor is not editable right now (source mode, or a frozen document).`, ok ? 'ok' : 'error');
   };
   return (
     <div className="ct-refs">
@@ -482,9 +482,18 @@ function ProjectMismatchOffer({ messages, index, projectName, disabled, onStart 
   disabled: boolean;
   onStart: (question: AnaChatMessage) => void;
 }) {
+  /* The same GE-P-3 pattern as the insert offer above: one id per reason, taken
+     before any early return so hook order cannot change. */
+  const reasonId = `ct-mismatch-reason-${React.useId()}`;
   if (messages[index]?.refusalCode !== THREAD_PROJECT_MISMATCH) return null;
   const question = questionBefore(messages, index);
   if (!question) return null;
+  /* Why it is off, as TEXT. It was a `title` only, which a keyboard or touch
+     user never sees and a screen reader may not announce on a disabled
+     control. That was survivable while the button still looked live; once
+     `.ct-ref:disabled` dimmed it (round 13), the dimming became the only cue
+     and the reason had to be on screen beside it. */
+  const reason = disabled ? 'AnA is still answering. A new conversation can start once she has finished.' : null;
   return (
     <div className="ct-refs" data-testid="ct-project-mismatch">
       <button
@@ -492,11 +501,16 @@ function ProjectMismatchOffer({ messages, index, projectName, disabled, onStart 
         className="ct-ref"
         onClick={() => onStart(question)}
         disabled={disabled}
-        title={disabled ? 'AnA is still answering. A new conversation can start once she has finished.' : undefined}
+        aria-describedby={reason ? reasonId : undefined}
       >
         <span className="ct-ref-ic">{I.plus}</span>
         <span className="ct-ref-l">Ask again in a new conversation in {projectName || 'the open project'}</span>
       </button>
+      {reason && (
+        <span id={reasonId} style={{ flexBasis: '100%', fontSize: 12, color: 'var(--text-300)' }}>
+          {reason}
+        </span>
+      )}
     </div>
   );
 }
