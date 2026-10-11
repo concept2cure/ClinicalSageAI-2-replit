@@ -74,12 +74,12 @@ describe("Module 3 routers — another organization's project", () => {
     expect(mockQuery).not.toHaveBeenCalled();
   });
 
+  /* GET /uploaded-sources, POST /classify-artifact and GET /source-lineage
+     were deleted on 2026-10-05 with no caller (cmc-retired-routers.contract.
+     test.ts); what is left of these two routers is below. */
   it.each([
     ['get', '/api/cmc/module3-build/build-state/foreign-proj', undefined],
-    ['get', '/api/cmc/module3-build/uploaded-sources/foreign-proj', undefined],
-    ['post', '/api/cmc/module3-convergence/classify-artifact/foreign-proj', { artifactId: 'a-1', sourceType: 'batch' }],
     ['post', '/api/cmc/module3-convergence/build-section/foreign-proj/3.2.P.5', {}],
-    ['get', '/api/cmc/module3-convergence/source-lineage/foreign-proj/3.2.P.5', undefined],
   ] as const)('%s %s is not found — never an empty build state — and nothing is read or written', async (method, path, body) => {
     const r = request(appFor(1))[method](path);
     const res = await (body ? r.send(body) : r);

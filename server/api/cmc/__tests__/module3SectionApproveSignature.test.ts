@@ -98,7 +98,7 @@ describe('Module 3 section approval: who may sign, and with what meaning', () =>
     mockRefusedAuthority.mockResolvedValueOnce({ status: 403, code: 'ESIGNATURE_NO_AUTHORITY', message: 'No.' });
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
-      .send({ reason: 'approve', meaning: 'approval', reauth: { password: 'ok' } });
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'ok' } });
     expect(res.status).toBe(403);
     expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
     expect(mockRefusedAuthority).toHaveBeenCalledWith(1, 101);
@@ -110,7 +110,7 @@ describe('Module 3 section approval: who may sign, and with what meaning', () =>
   it('refuses an undeclared signature meaning before the password and before any write', async () => {
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
-      .send({ reason: 'approve', meaning: 'TECHNICAL_APPROVAL', reauth: { password: 'ok' } });
+      .send({ reason: 'approve for filing', meaning: 'TECHNICAL_APPROVAL', reauth: { password: 'ok' } });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('INVALID_SIGNATURE_MEANING');
     expect(mockVerifyReauth).not.toHaveBeenCalled();
@@ -121,7 +121,6 @@ describe('Module 3 section approval: who may sign, and with what meaning', () =>
 describe('Module 3 section approval: what is signed is current, and is what is filed', () => {
   it('freezes the narrative that is filed into the approved version, so the signature covers it', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // contradiction check
       .mockResolvedValueOnce({}) // BEGIN
       .mockResolvedValueOnce({
         rows: [
@@ -134,6 +133,7 @@ describe('Module 3 section approval: what is signed is current, and is what is f
           },
         ],
       })
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check (inside the transaction, GA plan item 4)
       .mockResolvedValueOnce({ rows: [] }) // drift: lineage
       .mockResolvedValueOnce({ rows: [] }) // drift: sources
       .mockResolvedValueOnce({ rows: [{ max_version: 0 }] })
@@ -146,7 +146,7 @@ describe('Module 3 section approval: what is signed is current, and is what is f
       .mockResolvedValueOnce({ rows: [{ id: 9001, signed_at: new Date() }] });
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.P.1/approve')
-      .send({ reason: 'approve', meaning: 'approval', reauth: { password: 'ok' } });
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'ok' } });
     expect(res.status).toBe(200);
     const versionInsert = mockQuery.mock.calls.find(c =>
       String(c[0]).includes('INSERT INTO cmc_module3_section_versions')
@@ -159,7 +159,6 @@ describe('Module 3 section approval: what is signed is current, and is what is f
 
   it('refuses to approve a stale section — 409, rolled back, the stale flag left standing', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // contradiction check
       .mockResolvedValueOnce({}) // BEGIN
       .mockResolvedValueOnce({
         rows: [
@@ -172,10 +171,11 @@ describe('Module 3 section approval: what is signed is current, and is what is f
             stale_reason: 'Source data updated: specification (SPEC-1)',
           },
         ],
-      });
+      })
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check (inside the transaction, GA plan item 4);
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.S.4/approve')
-      .send({ reason: 'approve', meaning: 'approval', reauth: { password: 'ok' } });
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'ok' } });
     expect(res.status).toBe(409);
     expect(res.body.error).toBe('SECTION_STALE');
     expect(res.body.detail).toContain('SPEC-1');
@@ -189,7 +189,6 @@ describe('Module 3 section approval: what is signed is current, and is what is f
 describe('drift from the sources: refused at approval and at export', () => {
   it('refuses to approve a section whose lineage has drifted from its sources, whoever changed them', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // contradiction check
       .mockResolvedValueOnce({}) // BEGIN
       .mockResolvedValueOnce({
         rows: [
@@ -202,6 +201,7 @@ describe('drift from the sources: refused at approval and at export', () => {
           },
         ],
       })
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check (inside the transaction, GA plan item 4)
       .mockResolvedValueOnce({
         rows: [
           {
@@ -219,7 +219,7 @@ describe('drift from the sources: refused at approval and at export', () => {
       .mockResolvedValueOnce({ rows: [] });
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.S.4/approve')
-      .send({ reason: 'approve', meaning: 'approval', reauth: { password: 'ok' } });
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'ok' } });
     expect(res.status).toBe(409);
     expect(res.body.error).toBe('SECTION_DRIFTED');
     expect(res.body.detail).toContain('specification "SPEC-1" changed after compile');
@@ -276,11 +276,11 @@ describe('evidence from the Vault: refused at approval when the linked version w
     // The evidence read runs for a program (a uuid); its own SQL is proven on
     // PostgreSQL in tests/db/cmc-source-evidence.dbtest.ts.
     mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // contradiction check
       .mockResolvedValueOnce({}) // BEGIN
       .mockResolvedValueOnce({
         rows: [{ id: 'sec-5', deterministic_json: COMPLETE, narrative_text: 'x', approval_state: 'draft', stale: false }],
       })
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check (inside the transaction, GA plan item 4)
       .mockResolvedValueOnce({ rows: [] }) // drift: lineage
       .mockResolvedValueOnce({ rows: [] }) // drift: sources
       .mockResolvedValueOnce({
@@ -297,7 +297,7 @@ describe('evidence from the Vault: refused at approval when the linked version w
       });
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/aaaaaaaa-0000-4000-8000-00000000000a/3.2.P.5.4/approve')
-      .send({ reason: 'approve', meaning: 'approval', reauth: { password: 'ok' } });
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'ok' } });
     expect(res.status).toBe(409);
     expect(res.body.error).toBe('EVIDENCE_SUPERSEDED');
     expect(res.body.detail).toContain('batch:1 was taken from "CoA DP-001" version 1.0, which version 2.0 has superseded');

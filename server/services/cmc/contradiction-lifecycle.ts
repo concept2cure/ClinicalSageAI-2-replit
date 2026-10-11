@@ -57,6 +57,27 @@ export interface SweepOutcome {
 
 const key = (type: string, details: string) => `${type}\u0000${details}`;
 
+/**
+ * Critical findings the detector reports in the program's records NOW that
+ * its contradiction record does not hold at all: the program was never swept,
+ * or its data changed since the last sweep. A finding the record holds is
+ * already counted by its status (open blocks, resolved does not), so only an
+ * unrecorded one is returned. Pure: the caller supplies both sides.
+ */
+export function unrecordedCriticalFindings(
+  detected: DetectedContradiction[],
+  stored: Array<{ contradiction_type?: unknown; details?: unknown }>,
+): DetectedContradiction[] {
+  const recorded = new Set(stored.map((r) => key(String(r.contradiction_type ?? ''), String(r.details ?? ''))));
+  const seen = new Set<string>();
+  return detected.filter((c) => {
+    const k = key(c.contradictionType, c.details);
+    if (c.severity !== 'critical' || recorded.has(k) || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
 /** Reconcile the program's stored findings with what the detector found now. Run inside the caller's transaction. */
 export async function reconcileContradictions(
   client: Queryable,
@@ -116,6 +137,8 @@ export async function reconcileContradictions(
 export async function resolveContradiction(a: {
   organizationId: number;
   userId: number;
+  /** Whether the resolver's role carries signing authority; a critical finding needs it. */
+  signingAuthority: boolean;
   contradictionId: string;
   reason: unknown;
   ipAddress?: string;
@@ -133,6 +156,13 @@ export async function resolveContradiction(a: {
     const row = rows[0];
     if (!row) return refuse(404, 'NOT_FOUND', 'Contradiction not found.');
     if (row.status === 'resolved') return refuse(409, 'ALREADY_RESOLVED', 'That contradiction is already resolved.');
+    if (row.severity === 'critical' && !a.signingAuthority) {
+      return refuse(
+        403,
+        'ESIGNATURE_NO_AUTHORITY',
+        'A critical finding blocks every section approval, so resolving it needs a role with signing authority. Nothing was changed.',
+      );
+    }
     await client.query(
       `UPDATE cmc_contradictions SET status = 'resolved', updated_at = NOW() WHERE id = $1 AND organization_id = $2`,
       [row.id, a.organizationId],

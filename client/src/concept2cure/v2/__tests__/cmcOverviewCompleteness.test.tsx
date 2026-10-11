@@ -227,6 +227,28 @@ describe('CmOverview — a signature is over content, not a section number', () 
     expect(await screen.findByPlaceholderText('Reason for this approval...')).toBeTruthy();
   });
 
+  /* GA plan item 4: the panel shows the content hash the signature covers, and
+     the signature carries it back, so a recompile between the read and the
+     signing is refused by the server (409 SECTION_CHANGED) instead of signing
+     content nobody read. */
+  it('sends the content hash the signer actually read with the signature', async () => {
+    wire(board({ sections: [section('3.2.P.5', 'draft', 100)] }));
+    render(<CmOverview ask={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Approve section/ }));
+    expect(await screen.findByText(/abc123def456/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Sign & approve/ }));
+    fireEvent.change(await screen.findByPlaceholderText('Reason for this approval...'), { target: { value: 'Reviewed against the CoA and the executed record.' } });
+    fireEvent.change(screen.getByPlaceholderText('Re-enter your password'), { target: { value: 'pw' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sign & approve/ }));
+
+    await vi.waitFor(() => expect(approvePosts()).toHaveLength(1));
+    const body = (apiRequest.mock.calls as Array<[string, string, Record<string, unknown>]>)
+      .find((c) => c[0] === 'POST' && APPROVE.test(c[1]))![2];
+    expect(body.compiledHash).toBe('abc123def4567890');
+    expect(body.reason).toBe('Reviewed against the CoA and the executed record.');
+  });
+
   it('offers NO signature when the section could not be read', async () => {
     /* A failed read is not an empty section, and it is certainly not something
        to sign: the control is withheld and the failure is named. */
