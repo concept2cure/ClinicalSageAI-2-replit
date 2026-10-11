@@ -25,6 +25,22 @@ process.env.JWT_SECRET =
 process.env.JWT_SECRET_DEV =
   process.env.JWT_SECRET_DEV || 'test-jwt-secret-for-unit-tests-min-32-chars-long';
 process.env.DATABASE_URL_DEV = process.env.DATABASE_URL_DEV || process.env.DATABASE_URL;
+// 2026-10-11 (D2): this suite runs against the global `pg` mock below, where RLS
+// cannot actually be enforced — there is no Postgres to apply a policy. But
+// RLS_ENFORCE reached it anyway: server/db/runtime.ts imports
+// server/config/load-env-files, which dotenv-loads `.env`, and a developer's
+// `.env` sets RLS_ENFORCE=on (the one value production accepts). The mocked pool
+// then refused every unscoped query — correctly, by its own contract — and
+// because a handler's catch flattens that rejection into a generic error, the
+// failure surfaced as "the mock was never called" several layers away. Two files
+// were failing that way (batch-draft-sections, transmit-guard-reports-checks,
+// 8 tests) while CI stayed green, because CI's mocked-pg jobs have no `.env`.
+// So: default it OFF for the mocked suite, which is the mode CI already runs it
+// in. `||` keeps any explicit value, so the two CI jobs that set RLS_ENFORCE=on
+// (the real-database suites, which DO have a Postgres and are where enforcement
+// is actually proven) and any TEST_REAL_DB=1 run are unaffected. dotenv uses
+// override: false, so this assignment wins over `.env`.
+process.env.RLS_ENFORCE = process.env.RLS_ENFORCE || 'off';
 // 2026-09-23 (W5/D7, round-2 skeptic): assembleSequence stages packages under
 // <bundle root>/staging, and the default root is <cwd>/uploads/submission-bundles
 // — so a test that never reached cleanup() left packages in the repository's own

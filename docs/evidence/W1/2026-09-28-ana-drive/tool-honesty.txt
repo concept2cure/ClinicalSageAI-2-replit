@@ -1,0 +1,108 @@
+D2 — every read tool AnA is offered, called for real
+2026-10-11, concept2cure-v2, local PostgreSQL (GA demo seed), no model
+
+── What was run ─────────────────────────────────────────────────────────────
+With launch scope enforced, AnA is offered 172 distinct tools. 145 of them are
+classed `read` in tool-authorization.register.json. Every one was called
+through its real handler against the local database, with the required
+arguments filled from the tool's own schema (enums take their first value, a
+program argument takes BX-301, a document argument the seed's one authoring
+document). The 27 that are not `read` — write, command, confirm, refuse —
+were not called: running them is a governed act, not a smoke test.
+
+Outcome: 115 answered cleanly. 29 answered with an honest refusal naming what
+was missing or unreachable ("Provide brand_name, generic_name, or query",
+"No study design is bound to protocol 1", "ClinicalTrials.gov API returned
+HTTP 403"). 1 threw where its schema said the argument was optional. No SQL
+error, no timeout, no crash. The failures below are what the sweep was for.
+
+── The defect: a register that could not be reached reported zero ───────────
+Two safety registers, FAERS (drug adverse events) and MAUDE (device adverse
+events), answered a FAILED request as a search that found nothing.
+
+  search_drug_adverse_events {"product_name": "aspirin"}
+  FDA FAERS API query: patient.drug.medicinalproduct:aspirin
+  Error searching FDA FAERS: HTTP Error: 403 Forbidden
+  -> {"source":"FDA FAERS (openFDA)","summary":{"serious_percentage":0,
+      "adverse_events_count":0,"top_adverse_events":[],
+      "summary":"Analysis of undefined FDA FAERS reports found undefined
+      serious reports (0%) and 0 unique adverse events."},
+      "provenance":[{... "title":"FAERS adverse-event signal for aspirin
+      (0 reports)" ...}]}
+
+Nobody reached FAERS. AnA was handed a clean zero, with provenance, and the
+word "undefined" where the counts should be. On a safety register that is the
+worst available lie: "no adverse events are reported for this product" when
+the question was never asked. MAUDE did the same, and worse — its client
+returned `[]` on failure, so nothing downstream could tell a failed search
+from an empty one.
+
+Why both paths produced it:
+  - fda_faers_client.js catches a transport failure and returns
+    `{ error, meta: {total: 0}, results: { adverse_events: [] } }`. The
+    handler never looked at `.error`, and analyzeFaersData read no counts off
+    that empty body — hence "undefined".
+  - fda_maude_client.js caught and returned `[]`. Its own comment said
+    "Return an empty array with error information"; there was no error
+    information in an empty array.
+  - Both handlers' own catch blocks then reported `summary: {total_reports: 0}`.
+
+── The fix ──────────────────────────────────────────────────────────────────
+  server/services/ana/AnaToolExecutor.ts
+    - openFdaUnavailable(): a register that could not be searched answers
+      `status: 'unavailable'` with the reason and the sentence "No reports
+      were retrieved, so this is not a finding of zero adverse events: say
+      the search could not run." No counts, no provenance, nothing to quote.
+    - The FAERS handler now reads the client's `error` field, not only throws.
+    - hasOpenFdaCriteria(): a call naming nothing to search for is refused as
+      needs_parameters instead of being sent. Both clients answer a
+      criteria-less search with an empty result, which read as zero too.
+  server/fda_maude_client.js
+    - The catch rethrows instead of returning []. AnA's tool catches it; the
+      other caller (data_integration.js) already catches and leaves MAUDE out
+      of its source list, which is the honest outcome there.
+
+A search that really ran is unchanged: real counts, real provenance.
+
+── The test, seen failing first ─────────────────────────────────────────────
+server/services/ana/__tests__/openfda-unreachable-honesty.test.ts, 8 tests.
+With both fixes stashed:
+ × FAERS: the client reporting a failed request is not a finding of zero adverse events
+ × FAERS: a thrown request says so too
+ × FAERS: a search naming nothing is refused, not sent as a blank query
+ ✓ FAERS: a search that ran reports its real counts
+ × MAUDE: a thrown request is not a finding of zero device reports
+ × MAUDE: a search naming nothing is refused, not sent as a blank query
+ ✓ MAUDE: a search that ran reports its real counts
+ × the MAUDE client itself: raises a failed search instead of returning an empty list
+      Tests  6 failed | 2 passed (8)
+Restored: 8 passed. The two that pass either way are the no-regression
+checks — a search that really ran still reports 42 and 7 reports.
+The existing adverse-event-provenance.test.ts passes unchanged (3 tests).
+
+── Found, not fixed here ────────────────────────────────────────────────────
+Four more defects the sweep turned up, each on a call its own schema allows.
+They are separate engines with separate owners, and none of them is a
+wrong-answer-presented-as-fact of the kind above:
+  - design_stability_study throws "intendedMarkets is not iterable" when that
+    OPTIONAL array is omitted (cmc-quality-knowledge.ts destructures it and
+    iterates without a default).
+  - assess_pregnancy_lactation_labeling answers needs_parameters with the raw
+    message "Cannot read properties of undefined (reading 'length')" when the
+    OPTIONAL animalReproToxData is omitted.
+  - compare_statistical_scenarios reports "Scenario A has NaN% power with
+    N=Infinity" when a scenario object is passed with no fields: the
+    orchestrator computes from an unvalidated normalized input instead of
+    refusing. quickCompute on the same engine DOES check validation.valid;
+    compareScenarios does not.
+  - Eight outside-data lookups answered HTTP 403 from this container (no
+    outbound access to ClinicalTrials.gov, ChEMBL, Europe PMC, Grants.gov,
+    EMA, EUDAMED, CTIS, CMS). Every one of those EIGHT already says so
+    honestly — "unavailable", with a manual-search URL. They are listed here
+    only to record that the 403s in this sweep are the container, not the
+    code.
+
+── How to repeat it ─────────────────────────────────────────────────────────
+The sweep script is harness/read-tool-smoke.mts beside the browser battery.
+It reads the tool schemas captured from a battery run, calls every `read`
+tool, and writes a JSON result per tool.

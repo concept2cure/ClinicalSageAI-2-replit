@@ -1,0 +1,251 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+{
+  "timestamp": "2026-10-05T13:14:58.286Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T13:14:58.288Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+{
+  "timestamp": "2026-10-05T13:14:58.288Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > a fully authored 510k outline is not missing a slot the outline cannot supply 7ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > a fully authored de_novo outline is not missing a slot the outline cannot supply 1ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > records exactly which required slots the shipped outlines cannot supply 1ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the 510k financial-disclosure section does not satisfy performance testing 1ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the de_novo financial-disclosure section does not satisfy performance testing 1ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the 510k node-to-slot map is exactly this 1ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the de_novo node-to-slot map is exactly this 1ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510: after two deploys v1.1 is the one live pack and the chain is 2024 → v1.0 → v1.1 3684ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo: after two deploys v1.1 is the one live pack and the chain is 2024 → v1.0 → v1.1 1951ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > a third deploy changes nothing 1847ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > 510(k) v1.1 is v1.0 plus A9 (user fee, mandatory) and D6 (risk management, optional), in outline order 1913ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > De Novo v1.1 is v1.0 plus A7 (user fee, mandatory), in outline order 1867ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510 v1.1 carries its provenance from the first deploy, naming the eSTAR template and Form FDA 3601 1864ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo v1.1 carries its provenance from the first deploy, naming the eSTAR template and Form FDA 3601 1821ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510: the content assertion fails the deploy when a truncated v1.1 row already holds the key 1928ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ × tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo: the content assertion fails the deploy when a truncated v1.1 row already holds the key 1955ms
+   → ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > a fully authored 510k outline is not missing a slot the outline cannot supply
+ FAIL  tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > a fully authored de_novo outline is not missing a slot the outline cannot supply
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ ❯ shippedPacks tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts:54:18
+     52| /** The shipped packs, in file order: [0] k510, [1] denovo. Default: t…
+     53| function shippedPacks(file: string = OUTLINES) {
+     54|   const sql = fs.readFileSync(file, 'utf8');
+       |                  ^
+     55|   const blobs = [...sql.matchAll(/\$pack\$([\s\S]*?)\$pack\$/g)].map((…
+     56|   expect(blobs, 'the outlines migration no longer carries two $pack$ b…
+ ❯ tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts:97:57
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > records exactly which required slots the shipped outlines cannot supply
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ ❯ shippedPacks tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts:54:18
+     52| /** The shipped packs, in file order: [0] k510, [1] denovo. Default: t…
+     53| function shippedPacks(file: string = OUTLINES) {
+     54|   const sql = fs.readFileSync(file, 'utf8');
+       |                  ^
+     55|   const blobs = [...sql.matchAll(/\$pack\$([\s\S]*?)\$pack\$/g)].map((…
+     56|   expect(blobs, 'the outlines migration no longer carries two $pack$ b…
+ ❯ tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts:114:37
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the 510k financial-disclosure section does not satisfy performance testing
+ FAIL  tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the de_novo financial-disclosure section does not satisfy performance testing
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ ❯ shippedPacks tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts:54:18
+     52| /** The shipped packs, in file order: [0] k510, [1] denovo. Default: t…
+     53| function shippedPacks(file: string = OUTLINES) {
+     54|   const sql = fs.readFileSync(file, 'utf8');
+       |                  ^
+     55|   const blobs = [...sql.matchAll(/\$pack\$([\s\S]*?)\$pack\$/g)].map((…
+     56|   expect(blobs, 'the outlines migration no longer carries two $pack$ b…
+ ❯ tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts:147:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the 510k node-to-slot map is exactly this
+ FAIL  tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts > eSTAR slot registry vs the shipped rule packs > the de_novo node-to-slot map is exactly this
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ ❯ shippedPacks tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts:54:18
+     52| /** The shipped packs, in file order: [0] k510, [1] denovo. Default: t…
+     53| function shippedPacks(file: string = OUTLINES) {
+     54|   const sql = fs.readFileSync(file, 'utf8');
+       |                  ^
+     55|   const blobs = [...sql.matchAll(/\$pack\$([\s\S]*?)\$pack\$/g)].map((…
+     56|   expect(blobs, 'the outlines migration no longer carries two $pack$ b…
+ ❯ tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts:203:34
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510: after two deploys v1.1 is the one live pack and the chain is 2024 → v1.0 → v1.1
+ FAIL  tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo: after two deploys v1.1 is the one live pack and the chain is 2024 → v1.0 → v1.1
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ ❯ read tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:36:34
+     34|
+     35| const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.…
+     36| const read = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel…
+       |                                  ^
+     37|
+     38| const PREREQ = 'migrations/20260527_mutation_primitives.sql';
+ ❯ deploy tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:81:106
+ ❯ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:114:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > a third deploy changes nothing
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ ❯ read tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:36:34
+     34|
+     35| const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.…
+     36| const read = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel…
+       |                                  ^
+     37|
+     38| const PREREQ = 'migrations/20260527_mutation_primitives.sql';
+ ❯ deploy tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:81:106
+ ❯ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:134:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > 510(k) v1.1 is v1.0 plus A9 (user fee, mandatory) and D6 (risk management, optional), in outline order
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ ❯ read tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:36:34
+     34|
+     35| const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.…
+     36| const read = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel…
+       |                                  ^
+     37|
+     38| const PREREQ = 'migrations/20260527_mutation_primitives.sql';
+ ❯ deploy tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:81:106
+ ❯ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:142:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > De Novo v1.1 is v1.0 plus A7 (user fee, mandatory), in outline order
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ ❯ read tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:36:34
+     34|
+     35| const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.…
+     36| const read = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel…
+       |                                  ^
+     37|
+     38| const PREREQ = 'migrations/20260527_mutation_primitives.sql';
+ ❯ deploy tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:81:106
+ ❯ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:168:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510 v1.1 carries its provenance from the first deploy, naming the eSTAR template and Form FDA 3601
+ FAIL  tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo v1.1 carries its provenance from the first deploy, naming the eSTAR template and Form FDA 3601
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ ❯ read tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:36:34
+     34|
+     35| const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.…
+     36| const read = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel…
+       |                                  ^
+     37|
+     38| const PREREQ = 'migrations/20260527_mutation_primitives.sql';
+ ❯ deploy tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:81:106
+ ❯ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:188:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > k510: the content assertion fails the deploy when a truncated v1.1 row already holds the key
+ FAIL  tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts > k510:fda and denovo:fda v1.1 — user fee and risk management, replay-safe > denovo: the content assertion fails the deploy when a truncated v1.1 row already holds the key
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql'
+ ❯ read tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:36:34
+     34|
+     35| const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.…
+     36| const read = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel…
+       |                                  ^
+     37|
+     38| const PREREQ = 'migrations/20260527_mutation_primitives.sql';
+ ❯ tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts:215:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/migrations/20261005c_k510_denovo_estar_outline_v1_1.sql' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  16 failed (16)
+   Start at  13:14:55
+   Duration  19.38s (transform 1.51s, setup 235ms, import 2.95s, tests 18.86s, environment 0ms)
+
+
+=== RED 2: the amended ledger ([] for the live packs) evaluated against the packs live at HEAD (fda-estar-*-v1.0, 20260901b) — a copy of the test with OUTLINES pointed at 20260901b ===
+ × tests/schema-contract/zz-k510-red-probe-tmp.contract.test.ts > eSTAR slot registry vs the shipped rule packs > records exactly which required slots the shipped outlines cannot supply 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/zz-k510-red-probe-tmp.contract.test.ts > eSTAR slot registry vs the shipped rule packs > records exactly which required slots the shipped outlines cannot supply
+AssertionError: expected [ 'risk-management', …(1) ] to deeply equal []
+- Expected
++ Received
+      Tests  1 failed | 6 skipped (7)

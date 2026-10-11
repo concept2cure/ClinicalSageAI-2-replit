@@ -1,0 +1,456 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > records Principles + Annex 1 in force in the EU from 2025-07-23 20ms
+   → no EU E6(R3) fact: expected undefined to be defined
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > records Annex 2 as upcoming in the EU until 2027-01-15, then in force 6ms
+   → no EU E6(R3) Annex 2 fact: expected undefined to be defined
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > keeps the ICH Step 4 facts, and their notes say Step 4 is not regional effect 2ms
+   → ich-e6r3-gcp-step4: expected 'ICH E6(R3) Good Clinical Practice (Pr…' to match /regional effect differs/i
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > leaves "supersedes E6(R2)" on the ICH fact only 1ms
+   → no fact eu-e6r3-effective in the currency registry
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > resolves an EU "ICH E6(R3) Annex 2" citation to the EU fact and says it is not yet in effect 9ms
+   → expected 'ich-e6r3-annex2-step4' to be 'eu-e6r3-annex2-effective' // Object.is equality
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > does not call a current EU Annex 2 citation stale against a date still to come 1ms
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > resolves an EU "ICH E6(R3)" citation to the EU Principles fact 15ms
+   → expected { …(6) } to match object { current: true, …(2) }
+(6 matching properties omitted from actual)
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > dates an EU E6(R2) citation as superseded on the EU date 1ms
+   → expected 'ich-e6r3-gcp-step4' to be 'eu-e6r3-effective' // Object.is equality
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > still answers a citation with no jurisdiction from the ICH Step 4 facts 1ms
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > records EMA eCTD v4.0 as optional for new centralised MAAs since 2025-12-22 1ms
+   → no fact ema-ectd-v4-cp-optional in the currency registry
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > identifies an EU "eCTD v4.0" citation as the EMA fact, not FDA or PMDA 1ms
+   → expected undefined to be 'ema-ectd-v4-cp-optional' // Object.is equality
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > records EU M1 v3.1.1 with validation criteria v8.2 as mandatory since 2025-12-01 11ms
+   → no fact eu-ectd-m1-v311-vc-v82 in the currency registry
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > derives the EU eCTD datasheet format from the dated facts 0ms
+   → no fact ema-ectd-v4-cp-optional in the currency registry
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > cites EU M1 v3.1.1 by fact id where filing types used to cite v3.0 1ms
+   → EU_MAA: expected 'ICH M4; EU Module 1 Specification v3.…' to match /M1(?: Specification)? v3\.1\.1/
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded, undated, and never promoted > holds no effective date until the Official Journal fixes one 0ms
+   → no fact eu-pharma-package in the currency registry
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded, undated, and never promoted > is never promoted to in force, whatever the date 0ms
+   → no fact eu-pharma-package in the currency registry
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded, undated, and never promoted > stays on the change radar after any draft date — an undated change never predates a document 1ms
+   → expected [] to include 'eu-pharma-package'
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded, undated, and never promoted > is the one statement of the package in AnA's EU prompt 16ms
+   → no fact eu-pharma-package in the currency registry
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > every fact carries a date or the explicit not-fixed marker > has an ISO effective date unless it is marked not fixed 2ms
+   → hasFixedEffectiveDate is not a function
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-10-05T12:54:52.809Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T12:54:52.810Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-10-05T12:54:52.811Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report an EU CTA submittable through the medicines dossier gateway 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > names the channel it cannot transmit to, rather than reporting a bare gap 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report a centralised-procedure filing submittable through CESP 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > routes every centralised EMA eCTD filing to the eSubmission Gateway, not CESP 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > keeps national, MRP and DCP filings on CESP — the positive control 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > is the one channel function: CTIS is a portal, an EMA device filing goes to EUDAMED 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > lists the unconnected centralised filings in the integration backlog 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > counts the portal-only channel in the report rather than hiding it in submittable 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > an EMA filing outside the centralised procedure is not sent to the eSubmission Gateway > does not claim the centralised procedure or the eSubmission Gateway for an EMA IRIS filing 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > an EMA filing outside the centralised procedure is not sent to the eSubmission Gateway > fails closed for an EMA filing whose channel is not modelled — never the CESP region default 4ms
+ × server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > declares IRIS, not eCTD, on orphan designation, PIP, scientific advice and PRIME 7ms
+   → EU_ORPHAN: expected 'eCTD' to be 'IRIS' // Object.is equality
+ × server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > routes every entry the registry declares IRIS to EMA IRIS, and no other entry 5ms
+   → expected [] to deeply equal [ 'EU_ORPHAN', 'EU_PIP', …(2) ]
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > never reports an IRIS filing submittable, and keeps the centralised MAA on the eSubmission Gateway 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > records Principles + Annex 1 in force in the EU from 2025-07-23
+AssertionError: no EU E6(R3) fact: expected undefined to be defined
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:42:45
+     40|     const facts = findFacts({ topic: 'E6(R3)', jurisdiction: 'EU', asO…
+     41|     const principles = facts.find((f) => f.id === 'eu-e6r3-effective');
+     42|     expect(principles, 'no EU E6(R3) fact').toBeDefined();
+       |                                             ^
+     43|     expect(principles).toMatchObject({ jurisdiction: 'EU', status: 'in…
+     44|     expect(principles!.sourceUrl).toMatch(/^https:\/\/www\.ema\.europa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > records Annex 2 as upcoming in the EU until 2027-01-15, then in force
+AssertionError: no EU E6(R3) Annex 2 fact: expected undefined to be defined
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:51:49
+     49|       (f) => f.id === 'eu-e6r3-annex2-effective',
+     50|     );
+     51|     expect(annex2, 'no EU E6(R3) Annex 2 fact').toBeDefined();
+       |                                                 ^
+     52|     expect(annex2).toMatchObject({ status: 'mandatory_upcoming', effec…
+     53|     expect(statusAsOf(fact('eu-e6r3-annex2-effective'), '2027-01-14'))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > keeps the ICH Step 4 facts, and their notes say Step 4 is not regional effect
+AssertionError: ich-e6r3-gcp-step4: expected 'ICH E6(R3) Good Clinical Practice (Pr…' to match /regional effect differs/i
+
+- Expected:
+/regional effect differs/i
+
++ Received:
+"ICH E6(R3) Good Clinical Practice (Principles + Annex 1) reached Step 4 on 2025-01-06, modernising GCP around quality-by-design and varied trial types; it supersedes E6(R2). Annex 2 (non-traditional/decentralised trials, RWD) reached Step 4 on 2026-06-03 — see ich-e6r3-annex2-step4."
+
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:60:33
+     58|     for (const id of ['ich-e6r3-gcp-step4', 'ich-e6r3-annex2-step4']) {
+     59|       expect(fact(id).jurisdiction).toBe('ICH');
+     60|       expect(fact(id).note, id).toMatch(/regional effect differs/i);
+       |                                 ^
+     61|     }
+     62|     expect(fact('ich-e6r3-gcp-step4').note).toContain('eu-e6r3-effecti…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > leaves "supersedes E6(R2)" on the ICH fact only
+Error: no fact eu-e6r3-effective in the currency registry
+ ❯ fact server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:34:17
+     32| const fact = (id: string): RegulatoryFact => {
+     33|   const f = REGULATORY_FACTS.find((x) => x.id === id);
+     34|   if (!f) throw new Error(`no fact ${id} in the currency registry`);
+       |                 ^
+     35|   return f;
+     36| };
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:68:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > resolves an EU "ICH E6(R3) Annex 2" citation to the EU fact and says it is not yet in effect
+AssertionError: expected 'ich-e6r3-annex2-step4' to be 'eu-e6r3-annex2-effective' // Object.is equality
+
+Expected: "eu-e6r3-annex2-effective"
+Received: "ich-e6r3-annex2-step4"
+
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:79:25
+     77|       citedGuidances: [{ title: 'ICH E6(R3) Annex 2', jurisdiction: 'E…
+     78|     }).results;
+     79|     expect(r.basis?.id).toBe('eu-e6r3-annex2-effective');
+       |                         ^
+     80|     expect(r.latestKnownDate).toBe('2027-01-15');
+     81|     expect(r.warning ?? '').toMatch(/not yet in effect/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > resolves an EU "ICH E6(R3)" citation to the EU Principles fact
+AssertionError: expected { …(6) } to match object { current: true, …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "basis": {
+-     "id": "eu-e6r3-effective",
++     "id": "ich-e6r3-gcp-step4",
+    },
+    "current": true,
+-   "latestKnownDate": "2025-07-23",
++   "latestKnownDate": "2025-01-06",
+  }
+
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:98:15
+     96|       citedGuidances: [{ title: 'ICH E6(R3) Good Clinical Practice', j…
+     97|     }).results;
+     98|     expect(r).toMatchObject({ current: true, basis: { id: 'eu-e6r3-eff…
+       |               ^
+     99|   });
+    100|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > dates an EU E6(R2) citation as superseded on the EU date
+AssertionError: expected 'ich-e6r3-gcp-step4' to be 'eu-e6r3-effective' // Object.is equality
+
+Expected: "eu-e6r3-effective"
+Received: "ich-e6r3-gcp-step4"
+
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:107:25
+    105|     }).results;
+    106|     expect(r.current).toBe(false);
+    107|     expect(r.basis?.id).toBe('eu-e6r3-effective');
+       |                         ^
+    108|     expect(r.warning ?? '').toContain('2025-07-23');
+    109|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > records EMA eCTD v4.0 as optional for new centralised MAAs since 2025-12-22
+Error: no fact ema-ectd-v4-cp-optional in the currency registry
+ ❯ fact server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:34:17
+     32| const fact = (id: string): RegulatoryFact => {
+     33|   const f = REGULATORY_FACTS.find((x) => x.id === id);
+     34|   if (!f) throw new Error(`no fact ${id} in the currency registry`);
+       |                 ^
+     35|   return f;
+     36| };
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:123:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > identifies an EU "eCTD v4.0" citation as the EMA fact, not FDA or PMDA
+AssertionError: expected undefined to be 'ema-ectd-v4-cp-optional' // Object.is equality
+
+- Expected:
+"ema-ectd-v4-cp-optional"
+
++ Received:
+undefined
+
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:137:25
+    135|       citedGuidances: [{ title: 'eCTD v4.0', jurisdiction: 'EU' }],
+    136|     }).results;
+    137|     expect(r.basis?.id).toBe('ema-ectd-v4-cp-optional');
+       |                         ^
+    138|   });
+    139|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > records EU M1 v3.1.1 with validation criteria v8.2 as mandatory since 2025-12-01
+Error: no fact eu-ectd-m1-v311-vc-v82 in the currency registry
+ ❯ fact server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:34:17
+     32| const fact = (id: string): RegulatoryFact => {
+     33|   const f = REGULATORY_FACTS.find((x) => x.id === id);
+     34|   if (!f) throw new Error(`no fact ${id} in the currency registry`);
+       |                 ^
+     35|   return f;
+     36| };
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:141:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > derives the EU eCTD datasheet format from the dated facts
+Error: no fact ema-ectd-v4-cp-optional in the currency registry
+ ❯ fact server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:34:17
+     32| const fact = (id: string): RegulatoryFact => {
+     33|   const f = REGULATORY_FACTS.find((x) => x.id === id);
+     34|   if (!f) throw new Error(`no fact ${id} in the currency registry`);
+       |                 ^
+     35|   return f;
+     36| };
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:153:43
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > cites EU M1 v3.1.1 by fact id where filing types used to cite v3.0
+AssertionError: EU_MAA: expected 'ICH M4; EU Module 1 Specification v3.…' to match /M1(?: Specification)? v3\.1\.1/
+
+- Expected:
+/M1(?: Specification)? v3\.1\.1/
+
++ Received:
+"ICH M4; EU Module 1 Specification v3.0 (eCTD EU regional M1); Regulation (EC) 726/2004."
+
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:161:29
+    159|     for (const id of ['EU_MAA', 'EU_VARIATION_IA', 'EU_VARIATION_IB', …
+    160|       const authority = getApplicationType(id)?.moduleAuthority ?? '';
+    161|       expect(authority, id).toMatch(/M1(?: Specification)? v3\.1\.1/);
+       |                             ^
+    162|       expect(authority, id).toContain('eu-ectd-m1-v311-vc-v82');
+    163|       expect(authority, id).not.toMatch(/v3\.0\b/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded, undated, and never promoted > holds no effective date until the Official Journal fixes one
+Error: no fact eu-pharma-package in the currency registry
+ ❯ fact server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:34:17
+     32| const fact = (id: string): RegulatoryFact => {
+     33|   const f = REGULATORY_FACTS.find((x) => x.id === id);
+     34|   if (!f) throw new Error(`no fact ${id} in the currency registry`);
+       |                 ^
+     35|   return f;
+     36| };
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:170:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded, undated, and never promoted > is never promoted to in force, whatever the date
+Error: no fact eu-pharma-package in the currency registry
+ ❯ fact server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:34:17
+     32| const fact = (id: string): RegulatoryFact => {
+     33|   const f = REGULATORY_FACTS.find((x) => x.id === id);
+     34|   if (!f) throw new Error(`no fact ${id} in the currency registry`);
+       |                 ^
+     35|   return f;
+     36| };
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:180:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded, undated, and never promoted > stays on the change radar after any draft date — an undated change never predates a document
+AssertionError: expected [] to include 'eu-pharma-package'
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:186:41
+    184|   it('stays on the change radar after any draft date — an undated chan…
+    185|     const radar = changeRadar({ jurisdictions: ['EU'], draftedOn: '209…
+    186|     expect(radar.map((d) => d.fact.id)).toContain('eu-pharma-package');
+       |                                         ^
+    187|     // Dated facts are ordered by date; the undated one is ordered las…
+    188|     const ids = changeRadar({ jurisdictions: ['EU'] }).map((d) => d.fa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded, undated, and never promoted > is the one statement of the package in AnA's EU prompt
+Error: no fact eu-pharma-package in the currency registry
+ ❯ fact server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:34:17
+     32| const fact = (id: string): RegulatoryFact => {
+     33|   const f = REGULATORY_FACTS.find((x) => x.id === id);
+     34|   if (!f) throw new Error(`no fact ${id} in the currency registry`);
+       |                 ^
+     35|   return f;
+     36| };
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:195:47
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/19]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > every fact carries a date or the explicit not-fixed marker > has an ISO effective date unless it is marked not fixed
+TypeError: hasFixedEffectiveDate is not a function
+ ❯ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts:203:11
+    201|   it('has an ISO effective date unless it is marked not fixed', () => {
+    202|     for (const f of REGULATORY_FACTS) {
+    203|       if (hasFixedEffectiveDate(f)) expect(f.effectiveDate, f.id).toMa…
+       |           ^
+    204|       else expect(f.status, `${f.id}: only a future change may be unda…
+    205|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/19]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > declares IRIS, not eCTD, on orphan designation, PIP, scientific advice and PRIME
+AssertionError: EU_ORPHAN: expected 'eCTD' to be 'IRIS' // Object.is equality
+
+Expected: "IRIS"
+Received: "eCTD"
+
+ ❯ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts:197:43
+    195|       const entry = getApplicationType(id);
+    196|       expect(entry, `${id} missing from the registry`).toBeTruthy();
+    197|       expect(entry!.submissionFormat, id).toBe('IRIS');
+       |                                           ^
+    198|       expect(entry!.dossierStandard, `${id} is not an eCTD dossier`).n…
+    199|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/19]⎯
+
+ FAIL  server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > the registry declares IRIS for the EMA filings that go through IRIS > routes every entry the registry declares IRIS to EMA IRIS, and no other entry
+AssertionError: expected [] to deeply equal [ 'EU_ORPHAN', 'EU_PIP', …(2) ]
+
+- Expected
++ Received
+
+- [
+-   "EU_ORPHAN",
+-   "EU_PIP",
+-   "EU_PRIME",
+-   "EU_SCIENTIFIC_ADVICE",
+- ]
++ []
+
+ ❯ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts:207:22
+    205|   it('routes every entry the registry declares IRIS to EMA IRIS, and n…
+    206|     const declared = GLOBAL_REGISTRY.filter((e) => e.submissionFormat …
+    207|     expect(declared).toEqual([...IRIS_IDS].sort());
+       |                      ^
+    208|     for (const entry of GLOBAL_REGISTRY) {
+    209|       const ch = submissionChannelFor(entry);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/19]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  19 failed | 13 passed (32)
+   Start at  12:54:49
+   Duration  5.95s (transform 4.05s, setup 306ms, import 5.31s, tests 151ms, environment 0ms)
+
+
+=== ADDENDUM (2026-10-05): two assertions added after the run above ===
+1. 'cites EU M1 v3.1.1 by fact id where filing types used to cite v3.0' now also covers EU_CMA, EU_BIOSIMILAR_MAA, EU_LINE_EXTENSION, EU_CTD_M1_REGIONAL, ICH_CTD_M1. It was already red above. On HEAD these entries cite v3.0:
+entry('EU_MAA'	EU Module 1 Specification v3.0
+entry('EU_VARIATION_IA'	EU M1 v3.0
+entry('EU_VARIATION_IB'	EU M1 v3.0
+entry('EU_VARIATION_II'	EU M1 v3.0
+entry('EU_RMP'	EU Module 1 Specification v3.0
+entry('EU_RENEWAL'	EU M1 v3.0
+entry('EU_CMA'	EU M1 v3.0
+entry('ICH_CTD_M1'	EU M1 v3.0
+entry('EU_BIOSIMILAR_MAA'	EU M1 v3.0
+entry('EU_LINE_EXTENSION'	EU M1 v3.0
+entry('EU_CTD_M1_REGIONAL'	EU Module 1 Specification v3.0
+2. 'identifies an "EU M1 v3.1.1" citation although "M1" reads as an ICH code' expects basis id eu-ectd-m1-v311-vc-v82. On HEAD that fact does not exist:
+   grep -c eu-ectd-m1-v311-vc-v82 in HEAD currency-registry.ts = 0
+   On HEAD, identify() returned null for any title with an ICH-code-shaped token that no registry held ("M1"), with no fallback to names.
+
+=== Fix round 1 addendum (2026-10-05): the pharma package stored as 'proposed' (founder decision 25) ===
+Run: npx vitest run server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts
+Against the round-0 code (eu-pharma-package status 'mandatory_upcoming', note 'adopted by the Council on 2026-09-28', no 'proposed' verdict branch), the revised test fails 4 of 21:
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > records Principles + Annex 1 in force in the EU from 2025-07-23 6ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > records Annex 2 as upcoming in the EU until 2027-01-15, then in force 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > keeps the ICH Step 4 facts, and their notes say Step 4 is not regional effect 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > ICH E6(R3) in the EU is dated by EMA, not by ICH Step 4 > leaves "supersedes E6(R2)" on the ICH fact only 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > resolves an EU "ICH E6(R3) Annex 2" citation to the EU fact and says it is not yet in effect 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > does not call a current EU Annex 2 citation stale against a date still to come 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > resolves an EU "ICH E6(R3)" citation to the EU Principles fact 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > dates an EU E6(R2) citation as superseded on the EU date 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > check_guidance_freshness answers an EU citation with the EU fact > still answers a citation with no jurisdiction from the ICH Step 4 facts 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > records EMA eCTD v4.0 as optional for new centralised MAAs since 2025-12-22 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > identifies an EU "eCTD v4.0" citation as the EMA fact, not FDA or PMDA 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > records EU M1 v3.1.1 with validation criteria v8.2 as mandatory since 2025-12-01 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > derives the EU eCTD datasheet format from the dated facts 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > cites EU M1 v3.1.1 by fact id where filing types used to cite v3.0 1ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > EU eCTD dated facts > identifies an "EU M1 v3.1.1" citation although "M1" reads as an ICH code 0ms
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > is stored as a proposal with no effective date 11ms
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > is never promoted to in force, whatever the date 2ms
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > a citation of it is reported as proposed, not current, and never as adopted 2ms
+ × server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > stays on the change radar after any draft date — an undated change never predates a document 2ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > is the one statement of the package in AnA's EU prompt 0ms
+ ✓ server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > every fact carries a date or the explicit not-fixed marker > has an ISO effective date unless it is marked not fixed 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > is stored as a proposal with no effective date
+AssertionError: expected { id: 'eu-pharma-package', …(10) } to match object { jurisdiction: 'EU', …(1) }
+- Expected
++ Received
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > is never promoted to in force, whatever the date
+AssertionError: expected 'mandatory_upcoming' to be 'proposed' // Object.is equality
+Expected: "proposed"
+Received: "mandatory_upcoming"
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > a citation of it is reported as proposed, not current, and never as adopted
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+ FAIL  server/services/regulatory-currency/__tests__/eu-dated-facts.test.ts > the pharma package is recorded as proposed, undated, and never promoted > stays on the change radar after any draft date — an undated change never predates a document
+AssertionError: expected 'mandatory_change' to be 'info' // Object.is equality
+Expected: "info"
+Received: "mandatory_change"
+      Tests  4 failed | 17 passed (21)

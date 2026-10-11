@@ -36,11 +36,12 @@ import { serverError } from '../lib/api-response.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { resolveOrgId, resolveUserId } from '../types/auth-request.js';
 
-// Also import device registry
-let getDeviceSections: ((type: '510K' | 'PMA' | 'DE_NOVO' | 'CER') => Array<{ code: string; title: string; required: boolean; guidance: string }>) | null = null;
+// Also import device registry. CER and IVDR answer from the canonical outlines
+// (market-specs/cer-structure.ts, per-structure.ts) through its projection.
+type DeviceRegistry = typeof import('../services/device/device-section-registry.js');
+let deviceRegistry: Pick<DeviceRegistry, 'getDeviceSections' | 'isDeviceSubmissionType' | 'DEVICE_SUBMISSION_TYPES'> | null = null;
 try {
-  const deviceMod = await import('../services/device/device-section-registry.js');
-  getDeviceSections = deviceMod.getDeviceSections;
+  deviceRegistry = await import('../services/device/device-section-registry.js');
 } catch {
   // Device registry not available
 }
@@ -283,20 +284,28 @@ router.get('/guidance', (_req: Request, res: Response) => {
 });
 
 // ─── GET /api/ind/device-status/:type/:projectId ──────────────────────────────
-// Universal section status for device submissions (510K, PMA, CER, DE_NOVO)
+// Universal section status for device submissions (510K, PMA, DE_NOVO, CER, IVDR)
 
 router.get('/device-status/:type/:projectId', async (req: Request, res: Response) => {
   try {
     const { type } = req.params;
     const projectRef = projectRefOf(req.params.projectId);
     if (!projectRef) return sendBadProjectRef(res);
-    const deviceType = String(type).toUpperCase() as '510K' | 'PMA' | 'DE_NOVO' | 'CER';
+    const deviceType = String(type).toUpperCase();
 
-    if (!getDeviceSections) {
-      return res.json({ success: true, data: { sections: [], totalSections: 0, completedSections: 0 } });
+    // No registry is this server's failure, and a type with no outline is the
+    // caller's: neither is a project with nothing drafted.
+    if (!deviceRegistry) {
+      return res.status(503).json({ success: false, error: 'Device section registry unavailable' });
+    }
+    if (!deviceRegistry.isDeviceSubmissionType(deviceType)) {
+      return res.status(400).json({
+        success: false,
+        error: `Unknown device submission type. Known: ${deviceRegistry.DEVICE_SUBMISSION_TYPES.join(', ')}`,
+      });
     }
 
-    const sections = getDeviceSections(deviceType);
+    const sections = deviceRegistry.getDeviceSections(deviceType);
     if (!sections || sections.length === 0) {
       return res.json({ success: true, data: { sections: [], totalSections: 0, completedSections: 0 } });
     }
