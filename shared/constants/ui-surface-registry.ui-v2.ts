@@ -889,7 +889,16 @@ export const UI_V2_SURFACES: UiSurface[] = [
     // Launch-scope API (2026-09-30): the catalog and every run are under /api/audit,
     // which is never gated (the audit trail is never switchable); the run is
     // role-gated to organisation owners, admins and managers.
-    apiPrefixes: ['/api/audit'],
+    //
+    // 2026-10-11: the audit-trail attestation joins them. GET /api/tenant-export/
+    // attestation walks this tenant's audit hash chain, recomputes every entry
+    // and HMAC-signs the verdict (§11.10(e)); it is admin-gated and records its
+    // own audit row per pull. It had no caller in the client, so the one report
+    // that attests the RECORD is intact — rather than reporting what the record
+    // says — was unreachable. Only that one path is claimed: the rest of
+    // /api/tenant-export (the full tenant export and the purge preconditions)
+    // has no screen here and stays unmapped.
+    apiPrefixes: ['/api/audit', '/api/tenant-export/attestation'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
