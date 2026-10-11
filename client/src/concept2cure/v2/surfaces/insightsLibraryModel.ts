@@ -230,6 +230,126 @@ export function schedulableTypes<T extends { runnable?: boolean; entitled?: bool
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   A run's Part 11 evidence: its seal, its signature, and its sources
+   ══════════════════════════════════════════════════════════════════ */
+
+/** One of the four checks `readRunSeal` performs, with its written reason. */
+export interface SealCheck {
+  check: 'audit-chain' | 'stored-seal' | 'stored-document' | 'signature';
+  ok: boolean;
+  detail: string;
+}
+
+/** `GET /api/report-os/runs/:id/seal` — the sealing act, read back and re-verified. */
+export interface RunSealView {
+  runId: number;
+  sealed: boolean;
+  seal: { algorithm: string | null; contentHash: string | null; atomCount: number | null; sealedAt: string | null } | null;
+  finalizedAt: string | null;
+  signature: { signerName: string | null; signedAt: string | null; meaning: string | null } | null;
+  finalization: { reason: string | null; meaning: string | null; priorStatus: string | null } | null;
+  verification: { verdict: 'intact' | 'mismatch' | 'not-verifiable'; checks: SealCheck[] };
+}
+
+/** One row of `GET /api/report-os/runs/:id/dependencies`. */
+export interface RunDependencyRow {
+  id: number;
+  runId: number;
+  provider: string;
+  status: string;
+  blocker: string | null;
+  observedAt: string;
+  payload?: unknown;
+}
+
+/** What each seal verdict MEANS, in the words an inspector needs.
+ *
+ *  The three are not degrees of the same thing, and must not read as if they
+ *  were: `intact` is positive evidence, `mismatch` is positive evidence of a
+ *  problem, and `not-verifiable` is the absence of evidence either way. A UI
+ *  that rendered the last as a quiet "unverified" badge is how a broken chain
+ *  stayed invisible (SECURITY-8, reporting review 2026-10-01). */
+export const SEAL_VERDICT: Readonly<Record<string, { label: string; meaning: string }>> = {
+  intact: {
+    label: 'Seal verified',
+    meaning:
+      'The sealed document still hashes to the seal the audit chain recorded, and the electronic signature ' +
+      'signed that same seal.',
+  },
+  mismatch: {
+    label: 'Seal does not verify',
+    meaning:
+      'The stored record contradicts what the audit chain recorded for this finalization. The sealed document ' +
+      'is withheld and the report is not exported as final.',
+  },
+  'not-verifiable': {
+    label: 'Not verifiable',
+    meaning:
+      'There is no verified record on the audit chain to check this run against, so nothing is claimed about ' +
+      'its seal either way.',
+  },
+};
+
+/** One recorded field of a signature manifestation, ready to render. */
+export interface SealFactRow {
+  term: string;
+  value: string;
+  /** A hash, which wants the mono face and may wrap anywhere. */
+  mono?: boolean;
+}
+
+/**
+ * The signature manifestation's recorded fields, in reading order.
+ *
+ * PURE, and the reason this is not inline JSX: a field the record does not
+ * carry is OMITTED, never rendered empty and never given a stand-in, and that
+ * rule is worth testing without a DOM. 21 CFR 11.50 requires the signer, the
+ * date and time, and the meaning; where the platform holds no value for one,
+ * saying nothing is correct and inventing one is not.
+ */
+export function sealFactRows(view: RunSealView): SealFactRow[] {
+  const sig = view.signature;
+  const fin = view.finalization;
+  const seal = view.seal;
+  const sealText = seal?.contentHash
+    ? [`${seal.algorithm ?? 'sha256'} ${seal.contentHash}`, seal.atomCount != null ? `${seal.atomCount} provenance atoms` : '']
+        .filter(Boolean)
+        .join(' · ')
+    : '';
+  return (
+    [
+      { term: 'Signed by', value: sig?.signerName ?? '' },
+      { term: 'Signed at', value: sig?.signedAt ? whenText(sig.signedAt) : '' },
+      { term: 'Meaning', value: sig?.meaning ?? '' },
+      { term: 'Reason given', value: fin?.reason ?? '' },
+      { term: 'Seal', value: sealText, mono: true },
+      { term: 'Recorded on the chain', value: view.finalizedAt ? whenText(view.finalizedAt) : '' },
+    ] as SealFactRow[]
+  ).filter((r) => r.value.length > 0);
+}
+
+/** The four checks, in the order a reader follows them. */
+export const SEAL_CHECK_LABEL: Readonly<Record<string, string>> = {
+  'audit-chain': 'Audit chain record',
+  'stored-seal': 'Stored seal',
+  'stored-document': 'Sealed document',
+  signature: 'Electronic signature',
+};
+
+/**
+ * How a dependency's status reads. `blocker` carries the server's own sentence
+ * when there is one, so nothing here paraphrases a reason the engine gave.
+ */
+export const DEPENDENCY_STATUS_LABEL: Readonly<Record<string, string>> = {
+  ok: 'Read',
+  fresh: 'Read',
+  stale: 'Stale',
+  missing: 'Not available',
+  blocked: 'Blocked',
+  error: 'Failed',
+};
+
+/* ══════════════════════════════════════════════════════════════════
    Bundles
    ══════════════════════════════════════════════════════════════════ */
 

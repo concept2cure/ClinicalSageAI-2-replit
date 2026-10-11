@@ -225,6 +225,33 @@
 
 .rl-form{ background:var(--bg-050); border:1px solid var(--border); border-radius:12px; padding:14px; margin:0 0 16px; }
 
+/* ── A run's Part 11 evidence: the seal read back, and what the run read ──
+   A disclosure, not a hover: an inspector reads this, and a hover cannot be
+   read by a keyboard, printed, or quoted. */
+.rl-ev{ border:1px solid var(--border); border-radius:12px; background:var(--bg-000); margin:18px 0 0; }
+.rl-ev-sum{ display:flex; align-items:center; gap:7px; padding:11px 14px; font-size:12.5px; font-weight:600; color:var(--text-200); cursor:pointer; }
+.rl-ev-sum svg{ width:13px; height:13px; }
+.rl-ev-sum:focus-visible{ outline:2px solid var(--accent-200); outline-offset:2px; }
+.rl-ev-body{ display:flex; flex-direction:column; gap:20px; padding:4px 14px 16px; border-top:1px solid var(--border); }
+.rl-ev-verdict{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:5px 11px; border-radius:999px; margin:0 0 7px; background:var(--bg-050); color:var(--text-200); border:1px solid var(--border); }
+.rl-ev-verdict svg{ width:13px; height:13px; }
+.rl-ev-verdict[data-verdict="intact"]{ color:var(--success); background:var(--success-muted); border-color:color-mix(in srgb,var(--success) 32%,var(--border)); }
+.rl-ev-verdict[data-verdict="mismatch"]{ color:var(--error); background:var(--error-muted); border-color:color-mix(in srgb,var(--error) 32%,var(--border)); }
+/* `not-verifiable` is the absence of evidence, not a quieter pass and not a
+   failure, so it keeps the neutral token pair rather than borrowing either. */
+.rl-ev-verdict[data-verdict="not-verifiable"]{ color:var(--text-300); }
+.rl-ev-checks{ list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:9px; }
+.rl-ev-check{ display:flex; flex-direction:column; gap:3px; }
+.rl-ev-check-h{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--text-200); }
+.rl-ev-check-h svg{ width:12px; height:12px; }
+.rl-ev-check[data-ok="true"] .rl-ev-check-h{ color:var(--success); }
+.rl-ev-check[data-ok="false"] .rl-ev-check-h{ color:var(--warning); }
+.rl-ev-check-d{ font-size:11.5px; color:var(--text-300); line-height:1.5; padding-left:18px; }
+.rl-ev-dl{ display:grid; grid-template-columns:auto 1fr; gap:5px 14px; margin:14px 0 0; font-size:12px; }
+.rl-ev-dl dt{ color:var(--text-400); font-weight:600; }
+.rl-ev-dl dd{ color:var(--text-200); margin:0; }
+.rl-ev-hash{ font-family:var(--font-mono); font-size:11px; word-break:break-all; }
+
 @media (max-width:1000px){ .rc{ grid-template-columns:340px 1fr; } .rl-head{ flex-direction:column; } }
 }
 

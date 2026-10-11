@@ -18,6 +18,7 @@ import { BundlesPanel } from './InsightsBundlesPanel';
 import { CatalogPanel } from './InsightsCatalogPanel';
 import { RunsPanel } from './InsightsRunsPanel';
 import { SchedulesPanel } from './InsightsSchedulesPanel';
+import { RunEvidence } from './InsightsRunEvidence';
 import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
 import type { ReportRunRow } from './insightsLibraryModel';
 
@@ -825,13 +826,20 @@ function reportHeading(report: RenderedReport): { fam: { label?: string; region?
   return { fam: RO_FAMILY[report.family ?? ''] || {}, scope: report.scopeLabel ?? 'This program' };
 }
 
-function ROReport({ report, onExport, onFinalize, seal, compact }: {
+function ROReport({ report, onExport, onFinalize, seal, compact, runId }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
   /** Offered only to a role that may finalize, on a run that is not final. */
   onFinalize?: () => void;
   seal?: ReportSeal | null;
   compact?: boolean;
+  /** The governed run behind the report, when there is one. It unlocks the
+   *  evidence disclosure: GET /runs/:id/seal re-verifies the sealing act and
+   *  GET /runs/:id/dependencies says what the run read. Both were callable all
+   *  along — inside the prefix this surface already claims — and neither had a
+   *  caller, so a sealed report re-opened from the history showed no evidence
+   *  at all (see InsightsRunEvidence.tsx). */
+  runId?: number | null;
 }) {
   if (!report) return null;
   const { fam, scope } = reportHeading(report);
@@ -859,6 +867,7 @@ function ROReport({ report, onExport, onFinalize, seal, compact }: {
         </section>
       ))}
       {!compact && <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} />}
+      {!compact && runId != null && <RunEvidence runId={runId} />}
     </div>
   );
 }
@@ -1811,6 +1820,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             onExport={exportRep}
             onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => setSigning(true) : undefined}
             seal={seal}
+            runId={reportRunId}
           />
           : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} scope={p.scope} catalog={catalog} />
           : (
