@@ -107,7 +107,11 @@ vi.mock('../../../services/intelligence/rim-interceptors.js', () => ({
 
 import artifactRouter from '../artifacts';
 import { db } from '../../../db';
-import { commitSignedArtifactAct } from '../../../services/artifact-signed-act';
+import {
+  ArtifactActConflictError,
+  ArtifactActContractError,
+  commitSignedArtifactAct,
+} from '../../../services/artifact-signed-act';
 import { artifactStatusUpdate } from '../../../services/artifact-approval-act';
 import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
 import { eq } from 'drizzle-orm';
@@ -410,5 +414,78 @@ describe('the signed act commits only from the state the signer was shown', () =
     expect(await signatures()).toEqual([]);
     expect(await ledger()).toEqual([]);
     expect(await snapshots()).toEqual([]);
+  });
+});
+
+/**
+ * The act writes exactly the canonical approval/lock columns. A caller that
+ * hands it any other set is the server disagreeing with itself, and must never
+ * be reported to a signer as "the document changed".
+ *
+ * 2026-10-11: the status route added one extra key (`metadata`) to that set and
+ * every approve and lock answered 409 ARTIFACT_CHANGED — a sentence that was
+ * not true, shown to users, for a mismatch between two of our own modules. The
+ * metadata is now its own input, and a wrong column set is a contract error.
+ */
+describe('the column set the signed act accepts', () => {
+  const act = async (over: Record<string, unknown>) => {
+    const [artifact] = (await run(`SELECT * FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows;
+    const [version] = (await run(`SELECT * FROM concept2cure_artifact_versions`)).rows;
+    const read = {
+      ...artifact,
+      artifactId: artifact.artifact_id,
+      approvedVersionId: artifact.approved_version_id,
+      contentHash: artifact.content_hash,
+      createdById: artifact.created_by_id,
+      projectId: artifact.project_id,
+      organizationId: artifact.organization_id,
+      updatedAt: artifact.updated_at,
+    };
+    return db.transaction(tx =>
+      commitSignedArtifactAct(tx, {
+        artifact: read as never,
+        version: { ...version, contentHash: version.content_hash } as never,
+        status: 'approved',
+        previousStatus: 'review',
+        updateData: artifactStatusUpdate(read as never, 'review', 'approved', USER) as never,
+        organizationId: ORG,
+        userId: USER,
+        userRole: 'admin',
+        attestationText: 'I approve this document as reviewed.',
+        reason: null,
+        secondFactorVerified: false,
+        ipAddress: null,
+        ...over,
+      }),
+    );
+  };
+
+  it('the harness metadata the route republishes is written by the act, through the route', async () => {
+    await seed('review');
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const { metadata } = (await run(`SELECT metadata FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows[0];
+    expect(metadata?.harness, 'the status change did not republish the harness block').toBeTruthy();
+    expect(await signatures()).toHaveLength(1);
+  });
+
+  it.each([
+    ['an extra column', { metadata: { a: 1 } }],
+    ['a column it must write, removed', {}],
+  ])('%s is a contract error, never "the document changed", and nothing is written', async (_label, extra) => {
+    await seed('review');
+    const [artifact] = (await run(`SELECT * FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows;
+    const canonical = artifactStatusUpdate({ version: artifact.version } as never, 'review', 'approved', USER);
+    const updateData = 'metadata' in extra ? { ...canonical, ...extra } : Object.fromEntries(Object.entries(canonical).slice(1));
+
+    const err = await act({ updateData: updateData as never }).catch((e: unknown) => e);
+
+    expect(err, 'a wrong column set was reported as a conflict').toBeInstanceOf(ArtifactActContractError);
+    expect(err).not.toBeInstanceOf(ArtifactActConflictError);
+    expect(String((err as Error).message)).not.toMatch(/document changed/i);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+    expect(await ledger()).toEqual([]);
   });
 });
