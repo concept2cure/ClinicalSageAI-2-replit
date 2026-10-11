@@ -2205,3 +2205,62 @@ from — not a guess from this lane.
   (line 421). Left alone deliberately — a different concern from this migration,
   and `server/api/` is outside the WO-16C fabrication sweep's stated scope of
   `server/services/` and `server/routes/`, so it belongs to nobody right now.
+
+---
+
+## 2026-10-11 — 16 red tests from four stale fixtures, taken and fixed (`…01P6GWSv`)
+
+The 275707c7 run was two days stale. Re-run against the current head, its
+failures were **16 across 7 files, four causes**, all last touched 2026-10-08 by
+`…01DiJJAk` — three days and six CI runs earlier, so outside the 24-hour hand-on
+window. Taken rather than handed on; a red trunk blocks every launch row.
+
+**None was a production defect.** All four were fixtures that had fallen behind
+correct code, so each fix deletes the hand-transcription that drifted instead of
+re-typing it. Evidence:
+`docs/evidence/D5/2026-10-11-trunk-red-four-causes/`.
+
+1. `biopharma-programs-router-columns.contract.test.ts` declared
+   `sponsor_address`/`ind_type` **twice** — two lanes transcribed migration
+   `20261008b` into the fixture at different positions and a merge took both.
+   The file threw at load, so **the gate that exists because every
+   `/api/biopharma` request once failed 100% with a 500 had been guarding
+   nothing for three days.** Duplicate removed; its column-for-column pin to
+   `shared/schema/programs.ts` passes again.
+2. `consumers.pglite.integration.test.ts` — `column c.catalog_state does not
+   exist`. Production was right (the column is on the applier at
+   `migration-set.mjs:3092`); the hand-written fixture ALTER was stale.
+   `disposition-fixture.ts` now applies `20261008e` from disk, twice, as it
+   already does for the disposition migration.
+3. The three `report-os-*` suites each held a private copy of the pre-hardening
+   tenant stamp. One `tenantStampSql()` now lives in their shared harness — a
+   **function**, because `switchPinTerms` reads `RLS_ENFORCE` at call time and
+   the harness is imported before the env loads. Green with enforcement on and
+   off.
+4. The nonclinical outline pin had not followed `CTD_AUTHORING_GUIDANCE`
+   (see hand-on below); the wizard's `create()` helper read
+   `apiRequest.mock.calls[0]`, which is now the step-2 market-support GET.
+
+Each repaired gate was then **shown still to fail** on the case it exists to
+catch (8 and 10 failures for an unpinned / dropped tenant stamp, 1 for an orphan
+leaf, 4 for a create posted to the wrong path). No production file is changed.
+
+### Still red on this head — not this lane's, named rather than left silent
+
+- **Production Image Boot** — "Build the provision and production images (as
+  deploy-aws.yml does)".
+- **Blank DB Provisioning + Deploy Migration** — "Guardrails — what a tenant
+  purge cannot reach (ratchet)", on the new table `stats_computation_runs`.
+  A purge ratchet entry is a tenant-isolation guardrail, so whichever lane added
+  that table should close it rather than baseline it.
+
+### Hand-on — the CTD 2.6 subtree is expanded asymmetrically
+
+`CTD_AUTHORING_GUIDANCE` has gained ICH M4S §2.6.2's seven leaves (2.6.2.1
+Brief Summary … 2.6.2.7 Tables and Figures), each with an M4S citation and a
+`parentCode`, and the nonclinical blueprint projects them faithfully. M4S
+defines leaves under **all three** written summaries, and **2.6.4
+(Pharmacokinetics) and 2.6.6 (Toxicology) still have none.** Not a defect in
+what ships — both sections exist with their own guidance — but a half-finished
+expansion. For the lane doing that content work; this session only corrected the
+test's pin (and added an orphan-leaf check), because RULE 2 keeps it on D5.

@@ -62,7 +62,7 @@ vi.mock('../../services/auditService', async (importOriginal) => ({
 }));
 
 import reportOsRouter from '../report-os';
-import { resetReportOsHarness } from './_report-os-route-harness';
+import { tenantStampSql, resetReportOsHarness } from './_report-os-route-harness';
 import { verifySeal } from '../../services/report-os/sealing/seal';
 
 const app = express();
@@ -77,7 +77,6 @@ app.use((req, _res, next) => {
 });
 app.use('/api/report-os', reportOsRouter);
 
-const STAMP = "SELECT set_config('app.current_tenant_id', $1, true)";
 const TYPE = { typeId: 'readiness.executive_digest', label: 'Executive Readiness Digest', family: 'readiness', allowedScopes: ['program', 'project', 'submission'] };
 const RUN = {
   id: 41, runUuid: '00000000-0000-4000-8000-000000000041', organizationId: 7, scopeType: 'submission', scopeId: 'sub-1',
@@ -161,7 +160,7 @@ describe('POST /runs/:id/finalize (DP-47)', () => {
     });
     // One connection, one transaction: the lock, both writes and the row sit between BEGIN and COMMIT.
     const s = h.statements;
-    expect(s.slice(0, 2)).toEqual(['BEGIN', STAMP]);
+    expect(s.slice(0, 2)).toEqual(['BEGIN', tenantStampSql()]);
     expect(s.slice(-2)).toEqual(['COMMIT', '<released>']);
     const at = (re: RegExp) => s.findIndex((x) => re.test(x));
     expect(at(/FROM report_runs .*FOR UPDATE/)).toBeGreaterThan(1);
