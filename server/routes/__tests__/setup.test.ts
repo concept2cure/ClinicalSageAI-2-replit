@@ -217,8 +217,11 @@ describe('first-run setup — /api/setup', () => {
       'insert organization_users',
       // The new organisation becomes the tenant BEFORE the workspace is
       // counted or written — the count must not read through another tenant.
-      // The stamp as the server writes it (switchPinTerms: ac688076e pins the
-      // isolation switches in the same statement).
+      // The statement is built from switchPinTerms, as setTenantContextTx
+      // builds it, and at assertion time: that helper reads RLS_ENFORCE when
+      // called, so a literal here goes stale the moment the pinned switches
+      // change and disagrees with the route wherever .env sets enforcement on.
+      // What this trace pins is the ORDER, not the stamp's text.
       `execute SELECT set_config('app.current_tenant_id', $1, true), ${switchPinTerms(true)} ["1"]`,
       'select client_workspaces',
       'insert client_workspaces',
