@@ -66,17 +66,29 @@ docs/evidence/D4/2026-10-10-ana-ind-pharmacology-leaf-guidance/PRIOR_HEAD_CI.md:
 lists the same 4 failures at remote HEAD 26b187705, which does not contain this
 round's commits.
 
-Fixed here rather than handed on a third time: the helper now finds the create by
-what it is, not by call order -- the pattern the sibling newProjectWizardName.
-test.tsx already uses at its line 117, which is why that file never broke. Four
-lines, test file only, in a file three days cold; the product source is unchanged.
-7 passed (7).
+Fixed -- but not by this lane, and that is worth recording precisely. This
+session repaired the helper the same way and committed it (3c9dfb1d8); on the
+very next fetch the merge conflicted on that file, because another lane had
+landed the same repair concurrently in 010959e36 ("Trunk CI: 16 red tests from
+four stale fixtures, one of which had switched off a gate"). Theirs is the
+better of the two -- it annotates the callback parameter and gives the waitFor
+assertion a message -- so this round's copy was dropped and origin's taken
+whole, per the zero-duplication rule. What ships is theirs:
 
-That the repair restores coverage instead of hiding a defect was checked by
-mutating the product, not the test:
+  const createCall = () => apiRequest.mock.calls.find(
+    (c: unknown[]) => c[0] === 'POST' && c[1] === '/api/c2c/projects');
+  await vi.waitFor(() => expect(createCall(), 'the wizard never posted the project').toBeDefined());
+
+which is the pattern the sibling newProjectWizardName.test.tsx:117 already used
+and the reason that file never broke. 7 passed (7) on the merged tree.
+
+That the repair restores coverage instead of hiding a defect was checked against
+the shipped version, by mutating the product rather than the test:
   productType: recordedClass  ->  'biologic'          2 of 7 fail
   (savedIndication || undefined) -> (|| 'oncology')   1 of 7 fail
-Both killed; Projects.tsx restored (git diff empty).
+Both killed; Projects.tsx restored (git diff empty). The two lanes reached the
+same four lines within minutes of each other, which is the same cross-lane
+blindness that caused the red in the first place.
 
 -- a correction to this round's own claim -------------------------------------
 
