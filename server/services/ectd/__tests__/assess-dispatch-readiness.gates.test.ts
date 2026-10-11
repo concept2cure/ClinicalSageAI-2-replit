@@ -17,8 +17,11 @@ import {
   externalNotAssessed,
   readinessOptionsForSequence,
   validatedStageOf,
+  originalIndModule3Headings,
+  isOriginalApplicationSequence,
 } from '../assess-dispatch-readiness';
-import { computeDispatchReadiness } from '../dispatch-readiness';
+import { computeDispatchReadiness, type OriginalModule3Requirement, type ReadinessLeaf } from '../dispatch-readiness';
+import { requiredSectionProfileFor } from '../required-sections';
 import { DISPATCH_GATE_RULE_IDS } from '../validation-rule-corpus';
 
 describe('resolveDispatchEnvironment — fails toward production', () => {
@@ -373,5 +376,93 @@ describe('validatedStageOf — does a recorded Validated stage still hold?', () 
 
   it('an undetermined count does not hold — unknown is not zero', () => {
     expect(validatedStageOf(seq('validated', 'passed'), Number.NaN)).toMatchObject({ holds: false });
+  });
+});
+
+/**
+ * CMC-M3-GA item 21 (2026-10-05). The dispatch path asked an IND for Module 1
+ * alone, as warnings, and never read the IND profile that names 3.2.S and
+ * 3.2.P — an original IND with no CMC section read dispatch-clear. The DB-bound
+ * half (which sequence is original, the cross-reference register) is pinned in
+ * assess-dispatch-readiness.original-ind-module3.pglite.test.ts.
+ */
+describe('an original IND is asked for the Module 3 its profile names', () => {
+  it('reads the headings from the IND profile, with their ICH M4 titles — not a second list', () => {
+    const headings = originalIndModule3Headings('ind', 'fda');
+    const profileM3 = [...requiredSectionProfileFor('IND', 'fda')!.sections].filter((c) => c.startsWith('3.'));
+    expect(headings?.map((h) => h.code)).toEqual(profileM3);
+    expect(headings).toEqual([
+      { code: '3.2.S', title: 'Drug Substance' },
+      { code: '3.2.P', title: 'Drug Product' },
+    ]);
+  });
+
+  it('asks a US IND only: not an NDA, not an IND outside FDA, not an unknown type', () => {
+    expect(originalIndModule3Headings('nda', 'fda')).toBeNull();
+    expect(originalIndModule3Headings('ind', 'eu')).toBeNull();
+    expect(originalIndModule3Headings(null, 'fda')).toBeNull();
+  });
+
+  it('sequence 0000 is the original; another number only when typed original and first', () => {
+    expect(isOriginalApplicationSequence({ type: 'amendment', sequenceNumber: '0000' }, false)).toBe(true);
+    expect(isOriginalApplicationSequence({ type: 'original', sequenceNumber: '0001' }, false)).toBe(true);
+    // The column default: a later sequence created without a type reads 'original'.
+    expect(isOriginalApplicationSequence({ type: 'original', sequenceNumber: '0003' }, true)).toBe(false);
+    expect(isOriginalApplicationSequence({ type: 'amendment', sequenceNumber: '0001' }, false)).toBe(false);
+  });
+});
+
+describe('IND_MODULE3_REQUIRED — what clears a required heading, and what does not', () => {
+  const leaf = (sectionCode: string, over: Partial<ReadinessLeaf> = {}): ReadinessLeaf => ({
+    sectionCode, title: sectionCode, lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 1, ...over,
+  });
+  const requirement = (crossReferences: OriginalModule3Requirement['crossReferences'] = []): OriginalModule3Requirement => ({
+    label: 'the original IND (sequence 0000)',
+    headings: [{ code: '3.2.S', title: 'Drug Substance' }, { code: '3.2.P', title: 'Drug Product' }],
+    crossReferences,
+  });
+  const missing = (leaves: ReadinessLeaf[], req = requirement()) =>
+    computeDispatchReadiness(leaves, { originalModule3: req }).findings
+      .filter((f) => f.code === 'IND_MODULE3_REQUIRED')
+      .map((f) => f.sectionCode);
+
+  it('Module 1 alone: both headings are blocking errors', () => {
+    const r = computeDispatchReadiness([leaf('m1.1'), leaf('m1.2')], { originalModule3: requirement() });
+    expect(r.errors).toBe(2);
+    expect(r.findings.filter((f) => f.severity === 'error').map((f) => f.sectionCode)).toEqual(['3.2.S', '3.2.P']);
+  });
+
+  it('a leaf at or under the heading clears it, in any spelling; a numerically adjacent code does not', () => {
+    expect(missing([leaf('m3.2.S.4.1'), leaf('3.2.p')])).toEqual([]);
+    expect(missing([leaf('m3-2-s-1'), leaf('3.2.P1')])).toEqual(['3.2.P']);
+  });
+
+  it('a delete leaf places nothing', () => {
+    expect(missing([leaf('m3.2.S.1', { lifecycleOp: 'delete' }), leaf('m3.2.P.1')])).toEqual(['3.2.S']);
+  });
+
+  it('a cross-reference clears only with its LOA on file and the heading named (or a heading that contains it)', () => {
+    const p = [leaf('m3.2.P.1')];
+    const ref = (authorizedSections: string[], loaOnFile: boolean) => [{ fileLabel: 'DMF 1', authorizedSections, loaOnFile }];
+    expect(missing(p, requirement(ref(['3.2.S'], true)))).toEqual([]);
+    expect(missing(p, requirement(ref(['m3.2.S.2'], true)))).toEqual([]);
+    expect(missing(p, requirement(ref(['3.2'], true)))).toEqual([]);
+    expect(missing(p, requirement(ref(['3.2.S'], false)))).toEqual(['3.2.S']);
+    // "The file in its entirety" does not say which part of Module 3 it holds.
+    expect(missing(p, requirement(ref([], true)))).toEqual(['3.2.S']);
+    expect(missing(p, requirement(ref(['3.2.P'], true)))).toEqual(['3.2.S']);
+  });
+
+  it('a register that could not be read is not an empty register: still blocking, with the reason', () => {
+    const r = computeDispatchReadiness([leaf('m3.2.P.1')], {
+      originalModule3: { ...requirement(null), crossReferenceError: 'relation "ind_cross_references" does not exist' },
+    });
+    const f = r.findings.find((x) => x.code === 'IND_MODULE3_REQUIRED');
+    expect(f?.severity).toBe('error');
+    expect(f?.message).toMatch(/register could not be read \(relation "ind_cross_references" does not exist\)/);
+  });
+
+  it('asks nothing when no requirement is given (an amendment, another application)', () => {
+    expect(computeDispatchReadiness([leaf('m1.1')], { originalModule3: null }).errors).toBe(0);
   });
 });

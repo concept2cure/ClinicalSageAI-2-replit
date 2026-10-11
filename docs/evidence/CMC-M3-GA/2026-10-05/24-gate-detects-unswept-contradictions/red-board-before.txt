@@ -1,0 +1,671 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx > CmModule3Build — contradictions header honesty > claims no count while the read is in flight 88ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx > CmModule3Build — contradictions header honesty > claims no count after the read failed 25ms
+ × client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx > CmModule3Build — contradictions header honesty > claims no count for a program that was never swept 5018ms
+   → expected 'Contradictions0 open — across specifi…' to match /Not swept yet/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="cm-body"
+      >
+        <div
+          class="cm-head"
+        >
+          <div>
+            <div
+              class="cm-kicker"
+            >
+              CMC — Module 3 operating system
+            </div>
+            <h1
+              class="cm-title"
+            >
+              Module 3 build
+            </h1>
+            <div
+              class="cm-meta"
+            >
+              Compile CTD §3.2 from your CMC data, resolve what blocks it, and clear the export gate
+            </div>
+          </div>
+          <div
+            style="display: flex; gap: 8px; flex-shrink: 0;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-shield-alert"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+                />
+                <path
+                  d="M12 8v4"
+                />
+                <path
+                  d="M12 16h.01"
+                />
+              </svg>
+               
+              Run contradiction sweep
+            </button>
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-zap"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                />
+              </svg>
+               
+              Compile Module 3
+            </button>
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Ask AnA
+            </button>
+          </div>
+        </div>
+        <div
+          class="sp-starters"
+          style="grid-template-columns: 1fr 1fr 1fr;"
+        >
+          <button
+            class="sp-starter"
+          >
+            <span
+              class="sk"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                ...
+ × client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx > CmModule3Build — contradictions header honesty > reports 0 open only from a settled read of a program that was swept, and says what was compared 5017ms
+   → expected 'Contradictions0 open — across specifi…' to match /0 open — last swept/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="cm-body"
+      >
+        <div
+          class="cm-head"
+        >
+          <div>
+            <div
+              class="cm-kicker"
+            >
+              CMC — Module 3 operating system
+            </div>
+            <h1
+              class="cm-title"
+            >
+              Module 3 build
+            </h1>
+            <div
+              class="cm-meta"
+            >
+              Compile CTD §3.2 from your CMC data, resolve what blocks it, and clear the export gate
+            </div>
+          </div>
+          <div
+            style="display: flex; gap: 8px; flex-shrink: 0;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-shield-alert"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+                />
+                <path
+                  d="M12 8v4"
+                />
+                <path
+                  d="M12 16h.01"
+                />
+              </svg>
+               
+              Run contradiction sweep
+            </button>
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-zap"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                />
+              </svg>
+               
+              Compile Module 3
+            </button>
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Ask AnA
+            </button>
+          </div>
+        </div>
+        <div
+          class="sp-starters"
+          style="grid-template-columns: 1fr 1fr 1fr;"
+        >
+          <button
+            class="sp-starter"
+          >
+            <span
+              class="sk"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx > CmModule3Build — contradictions header honesty > claims no count for a program that was never swept
+AssertionError: expected 'Contradictions0 open — across specifi…' to match /Not swept yet/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="cm-body"
+      >
+        <div
+          class="cm-head"
+        >
+          <div>
+            <div
+              class="cm-kicker"
+            >
+              CMC — Module 3 operating system
+            </div>
+            <h1
+              class="cm-title"
+            >
+              Module 3 build
+            </h1>
+            <div
+              class="cm-meta"
+            >
+              Compile CTD §3.2 from your CMC data, resolve what blocks it, and clear the export gate
+            </div>
+          </div>
+          <div
+            style="display: flex; gap: 8px; flex-shrink: 0;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-shield-alert"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+                />
+                <path
+                  d="M12 8v4"
+                />
+                <path
+                  d="M12 16h.01"
+                />
+              </svg>
+               
+              Run contradiction sweep
+            </button>
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-zap"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                />
+              </svg>
+               
+              Compile Module 3
+            </button>
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Ask AnA
+            </button>
+          </div>
+        </div>
+        <div
+          class="sp-starters"
+          style="grid-template-columns: 1fr 1fr 1fr;"
+        >
+          <button
+            class="sp-starter"
+          >
+            <span
+              class="sk"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                ...
+
+- Expected:
+/Not swept yet/
+
++ Received:
+"Contradictions0 open — across specifications, methods, stability, batch and comparability"
+
+ ❯ client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx:81:42
+     79|     mockServer('empty');
+     80|     render(<CmModule3Build ask={() => {}} />);
+     81|     await waitFor(() => expect(header()).toMatch(/Not swept yet/));
+       |                                          ^
+     82|     expect(header()).not.toMatch(/\d+ open/);
+     83|     expect(screen.getByText('Not swept yet')).toBeTruthy();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx > CmModule3Build — contradictions header honesty > reports 0 open only from a settled read of a program that was swept, and says what was compared
+AssertionError: expected 'Contradictions0 open — across specifi…' to match /0 open — last swept/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="cm-body"
+      >
+        <div
+          class="cm-head"
+        >
+          <div>
+            <div
+              class="cm-kicker"
+            >
+              CMC — Module 3 operating system
+            </div>
+            <h1
+              class="cm-title"
+            >
+              Module 3 build
+            </h1>
+            <div
+              class="cm-meta"
+            >
+              Compile CTD §3.2 from your CMC data, resolve what blocks it, and clear the export gate
+            </div>
+          </div>
+          <div
+            style="display: flex; gap: 8px; flex-shrink: 0;"
+          >
+            <button
+              class="nda-open"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-shield-alert"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+                />
+                <path
+                  d="M12 8v4"
+                />
+                <path
+                  d="M12 16h.01"
+                />
+              </svg>
+               
+              Run contradiction sweep
+            </button>
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-zap"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                />
+              </svg>
+               
+              Compile Module 3
+            </button>
+            <button
+              class="reg-cta"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                  d="M20 3v4"
+                />
+                <path
+                  d="M22 5h-4"
+                />
+                <path
+                  d="M4 17v2"
+                />
+                <path
+                  d="M5 18H3"
+                />
+              </svg>
+               Ask AnA
+            </button>
+          </div>
+        </div>
+        <div
+          class="sp-starters"
+          style="grid-template-columns: 1fr 1fr 1fr;"
+        >
+          <button
+            class="sp-starter"
+          >
+            <span
+              class="sk"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-sparkles"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+                />
+                <path
+                ...
+
+- Expected:
+/0 open — last swept/
+
++ Received:
+"Contradictions0 open — across specifications, methods, stability, batch and comparability"
+
+ ❯ client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx:90:42
+     88|     mockServer('swept');
+     89|     render(<CmModule3Build ask={() => {}} />);
+     90|     await waitFor(() => expect(header()).toMatch(/0 open — last swept/…
+       |                                          ^
+     91|     expect(screen.getByText('No open contradictions at the last sweep'…
+     92|     expect(document.body.textContent).toMatch(/Compared 2 specificatio…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  13:58:42
+   Duration  11.62s (transform 393ms, setup 196ms, import 503ms, tests 10.15s, environment 571ms)
+

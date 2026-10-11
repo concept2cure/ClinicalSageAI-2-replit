@@ -1,0 +1,18 @@
+ ✓ client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx > CmModule3Build — contradictions header honesty > claims no count while the read is in flight 91ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx > CmModule3Build — contradictions header honesty > claims no count after the read failed 46ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx > CmModule3Build — contradictions header honesty > claims no count for a program that was never swept 55ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcContradictionsHeader.test.tsx > CmModule3Build — contradictions header honesty > reports 0 open only from a settled read of a program that was swept, and says what was compared 63ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — completeness is checked, not just approval > REFUSES export when an approved section compiled at 0% completeness 6ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — completeness is checked, not just approval > ALLOWS export when every approved section is actually complete 1ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — completeness is checked, not just approval > REFUSES export when an approved section was compiled before its tables were carried 3ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — completeness is checked, not just approval > REFUSES when an approved section still lists missing inputs, even at high completeness 1ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — completeness is checked, not just approval > names which sections are incomplete in the refusal 1ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep > REFUSES when the records hold a critical conflict that was never swept 1ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep > ALLOWS when the same finding is recorded and resolved over the same data 1ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep > a recorded, open finding is refused as before — counted once, by its status 1ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep > a register read that fails refuses — it is not an empty sweep 3ms
+ ✓ server/api/cmc/__tests__/contradiction-sweep-scope.test.ts > the contradiction sweep reports its scope > returns how many records of each register it compared 32ms
+ ✓ server/api/cmc/__tests__/contradiction-sweep-scope.test.ts > the contradiction sweep reports its scope > records the sweep itself — when, by whom, over what — in the same transaction as the reconcile 6ms
+ ✓ server/api/cmc/__tests__/contradiction-sweep-scope.test.ts > the contradiction sweep reports its scope > the list carries the last sweep, and null for a program never swept 8ms
+ Test Files  3 passed (3)
+      Tests  16 passed (16)

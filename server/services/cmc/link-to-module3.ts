@@ -73,6 +73,20 @@ export const MODULE3_PROJECT_NOT_IN_TENANT_WARNING =
   'Saved to the register only. The project named on the request is not one of this organization\'s programs or projects, so the record was not linked into any Module 3 dossier.';
 
 /**
+ * How a program with no canonical source gets one, said the same way by every
+ * path that refuses for want of them: the compile route, the build-section
+ * route and AnA's build commands.
+ *
+ * It names a door that exists. Until 2026-10-05 these refusals said "upload
+ * and classify source documents first", which pointed at
+ * POST /module3-os/source-objects and POST /module3-os/classify-artifact —
+ * both retired that day for want of a caller. The one writer of
+ * cmc_source_objects is the registers' write-through below.
+ */
+export const NO_CANONICAL_SOURCES_REMEDY =
+  'Record the program\'s CMC data in the registers (substance, product, methods, specifications, batches, stability); each record reaches Module 3 as a canonical source.';
+
+/**
  * Observe a failed canonical write-through to the Module 3 submission source
  * object: logged with the record and the propagation, and metered as a
  * `propagation_failed` error under `cmc_<propagation>`. The primary response
