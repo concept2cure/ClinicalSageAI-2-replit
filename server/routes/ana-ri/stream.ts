@@ -124,6 +124,12 @@ import {
   type GenerationCapture,
 } from '../../services/ai-gateway/generation-capture.js';
 import { toolEvidence, type EvidenceEntry } from '../../services/ana/answer-grounding.js';
+import { RUN_AGENT_TOOL } from '@shared/ana/run-control-limits';
+import { agentTraceStatus } from '../../services/ana/sub-agent-result.js';
+import { newAgentTurnCounters } from '../../services/ana/sub-agent-limits.js';
+import { runAgentViewForModel } from '../../services/ana/sub-agent-shape.js';
+import { agentEvidenceEntries, agentProvenance, subAgentsHostable } from '../../services/ana/sub-agent-stream.js';
+import type { SubAgentHost } from '../../services/ana/sub-agent.js';
 import { checkProposal } from '../../services/ana/proposal-check.js';
 import { buildShortfallNote } from '../../services/ana/tool-outcome.js';
 import { persistStoppedAnswer, runStreamPostProcessing } from './post-processing.js';
@@ -1092,7 +1098,13 @@ export function mountStreamRoute(router: Router): void {
          assembly. Composed by governedToolsetFor so this path and
          POST /api/chat/send-message cannot drift on whether the deny-list is
          applied — which they had. */
-      const toolPolicyPromise = governedToolsetFor(getPool(), orgId == null ? null : Number(orgId));
+      /* Sub-agents (row 74, S5): hosted only on a turn that has a run row whose
+         organization is the request's — the person's pause and Stop, and the
+         ledger's parent link, all hang off that row. Hosting also makes the
+         tenant policy read STRICT, so an unreadable policy withholds run_agent
+         rather than offering every tool to an unattended child (governed-toolset.ts). */
+      const hostsSubAgents = subAgentsHostable({ runId, runOrgId, orgId });
+      const toolPolicyPromise = governedToolsetFor(getPool(), orgId == null ? null : Number(orgId), { hostsSubAgents });
 
       // ── Live Drive (opt-in screen driving) ─────────────────────────────
       // The client sends `live_drive: true` only while the person has the
@@ -2032,6 +2044,13 @@ export function mountStreamRoute(router: Router): void {
       // the assembled toolset so disabled tools are never offered to the
       // model. Loader is fail-open (default-allow) on any DB issue.
       const governedTools = await toolPolicyPromise;
+      /* run_agent is in THIS turn's governed set only when the turn hosts agents
+         and the tenant allows it. The stream dispatches any registered handler by
+         name, so the host below is lent only when this holds (brief D14): a tenant
+         deny of run_agent is a real kill switch, and it fails closed. */
+      const agentsOffered = governedTools.some(t => t.name === RUN_AGENT_TOOL);
+      /** This turn's agent counts: 6 per turn, 4 per round (sub-agent-limits.ts). */
+      const agentCounters = newAgentTurnCounters();
       // Governance first (tenant deny-list), then offer the subset relevant to this
       // turn's intent + context. The platform command bridge is always retained,
       // but it reaches the command registry only — a typed tool dropped here is
@@ -2058,6 +2077,8 @@ export function mountStreamRoute(router: Router): void {
             // rather than always-on because voice and deep investigations
             // share the selector and can do neither (tool-selection.ts).
             ...SELF_DRIVE_TOOLS,
+            // Delegation survives relevance trimming on a turn that may use it.
+            ...(agentsOffered ? [RUN_AGENT_TOOL] : []),
           ],
           context: {
             projectType: asStr(submission_type),
@@ -2213,6 +2234,33 @@ export function mountStreamRoute(router: Router): void {
           runId && runHandle
             ? streamRunHold({ runId, handle: runHandle, runOrgId, res, emit: emitControl, policy: runPolicy })
             : null;
+
+        /**
+         * What a `run_agent` call is lent (row 74, S5): nothing unless this turn
+         * hosts agents, the tenant allowed the tool, and there is a run hold to
+         * wait on — the runner then answers AGENTS_NEED_A_LIVE_RUN, so nothing
+         * starts. The hold is bound to the PARENT's round, because `paused` and
+         * `resumed` name the round the person is watching; a child passing its
+         * own 0-6 would write its number into the person's frames. Frames leave
+         * as `agent_event` under the CALL's id, whatever the frame itself says,
+         * so a client pairs them with the step that started them.
+         */
+        const subAgentHostFor = (toolUseId: string, round: number): { subAgentHost?: SubAgentHost } => {
+          if (!agentsOffered || !runHold || !runId || orgId == null) return {};
+          return {
+            subAgentHost: {
+              organizationId: Number(orgId),
+              parentRunId: runId,
+              round,
+              governedTools,
+              agents: agentCounters,
+              hold: (announce, signal) => runHold.hold(round, announce, signal),
+              expiredSignal: runHold.expiredSignal,
+              heldMs: () => runHold.heldMs(),
+              emit: frame => emitControl({ ...frame, type: 'agent_event', toolUseId }),
+            },
+          };
+        };
 
         /**
          * Settle every tool call in this round that a person has to authorise.
@@ -2514,7 +2562,8 @@ export function mountStreamRoute(router: Router): void {
               const handler = getToolHandler(toolUse.name);
               const toolStart = Date.now();
               let resultStr: string;
-              let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' = 'success';
+              // 'incomplete': an agent that stopped at a budget (sub-agent-result.ts).
+              let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete' = 'success';
               let toolErrorMessage: string | undefined;
               // A person's no (or no answer): not a failure to work around.
               let heldBack = false;
@@ -2575,6 +2624,8 @@ export function mountStreamRoute(router: Router): void {
                       turnState: driveTurnState,
                       signal: runSignal,
                       ...readReceiptContext(readReceipts, toolUse.id),
+                      // Only a run_agent call, and only on a hosting turn.
+                      ...(toolUse.name === RUN_AGENT_TOOL ? subAgentHostFor(toolUse.id, round) : {}),
                     })));
                   const cancellationWait = abortRace(runSignal);
                   try {
@@ -2613,6 +2664,12 @@ export function mountStreamRoute(router: Router): void {
                 toolStatus = 'error';
                 toolErrorMessage = refusal;
               }
+              // An agent's own outcome refines a mechanical success: a budget
+              // stop reads 'incomplete', a child the person stopped 'cancelled'
+              // (brief D16). Every other status is kept as it is.
+              if (toolUse.name === RUN_AGENT_TOOL) {
+                toolStatus = agentTraceStatus(toolStatus, resultStr);
+              }
               void logToolRun({
                 threadId: thread_id,
                 projectId: streamProjectIdNumber,
@@ -2621,7 +2678,8 @@ export function mountStreamRoute(router: Router): void {
                 toolName: toolUse.name,
                 arguments: (toolUse.input ?? {}) as Record<string, unknown>,
                 result: { resultBytes: resultStr.length },
-                status: toolStatus,
+                // Telemetry keeps the mechanical status: the call ran and returned.
+                status: toolStatus === 'incomplete' ? 'success' : toolStatus,
                 errorMessage: toolErrorMessage,
                 latencyMs: Date.now() - toolStart,
               });
@@ -2672,7 +2730,12 @@ export function mountStreamRoute(router: Router): void {
           };
           const roundFailures: FailedToolCall[] = [];
           for (const { toolUse, resultStr, toolStatus, toolErrorMessage, heldBack, latencyMs, usedModel, startedAt } of ran) {
-            entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
+            /* An agent's full result keeps its whole trace — every child step, in
+               full — for the turn record. The model and the client read it
+               without that trace: it is the record's, not the conversation's. */
+            const isAgent = toolUse.name === RUN_AGENT_TOOL;
+            const shown = isAgent ? runAgentViewForModel(resultStr) : resultStr;
+            entries.push({ tool_use_id: toolUse.id, content: shown, name: toolUse.name });
             // The finished step: its label in the right tense, its facts and the
             // sentence for a step that did not succeed (step-presentation.ts).
             const step = finishedStep(toolUse, roundTitles, {
@@ -2704,7 +2767,9 @@ export function mountStreamRoute(router: Router): void {
             // A step a person declined, left unanswered, or that only a person
             // may take is not one either (row 74, F1): the note would tell the
             // model to find another way to do what a person just said no to.
-            if (toolStatus !== 'success' && toolStatus !== 'cancelled' && !heldBack) {
+            // Nor is an agent that stopped at a budget: what it found is usable,
+            // and "try an alternative" would start the same brief over (D16).
+            if (toolStatus !== 'success' && toolStatus !== 'cancelled' && toolStatus !== 'incomplete' && !heldBack) {
               roundFailures.push({
                 name: toolUse.name,
                 label: step.doing,
@@ -2728,7 +2793,7 @@ export function mountStreamRoute(router: Router): void {
                 ...step.frame,
                 status: toolStatus,
                 latencyMs,
-                result: resultStr,
+                result: shown,
               })}\n\n`
             );
             // The plan AnA declared, from the handler's NORMALISED result — the
@@ -2740,7 +2805,17 @@ export function mountStreamRoute(router: Router): void {
               res.write(`data: ${JSON.stringify(planEvent)}\n\n`);
               timeline.planned(round, planEvent.steps);
             }
-            if (toolStatus === 'success') {
+            /* An agent's provenance is its tools' own, for a completed agent and
+               one that stopped at a budget alike. A failed agent's is dropped:
+               nothing it did is evidence. The parsed-result block below reads
+               directives and drafts, which no agent produces. */
+            if (isAgent && (toolStatus === 'success' || toolStatus === 'incomplete')) {
+              for (const p of agentProvenance(resultStr)) {
+                if (collectedProvenance.length >= PROVENANCE_CAP) break;
+                collectedProvenance.push(p as ProvenanceRecord);
+              }
+            }
+            if (toolStatus === 'success' && !isAgent) {
               try {
                 const parsed = JSON.parse(resultStr);
                 // Accumulate any provenance envelope this evidence tool emitted, for
@@ -2979,6 +3054,15 @@ export function mountStreamRoute(router: Router): void {
           const outcomes = new Map(ran.map(r => [r.toolUse.id, r]));
           for (const b of budgeted) {
             const r = outcomes.get(b.tool_use_id);
+            if (r?.toolUse.name === RUN_AGENT_TOOL) {
+              /* An agent is evidence only through its tools' results, as the
+                 child read them — never its report, never the checks' echo of
+                 the text the parent gave it, never its notes (brief D19). */
+              if (r.toolStatus === 'success' || r.toolStatus === 'incomplete') {
+                toolEvidenceCorpus.push(...agentEvidenceEntries(r.resultStr));
+              }
+              continue;
+            }
             const entry = r
               ? toolEvidence(r.toolUse.name, {
                   status: r.toolStatus,

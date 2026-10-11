@@ -30,7 +30,11 @@ import type { StepFact, StepSource } from './step-verbs';
 import { STEP_FACT_NAMES, STEP_SOURCES } from './step-verbs';
 
 export type SourceKey = StepSource;
-export type StepStatus = 'success' | 'error' | 'not_found' | 'cancelled' | 'not_run';
+/**
+ * 'incomplete' is a sub-agent that stopped at one of its budgets (row 74, S5):
+ * neither a success nor a failure, and the only status no other tool produces.
+ */
+export type StepStatus = 'success' | 'error' | 'not_found' | 'cancelled' | 'not_run' | 'incomplete';
 export type Fact = StepFact;
 export type StepPhase = 'announced' | 'awaiting_approval' | 'finished';
 export type TaskChangeKind = 'added' | 'started' | 'completed' | 'removed';
@@ -128,7 +132,10 @@ export function resolveTimeline(sealed: readonly SealedTimelineEvent[], texts: R
 
 /* ── Reading an event off the wire ──────────────────────────────────────────── */
 
-const STATUSES: ReadonlySet<string> = new Set<StepStatus>(['success', 'error', 'not_found', 'cancelled', 'not_run']);
+/* A status outside this set is dropped by the reader below, so a step would
+   reach the person's timeline with no outcome at all: every status the server
+   can send belongs here. */
+const STATUSES: ReadonlySet<string> = new Set<StepStatus>(['success', 'error', 'not_found', 'cancelled', 'not_run', 'incomplete']);
 const PHASES: ReadonlySet<string> = new Set<StepPhase>(['announced', 'awaiting_approval', 'finished']);
 const TASK_CHANGES: ReadonlySet<string> = new Set<TaskChangeKind>(['added', 'started', 'completed', 'removed']);
 const OUTCOMES: ReadonlySet<string> = new Set<TurnEndOutcome>(['answered', 'stopped', 'failed']);
