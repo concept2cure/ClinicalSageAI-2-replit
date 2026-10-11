@@ -9,7 +9,11 @@
  * no longer pass `validationErrors: 0` to talk the gate out of a blocker.
  *
  * Required-section context comes from the region profile (Module-1), used only
- * for non-blocking warnings.
+ * for non-blocking warnings. The one exception is Module 3 of an original US
+ * IND: its required headings come from the IND profile
+ * (required-sections.requiredSectionProfileFor), and a heading with no leaf and
+ * no cross-reference covered by a Letter of Authorization blocks
+ * (IND_MODULE3_REQUIRED; see originalModule3Requirement).
  *
  * Tenant-scoped + DB-bound. Running it needs a database.
  *
@@ -17,18 +21,23 @@
  */
 
 import { ruleView, DISPATCH_GATE_RULE_IDS, type RuleView } from './validation-rule-corpus';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, lt, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissionLeaves, ectdSequences, submissions } from '../../../shared/schema/submissions';
 import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
+import { indCrossReferences } from '../../../shared/schema/ind-cross-references';
 import {
   getSubmissionRegionProfile,
   requiredModule1CodesForRegion,
 } from '../region-profiles/region-profile-service';
+import { moduleOfSectionKey, requiredSectionProfileFor } from './required-sections';
+import { ichHeadingTitle } from '../ind/ctd/ich-m4-headings';
 import {
   computeDispatchReadiness,
   type ComputeReadinessOptions,
   type DispatchReadinessReport,
+  type Module3CrossReference,
+  type OriginalModule3Requirement,
   type ReadinessFinding,
 } from './dispatch-readiness';
 import { resolveLeafDocuments } from './leaf-document-resolver';
@@ -431,6 +440,124 @@ async function loadApplicationType(submissionId: number, organizationId: number)
 }
 
 /**
+ * The Module 3 headings an original IND must carry, read from the IND profile
+ * (required-sections.requiredSectionProfileFor) and never restated here, with
+ * their ICH M4 titles. Null for anything that is not a US IND — the scope the
+ * CMC launch decision (P-13) ships. Pure + exported for test.
+ */
+export function originalIndModule3Headings(
+  applicationType: string | null,
+  region: string,
+): Array<{ code: string; title: string | null }> | null {
+  const profile = requiredSectionProfileFor(applicationType ?? '', region);
+  if (!profile || profile.submissionType !== 'IND') return null;
+  return [...profile.sections]
+    .filter((code) => moduleOfSectionKey(code) === 'm3')
+    .map((code) => ({ code, title: ichHeadingTitle(code) }));
+}
+
+/**
+ * Is this sequence the original of its application? Sequence 0000 always is.
+ * Any other number is only when it is typed 'original' AND no earlier live
+ * sequence of the same submission and region exists: the type column defaults
+ * to 'original', so a later sequence created without a type reads 'original',
+ * and asking an amendment for an original's content would block a filing the
+ * agency accepts. Pure + exported for test.
+ */
+export function isOriginalApplicationSequence(
+  sequence: { type: string | null; sequenceNumber: string },
+  earlierSequenceExists: boolean,
+): boolean {
+  return sequence.sequenceNumber === '0000' || (sequence.type === 'original' && !earlierSequenceExists);
+}
+
+type SequenceIdentity = { submissionId: number; region: string; type: string | null; sequenceNumber: string };
+
+/** A live sequence of the same submission and region numbered before this one. Tenant-scoped. */
+async function hasEarlierSequence(sequence: SequenceIdentity, organizationId: number): Promise<boolean> {
+  const [{ value }] = await db
+    .select({ value: sql<number>`count(*)::int` })
+    .from(ectdSequences)
+    .where(
+      and(
+        eq(ectdSequences.submissionId, sequence.submissionId),
+        eq(ectdSequences.organizationId, organizationId),
+        eq(ectdSequences.region, sequence.region),
+        // Four-digit, zero-padded: string order is numeric order.
+        lt(ectdSequences.sequenceNumber, sequence.sequenceNumber),
+        isNull(ectdSequences.deletedAt),
+      ),
+    );
+  return (value ?? 0) > 0;
+}
+
+/**
+ * The submission's recorded cross-references (ind_cross_references, the
+ * Module 1.4 register the LOA filing route marks), tenant-scoped. A register
+ * that cannot be read is returned as null with the reason — never as an empty
+ * register, which would read as "nothing is referenced". The finding stays
+ * blocking either way; the reason is what it says.
+ */
+async function loadModule3CrossReferences(
+  submissionId: number,
+  organizationId: number,
+): Promise<{ refs: Module3CrossReference[] | null; error: string | null }> {
+  try {
+    const rows = await db
+      .select({
+        fileType: indCrossReferences.referencedFileType,
+        fileNumber: indCrossReferences.referencedFileNumber,
+        authorizedSections: indCrossReferences.authorizedSections,
+        loaOnFile: indCrossReferences.loaOnFile,
+      })
+      .from(indCrossReferences)
+      .where(and(eq(indCrossReferences.organizationId, organizationId), eq(indCrossReferences.submissionId, submissionId)));
+    return {
+      refs: rows.map((r) => ({
+        fileLabel: `${r.fileType} ${r.fileNumber}`.trim(),
+        authorizedSections: Array.isArray(r.authorizedSections) ? r.authorizedSections.map(String) : [],
+        loaOnFile: r.loaOnFile === true,
+      })),
+      error: null,
+    };
+  } catch (err) {
+    return { refs: null, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/**
+ * What an original US IND must carry in Module 3 — its required headings and
+ * the cross-references that may stand in for them — or null when the sequence
+ * is not one: another application type, another region, or a later sequence.
+ * An IND amendment is not asked; 21 CFR 312.23(a)(7) is the initial IND's
+ * content. Until 2026-10-05 (CMC-M3-GA item 21) nothing on the dispatch path
+ * asked, and an original IND with Module 1 alone read dispatch-clear.
+ */
+export async function originalModule3Requirement(
+  sequence: SequenceIdentity,
+  applicationType: string | null,
+  organizationId: number,
+): Promise<OriginalModule3Requirement | null> {
+  const headings = originalIndModule3Headings(applicationType, sequence.region);
+  if (!headings || headings.length === 0) return null;
+  const earlier =
+    sequence.sequenceNumber !== '0000' && sequence.type === 'original'
+      ? await hasEarlierSequence(sequence, organizationId)
+      : false;
+  if (!isOriginalApplicationSequence(sequence, earlier)) return null;
+  const { refs, error } = await loadModule3CrossReferences(sequence.submissionId, organizationId);
+  return {
+    label:
+      sequence.sequenceNumber === '0000'
+        ? 'the original IND (sequence 0000)'
+        : `the original IND (sequence ${sequence.sequenceNumber}, its first sequence)`,
+    headings,
+    crossReferences: refs,
+    crossReferenceError: error,
+  };
+}
+
+/**
  * Assess whether a sequence is clear to dispatch, computing every gate input from
  * server-side truth. Throws if the sequence is not found in the tenant.
  */
@@ -483,7 +610,10 @@ export async function assessSequenceDispatchReadiness(
       documentUuid: l.documentUuid,
       document: documents[i],
     })),
-    readinessOptionsForSequence(sequence, submissionApplicationType, params.asOf ?? dispatchAsOfDate()),
+    {
+      ...readinessOptionsForSequence(sequence, submissionApplicationType, params.asOf ?? dispatchAsOfDate()),
+      originalModule3: await originalModule3Requirement(sequence, submissionApplicationType, organizationId),
+    },
   );
 
   // Fail-visible on an unrecognized region: requiredModule1Codes returns [] for a
