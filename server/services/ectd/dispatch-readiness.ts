@@ -47,6 +47,17 @@
  *     fact `pmda-ectd-v4-mandatory`, read here, never copied; a continuing
  *     sequence of a lifecycle begun in v3.2.2 is not affected. Added
  *     2026-10-05 (g-jp-ectd-v4-dispatch-blocker).
+ *   - IND_MODULE3_REQUIRED — the original sequence of a US IND carries no
+ *     leaf under a Module 3 heading the IND profile requires (3.2.S, 3.2.P;
+ *     required-sections.requiredSectionProfileFor), and no cross-reference on
+ *     record covers that heading with a Letter of Authorization on file. 21 CFR
+ *     312.23(a)(7) asks the initial IND for its chemistry, manufacturing and
+ *     controls information; 312.23(b) lets it be incorporated by reference.
+ *     An amendment is not asked. The DB-bound assessor decides whether the
+ *     sequence is an original IND and reads the cross-reference register; this
+ *     module only compares. Until 2026-10-05 (CMC-M3-GA item 21) the dispatch
+ *     path checked Module 1 alone, as warnings, and an original IND with no
+ *     CMC section read dispatch-clear.
  *
  * RELEASE BLOCKERS are findings that do not fail validation but that freeze,
  * dispatch and transmit refuse. They are reported as warnings, marked
@@ -254,6 +265,35 @@ export interface ComputeReadinessOptions {
    * a date-effective rule and no usable date fails closed on that rule.
    */
   asOf?: string;
+  /**
+   * The Module 3 this sequence must carry because it is the original of a US
+   * IND, and the cross-references that may stand in for it. Set by the
+   * DB-bound assessor (assess-dispatch-readiness) only for such a sequence;
+   * absent or null, nothing is asked of Module 3.
+   */
+  originalModule3?: OriginalModule3Requirement | null;
+}
+
+/** One external file the application relies on, as its cross-reference register records it. */
+export interface Module3CrossReference {
+  /** "DMF 012345". */
+  fileLabel: string;
+  /** Sections recorded as relied upon. Empty is "the file in its entirety", which names no heading. */
+  authorizedSections: readonly string[];
+  /** A Letter of Authorization is recorded as on file for it. */
+  loaOnFile: boolean;
+}
+
+/** The Module 3 an original application must carry, and what may stand in for a heading it does not. */
+export interface OriginalModule3Requirement {
+  /** How the sequence is named in a finding: "the original IND (sequence 0000)". */
+  label: string;
+  /** Required Module 3 headings, unprefixed ('3.2.S'), with their ICH M4 titles. */
+  headings: ReadonlyArray<{ code: string; title: string | null }>;
+  /** The submission's recorded cross-references; null when the register could not be read. */
+  crossReferences: ReadonlyArray<Module3CrossReference> | null;
+  /** Why the register could not be read, when it could not. */
+  crossReferenceError?: string | null;
 }
 
 /** The currency fact that dates PMDA's end of eCTD v3.2.2 for new applications. */
@@ -331,6 +371,83 @@ function normalizeCode(code: string): string {
     .replace(/^m(?=\d)/, '')
     .replace(/[^a-z0-9]+/g, '.')
     .replace(/^\.+|\.+$/g, '');
+}
+
+/** `code` is `heading` or a sub-heading of it, on a segment boundary ('3.2.s.4.1' under '3.2.s'; '3.2.s1' is not). Both normalized. */
+function isAtOrUnder(code: string, heading: string): boolean {
+  return code === heading || code.startsWith(`${heading}.`);
+}
+
+/**
+ * A recorded section covers a required heading when it is that heading, a
+ * sub-heading of it (the same reading a placed leaf gets), or a heading that
+ * contains it ('3.2' contains '3.2.S'). An empty list — "the file in its
+ * entirety" — names no heading, so it covers none: which part of Module 3 a
+ * whole Drug Master File holds is not recorded, and is not guessed.
+ */
+function namesHeading(ref: Module3CrossReference, heading: string): boolean {
+  return ref.authorizedSections.some((s) => {
+    const n = normalizeCode(s);
+    return n !== '' && (isAtOrUnder(n, heading) || isAtOrUnder(heading, n));
+  });
+}
+
+/** What the register holds that does NOT clear the heading, so the finding says why. */
+function crossReferenceNote(req: OriginalModule3Requirement, heading: string, code: string): string {
+  if (req.crossReferences === null) {
+    return ` The cross-reference register could not be read${req.crossReferenceError ? ` (${req.crossReferenceError})` : ''}, so no referenced file can be counted for ${code}.`;
+  }
+  const withoutLoa = req.crossReferences.filter((r) => !r.loaOnFile && namesHeading(r, heading)).map((r) => r.fileLabel);
+  const notNamed = req.crossReferences.filter((r) => r.loaOnFile && !namesHeading(r, heading)).map((r) => r.fileLabel);
+  let note = '';
+  if (withoutLoa.length) note += ` Recorded for ${code} but with no Letter of Authorization on file: ${withoutLoa.join(', ')}.`;
+  if (notNamed.length) note += ` Recorded with a Letter of Authorization but not naming ${code} among its sections: ${notNamed.join(', ')}.`;
+  return note;
+}
+
+/**
+ * IND_MODULE3_REQUIRED — the original IND's Module 3. Each heading the
+ * requirement names must have a leaf at or under it in this sequence, or a
+ * recorded cross-reference that names it with a Letter of Authorization on
+ * file; a heading with neither is a blocking error. A heading that stands on a
+ * cross-reference alone is reported as an info finding, so a clean verdict
+ * says what it rests on.
+ */
+function originalModule3Findings(activeNonDelete: ReadinessLeaf[], opts: ComputeReadinessOptions): ReadinessFinding[] {
+  const req = opts.originalModule3;
+  if (!req) return [];
+  const placed = activeNonDelete.map((l) => normalizeCode(l.sectionCode));
+  const out: ReadinessFinding[] = [];
+  for (const h of req.headings) {
+    const heading = normalizeCode(h.code);
+    if (placed.some((p) => isAtOrUnder(p, heading))) continue;
+    const named = `${h.code}${h.title ? ` ${h.title}` : ''}`;
+    const byReference = (req.crossReferences ?? []).filter((r) => r.loaOnFile && namesHeading(r, heading));
+    if (byReference.length) {
+      out.push({
+        severity: 'info',
+        code: 'IND_MODULE3_BY_REFERENCE',
+        sectionCode: h.code,
+        message:
+          `${named} has no leaf in ${req.label}; it is incorporated by reference to ${byReference.map((r) => r.fileLabel).join(', ')}, ` +
+          'with a Letter of Authorization on file (21 CFR 312.23(b)).',
+      });
+      continue;
+    }
+    out.push({
+      severity: 'error',
+      code: 'IND_MODULE3_REQUIRED',
+      sectionCode: h.code,
+      message:
+        `There is no ${named} leaf in ${req.label}, and no cross-reference on record covers ${h.code} with a Letter of Authorization on file. ` +
+        'An initial IND carries its chemistry, manufacturing and controls information (21 CFR 312.23(a)(7)), or incorporates it by reference ' +
+        'to a file whose holder has authorized it (21 CFR 312.23(b)). To clear this, place Module 3 from the CMC module ' +
+        `(CMC / Module 3, "Place into the submission"), or record the cross-reference to the Drug Master File that holds ${h.code}, ` +
+        `naming ${h.code} among its sections, with its Letter of Authorization on file (Module 1.4.1).` +
+        crossReferenceNote(req, heading, h.code),
+    });
+  }
+  return out;
 }
 
 /**
@@ -618,6 +735,9 @@ export function computeDispatchReadiness(
 
   // ERROR: a new Japanese application in a format PMDA no longer receives.
   findings.push(...jpEctdV4Findings(opts));
+
+  // ERROR: an original IND with no Module 3 placed and none incorporated by reference.
+  findings.push(...originalModule3Findings(activeNonDelete, opts));
 
   for (const leaf of leaves) {
     // ERROR: invalid lifecycle operation.

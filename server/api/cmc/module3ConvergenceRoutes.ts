@@ -3,32 +3,40 @@
  *
  * Phase 2 + 6 — Module 3 Workflow Convergence
  *
- * Endpoints:
- *  POST /classify-artifact/:projectId — Map an uploaded artifact to a CMC source object
+ * Endpoint:
  *  POST /build-section/:projectId/:sectionKey — Compile + bridge a specific section
- *  GET  /source-lineage/:projectId/:sectionKey — Get lineage for a section
+ *
+ * Deleted 2026-10-05, with no caller in client/src or server, when the cmc
+ * surface's API claim was narrowed to what its screens call (decision P-13;
+ * docs/evidence/CMC-M3-GA/2026-10-05/20-cmc-api-allowlist/), and kept gone by
+ * server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts:
+ *  POST /classify-artifact/:projectId — an upload is classified into a
+ *    canonical source by AnA's module3_classify_source command
+ *    (services/ana-ri/module3-command-handlers.ts, the same
+ *    classifyAndMapArtifactToSource), and a Vault document is linked to the
+ *    record it evidences by /source-evidence (sourceEvidenceRoutes.ts);
+ *  GET /source-lineage/:projectId/:sectionKey — a section's sources and their
+ *    drift are GET /provenance/:projectId/:sectionKey
+ *    (module3OperatingSystemRoutes.ts) and GET /build-state/:projectId
+ *    (module3BuildStateRoutes.ts).
  */
 
 import express from 'express';
-import { z } from 'zod';
 import { getPool } from '../../db';
-import {
-  classifyAndMapArtifactToSource,
-  bridgeCompileToArtifact,
-} from '../../services/module3-convergence-service';
-import { CmcSourceType } from '../../services/module3Composer';
+import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
 /* The canonical Module 3 composition and persistence. Core sections + emittable
    3.2.A appendices + 3.2.R for the recorded region; one row, one lineage
    rewrite and one provenance event per section. */
 import { composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
+import { NO_CANONICAL_SOURCES_REMEDY } from '../../services/cmc/link-to-module3';
 
 /** Said the same way by every build path, so the remedy does not depend on which one the user hit. */
 const NO_CANONICAL_SOURCES_ERROR =
   'No canonical source objects for this project — nothing to build from.';
-const NO_CANONICAL_SOURCES_HINT =
-  'Upload and classify source documents first, then rebuild the section.';
-import { createSourceHash } from '../../services/cmc-module3-compiler';
-import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
+/* The remedy names a door that exists: /classify-artifact and
+   /module3-os/source-objects were both retired on 2026-10-05, and the one
+   writer of cmc_source_objects is the registers' write-through
+   (services/cmc-write-through.ts). */
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
 import { guardModule3Project, module3OrgId } from './module3-project-guard';
@@ -40,58 +48,6 @@ const log = createScopedLogger('module3-convergence');
    not an empty build state. */
 guardModule3Project(router, log);
 
-
-// ── POST /classify-artifact/:projectId ────────────────────────────────────────
-// Takes an existing uploaded artifact and maps it into a CMC source object.
-// This is the "source normalization" step in the Module 3 workflow.
-
-const classifySchema = z.object({
-  artifactId: z.string().min(1),
-  submissionTrack: z.enum(['IND', 'NDA', 'BLA', '510K', 'PMA', 'SOP', 'CER', 'general']).optional().default('IND'),
-  dossierModule: z.string().nullable().optional(),
-  ctdSection: z.string().nullable().optional(),
-  sourceType: z.enum([
-    'drug_substance', 'drug_product', 'specification', 'method', 'stability',
-    'batch', 'change_control', 'comparability', 'manufacturing_process',
-    'characterization', 'reference_standard', 'container_closure', 'excipient',
-  ]),
-  tags: z.array(z.string()).optional().default([]),
-});
-
-router.post('/classify-artifact/:projectId', async (req, res) => {
-  try {
-    const orgId = module3OrgId(req);
-    const { projectId } = req.params;
-    const data = classifySchema.parse(req.body);
-
-    const result = await classifyAndMapArtifactToSource(orgId, projectId, data.artifactId, {
-      submissionTrack: data.submissionTrack as any,
-      dossierModule: data.dossierModule || null,
-      ctdSection: data.ctdSection || null,
-      sourceType: data.sourceType as CmcSourceType,
-      useAsModule3Source: true,
-      tags: data.tags,
-    });
-
-    return res.json({
-      success: true,
-      data: {
-        sourceObjectId: result.sourceObjectId,
-        sectionKey: result.sectionKey,
-        artifactId: data.artifactId,
-        sourceType: data.sourceType,
-      },
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: 'Invalid classification payload', details: error.errors });
-    }
-    if (String((error as Error)?.message || '').includes('Organization context required')) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
-    return serverError(res, log, 'classifying the artifact', error);
-  }
-});
 
 // ── POST /build-section/:projectId/:sectionKey ───────────────────────────────
 // Compile a specific subsection and auto-bridge the result to a governed artifact.
@@ -127,7 +83,7 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: NO_CANONICAL_SOURCES_ERROR,
-        hint: NO_CANONICAL_SOURCES_HINT,
+        hint: NO_CANONICAL_SOURCES_REMEDY,
       });
     }
 
@@ -192,84 +148,6 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
     return serverError(res, log, 'building the section', error);
   } finally {
     client.release();
-  }
-});
-
-// ── GET /source-lineage/:projectId/:sectionKey ───────────────────────────────
-// Returns the full lineage chain for a section: source objects → section → artifact.
-
-router.get('/source-lineage/:projectId/:sectionKey', async (req, res) => {
-  try {
-    const orgId = module3OrgId(req);
-    const { projectId, sectionKey } = req.params;
-    const pool = getPool();
-
-    // Get section
-    const sectionRes = await pool.query(
-      `SELECT id, deterministic_json as "deterministicJson", narrative_text as "narrativeText",
-              approval_state as "approvalState", stale, updated_at as "updatedAt"
-       FROM cmc_module3_sections
-       WHERE organization_id = $1 AND project_id = $2 AND section_key = $3`,
-      [orgId, projectId, sectionKey]
-    );
-
-    // Get lineage (source objects linked to this section)
-    const lineageRes = sectionRes.rows[0]
-      ? await pool.query(
-          `SELECT sl.source_hash_at_compile as "sourceHashAtCompile",
-                  so.id as "sourceObjectId", so.source_type as "sourceType",
-                  so.source_key as "sourceKey", so.source_hash as "currentSourceHash",
-                  so.updated_at as "sourceUpdatedAt"
-           FROM cmc_section_lineage sl
-           JOIN cmc_source_objects so ON so.id = sl.source_object_id
-           WHERE sl.section_id = $1`,
-          [sectionRes.rows[0].id]
-        )
-      : { rows: [] };
-
-    // Get governed artifact — via the integer artifact spine; the raw TEXT
-    // project id aborts this query for uuid programs (22P02).
-    const spine = await resolveCmcArtifactProject(orgId, projectId);
-    const artifactRes =
-      spine.state === 'linked'
-        ? await pool.query(
-            `SELECT id, artifact_id as "artifactId", title, status, version,
-                    metadata, updated_at as "updatedAt"
-             FROM concept2cure_artifacts
-             WHERE organization_id = $1 AND project_id = $2 AND ctd_section = $3
-             ORDER BY version DESC LIMIT 1`,
-            [orgId, spine.artifactProjectId, sectionKey]
-          )
-        : { rows: [] as any[] };
-
-    // Check for hash drift (source changed since compile)
-    const driftingSources = lineageRes.rows.filter(
-      (l: any) => l.sourceHashAtCompile !== l.currentSourceHash
-    );
-
-    return res.json({
-      success: true,
-      data: {
-        sectionKey,
-        compiled: sectionRes.rows[0] || null,
-        sourceObjects: lineageRes.rows,
-        governedArtifact: artifactRes.rows[0] || null,
-        // Distinguishes "no artifact" from "registry not addressable".
-        artifactRegistry:
-          spine.state === 'linked' ? { state: 'linked' } : { state: spine.state, detail: spine.detail },
-        driftingSources: driftingSources.map((d: any) => ({
-          sourceObjectId: d.sourceObjectId,
-          sourceType: d.sourceType,
-          sourceKey: d.sourceKey,
-        })),
-        hasDrift: driftingSources.length > 0,
-      },
-    });
-  } catch (error) {
-    if (String((error as Error)?.message || '').includes('Organization context required')) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
-    return serverError(res, log, 'loading source lineage', error);
   }
 });
 

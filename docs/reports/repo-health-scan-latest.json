@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-11T23:04:42.034Z",
+  "generatedAt": "2026-10-11T23:28:16.861Z",
   "git": {
-    "sha": "f08b0e5a7a6ac28b5fed27db37ac0d3774eeddc2",
+    "sha": "a241b716a072bc3656df7920684d9ae8164a4893",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2080,11 +2080,11 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 189160
+        "bytes": 194672
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 185800
+        "bytes": 186572
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2207,10 +2207,6 @@
         "bytes": 113223
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "bytes": 112780
-      },
-      {
         "file": "server/routes/report-os.ts",
         "bytes": 112190
       },
@@ -2249,6 +2245,10 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
         "bytes": 105258
+      },
+      {
+        "file": "server/api/cmc/routes.ts",
+        "bytes": 103227
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
@@ -2314,7 +2314,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3717
+        "lines": 3801
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2350,7 +2350,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3248
+        "lines": 3257
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2409,10 +2409,6 @@
         "lines": 2504
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2440
-      },
-      {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "lines": 2406
       },
@@ -2459,6 +2455,10 @@
       {
         "file": "server/routes/c2c/projects.ts",
         "lines": 2189
+      },
+      {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2186
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",

@@ -114,15 +114,13 @@ describe('the MAUDE client itself', () => {
     // The real client's catch returned [], which every caller read as "no
     // reports for this device". It must raise so the caller can tell the two
     // apart; AnA's tool catches it above, and data_integration.js already
-    // catches and leaves MAUDE out of its source list.
-    const { searchDeviceReports } = await vi.importActual<typeof import('../../../fda_maude_client.js')>(
-      '../../../fda_maude_client.js',
-    );
-    const src = await import('node:fs').then(fs =>
-      fs.readFileSync(new URL('../../../fda_maude_client.js', import.meta.url), 'utf8'),
-    );
-    expect(typeof searchDeviceReports).toBe('function');
+    // catches and leaves MAUDE out of its source list. Read from the source:
+    // the module is plain JS with no types, and the behaviour under test is a
+    // transport failure this suite deliberately does not perform.
+    const fs = await import('node:fs');
+    const src = fs.readFileSync(new URL('../../../fda_maude_client.js', import.meta.url), 'utf8');
     const tail = src.slice(src.indexOf("console.error('Error searching FDA MAUDE:"));
+    expect(tail, 'the catch must be there to read').not.toBe('');
     expect(tail.slice(0, 400), 'the catch must rethrow, not swallow into []').toMatch(/throw error;/);
   });
 });

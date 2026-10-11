@@ -21,6 +21,10 @@ vi.mock('../../../services/cmc/contradiction-lifecycle', () => ({
   resolveContradiction: (...a: unknown[]) => resolve(...a),
 }));
 vi.mock('../../../services/cmc/project-membership', () => ({ projectBelongsToTenant: async () => true }));
+/* The resolver's signing authority comes from the membership row (GA plan item
+   4: a critical finding needs it). Mocked per test. */
+const signerRole = vi.hoisted(() => ({ value: 'member' as string | null }));
+vi.mock('../../../services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => signerRole.value }));
 vi.mock('../../../db', () => ({
   getPool: () => ({ query: vi.fn(async () => ({ rows: [] })), connect: async () => ({ query: vi.fn(), release: vi.fn() }) }),
 }));
@@ -88,10 +92,17 @@ describe('resolving a contradiction is a governed act', () => {
     expect(resolve).not.toHaveBeenCalled();
   });
 
-  it('resolves for a member, under their own id, with their note', async () => {
+  it('resolves for a member, under their own id, with their note — and says whether they may sign', async () => {
+    signerRole.value = 'member';
     const res = await patch('member', { resolutionNote: NOTE });
     expect(res.status).toBe(200);
-    expect(resolve).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 7, userId: 42, reason: NOTE }));
+    expect(resolve).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 7, userId: 42, reason: NOTE, signingAuthority: false }));
+  });
+
+  it('passes signing authority for a role that holds it (the service requires it for a critical finding)', async () => {
+    signerRole.value = 'admin';
+    await patch('member', { resolutionNote: NOTE });
+    expect(resolve).toHaveBeenCalledWith(expect.objectContaining({ signingAuthority: true }));
   });
 
   it('answers the service’s refusal with its own status and sentence', async () => {

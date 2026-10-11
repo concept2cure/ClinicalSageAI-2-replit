@@ -69,7 +69,7 @@ vi.mock('../../services/auditService', async (importOriginal) => ({
 }));
 
 import reportOsRouter from '../report-os';
-import { driverRow, resetReportOsHarness } from './_report-os-route-harness';
+import { tenantStampSql, driverRow, resetReportOsHarness } from './_report-os-route-harness';
 import { buildSealedRecord } from '../../services/report-os/sealing/seal';
 import type { RenderedReport } from '../../services/report-os/render/types';
 import { deriveChainHash } from '../../services/audit/chain';
@@ -87,7 +87,6 @@ app.use((req, _res, next) => {
 });
 app.use('/api/report-os', reportOsRouter);
 
-const STAMP = "SELECT set_config('app.current_tenant_id', $1, true)";
 const TYPE = { typeId: 'readiness.executive_digest', label: 'Executive Readiness Digest', family: 'readiness', allowedScopes: ['program', 'project', 'submission'] };
 const RUN = {
   id: 41, runUuid: '00000000-0000-4000-8000-000000000041', organizationId: 7, scopeType: 'submission', scopeId: 'sub-1',
@@ -157,7 +156,7 @@ describe('POST /runs records the run on the audit chain, in the same transaction
       resourceId: '41',
       details: { runUuid: RUN.runUuid, reportTypeId: TYPE.typeId, scopeType: 'submission', scopeId: 'sub-1', status: 'completed' },
     });
-    expect(h.statements.slice(0, 2)).toEqual(['BEGIN', STAMP]);
+    expect(h.statements.slice(0, 2)).toEqual(['BEGIN', tenantStampSql()]);
     INSERTS.forEach((re, i) => expect(h.statements[2 + i]).toMatch(re));
     expect(h.statements.slice(4)).toEqual(['<audit row>', 'COMMIT', '<released>']);
   });
@@ -277,7 +276,7 @@ describe('GET /runs/:id/export.pdf records the export before anything is sent', 
     const text = await pdfText(body);
     expect(text).toContain(`Export ${auditEntry()?.details.exportId} · Exported ${auditEntry()?.details.exportedAt} (UTC)`);
     expect(text).toContain('NOT FINAL (COMPLETED)');
-    expect(h.statements.slice(-5)).toEqual(['BEGIN', STAMP, '<audit row>', 'COMMIT', '<released>']);
+    expect(h.statements.slice(-5)).toEqual(['BEGIN', tenantStampSql(), '<audit row>', 'COMMIT', '<released>']);
   });
 
   it('exports a final run as its verified sealed document, with the signature and the verdict', async () => {
@@ -355,7 +354,7 @@ describe('GET /bundles/:bundleId/export.pdf (DP-50)', () => {
       resourceId: BUNDLE_ID,
       details: { runIds: [41, 42], finalAtExport: 1, exportId: expect.any(String), format: 'pdf', byteLength: body.length, sha256: createHash('sha256').update(body).digest('hex') },
     });
-    expect(h.statements.slice(-5)).toEqual(['BEGIN', STAMP, '<audit row>', 'COMMIT', '<released>']);
+    expect(h.statements.slice(-5)).toEqual(['BEGIN', tenantStampSql(), '<audit row>', 'COMMIT', '<released>']);
   });
 
   it('answers 503 and sends no PDF when the bundle export cannot be recorded', async () => {
