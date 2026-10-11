@@ -145,3 +145,28 @@ defect in what ships — both sections exist with their own guidance. It is name
 here and on the board so the expansion is finished deliberately rather than
 left half-done. This session did not add them: content expansion is that lane's
 work, and RULE 2 keeps this one on D5.
+
+---
+
+## Addendum, same day: a fourth suite carried the same stale stamp
+
+The sweep that found cause 3 matched on the statement as a bare quoted string
+and so **missed `server/routes/__tests__/setup.test.ts`**, where it sits inside
+a trace line with a params suffix:
+
+    `execute SELECT set_config('app.current_tenant_id', $1, true) ["1"]`
+
+One case — *"POST /initialize writes the org, its admin, and the org's own
+workspace under the org's tenant, in one transaction"* — was still red for
+exactly the reason cause 3 names. This is not a report-os suite, so it derives
+the statement from `switchPinTerms` directly rather than importing the report-os
+harness: 14/14 with enforcement on and off, and 1 failure when
+`setTenantContextTx` drops the stamp, so the trace still pins the order.
+
+A broader sweep then checked **every** test file mentioning
+`set_config('app.current_tenant_id'` and classified each as an expectation or a
+self-issued statement. Three others assert it —
+`withTenantConnection-scope-before-checkout.test.ts` (a drift-tolerant
+`TENANT_LOCAL_SQL_PREFIX`), `saved-precedent-queries.rls.test.ts` and
+`stability-tenant-isolation.contract.test.ts` — and all three pass in both
+postures: 17/17. `setup.test.ts` was the last one.
