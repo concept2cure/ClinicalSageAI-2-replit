@@ -1,0 +1,108 @@
+## hosting never asked for: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (a) a hosting turn > asks for run_agent, offers it, and lends the call a host 63ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (b) no run row > does not host: not offered, and no host if the model names it anyway 12ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (g) agent frames > go out as agent_event under the call's id, whatever the frame says, before the call's result 12ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (h) a child's pause > names the parent's round 8ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (i) a run row of another organization > does not host 6ms
+ × server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts > run_agent, real, through the stream > the child's model call is governed and linked to the parent run, and its finished frame precedes the result 85ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 18 passed (24)
+
+## host attached by name only: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (c) a tenant that denies run_agent > lends no host when the model names it 15ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (i) a run row of another organization > does not host 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 22 passed (24)
+
+## host spread into every ctx: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (d) only run_agent is lent a host > another tool in the same step gets none, and no context carries a confirmation 16ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+
+## status not refined by the agent outcome: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (j) incomplete is said plainly, and is not a failure for the model to work around 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+
+## trace left in the view: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (e) the view, the record and provenance > the client and the next model call read no trace; provenance comes from the child 17ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+
+## incomplete pushed to roundFailures: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (j) incomplete is said plainly, and is not a failure for the model to work around 15ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+
+## provenance on success only: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (k) an incomplete agent keeps its provenance, and its telemetry row says the call ran 18ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+
+## the agent view pushed into the corpus: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > the child's report is not evidence; its tool results are 17ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > the checks' echo of the parent's own text is not evidence 14ms
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > a kept child result is exactly what the child read: budgeted over its whole round 22ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 21 passed (24)
+
+## spread the frame last in emit: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (g) agent frames > go out as agent_event under the call's id, whatever the frame says, before the call's result 45ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+
+## child hold not bound to the parent round: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (h) a child's pause > names the parent's round 18ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+
+## child hold not taken at all: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (h) a child's pause > names the parent's round 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+
+## drop the org-agreement clause: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (i) a run row of another organization > does not host 14ms
+ × server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: 8, orgId: 7 } → false 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 22 passed (24)
+
+## hosting from runOrgId alone: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (b) no run row > does not host: not offered, and no host if the model names it anyway 24ms
+ × server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: undefined, runOrgId: 7, orgId: 7 } → false 6ms
+ × server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: '', runOrgId: 7, orgId: 7 } → false 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 21 passed (24)
+
+## compare without String(): RED
+ × server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: 7, orgId: '7' } → true 7ms
+ × server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: '7', orgId: 7 } → true 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 22 passed (24)
+
+## push checkOutputs into the corpus: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > the checks' echo of the parent's own text is not evidence 19ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+
+## budget only the successful child steps: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > a kept child result is exactly what the child read: budgeted over its whole round 70ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+
+## the incomplete sentence is not written: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (j) incomplete is said plainly, and is not a failure for the model to work around 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+
+## the sentence ignores the agent's own summary: RED
+ × server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (j) incomplete is said plainly, and is not a failure for the model to work around 13ms
+ × server/services/ana/__tests__/sub-agent-hostable.test.ts > the timeline keeps an agent's budget stop > reads 'incomplete' off the wire 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 24 passed (26)
+
+## stub run_agent in the end-to-end test: RED
+ × server/services/ana/__tests__/sub-agent-hostable.test.ts > the timeline keeps an agent's budget stop > reads 'incomplete' off the wire 7ms
+ × server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts > run_agent, real, through the stream > the child's model call is governed and linked to the parent run, and its finished frame precedes the result 70ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 24 passed (26)
