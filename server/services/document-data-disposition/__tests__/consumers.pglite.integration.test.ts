@@ -35,21 +35,6 @@ beforeAll(async () => {
       ADD COLUMN extraction_error text, ADD COLUMN char_count integer DEFAULT 22,
       ADD COLUMN word_count integer, ADD COLUMN page_count integer, ADD COLUMN document_kind text,
       ADD COLUMN purpose text, ADD COLUMN summary text, ADD COLUMN cataloged_at timestamptz DEFAULT now();
-    -- The catalog's attribution columns and their CHECK, as
-    -- migrations/20261008e_document_catalog_attribution.sql adds them: the
-    -- governance service and the evidence-spine read catalog_state, so without
-    -- it every case here failed with 42703 on a column the real schema has.
-    ALTER TABLE vault.document_catalog ADD COLUMN catalog_state text,
-      ADD COLUMN proposed_by text, ADD COLUMN proposed_model text,
-      ADD COLUMN proposed_thread_id text, ADD COLUMN proposed_turn_id text,
-      ADD COLUMN confirmed_by integer, ADD COLUMN confirmed_at timestamptz,
-      ADD COLUMN correction_reason text;
-    ALTER TABLE vault.document_catalog ADD CONSTRAINT document_catalog_state_chk CHECK (
-      catalog_state IS NULL
-      OR catalog_state = 'suggested'
-      OR (catalog_state = 'confirmed' AND confirmed_by IS NOT NULL AND confirmed_at IS NOT NULL)
-      OR (catalog_state = 'corrected' AND confirmed_by IS NOT NULL AND confirmed_at IS NOT NULL
-          AND correction_reason IS NOT NULL AND btrim(correction_reason) <> ''));
   `);
   spine = await import('../../clinical-regulatory-evidence/evidence-spine.service');
   catalog = await import('../../vault/document-catalog.service');

@@ -80,3 +80,25 @@ tests, and no summary was written (no text-summary table appears in the log
 either). So the Coverage job is downstream of the `Test` failures above, not a
 coverage regression. It should clear once those are green; this session did not
 produce a coverage report to prove the ratchet passes.
+
+### Correction, after the merge: these fixtures were fixed twice
+
+While this session was fixing them, another session landed `010959e36`
+("Trunk CI: 16 red tests from four stale fixtures, one of which had switched
+off a gate") and `94c42b598` (the `regulatory_programs` fixture), covering the
+same files. The merge conflicted in five of them.
+
+Trunk's versions were taken for all five, and this session's were withdrawn, so
+there is ONE fix per fixture. The `document-data-disposition` fixture needed a
+further withdrawal: trunk added the catalog's attribution columns to the shared
+harness, which is the better place, so the block this session had added to the
+suite became a duplicate `ADD COLUMN` and failed with 42701.
+
+What remains from this session in the end: the pushed `biopharma-programs`
+duplicate-column fix (`2274cf036`, which `94c42b598` also addressed), and the
+diagnosis recorded here. The ten files pass together on the merged tree: 144
+tests, exit 0.
+
+This is the third overlap of the day (after `d3e303611` on the scanner gates).
+Two sessions reading the same red CI and fixing the same files is waste; the
+board's claim section is the mechanism for avoiding it.
