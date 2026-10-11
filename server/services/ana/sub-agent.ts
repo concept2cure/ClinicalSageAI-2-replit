@@ -43,7 +43,7 @@ import {
 } from '@shared/ana/run-control-limits';
 import { getTenantScope } from '../../db/tenantStore.js';
 import { runRefusingModelCalls } from '../ai-gateway/model-call-scope.js';
-import type { AnaTool, GatewayRequest } from '../ai-gateway/types.js';
+import type { AnyAnaTool, GatewayRequest } from '../ai-gateway/types.js';
 import type { AgenticToolEvent } from './agentic-tool-dispatch.js';
 import { notifyObserver } from './agentic-tool-dispatch.js';
 import type { LoopStopDirective } from './agentic-loop.js';
@@ -97,7 +97,7 @@ export interface SubAgentHost {
   /** The parent round this call belongs to. */
   round: number;
   /** The tools the parent was offered this turn, after tenant policy and launch scope. */
-  governedTools: readonly AnaTool[];
+  governedTools: readonly AnyAnaTool[];
   /** This turn's agent counts. */
   agents: AgentTurnCounters;
   /** The parent's run hold, bound to the PARENT's round (a child round never reaches it). */

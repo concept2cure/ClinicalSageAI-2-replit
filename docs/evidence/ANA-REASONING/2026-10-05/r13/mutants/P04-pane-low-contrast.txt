@@ -1,0 +1,12 @@
+Mutant P04-pane-low-contrast: the pane’s reason drops back to the bare minimum contrast
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- <span id={refusalId} style={{ display: 'block', marginTop: 4, fontSize: 12, color: 'var(--text-300)' }}>
++ <span id={refusalId} style={{ display: 'block', marginTop: 4, fontSize: 11.5, color: 'var(--text-400)' }}>
+
+Tests run: client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer a model not approved for regulatory drafting wrote: disabled, and the reason is on screen 918ms
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

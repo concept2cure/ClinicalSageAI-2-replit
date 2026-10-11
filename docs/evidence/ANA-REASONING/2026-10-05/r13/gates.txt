@@ -1,0 +1,19 @@
+The repo's own gates on the final tree.
+
+ci:surface-text-ramp      exit 0   (it exited 1 on the round-13 commit: the new .ct-ref:disabled:hover rule made the generated ramp sheets stale. Regenerated.)
+ci:design-system          exit 0
+ci:token-contrast         exit 0
+ci:check-phantom-tokens   exit 0
+check:microcopy           exit 0
+ci:empty-state-honesty    exit 0
+check:compliance-claims   exit 0
+ci:internals-in-copy      exit 0
+ci:action-overclaim       exit 0
+
+visual-qa, over the new capture (scripts/visual-qa/dump-insert-gate.spec.tsx), built client, real Chromium:
+[visual-qa:contrast] 1 surfaces × 2 themes · 266 text elements measured · 0 below WCAG 2.2 AA (0.0%).
+[visual-qa:a11y] 1 surfaces · 0 findings.
+
+Before the lineage palette fix the same capture reported 1 below AA in dark:
+    3.02:1 (needs 4.5) rgb(180, 83, 9) on rgb(38, 38, 36) 12px span "Attribution could not be read, so none is shown."
+That is the failure the capture was added to be able to see.

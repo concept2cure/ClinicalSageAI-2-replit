@@ -1,0 +1,14 @@
+Mutant S01-turn-dropped: a pasted AnA suggestion made the person’s loses the turn its words came from
+
+--- client/src/concept2cure/v2/editor/suggestions.ts
+- return mark.type.create({ ...mark.attrs, authorId: person.id, authorName: person.name, at: minuteBucket() });
++ return mark.type.create({ ...mark.attrs, ...suggestionMarkAttrs(person, minuteBucket()) });
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes off: one the host does not admit becomes the pasting person’s, still naming the turn it came from 128ms
+ × client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes off: a pasted AnA deletion the host does not admit is the person’s too, naming its turn 32ms
+ × client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes on: the paste is the person’s, naming the turn its words came from 23ms
+      Tests  3 failed | 4 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

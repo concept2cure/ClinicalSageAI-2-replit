@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-11T22:23:50.742Z",
+  "generatedAt": "2026-10-11T23:17:02.241Z",
   "git": {
-    "sha": "de0fceff88e52011218f6f99ddfac0e7dd6897ac",
+    "sha": "286c4bbc6be08ed7bda93a560a69ec1a026c2cb7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2068,7 +2068,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 280813
+        "bytes": 292728
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2080,7 +2080,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 189160
+        "bytes": 194672
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2092,7 +2092,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 169224
+        "bytes": 170486
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2248,7 +2248,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 104301
+        "bytes": 105258
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
@@ -2290,7 +2290,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5954
+        "lines": 6163
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2310,11 +2310,11 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4225
+        "lines": 4252
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3717
+        "lines": 3801
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2477,6 +2477,14 @@
         "lines": 2116
       },
       {
+        "file": "client/src/concept2cure/v2/editor/suggestions.ts",
+        "lines": 2112
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 2106
+      },
+      {
         "file": "server/services/precedent-engine.ts",
         "lines": 2097
       },
@@ -2485,16 +2493,8 @@
         "lines": 2093
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 2089
-      },
-      {
         "file": "server/routes/510k-estar-routes.ts",
         "lines": 2083
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/suggestions.ts",
-        "lines": 2077
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
