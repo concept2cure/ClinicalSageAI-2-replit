@@ -625,23 +625,28 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const contextType = (req.body.context?.productType || '').toUpperCase();
 
       // ── Device Context Injection ────────────────────────────────────────────────
+      // The registry renders the block. CER and IVDR are projections of the
+      // canonical outlines (market-specs/cer-structure.ts CER_SECTIONS and
+      // per-structure.ts PER_SECTIONS); the client's productType wins over the
+      // type detected from the message.
       let deviceContextBlock = '';
-      const deviceTypes = ['510K', 'PMA', 'DE_NOVO', 'CER', 'IVDR'];
-      if (deviceTypes.includes(detectedType) || deviceTypes.includes(contextType)) {
-        try {
-          const { getDeviceSections } = await import('../../services/device/device-section-registry.js');
-          const deviceType = (deviceTypes.includes(contextType) ? contextType : detectedType) as '510K' | 'PMA' | 'DE_NOVO' | 'CER';
-          const sections = getDeviceSections(deviceType);
-          if (sections.length > 0) {
-            const sectionList = sections.map(s =>
-              `- ${s.code} ${s.title} (${s.required ? 'required' : 'optional'}) — ${s.guidance}`
-            ).join('\n');
-            const projectContext = req.body.context || {};
-            deviceContextBlock = `\n\n## ${deviceType} Submission Context\nThis is a ${deviceType} medical device submission project.\n${projectContext.activeProject ? `Project: ${projectContext.activeProject}` : ''}\n\nRequired sections (${sections.filter(s => s.required).length} required, ${sections.length} total):\n${sectionList}\n\nUse the generate_document tool to draft any section. Guide the user through the submission systematically.\n`;
-          }
-        } catch {
-          // Device registry not available
+      try {
+        const { isDeviceSubmissionType, renderDeviceContextBlock } = await import(
+          '../../services/device/device-section-registry.js'
+        );
+        const deviceType = isDeviceSubmissionType(contextType)
+          ? contextType
+          : isDeviceSubmissionType(detectedType)
+            ? detectedType
+            : null;
+        if (deviceType) {
+          const projectContext = req.body.context || {};
+          deviceContextBlock = renderDeviceContextBlock(deviceType, {
+            activeProject: typeof projectContext.activeProject === 'string' ? projectContext.activeProject : undefined,
+          });
         }
+      } catch {
+        // Device registry not available
       }
 
       // Project instructions injection (spec A1.1) — read the project's

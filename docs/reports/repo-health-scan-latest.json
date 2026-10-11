@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-11T23:28:16.861Z",
+  "generatedAt": "2026-10-11T23:42:15.481Z",
   "git": {
-    "sha": "a241b716a072bc3656df7920684d9ae8164a4893",
+    "sha": "29f4cb435ca17e21159ee07d946a8a8c84918add",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2048,7 +2048,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1127759
+        "bytes": 1130188
       },
       {
         "file": "shared/schema.ts",
@@ -2139,12 +2139,12 @@
         "bytes": 135450
       },
       {
-        "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
-        "bytes": 134822
+        "file": "shared/regulatory/global-document-registry.ts",
+        "bytes": 135326
       },
       {
-        "file": "shared/regulatory/global-document-registry.ts",
-        "bytes": 134270
+        "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
+        "bytes": 134822
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2274,7 +2274,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21711
+        "lines": 21760
       },
       {
         "file": "shared/schema.ts",

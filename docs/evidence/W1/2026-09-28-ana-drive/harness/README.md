@@ -2,8 +2,7 @@
 
 The browser battery and the stand-in model that produced `../browser-battery.txt`,
 `../contract-audit.txt`, `../silent-thinking.txt`, `../answer-cut-off.txt`,
-`../batched-moves.txt`, `../narration.txt`, `../held-actions.txt` and
-`../launch-scope-on.txt`. Kept beside the evidence
+`../batched-moves.txt`, `../narration.txt`, `../held-actions.txt`, `../launch-scope-on.txt` and `../tool-honesty.txt`. Kept beside the evidence
 so the runs can be repeated, the way `../../2026-09-24-ana-progress/live/harness/`
 keeps its own. It is evidence tooling, not product: nothing in the app imports
 it.
@@ -30,6 +29,12 @@ it.
   block first.
 - `selftest.mjs` makes each of the stand-in's rules fail on a request built to
   break it (27 cases). Run it after any change to the stand-in.
+- `read-tool-smoke.mts` calls every tool the register classes `read` through
+  its real handler against the local database, with arguments filled from each
+  tool's own schema. It is what found the openFDA defect in
+  `../tool-honesty.txt`. Run a battery first so the tool schemas are captured:
+  `npx tsx read-tool-smoke.mts` (`SMOKE_PROGRAM_ID`, `SMOKE_DOC_ID` point the
+  filled arguments at seeded rows).
 - `battery.mjs` drives the real app in headless Chromium through 23 checks:
   - navigation from Home and from the rail;
   - a program's Vault, opening a program, a Vault search;
