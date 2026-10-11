@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-11T23:04:42.034Z",
+  "generatedAt": "2026-10-11T23:17:02.241Z",
   "git": {
-    "sha": "f08b0e5a7a6ac28b5fed27db37ac0d3774eeddc2",
+    "sha": "286c4bbc6be08ed7bda93a560a69ec1a026c2cb7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2080,7 +2080,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 189160
+        "bytes": 194672
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2314,7 +2314,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3717
+        "lines": 3801
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
