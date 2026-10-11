@@ -27,12 +27,12 @@ before it reaches an agency.
 
 | | Steps |
 |---|---|
-| Landed, with evidence on `concept2cure-v2` | **68** |
-| Implemented, awaiting review or commit | 10 |
+| Landed, with evidence on `concept2cure-v2` | **70** |
+| Implemented, awaiting review or commit | 8 |
 | Not started | 110 |
 | **Plan total** | **188** |
 
-Batch 1 is complete (29/29). Batch 2 is at 28/35. The per-step evidence is in
+Batch 1 is complete (29/29). Batch 2 is at 29/35. The per-step evidence is in
 this directory as `<step-id>-red.txt`, `-green.txt` and `-facts.md`: the test
 failing against the old code, the same test passing, and every regulator fact
 the step relies on with its URL and check date, or labelled `recall`.
@@ -206,10 +206,19 @@ rather than adding a fourth — is batch 8 of the plan.
 - **110 plan steps are not started**, mostly batches 4–7: the acceptance-rule
   corpus fold, the remaining device and EU content, the study-data path, and the
   engine integration.
-- **10 steps are implemented and awaiting review or commit.** Their work is
-  preserved in the session scratchpad; two had already passed review, one has
-  three known blocking findings, and the rest never reached a reviewer. None is
-  on trunk, so none is claimed above.
+- **8 steps are implemented and awaiting review or commit.** Their work is
+  preserved in the session scratchpad. Four of the ten passed adversarial review
+  before their run hit a weekly model limit; two of those four are now landed
+  (`2c9699b3` the chat CER/PER projection, `fc025c5a` the EU dated facts), each
+  re-verified against the current trunk rather than trusted — the patches still
+  applied, their tests still passed, and every dated EU fact was re-checked
+  against the date of landing. The remaining eight are:
+  `g-k510-denovo-pack-v1-1` and `g-ctd-registry-inventory-ratchet` (reviewed,
+  not yet re-verified), `g-combination-product-one-engine`, `g-csr-copies-onto-e3`
+  and `g-stf-1789-fail-closed` (implemented, never reviewed),
+  `g-document-reference-matcher` (fixed once, not re-reviewed), and
+  `g-classify-medical-device-mapper` and `g-section-basis-default` (incomplete).
+  None is on trunk, so none is claimed above.
 - **One step is reverted and deliberately not shipped:** the writing-register
   follow-ups. Three review rounds each found it turning ordinary ICH E3
   disposition, exposure and adverse-event-outcome wording into a high-severity
