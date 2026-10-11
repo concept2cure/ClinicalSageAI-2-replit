@@ -556,6 +556,33 @@ interface DashboardData {
   rows?: PortfolioRow[];
   markets?: string[];
   program?: ProgramCtx;
+  /**
+   * The server capped the rollup and there are more programs than these.
+   *
+   * `portfolio/fetch.ts` reads `ORG_ROLLUP_CAP + 1` rows and sets `truncated`
+   * when it got more than the cap (100). The flag reached the client type and
+   * was never rendered, so an organisation with more than 100 programs saw
+   * "100 programs · avg readiness N%" presented as its portfolio, with the
+   * average taken over the first hundred. A capped board that does not say so
+   * is a silent cap on a governed figure.
+   */
+  truncated?: boolean;
+}
+
+/**
+ * What a portfolio reply covers: all of them, or the first N of more.
+ *
+ * PURE, and separate from the router so the sentence can be tested without
+ * driving the canvas. `portfolio/fetch.ts` caps the rollup at
+ * `ORG_ROLLUP_CAP` (100) and reads one row past it to set `truncated`; a reply
+ * that said "across your 100 programs" to an organisation with 150 would be a
+ * silent cap on the figure an executive reads as their position.
+ */
+function roPortfolioCovers(count: number, truncated: boolean): string {
+  if (truncated) {
+    return `The first ${count} programs your organization has, by the server's ranking — there are more.`;
+  }
+  return `Readiness across your ${count} program${count > 1 ? 's' : ''}.`;
 }
 
 /**
@@ -594,7 +621,8 @@ function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCt
     // entitled or has none; show an honest empty, never a fabricated board.
     const rows = ctx.portfolio.programs ? roPortfolioFrom(ctx.portfolio.programs) : [];
     if (rows.length === 0) return { tool: name, text: `Your plan unlocks the portfolio rollup, but there are no governed programs to roll up yet. Once a program with a readiness run exists in your organization, its board view appears here.`, report: null, dashboard: null };
-    return { tool: name, text: `Readiness across your ${rows.length} program${rows.length > 1 ? 's' : ''}. The numbers are the governed readiness scores, ranked — not recomputed here.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: 'Board view across all programs', rows }, report: null };
+    const truncated = ctx.portfolio.summary?.truncated === true;
+    return { tool: name, text: `${roPortfolioCovers(rows.length, truncated)} The numbers are the governed readiness scores, ranked — not recomputed here.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: 'Board view across all programs', rows, truncated }, report: null };
   }
   if (name === 'compare_regions') {
     const markets = roMarketsIn(utterance);
@@ -886,7 +914,7 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashb
     const avg = known.length ? Math.round(known.reduce((a, v) => a + v, 0) / known.length) : null;
     return (
       <div className="ro-dash">
-        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{rows.length} programs</span>{avg == null ? <span className="ro-status">readiness not computed</span> : <span className="ro-status">avg readiness {avg}%{known.length < rows.length ? ` · ${rows.length - known.length} not computed` : ''}</span>}</div></div></div>
+        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta">{/* A capped board says it is capped, here, beside the count it caps. */}<span>{dashboard.truncated ? `first ${rows.length} programs` : `${rows.length} programs`}</span>{avg == null ? <span className="ro-status">readiness not computed</span> : <span className="ro-status">avg readiness {avg}%{known.length < rows.length ? ` · ${rows.length - known.length} not computed` : ''}</span>}</div></div></div>
         <div className="ro-port-grid">
           {rows.map((r, i) => (
             <div key={i} className="ro-port-card">
@@ -898,6 +926,16 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashb
           ))}
         </div>
         <div className="ro-dash-note">{I.info} Readiness values are the governed scores per program, in the order the server ranked them. The average is taken here, over the programs that have one.</div>
+        {/* The server read one row past its cap to detect this; saying nothing
+            would present a hundred-program board as the whole portfolio and an
+            average over it as the organisation's. */}
+        {dashboard.truncated && (
+          <div className="ro-dash-note" role="status" data-testid="ro-port-truncated">
+            {I.alertTriangle} Your organization has more programs than this board shows. The rollup is capped
+            at {rows.length}, so these are the highest-ranked ones and the average above is over them only —
+            not over your whole portfolio.
+          </div>
+        )}
       </div>
     );
   }
