@@ -1710,203 +1710,6 @@ router.post('/characterization-studies/:id/qualify', async (req, res) => {
   });
 });
 
-// POST /api/cmc/insights/take-action - Take action on AI insights (DB-backed)
-router.post('/insights/take-action', async (req, res) => {
-  try {
-    const actionSchema = z.object({
-      insightId: z.string().min(1, 'Insight ID is required'),
-      action: z.string().min(1, 'Action is required'),
-      type: z.string().min(1, 'Type is required'),
-    });
-
-    const validationResult = actionSchema.safeParse(req.body);
-
-    if (!validationResult.success) {
-      return res.status(400).json({
-        error: 'Invalid input data',
-        details: validationResult.error.errors,
-      });
-    }
-
-    const { insightId, action, type } = validationResult.data;
-    const orgId = getOrgId(req);
-
-    // Persist task to project_workflows table
-    let taskResult: any;
-    try {
-      const pool = getPool();
-
-      const priority = type === 'compliance' ? 'high' : 'medium';
-      const dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-      const result = await pool.query(
-        `INSERT INTO project_workflows (organization_id, workflow_name, workflow_data, status, progress, assigned_to, start_date, end_date)
-         VALUES ($1, $2, $3, 'active', 0, $4, NOW(), $5)
-         RETURNING *`,
-        [
-          orgId,
-          `Insight Action: ${action}`,
-          JSON.stringify({ insightId, action, type, priority, source: 'cmc-insights' }),
-          'CMC Team Lead',
-          dueDate,
-        ]
-      );
-
-      const row = result.rows[0];
-      taskResult = {
-        taskId: row.id,
-        action,
-        status: row.status,
-        assignedTo: row.assigned_to,
-        priority,
-        dueDate: row.end_date,
-        createdAt: row.created_at,
-      };
-    } catch (e) {
-      console.error('[CMC] Could not persist to project_workflows:', e);
-      return res.status(500).json({ success: false, error: 'Failed to persist workflow task' });
-    }
-
-    res.status(200).json({
-      status: 'success',
-      message: 'Action taken successfully',
-      task: taskResult,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('[CMC] Error taking action on insight:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to take action on insight',
-    });
-  }
-});
-
-// POST /api/cmc/compliance/check-rules - Check compliance rules (DB-backed)
-router.post('/compliance/check-rules', async (req, res) => {
-  try {
-    const rulesSchema = z.object({
-      insightId: z.string().min(1, 'Insight ID is required'),
-      type: z.string().min(1, 'Type is required'),
-      section: z.string().optional(),
-    });
-
-    const validationResult = rulesSchema.safeParse(req.body);
-
-    if (!validationResult.success) {
-      return res.status(400).json({
-        error: 'Invalid input data',
-        details: validationResult.error.errors,
-      });
-    }
-
-    const { insightId, type, section } = validationResult.data;
-
-    console.log(
-      `[CMC] Checking compliance rules for insight ${insightId} (type: ${type}, section: ${section})`
-    );
-
-    // Query complianceTracking table for real violations
-    let rules: any[] = [];
-    /* `null` until something is actually assessed, NOT 100. This started at 100
-       and stayed there for a project with no compliance_tracking records, under
-       a comment calling that a "clean state" — so the strongest claim this
-       endpoint can make was its answer for having looked at nothing, and it was
-       indistinguishable from a real 100. Zero records is also the DEFAULT: no
-       row is written until someone creates one, so every new project scored
-       100% compliant on the day it was created. */
-    let complianceScore: number | null = null;
-    let assessed = false;
-    let recommendedActions: string[] = [];
-
-    try {
-      const pool = getPool();
-
-      const orgId = getOrgId(req);
-      const result = await pool.query(
-        /* Strictly the caller's organization. `OR organization_id IS NULL` used
-           to sit here, and it was load-bearing: the CMC project routes bound a
-           drizzle model that mapped no organizationId, so every row the product
-           wrote was NULL-org and without the OR this endpoint returned nothing.
-           It bought that by serving every sponsor's compliance findings —
-           guideline, requirement, violation status, risk level — to every other
-           sponsor as their own. The write now stamps the owning org and
-           migrations/20260908_compliance_tracking_organization_backfill.sql
-           attributes the legacy rows through their project, so the strict
-           predicate returns MORE for a legitimate caller, not less. */
-        `SELECT * FROM compliance_tracking WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 50`,
-        [orgId]
-      );
-
-      const trackingRows = result.rows;
-
-      if (trackingRows.length > 0) {
-        assessed = true;
-        complianceScore = 100;
-        for (const row of trackingRows) {
-          const ruleStatus = row.status === 'compliant' ? 'compliant' : 'violation';
-          rules.push({
-            rule: row.guideline,
-            status: ruleStatus,
-            severity: row.risk_level || 'medium',
-            description: row.requirement,
-            trackingId: row.id,
-          });
-          if (ruleStatus === 'violation') {
-            complianceScore -= 8;
-            if (row.mitigation) {
-              recommendedActions.push(row.mitigation);
-            }
-          }
-        }
-      } else {
-        /* Nothing recorded is nothing assessed. Reported as such — no score —
-           rather than as a clean bill of health for a check that never ran. */
-        rules = [];
-        complianceScore = null;
-        assessed = false;
-        recommendedActions = [];
-      }
-    } catch (e) {
-      console.error('[CMC] Could not query compliance_tracking:', e);
-      return res.status(500).json({ success: false, error: 'Failed to check compliance rules' });
-    }
-
-    if (complianceScore !== null) complianceScore = Math.max(complianceScore, 0);
-    const violations = rules.filter((r: any) => r.status === 'violation').length;
-
-    const complianceCheck = {
-      insightId,
-      violations,
-      rules,
-      /* Explicit, so a caller can tell an assessed-and-clean project from an
-         unassessed one. A score of null with assessed:false is the honest
-         answer; the two together are what make it unambiguous. */
-      assessed,
-      complianceScore,
-      recommendedActions,
-      checkedAt: new Date().toISOString(),
-      ...(assessed
-        ? {}
-        : { message: 'No compliance records exist for this organization — nothing has been assessed.' }),
-    };
-
-    res.status(200).json({
-      status: 'success',
-      message: 'Compliance rules checked successfully',
-      violations: complianceCheck.violations,
-      complianceCheck,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('[CMC] Error checking compliance rules:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to check compliance rules',
-    });
-  }
-});
-
 // =====================================================
 // Comparability Studies Routes (canonical DB-backed persistence)
 // =====================================================
@@ -2010,72 +1813,14 @@ router.put('/comparability-studies/:id', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENHANCED BLUEPRINT GENERATION (CMCHub)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * POST /api/cmc/generate-enhanced-blueprint
- * Generate ICH Q-series compliant Module 3.2.S/P section content
- */
-router.post('/generate-enhanced-blueprint', async (req: express.Request, res: express.Response) => {
-  try {
-    const { projectId, section, drugSubstance, drugProduct, submissionType } = req.body;
-
-    if (!section) {
-      return res.status(400).json({ success: false, error: 'section is required' });
-    }
-
-    // Build prompt context from drug substance/product form data
-    const dsInfo = drugSubstance
-      ? `Drug Substance: ${drugSubstance.name || 'N/A'}, INN: ${drugSubstance.inn || 'N/A'}, Route: ${drugSubstance.route || 'N/A'}, Dosage Form: ${drugSubstance.dosageForm || 'N/A'}`
-      : 'Drug substance information not provided.';
-    const dpInfo = drugProduct
-      ? `Drug Product: ${drugProduct.name || 'N/A'}, Strength: ${drugProduct.strength || 'N/A'}, Container: ${drugProduct.container || 'N/A'}`
-      : 'Drug product information not provided.';
-
-    const { ai: aiClient } = await import('../../lib/unified-ai-client.js');
-
-    const result = await aiClient.chat(
-      [
-        {
-          role: 'system',
-          content: `You are a CMC regulatory writer generating Module 3 content for an ${submissionType || 'IND'} submission following ICH Q1-Q14 guidelines. Generate a compliant draft for section ${section} with regulatory-grade technical language. Include relevant specifications, acceptance criteria, and cross-references to ICH guidelines where applicable.`,
-        },
-        {
-          role: 'user',
-          content: `Generate section ${section} content.
-
-${dsInfo}
-${dpInfo}
-Submission Type: ${submissionType || 'IND'}
-Project ID: ${projectId || 'N/A'}
-
-Write a comprehensive draft for this CMC section following ICH guidelines.`,
-        },
-      ],
-      { taskType: 'regulatory_review', temperature: 0.3, maxTokens: 3000, callerModule: 'cmc-blueprint-generator' }
-    );
-
-    res.json({
-      success: true,
-      data: {
-        section,
-        content: result.content || '',
-        wordCount: (result.content || '').split(/\s+/).length,
-        submissionType: submissionType || 'IND',
-      },
-    });
-  } catch (error) {
-    console.error('CMC blueprint generation error:', error);
-    return serverError(res, logger, 'generating enhanced blueprint', error);
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// DATA-DRIVEN QUALITY ANALYSIS (replaces hardcoded CQA/CPP heuristics for
-// projects that have CMC source data). The blueprint-generator route keeps
-// its type-string heuristics for upfront blueprint creation where no
-// project data exists yet.
+// DATA-DRIVEN QUALITY ANALYSIS: CQAs, CPPs, the ICH compliance check and the
+// control strategy, each derived deterministically from the program's
+// recorded data. Nothing heuristic or model-drafted sits beside them: the
+// blueprint router's drug-type CQA/CPP heuristics (blueprintRoutes.ts) were
+// retired, and POST /generate-enhanced-blueprint, a model drafting Module 3
+// text with no organisation and no record, was deleted on 2026-10-05 with no
+// caller (server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts).
+// Module 3 text is composed from the record by POST /api/cmc/module3-os/compile.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -2154,7 +1899,8 @@ router.post('/variations/classify', async (req, res) => {
  * Deterministic ICH Q8/Q9/Q10/Q11-grade control strategy generator.
  * Reads CMC source objects, specs, methods, stability — produces a
  * structured control strategy with risk-based justifications and
- * cited guidance. Replaces the fallback playbook string.
+ * cited guidance. It is the only control-strategy path: the playbook
+ * router's model-prompted control strategy (playbookRoutes.ts) was retired.
  */
 router.post('/control-strategy', async (req, res) => {
   try {

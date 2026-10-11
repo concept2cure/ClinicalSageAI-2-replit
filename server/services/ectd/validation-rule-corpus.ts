@@ -408,6 +408,38 @@ export const RULE_CORPUS: ValidationRule[] = [
     findingCode: 'MISSING_REQUIRED_SECTION',
   },
   {
+    // 2026-10-05 (CMC-M3-GA item 21). Until then the dispatch path checked
+    // Module 1 alone, as warnings, and an original IND with no CMC section read
+    // dispatch-clear.
+    id: 'IND_MODULE3_REQUIRED',
+    title: 'The original IND carries its Module 3 (3.2.S, 3.2.P), or incorporates it by reference under a Letter of Authorization',
+    category: 'content',
+    regions: ['fda'],
+    severity: 'high',
+    rationale:
+      'An initial IND contains chemistry, manufacturing and controls information on the drug substance and the drug product ' +
+      '(21 CFR 312.23(a)(7)); information in a file another person holds may be incorporated by reference with that person’s ' +
+      'written authorization (21 CFR 312.23(b) — the Letter of Authorization, Module 1.4.1). The required Module 3 headings are ' +
+      'read from the IND required-section profile. A heading with no leaf at or under it in the original sequence, and no ' +
+      'recorded cross-reference naming it with a Letter of Authorization on file, blocks dispatch. An IND amendment is not asked.',
+    source: `21 CFR 312.23(a)(7) and 312.23(b); ICH M4Q (3.2.S, 3.2.P); ${FDA_CRIT}`,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'IND_MODULE3_REQUIRED',
+  },
+  {
+    id: 'IND_MODULE3_BY_REFERENCE',
+    title: 'A required Module 3 heading of the original IND stands on a cross-reference rather than a placed leaf',
+    category: 'content',
+    regions: ['fda'],
+    severity: 'low',
+    rationale:
+      'Reported as information when the original IND carries no leaf for a required Module 3 heading and a recorded ' +
+      'cross-reference names that heading with a Letter of Authorization on file, so a clear verdict says what it rests on.',
+    source: '21 CFR 312.23(b)',
+    enforcement: 'dispatch-readiness',
+    findingCode: 'IND_MODULE3_BY_REFERENCE',
+  },
+  {
     id: 'STF_FOR_STUDIES',
     title: 'Study reports carry a Study Tagging File (STF)',
     category: 'content',
