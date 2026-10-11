@@ -218,6 +218,32 @@ Items in this lane's own code are fixed in this lane, not listed here.
 - ~~The vault passage tool refuses on two AnA entry points that never pass `organizationUuid`.~~ **Done 2026-09-24:** `executeAgenticLoop` fills it from the same-tenant request scope, which covers deep investigations. The realtime `/ana` namespace opens no tenant scope at all and has no client; that is reported, not fixed. Evidence: `docs/evidence/D4/2026-09-24-passage-search-entry-points/`.
 - ~~AnA's Vault screen context reports uploaded files as "0% complete" (the surface itself was fixed to show no percentage, `28324fdf`).~~ **Done 2026-09-24:** an upload's `pct` is `null` on the server and in the client type, and the published context says `percentComplete: null` for an upload. Evidence: `docs/evidence/D4/2026-09-24-vault-upload-completion/`. (`…01KnUGoX` had fixed the same defect locally in `3b525ea9` without re-reading this claim; it yielded to this change at merge. What it adds: a search-hit selection is pinned too, in `vaultSurfaceLabels.test.tsx`.)
 
+**D5 — approving and locking were refused for EVERY caller since `c91dba52`,
+fixed 2026-10-11 (`…01P6GWSv`).** Found triaging trunk run 13267: 8 of the Test
+job's 25 failures were this lane's. `validatedStatusChanges` (the commit-time
+signature hardening) admits only the canonical approval/lock columns, and the
+status route adds one more — `metadata`, the harness block it republishes. The
+key-set check therefore threw before any lock was taken, and `review →
+approved` and `approved → locked` answered **409 ARTIFACT_CHANGED** to every
+caller: the signed approval path was dead on trunk. Worse, the sentence sent to
+the signer — "The document changed while it was being signed. Reload it and
+sign again." — was untrue; two of our own modules disagreed about a column, and
+reloading could never help.
+
+Fixed: `metadata` is a named input of the act (so the hardening's invariant
+holds — no other column can ride in), and a non-canonical column set is now
+`ArtifactActContractError` / 500 with the detail logged, not a conflict a
+signer is told to retry. Red 8/8 as trunk produces them; green 18/18 in the
+ceremony suite and 297/297 across the 16 suites touching the act, the approval
+act or the status route; the two new contract cases shown failing against the
+old error. Evidence:
+`docs/evidence/D5/2026-10-11-approve-lock-refused-every-caller/`.
+
+**For the lane that wrote the hardening:** it is kept, and it is right. What
+let it fail closed against its own caller is that the canonical set is defined
+in one module and assembled in another, with the route-level suites that caught
+it left red at push time.
+
 **Trunk CI: the four scanner gates repaired, 2026-10-11 (`…01P6GWSv`).** Run
 13267 (head `275707c7`, 2026-10-10) was red in Lint, Test, Integration Tests,
 Coverage and Blank DB. Four Lint guardrails reproduce with no database and are
