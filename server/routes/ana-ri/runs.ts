@@ -47,7 +47,7 @@
 
 import type { Request, Response, Router } from 'express';
 
-import { getPool } from '../../db.js';
+import { requestPgClient } from '../../db/requestDb.js';
 import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
 import { readPendingApproval, reapOrphanedRunsThrottled } from '../../services/ana/run-control.js';
 import { controlsOf } from '../../services/ana/turn-summary.js';
@@ -335,10 +335,10 @@ async function listRuns(req: Request, res: Response, pool: RunsQuery): Promise<v
 
 /** Wrap a handler so a failure is a 500 with words, never an empty result. */
 const guarded =
-  (fn: (req: Request, res: Response, pool: RunsQuery) => Promise<void>, pool: () => RunsQuery) =>
+  (fn: (req: Request, res: Response, pool: RunsQuery) => Promise<void>, pool: (req: Request) => RunsQuery) =>
   async (req: Request, res: Response) => {
     try {
-      await fn(req, res, pool());
+      await fn(req, res, pool(req));
     } catch (err: any) {
       console.error('[AnA RI runs] read failed:', err?.message);
       if (!res.headersSent) {
@@ -347,9 +347,16 @@ const guarded =
     }
   };
 
-/** Register the live run reads. `pool` is a seam for the route tests. */
-export function mountRunReadRoutes(router: Router, opts: { pool?: () => RunsQuery } = {}): void {
-  const pool = opts.pool ?? (() => getPool() as unknown as RunsQuery);
+/**
+ * Register the live run reads. `pool` is a seam for the route tests.
+ *
+ * Every statement runs on the REQUEST's pinned, tenant-scoped connection
+ * (requestPgClient), never the shared pool: these reads carry the organisation
+ * in their own SQL, and the scope is the second of the two walls the header
+ * describes, not a substitute for it (ci:requestdb-coverage).
+ */
+export function mountRunReadRoutes(router: Router, opts: { pool?: (req: Request) => RunsQuery } = {}): void {
+  const pool = opts.pool ?? ((req: Request) => requestPgClient(req) as unknown as RunsQuery);
   router.get('/runs', guarded(listRuns, pool));
   router.get('/runs/:runId/events', guarded(readRunEvents, pool));
 }

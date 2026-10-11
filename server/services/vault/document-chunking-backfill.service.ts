@@ -98,6 +98,9 @@ function candidateFilter(embed: boolean, retryFailed: boolean): string {
   return [
     'c.chunk_status IS NULL',
     ...(retryFailed ? [`c.chunk_status = 'chunk_failed'`] : []),
+    // tenant-isolation-safe: a fragment of the candidate query below, whose own
+    // WHERE carries `p.organization_id = $1`; this EXISTS is correlated to that
+    // query's document (ch.document_id = d.id), so it reaches no other org's rows.
     ...(embed
       ? [`(c.chunk_status = 'chunked'${retryFailed ? '' : ' AND c.chunk_error IS NULL'}
             AND EXISTS (SELECT 1 FROM vault.document_chunks ch

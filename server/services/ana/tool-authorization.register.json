@@ -5971,7 +5971,15 @@
   "review_sop_requirements": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:6069"
+   "site": "AnaToolExecutor.ts:6069",
+   "present": {
+    "verb": "review",
+    "object": "an SOP against its requirements",
+    "source": "engine",
+    "preview": [
+     "topic"
+    ]
+   }
   },
   "review_spirit_conformance": {
    "class": "read",
