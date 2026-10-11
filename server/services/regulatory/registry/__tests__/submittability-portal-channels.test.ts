@@ -29,7 +29,7 @@
  * codebase hedges on.
  */
 import { describe, it, expect } from 'vitest';
-import { getApplicationType } from '../../../../../shared/regulatory/global-document-registry';
+import { getApplicationType, GLOBAL_REGISTRY } from '../../../../../shared/regulatory/global-document-registry';
 import {
   getSubmittability,
   buildSubmittabilityReport,
@@ -178,5 +178,48 @@ describe('an EMA filing outside the centralised procedure is not sent to the eSu
       expect(text, id).not.toMatch(/Centralised procedure|eSubmission Gateway/);
       expect(getSubmittability(entry!).tier, id).toBe('no_gateway');
     }
+  });
+});
+
+describe('the registry declares IRIS for the EMA filings that go through IRIS', () => {
+  /* 2026-10-05 (step g-eu-medicines-dated-facts; finding 45). EU_ORPHAN,
+     EU_PIP, EU_SCIENTIFIC_ADVICE and EU_PRIME declared submissionFormat 'eCTD'
+     (and EU_PIP ctdModule 'M1 (EU regional)'), while EMA receives them through
+     IRIS (regulator text, ema.europa.eu — g-eu-medicines-dated-facts-facts.md).
+     The channel function knew it only from a list of ids beside the registry;
+     now the registry entry says it, and the channel is read from the entry. */
+  const IRIS_IDS = ['EU_ORPHAN', 'EU_PIP', 'EU_SCIENTIFIC_ADVICE', 'EU_PRIME'];
+
+  it('declares IRIS, not eCTD, on orphan designation, PIP, scientific advice and PRIME', () => {
+    for (const id of IRIS_IDS) {
+      const entry = getApplicationType(id);
+      expect(entry, `${id} missing from the registry`).toBeTruthy();
+      expect(entry!.submissionFormat, id).toBe('IRIS');
+      expect(entry!.dossierStandard, `${id} is not an eCTD dossier`).not.toBe('eCTD');
+    }
+    // A PIP application is not the MAA's Module 1 paediatric section.
+    expect(getApplicationType('EU_PIP')!.ctdModule).toBeUndefined();
+    expect(getApplicationType('EU_PIP')!.moduleAuthority ?? '').toMatch(/IRIS/);
+  });
+
+  it('routes every entry the registry declares IRIS to EMA IRIS, and no other entry', () => {
+    const declared = GLOBAL_REGISTRY.filter((e) => e.submissionFormat === 'IRIS').map((e) => e.id).sort();
+    expect(declared).toEqual([...IRIS_IDS].sort());
+    for (const entry of GLOBAL_REGISTRY) {
+      const ch = submissionChannelFor(entry);
+      const isIris = ch.kind === 'unconnected' && /IRIS/.test(ch.channel);
+      expect(isIris, `${entry.id}: IRIS channel must follow the declared format`).toBe(
+        entry.submissionFormat === 'IRIS',
+      );
+    }
+  });
+
+  it('never reports an IRIS filing submittable, and keeps the centralised MAA on the eSubmission Gateway', () => {
+    for (const id of IRIS_IDS) {
+      expect(getSubmittability(getApplicationType(id)!).tier, id).not.toBe('submittable');
+    }
+    const maa = submissionChannelFor(getApplicationType('EU_MAA')!);
+    expect(maa.kind).toBe('unconnected');
+    if (maa.kind === 'unconnected') expect(maa.channel).toMatch(/eSubmission Gateway/);
   });
 });
