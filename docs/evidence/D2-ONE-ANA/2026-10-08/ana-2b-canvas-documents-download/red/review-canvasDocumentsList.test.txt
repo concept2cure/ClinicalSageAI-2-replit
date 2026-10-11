@@ -1,0 +1,2692 @@
+# Red, as reviewed: ConversationThread.tsx, DocumentCanvas.tsx, CanvasDocumentList.tsx and DownloadMenu.tsx set back to the reviewed copies (restored afterwards, checked with cmp); the test file as it now stands.
+# npx vitest run client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > reopened with no card in the transcript, the right column lists them, read by conversation id 143ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > Open puts the document in the one editor, beside the conversation 318ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a document whose card is in the transcript opens through that card: no second editor 447ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > an open document reaches the list from its bar, "← Documents (2)", and focus lands on the list 320ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > closing a document the list opened hands focus back to its row 271ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > "This project" lists what AnA built in the open project 96ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The canvas lists the documents this conversation built, from the server > a row offers "Download working copy", with working copies only, marked as uncontrolled 122ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a failed read is an error with a retry, never an empty list 52ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > a document the list opened whose record does not read says so beside the conversation, with a retry 119ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > empty is said in words, and the column stays closed until asked 27ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > at 1100px and narrower it never takes the screen by itself; the header opens it 26ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > closed by the person, it stays closed, and focus returns to the header control 68ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > Honest states > is read again when an AnA turn ends 35ms
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > "Back to conversation" shows the conversation, and focus goes to the header's Documents 5199ms
+   → expected 'list' to be 'closed' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ct-wrap"
+      >
+        <div
+          class="ct-thread-head"
+        >
+          <button
+            class="ct-back"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-arrow-left"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12 19-7-7 7-7"
+              />
+              <path
+                d="M19 12H5"
+              />
+            </svg>
+             Project
+          </button>
+          <div
+            class="ct-head-mid"
+          >
+            <div
+              class="ct-head-t"
+            >
+              Draft the 2.5 Clinical Overview.
+            </div>
+            <div
+              class="ct-head-m"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-message-square"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                />
+              </svg>
+               Conversation
+            </div>
+          </div>
+          <div
+            class="ct-head-r"
+          >
+            <span
+              class="ct-head-model"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-zap"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                />
+              </svg>
+               AnA
+            </span>
+            <button
+              class="ct-head-open"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-plus"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12h14"
+                />
+                <path
+                  d="M12 5v14"
+                />
+              </svg>
+               New conversation
+            </button>
+            <button
+              aria-controls="_r_7f_"
+              aria-expanded="true"
+              class="ct-head-open"
+              data-testid="ct-documents-toggle"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               Documents
+               (2)
+            </button>
+          ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > Escape does the same 5199ms
+   → expected 'list' to be 'closed' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ct-wrap"
+      >
+        <div
+          class="ct-thread-head"
+        >
+          <button
+            class="ct-back"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-arrow-left"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12 19-7-7 7-7"
+              />
+              <path
+                d="M19 12H5"
+              />
+            </svg>
+             Project
+          </button>
+          <div
+            class="ct-head-mid"
+          >
+            <div
+              class="ct-head-t"
+            >
+              Draft the 2.5 Clinical Overview.
+            </div>
+            <div
+              class="ct-head-m"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-message-square"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                />
+              </svg>
+               Conversation
+            </div>
+          </div>
+          <div
+            class="ct-head-r"
+          >
+            <span
+              class="ct-head-model"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-zap"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                />
+              </svg>
+               AnA
+            </span>
+            <button
+              class="ct-head-open"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-plus"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12h14"
+                />
+                <path
+                  d="M12 5v14"
+                />
+              </svg>
+               New conversation
+            </button>
+            <button
+              aria-controls="_r_8f_"
+              aria-expanded="true"
+              class="ct-head-open"
+              data-testid="ct-documents-toggle"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               Documents
+               (2)
+            </button>
+          ...
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > an ask from the editor lands in the composer, on screen, not behind the list 5369ms
+   → expected 'list' to be 'closed' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ct-wrap"
+      >
+        <div
+          class="ct-thread-head"
+        >
+          <button
+            class="ct-back"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-arrow-left"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12 19-7-7 7-7"
+              />
+              <path
+                d="M19 12H5"
+              />
+            </svg>
+             Project
+          </button>
+          <div
+            class="ct-head-mid"
+          >
+            <div
+              class="ct-head-t"
+            >
+              Draft the 2.5 Clinical Overview.
+            </div>
+            <div
+              class="ct-head-m"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-message-square"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                />
+              </svg>
+               Conversation
+            </div>
+          </div>
+          <div
+            class="ct-head-r"
+          >
+            <span
+              class="ct-head-model"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-zap"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                />
+              </svg>
+               AnA
+            </span>
+            <button
+              class="ct-head-open"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-plus"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12h14"
+                />
+                <path
+                  d="M12 5v14"
+                />
+              </svg>
+               New conversation
+            </button>
+            <button
+              aria-controls="_r_9f_"
+              aria-expanded="true"
+              class="ct-head-open"
+              data-testid="ct-documents-toggle"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               Documents
+               (2)
+            </button>
+          ...
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > beside the conversation (wider than 1100px), closing it still hands focus back to its row in the list 221ms
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > a draft that is not an authoring document keeps the side column on screen; the header still opens the list 51ms
+   → expected <section class="cdl" …(3)>…(3)</section> to be null
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > a turn still running keeps AnA's progress on screen; the list shows by itself once it ends 41ms
+   → expected <section class="cdl" …(3)>…(3)</section> to be null
+ ✓ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > with the side column closed by the person, the list shows by itself even beside a type-B draft 56ms
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The count beside "Documents" is of the list it opens > after "This project", an open document's "← Documents" counts the project's list 121ms
+   → expected ' Documents (2)' to contain 'Documents (3)'
+ × client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > A document the list opened says its status > a draft opened with no card in the transcript shows "Draft" in the editor's bar 5129ms
+   → Unable to find an element by: [data-testid="dc-status"]
+
+Ignored nodes: comments, script, style
+<div
+  class="dcv-expanded"
+  data-beside="true"
+  data-testid="dc-expanded"
+  id="_r_ds_"
+>
+  <div
+    class="dcv-bar"
+  >
+    <button
+      class="ed-back"
+      data-testid="dc-documents"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-arrow-left"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12 19-7-7 7-7"
+        />
+        <path
+          d="M19 12H5"
+        />
+      </svg>
+       Documents
+       (2)
+    </button>
+    <button
+      class="ed-back"
+      data-testid="dc-back"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+       Back to conversation
+    </button>
+    <span
+      class="dcv-bar-t"
+      title="Clinical Overview"
+    >
+      Clinical Overview
+    </span>
+    <span
+      class="dcv-bar-p"
+    >
+      ONC-221 · Planning
+    </span>
+    <span
+      aria-hidden="true"
+      class="dcv-bar-hint"
+    >
+      Esc
+    </span>
+  </div>
+  <div
+    class="dcv-workbench"
+  >
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Clinical Overview
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                4
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="ONC-221"
+            >
+              ONC-221 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical Overview"
+            >
+              Clinical Overview
+            </span>
+            <span
+              [3...
+
+Ignored nodes: comments, script, style
+<div
+  class="dcv-expanded"
+  data-beside="true"
+  data-testid="dc-expanded"
+  id="_r_ds_"
+>
+  <div
+    class="dcv-bar"
+  >
+    <button
+      class="ed-back"
+      data-testid="dc-documents"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-arrow-left"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12 19-7-7 7-7"
+        />
+        <path
+          d="M19 12H5"
+        />
+      </svg>
+       Documents
+       (2)
+    </button>
+    <button
+      class="ed-back"
+      data-testid="dc-back"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+       Back to conversation
+    </button>
+    <span
+      class="dcv-bar-t"
+      title="Clinical Overview"
+    >
+      Clinical Overview
+    </span>
+    <span
+      class="dcv-bar-p"
+    >
+      ONC-221 · Planning
+    </span>
+    <span
+      aria-hidden="true"
+      class="dcv-bar-hint"
+    >
+      Esc
+    </span>
+  </div>
+  <div
+    class="dcv-workbench"
+  >
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Clinical Overview
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                4
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="ONC-221"
+            >
+              ONC-221 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical Overview"
+            >
+              Clinical Overview
+            </span>
+            <span
+              [3...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > "Back to conversation" shows the conversation, and focus goes to the header's Documents
+AssertionError: expected 'list' to be 'closed' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ct-wrap"
+      >
+        <div
+          class="ct-thread-head"
+        >
+          <button
+            class="ct-back"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-arrow-left"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12 19-7-7 7-7"
+              />
+              <path
+                d="M19 12H5"
+              />
+            </svg>
+             Project
+          </button>
+          <div
+            class="ct-head-mid"
+          >
+            <div
+              class="ct-head-t"
+            >
+              Draft the 2.5 Clinical Overview.
+            </div>
+            <div
+              class="ct-head-m"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-message-square"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                />
+              </svg>
+               Conversation
+            </div>
+          </div>
+          <div
+            class="ct-head-r"
+          >
+            <span
+              class="ct-head-model"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-zap"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                />
+              </svg>
+               AnA
+            </span>
+            <button
+              class="ct-head-open"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-plus"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12h14"
+                />
+                <path
+                  d="M12 5v14"
+                />
+              </svg>
+               New conversation
+            </button>
+            <button
+              aria-controls="_r_7f_"
+              aria-expanded="true"
+              class="ct-head-open"
+              data-testid="ct-documents-toggle"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               Documents
+               (2)
+            </button>
+          ...
+
+Expected: "closed"
+Received: "list"
+
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:370:67
+    368|     expect(back.textContent).toContain('Back to conversation');
+    369|     fireEvent.click(back);
+    370|     await waitFor(() => expect(pane().getAttribute('data-state')).toBe…
+       |                                                                   ^
+    371|     // `.ct-main[data-canvas-open] > .ct-conv { display: none }` at th…
+    372|     expect(main(container).getAttribute('data-canvas-open')).toBeNull(…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > Escape does the same
+AssertionError: expected 'list' to be 'closed' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ct-wrap"
+      >
+        <div
+          class="ct-thread-head"
+        >
+          <button
+            class="ct-back"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-arrow-left"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12 19-7-7 7-7"
+              />
+              <path
+                d="M19 12H5"
+              />
+            </svg>
+             Project
+          </button>
+          <div
+            class="ct-head-mid"
+          >
+            <div
+              class="ct-head-t"
+            >
+              Draft the 2.5 Clinical Overview.
+            </div>
+            <div
+              class="ct-head-m"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-message-square"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                />
+              </svg>
+               Conversation
+            </div>
+          </div>
+          <div
+            class="ct-head-r"
+          >
+            <span
+              class="ct-head-model"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-zap"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                />
+              </svg>
+               AnA
+            </span>
+            <button
+              class="ct-head-open"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-plus"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12h14"
+                />
+                <path
+                  d="M12 5v14"
+                />
+              </svg>
+               New conversation
+            </button>
+            <button
+              aria-controls="_r_8f_"
+              aria-expanded="true"
+              class="ct-head-open"
+              data-testid="ct-documents-toggle"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               Documents
+               (2)
+            </button>
+          ...
+
+Expected: "closed"
+Received: "list"
+
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:384:67
+    382|     await screen.findByTestId('dc-back');
+    383|     fireEvent.keyDown(document.body, { key: 'Escape' });
+    384|     await waitFor(() => expect(pane().getAttribute('data-state')).toBe…
+       |                                                                   ^
+    385|     expect(main(container).getAttribute('data-canvas-open')).toBeNull(…
+    386|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > At 1100px and narrower, closing a document the list opened shows the conversation > an ask from the editor lands in the composer, on screen, not behind the list
+AssertionError: expected 'list' to be 'closed' // Object.is equality
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="ct-wrap"
+      >
+        <div
+          class="ct-thread-head"
+        >
+          <button
+            class="ct-back"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-arrow-left"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12 19-7-7 7-7"
+              />
+              <path
+                d="M19 12H5"
+              />
+            </svg>
+             Project
+          </button>
+          <div
+            class="ct-head-mid"
+          >
+            <div
+              class="ct-head-t"
+            >
+              Draft the 2.5 Clinical Overview.
+            </div>
+            <div
+              class="ct-head-m"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-message-square"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                />
+              </svg>
+               Conversation
+            </div>
+          </div>
+          <div
+            class="ct-head-r"
+          >
+            <span
+              class="ct-head-model"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-zap"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"
+                />
+              </svg>
+               AnA
+            </span>
+            <button
+              class="ct-head-open"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-plus"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12h14"
+                />
+                <path
+                  d="M12 5v14"
+                />
+              </svg>
+               New conversation
+            </button>
+            <button
+              aria-controls="_r_9f_"
+              aria-expanded="true"
+              class="ct-head-open"
+              data-testid="ct-documents-toggle"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-layers"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+                />
+                <path
+                  d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+                />
+                <path
+                  d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+                />
+              </svg>
+               Documents
+               (2)
+            </button>
+          ...
+
+Expected: "closed"
+Received: "list"
+
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:392:67
+    390|     const region = await screen.findByTestId('dc-expanded');
+    391|     fireEvent.click(await within(region).findByRole('button', { name: …
+    392|     await waitFor(() => expect(pane().getAttribute('data-state')).toBe…
+       |                                                                   ^
+    393|     expect(main(container).getAttribute('data-canvas-open')).toBeNull(…
+    394|     const box = screen.getByRole('textbox', { name: 'Reply to AnA' }) …
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > a draft that is not an authoring document keeps the side column on screen; the header still opens the list
+AssertionError: expected <section class="cdl" …(3)>…(3)</section> to be null
+
+- Expected:
+null
+
++ Received:
+<section
+  aria-labelledby="_r_bm_"
+  class="cdl"
+  data-scope="conversation"
+  data-testid="ct-documents"
+>
+  <div
+    class="cdl-head"
+  >
+    <h2
+      class="cdl-title"
+      id="_r_bm_"
+      tabindex="-1"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Documents
+    </h2>
+    <div
+      aria-label="Show documents built in"
+      class="cdl-scope"
+      role="group"
+    >
+      <button
+        aria-pressed="true"
+        class="cdl-scope-btn"
+        data-testid="cdl-scope-conversation"
+        type="button"
+      >
+        This conversation
+      </button>
+      <button
+        aria-pressed="false"
+        class="cdl-scope-btn"
+        data-testid="cdl-scope-project"
+        type="button"
+      >
+        This project
+      </button>
+    </div>
+    <button
+      aria-label="Close the documents list"
+      class="cdl-close"
+      data-testid="cdl-close"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <p
+    class="cdl-sub"
+  >
+    Built in this conversation
+  </p>
+  <ul
+    aria-label="Documents"
+    class="cdl-list"
+  >
+    <li
+      class="cdl-row"
+      data-doc-id="aaaaaaaa-0000-4000-8000-00000000000a"
+      data-testid="cdl-row"
+    >
+      <div
+        class="cdl-row-main"
+      >
+        <span
+          class="cdl-row-t"
+        >
+          Clinical Overview
+        </span>
+        <span
+          class="cdl-row-meta"
+        >
+          <span
+            class="cdl-pill"
+            data-status="DRAFT"
+            data-testid="cdl-status"
+          >
+            Draft
+          </span>
+          <span>
+            Module 2
+          </span>
+          <span>
+            4 sections
+          </span>
+          <span>
+            Updated 
+            <time
+              datetime="2026-10-07T10:42:00Z"
+            >
+              Oct 7
+            </time>
+          </span>
+          <span>
+            Built by AnA
+          </span>
+        </span>
+      </div>
+      <div
+        class="cdl-row-actions"
+      >
+        <button
+          aria-label="Open Clinical Overview"
+          class="btn primary"
+          data-testid="cdl-open"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-pen-line"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 20h9"
+            />
+            <path
+              d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+            />
+          </svg>
+           Open
+        </button>
+        <span
+          class="dlm"
+          data-testid="cdl-download"
+        >
+          <button
+            aria-expanded="false"
+            aria-haspopup="menu"
+            aria-label="Download working copy of Clinical Overview"
+            class="btn ghost"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             
+            Download working copy
+             
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-chevron-down"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m6 9 6 6 6-6"
+              />
+            </svg>
+          </button>
+          <span
+            aria-live="polite"
+            class="sr-only"
+          />
+        </span>
+      </div>
+    </li>
+    <li
+      class="cdl-row"
+      data-doc-id="bbbbbbbb-0000-4000-8000-00000000000b"
+      data-testid="cdl-row"
+    >
+      <div
+        class="cdl-row-main"
+      >
+        <span
+          class="cdl-row-t"
+        >
+          Nonclinical Overview
+        </span>
+        <span
+          class="cdl-row-meta"
+        >
+          <span
+            class="cdl-pill"
+            data-status="IN_REVIEW"
+            data-testid="cdl-status"
+          >
+            In review
+          </span>
+          <span>
+            Module 2
+          </span>
+          <span>
+            6 sections
+          </span>
+          <span>
+            Updated 
+            <time
+              datetime="2026-10-07T10:42:00Z"
+            >
+              Oct 7
+            </time>
+          </span>
+          <span>
+            Built by AnA
+          </span>
+        </span>
+      </div>
+      <div
+        class="cdl-row-actions"
+      >
+        <button
+          aria-label="Open Nonclinical Overview"
+          class="btn primary"
+          data-testid="cdl-open"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-pen-line"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 20h9"
+            />
+            <path
+              d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+            />
+          </svg>
+           Open
+        </button>
+        <span
+          class="dlm"
+          data-testid="cdl-download"
+        >
+          <button
+            aria-expanded="false"
+            aria-haspopup="menu"
+            aria-label="Download working copy of Nonclinical Overview"
+            class="btn ghost"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             
+            Download working copy
+             
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-chevron-down"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m6 9 6 6 6-6"
+              />
+            </svg>
+          </button>
+          <span
+            aria-live="polite"
+            class="sr-only"
+          />
+        </span>
+      </div>
+    </li>
+  </ul>
+</section>
+
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:420:50
+    418|     const toggle = await screen.findByTestId('ct-documents-toggle');
+    419|     await waitFor(() => expect(toggle.textContent).toContain('Document…
+    420|     expect(screen.queryByTestId('ct-documents')).toBeNull();
+       |                                                  ^
+    421|     const side = document.querySelector('.ct-side') as HTMLElement;
+    422|     expect(side).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > By itself the list hides nothing the side column holds > a turn still running keeps AnA's progress on screen; the list shows by itself once it ends
+AssertionError: expected <section class="cdl" …(3)>…(3)</section> to be null
+
+- Expected:
+null
+
++ Received:
+<section
+  aria-labelledby="_r_c2_"
+  class="cdl"
+  data-scope="conversation"
+  data-testid="ct-documents"
+>
+  <div
+    class="cdl-head"
+  >
+    <h2
+      class="cdl-title"
+      id="_r_c2_"
+      tabindex="-1"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-layers"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"
+        />
+        <path
+          d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"
+        />
+        <path
+          d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"
+        />
+      </svg>
+       Documents
+    </h2>
+    <div
+      aria-label="Show documents built in"
+      class="cdl-scope"
+      role="group"
+    >
+      <button
+        aria-pressed="true"
+        class="cdl-scope-btn"
+        data-testid="cdl-scope-conversation"
+        type="button"
+      >
+        This conversation
+      </button>
+      <button
+        aria-pressed="false"
+        class="cdl-scope-btn"
+        data-testid="cdl-scope-project"
+        type="button"
+      >
+        This project
+      </button>
+    </div>
+    <button
+      aria-label="Close the documents list"
+      class="cdl-close"
+      data-testid="cdl-close"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <p
+    class="cdl-sub"
+  >
+    Built in this conversation
+  </p>
+  <ul
+    aria-label="Documents"
+    class="cdl-list"
+  >
+    <li
+      class="cdl-row"
+      data-doc-id="aaaaaaaa-0000-4000-8000-00000000000a"
+      data-testid="cdl-row"
+    >
+      <div
+        class="cdl-row-main"
+      >
+        <span
+          class="cdl-row-t"
+        >
+          Clinical Overview
+        </span>
+        <span
+          class="cdl-row-meta"
+        >
+          <span
+            class="cdl-pill"
+            data-status="DRAFT"
+            data-testid="cdl-status"
+          >
+            Draft
+          </span>
+          <span>
+            Module 2
+          </span>
+          <span>
+            4 sections
+          </span>
+          <span>
+            Updated 
+            <time
+              datetime="2026-10-07T10:42:00Z"
+            >
+              Oct 7
+            </time>
+          </span>
+          <span>
+            Built by AnA
+          </span>
+        </span>
+      </div>
+      <div
+        class="cdl-row-actions"
+      >
+        <button
+          aria-label="Open Clinical Overview"
+          class="btn primary"
+          data-testid="cdl-open"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-pen-line"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 20h9"
+            />
+            <path
+              d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+            />
+          </svg>
+           Open
+        </button>
+        <span
+          class="dlm"
+          data-testid="cdl-download"
+        >
+          <button
+            aria-expanded="false"
+            aria-haspopup="menu"
+            aria-label="Download working copy of Clinical Overview"
+            class="btn ghost"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             
+            Download working copy
+             
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-chevron-down"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m6 9 6 6 6-6"
+              />
+            </svg>
+          </button>
+          <span
+            aria-live="polite"
+            class="sr-only"
+          />
+        </span>
+      </div>
+    </li>
+    <li
+      class="cdl-row"
+      data-doc-id="bbbbbbbb-0000-4000-8000-00000000000b"
+      data-testid="cdl-row"
+    >
+      <div
+        class="cdl-row-main"
+      >
+        <span
+          class="cdl-row-t"
+        >
+          Nonclinical Overview
+        </span>
+        <span
+          class="cdl-row-meta"
+        >
+          <span
+            class="cdl-pill"
+            data-status="IN_REVIEW"
+            data-testid="cdl-status"
+          >
+            In review
+          </span>
+          <span>
+            Module 2
+          </span>
+          <span>
+            6 sections
+          </span>
+          <span>
+            Updated 
+            <time
+              datetime="2026-10-07T10:42:00Z"
+            >
+              Oct 7
+            </time>
+          </span>
+          <span>
+            Built by AnA
+          </span>
+        </span>
+      </div>
+      <div
+        class="cdl-row-actions"
+      >
+        <button
+          aria-label="Open Nonclinical Overview"
+          class="btn primary"
+          data-testid="cdl-open"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-pen-line"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 20h9"
+            />
+            <path
+              d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"
+            />
+          </svg>
+           Open
+        </button>
+        <span
+          class="dlm"
+          data-testid="cdl-download"
+        >
+          <button
+            aria-expanded="false"
+            aria-haspopup="menu"
+            aria-label="Download working copy of Nonclinical Overview"
+            class="btn ghost"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             
+            Download working copy
+             
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-chevron-down"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m6 9 6 6 6-6"
+              />
+            </svg>
+          </button>
+          <span
+            aria-live="polite"
+            class="sr-only"
+          />
+        </span>
+      </div>
+    </li>
+  </ul>
+</section>
+
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:433:50
+    431|     const toggle = await screen.findByTestId('ct-documents-toggle');
+    432|     await waitFor(() => expect(toggle.textContent).toContain('Document…
+    433|     expect(screen.queryByTestId('ct-documents')).toBeNull();
+       |                                                  ^
+    434|     expect(document.querySelector('.ct-side')).toBeTruthy();
+    435|     chatStreaming.current = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > The count beside "Documents" is of the list it opens > after "This project", an open document's "← Documents" counts the project's list
+AssertionError: expected ' Documents (2)' to contain 'Documents (3)'
+
+Expected: "Documents (3)"
+Received: " Documents (2)"
+
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:455:67
+    453|     fireEvent.click(screen.getByRole('button', { name: 'This project' …
+    454|     await waitFor(() => expect(rows()).toHaveLength(3));
+    455|     expect(screen.getByTestId('ct-documents-toggle').textContent).toCo…
+       |                                                                   ^
+    456|     fireEvent.click(screen.getByRole('button', { name: 'Open Quality O…
+    457|     const back = await screen.findByTestId('dc-documents');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx > A document the list opened says its status > a draft opened with no card in the transcript shows "Draft" in the editor's bar
+TestingLibraryElementError: Unable to find an element by: [data-testid="dc-status"]
+
+Ignored nodes: comments, script, style
+<div
+  class="dcv-expanded"
+  data-beside="true"
+  data-testid="dc-expanded"
+  id="_r_ds_"
+>
+  <div
+    class="dcv-bar"
+  >
+    <button
+      class="ed-back"
+      data-testid="dc-documents"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-arrow-left"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12 19-7-7 7-7"
+        />
+        <path
+          d="M19 12H5"
+        />
+      </svg>
+       Documents
+       (2)
+    </button>
+    <button
+      class="ed-back"
+      data-testid="dc-back"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+       Back to conversation
+    </button>
+    <span
+      class="dcv-bar-t"
+      title="Clinical Overview"
+    >
+      Clinical Overview
+    </span>
+    <span
+      class="dcv-bar-p"
+    >
+      ONC-221 · Planning
+    </span>
+    <span
+      aria-hidden="true"
+      class="dcv-bar-hint"
+    >
+      Esc
+    </span>
+  </div>
+  <div
+    class="dcv-workbench"
+  >
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Clinical Overview
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                4
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="ONC-221"
+            >
+              ONC-221 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical Overview"
+            >
+              Clinical Overview
+            </span>
+            <span
+              [3...
+
+Ignored nodes: comments, script, style
+<div
+  class="dcv-expanded"
+  data-beside="true"
+  data-testid="dc-expanded"
+  id="_r_ds_"
+>
+  <div
+    class="dcv-bar"
+  >
+    <button
+      class="ed-back"
+      data-testid="dc-documents"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-arrow-left"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="m12 19-7-7 7-7"
+        />
+        <path
+          d="M19 12H5"
+        />
+      </svg>
+       Documents
+       (2)
+    </button>
+    <button
+      class="ed-back"
+      data-testid="dc-back"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+       Back to conversation
+    </button>
+    <span
+      class="dcv-bar-t"
+      title="Clinical Overview"
+    >
+      Clinical Overview
+    </span>
+    <span
+      class="dcv-bar-p"
+    >
+      ONC-221 · Planning
+    </span>
+    <span
+      aria-hidden="true"
+      class="dcv-bar-hint"
+    >
+      Esc
+    </span>
+  </div>
+  <div
+    class="dcv-workbench"
+  >
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Clinical Overview
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                4
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.5.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Rationale
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="ed-program"
+              title="ONC-221"
+            >
+              ONC-221 · Planning
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Clinical Overview"
+            >
+              Clinical Overview
+            </span>
+            <span
+              [3...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/canvasDocumentsList.test.tsx:470:41
+    468|     const region = await screen.findByTestId('dc-expanded');
+    469|     expect(screen.queryByTestId('document-canvas')?.querySelector('.dc…
+    470|     const status = await within(region).findByTestId('dc-status');
+       |                                         ^
+    471|     expect(status.textContent).toBe('Draft');
+    472|     expect(status.closest('.dcv-bar')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 15 passed (22)
+   Start at  05:42:15
+   Duration  26.63s (transform 1.81s, setup 239ms, import 2.30s, tests 23.44s, environment 483ms)
+

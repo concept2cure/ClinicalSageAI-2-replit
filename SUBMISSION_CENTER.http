@@ -94,12 +94,6 @@ GET {{base}}/api/submissions/sequences/{{sequenceId}}/shadow-review
 ### Shadow Review — findings of a run
 GET {{base}}/api/submissions/shadow-review/{{runId}}/findings
 
-### Cross-region gap
-POST {{base}}/api/submissions/{{submissionId}}/cross-region
-Content-Type: application/json
-
-{ "sourceRegion": "fda", "targetRegions": ["eu", "jp"], "applicationType": "nda" }
-
 ### Dispatch QC gate (does NOT transmit)
 POST {{base}}/api/submissions/{{submissionId}}/dispatch-qc
 Content-Type: application/json

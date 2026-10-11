@@ -1,0 +1,58 @@
+Route mount audit target: server/index.ts,server/bootstrap/register-*.ts,server/startup/routes.ts,server/startup/inline-endpoints.ts,server/startup/middleware.ts
+Scanned files (19): server/index.ts, server/bootstrap/register-admin-routes.ts, server/bootstrap/register-advanced-platform-routes.ts, server/bootstrap/register-ai-routes.ts, server/bootstrap/register-clinical-intel-routes.ts, server/bootstrap/register-concept2cure-routes.ts, server/bootstrap/register-core-routes.ts, server/bootstrap/register-document-routes.ts, server/bootstrap/register-entitlement-gate.ts, server/bootstrap/register-governance-routes.ts, server/bootstrap/register-ind-lifecycle-routes.ts, server/bootstrap/register-inline-routes.ts, server/bootstrap/register-platform-routes.ts, server/bootstrap/register-project-routes.ts, server/bootstrap/register-regulatory-routes.ts, server/bootstrap/register-tenant-routes.ts, server/startup/routes.ts, server/startup/inline-endpoints.ts, server/startup/middleware.ts
+Total captured mounts: 329
+Errors: 0
+Warnings: 8
+
+Warnings:
+- Prefix "/api/ai" mounted via app.use 4 times
+  owner: AI Platform (server/services/ai-gateway/)
+  • server/bootstrap/register-ai-routes.ts:102 app.use('/api/ai') [module-top]
+  • server/bootstrap/register-core-routes.ts:41 app.use('/api/ai') [module-top]
+  • server/bootstrap/register-core-routes.ts:42 app.use('/api/ai') [module-top]
+  • server/bootstrap/register-core-routes.ts:202 app.use('/api/ai') [module-top]
+- Prefix "/api/concept2cure" mounted via app.use 19 times
+  owner: Platform Kernel (server/routes/concept2cure.ts)
+  • server/bootstrap/register-concept2cure-routes.ts:30 app.use('/api/concept2cure') [module-top]
+  • server/bootstrap/register-concept2cure-routes.ts:31 app.use('/api/concept2cure') [module-top]
+  • server/bootstrap/register-concept2cure-routes.ts:32 app.use('/api/concept2cure') [module-top]
+  • server/bootstrap/register-concept2cure-routes.ts:33 app.use('/api/concept2cure') [module-top]
+  • ...and 15 more
+- Prefix "/api/cmc" mounted via app.use 3 times
+  owner: CMC Platform (server/routes/cmc*.ts)
+  • server/bootstrap/register-core-routes.ts:68 app.use('/api/cmc') [module-top]
+  • server/bootstrap/register-core-routes.ts:71 app.use('/api/cmc') [module-top]
+  • server/bootstrap/register-core-routes.ts:72 app.use('/api/cmc') [module-top]
+- Prefix "/api/cmc/module3-os" mounted via app.use 4 times
+  owner: CMC Platform (server/routes/cmc*.ts)
+  • server/bootstrap/register-core-routes.ts:137 app.use('/api/cmc/module3-os') [module-top]
+  • server/bootstrap/register-core-routes.ts:138 app.use('/api/cmc/module3-os') [module-top]
+  • server/bootstrap/register-core-routes.ts:139 app.use('/api/cmc/module3-os') [module-top]
+  • server/bootstrap/register-core-routes.ts:142 app.use('/api/cmc/module3-os') [module-top]
+- Prefix "/api/ectd" mounted via app.use 2 times
+  owner: Platform API Gateway (server/index.ts)
+  • server/bootstrap/register-document-routes.ts:127 app.use('/api/ectd') [module-top]
+  • server/bootstrap/register-document-routes.ts:140 app.use('/api/ectd') [module-top]
+- Prefix "/api/submissions" mounted via app.use 2 times
+  owner: Platform API Gateway (server/index.ts)
+  • server/bootstrap/register-document-routes.ts:188 app.use('/api/submissions') [module-top]
+  • server/bootstrap/register-governance-routes.ts:65 app.use('/api/submissions') [module-top]
+- Prefix "/api/v1" mounted via app.use 2 times
+  owner: Platform API Gateway (server/index.ts)
+  • server/bootstrap/register-document-routes.ts:415 app.use('/api/v1') [module-top]
+  • server/bootstrap/register-regulatory-routes.ts:469 app.use('/api/v1') [module-top]
+- Prefix "/api/mdx" mounted via app.use 32 times
+  owner: Platform API Gateway (server/index.ts)
+  • server/bootstrap/register-inline-routes.ts:1183 app.use('/api/mdx') [module-top]
+  • server/bootstrap/register-inline-routes.ts:1195 app.use('/api/mdx') [module-top]
+  • server/bootstrap/register-inline-routes.ts:1204 app.use('/api/mdx') [module-top]
+  • server/bootstrap/register-inline-routes.ts:1205 app.use('/api/mdx') [module-top]
+  • ...and 28 more
+
+Owner summary (warning/error counts):
+- Platform API Gateway (server/index.ts): 0 errors, 4 warnings
+- CMC Platform (server/routes/cmc*.ts): 0 errors, 2 warnings
+- AI Platform (server/services/ai-gateway/): 0 errors, 1 warnings
+- Platform Kernel (server/routes/concept2cure.ts): 0 errors, 1 warnings
+
+Baseline delta: +0 new errors, +0 new warnings (baseline: docs/reports/route-mount-audit-baseline.json)

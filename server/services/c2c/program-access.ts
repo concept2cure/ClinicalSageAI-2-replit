@@ -31,13 +31,15 @@
  */
 
 import { describeFailure, VerificationUnavailableError } from '../../lib/verification-outcome';
+import { withExtendingRoles } from '../../../shared/constants/org-roles';
 
 export type ProgramAuthzMode = 'enforce' | 'warn';
 
 /** Org roles that carry program-management authority, mirroring the set
  *  project-sharing-access.ts uses for the other project entity so one user does
  *  not hold two different answers depending on which router they hit. */
-const ORG_MANAGE_ROLES = new Set(['admin', 'super_admin', 'owner', 'manager']);
+// P-18: an approver administers what a manager does.
+const ORG_MANAGE_ROLES = new Set(withExtendingRoles(['admin', 'super_admin', 'owner', 'manager']));
 
 export interface ProgramMutationInput {
   actor: { userId: number | null; orgRole: string | null | undefined };

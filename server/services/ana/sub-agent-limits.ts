@@ -42,7 +42,7 @@ export function subAgentsEnabled(env: NodeJS.ProcessEnv = process.env): boolean 
  *
  * Listed by name, not derived from the register's `read` class: several
  * `read` tools call a model (explain_validation_findings, plan_submission,
- * cross_region_gap_analysis, dispatch_qc_check) or read a file path
+ * dispatch_qc_check) or read a file path
  * (rasterize_page, pdf_overlay, validate_docx …), and a derived set would
  * offer them the day they are registered.
  */

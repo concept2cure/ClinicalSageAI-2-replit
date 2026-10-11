@@ -40,16 +40,22 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 import pg from 'pg';
+import {
+  atomDataEligibleSql, atomOriginalFileAvailableSql, vaultDataEligibleSql,
+  vaultBinaryAvailableSql, ragDataEligibleSql, ragOriginalFileAvailableSql,
+} from './document-data-disposition/eligibility.js';
 import { createHash, randomUUID } from 'node:crypto';
 import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddingService.js';
-import { assertTenantIsCurrent } from '../db/currentTenant.js';
+import { assertTenantIsCurrent, isTenantUuid } from '../db/currentTenant.js';
 import { getTenantScope } from '../db/tenantStore.js';
 import { refuseModelCallHere } from './ai-gateway/model-call-scope.js';
 import { getOrgPlacementResolver } from './ai-gateway/providers/org-placement.js';
 import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
 import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
+import { buildRagGenerationRequest, buildRagSourceText, RAG_EMPTY_CONTEXT_REFUSAL } from './rag-generation-request.js';
 import { fuseHybrid, mergeByMaxScore } from './rag-fusion.js';
+import { anyTermsQuery } from './vault/vault-search.js';
 import {
   hydeRetrieval,
   multiQueryRetrieval,
@@ -204,8 +210,12 @@ export interface RetrievedDocument {
   atomType: string;
   source?: string;
   initialScore: number; // From embedding similarity
+  /** Found by the text index alone: the query could not be embedded (no key, or egress refused). */
+  lexicalOnly?: boolean;
   rerankScore?: number; // From the LLM relevance judge (LLM-as-judge, not a cross-encoder)
   finalScore: number; // Combined score
+  /** Freshly checked availability of the captured binary, distinct from retained data. */
+  originalFileAvailable?: boolean;
   compressedContent?: string; // Extracted relevant passage
   /**
    * Small-to-big context expansion: the retrieved chunk concatenated with its
@@ -293,6 +303,9 @@ type CorpusScope = {
   needEmbeddings?: boolean;
 };
 
+const candidateOrganizationUuid = (options: RetrievalOptions): string | undefined =>
+  options.artifactScope?.organizationUuid ?? options.organizationUuid;
+
 /**
  * Parse a pgvector value into a number[]. Without a registered pg type parser
  * the column arrives as the text form '[a,b,...]'; tolerate an already-parsed
@@ -326,6 +339,25 @@ function buildLocator(row: VaultChunkRow): string | undefined {
     return `p.${row.page_number}`;
   }
   return undefined;
+}
+
+/** One vault chunk row as a retrieved passage. */
+function vaultChunkToDoc(row: VaultChunkRow, withEmbedding?: boolean): RetrievedDocument {
+  return {
+    id: row.chunk_id,
+    chunkId: row.chunk_id,
+    documentId: row.document_id,
+    content: row.content || '',
+    title: row.title || 'Untitled',
+    atomType: 'vault_chunk',
+    initialScore: Number(row.similarity),
+    finalScore: Number(row.similarity),
+    pageNumber: row.page_number ?? undefined,
+    sectionTitle: row.section_title,
+    chunkIndex: row.chunk_index ?? undefined,
+    locator: buildLocator(row),
+    embedding: withEmbedding ? parsePgVector(row.embedding) : undefined,
+  };
 }
 
 /** RFC-4122 shape. Guards the `::uuid` casts on the vault retrieval path so a
@@ -494,7 +526,7 @@ export class AdvancedRAGPipeline {
     // Every arm below takes its tenant from these options; refuse any that is
     // not the session's before one of them runs.
     await assertTenantIsCurrent(this.pool, {
-      organizationUuid: options.organizationUuid,
+      organizationUuid: candidateOrganizationUuid(options),
       organizationId: options.organizationId,
     });
     const startTime = Date.now();
@@ -545,6 +577,10 @@ export class AdvancedRAGPipeline {
 
     const totalCandidates = candidates.length;
 
+    // Retrieval is a snapshot. Recheck after every asynchronous processing step
+    // before the next provider sees candidate text; no cache bypasses withdrawal.
+    candidates = await this.revalidateCandidates(candidates, options);
+
     // Step 2: reranking via the configured provider (LLM-judge by default,
     // cross-encoder when RAG_RERANKER_* is set).
     if (options.useReranking && candidates.length > 0) {
@@ -554,6 +590,7 @@ export class AdvancedRAGPipeline {
     }
 
     // Step 3: MMR for diversity
+    candidates = await this.revalidateCandidates(candidates, options);
     if (options.useMmr && candidates.length > limit) {
       candidates = await this.applyMmr(candidates, limit, options.mmrLambda || 0.7);
     } else {
@@ -574,12 +611,14 @@ export class AdvancedRAGPipeline {
     }
 
     // Step 4: Contextual compression
+    candidates = await this.revalidateCandidates(candidates, options);
     if (options.useCompression && candidates.length > 0) {
       const compressionResult = await this.compressContexts(query, candidates);
       candidates = compressionResult.documents;
       tokensUsed += compressionResult.tokensUsed;
     }
 
+    candidates = await this.revalidateCandidates(candidates, options);
     return {
       documents: candidates,
       totalCandidates,
@@ -587,6 +626,86 @@ export class AdvancedRAGPipeline {
       processingTimeMs: Date.now() - startTime,
       tokensUsed,
     };
+  }
+
+  /**
+   * Batch by corpus, bind the tenant/project again, and fail closed on lookup
+   * errors. A missing row is no longer usable grounding. Memory entries have
+   * their own lifecycle and are not document identities; public RAG guidance
+   * must be verified by a row whose organization_id is NULL.
+   *
+   * These are point-in-time checks, not a cancellation protocol for an already
+   * dispatched provider request. A later disposition cannot recall its input.
+   */
+  private async revalidateCandidates(
+    documents: RetrievedDocument[], options: RetrievalOptions,
+  ): Promise<RetrievedDocument[]> {
+    const eligible = new Map<string, { documentId?: string; available: boolean; title: string }>();
+    const uuid = candidateOrganizationUuid(options);
+    await assertTenantIsCurrent(this.pool, {
+      organizationUuid: uuid, organizationId: options.organizationId,
+    });
+    const groups = ['vault_chunk', 'rag_chunk', 'project_atom'] as const;
+    for (const type of groups) {
+      const candidates = documents.filter(d => d.atomType === type);
+      if (!candidates.length) continue;
+      const ids = [...new Set(candidates.map(d => d.chunkId ?? d.id))];
+      let rows: Array<{ id: string; document_id?: string; original_file_available: boolean; title: string }>;
+      if (type === 'vault_chunk') {
+        if (!isTenantUuid(uuid)) continue;
+        rows = await withTenantContext(this.pool, uuid, async client => (await client.query(
+          `SELECT c.id::text AS id, d.id::text AS document_id,
+                  COALESCE(d.document_title, d.file_name, '') AS title,
+                  ${vaultBinaryAvailableSql('d')} AS original_file_available
+             FROM vault.document_chunks c JOIN vault.documents d ON d.id = c.document_id
+            WHERE c.id::text = ANY($1::text[]) AND d.deleted_at IS NULL
+              AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid=$2::uuid)
+              AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id=d.program_id
+                AND p.organization_id=d.organization_id AND p.deleted_at IS NULL)
+              AND ${vaultDataEligibleSql('d')}`,
+          [ids, uuid],
+        )).rows);
+      } else if (type === 'rag_chunk') {
+        // A missing tenant key means explicitly public guidance, never all orgs.
+        ({ rows } = await this.pool.query(
+          `SELECT c.id::text AS id, d.id::text AS document_id, COALESCE(d.title,'') AS title,
+                  ${ragOriginalFileAvailableSql('d')} AS original_file_available
+             FROM rag_chunks c JOIN rag_documents d ON d.id=c.document_id
+            WHERE c.id::text=ANY($1::text[]) AND ${ragDataEligibleSql('d')}
+              AND (d.organization_id IS NULL OR d.organization_id=$2::int
+                OR d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid=$3::uuid))`,
+          [ids, options.organizationId ?? null, isTenantUuid(uuid) ? uuid : null],
+        ));
+      } else {
+        if (!isTenantUuid(uuid)) continue;
+        const project = options.artifactScope?.projectId;
+        ({ rows } = await this.pool.query(
+          `SELECT a.id::text AS id, COALESCE(a.title,'') AS title,
+                  ${atomOriginalFileAvailableSql('a')} AS original_file_available
+             FROM lumen_data_atoms a
+            WHERE a.id::text=ANY($1::text[])
+              AND a.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid=$2::uuid)
+              AND ${atomDataEligibleSql('a')}
+              AND ($3::int IS NULL OR (a.source_type IN ('artifact','data_room_upload')
+                AND a.source_id IN (SELECT artifact_id FROM concept2cure_artifacts
+                  WHERE project_id=$3 AND organization_id=a.organization_id)))`,
+          [ids, uuid, project == null ? null : Number(project)],
+        ));
+      }
+      for (const row of rows) {
+        eligible.set(`${type}:${row.id}`, {
+          documentId: row.document_id, available: row.original_file_available === true,
+          title: String(row.title ?? ''),
+        });
+      }
+    }
+    return documents.flatMap(doc => {
+      if (doc.atomType === 'client_memory' || doc.atomType === 'project_memory') return [doc];
+      const row = eligible.get(`${doc.atomType}:${doc.chunkId ?? doc.id}`);
+      if (!row || (doc.documentId && row.documentId !== doc.documentId)) return [];
+      return [{ ...doc, originalFileAvailable: row.available, title:
+        (row.title || 'Untitled') + (row.available ? '' : ' [original file unavailable; retained extracted data]') }];
+    });
   }
 
   /**
@@ -699,7 +818,7 @@ export class AdvancedRAGPipeline {
       // For a governed verdict the failure is the caller's to report.
       if (governedVerdict) throw error;
       // Otherwise a reranker failure must never break retrieval — keep the embedding order.
-      console.warn(`[RAG] reranker "${this.reranker.name}" failed; keeping embedding order:`, error);
+      console.warn('[RAG] reranker failed; keeping embedding order:', this.reranker.name, error);
       return { documents, tokensUsed: 0 };
     }
 
@@ -827,8 +946,9 @@ export class AdvancedRAGPipeline {
    * generation sees the surrounding context the precise chunk omits (the chunk
    * stays the unit we *rank* on; the window is the unit we *read*). Results
    * without a chunk index (project atoms, memory) pass through unchanged, and a
-   * per-chunk failure degrades to the bare chunk — expansion never drops a
-   * result. Both windows are backed by a (document_id, chunk_index) index.
+   * missing or unreadable window drops the candidate: retaining the old chunk
+   * would defeat a withdrawal confirmed after initial retrieval. Both windows
+   * are backed by a (document_id, chunk_index) index.
    */
   private async expandContext(
     documents: RetrievedDocument[],
@@ -837,7 +957,7 @@ export class AdvancedRAGPipeline {
     organizationId?: number
   ): Promise<RetrievedDocument[]> {
     if (window <= 0) return documents;
-    return Promise.all(
+    const expanded = await Promise.all(
       documents.map(async doc => {
         if (doc.chunkIndex == null || !doc.documentId) return doc;
         const lo = doc.chunkIndex - window;
@@ -848,39 +968,43 @@ export class AdvancedRAGPipeline {
             texts = await withTenantContext(this.pool, organizationUuid, async client => {
               // tenant-isolation-safe: RLS-scoped — withTenantContext sets app.current_org_id; vault.document_chunks is org-filtered by its RLS policy (fails closed with no org context).
               const { rows } = await client.query<{ chunk_text: string | null }>(
-                `SELECT chunk_text FROM vault.document_chunks
-                 WHERE document_id = $1 AND chunk_index BETWEEN $2 AND $3
-                 ORDER BY chunk_index`,
+                `SELECT c.chunk_text FROM vault.document_chunks c
+                   JOIN vault.documents d ON d.id = c.document_id
+                 WHERE c.document_id = $1 AND c.chunk_index BETWEEN $2 AND $3
+                   AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}
+                 ORDER BY c.chunk_index`,
                 [doc.documentId, lo, hi]
               );
               return rows.map(r => r.chunk_text || '').filter(Boolean);
             });
           } else if (doc.atomType === 'rag_chunk') {
-            // Tenant-scoped: rag_chunks is not RLS-scoped, so join rag_documents
-            // and filter by the caller's org (rag_documents.organization_id) —
-            // defense-in-depth over the document_id that upstream retrieval
-            // already org-vetted. Conditional ($4 NULL → no filter) preserves
-            // internal callers that don't pass an org id.
+            // rag_chunks has no RLS; permit explicit public guidance or the
+            // supplied integer/verified UUID tenant, even without prior retrieval.
             const { rows } = await this.pool.query<{ content: string | null }>(
               `SELECT rc.content FROM rag_chunks rc
                JOIN rag_documents rd ON rd.id = rc.document_id
                WHERE rc.document_id = $1 AND rc.chunk_index BETWEEN $2 AND $3
-                 AND ($4::int IS NULL OR rd.organization_id = $4)
+                 AND (rd.organization_id IS NULL OR rd.organization_id = $4::int
+                   OR rd.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $5::uuid))
+                 AND ${ragDataEligibleSql('rd')}
                ORDER BY rc.chunk_index`,
-              [doc.documentId, lo, hi, organizationId ?? null]
+              [doc.documentId, lo, hi, organizationId ?? null,
+                isTenantUuid(organizationUuid) ? organizationUuid : null]
             );
             texts = rows.map(r => r.content || '').filter(Boolean);
           } else {
             return doc;
           }
+          if (!texts.length) return null;
           // Only annotate when the window actually added neighbours.
           return texts.length > 1 ? { ...doc, expandedContent: texts.join('\n\n') } : doc;
         } catch (error) {
-          console.warn('[RAG] context expansion failed for a chunk; using the chunk alone:', error);
-          return doc;
+          console.warn('[RAG] context expansion unavailable; refusing the stale chunk:', error);
+          return null;
         }
       })
     );
+    return expanded.filter((doc): doc is RetrievedDocument => doc !== null);
   }
 
   /**
@@ -937,6 +1061,78 @@ export class AdvancedRAGPipeline {
     };
   }
 
+  /** The query as a pgvector literal, or null when no embedder will embed it (no key, or egress refused). */
+  private async queryVectorOrNull(query: string): Promise<string | null> {
+    try {
+      const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
+      return `[${queryResult.embedding.join(',')}]`;
+    } catch (error) {
+      console.warn(
+        '[RAG] vault query not embedded; answering from the text index alone:',
+        error instanceof Error ? error.message : String(error),
+      );
+      return null;
+    }
+  }
+
+  /**
+   * The vault's full-text arm over vault.document_chunks.chunk_text (GIN index,
+   * migrations/20260905b_vault_document_chunks.sql). Two uses:
+   *   - the sparse half of hybrid retrieval (keyless false): every term, scores
+   *     left to reciprocal-rank fusion;
+   *   - the whole search when there is no query vector (keyless true): ANY of
+   *     the terms, ranked by ts_rank_cd normalised to 0..1, each hit marked
+   *     lexicalOnly. A chunk written without an embedding is found either way.
+   */
+  private async vaultLexicalArm(
+    client: pg.PoolClient,
+    args: {
+      query: string;
+      limit: number;
+      organizationUuid: string;
+      filters?: QueryFilters;
+      keyless: boolean;
+      needEmbeddings?: boolean;
+    },
+  ): Promise<RetrievedDocument[]> {
+    const withVectors = Boolean(args.needEmbeddings) && !args.keyless;
+    const tsquery = args.keyless ? anyTermsQuery(args.query) : args.query;
+    if (!tsquery.trim()) return [];
+    const params: Array<string | number | Date> = [tsquery, args.limit, args.organizationUuid];
+    const filter = buildDocFilterClause(args.filters, params, VAULT_FILTER_COLUMNS);
+    // tenant-isolation-safe: explicit organization predicate ($3), as the dense arm.
+    const { rows } = await client.query<VaultChunkRow>(
+      `
+      SELECT
+        c.id AS chunk_id,
+        c.document_id AS document_id,
+        COALESCE(d.document_title, d.file_name, '') ||
+          CASE WHEN ${vaultBinaryAvailableSql('d')} THEN ''
+          ELSE ' [original file unavailable; retained extracted data]' END AS title,
+        c.chunk_text AS content,
+        c.page_number AS page_number,
+        c.section_title AS section_title,
+        c.chunk_index AS chunk_index,
+        ${withVectors ? 'c.embedding::text AS embedding,' : ''}
+        ${args.keyless
+          ? "ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1), 32)::float8"
+          : '0::float8'} AS similarity
+      FROM vault.document_chunks c
+      JOIN vault.documents d ON d.id = c.document_id
+      WHERE ${withVectors ? 'c.embedding IS NOT NULL' : 'TRUE'}${filter}
+        AND d.deleted_at IS NULL
+        AND ${vaultDataEligibleSql('d')}
+        AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id = d.program_id AND p.organization_id = d.organization_id AND p.deleted_at IS NULL)
+        AND to_tsvector('english', c.chunk_text) @@ websearch_to_tsquery('english', $1)
+        AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $3::uuid)
+      ORDER BY ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1)) DESC
+      LIMIT $2
+    `,
+      params
+    );
+    return rows.map(row => ({ ...vaultChunkToDoc(row, withVectors), ...(args.keyless ? { lexicalOnly: true } : {}) }));
+  }
+
   private async searchVaultSimilar(
     query: string,
     limit: number,
@@ -946,9 +1142,6 @@ export class AdvancedRAGPipeline {
     hybrid?: boolean,
     filters?: QueryFilters
   ): Promise<RetrievedDocument[]> {
-    const queryResult = await this.embeddingService.embed(query, 'text-embedding-3-small');
-    const vector = `[${queryResult.embedding.join(',')}]`;
-
     // Metadata pre-filters on the joined documents table. Each arm has its own
     // param array, so each gets its own clause with arm-local placeholders.
     /* REFUSE WITHOUT A TENANT, rather than searching every tenant's vault.
@@ -977,6 +1170,20 @@ export class AdvancedRAGPipeline {
       return [];
     }
 
+    /* KEYLESS BY DEFAULT. With no embedding provider (no key, or a tenant whose
+       placement policy refuses egress) the query cannot be embedded, and this
+       arm used to throw, so AnA could not search the Vault at all. The text
+       index on chunk_text answers instead (vaultLexicalArm), and every passage
+       found that way says so (`lexicalOnly`), so a caller can state how the
+       search was ranked. An embedding, when there is one, only adds the
+       meaning-based arm. Embedded after the tenant refusal above, so a refused
+       call sends nothing to a provider. */
+    const vector = await this.queryVectorOrNull(query);
+    if (vector === null) {
+      return withTenantContext(this.pool, organizationUuid, client =>
+        this.vaultLexicalArm(client, { query, limit, organizationUuid, filters, keyless: true }));
+    }
+
     const denseParams: Array<string | number | Date> = [vector, threshold, limit, organizationUuid];
     const denseFilter = buildDocFilterClause(filters, denseParams, VAULT_FILTER_COLUMNS);
 
@@ -984,21 +1191,7 @@ export class AdvancedRAGPipeline {
     // columns take no params, so this doesn't shift the $1..$3 placeholders.
     const embeddingCol = needEmbeddings ? 'c.embedding::text AS embedding,' : '';
 
-    const toDoc = (row: VaultChunkRow): RetrievedDocument => ({
-      id: row.chunk_id,
-      chunkId: row.chunk_id,
-      documentId: row.document_id,
-      content: row.content || '',
-      title: row.title || 'Untitled',
-      atomType: 'vault_chunk',
-      initialScore: Number(row.similarity),
-      finalScore: Number(row.similarity),
-      pageNumber: row.page_number ?? undefined,
-      sectionTitle: row.section_title,
-      chunkIndex: row.chunk_index ?? undefined,
-      locator: buildLocator(row),
-      embedding: needEmbeddings ? parsePgVector(row.embedding) : undefined,
-    });
+    const toDoc = (row: VaultChunkRow) => vaultChunkToDoc(row, needEmbeddings);
 
     return withTenantContext(this.pool, organizationUuid, async client => {
       /* ── Scope to the tenant FIRST, then rank exactly ──────────────────────
@@ -1026,16 +1219,23 @@ export class AdvancedRAGPipeline {
       // predicate ($4 -> organizations.uuid -> organizations.id ->
       // vault.documents.organization_id). RLS is defence in depth here, not the
       // boundary — see the refusal above for why it could not be relied on.
-      const { rows: denseRows } = await client.query<VaultChunkRow>(
+      let denseRows: VaultChunkRow[];
+      try {
+        ({ rows: denseRows } = await client.query<VaultChunkRow>(
         `
         WITH scoped AS MATERIALIZED (
           SELECT
             c.id, c.document_id, c.chunk_text, c.page_number, c.section_title,
             c.chunk_index, c.embedding,
-            COALESCE(d.document_title, d.file_name, '') AS title
+            COALESCE(d.document_title, d.file_name, '') ||
+              CASE WHEN ${vaultBinaryAvailableSql('d')} THEN ''
+              ELSE ' [original file unavailable; retained extracted data]' END AS title
           FROM vault.document_chunks c
           JOIN vault.documents d ON d.id = c.document_id
           WHERE c.embedding IS NOT NULL${denseFilter}
+            AND d.deleted_at IS NULL
+            AND ${vaultDataEligibleSql('d')}
+            AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id = d.program_id AND p.organization_id = d.organization_id AND p.deleted_at IS NULL)
             -- Explicit tenant predicate. A document with a NULL organization_id is
             -- unattributable (migrations/20260905_vault_documents_organization_id.sql)
             -- and this predicate excludes it, which is the intended refusal: an
@@ -1062,44 +1262,24 @@ export class AdvancedRAGPipeline {
         LIMIT $3
       `,
         denseParams
-      );
+      ));
+      } catch (error) {
+        // 42703 / 42883: no embedding column or no vector operator on this
+        // database (no pgvector). The index, not the corpus, is absent.
+        const code = (error as { code?: string })?.code;
+        if (code !== '42703' && code !== '42883') throw error;
+        return this.vaultLexicalArm(client, { query, limit, organizationUuid, filters, keyless: true });
+      }
       const dense = denseRows.map(toDoc);
       if (!hybrid) return dense;
 
-      // Sparse arm: Postgres full-text ranked by ts_rank_cd. websearch_to_tsquery
-      // tolerates arbitrary user text (no tsquery syntax errors), and the
-      // to_tsvector('english', chunk_text) expression matches the GIN index in
-      // performance_indexes.sql so this stays index-backed. A lexical failure
-      // must not break retrieval — fall back to the dense arm alone.
+      // Sparse arm: Postgres full-text over chunk_text (vaultLexicalArm). A
+      // lexical failure must not break retrieval: fall back to the dense arm.
       let lexical: RetrievedDocument[];
-      const lexParams: Array<string | number | Date> = [query, limit, organizationUuid];
-      const lexFilter = buildDocFilterClause(filters, lexParams, VAULT_FILTER_COLUMNS);
       try {
-        // tenant-isolation-safe: same explicit organization predicate as the
-        // dense arm, on this arm's own placeholder ($3).
-        const { rows: lexRows } = await client.query<VaultChunkRow>(
-          `
-          SELECT
-            c.id AS chunk_id,
-            c.document_id AS document_id,
-            COALESCE(d.document_title, d.file_name, '') AS title,
-            c.chunk_text AS content,
-            c.page_number AS page_number,
-            c.section_title AS section_title,
-            c.chunk_index AS chunk_index,
-            ${embeddingCol}
-            0::float8 AS similarity
-          FROM vault.document_chunks c
-          JOIN vault.documents d ON d.id = c.document_id
-          WHERE c.embedding IS NOT NULL${lexFilter}
-            AND to_tsvector('english', c.chunk_text) @@ websearch_to_tsquery('english', $1)
-            AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $3::uuid)
-          ORDER BY ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1)) DESC
-          LIMIT $2
-        `,
-          lexParams
-        );
-        lexical = lexRows.map(toDoc);
+        lexical = await this.vaultLexicalArm(client, {
+          query, limit, organizationUuid, filters, keyless: false, needEmbeddings,
+        });
       } catch (error) {
         console.warn('[RAG] vault lexical arm failed; using dense-only retrieval:', error);
         return dense;
@@ -1166,7 +1346,8 @@ export class AdvancedRAGPipeline {
         SELECT
           c.id AS chunk_id,
           c.document_id AS document_id,
-          COALESCE(d.title, '') AS title,
+          COALESCE(d.title, '') || CASE WHEN ${ragOriginalFileAvailableSql('d')} THEN ''
+            ELSE ' [original file unavailable; retained extracted data]' END AS title,
           c.content AS content,
           c.page_number AS page_number,
           c.section_title AS section_title,
@@ -1176,6 +1357,7 @@ export class AdvancedRAGPipeline {
         FROM rag_chunks c
         JOIN rag_documents d ON d.id = c.document_id
         WHERE c.embedding IS NOT NULL
+          AND ${ragDataEligibleSql('d')}
           ${orgFilter}${denseFilter}
           -- (1 - sim) filter as a distance bound: 1 - dist > t  <=>  dist < 1 - t.
           -- Uses the same bare <=> operator as ORDER BY so the planner reuses
@@ -1210,7 +1392,8 @@ export class AdvancedRAGPipeline {
         SELECT
           c.id AS chunk_id,
           c.document_id AS document_id,
-          COALESCE(d.title, '') AS title,
+          COALESCE(d.title, '') || CASE WHEN ${ragOriginalFileAvailableSql('d')} THEN ''
+            ELSE ' [original file unavailable; retained extracted data]' END AS title,
           c.content AS content,
           c.page_number AS page_number,
           c.section_title AS section_title,
@@ -1220,6 +1403,7 @@ export class AdvancedRAGPipeline {
         FROM rag_chunks c
         JOIN rag_documents d ON d.id = c.document_id
         WHERE c.embedding IS NOT NULL
+          AND ${ragDataEligibleSql('d')}
           ${lexOrgFilter}${lexFilter}
           AND to_tsvector('english', c.content) @@ websearch_to_tsquery('english', $1)
         ORDER BY ts_rank_cd(to_tsvector('english', c.content), websearch_to_tsquery('english', $1)) DESC
@@ -1366,6 +1550,7 @@ export class AdvancedRAGPipeline {
 
   private async persistEvidenceCitations(
     client: pg.PoolClient,
+    organizationUuid: string,
     query: string,
     citations: Array<{
       documentId?: string;
@@ -1398,7 +1583,7 @@ export class AdvancedRAGPipeline {
           support_type,
           citation_context,
           created_at
-        ) VALUES (
+        ) SELECT
           $1,
           $2,
           $3,
@@ -1410,7 +1595,10 @@ export class AdvancedRAGPipeline {
           'SUPPORTS',
           $7,
           now()
-        )
+          FROM vault.document_chunks c JOIN vault.documents d ON d.id=c.document_id
+         WHERE c.id=$3 AND d.id=$2 AND d.deleted_at IS NULL
+           AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid=$8::uuid)
+           AND ${vaultDataEligibleSql('d')}
       `,
         [
           citationId,
@@ -1420,6 +1608,7 @@ export class AdvancedRAGPipeline {
           citation.quote,
           quantize(citation.confidence),
           citation.locator ?? null,
+          organizationUuid,
         ]
       );
     }
@@ -1536,12 +1725,24 @@ export class AdvancedRAGPipeline {
 
   /** Assemble the `[Source N: title]` block fed to generation and the self-checks. */
   private buildSourceText(documents: RetrievedDocument[]): string {
-    return documents
-      .map(
-        (doc, idx) =>
-          `[Source ${idx + 1}: ${doc.title}]\n${doc.compressedContent || doc.expandedContent || doc.content}`
-      )
-      .join('\n\n---\n\n');
+    return buildRagSourceText(documents);
+  }
+
+  private async correctContext(
+    query: string, context: RAGContext, options: RetrievalOptions,
+  ): Promise<RAGContext> {
+    if (!options.useCorrectiveLoop) return context;
+    const route = (req: AIRequest) => this.routeCached(req);
+    const grade = await gradeContextSufficiency(route, query, this.buildSourceText(context.documents));
+    context.tokensUsed += grade.tokensUsed;
+    if (grade.sufficient) return context;
+    const rewrite = await rewriteQuery(route, query);
+    context.tokensUsed += rewrite.tokensUsed;
+    if (rewrite.query === query) return context;
+    const retried = await this.retrieve(rewrite.query, options);
+    if (!retried.documents.length) return context;
+    retried.tokensUsed += context.tokensUsed;
+    return retried;
   }
 
   async queryWithGeneration(
@@ -1556,14 +1757,14 @@ export class AdvancedRAGPipeline {
   }> {
     // Retrieve relevant documents
     let context = await this.retrieve(query, options);
+    const refuse = () => {
+      context = { ...context, documents: [] };
+      return { answer: RAG_EMPTY_CONTEXT_REFUSAL, sources: [], context };
+    };
+    context.documents = await this.revalidateCandidates(context.documents, options);
 
     if (context.documents.length === 0) {
-      return {
-        answer:
-          'I could not find relevant information in the regulatory knowledge base to answer this question.',
-        sources: [],
-        context,
-      };
+      return refuse();
     }
 
     const route = (req: AIRequest) => this.routeCached(req);
@@ -1571,22 +1772,10 @@ export class AdvancedRAGPipeline {
     // Corrective pre-generation (CRAG): grade whether the retrieved sources can
     // answer the question; if not, rewrite the query and retrieve once more,
     // keeping the new context when it returns results. Bounded to a single retry.
-    if (options.useCorrectiveLoop) {
-      const grade = await gradeContextSufficiency(route, query, this.buildSourceText(context.documents));
-      context.tokensUsed += grade.tokensUsed;
-      if (!grade.sufficient) {
-        const rewrite = await rewriteQuery(route, query);
-        context.tokensUsed += rewrite.tokensUsed;
-        if (rewrite.query !== query) {
-          const retried = await this.retrieve(rewrite.query, options);
-          if (retried.documents.length > 0) {
-            retried.tokensUsed += context.tokensUsed; // carry the grading/rewrite cost
-            context = retried;
-          }
-        }
-      }
-    }
+    context = await this.correctContext(query, context, options);
 
+    context.documents = await this.revalidateCandidates(context.documents, options);
+    if (!context.documents.length) return refuse();
     // Build context for generation
     const sourceText = this.buildSourceText(context.documents);
 
@@ -1594,23 +1783,22 @@ export class AdvancedRAGPipeline {
     // the run can be attributed to it (a PQ requirement); unset keeps the
     // gateway's task-type selection, which is every existing caller.
     const response = await this.aiRouter.route({
-      taskType: 'regulatory_review',
+      ...buildRagGenerationRequest(query, sourceText),
       ...(options.model ? { model: options.model } : {}),
-      messages: [
-        {
-          role: 'system',
-          content: `You are a regulatory affairs expert with deep knowledge of FDA, EMA, and ICH guidelines.
-Answer questions based ONLY on the provided sources. Be precise and cite sources using [Source N] notation.
-If the sources don't contain enough information to fully answer, say so clearly.`,
-        },
-        {
-          role: 'user',
-          content: `Question: ${query}\n\nSources:\n${sourceText}`,
-        },
-      ],
-      maxTokens: 1000,
-      temperature: 0.3,
     });
+
+    // A withdrawal during generation invalidates the answer's entire grounding;
+    // dropping only its citation would still return claims derived from it.
+    const stillCurrent = async () => {
+      const previous = context.documents;
+      const current = await this.revalidateCandidates(previous, options);
+      const unchanged = current.length === previous.length && current.every((d, i) =>
+        d.id === previous[i].id && d.atomType === previous[i].atomType &&
+        d.originalFileAvailable === previous[i].originalFileAvailable);
+      context.documents = current;
+      return unchanged;
+    };
+    if (!await stillCurrent()) return refuse();
 
     if (options.persistCitations && options.organizationUuid) {
       const citations = context.documents.map(doc => ({
@@ -1623,7 +1811,7 @@ If the sources don't contain enough information to fully answer, say so clearly.
 
       try {
         await withTenantContext(this.pool, options.organizationUuid, async client => {
-          await this.persistEvidenceCitations(client, query, citations);
+          await this.persistEvidenceCitations(client, options.organizationUuid!, query, citations);
         });
       } catch (error) {
         console.warn('[RAG] Citation persistence failed:', error);
@@ -1635,10 +1823,12 @@ If the sources don't contain enough information to fully answer, say so clearly.
     // than withholding the answer.
     let grounded: boolean | undefined;
     if (options.useCorrectiveLoop) {
+      if (!await stillCurrent()) return refuse();
       const check = await verifyGroundedness(route, response.content, sourceText);
       context.tokensUsed += check.tokensUsed;
       grounded = check.grounded;
     }
+    if (!await stillCurrent()) return refuse();
 
     return {
       answer: response.content,

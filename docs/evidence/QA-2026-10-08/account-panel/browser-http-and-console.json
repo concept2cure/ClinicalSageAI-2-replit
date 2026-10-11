@@ -1,0 +1,43 @@
+[
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5078/concept2cure"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "url": "http://localhost:5078/concept2cure"
+  },
+  {
+    "kind": "http",
+    "status": 401,
+    "method": "POST",
+    "url": "/api/v1/auth/password/change",
+    "body": "{\"success\":false,\"error\":{\"code\":\"AUTH_001\",\"message\":\"Current password is incorrect\"}}",
+    "at": "http://localhost:5078/concept2cure"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5078/concept2cure"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+    "url": "http://localhost:5078/concept2cure"
+  },
+  {
+    "kind": "console",
+    "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "url": "http://localhost:5078/concept2cure"
+  },
+  {
+    "kind": "http",
+    "status": 401,
+    "method": "POST",
+    "url": "/api/v1/auth/mfa/disable",
+    "body": "{\"success\":false,\"error\":{\"code\":\"AUTH_004\",\"message\":\"Invalid verification code\"}}",
+    "at": "http://localhost:5078/concept2cure"
+  }
+]

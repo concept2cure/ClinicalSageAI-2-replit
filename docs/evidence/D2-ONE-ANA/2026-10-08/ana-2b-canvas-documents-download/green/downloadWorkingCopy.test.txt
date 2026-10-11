@@ -1,0 +1,68 @@
+# Green: npx vitest run client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx (the slice as it now stands, after the review fixes)
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft offers both working copies, each marked as an uncontrolled copy 326ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > choosing Working copy (Word) on a draft posts the working-copy route and downloads what the server sent 90ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > Working copy (PDF) asks for a PDF 56ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a refusal is said in the server’s words, beside the control and in a toast, and nothing downloads 90ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a draft shows the controlled export disabled, with its reason visible and read with each item 40ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a FROZEN document offers the controlled export, through the export route 40ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a APPROVED document offers the controlled export, through the export route 29ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > One Download menu: a working copy at any status, a controlled export only when sealed > a approved document offers the controlled export, through the export route 46ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > names what it opens, and says whether it is open 33ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > opens on ArrowDown with focus on the first item; the arrows move; Escape closes and returns focus 44ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The Download menu is a real menu button > choosing an item closes the menu and returns focus to the button 58ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > What the control says belongs to one document > a refusal for one document is not shown beside the next one the control is handed 45ms
+stderr | client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > where the browser has a top layer, the menu opens in it as a manual popover, placed from its button
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > What the control says belongs to one document > an answer that arrives after the person moved on is told, but not shown beside the other document, and does not hold its control 102ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > where the browser has a top layer, the menu opens in it as a manual popover, placed from its button 26ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > near the top of the screen it opens below its button, right edges aligned, in fixed coordinates 1ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > with room above it opens above; aligned left where right-aligned would run off the screen 1ms
+ ✓ client/src/concept2cure/v2/__tests__/downloadWorkingCopy.test.tsx > The menu opens outside the toolbar that scrolls > taller than the room below, it scrolls inside itself rather than running off the screen 1ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  06:03:22
+   Duration  2.73s (transform 353ms, setup 194ms, import 465ms, tests 1.03s, environment 815ms)
+

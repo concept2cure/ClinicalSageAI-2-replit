@@ -1,0 +1,33 @@
+RED, one fix at a time: the sources as in this change, with ONE review fix undone per block (scratch copy; each block restored before the next). Shows each new test fails on the defect it exists to catch.
+Mutations applied with an exact single-occurrence string replace; only failing cases and the totals are kept.
+
+== M1  V2App chooseSegment lands on Home again: nav('home') in place of the type's default screen
+ × shellWiring.test.tsx > choosing a client type from the account menu > lands on that type’s default screen, which is in this release 5301ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)
+== M2  RAIL_CORE: My work without its screen action (opens the board on everyone's tasks)
+ × shellNav.test.tsx > My work is the person’s own work > opens the task board filtered to the signed-in person’s tasks 5199ms
+ × registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > a rail entry that applies a screen action names a registered, ungoverned action on its own screen 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 48 passed (50)
+== M3  RAIL_CORE: no Conversation entry
+ × shellNav.test.tsx > the rail lists the places > exactly the places, in order 242ms
+ × shellNav.test.tsx > the rail lists the places > every entry opens a screen in this release 153ms
+ × shellNav.test.tsx > the conversation in progress is one step away > the rail’s Conversation entry opens the conversation screen, and is marked when it is open 171ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 20 passed (23)
+== M4  AccountMenu: no keyboard handling (onKeyDown removed)
+ × shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 90ms
+ × shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 63ms
+ × shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 61ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 20 passed (23)
+== M5  AccountMenu: choosing the checked client type calls setSegment again
+ × shellWiring.test.tsx > choosing a client type from the account menu > choosing the type already chosen leaves the person where they are 133ms
+ × shellNav.test.tsx > the account menu holds Apps and the client type > choosing the type already chosen changes nothing and closes the menu 70ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 25 passed (27)
+== M6  app-v2.css: .rail clips again (overflow:hidden)
+ × shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 22 passed (23)

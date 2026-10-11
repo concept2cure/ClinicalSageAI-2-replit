@@ -95,7 +95,15 @@ export function resolveAppBaseUrl(
   return configured || `${req.protocol}://${req.get('host')}`;
 }
 
+/**
+ * What every invited, not-yet-activated account's password hash begins with.
+ * Redeeming the setup link replaces the hash, so this prefix is how "invited,
+ * never activated" is read back (Admin and access member state; re-issuing an
+ * invitation — QA 2026-10-08, j9 finding 4). SCIM accounts use `scim:`.
+ */
+export const INVITE_PASSWORD_HASH_PREFIX = 'invite:';
+
 /** The password hash an invited, not-yet-activated account carries. */
 export function unusableInvitePasswordHash(): string {
-  return `invite:${crypto.randomUUID()}`;
+  return `${INVITE_PASSWORD_HASH_PREFIX}${crypto.randomUUID()}`;
 }

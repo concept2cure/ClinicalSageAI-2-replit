@@ -28,6 +28,7 @@ import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
+import { callToolAsTurn } from './ana-tool-call';
 
 process.env.ANA_DOCUMENT_CATALOG_FORCE_ON = 'true';
 
@@ -89,16 +90,10 @@ async function inTenantScope<T>(org: { id: number; uuid: string }, fn: () => Pro
   );
 }
 
-/** The registered tool handlers, resolved through the real executor registry. */
+/** The registered tool handlers, called as AnA's turn calls them (a read counts once delivered; see ana-tool-call.ts). */
 async function callTool(name: string, input: Record<string, unknown>, asOrg?: { id: number; uuid: string }) {
-  const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
-  const handler = getToolHandler(name);
-  if (!handler) throw new Error(`tool ${name} is not registered`);
   const org = asOrg ?? { id: orgId, uuid: orgUuid };
-  const raw = await inTenantScope(org, () =>
-    handler(input, { organizationId: org.id, userId, humanConfirmed: true }),
-  );
-  return JSON.parse(raw);
+  return inTenantScope(org, () => callToolAsTurn(name, input, { organizationId: org.id, userId, humanConfirmed: true }));
 }
 
 async function cleanupProbeRows(): Promise<void> {
@@ -378,7 +373,7 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
       offset: 0,
       max_chars: 1000,
     });
-    // max_chars floor is 1000, which covers this small fixture entirely — so
+    // This small fixture fits one window, which covers it entirely — so
     // force partial coverage the way it happens on real documents: wipe the
     // receipts and record a genuinely partial one.
     expect(first.ok).toBe(true);
@@ -398,7 +393,7 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
 
     const refused = await callTool('catalog_project_document', {
       document_id: txtDocId,
-      document_kind: 'Stability study report',
+      document_kind: 'report',
       purpose: 'Supports the retest period.',
       summary: 'Twelve-month stability data for batch 23-104.',
     });
@@ -419,7 +414,7 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
 
     const done = await callTool('catalog_project_document', {
       document_id: txtDocId,
-      document_kind: 'Stability study report',
+      document_kind: 'report',
       purpose: 'Supports the 24-month retest period for batch 23-104.',
       summary:
         'Twelve-month 25C/60RH stability data for batch 23-104; assay 99.2% of label claim; no OOS; supports a 24-month retest period.',
@@ -437,7 +432,7 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
     );
     expect(rows[0]).toMatchObject({
       catalog_status: 'cataloged',
-      document_kind: 'Stability study report',
+      document_kind: 'report',
       batch: '23-104',
     });
   });
@@ -452,7 +447,7 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
     const read = await callTool('read_project_document', { document_id: txtDocId });
     expect(read.ok).toBe(true);
     expect(read.comprehension, 'a cataloged document must return what was learned').toBeTruthy();
-    expect(read.comprehension.documentKind).toBe('Stability study report');
+    expect(read.comprehension.documentKind).toBe('report');
     expect(read.comprehension.keyData).toMatchObject({ batch: '23-104', retestMonths: 24 });
     expect(read.comprehension.catalogedAt).toBeTruthy();
   });
@@ -525,7 +520,7 @@ describe('key_data is verified against the text it claims to transcribe', () => 
   const catalogWith = (keyData: Record<string, unknown>) =>
     callTool('catalog_project_document', {
       document_id: coaDocId,
-      document_kind: 'Certificate of Analysis',
+      document_kind: 'cert',
       purpose: 'Release evidence for the clinical batch.',
       summary: 'CoA for one Catalogin 10mg batch: assay, batch size, particle size; released.',
       key_data: keyData,

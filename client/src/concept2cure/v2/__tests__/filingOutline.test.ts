@@ -131,6 +131,24 @@ describe('binding an outline node to the section that holds its text', () => {
     expect(findSectionForNode(sections, '3.2.S')).toBeNull();
   });
 
+  /* QA 2026-10-08, walk 2 (j4): the 2.5 Clinical Overview's sections are
+     2.5.1 … 2.5.7 and the IND outline has one node, 2.5. Its text now reaches
+     the filing's 2.5 (shared/regulatory/filing-section-key.ts), so the node
+     opens the document's first section under it — but only a node the outline
+     does not subdivide: a container's children have nodes of their own. */
+  it('an undivided node opens the document’s first section under it; a subdivided node does not', () => {
+    const overview = [
+      { id: 'c1', code: '2.5.1', title: 'Product Development Rationale' },
+      { id: 'c2', code: '2.5.2', title: 'Overview of Biopharmaceutics' },
+      { id: 'q9', code: '3.2.S.9', title: 'Not in the outline' },
+    ];
+    const keys = ['2.5', '3.2.S', '3.2.S.1'];
+    expect(findSectionForNode(overview, '2.5', keys)?.id).toBe('c1');
+    expect(findSectionForNode(overview, '3.2.S', keys)).toBeNull();
+    // The node's own section still wins when there is one.
+    expect(findSectionForNode([...overview, { id: 'own', code: '2.5', title: 'Clinical overview' }], '2.5', keys)?.id).toBe('own');
+  });
+
   it('never matches a null code — the worst failure would be opening the wrong text', () => {
     // authoring_sections.code is nullable TEXT. Collapsing null onto a real
     // section key would show one section's content under another section's

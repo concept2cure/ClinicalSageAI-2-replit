@@ -21,11 +21,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveRunDate } from './env-files.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-27';
+const RUN_DATE = resolveRunDate();
 const DOCS = path.join(ROOT, 'docs', 'validation');
-const EVIDENCE = path.join(ROOT, 'docs', 'evidence', 'W3', RUN_DATE);
+const EVIDENCE = process.env.VALIDATION_EVIDENCE_ROOT || path.join(ROOT, 'docs', 'evidence', 'W3', RUN_DATE);
 
 const args = process.argv.slice(2);
 const opt = (name) => {

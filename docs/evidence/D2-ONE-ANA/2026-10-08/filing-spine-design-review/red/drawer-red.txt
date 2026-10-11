@@ -1,0 +1,1200 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an NDA · FDA project opens on NDA · FDA (US), with the project's client type 320ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an MAA · EMA project opens on MAA · EU (EMA), not on a US IND 67ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a Health Canada project preselects Health Canada, whatever its spelling 70ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project opened from a link (no workspace on the shell) takes its client type from the project's product type 51ms
+   → expected '' to be 'biotech' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an IVD product is an IVD client, whatever bucket its filing type falls in 47ms
+   → expected 'mdx' to be 'ivd' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when that market already exists on the project, no region is preselected, and the field says why 62ms
+   → expected 'Checking what the platform can carry …' to match /^NDA in the project's region already …/
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each defaulted field says it came from the project's record 39ms
+   → expected '' to be 'From this project\'s record.' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a small-molecule IND is a Pharma client: the product type decides, not the filing type's bucket 56ms
+   → expected '' to be 'pharma' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > opens at once while the project is read: the dialog says so, with no fields and no submit 5043ms
+   → Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"sp sc-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSubmission[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mSubmission center[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mPlan, build, validate and dispatch each market's eCTD v3.2.2 sequences.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"sp-state sc-mb"[39m
+        [33mdata-testid[39m=[32m"sc-scope"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0mSubmissions of [0m
+          [36m<b>[39m
+            [0mONC-221[0m
+          [36m</b>[39m
+          [0m, the open project.[0m
+        [36m</span>[39m
+        [0m [0m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-card-h-go"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mShow all of the organization's submissions[0m
+        [36m</button>[39m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sc-wsbar"[39m
+        [33mrole[39m=[32m"tablist"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"true"[39m
+          [33mclass[39m=[32m"sc-ws on"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSubmissions[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mPlanner[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mBuilder[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSequences[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mValidation[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mShadow review[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDispatch[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"true"[39m
+        [33mclass[39m=[32m"scaf-note"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mReading the open project…[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mSubmissions[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"pj-card-h-go"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m+ New submission[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b pj-card-b-flush"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mNo submissions for ONC-221 yet[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-h"[39m
+            [36m>[39m
+              [0mCreate this project's first submission to plan, assemble, validate and dispatch a regulatory sequence.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mDevice filings · eSTAR[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0m510(k) device assembly readiness unavailable right now[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b pj-card-b-flush"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"assertive"[39m
+            [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-error-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 9v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 17h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-error-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-error-t"[39m
+              [36m>[39m
+                [0mCouldn't load the device filings[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-error-h"[39m
+              [36m>[39m
+                [0mThe eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"sp sc-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSubmission[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mSubmission center[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mPlan, build, validate and dispatch each market's eCTD v3.2.2 sequences.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"sp-state sc-mb"[39m
+        [33mdata-testid[39m=[32m"sc-scope"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0mSubmissions of [0m
+          [36m<b>[39m
+            [0mONC-221[0m
+          [36m</b>[39m
+          [0m, the open project.[0m
+        [36m</span>[39m
+        [0m [0m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-card-h-go"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mShow all of the organization's submissions[0m
+        [36m</button>[39m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sc-wsbar"[39m
+        [33mrole[39m=[32m"tablist"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"true"[39m
+          [33mclass[39m=[32m"sc-ws on"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSubmissions[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mPlanner[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mBuilder[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSequences[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mValidation[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mShadow review[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDispatch[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"true"[39m
+        [33mclass[39m=[32m"scaf-note"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mReading the open project…[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mSubmissions[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"pj-card-h-go"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m+ New submission[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b pj-card-b-flush"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mNo submissions for ONC-221 yet[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-h"[39m
+            [36m>[39m
+              [0mCreate this project's first submission to plan, assemble, validate and dispatch a regulatory sequence.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mDevice filings · eSTAR[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0m510(k) device assembly readiness unavailable right now[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b pj-card-b-flush"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"assertive"[39m
+            [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-error-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 9v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 17h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-error-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-error-t"[39m
+              [36m>[39m
+                [0mCouldn't load the device filings[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-error-h"[39m
+              [36m>[39m
+                [0mThe eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a type the form does not offer (J-NDA) is not guessed 45ms
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project record that could not be read preselects nothing, and says why 69ms
+   → Cannot read properties of null (reading 'getAttribute')
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when the project's submissions cannot be read, no region is preselected, and the drawer says why 57ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type 69ms
+ ✓ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission with no project open (F20) > preselects no application type, region or client type 44ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project opened from a link (no workspace on the shell) takes its client type from the project's product type
+AssertionError: expected '' to be 'biotech' // Object.is equality
+
+- Expected
++ Received
+
+- biotech
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:131:41
+    129|     serve({ program: { id: PID, name: 'ONC-221', program_type: 'IND', …
+    130|     await openNew();
+    131|     expect(select(/Client type/).value).toBe('biotech');
+       |                                         ^
+    132|   });
+    133|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > an IVD product is an IVD client, whatever bucket its filing type falls in
+AssertionError: expected 'mdx' to be 'ivd' // Object.is equality
+
+Expected: "ivd"
+Received: "mdx"
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:138:41
+    136|     serve({ program: { id: PID, name: 'DX-9', program_type: '510k', pr…
+    137|     await openNew();
+    138|     expect(select(/Client type/).value).toBe('ivd');
+       |                                         ^
+    139|   });
+    140|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > when that market already exists on the project, no region is preselected, and the field says why
+AssertionError: expected 'Checking what the platform can carry …' to match /^NDA in the project's region already …/
+
+- Expected:
+/^NDA in the project's region already exists on this project, so no region is preselected\./
+
++ Received:
+"Checking what the platform can carry for each region…"
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:146:36
+    144|     expect(select(/Application type/).value).toBe('nda');
+    145|     expect(select(/Primary region/).value).toBe('');
+    146|     expect(desc(/Primary region/)).toMatch(/^NDA in the project's regi…
+       |                                    ^
+    147|   });
+    148|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each defaulted field says it came from the project's record
+AssertionError: expected '' to be 'From this project\'s record.' // Object.is equality
+
+- Expected
++ Received
+
+- From this project's record.
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:154:38
+    152|     serve();
+    153|     await openNew();
+    154|     expect(desc(/Application type/)).toBe("From this project's record.…
+       |                                      ^
+    155|     expect(desc(/Primary region/)).toMatch(/^From this project's recor…
+    156|     expect(desc(/Client type/)).toBe("From this project's product type…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a small-molecule IND is a Pharma client: the product type decides, not the filing type's bucket
+AssertionError: expected '' to be 'pharma' // Object.is equality
+
+- Expected
++ Received
+
+- pharma
+
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:167:41
+    165|     serve({ program: { id: PID, name: 'ONC-221', program_type: 'IND', …
+    166|     await openNew();
+    167|     expect(select(/Client type/).value).toBe('pharma');
+       |                                         ^
+    168|   });
+    169|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > opens at once while the project is read: the dialog says so, with no fields and no submit
+TestingLibraryElementError: Unable to find role="dialog"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"sp sc-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSubmission[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mSubmission center[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mPlan, build, validate and dispatch each market's eCTD v3.2.2 sequences.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"sp-state sc-mb"[39m
+        [33mdata-testid[39m=[32m"sc-scope"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0mSubmissions of [0m
+          [36m<b>[39m
+            [0mONC-221[0m
+          [36m</b>[39m
+          [0m, the open project.[0m
+        [36m</span>[39m
+        [0m [0m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-card-h-go"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mShow all of the organization's submissions[0m
+        [36m</button>[39m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sc-wsbar"[39m
+        [33mrole[39m=[32m"tablist"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"true"[39m
+          [33mclass[39m=[32m"sc-ws on"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSubmissions[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mPlanner[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mBuilder[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSequences[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mValidation[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mShadow review[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDispatch[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"true"[39m
+        [33mclass[39m=[32m"scaf-note"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mReading the open project…[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mSubmissions[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"pj-card-h-go"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m+ New submission[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b pj-card-b-flush"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mNo submissions for ONC-221 yet[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-h"[39m
+            [36m>[39m
+              [0mCreate this project's first submission to plan, assemble, validate and dispatch a regulatory sequence.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mDevice filings · eSTAR[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0m510(k) device assembly readiness unavailable right now[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b pj-card-b-flush"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"assertive"[39m
+            [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-error-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 9v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 17h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-error-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-error-t"[39m
+              [36m>[39m
+                [0mCouldn't load the device filings[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-error-h"[39m
+              [36m>[39m
+                [0mThe eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"sp sc-page"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sp-head"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"sp-eyebrow"[39m
+          [36m>[39m
+            [0mSubmission[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"sp-title"[39m
+          [36m>[39m
+            [0mSubmission center[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"sp-state"[39m
+          [36m>[39m
+            [0mPlan, build, validate and dispatch each market's eCTD v3.2.2 sequences.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"sp-state sc-mb"[39m
+        [33mdata-testid[39m=[32m"sc-scope"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0mSubmissions of [0m
+          [36m<b>[39m
+            [0mONC-221[0m
+          [36m</b>[39m
+          [0m, the open project.[0m
+        [36m</span>[39m
+        [0m [0m
+        [36m<button[39m
+          [33mclass[39m=[32m"pj-card-h-go"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mShow all of the organization's submissions[0m
+        [36m</button>[39m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sc-wsbar"[39m
+        [33mrole[39m=[32m"tablist"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"true"[39m
+          [33mclass[39m=[32m"sc-ws on"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSubmissions[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mPlanner[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mBuilder[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mSequences[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mValidation[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mShadow review[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-selected[39m=[32m"false"[39m
+          [33mclass[39m=[32m"sc-ws"[39m
+          [33mrole[39m=[32m"tab"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mDispatch[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-busy[39m=[32m"true"[39m
+        [33mclass[39m=[32m"scaf-note"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [0mReading the open project…[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mSubmissions[0m
+          [36m</span>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"pj-card-h-go"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0m+ New submission[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b pj-card-b-flush"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"polite"[39m
+            [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+            [33mrole[39m=[32m"status"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-empty-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-file-text"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M10 9H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 13H8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M16 17H8"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-t"[39m
+            [36m>[39m
+              [0mNo submissions for ONC-221 yet[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-empty-h"[39m
+            [36m>[39m
+              [0mCreate this project's first submission to plan, assemble, validate and dispatch a regulatory sequence.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-card"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-h"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"t"[39m
+          [36m>[39m
+            [0mDevice filings · eSTAR[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"s"[39m
+          [36m>[39m
+            [0m510(k) device assembly readiness unavailable right now[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"pj-card-b pj-card-b-flush"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-live[39m=[32m"assertive"[39m
+            [33mclass[39m=[32m"c2c-error-state variant-panel"[39m
+            [33mrole[39m=[32m"alert"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"c2c-error-ic"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 9v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 17h.01"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"c2c-error-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-error-t"[39m
+              [36m>[39m
+                [0mCouldn't load the device filings[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"c2c-error-h"[39m
+              [36m>[39m
+                [0mThe eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:179:33
+    177|     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
+    178|     fireEvent.click(await screen.findByRole('button', { name: /New sub…
+    179|     const dialog = await screen.findByRole('dialog');
+       |                                 ^
+    180|     expect(within(dialog).getByRole('status').textContent).toBe("Loadi…
+    181|     expect(dialog.getAttribute('aria-busy')).toBe('true');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > a project record that could not be read preselects nothing, and says why
+TypeError: Cannot read properties of null (reading 'getAttribute')
+ ❯ client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx:200:19
+    198|     const notice = within(screen.getByRole('dialog')).getByText(/proje…
+    199|     // Read with the dialog (it describes it), not raised as an alert …
+    200|     expect(notice.getAttribute('role')).toBe('status');
+       |                   ^
+    201|     expect(screen.getByRole('dialog').getAttribute('aria-describedby')…
+    202|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 7 passed (14)
+   Start at  17:26:50
+   Duration  8.31s (transform 1.09s, setup 174ms, import 1.35s, tests 6.04s, environment 573ms)
+

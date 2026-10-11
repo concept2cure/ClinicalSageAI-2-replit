@@ -1,0 +1,17 @@
+Exact verified source: a5dc3f3d84ba62a06806f8455897fe0554ae654d
+Exact source tree: 4c20c1c7bb1a5df4b0dd5e8fdcddb80030596174
+Both full GitHub compiler measurements: baseline 0; errors 0; tsc exit 0.
+Agent job: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37669994004/job/112958988344
+Main CI lint job: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37669994264/job/112958988772
+Both jobs completed success; no full local compiler was run.
+
+AGENT COMPILER
+2026-10-07T18:52:15.8400953Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-07T18:55:25.1811019Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-07T18:55:25.1812857Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.
+
+MAIN CI COMPILER
+2026-10-07T19:01:02.5477215Z [ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)
+2026-10-07T19:03:11.8164776Z [ci:typecheck-no-regression] errors found: 0 (tsc exit 0)
+2026-10-07T19:03:11.8165393Z [ci:typecheck-no-regression] OK — error count 0 matches baseline.
+

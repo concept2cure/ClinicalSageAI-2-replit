@@ -1,0 +1,3 @@
+node --check scripts/ci/check-unbacked-tables.mjs: exit 0
+node --check scripts/ci/__tests__/unbacked-tables-strings.test.mjs: exit 0
+Both files are ignored by the existing ESLint configuration; ignored-file warnings are not script lint proof. The actual Node fixture controls execute both files.

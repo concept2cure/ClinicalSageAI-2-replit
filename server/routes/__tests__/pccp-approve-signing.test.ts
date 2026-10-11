@@ -77,6 +77,27 @@ describe('POST /api/pccp/plans/:planId/approve', () => {
     expect(h.approvePlan).not.toHaveBeenCalled();
   });
 
+  // P-27 (2026-10-08): one signing-authority policy (checkSigningAuthority).
+  // This route asked authority only after the password, so a role that may not
+  // sign could still test a password here; and a role lookup that failed threw.
+  it('asks signing authority before the password: a role that may not sign tests no password', async () => {
+    h.role.mockResolvedValue('member');
+    h.reverify.mockResolvedValue({ ok: false, status: 401, code: 'PASSWORD_VERIFICATION_FAILED', error: 'bad password' });
+    const res = await request(app()).post('/api/pccp/plans/plan-1/approve').send(GOOD);
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('PCCP_NO_SIGNING_AUTHORITY');
+    expect(h.reverify).not.toHaveBeenCalled();
+  });
+
+  it('refuses, unverified, when the signer role cannot be read — and asks for no password', async () => {
+    h.role.mockRejectedValue(new Error('membership read failed'));
+    const res = await request(app()).post('/api/pccp/plans/plan-1/approve').send(GOOD);
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('SIGNING_AUTHORITY_UNVERIFIED');
+    expect(h.reverify).not.toHaveBeenCalled();
+    expect(h.approvePlan).not.toHaveBeenCalled();
+  });
+
   it('refuses when no user is on the request — never approves as "system"', async () => {
     h.user = { organizationId: 7 };
     const res = await request(app()).post('/api/pccp/plans/plan-1/approve').send(GOOD);

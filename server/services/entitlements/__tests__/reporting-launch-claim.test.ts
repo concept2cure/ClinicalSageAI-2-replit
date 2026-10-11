@@ -16,14 +16,15 @@ import { launchScopeApiVerdict } from '../launch-scope-api';
 const prefixMap = buildPrefixMap();
 const verdict = (path: string) => launchScopeApiVerdict(path, prefixMap, NEVER_GATED);
 
-/** Every reporting path a launch screen calls: Insights.tsx, AnaCommand.tsx, Orchestration.tsx. */
+/** Every reporting path a launch screen calls: Insights.tsx. (AnaCommand.tsx and
+ *  Orchestration.tsx, which read the portfolio rollup, are locked since
+ *  2026-10-08; docs/SURFACE_DECISIONS_2026-10-08.md.) */
 const CALLED = [
   '/api/insights-canvas/overview',
   '/api/report-os/runs',
   '/api/report-os/runs/41/rendered',
   '/api/report-os/runs/41/finalize',
   '/api/report-os/runs/41/export.pdf',
-  '/api/report-os/portfolio/org',
 ];
 
 /** Routes the reporting routers mount that no launch screen calls. */
@@ -41,6 +42,7 @@ const UNCALLED = [
   '/api/report-os/health',
   '/api/report-os/taxonomy',
   '/api/report-os/scopes',
+  '/api/report-os/portfolio/org',
 ];
 
 describe('the Reporting & analytics launch claim', () => {

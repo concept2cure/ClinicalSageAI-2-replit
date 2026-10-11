@@ -1,0 +1,11 @@
+{
+  "base_sha": "1473342ab8371155fddc479590ba5de51846bc40",
+  "branch": "concept2cure-v2",
+  "client_hash": "f4a50c306387585250e354c68e08a099362e3823",
+  "original_production_blob": "a1f6ecf592572aea30ff8a4c1ba15e3990d6dde5",
+  "owned_paths": [
+    "server/services/ana/client-journey.ts",
+    "server/services/ana/__tests__/client-journey.test.ts"
+  ],
+  "scope": "W3/D4: overlap four independent tenant-scoped client-journey reads; unchanged query order, SQL, fallbacks and stage/prompt formatting. No UI, gate changes, cache, public signature or new capability."
+}

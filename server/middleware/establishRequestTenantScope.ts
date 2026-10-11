@@ -56,6 +56,7 @@ import {
 } from '../db/tenantStore';
 import { LazyRequestDbClient } from './lazyRequestDbClient';
 import { createScopedLogger } from '../utils/logger';
+import { applySessionScope } from '../db/sessionScope';
 
 const logger = createScopedLogger('establish-tenant-scope');
 
@@ -175,20 +176,13 @@ function tenantSessionVars(
   role: string | null,
   orgUuid: string | null,
 ): (client: PoolClient) => Promise<void> {
-  return async (client: PoolClient) => {
-    await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [tenantId]);
-    await client.query("SELECT set_config('app.current_user_role', $1, false)", [role ?? '']);
-    await client.query("SELECT set_config('app.current_org_id', $1, false)", [orgUuid ?? '']);
-  };
+  // With the isolation switches pinned in the same statement (sessionScope.ts).
+  return (client: PoolClient) => applySessionScope(client, { tenantId, role, orgUuid });
 }
 
 /** Session-var applier for the cross-tenant system scope (super-admin). */
 function systemSessionVars(): (client: PoolClient) => Promise<void> {
-  return async (client: PoolClient) => {
-    await client.query("SELECT set_config('app.current_tenant_id', '0', false)");
-    await client.query("SELECT set_config('app.current_user_role', 'app_super_admin', false)");
-    await client.query("SELECT set_config('app.current_org_id', '', false)");
-  };
+  return (client: PoolClient) => applySessionScope(client, { tenantId: '0', role: 'app_super_admin', orgUuid: '' });
 }
 
 /**

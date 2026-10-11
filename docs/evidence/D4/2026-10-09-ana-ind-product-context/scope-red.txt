@@ -1,0 +1,113 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/drafting-product-advisory.test.ts > IND therapeutic and modality context reaches the existing drafting gateway > filters out oncology safety/efficacy rules while drafting CMC, retaining the default renderer contract
+AssertionError: expected 'PROJECT CONTEXT:\n\nSECTION TO DRAFT:…' not to contain 'Benefit-risk narrative in Clinical Ov…'
+
+- Expected
++ Received
+
+- Benefit-risk narrative in Clinical Overview missing surrogate-endpoint-to-OS bridge or confirmatory trial commitment
++ PROJECT CONTEXT:
++
++ SECTION TO DRAFT: 3.2.P.2
++
++ SECTION REQUIREMENTS (from the platform's canonical regulatory record — draft to these; do not add requirements from memory):
++ ## Drafting: Module 3.2.P.2 — Pharmaceutical Development
++ Required for: IND, NDA, BLA.
++ This is the scientific narrative that demonstrates, per ICH Q8(R2), that the formulation and manufacturing process were rationally designed to consistently deliver a product with the intended quality and performance. Reviewers use it to understand the Quality Target Product Profile (QTPP), the critical quality attributes (CQAs), and the studies linking material attributes and process parameters to those CQAs; a strong section justifies the control strategy that appears in P.3.4, P.5.1, and P.5.6. It is where a sponsor may present a Quality-by-Design approach, design space, and any proposed regulatory flexibility. …
++
++ ### How it is written
++ Define the QTPP and derive the CQAs, then narrate the development of the formulation, the drug substance–excipient compatibility studies, and the selection of the container closure system and manufacturing process. Present the risk assessments (ICH Q9) that prioritized material attributes and process parameters, the studies (including DoE) that established their relationship to CQAs, and, if a QbD approach is used, the design space and its verification. Address overages with quantitative justification, discuss physicochemical and biological properties relevant to performance (dissolution, particle size, polymorphic form), and for solutions/parenterals justify pH, tonicity, and antioxidant/preservative selection with any preservative effectiveness data. …
++
++ ### It must contain
++ - Quality Target Product Profile (QTPP) and identification of CQAs with rationale
++ - Development history of the formulation, including changes across clinical phases and bridging where relevant
++ - Drug substance–excipient and excipient–excipient compatibility study summaries
++ - Physicochemical and biological characterization relevant to performance (solubility, pKa, polymorphism, particle size, permeability/BCS class)
++ - Risk assessment (ICH Q9) linking material attributes and process parameters to CQAs
++ - Design of Experiments (DoE) summaries and, where applicable, the proposed design space and its verification
++ - Justification of overages with supporting data
++ - Container closure system selection rationale, including protection, compatibility, and functional suitability
++ - Microbiological attributes: preservative selection and preservative effectiveness testing rationale where applicable
++ - Dissolution/drug release method development and discriminating power, and IVIVC/biowaiver rationale where applicable
++
++ ### Tables and data a reviewer expects
++ - Excipient compatibility study summary tables
++ - DoE factor/response tables and design-space summaries
++ - Dissolution method development and discrimination data
++ - Risk assessment/FMEA tables mapping parameters to CQAs
++ - Comparative formulation/bridging data across clinical phases
++
++ ### Common deficiencies
++ - Listing CQAs without a QTPP-based rationale or without linking them to controls
++ - Asserting a design space without adequate multivariate data or verification at the edges
++ - Failing to bridge formulation or process changes between early-phase clinical and to-be-marketed product
++ - Omitting a discriminating dissolution method justification, or presenting a method that fails to discriminate
++ - Justifying overage on manufacturing convenience rather than stability/assay data
++ - Weak or absent risk assessment, leaving critical parameters unidentified and unjustified
++
++ ### Read with
++ 3.2.P.1, 3.2.P.3.3, 3.2.P.3.4, 3.2.P.5.1, 3.2.P.5.6, 3.2.P.7, 3.2.S.1
++
++ PRODUCT CONTEXT STATUS: CALLER-DECLARED, UNVERIFIED ADVISORY.
++ These labels select existing advisory context; they are not server-loaded project facts or scientific source qualification. Use the selected section requirements and supplied evidence first. Confirm phase, disease stage, population and product details; do not infer modality from therapeutic area, or an approved pathway from a profile. Static reference titles do not establish current guidance status or effective dates.
++ ## Therapeutic Area Context — Oncology
++ > Adapts AnA for oncology submissions: accelerated-pathway logic, surrogate-endpoint scrutiny, dose-optimization (Project Optimus), REMS awareness, and FDA ODAC precedent.
++
++ ### Context Rules
++ - [critical] Accelerated approval requires a confirmatory trial commitment with a specified endpoint, sample size, and timeline. Flag any draft that proposes accelerated approval without a documented post-marketing requirement (PMR) for the confirmatory trial. (21 CFR 314.510 (Subpart H) and 21 CFR 601.41 (Subpart E))
++ - [minor] When the indication has had a recent ODAC vote (positive or negative), surface the ODAC briefing document and FDA response in the strategy section. Reviewers will reference ODAC precedent; not addressing it is a flag.
++
++ ### Risk Factors
++ - Surrogate endpoint may not be on FDA Surrogate Endpoint Table — increases reviewer scrutiny
++ - Single-arm trial design without strong external control creates assessment uncertainty
++ - Cross-trial comparison of response rates is not interpretable without matched-adjusted analysis
++ - Genotoxic agent → REMS + pregnancy prevention program required
++
++ ### Reviewer Expectations
++ - OS or OS-surrogate with regulatory precedent
++ - Confirmatory trial commitment with specific endpoint + timeline (if AA)
++ - BICR for imaging endpoints in pivotal trial
++ - Subgroup analysis by line of therapy, biomarker status, prior treatments
++
++ ### Key Guidance References
++ - [ICH] ICH S9 — Nonclinical Evaluation for Anticancer Pharmaceuticals
++     Why: Reduced nonclinical package for advanced cancer; sets expectations for first-in-human enabling studies
++ - [FDA] FDA Guidance: Clinical Trial Endpoints for Approval of Cancer Drugs and Biologics — Clinical Trial Endpoints for Cancer Drug Approval
++     Why: Defines acceptable endpoints (OS, PFS, ORR, MRD), conditions for accelerated approval
++ - [FDA] FDA Project Optimus — Optimizing the Dose of Oncology Drug Products
++     Why: Randomized dose-finding now expected before pivotal — major shift from MTD-only
++ - [EMA] EMA Anticancer Guideline — Guideline on the Evaluation of Anticancer Medicinal Products in Man (EMA/CHMP/205/95)
++     Why: EU equivalent of FDA endpoint guidance + tumor-type considerations
++
++ ### Common Gaps in This Therapeutic Area
++ - [critical] §2.5: Benefit-risk narrative in Clinical Overview missing surrogate-endpoint-to-OS bridge or confirmatory trial commitment
++ - [major] §2.7.3: Efficacy summary missing ORR/DoR by sub-population (line of therapy, biomarker status, prior treatment)
++ - [major] §5.3.5.1: Pivotal CSR missing blinded independent central review (BICR) of imaging-based endpoints
++ - [critical] §4.2.3: Genotoxicity battery (Ames, in vitro mammalian, in vivo MN) not complete or not reported
++
++ PRODUCT MODALITY (declared): Monoclonal antibody.
++ Existing modality CMC reference set (advisory, currency unverified): ICH Q5 family; ICH Q6B specifications.
++ Assess each reference against the actual product and development phase. Missing characterization, validation or comparability results remain evidence gaps, never invented results.
++
++ INSTRUCTIONS:
++ Draft only supplied facts; identify gaps.
++
++ PROJECT SOURCE STATUS: UNASSESSED. No processed project source records were loaded for this section. Instructions and prior prose are not verified study evidence. Use explicit gaps for unsupported facts; do not claim project evidence review.
+
+ ❯ server/services/ana/__tests__/drafting-product-advisory.test.ts:73:28
+     71|     expect(prompt()).not.toContain(unrelated.instruction);
+     72|     for (const gap of oncology.commonGaps.filter(gap => gap.ctdSection…
+     73|       expect(prompt()).not.toContain(gap.description);
+       |                            ^
+     74|     }
+     75|     expect(prompt()).not.toContain('### Endpoint Considerations');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 286 skipped (287)
+   Start at  16:12:14
+   Duration  8.85s (transform 5.50s, setup 139ms, import 8.17s, tests 32ms, environment 0ms)
+

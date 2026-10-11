@@ -1,0 +1,226 @@
+[
+  {
+    "user": "emily.watson@concept2cure.pro",
+    "expectedRoleLabel": "member",
+    "request": {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "body": {
+        "email": "emily.watson@concept2cure.pro",
+        "password": "<DPW-REDACTED>"
+      }
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "accessToken": "<JWT-REDACTED>",
+      "refreshToken": "<JWT-REDACTED>",
+      "expiresIn": 86400,
+      "mfaRequired": false,
+      "user": {
+        "id": "4",
+        "email": "emily.watson@concept2cure.pro",
+        "firstName": "Emily",
+        "lastName": "Watson",
+        "displayName": "Emily Watson",
+        "roles": [
+          "member",
+          "user"
+        ],
+        "permissions": [
+          "governed:write"
+        ],
+        "organizationId": "1",
+        "organizationName": "Concept2Cure Therapeutics",
+        "organizationUuid": "d71cc5e7-7e67-46b7-a78c-caf1dae717a0",
+        "mfaEnabled": false,
+        "mfaMethods": [
+          {
+            "type": "email",
+            "isEnabled": true,
+            "isPrimary": true
+          }
+        ],
+        "mustChangePassword": false
+      }
+    }
+  },
+  {
+    "user": "emily.watson@concept2cure.pro",
+    "request": {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "headers": {
+        "Authorization": "Bearer <JWT-REDACTED>"
+      }
+    },
+    "status": 200,
+    "response": {
+      "authenticated": true,
+      "user": {
+        "id": "4",
+        "email": "emily.watson@concept2cure.pro",
+        "firstName": "Emily",
+        "lastName": "Watson",
+        "displayName": "Emily Watson",
+        "roles": [
+          "user"
+        ],
+        "permissions": [
+          "governed:write"
+        ],
+        "organizationId": "1",
+        "organizationName": "Concept2Cure Therapeutics",
+        "mfaEnabled": false,
+        "mfaMethods": [
+          {
+            "type": "email",
+            "isEnabled": true,
+            "isPrimary": true
+          }
+        ],
+        "mustChangePassword": false
+      },
+      "session": {
+        "id": "dbe2b4d0-5632-410d-95db-f1220ea18889",
+        "createdAt": "2026-10-08T01:12:28.000Z",
+        "expiresAt": "2026-10-08T13:12:28.000Z",
+        "lastActivityAt": "2026-10-08T01:12:28.969Z",
+        "idleMinutes": 15,
+        "lifetimeHours": 12
+      },
+      "tokenExpiry": "2026-10-09T01:12:28.969Z"
+    }
+  },
+  {
+    "user": "sarah.chen@concept2cure.pro",
+    "expectedRoleLabel": "manager",
+    "request": {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "body": {
+        "email": "sarah.chen@concept2cure.pro",
+        "password": "<DPW-REDACTED>"
+      }
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "accessToken": "<JWT-REDACTED>",
+      "refreshToken": "<JWT-REDACTED>",
+      "expiresIn": 86400,
+      "mfaRequired": false,
+      "user": {
+        "id": "2",
+        "email": "sarah.chen@concept2cure.pro",
+        "firstName": "Sarah",
+        "lastName": "Chen",
+        "displayName": "Sarah Chen",
+        "roles": [
+          "manager",
+          "user"
+        ],
+        "permissions": [
+          "governed:write"
+        ],
+        "organizationId": "1",
+        "organizationName": "Concept2Cure Therapeutics",
+        "organizationUuid": "d71cc5e7-7e67-46b7-a78c-caf1dae717a0",
+        "mfaEnabled": false,
+        "mfaMethods": [
+          {
+            "type": "email",
+            "isEnabled": true,
+            "isPrimary": true
+          }
+        ],
+        "mustChangePassword": false
+      }
+    }
+  },
+  {
+    "user": "sarah.chen@concept2cure.pro",
+    "request": {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "headers": {
+        "Authorization": "Bearer <JWT-REDACTED>"
+      }
+    },
+    "status": 200,
+    "response": {
+      "authenticated": true,
+      "user": {
+        "id": "2",
+        "email": "sarah.chen@concept2cure.pro",
+        "firstName": "Sarah",
+        "lastName": "Chen",
+        "displayName": "Sarah Chen",
+        "roles": [
+          "user"
+        ],
+        "permissions": [
+          "governed:write"
+        ],
+        "organizationId": "1",
+        "organizationName": "Concept2Cure Therapeutics",
+        "mfaEnabled": false,
+        "mfaMethods": [
+          {
+            "type": "email",
+            "isEnabled": true,
+            "isPrimary": true
+          }
+        ],
+        "mustChangePassword": false
+      },
+      "session": {
+        "id": "63655143-c8ba-4d9d-a11c-5b9ec8a288d1",
+        "createdAt": "2026-10-08T01:12:29.000Z",
+        "expiresAt": "2026-10-08T13:12:29.000Z",
+        "lastActivityAt": "2026-10-08T01:12:29.382Z",
+        "idleMinutes": 15,
+        "lifetimeHours": 12
+      },
+      "tokenExpiry": "2026-10-09T01:12:29.382Z"
+    }
+  },
+  {
+    "user": "jm.smith@concept2cure.pro",
+    "expectedRoleLabel": "admin (control)",
+    "request": {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "body": {
+        "email": "jm.smith@concept2cure.pro",
+        "password": "<DPW-REDACTED>"
+      }
+    },
+    "status": 401,
+    "response": {
+      "success": false,
+      "error": {
+        "code": "AUTH_001",
+        "message": "Invalid credentials"
+      }
+    }
+  },
+  {
+    "user": "jm.smith@concept2cure.pro",
+    "request": {
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "headers": {
+        "Authorization": "Bearer <JWT-REDACTED>"
+      }
+    },
+    "status": 401,
+    "response": {
+      "authenticated": false,
+      "error": {
+        "code": "AUTH_005",
+        "message": "Session expired"
+      }
+    }
+  }
+]

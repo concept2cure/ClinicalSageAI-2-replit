@@ -50,6 +50,7 @@ import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
 import type { CanonicalGovernedState } from '../../../shared/types/governed-document-fabric.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { buildInvokedAppsBlock, invokedApps } from './invoked-apps-block.js';
+import { strictProjectRowForRef } from '../c2c/program-project-anchor.js';
 import {
   detectSlashCommand,
   detectAppMention,
@@ -93,6 +94,10 @@ export interface EnrichmentResult {
     sourcesSucceeded: string[];
     /** Sources that failed or had no data */
     sourcesFailed: string[];
+    /** Failed or deadline-exceeded reads, distinct from healthy empty results. */
+    unavailableSources?: string[];
+    /** Why each unavailable source is unavailable: it took too long, or the read failed. */
+    unavailableReasons?: Record<string, EnrichmentUnavailableReason>;
     /** Whether this was a slash-command-triggered, app-mention-triggered, or natural-language-triggered enrichment */
     triggerType: 'slash_command' | 'app_mention' | 'natural_language' | 'proactive' | 'none';
     /** The detected slash command, if any */
@@ -173,6 +178,33 @@ function buildChallengeOrRedteam(message: string, submissionType?: string): stri
   );
 }
 
+/**
+ * The integer `projects.id` a project-scoped reader keys on, or null when there
+ * is no row to read: the program has no linked projects row, or which row it is
+ * could not be told this turn (TurnProject). Each reader then reads nothing and
+ * returns ''. Never the program UUID: Number(uuid) is NaN, and every reader
+ * below that took the raw id failed on it (ana-14).
+ */
+type ProjectRowId = number | null;
+
+/** Why an enrichment source is unavailable this turn. */
+export type EnrichmentUnavailableReason = 'timeout' | 'error';
+
+/**
+ * The project row a turn is in, as the readers keyed on projects.id need it
+ * (ana-14). Three answers, kept apart because they mean different things to
+ * the person:
+ *   - linked: an integer projects.id, or the row the program is linked to;
+ *   - none: no projects row exists for it (a program with no linked project),
+ *     so there are no project records to read;
+ *   - unresolved: the lookup failed or ran out of time, so whether records
+ *     exist is not known. It is reported, and nothing is said about them.
+ */
+export type TurnProject =
+  | { status: 'linked'; id: number }
+  | { status: 'none' }
+  | { status: 'unresolved'; reason: EnrichmentUnavailableReason };
+
 // ─── Enrichment functions ────────────────────────────────────────────────────
 
 // Reads project memory and returns the formatted block, `''` for a GENUINE
@@ -185,13 +217,14 @@ function buildChallengeOrRedteam(message: string, submissionType?: string): stri
 // `enrichWithDomainMemory` keeps the distinction because it would otherwise
 // print "No {domain} data found" on a failed read.
 async function readProjectMemory(
-  projectId: string | number,
+  projectId: ProjectRowId,
   categories: string[],
   label: string,
   description: string,
   limit = 5,
   orgId?: number,
 ): Promise<string | null> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   /* No organization, no memory.
      This read carried `($2::int IS NULL OR organization_id = $2)` — a tenant
      guard the caller could switch off, described as preserving "prior behavior
@@ -225,7 +258,7 @@ async function readProjectMemory(
     const result = await pool.query(
       `SELECT content, title, confidence_score, importance_level, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND organization_id = $2
+       WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
          AND category IN (${catPlaceholders})
        ORDER BY CASE lower(coalesce(importance_level, ''))
                   WHEN 'critical' THEN 4
@@ -265,7 +298,7 @@ async function readProjectMemory(
 // enrichWithDomainMemory reads readProjectMemory directly, because it is the
 // one caller that would otherwise assert a false absence on a failed read.
 async function enrichWithProjectMemory(
-  projectId: string | number,
+  projectId: ProjectRowId,
   categories: string[],
   label: string,
   description: string,
@@ -275,7 +308,8 @@ async function enrichWithProjectMemory(
   return (await readProjectMemory(projectId, categories, label, description, limit, orgId)) ?? '';
 }
 
-async function enrichWithForesight(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithForesight(projectId: ProjectRowId, orgId?: number): Promise<string> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   let liveBlock = '';
 
   // Live path: pull real-time RIM signals sorted by score
@@ -313,7 +347,8 @@ async function enrichWithForesight(projectId: string | number, orgId?: number): 
   return liveBlock + memoryBlock;
 }
 
-async function enrichWithPrecedents(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithPrecedents(projectId: ProjectRowId, orgId?: number): Promise<string> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   // Structured precedent enrichment with category labels per type
   const categories = ['precedent_analysis', 'competitive_intelligence', 'predicate_device'] as const;
   const categoryLabels: Record<string, string> = {
@@ -328,11 +363,18 @@ async function enrichWithPrecedents(projectId: string | number, orgId?: number):
   try {
     const catPlaceholders = categories.map((_, i) => `$${i + 3}`).join(', ');
     const result = await pool.query(
-      `SELECT content, title, confidence, importance, category
+      `SELECT content, title, confidence_score AS confidence, importance_level AS importance, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND organization_id = $2
+       WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
          AND category IN (${catPlaceholders})
-       ORDER BY importance DESC, created_at DESC
+       ORDER BY CASE lower(coalesce(importance_level, ''))
+                  WHEN 'critical' THEN 4
+                  WHEN 'high'     THEN 3
+                  WHEN 'medium'   THEN 2
+                  WHEN 'low'      THEN 1
+                  ELSE 0
+                END DESC,
+                created_at DESC
        LIMIT $${categories.length + 3}`,
       [projectId, orgId, ...categories, 12]
     );
@@ -361,7 +403,8 @@ async function enrichWithPrecedents(projectId: string | number, orgId?: number):
   }
 }
 
-async function enrichWithCRLRTF(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithCRLRTF(projectId: ProjectRowId, orgId?: number): Promise<string> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   let liveBlock = '';
 
   // Live path: pull active patterns from the RIM pattern registry
@@ -429,7 +472,8 @@ async function enrichWithAgentActivity(orgId?: number): Promise<string> {
   }
 }
 
-async function enrichWithReadiness(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithReadiness(projectId: ProjectRowId, orgId?: number): Promise<string> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   // Try live readiness scoring engine first
   if (orgId) {
     try {
@@ -487,7 +531,8 @@ async function enrichWithReadiness(projectId: string | number, orgId?: number): 
   );
 }
 
-async function enrichWithRecommendations(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithRecommendations(projectId: ProjectRowId, orgId?: number): Promise<string> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   // Query feedback summary to avoid repeating dismissed recommendations
   let feedbackNote = '';
   if (orgId) {
@@ -535,18 +580,26 @@ async function enrichWithRecommendations(projectId: string | number, orgId?: num
   return memoryResult + feedbackNote;
 }
 
-async function enrichWithClaims(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithClaims(projectId: ProjectRowId, orgId?: number): Promise<string> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   // Same rule as readProjectMemory: no organization, no memory.
   if (!Number.isFinite(orgId) || (orgId as number) <= 0) return '';
 
   // Try to build evidence chains from stored memory
   try {
     const result = await pool.query(
-      `SELECT content, title, confidence, category
+      `SELECT content, title, confidence_score AS confidence, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND organization_id = $2
+       WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
          AND category IN ('evidence_assessment', 'claim_evidence_map', 'evidence_gap')
-       ORDER BY importance DESC, created_at DESC
+       ORDER BY CASE lower(coalesce(importance_level, ''))
+                  WHEN 'critical' THEN 4
+                  WHEN 'high'     THEN 3
+                  WHEN 'medium'   THEN 2
+                  WHEN 'low'      THEN 1
+                  ELSE 0
+                END DESC,
+                created_at DESC
        LIMIT $3`,
       [projectId, orgId, 8]
     );
@@ -584,7 +637,8 @@ async function enrichWithClaims(projectId: string | number, orgId?: number): Pro
   );
 }
 
-async function enrichWithCrossModule(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithCrossModule(projectId: ProjectRowId, orgId?: number): Promise<string> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   if (!orgId) return '';
   try {
     const report = await analyzeCrossModuleRelationships({ organizationId: orgId, projectId: Number(projectId) });
@@ -601,7 +655,8 @@ async function enrichWithCrossModule(projectId: string | number, orgId?: number)
   }
 }
 
-async function enrichWithSignals(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithSignals(projectId: ProjectRowId, orgId?: number): Promise<string> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   // Try live RIM signals first
   if (orgId) {
     try {
@@ -658,17 +713,25 @@ async function enrichWithDeficiencies(submissionType?: string): Promise<string> 
   }
 }
 
-async function enrichWithKnowledgeSearch(query: string, projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithKnowledgeSearch(query: string, projectId: ProjectRowId, orgId?: number): Promise<string> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   // Same rule as readProjectMemory: no organization, no memory.
   if (!Number.isFinite(orgId) || (orgId as number) <= 0) return '';
 
   try {
     // Search project memory entries semantically
     const result = await pool.query(
-      `SELECT title, content, category, confidence, importance
+      `SELECT title, content, category, confidence_score AS confidence, importance_level AS importance
        FROM project_memory_entries
-       WHERE project_id = $1 AND organization_id = $2
-       ORDER BY importance DESC, created_at DESC
+       WHERE project_id = $1 AND organization_id = $2 AND status = 'active'
+       ORDER BY CASE lower(coalesce(importance_level, ''))
+                  WHEN 'critical' THEN 4
+                  WHEN 'high'     THEN 3
+                  WHEN 'medium'   THEN 2
+                  WHEN 'low'      THEN 1
+                  ELSE 0
+                END DESC,
+                created_at DESC
        LIMIT $3`,
       [projectId, orgId, 10]
     );
@@ -686,9 +749,10 @@ async function enrichWithKnowledgeSearch(query: string, projectId: string | numb
 }
 
 async function enrichWithDecisions(
-  projectId: string | number,
+  projectId: ProjectRowId,
   organizationId?: number,
 ): Promise<string> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   try {
     const { decisionLifecycleService } = await import('../decision-lifecycle-service.js');
     const decisionCtx = decisionLifecycleService.getDecisionContext(String(projectId), {
@@ -732,23 +796,32 @@ async function enrichWithDecisions(
  * is told a project has no recorded safety history when it has one.
  */
 async function enrichWithDomainMemory(
-  projectId: string | number,
+  projectId: ProjectRowId,
   domain: string,
   categories: string[],
   label: string,
   orgId?: number,
 ): Promise<string> {
+  /* No project row (none linked, or which one could not be told): no read ran,
+     so nothing may be said about what is recorded. Not the "No {domain} data
+     found" sentence below: that is an affirmative absence, and on a safety, CMC
+     or CSR surface a manufactured all-clear. The turn says why there is no
+     project memory (the project-record notice), not this block (ana-14). */
+  if (projectId === null) return '';
   const memBlock = await readProjectMemory(projectId, categories, label,
     `Project-specific ${domain} data. Reference directly in your response.`, 5, orgId);
-  // A READ FAILURE (null) omits the block entirely — the model is told nothing
-  // rather than a false "No {domain} data found," which on a safety / CMC / CSR
-  // surface is a manufactured all-clear injected straight into the prompt. Only
-  // a genuine empty ('') earns the affirmative "nothing recorded yet" sentence.
-  if (memBlock === null) return '';
+  // A READ FAILURE (null) never earns the "No {domain} data found" sentence:
+  // on a safety / CMC / CSR surface that is a manufactured all-clear injected
+  // straight into the prompt. Only a read that completed and found no rows
+  // ('') does. The failure is thrown, not returned as '': '' read as a healthy
+  // empty, so the enrichment budget never marked the source unavailable and
+  // neither the model nor the person was told (ana-14: every eCTD turn on a
+  // program UUID failed here, in silence). Thrown, the budget records it.
+  if (memBlock === null) throw new Error(`${domain} project memory could not be read`);
   return memBlock || `\n\n## ${label}\nNo ${domain} data found for this project yet. Ask the user what ${domain} work they need and gather parameters conversationally.`;
 }
 
-async function enrichWithSafety(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithSafety(projectId: ProjectRowId, orgId?: number): Promise<string> {
   return enrichWithDomainMemory(projectId, 'safety',
     ['safety_narrative', 'adverse_event_summary', 'benefit_risk', 'safety_signal'],
     'Safety Intelligence', orgId);
@@ -798,15 +871,25 @@ export function summarizeModule3Gate(input: {
   return out;
 }
 
-async function enrichWithCMC(
-  projectId: string | number,
+async function enrichWithCMC(projectId: ProjectRowId, orgId?: number): Promise<string> {
+  return enrichWithDomainMemory(projectId, 'CMC',
+    ['cmc_assessment', 'manufacturing_change', 'comparability', 'analytical_method'],
+    'CMC Intelligence', orgId);
+}
+
+/**
+ * The Module 3 build state, read beside the CMC memory (enrichWithCMC) as its
+ * own source: a failed memory read used to take this block with it (ana-14).
+ */
+async function enrichWithModule3BuildState(
+  /**
+   * The project as the caller named it. The Module 3 build-state tables key on
+   * the program UUID (`$1::text::uuid`), not on projects.id, so they read this.
+   */
+  programRef: string | number,
   organizationId?: number
 ): Promise<string> {
-  const memBlock = await enrichWithDomainMemory(projectId, 'CMC',
-    ['cmc_assessment', 'manufacturing_change', 'comparability', 'analytical_method'],
-    'CMC Intelligence', organizationId);
-
-  // Also pull Module 3 build-state summary so AnA knows which sections are stale/ready
+  // The Module 3 build-state summary, so AnA knows which sections are stale/ready
   let buildBlock = '';
   /* No organization, no build state — the same rule readProjectMemory applies
      above, for the same reason. cmc_projects.id is a uuid space shared across
@@ -815,7 +898,7 @@ async function enrichWithCMC(
      a MODEL'S PROMPT. A token with no org claim genuinely reaches this code, so
      "the caller always has one" is not a guard. Contributing nothing is a
      smaller loss than contributing someone else's. */
-  if (!Number.isFinite(organizationId) || (organizationId as number) <= 0) return memBlock;
+  if (!Number.isFinite(organizationId) || (organizationId as number) <= 0) return '';
   const orgId = organizationId as number;
   try {
     const { getPool } = await import('../../db');
@@ -824,13 +907,13 @@ async function enrichWithCMC(
       `SELECT section_key, stale_reason FROM cmc_module3_sections
        WHERE organization_id = $2 AND project_id = $1::text::uuid AND stale = true
        ORDER BY section_key LIMIT 10`,
-      [String(projectId), orgId],
+      [String(programRef), orgId],
     );
     const { rows: sourceCount } = await pool.query(
       `SELECT source_type, COUNT(*) as cnt FROM cmc_source_objects
        WHERE organization_id = $2 AND project_id = $1::text::uuid
        GROUP BY source_type ORDER BY cnt DESC`,
-      [String(projectId), orgId],
+      [String(programRef), orgId],
     );
     if (staleSections.length > 0 || sourceCount.length > 0) {
       buildBlock = '\n\n## Module 3 Build State';
@@ -861,7 +944,7 @@ async function enrichWithCMC(
        the widening, and this block re-derives the export gate's own verdict
        from a strictly weaker predicate than the gate uses. The guard above has
        already returned for a caller with no org. */
-    const params = [String(projectId), orgId];
+    const params = [String(programRef), orgId];
 
     const { rows: sections } = await pool.query(
       `SELECT approval_state, stale FROM cmc_module3_sections
@@ -897,28 +980,28 @@ async function enrichWithCMC(
     // Non-blocking — if build-state query fails, proceed with CMC memory only
   }
 
-  return memBlock + buildBlock;
+  return buildBlock;
 }
 
-async function enrichWithCSR(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithCSR(projectId: ProjectRowId, orgId?: number): Promise<string> {
   return enrichWithDomainMemory(projectId, 'CSR',
     ['csr_section', 'clinical_study', 'efficacy_result', 'safety_result'],
     'Clinical Study Report Intelligence', orgId);
 }
 
-async function enrichWithDevice(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithDevice(projectId: ProjectRowId, orgId?: number): Promise<string> {
   return enrichWithDomainMemory(projectId, 'medical device',
     ['predicate_device', 'device_classification', 'substantial_equivalence', 'clinical_evaluation'],
     'Medical Device Intelligence', orgId);
 }
 
-async function enrichWithECTD(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithECTD(projectId: ProjectRowId, orgId?: number): Promise<string> {
   return enrichWithDomainMemory(projectId, 'eCTD',
     ['ectd_structure', 'module_status', 'submission_package', 'granule_tracking'],
     'eCTD Structure Intelligence', orgId);
 }
 
-async function enrichWithCMS(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithCMS(projectId: ProjectRowId, orgId?: number): Promise<string> {
   return enrichWithDomainMemory(
     projectId,
     'CMS coverage and reimbursement',
@@ -934,7 +1017,7 @@ async function enrichWithCMS(projectId: string | number, orgId?: number): Promis
   );
 }
 
-async function enrichWithDiagnostics(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithDiagnostics(projectId: ProjectRowId, orgId?: number): Promise<string> {
   return enrichWithDomainMemory(
     projectId,
     'diagnostics and IVD',
@@ -950,7 +1033,8 @@ async function enrichWithDiagnostics(projectId: string | number, orgId?: number)
   );
 }
 
-async function enrichWithBiostatContext(projectId: string | number, submissionType?: string, organizationId?: number): Promise<string> {
+async function enrichWithBiostatContext(projectId: ProjectRowId, submissionType?: string, organizationId?: number): Promise<string> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   // Inject biostatistics knowledge + project-specific signals
   const parts: string[] = [];
   // A REAL read failure (not a missing table) must not be laundered into "No
@@ -1007,10 +1091,14 @@ async function enrichWithBiostatContext(projectId: string | number, submissionTy
 
 // ─── Project intelligence summary (first-message context) ────────────────────
 
-async function enrichWithProjectSummary(projectId: string | number, orgId?: number): Promise<string> {
+async function enrichWithProjectSummary(projectId: ProjectRowId, orgId?: number): Promise<string> {
+  if (projectId === null) return ''; // no linked project: nothing project-scoped to read
   if (!orgId) return '';
   try {
-    const intel = await getProjectIntelligence(Number(projectId), orgId);
+    /* Keyed by the integer projects row that enrichContextForChat resolved once
+       (strictProjectRowForRef, below). This was getProjectIntelligence(Number(uuid)):
+       NaN on every v2 project turn (QA 2026-10-08 j5; ana-14). */
+    const intel = await getProjectIntelligence(projectId, orgId);
     if (!intel) return '';
 
     const parts: string[] = ['## Project Intelligence Profile'];
@@ -1050,15 +1138,55 @@ async function enrichWithProjectSummary(projectId: string | number, orgId?: numb
 
     return '\n\n' + parts.join('\n') + '\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.';
   } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
-    return '';
+    // The turn budget handles this failure; an empty profile is a different result.
+    throw e;
   }
 }
 
 // ─── Main enrichment function ────────────────────────────────────────────────
 
+/** Optional narrative enrichment shares one budget; execution policy is separate. */
+function createEnrichmentBudget() {
+  const deadline = Date.now() + 3000;
+  /* Why each source is unavailable. The set this replaced recorded only THAT a
+     source was missing, so the person was told "some project context could not
+     be loaded" with no way to tell a slow read from a broken one. */
+  const unavailable = new Map<string, EnrichmentUnavailableReason>();
+  const mark = (source: string, reason: EnrichmentUnavailableReason) => {
+    if (!unavailable.has(source)) unavailable.set(source, reason);
+  };
+  const settle = async <T>(source: string, load: () => Promise<T>, fallback: T): Promise<T> => {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) { mark(source, 'timeout'); return fallback; }
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        Promise.resolve().then(load),
+        new Promise<T>(resolve => {
+          timer = setTimeout(() => { mark(source, 'timeout'); resolve(fallback); }, remaining);
+        }),
+      ]);
+    } catch {
+      mark(source, 'error');
+      return fallback;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  const read = (source: string, load: () => Promise<string>): Promise<string> => settle(source, load, '');
+  return { read, settle, mark, unavailable };
+}
+
 export async function enrichContextForChat(params: {
   message: string;
+  /** The project as the caller named it: a regulatory_programs UUID (v2), or an integer projects.id. */
   projectId?: string | number;
+  /**
+   * The project row the caller already resolved from `projectId` (the stream
+   * route does, once per turn, under its own deadline). Omitted: resolved
+   * here, once, inside this budget.
+   */
+  project?: TurnProject;
   organizationId?: number;
   submissionType?: string;
   canonicalGovernedState?: CanonicalGovernedState;
@@ -1224,96 +1352,145 @@ export async function enrichContextForChat(params: {
     sources.push('governed-envelope');
   }
 
-  // ── Always inject project intelligence summary when available ──
-  const projectSummary = await enrichWithProjectSummary(projectId, organizationId).catch(() => '');
-  if (projectSummary) {
-    blocks.push(projectSummary);
-    sources.push('project-profile');
-  }
+  const budget = createEnrichmentBudget();
+  /* The project row every reader below keys on, resolved once, before any read
+     starts. The v2 app names the project by its program UUID, and these readers
+     took it raw: Number(uuid) is NaN and `project_id = '<uuid>'` is 22P02 on an
+     integer column, so the profile read failed on every project-scoped turn
+     (the person saw "Some project context could not be loaded") and the domain
+     memory reads failed in silence (ana-14).
 
-  // ── Always inject workflow status when submission type is known ──
-  if (submissionType) {
-    const workflowCtx = await buildWorkflowContext(projectId, submissionType, organizationId).catch(() => '');
-    if (workflowCtx) {
-      blocks.push(workflowCtx);
-      sources.push('workflow');
-    }
-  }
+     Strict (program-project-anchor.ts strictProjectRowForRef), and bounded by
+     this budget: a lookup that fails or cannot finish marks 'project-record'
+     unavailable, with why, and nothing project-scoped is read or asserted. Not
+     strict, a failed lookup read as "no linked project", and the domain blocks
+     told the model "No safety data found for this project yet". */
+  const project: TurnProject = params.project ?? await (async (): Promise<TurnProject> => {
+    const id = await budget.settle<number | null | undefined>('project-record', () => strictProjectRowForRef(
+      async () => (await import('../../db.js')).db,
+      { ref: projectId, orgId: organizationId ?? 0, context: 'ana-ri.enrichment' },
+    ), undefined);
+    if (id === undefined) return { status: 'unresolved', reason: budget.unavailable.get('project-record') ?? 'error' };
+    return id === null ? { status: 'none' } : { status: 'linked', id };
+  })();
+  if (project.status === 'unresolved') budget.mark('project-record', project.reason);
+  const pid: ProjectRowId = project.status === 'linked' ? project.id : null;
+  // Common context and workflow commands read the same snapshot. Share only
+  // this invocation's raw read; each consumer keeps its own budget/reporting.
+  let workflowPromise: Promise<string> | undefined;
+  const workflowContext = (): Promise<string> =>
+    workflowPromise ??= submissionType && pid !== null
+      ? Promise.resolve().then(() => buildWorkflowContext(pid, submissionType, organizationId))
+      : Promise.resolve('');
+  // Share one raw deficiency snapshot only within this turn; consumers keep their budgets.
+  let deficiencyPromise: Promise<string> | undefined;
+  const deficiencyContext = (): Promise<string> =>
+    deficiencyPromise ??= Promise.resolve().then(() => enrichWithCRLRTF(pid, organizationId));
+  /* A request that reads several sources reads, and reports, each one under its
+     own name. They were joined with Promise.all inside one read, so one failed
+     read (a domain memory read now throws) discarded what the others found,
+     and the whole command was reported as one missing source (ana-14). */
+  const composites = new WeakSet<() => Promise<string>>();
+  const parts = (...list: Array<readonly [source: string, load: () => Promise<string>]>): (() => Promise<string>) => {
+    const load = () => Promise.all(list.map(([source, read]) => budget.read(source, read))).then(r => r.join(''));
+    composites.add(load);
+    return load;
+  };
+  const readRequested = (source: string, load: () => Promise<string>): Promise<string> =>
+    composites.has(load) ? load() : budget.read(source, load);
+  const cmcParts = () => parts(
+    ['cmc', () => enrichWithCMC(pid, organizationId)],
+    ['cmc-build-state', () => enrichWithModule3BuildState(projectId, organizationId)],
+  );
+
+  // These reads are independent of the requested enrichment. Start together
+  // and join at composition, preserving their original prompt ordering.
+  const commonContext = Promise.all([
+    pid !== null
+      ? budget.read('project-profile', () => enrichWithProjectSummary(pid, organizationId))
+      : Promise.resolve(''),
+    submissionType && pid !== null
+      ? budget.read('workflow', workflowContext)
+      : Promise.resolve(''),
+  ]);
 
   // ── Check for slash commands first ──
   const slash = detectSlashCommand(message);
   if (slash) {
     const enrichMap: Record<string, () => Promise<string>> = {
-      risk: () => Promise.all([enrichWithForesight(projectId, organizationId), enrichWithCRLRTF(projectId, organizationId)]).then(r => r.join('')),
-      readiness: () => enrichWithReadiness(projectId, organizationId),
-      precedent: () => enrichWithPrecedents(projectId, organizationId),
+      risk: parts(['foresight', () => enrichWithForesight(pid, organizationId)], ['deficiency', deficiencyContext]),
+      readiness: () => enrichWithReadiness(pid, organizationId),
+      precedent: () => enrichWithPrecedents(pid, organizationId),
       draft: () =>
         Promise.resolve(detectDocumentType(slash.args || message))
           .then(doc => (doc ? buildDocumentGenerationContext(doc) : '\n\n## Draft Request Context\nNo specific document type detected. Ask which CTD section or artifact to draft, then produce submission-ready content.')),
-      preflight: () =>
-        Promise.all([
-          enrichWithReadiness(projectId, organizationId),
-          submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
-          enrichWithClaims(projectId, organizationId),
-          enrichWithCRLRTF(projectId, organizationId),
-        ]).then(r => r.join('')),
-      claims: () => enrichWithClaims(projectId, organizationId),
-      recommend: () => enrichWithRecommendations(projectId, organizationId),
-      next: () => enrichWithRecommendations(projectId, organizationId),
-      signals: () => enrichWithSignals(projectId, organizationId),
+      preflight: parts(
+        ['readiness', () => enrichWithReadiness(pid, organizationId)],
+        ['workflow', workflowContext],
+        ['claims', () => enrichWithClaims(pid, organizationId)],
+        ['deficiency', deficiencyContext],
+      ),
+      claims: () => enrichWithClaims(pid, organizationId),
+      recommend: () => enrichWithRecommendations(pid, organizationId),
+      next: () => enrichWithRecommendations(pid, organizationId),
+      signals: () => enrichWithSignals(pid, organizationId),
       export: () =>
         Promise.resolve(
           '\n\n## Conversation Export Intent\nUser requested conversation export. Provide a concise markdown-ready output and include any critical action receipts from this turn.'
         ),
-      simulate: () => enrichWithCRLRTF(projectId, organizationId),
-      assess: () => Promise.all([
-        enrichWithReadiness(projectId, organizationId),
-        enrichWithRecommendations(projectId, organizationId),
-        enrichWithSignals(projectId, organizationId),
-        enrichWithForesight(projectId, organizationId),
-      ]).then(r => r.join('')),
-      twin: () => Promise.all([
-        enrichWithClaims(projectId, organizationId),
-        enrichWithCRLRTF(projectId, organizationId),
-        enrichWithReadiness(projectId, organizationId),
-      ]).then(r => r.join('')),
-      consistency: () => enrichWithCrossModule(projectId, organizationId),
+      simulate: deficiencyContext,
+      assess: parts(
+        ['readiness', () => enrichWithReadiness(pid, organizationId)],
+        ['recommendations', () => enrichWithRecommendations(pid, organizationId)],
+        ['signals', () => enrichWithSignals(pid, organizationId)],
+        ['foresight', () => enrichWithForesight(pid, organizationId)],
+      ),
+      twin: parts(
+        ['claims', () => enrichWithClaims(pid, organizationId)],
+        ['deficiency', deficiencyContext],
+        ['readiness', () => enrichWithReadiness(pid, organizationId)],
+      ),
+      consistency: () => enrichWithCrossModule(pid, organizationId),
       deficiencies: () => enrichWithDeficiencies(submissionType),
-      knowledge: () => enrichWithKnowledgeSearch(slash.args || message, projectId, organizationId),
-      decisions: () => enrichWithDecisions(projectId, organizationId),
-      sap: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
-      power: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
-      dose: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
-      defensibility: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
-      design: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
-      safety: () => enrichWithSafety(projectId, organizationId),
-      cmc: () => enrichWithCMC(projectId, organizationId),
-      csr: () => enrichWithCSR(projectId, organizationId),
-      device: () => enrichWithDevice(projectId, organizationId),
-      diagnostics: () => enrichWithDiagnostics(projectId, organizationId),
-      cms: () => enrichWithCMS(projectId, organizationId),
-      ectd: () => enrichWithECTD(projectId, organizationId),
-      audit: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithClaims(projectId, organizationId)]).then(r => r.join('')),
-      amend: () => enrichWithProjectMemory(projectId, ['document_version', 'change_impact', 'amendment_tracking'], 'Amendment Context', 'Relevant version history and change impact data.', 5, organizationId),
-      review: () => Promise.all([enrichWithClaims(projectId, organizationId), enrichWithCRLRTF(projectId, organizationId)]).then(r => r.join('')),
-      memo: () => enrichWithForesight(projectId, organizationId),
-      brief: () => enrichWithCRLRTF(projectId, organizationId),
-      strategy: () => Promise.all([enrichWithPrecedents(projectId, organizationId), enrichWithForesight(projectId, organizationId)]).then(r => r.join('')),
-      freeze: () => enrichWithECTD(projectId, organizationId),
-      sign: () => enrichWithECTD(projectId, organizationId),
-      scan: () => Promise.all([enrichWithClaims(projectId, organizationId), enrichWithCRLRTF(projectId, organizationId)]).then(r => r.join('')),
-      checklist: () => enrichWithReadiness(projectId, organizationId),
-      submit: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithECTD(projectId, organizationId)]).then(r => r.join('')),
-      narrative: () => enrichWithSafety(projectId, organizationId),
-      report: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithClaims(projectId, organizationId)]).then(r => r.join('')),
-      iss: () => enrichWithSafety(projectId, organizationId),
-      ise: () => enrichWithClaims(projectId, organizationId),
-      ib: () => Promise.all([enrichWithSafety(projectId, organizationId), enrichWithClaims(projectId, organizationId)]).then(r => r.join('')),
-      smpc: () => enrichWithSafety(projectId, organizationId),
-      rmp: () => enrichWithSafety(projectId, organizationId),
-      uspi: () => enrichWithSafety(projectId, organizationId),
-      haq: () => Promise.all([enrichWithCRLRTF(projectId, organizationId), enrichWithPrecedents(projectId, organizationId), enrichWithClaims(projectId, organizationId)]).then(r => r.join('')),
-      ask: () => enrichWithKnowledgeSearch(slash.args || message, projectId, organizationId),
+      knowledge: () => enrichWithKnowledgeSearch(slash.args || message, pid, organizationId),
+      decisions: () => enrichWithDecisions(pid, organizationId),
+      sap: () => enrichWithBiostatContext(pid, submissionType, organizationId),
+      power: () => enrichWithBiostatContext(pid, submissionType, organizationId),
+      dose: () => enrichWithBiostatContext(pid, submissionType, organizationId),
+      defensibility: () => enrichWithBiostatContext(pid, submissionType, organizationId),
+      design: () => enrichWithBiostatContext(pid, submissionType, organizationId),
+      safety: () => enrichWithSafety(pid, organizationId),
+      cmc: cmcParts(),
+      csr: () => enrichWithCSR(pid, organizationId),
+      device: () => enrichWithDevice(pid, organizationId),
+      diagnostics: () => enrichWithDiagnostics(pid, organizationId),
+      cms: () => enrichWithCMS(pid, organizationId),
+      ectd: () => enrichWithECTD(pid, organizationId),
+      audit: parts(['readiness', () => enrichWithReadiness(pid, organizationId)], ['claims', () => enrichWithClaims(pid, organizationId)]),
+      amend: () => enrichWithProjectMemory(pid, ['document_version', 'change_impact', 'amendment_tracking'], 'Amendment Context', 'Relevant version history and change impact data.', 5, organizationId),
+      review: parts(['claims', () => enrichWithClaims(pid, organizationId)], ['deficiency', deficiencyContext]),
+      memo: () => enrichWithForesight(pid, organizationId),
+      brief: deficiencyContext,
+      strategy: parts(['precedent', () => enrichWithPrecedents(pid, organizationId)], ['foresight', () => enrichWithForesight(pid, organizationId)]),
+      freeze: () => enrichWithECTD(pid, organizationId),
+      sign: () => enrichWithECTD(pid, organizationId),
+      scan: parts(['claims', () => enrichWithClaims(pid, organizationId)], ['deficiency', deficiencyContext]),
+      checklist: () => enrichWithReadiness(pid, organizationId),
+      submit: parts(['readiness', () => enrichWithReadiness(pid, organizationId)], ['ectd', () => enrichWithECTD(pid, organizationId)]),
+      narrative: () => enrichWithSafety(pid, organizationId),
+      report: parts(['readiness', () => enrichWithReadiness(pid, organizationId)], ['claims', () => enrichWithClaims(pid, organizationId)]),
+      iss: () => enrichWithSafety(pid, organizationId),
+      ise: () => enrichWithClaims(pid, organizationId),
+      ib: parts(['safety', () => enrichWithSafety(pid, organizationId)], ['claims', () => enrichWithClaims(pid, organizationId)]),
+      smpc: () => enrichWithSafety(pid, organizationId),
+      rmp: () => enrichWithSafety(pid, organizationId),
+      uspi: () => enrichWithSafety(pid, organizationId),
+      haq: parts(
+        ['deficiency', deficiencyContext],
+        ['precedent', () => enrichWithPrecedents(pid, organizationId)],
+        ['claims', () => enrichWithClaims(pid, organizationId)],
+      ),
+      ask: () => enrichWithKnowledgeSearch(slash.args || message, pid, organizationId),
       wisdom: () => Promise.resolve(buildIndustryWisdomBlock({ submissionType, message: slash.args || message })),
       guide: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
       playbook: () => Promise.resolve(buildTourGuideBlock({ submissionType, message: slash.args || message })),
@@ -1340,18 +1517,18 @@ export async function enrichContextForChat(params: {
       expedited: () => Promise.resolve(buildPathwaysBlock({ message: slash.args || message, segment: inferSegmentFromSubmissionType(submissionType) ?? inferSegmentFromMessage(slash.args || message) ?? undefined })),
       capabilities: () => Promise.resolve(buildCapabilityCatalogue()),
       whatcanyoudo: () => Promise.resolve(buildCapabilityCatalogue()),
-      workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
-      status: () => Promise.all([
-        enrichWithReadiness(projectId, organizationId),
-        submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
-        enrichWithRecommendations(projectId, organizationId),
-      ]).then(r => r.join('')),
-      help: () => Promise.all([
-        enrichWithReadiness(projectId, organizationId),
-        enrichWithRecommendations(projectId, organizationId),
-        enrichWithCMS(projectId, organizationId),
-        enrichWithDiagnostics(projectId, organizationId),
-      ]).then(r => r.join('')),
+      workflow: () => workflowContext(),
+      status: parts(
+        ['readiness', () => enrichWithReadiness(pid, organizationId)],
+        ['workflow', workflowContext],
+        ['recommendations', () => enrichWithRecommendations(pid, organizationId)],
+      ),
+      help: parts(
+        ['readiness', () => enrichWithReadiness(pid, organizationId)],
+        ['recommendations', () => enrichWithRecommendations(pid, organizationId)],
+        ['cms', () => enrichWithCMS(pid, organizationId)],
+        ['diagnostics', () => enrichWithDiagnostics(pid, organizationId)],
+      ),
     };
 
     triggerType = 'slash_command';
@@ -1359,7 +1536,7 @@ export async function enrichContextForChat(params: {
     const enrichFn = enrichMap[slash.command];
     sourcesAttempted++;
     if (enrichFn) {
-      const block = await enrichFn().catch(() => '');
+      const block = await readRequested(slash.command, enrichFn);
       if (block) {
         blocks.push(block);
         sources.push(slash.command);
@@ -1500,14 +1677,14 @@ export async function enrichContextForChat(params: {
 
     // Resolve enrichment sources for the invoked apps
     const appEnrichFnMap: Record<string, () => Promise<string>> = {
-      'foresight': () => enrichWithForesight(projectId, organizationId),
-      'precedent': () => enrichWithPrecedents(projectId, organizationId),
-      'device': () => enrichWithDevice(projectId, organizationId),
-      'readiness': () => enrichWithReadiness(projectId, organizationId),
-      'safety': () => enrichWithSafety(projectId, organizationId),
-      'claims': () => enrichWithClaims(projectId, organizationId),
-      'biostatistics': () => enrichWithBiostatContext(projectId, submissionType, organizationId),
-      'ectd': () => enrichWithECTD(projectId, organizationId),
+      'foresight': () => enrichWithForesight(pid, organizationId),
+      'precedent': () => enrichWithPrecedents(pid, organizationId),
+      'device': () => enrichWithDevice(pid, organizationId),
+      'readiness': () => enrichWithReadiness(pid, organizationId),
+      'safety': () => enrichWithSafety(pid, organizationId),
+      'claims': () => enrichWithClaims(pid, organizationId),
+      'biostatistics': () => enrichWithBiostatContext(pid, submissionType, organizationId),
+      'ectd': () => enrichWithECTD(pid, organizationId),
     };
 
     const apps = invokedApps(message);
@@ -1523,7 +1700,7 @@ export async function enrichContextForChat(params: {
         const fn = appEnrichFnMap[sourceName];
         if (!fn) { sourcesFailed.push(`app-${sourceName}`); return; }
         try {
-          const block = await fn();
+          const block = await budget.read(`app:${appId}/${sourceName}`, fn);
           if (block) {
             blocks.push(block);
             sources.push(`app:${appId}/${sourceName}`);
@@ -1547,22 +1724,22 @@ export async function enrichContextForChat(params: {
   // ── Natural language trigger detection (runs if no slash command and no app mention) ──
   if (!slash && !appMention) {
     const triggers: Array<{ test: RegExp[]; fn: () => Promise<string>; name: string }> = [
-      { test: FORESIGHT_TRIGGERS, fn: () => enrichWithForesight(projectId, organizationId), name: 'foresight' },
-      { test: PRECEDENT_TRIGGERS, fn: () => enrichWithPrecedents(projectId, organizationId), name: 'precedent' },
-      { test: CRL_RTF_TRIGGERS, fn: () => enrichWithCRLRTF(projectId, organizationId), name: 'deficiency' },
-      { test: READINESS_TRIGGERS, fn: () => enrichWithReadiness(projectId, organizationId), name: 'readiness' },
-      { test: RECOMMENDATION_TRIGGERS, fn: () => enrichWithRecommendations(projectId, organizationId), name: 'recommendations' },
-      { test: CLAIMS_TRIGGERS, fn: () => enrichWithClaims(projectId, organizationId), name: 'claims' },
-      { test: SIMULATION_TRIGGERS, fn: () => enrichWithCRLRTF(projectId, organizationId), name: 'simulation' },
-      { test: BIOSTAT_TRIGGERS, fn: () => enrichWithBiostatContext(projectId, submissionType, organizationId), name: 'biostatistics' },
-      { test: SAFETY_TRIGGERS, fn: () => enrichWithSafety(projectId, organizationId), name: 'safety' },
-      { test: CMC_TRIGGERS, fn: () => enrichWithCMC(projectId, organizationId), name: 'cmc' },
-      { test: CSR_TRIGGERS, fn: () => enrichWithCSR(projectId, organizationId), name: 'csr' },
-      { test: DEVICE_TRIGGERS, fn: () => enrichWithDevice(projectId, organizationId), name: 'device' },
-      { test: DIAGNOSTICS_TRIGGERS, fn: () => enrichWithDiagnostics(projectId, organizationId), name: 'diagnostics' },
-      { test: CMS_TRIGGERS, fn: () => enrichWithCMS(projectId, organizationId), name: 'cms' },
-      { test: ECTD_TRIGGERS, fn: () => enrichWithECTD(projectId, organizationId), name: 'ectd' },
-      { test: HAQ_TRIGGERS, fn: () => Promise.all([enrichWithCRLRTF(projectId, organizationId), enrichWithPrecedents(projectId, organizationId)]).then(r => r.join('')), name: 'haq' },
+      { test: FORESIGHT_TRIGGERS, fn: () => enrichWithForesight(pid, organizationId), name: 'foresight' },
+      { test: PRECEDENT_TRIGGERS, fn: () => enrichWithPrecedents(pid, organizationId), name: 'precedent' },
+      { test: CRL_RTF_TRIGGERS, fn: deficiencyContext, name: 'deficiency' },
+      { test: READINESS_TRIGGERS, fn: () => enrichWithReadiness(pid, organizationId), name: 'readiness' },
+      { test: RECOMMENDATION_TRIGGERS, fn: () => enrichWithRecommendations(pid, organizationId), name: 'recommendations' },
+      { test: CLAIMS_TRIGGERS, fn: () => enrichWithClaims(pid, organizationId), name: 'claims' },
+      { test: SIMULATION_TRIGGERS, fn: deficiencyContext, name: 'simulation' },
+      { test: BIOSTAT_TRIGGERS, fn: () => enrichWithBiostatContext(pid, submissionType, organizationId), name: 'biostatistics' },
+      { test: SAFETY_TRIGGERS, fn: () => enrichWithSafety(pid, organizationId), name: 'safety' },
+      { test: CMC_TRIGGERS, fn: cmcParts(), name: 'cmc' },
+      { test: CSR_TRIGGERS, fn: () => enrichWithCSR(pid, organizationId), name: 'csr' },
+      { test: DEVICE_TRIGGERS, fn: () => enrichWithDevice(pid, organizationId), name: 'device' },
+      { test: DIAGNOSTICS_TRIGGERS, fn: () => enrichWithDiagnostics(pid, organizationId), name: 'diagnostics' },
+      { test: CMS_TRIGGERS, fn: () => enrichWithCMS(pid, organizationId), name: 'cms' },
+      { test: ECTD_TRIGGERS, fn: () => enrichWithECTD(pid, organizationId), name: 'ectd' },
+      { test: HAQ_TRIGGERS, fn: parts(['deficiency', deficiencyContext], ['precedent', () => enrichWithPrecedents(pid, organizationId)]), name: 'haq' },
       { test: WISDOM_TRIGGERS, fn: () => Promise.resolve(buildIndustryWisdomBlock({ submissionType, message })), name: 'industry-wisdom' },
       { test: WAYFINDING_TRIGGERS, fn: () => Promise.resolve(buildTourGuideBlock({ submissionType, message })), name: 'tour-guide' },
     ];
@@ -1575,7 +1752,7 @@ export async function enrichContextForChat(params: {
         matchedFns.map(async t => {
           sourcesAttempted++;
           try {
-            const block = await t.fn();
+            const block = await readRequested(t.name, t.fn);
             if (block) {
               blocks.push(block);
               sources.push(t.name);
@@ -1682,8 +1859,9 @@ export async function enrichContextForChat(params: {
     }
 
     // ── Proactive enrichment for greetings/help — inject status so AnA can lead ──
+    const greetingCommonContext = await commonContext;
     const isGreeting = /^(hi|hello|hey|good\s*(morning|afternoon|evening)|what.?s up|how are you|help|what can you do)/i.test(message.trim());
-    if (isGreeting && sources.length === 0) {
+    if (isGreeting && sources.length === 0 && !greetingCommonContext.some(Boolean)) {
       triggerType = 'proactive';
       sourcesAttempted += 4;
       // Inject readiness + top recommendation + the license→submission journey +
@@ -1691,10 +1869,10 @@ export async function enrichContextForChat(params: {
       // where their program stands, the next move, and any investigation that
       // finished while they were away — not a bare hello.
       const [readinessBlock, recsBlock, journeyBlock, activityBlock] = await Promise.allSettled([
-        enrichWithReadiness(projectId, organizationId),
-        enrichWithRecommendations(projectId, organizationId),
-        enrichWithClientJourney(organizationId, submissionType),
-        enrichWithAgentActivity(organizationId),
+        budget.read('proactive-readiness', () => enrichWithReadiness(pid, organizationId)),
+        budget.read('proactive-recommendations', () => enrichWithRecommendations(pid, organizationId)),
+        budget.read('proactive-client-journey', () => enrichWithClientJourney(organizationId, submissionType)),
+        budget.read('proactive-agent-activity', () => enrichWithAgentActivity(organizationId)),
       ]);
       if (journeyBlock.status === 'fulfilled' && journeyBlock.value) {
         blocks.push(journeyBlock.value);
@@ -1743,6 +1921,12 @@ export async function enrichContextForChat(params: {
     }
   }
 
+  const commonBlocks = await commonContext;
+  const commonEntries = commonBlocks.map((block, i) => ({ block, source: i === 0 ? 'project-profile' : 'workflow' })).filter(entry => entry.block);
+  const commonOffset = canonicalGovernedState ? 1 : 0;
+  blocks.splice(commonOffset, 0, ...commonEntries.map(entry => entry.block));
+  sources.splice(commonOffset, 0, ...commonEntries.map(entry => entry.source));
+
   // ── Role lens — frame the pack guidance for the audience, once, at the end ──
   if (hasRoleLens(userRole) && sources.some(s => ROLE_FRAMEABLE_SOURCES.has(s))) {
     const lensBlock = buildRoleLensBlock(userRole as UserRole);
@@ -1771,6 +1955,30 @@ export async function enrichContextForChat(params: {
     composeTokensUsed = composed.tokensUsed;
   }
 
+  /* A program with no linked project has no project records for any reader
+     above to read: each returned '' without a read. Said to the model as an
+     instruction, beside the availability notice and for the same reason, so
+     that "nothing was read" is never taken for "nothing is recorded" (ana-14).
+     The submission workflow's steps are not shown for such a program: their
+     progress comes from project records, and a list of steps with nothing
+     marked done would read as nothing done. */
+  if (project.status === 'none') {
+    composedBlock = '\n## Project records\nThe open project has no linked project record, so no project memory, profile, readiness, ' +
+      `${submissionType ? 'submission workflow progress, ' : ''}signals or recommendations were read for this reply. ` +
+      'Do not state or imply that this project has, or lacks, any recorded data, finding or progress. Where it matters, ask the person.\n' + composedBlock;
+  }
+
+  const unavailableSources = [...budget.unavailable.keys()].sort();
+  const unavailableReasons = Object.fromEntries(unavailableSources.map(source => [source, budget.unavailable.get(source)!]));
+  if (unavailableSources.length > 0) {
+    // Availability is an instruction, not evidence or an enrichment success.
+    // It must survive the optional composer trimming substantive source text.
+    const named = unavailableSources
+      .map(source => `${source} (${unavailableReasons[source] === 'timeout' ? 'took too long to read' : 'read failed'})`)
+      .join(', ');
+    composedBlock = `\n## Enrichment context availability\nEnrichment context unavailable: ${named}. ` +
+      'Do not infer that missing context or unresolved findings do not exist. Check the relevant records before relying on their absence.\n' + composedBlock;
+  }
   return {
     block: composedBlock,
     sources,
@@ -1778,7 +1986,9 @@ export async function enrichContextForChat(params: {
     enrichmentMeta: {
       sourcesAttempted,
       sourcesSucceeded: [...sources],
-      sourcesFailed,
+      sourcesFailed: [...new Set([...sourcesFailed, ...unavailableSources])],
+      unavailableSources,
+      unavailableReasons,
       triggerType,
       detectedCommand,
       detectedAppMention: detectedAppMentionId,

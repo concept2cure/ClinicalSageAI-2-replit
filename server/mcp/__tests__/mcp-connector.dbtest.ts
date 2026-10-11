@@ -149,10 +149,13 @@ beforeAll(async () => {
 
   A = await seedTenant('a');
   B = await seedTenant('b');
+  // Anchored to A's program: a program's document is placed only into a
+  // submission anchored to that program (P-14, 2026-10-08), and the governed
+  // write below files A's Vault document.
   const sub = await owner.query(
-    `INSERT INTO submissions (title, application_type, client_type, primary_region, organization_id, created_by)
-       VALUES ($1, 'ind', 'pharma', 'fda', $2, $3) RETURNING id`,
-    [`${PREFIX} submission a`, A.orgId, A.userId],
+    `INSERT INTO submissions (title, application_type, client_type, primary_region, organization_id, created_by, program_id)
+       VALUES ($1, 'ind', 'pharma', 'fda', $2, $3, $4) RETURNING id`,
+    [`${PREFIX} submission a`, A.orgId, A.userId, A.programId],
   );
   submissionId = Number(sub.rows[0].id);
   const seq = await owner.query(

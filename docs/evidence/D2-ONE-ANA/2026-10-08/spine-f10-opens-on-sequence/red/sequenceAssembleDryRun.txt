@@ -1,0 +1,22 @@
+# Red run: SubmissionCenter.tsx, SubmissionSeqWorkspaces.tsx and AuthoringPlaceIntoFiling.tsx reverted to HEAD (git show HEAD:<path>), restored after; tests, baseline and the new files as in this change. 2026-10-08T18:27:35Z
+# npx vitest run client/src/concept2cure/v2/__tests__/submissionCenterOpensOnSequence.test.tsx client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx tests/ui/filing-path-reachability.test.ts  (lines for client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx; totals are for the whole run)
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: assemble a test package > POSTs the sequence assemble route and shows the server blockers verbatim 72ms
+   → expected 'Dispatch · sequence 0001dispatch read…' to match /test package/i
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: assemble a test package > the button is disabled while the request runs 258ms
+   → Unable to find an accessible element with the role "button" and name `/Assemble a test package/`
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: assemble a test package > an empty blocker list is not shown as ready to send 105ms
+   → Unable to find an accessible element with the role "button" and name `/Assemble a test package/`
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: a test package that failed or was refused > a 503 is reported as unknown, never as not assembled 83ms
+   → Unable to find an accessible element with the role "button" and name `/Assemble a test package/`
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: a test package that failed or was refused > a dropped connection is reported as unknown, never as not assembled 69ms
+   → Unable to find an accessible element with the role "button" and name `/Assemble a test package/`
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: a test package that failed or was refused > a refused assembly whose audit entry was not persisted says so 70ms
+   → Unable to find an accessible element with the role "button" and name `/Assemble a test package/`
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: a test package that failed or was refused > a role refusal says nothing about a refusal audit entry 69ms
+   → Unable to find an accessible element with the role "button" and name `/Assemble a test package/`
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: a test package that failed or was refused > a 422 shows the server words and claims no package 70ms
+   → Unable to find an accessible element with the role "button" and name `/Assemble a test package/`
+ × client/src/concept2cure/v2/__tests__/sequenceAssembleDryRun.test.tsx > Dispatch tab: a test package that failed or was refused > an assembly whose audit entry was not persisted says so 82ms
+   → Unable to find an accessible element with the role "button" and name `/Assemble a test package/`
+ Test Files  3 failed (3)
+      Tests  17 failed | 21 passed (38)

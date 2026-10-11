@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The Vault's data-room lane: a full window says it is full, and a source the
+ * The Vault's data-room lane: exact counts, a full list says it is the newest, and a source the
  * classifier refused reads "Needs review", not "Classified".
  * Server half: server/routes/__tests__/vault-data-room-counts.test.ts.
  */
@@ -33,10 +33,12 @@ beforeEach(() => { (window as any).C2C_PROJECT = { id: PID, title: 'BX-301' }; }
 afterEach(() => { cleanup(); delete (window as any).C2C_PROJECT; });
 
 describe('Vault data room lane', () => {
-  it('a full window reads as a floor, says so, and AnA is told', async () => {
+  // Since 2026-10-08 the server counts every current source (countDataRoomStages):
+  // a full window limits the LIST, never the counts.
+  it('a full window shows exact counts, says the list is the newest, and AnA is told', async () => {
     mockVaultApi(apiRequest, () => ok(vaultPayload({
       dataRoom: {
-        captured: 200, classified: 150, filed: 90, needsReview: 12,
+        captured: 250, classified: 150, filed: 90, needsReview: 12,
         sources: [row(1, 'filed'), row(2, 'classified')],
         window: { shown: 200, truncated: true },
       },
@@ -44,10 +46,11 @@ describe('Vault data room lane', () => {
     const seen: { ctx: SurfaceContext | null } = { ctx: null };
     render(<><Vault {...props()} /><Probe onCtx={(c) => { seen.ctx = c; }} /></>);
     const lane = await screen.findByTestId('vault-data-room');
-    await waitFor(() => expect(lane.textContent).toContain('Captured 200+'));
-    expect(lane.textContent).toMatch(/newest 200 sources/);
+    await waitFor(() => expect(lane.textContent).toContain('Captured 250'));
+    expect(lane.textContent).not.toContain('250+');
+    expect(lane.textContent).toMatch(/newest 200 of 250/);
     expect(lane.textContent).toContain('12 need review');
-    await waitFor(() => expect((seen.ctx?.facts as any)?.dataRoom?.truncated).toBe(true));
+    await waitFor(() => expect((seen.ctx?.facts as any)?.dataRoom?.listTruncated).toBe(true));
     expect((seen.ctx?.facts as any).dataRoom.needsReview).toBe(12);
   });
 
@@ -63,7 +66,7 @@ describe('Vault data room lane', () => {
     fireEvent.click(await screen.findByText('Show 1 source'));
     const lane = screen.getByTestId('vault-data-room');
     expect(lane.textContent).toContain('Needs review');
-    expect(lane.textContent).not.toMatch(/newest \d+ sources/);
+    expect(lane.textContent).not.toMatch(/newest \d+ of/);
     expect(lane.textContent).toContain('Captured 1');
     expect(lane.textContent).not.toContain('Captured 1+');
   });

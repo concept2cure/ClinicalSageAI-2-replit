@@ -194,6 +194,54 @@ export async function resolveSubmissionSpine(
 }
 
 /**
+ * The spine of a NAMED sequence, when this program owns it (FILING_SPINE.md
+ * F14): the sequence, joined to its submission, which must be anchored to the
+ * program (submissions.program_id). resolveSubmissionSpine finds one
+ * submission per program, by its application type, so an NDA project's MAA
+ * sequence, opened in the Submission Center, could not be compiled. Null when
+ * the sequence is not this program's (another project's, deleted, or no such
+ * id): the caller answers 404. A failed lookup throws; it is not "not
+ * found".
+ */
+export async function resolveSequenceSpine(
+  anchor: SpineAnchor,
+  orgId: number,
+  sequenceId: number,
+  executor: Queryable = pool,
+): Promise<SubmissionSpine | null> {
+  if (anchor.programId === null) return null;
+  const { rows } = await executor.query(
+    `SELECT q.id, q.sequence_number, q.region, q.submission_id, s.application_type, s.primary_region
+       FROM ectd_sequences q
+       JOIN submissions s ON s.id = q.submission_id AND s.organization_id = q.organization_id
+      WHERE q.id = $1 AND q.organization_id = $2 AND q.deleted_at IS NULL
+        AND s.deleted_at IS NULL AND s.program_id = $3::uuid`,
+    [sequenceId, orgId, anchor.programId],
+  );
+  const row = rows[0] as
+    | { id: number | string; sequence_number: string; region: string; submission_id: number | string; application_type: string; primary_region: string | null }
+    | undefined;
+  if (!row) return null;
+  const leafRes = await executor.query(
+    `SELECT count(*)::int AS n FROM submission_leaves
+      WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [Number(row.id), orgId],
+  );
+  return {
+    submissionId: Number(row.submission_id),
+    match: 'program',
+    applicationType: String(row.application_type),
+    primaryRegion: row.primary_region == null ? null : String(row.primary_region),
+    sequence: {
+      id: Number(row.id),
+      sequenceNumber: String(row.sequence_number),
+      region: String(row.region),
+      leafCount: Number(leafRes.rows[0]?.n ?? 0),
+    },
+  };
+}
+
+/**
  * The submission's recorded market, in the regional composer's vocabulary
  * (module3-extensions RegionCode) — or null for a market the composer has no
  * 3.2.R generator for. Null means COMPOSE NOTHING regional: an honest gap in

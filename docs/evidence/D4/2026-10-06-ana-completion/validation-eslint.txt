@@ -1,0 +1,47 @@
+
+/workspace/scratch/bd36ee581acd/concept2cure/scripts/validation/build-traceability.mjs
+  105:7  warning  'RANK' is assigned a value but never used                                                @typescript-eslint/no-unused-vars
+  191:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/workspace/scratch/bd36ee581acd/concept2cure/scripts/validation/build-traceability.selftest.mjs
+  41:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  49:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  51:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/workspace/scratch/bd36ee581acd/concept2cure/scripts/validation/run-iq.mjs
+   47:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   60:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  274:7  warning  The value assigned to 'pw' is not used in subsequent statements                          no-useless-assignment
+  333:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/workspace/scratch/bd36ee581acd/concept2cure/tests/validation/lib/harness.mjs
+  108:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+  225:7   warning  The value assigned to 'session' is not used in subsequent statements                     no-useless-assignment
+  303:10  warning  Async function 'api' has a complexity of 24. Maximum allowed is 15                       complexity
+  334:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  338:9   warning  The value assigned to 'json' is not used in subsequent statements                        no-useless-assignment
+  419:8   warning  Async function 'createRun' has too many lines (256). Maximum allowed is 100              max-lines-per-function
+  465:3   warning  Async function 'step' has too many lines (180). Maximum allowed is 100                   max-lines-per-function
+  465:3   warning  Async function 'step' has a complexity of 28. Maximum allowed is 15                      complexity
+  494:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  595:11  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  604:13  warning  The value assigned to 'text' is not used in subsequent statements                        no-useless-assignment
+  620:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  626:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  650:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  655:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  657:1   warning  File has too many lines (624). Maximum allowed is 500                                    max-lines
+  659:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  707:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/workspace/scratch/bd36ee581acd/concept2cure/tests/validation/lib/harness.selftest.mjs
+  50:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/workspace/scratch/bd36ee581acd/concept2cure/tests/validation/oq/vault/run.mjs
+  210:72  warning  Unnecessary escape character: \'  no-useless-escape
+
+/workspace/scratch/bd36ee581acd/concept2cure/tests/validation/run-all.mjs
+  40:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 30 problems (0 errors, 30 warnings)
+

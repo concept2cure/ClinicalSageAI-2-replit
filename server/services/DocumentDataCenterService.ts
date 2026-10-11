@@ -799,71 +799,20 @@ class DocumentDataCenterService {
   }
 
   /**
-   * Permanently delete a document (DB record + stored file) with audit logging
+   * Legacy removal entry point: refuses until routed through a typed disposition.
    */
   async deleteDocument(
     organizationId: number,
     documentId: number,
     userId: string
   ): Promise<{ success: boolean; notFound?: boolean; message?: string }> {
-    if (!db) {
-      throw new Error('Database connection not available');
-    }
-    try {
-      // Get existing document (org-scoped) so we never delete across tenants
-      const [existing] = await db
-        .select()
-        .from(deviceDataCenter)
-        .where(
-          and(
-            eq(deviceDataCenter.organizationId, organizationId),
-            eq(deviceDataCenter.id, documentId)
-          )
-        );
-
-      if (!existing) {
-        return { success: false, notFound: true };
-      }
-
-      // Remove the DB record (org-scoped)
-      await db
-        .delete(deviceDataCenter)
-        .where(
-          and(
-            eq(deviceDataCenter.organizationId, organizationId),
-            eq(deviceDataCenter.id, documentId)
-          )
-        );
-
-      // Best-effort removal of the stored file from disk
-      if (existing.storageUrl) {
-        try {
-          await fs.unlink(existing.storageUrl);
-        } catch (fileError) {
-          console.error('Error removing stored file during delete:', fileError);
-        }
-      }
-
-      // Log audit trail for 21 CFR Part 11 compliance
-      await auditService.logAction({
-        organizationId,
-        userId,
-        action: 'DOCUMENT_DELETED',
-        resourceType: 'device_data_center',
-        resourceId: documentId.toString(),
-        metadata: {
-          fileName: existing.fileName,
-          checksum: existing.checksum,
-        },
-        ipAddress: '127.0.0.1',
-        userAgent: 'DocumentDataCenterService',
-      });
-
-      return { success: true, message: 'Document deleted successfully' };
-    } catch (error) {
-      console.error('Error deleting document:', error);
-      throw error;
-    }
+    // A device_data_center integer is not a captured source identity or a
+    // Vault UUID. Refuse direct callers too; never unlink bytes or erase lineage
+    // by pretending these id-spaces are interchangeable.
+    void organizationId;
+    void documentId;
+    void userId;
+    throw new Error('DOCUMENT_DISPOSITION_REQUIRED: review the source in the project Data Room before removal.');
   }
 
   /**

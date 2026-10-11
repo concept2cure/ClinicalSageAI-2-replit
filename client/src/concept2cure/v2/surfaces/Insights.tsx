@@ -10,6 +10,7 @@ import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_share
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
+import { publishShellProject, shellProgramId, shellProgramName, useShellProject } from '../shellProject';
 import '../styles/project-home-v2.css';
 import '../styles/insights-v2.css';
 import { C2CToast, useToast } from '../toast';
@@ -77,7 +78,15 @@ const RO_FAMILY: Record<string, { label: string; region?: string }> = {
   prediction: { label: 'Predictive intelligence (advisory)' },
 };
 
-/* ── Report types (30 governed types from taxonomy) ── */
+/* ── Report types: the server's catalog for the program in view ──
+   This was RO_TYPES, a hand copy of 30 server seed rows filtered by the shell's
+   segment preference, so the canvas offered what the copy said rather than
+   what the server would run: a device-only 510(k) matrix for a biologic IND
+   (the preference was 'biopharma', which mapped to pharma + biotech + DEVICE),
+   and tiles for types no engine computes, each returning the readiness digest
+   under its own title (QA 2026-10-08, j8). The catalog is now the overview's
+   `reportTypes`: filtered by the lead program's recorded product type, with
+   each type's entitlement and whether an engine computes it (`runnable`). */
 interface ReportType {
   typeId: string;
   label: string;
@@ -85,37 +94,33 @@ interface ReportType {
   scopes: string[];
   segments: string[];
   t: { allowPartial?: boolean; requireBlockers?: boolean; requireConfidence?: boolean; requireExplicitGaps?: boolean; forbidFinal?: boolean; requireDisclosure?: boolean };
+  /** An engine computes it over a program; otherwise it is shown as not computed and never run. */
+  runnable: boolean;
 }
 
-const RO_TYPES: ReportType[] = [
-  { typeId: 'readiness.executive_digest', label: 'Executive Readiness Digest', family: 'readiness', scopes: ['program', 'project', 'submission'], segments: ['pharma', 'device', 'biotech'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'provenance.evidence_trace_report', label: 'Evidence & Provenance Trace Report', family: 'evidence_provenance', scopes: ['project', 'submission', 'document'], segments: ['pharma', 'device', 'biotech'], t: { allowPartial: true, requireConfidence: true } },
-  { typeId: 'compliance.audit_assurance_pack', label: 'Compliance & Audit Assurance Pack', family: 'compliance_audit', scopes: ['project', 'submission', 'document'], segments: ['pharma', 'device', 'biotech'], t: { allowPartial: true, requireExplicitGaps: true } },
-  { typeId: 'usa_fda.pma_submission_readiness', label: 'FDA PMA Submission Readiness Pack', family: 'usa_fda_pma', scopes: ['project', 'submission'], segments: ['device', 'biotech'], t: { allowPartial: true, requireBlockers: true, requireConfidence: true } },
-  { typeId: 'usa_fda.estar_510k_equivalence_matrix', label: 'FDA eSTAR / 510(k) Equivalence Matrix', family: 'usa_fda_510k', scopes: ['project', 'submission', 'document'], segments: ['device'], t: { allowPartial: true, requireExplicitGaps: true, requireConfidence: true } },
-  { typeId: 'usa_fda.deficiency_response_intelligence', label: 'FDA Deficiency Response Intelligence Report', family: 'usa_fda_response', scopes: ['project', 'submission', 'document'], segments: ['pharma', 'device', 'biotech'], t: { allowPartial: false, requireBlockers: true, requireExplicitGaps: true } },
-  { typeId: 'ema.maa_readiness_assessment', label: 'EMA MAA Readiness Assessment', family: 'ema_maa', scopes: ['program', 'project', 'submission'], segments: ['pharma', 'biotech'], t: { allowPartial: true, requireBlockers: true, requireConfidence: true } },
-  { typeId: 'ema.rmp_psur_signal_alignment', label: 'EMA RMP / PSUR Signal Alignment Report', family: 'ema_post_market', scopes: ['project', 'submission', 'document'], segments: ['pharma', 'biotech'], t: { allowPartial: true, requireExplicitGaps: true, requireConfidence: true } },
-  { typeId: 'china_nmpa.ctd_module_gap_analysis', label: 'NMPA CTD Module Gap Analysis', family: 'china_nmpa_ctd', scopes: ['project', 'submission', 'document'], segments: ['pharma', 'biotech', 'device'], t: { allowPartial: true, requireExplicitGaps: true, requireConfidence: true } },
-  { typeId: 'china_nmpa.registration_dossier_readiness', label: 'NMPA Registration Dossier Readiness Pack', family: 'china_nmpa_registration', scopes: ['program', 'project', 'submission'], segments: ['pharma', 'biotech', 'device'], t: { allowPartial: true, requireBlockers: true, requireConfidence: true } },
-  { typeId: 'china_nmpa.deficiency_letter_root_cause_pack', label: 'NMPA Deficiency Letter Root-Cause Pack', family: 'china_nmpa_response', scopes: ['project', 'submission', 'document'], segments: ['pharma', 'biotech', 'device'], t: { allowPartial: false, requireBlockers: true, requireExplicitGaps: true } },
-  { typeId: 'fcoi.disclosure_register', label: 'Financial Disclosure Register (21 CFR 54)', family: 'fcoi_compliance', scopes: ['submission', 'project'], segments: ['pharma', 'biotech', 'device'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'ha.commitment_register', label: 'HA Interaction & Commitment Register', family: 'ha_commitment', scopes: ['submission', 'project', 'program'], segments: ['pharma', 'biotech', 'device'], t: { allowPartial: true, requireBlockers: true, requireConfidence: true } },
-  { typeId: 'iacuc.protocol_register', label: 'IACUC Protocol & Animal Census Register', family: 'iacuc_governance', scopes: ['project', 'submission', 'program'], segments: ['academic', 'biotech', 'pharma'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'irb.submission_register', label: 'IRB Submission & Determination Register', family: 'irb_ethics', scopes: ['study', 'submission', 'project'], segments: ['biotech', 'pharma', 'academic'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'ibc.registration_register', label: 'IBC Biosafety Registration & Containment Register', family: 'ibc_biosafety', scopes: ['project', 'submission', 'program'], segments: ['biotech', 'academic', 'pharma'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'nonclinical.study_send_register', label: 'Nonclinical Study & SEND Readiness Register', family: 'nonclinical_module4', scopes: ['submission', 'program', 'project'], segments: ['pharma', 'biotech'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'grants.portfolio_register', label: 'Grant Portfolio & Funder-Milestone Register', family: 'sponsored_programs', scopes: ['program', 'project', 'account'], segments: ['academic', 'biotech'], t: { allowPartial: true, requireBlockers: true, requireConfidence: true } },
-  { typeId: 'rim.registration_grid', label: 'Product Registration Grid & Labeling Register', family: 'rim_registration', scopes: ['program', 'project', 'account'], segments: ['pharma', 'biotech'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'inspection.readiness_pack', label: 'Inspection Readiness & 483 Response Pack', family: 'inspection_readiness', scopes: ['program', 'project', 'submission'], segments: ['pharma', 'biotech', 'device', 'ivd', 'cro'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'controlled_substances.inventory_ledger', label: 'Controlled Substances Inventory & DEA Ledger', family: 'controlled_substances', scopes: ['program', 'project', 'account'], segments: ['academic', 'biotech', 'pharma'], t: { allowPartial: false, requireBlockers: true, requireExplicitGaps: true } },
-  { typeId: 'lifecycle.obligation_calendar', label: 'Lifecycle Obligation Calendar', family: 'lifecycle_obligations', scopes: ['program', 'project', 'submission'], segments: ['pharma', 'biotech'], t: { allowPartial: true, requireBlockers: true, requireConfidence: true } },
-  { typeId: 'etmf.completeness_pack', label: 'eTMF Completeness & Gap Pack', family: 'etmf', scopes: ['study', 'submission', 'project'], segments: ['pharma', 'biotech', 'cro'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'research_compliance.training_status', label: 'Research Personnel Training Status', family: 'research_compliance', scopes: ['program', 'project', 'account'], segments: ['academic', 'biotech', 'pharma'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'effort.certification_register', label: 'Effort Certification Register', family: 'effort_certification', scopes: ['program', 'project', 'account'], segments: ['academic', 'biotech', 'pharma'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'research_security.coi_register', label: 'Research Security & COI Disclosure Register', family: 'research_security', scopes: ['program', 'project', 'account'], segments: ['academic', 'biotech', 'pharma'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'research_admin.scorecard', label: 'Research Administration Scorecard', family: 'research_admin', scopes: ['program', 'account'], segments: ['academic', 'biotech', 'pharma'], t: { allowPartial: true, requireBlockers: true } },
-];
+/** The overview's catalog row (server insights-canvas-routes.ts CanvasReportType). */
+interface CanvasReportType {
+  typeId: string;
+  label: string;
+  family: string;
+  allowedScopes?: string[];
+  allowedClientSegments?: string[];
+  truthfulnessRules?: Record<string, unknown>;
+  runnable?: boolean;
+}
+
+/** The server catalog as the canvas reads it. A row without `runnable: true` is not run. */
+function catalogFrom(rows: CanvasReportType[] | undefined): ReportType[] {
+  return (rows ?? []).map((r) => ({
+    typeId: r.typeId,
+    label: r.label,
+    family: r.family,
+    scopes: r.allowedScopes ?? [],
+    segments: r.allowedClientSegments ?? [],
+    t: (r.truthfulnessRules ?? {}) as ReportType['t'],
+    runnable: r.runnable === true,
+  }));
+}
 
 /* ── Segment labels ── */
 const SEG_LABEL: Record<string, string> = {
@@ -156,7 +161,7 @@ interface CanvasLeadProgram {
   label: string;
   indication: string | null;
   readiness: number | null;
-  confidence: number;
+  confidence: number | null;
   status: string;
   riskLevel: string;
   criticalBlockerCount: number;
@@ -170,7 +175,7 @@ interface CanvasPortfolioProgram {
   label: string;
   indication: string | null;
   readiness: number | null;
-  confidence: number;
+  confidence: number | null;
   status: string;
   riskLevel: string;
   criticalBlockerCount: number;
@@ -196,6 +201,13 @@ interface CanvasOverview {
   tier: string;
   segments: string[];
   leadProgram: CanvasLeadProgram | null;
+  /** The open program named by `?programId=`, and whether it leads (server
+   *  insights-canvas-routes.ts, CanvasOpenProgram). Null/absent: none named. */
+  openProgram?: { programId: string; state: 'lead' | 'unanchored' | 'not-in-portfolio' } | null;
+  /** The governed report catalog for the program in view (see catalogFrom). */
+  reportTypes?: CanvasReportType[];
+  /** The programs the canvas can be opened on, for the picker shown when none is open. */
+  programs?: Array<{ programId: string; code: string | null; label: string }>;
   portfolio: CanvasPortfolio;
 }
 
@@ -231,20 +243,6 @@ function leadToProgramCtx(lp: CanvasLeadProgram): ProgramCtx {
   };
 }
 
-/* ── Segment helpers ── */
-function roSegForApp(seg: string): string[] {
-  const map: Record<string, string[]> = {
-    biotech: ['biotech'], pharma: ['pharma'], medtech: ['device'], diagnostics: ['ivd', 'device'],
-    cro: ['cro'], academic: ['academic'], health: ['pharma', 'biotech', 'device'],
-  };
-  return map[seg] || ['pharma', 'biotech', 'device'];
-}
-
-function roFilterForSegment(types: ReportType[], seg: string): ReportType[] {
-  const want = roSegForApp(seg);
-  return types.filter(t => t.segments.length === 0 || t.segments.some(s => want.includes(s)));
-}
-
 /* ── Entitlement decision ── */
 function roDecide(typeId: string, family: string, tier: string): { entitled: boolean; feature: string; requiredTier: string } {
   const hay = (typeId + ' ' + (family || '')).toLowerCase();
@@ -256,11 +254,20 @@ function roDecide(typeId: string, family: string, tier: string): { entitled: boo
 }
 
 /* ── Presets per segment ── */
+/** A pack as the canvas offers it: the reports it holds and its description. */
 interface Preset {
   id: string;
   label: string;
   types: string[];
   why: string;
+}
+
+/** A pack as defined: what it is for, in words that name no report. */
+interface PresetDef {
+  id: string;
+  label: string;
+  types: string[];
+  purpose: string;
 }
 
 /* A preset describes what the PACK contains — never what the reader's filing is
@@ -269,35 +276,68 @@ interface Preset {
    whose own home surface correctly reported no programs at all. The live facts
    are stated separately by roSuggestForClient, from the readiness model; a
    static string is not entitled to claim any of them. Guarded by
-   Insights.presetCopy.test.ts. */
-const RO_PRESETS: Record<string, Preset[]> = {
+   insightsHonestCopy.test.ts.
+
+   A pack's description names only the reports it computes (follow-up decision
+   "Pack copy", docs/LAUNCH_DEFINITION_OF_DONE.md). The descriptions were
+   written for every member, and after packs kept only their runnable members
+   (aac603a1b) the pre-approval pack, holding the readiness digest alone, still
+   promised safety-signal alignment and audit assurance. So `purpose` names no
+   report, and roPresetsForSeg names the reports the pack holds, by their
+   catalog labels, after the runnable filter. Guarded by
+   insightsReportsRunWhatTheyName.test.tsx (1b). */
+const RO_PRESETS: Record<string, PresetDef[]> = {
   pharma: [
-    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], why: 'Pairs the readiness digest with safety-signal alignment and the audit assurance an action date calls for.' },
-    { id: 'globalfile', label: 'Global filing harmonization', types: ['ema.maa_readiness_assessment', 'china_nmpa.ctd_module_gap_analysis', 'provenance.evidence_trace_report'], why: 'Reuse the US dossier across EMA and NMPA — the gap analyses show what each region still needs.' },
+    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], purpose: 'For the run-up to an action date.' },
+    { id: 'globalfile', label: 'Global filing harmonization', types: ['ema.maa_readiness_assessment', 'china_nmpa.ctd_module_gap_analysis', 'provenance.evidence_trace_report'], purpose: 'For reusing the US dossier in other regions.' },
   ],
   biotech: [
-    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], why: 'Tracks readiness and closes the evidence and financial-disclosure gaps before filing.' },
-    { id: 'nonclin', label: 'Nonclinical & CMC readiness', types: ['nonclinical.study_send_register', 'compliance.audit_assurance_pack'], why: 'Confirm Module 4 / SEND datasets and the audit trail are submission-grade.' },
+    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], purpose: 'For closing gaps before a BLA is filed.' },
+    { id: 'nonclin', label: 'Nonclinical & CMC readiness', types: ['nonclinical.study_send_register', 'compliance.audit_assurance_pack'], purpose: 'For confirming Module 4 is submission-grade.' },
   ],
   medtech: [
-    { id: 'clearance', label: '510(k) clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'compliance.audit_assurance_pack'], why: 'The equivalence matrix carries your substantial-equivalence argument; the inspection and audit packs keep the QMS ready for review.' },
+    { id: 'clearance', label: '510(k) clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'compliance.audit_assurance_pack'], purpose: 'For keeping a 510(k) and the quality system ready for review.' },
   ],
   diagnostics: [
-    { id: 'ivdperf', label: 'IVD performance & clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'provenance.evidence_trace_report'], why: 'Performance claims traced to source, with the equivalence matrix and inspection readiness for the IVD 510(k).' },
+    { id: 'ivdperf', label: 'IVD performance & clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'provenance.evidence_trace_report'], purpose: 'For an IVD 510(k) and the claims it rests on.' },
   ],
   cro: [
-    { id: 'sponsor', label: 'Sponsor oversight pack', types: ['etmf.completeness_pack', 'inspection.readiness_pack'], why: 'Cross-sponsor eTMF completeness plus 483 / inspection readiness across the sites you run.' },
+    { id: 'sponsor', label: 'Sponsor oversight pack', types: ['etmf.completeness_pack', 'inspection.readiness_pack'], purpose: 'For oversight across the sponsors and sites you run.' },
   ],
   academic: [
-    { id: 'researchadmin', label: 'Research administration pack', types: ['research_admin.scorecard', 'irb.submission_register', 'iacuc.protocol_register', 'effort.certification_register'], why: 'The scorecard rolls up IRB, IACUC, effort and COI so nothing lapses across your studies.' },
+    { id: 'researchadmin', label: 'Research administration pack', types: ['research_admin.scorecard', 'irb.submission_register', 'iacuc.protocol_register', 'effort.certification_register'], purpose: 'For keeping approvals from lapsing across your studies.' },
   ],
   health: [
-    { id: 'oversight', label: 'Portfolio oversight pack', types: ['readiness.executive_digest', 'compliance.audit_assurance_pack', 'inspection.readiness_pack'], why: 'Readiness, audit assurance and inspection readiness across the programs you oversee.' },
+    { id: 'oversight', label: 'Portfolio oversight pack', types: ['readiness.executive_digest', 'compliance.audit_assurance_pack', 'inspection.readiness_pack'], purpose: 'For the programs you oversee.' },
   ],
 };
 
-function roPresetsForSeg(seg: string): Preset[] {
-  return RO_PRESETS[seg] || RO_PRESETS.pharma;
+/** "the A", "the A and the B", "the A, the B and the C". */
+function roNamedList(labels: string[]): string {
+  const named = labels.map((label) => `the ${label}`);
+  if (named.length < 2) return named.join('');
+  return `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
+}
+
+/** The standard packs for a segment, each holding only the reports this
+ *  program's catalog computes; a pack left with none is not offered. P-26
+ *  (2026-10-08): packs list only types an engine computes. The engine-less
+ *  ones are listed once, as not computed in this release (roNotComputed), not
+ *  as tiles inside packs. Each description is the pack's purpose and the
+ *  reports it holds, by their catalog labels, so it names no other. */
+function roPresetsForSeg(seg: string, types: ReportType[]): Preset[] {
+  const runs = new Map(types.filter((t) => t.runnable).map((t) => [t.typeId, t.label] as const));
+  return (RO_PRESETS[seg] || RO_PRESETS.pharma)
+    .map(({ purpose, ...p }) => {
+      const held = p.types.filter((id) => runs.has(id));
+      return { ...p, types: held, why: `${purpose} It holds ${roNamedList(held.map((id) => runs.get(id) ?? id))}.` };
+    })
+    .filter((p) => p.types.length > 0);
+}
+
+/** The program's catalog types no engine computes, by label, each once. */
+function roNotComputed(types: ReportType[]): string[] {
+  return [...new Set(types.filter((t) => !t.runnable).map((t) => t.label))];
 }
 
 /* ── Guardrail ──
@@ -307,19 +347,42 @@ function roPresetsForSeg(seg: string): Preset[] {
    file — and "narrates and explains" describes a language model doing work that
    a `switch` is doing. The half that was true, and the half that matters, is
    that no metric on this surface originates here. */
-const RO_GUARDRAIL = 'This pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.';
+const RO_GUARDRAIL = 'Find a report matches your words to a governed report type and runs it; it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.';
 
-/* ── Resolve type from free text ── */
-function roResolveType(utterance: string, seg: string): ReportType | null {
+/* ── Resolve type from free text ──
+   Whole words, not substrings, and none of the words every request carries.
+   "Show me the controlled documents overdue for periodic review" ran the
+   Controlled Substances Inventory & DEA Ledger: the token "controlled" was a
+   substring of its type id, and nothing else in the request scored (QA
+   2026-10-08, j8). Controlled documents are QMS records, reported on Audit &
+   compliance reports (RO_QMS_INTENT, below), and a word shared with a type's
+   name is evidence only when it is the same word. */
+const RO_STOP_WORDS = new Set([
+  'the', 'and', 'for', 'show', 'report', 'reports', 'run', 'generate', 'create', 'build', 'produce', 'make',
+  'what', 'which', 'can', 'you', 'all', 'our', 'give', 'get', 'with', 'from', 'this', 'that', 'please',
+  'pack', 'view', 'about', 'into', 'over', 'list', 'need', 'want', 'how', 'are', 'its', 'program', 'programs',
+  // Kinds of document many report names share: on their own they name no report.
+  // "Show the 510(k) equivalence matrix" matched the Cross-Region Submission
+  // Comparison Matrix on "matrix" alone (2026-10-08 after-check).
+  'matrix', 'register', 'assessment', 'analysis', 'brief', 'readiness',
+]);
+function roWords(text: string): string[] {
+  return text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !RO_STOP_WORDS.has(w));
+}
+
+/** A request about QMS records: controlled documents, SOPs, periodic review, change control, CAPA, training. */
+const RO_QMS_INTENT = /\b(controlled[\s-]+documents?|sops?|standard operating procedures?|periodic reviews?|qms|quality management|document control|change control|change requests?|capas?|training records?|read[\s-]+and[\s-]+understood)\b/;
+
+/** The catalog type a request names, runnable or not; null when none does. */
+function roResolveType(utterance: string, types: ReportType[]): ReportType | null {
   const text = (utterance || '').toLowerCase();
-  const tokens = text.split(/[^a-z0-9]+/).filter(t => t.length > 2);
-  const cands = roFilterForSegment(RO_TYPES, seg);
+  const words = new Set(roWords(text));
   let best: ReportType | null = null;
   let bestScore = 0;
-  cands.forEach(t => {
-    const hay = (t.typeId + ' ' + t.label + ' ' + t.family + ' ' + ((RO_FAMILY[t.family] || {}).label || '')).toLowerCase();
+  types.forEach(t => {
+    const hay = new Set(roWords(`${t.typeId} ${t.label} ${t.family} ${(RO_FAMILY[t.family] || {}).label || ''}`));
     let s = 0;
-    tokens.forEach(tok => { if (hay.includes(tok)) s++; });
+    words.forEach(w => { if (hay.has(w)) s++; });
     if (/510|equivalence|predicate/.test(text) && t.typeId.includes('510k')) s += 3;
     if (/readiness|ready|digest|executive/.test(text) && t.typeId === 'readiness.executive_digest') s += 3;
     if (/etmf|tmf|trial master/.test(text) && t.typeId === 'etmf.completeness_pack') s += 3;
@@ -328,7 +391,8 @@ function roResolveType(utterance: string, seg: string): ReportType | null {
     if (/maa|europe|ema/.test(text) && t.typeId === 'ema.maa_readiness_assessment') s += 2;
     if (/inspection|483/.test(text) && t.typeId === 'inspection.readiness_pack') s += 2;
     if (/safety|psur|rmp|signal/.test(text) && t.typeId === 'ema.rmp_psur_signal_alignment') s += 2;
-    if (s > bestScore) { bestScore = s; best = t; }
+    // A tie goes to the type that runs: a request is answered with a report when one fits as well.
+    if (s > bestScore || (s === bestScore && s > 0 && t.runnable && best && !best.runnable)) { bestScore = s; best = t; }
   });
   return bestScore > 0 ? best : null;
 }
@@ -381,20 +445,26 @@ function roPortfolioFrom(programs: CanvasPortfolioProgram[]): PortfolioRow[] {
    tell it apart from one that did. The live facts are still stated, and the
    preset is now offered as what it is: the standard starting pack for the
    segment. */
-function roSuggestForClient(p: ProgramCtx, seg: string) {
-  const preset = roPresetsForSeg(seg)[0];
+function roSuggestForClient(p: ProgramCtx, seg: string, types: ReportType[]) {
+  const preset: Preset | null = roPresetsForSeg(seg, types)[0] ?? null;
   const rBit = p.readiness == null
     ? (p.filing ? `${p.code} is in ${p.filing} preparation` : `${p.code}'s submission readiness is not yet computed`)
     : `${p.code} is ${p.readiness}% ready`;
   const pduBit = p.pdufa ? ` with a target action date of ${p.pdufa}` : '';
+  /* The third prompt was "Run the audit assurance pack" or "Show the 510(k)
+     equivalence matrix", chosen by the shell's segment preference: the 510(k)
+     prompt was offered to a biologic program, and neither report has an engine
+     (QA 2026-10-08, j8). The prompts now name only what runs here. */
   return {
     headline: 'Build any governed report or dashboard — describe what you need.',
-    body: `${rBit}${pduBit}. The ${preset.label} is the standard starting pack for ${SEG_LABEL[seg] || seg} — it is not picked from the readiness figure above.`,
+    body: preset
+      ? `${rBit}${pduBit}. The ${preset.label} is the standard starting pack for ${SEG_LABEL[seg] || seg} — it is not picked from the readiness figure above.`
+      : `${rBit}${pduBit}.`,
     preset,
     prompts: [
-      `Build the ${preset.label}`,
-      p.readiness != null ? `How ready is ${p.code} to file?` : `What reports can you run for ${p.code}?`,
-      seg === 'pharma' || seg === 'biotech' ? 'Run the audit assurance pack' : 'Show the 510(k) equivalence matrix',
+      ...(preset ? [`Build the ${preset.label}`] : []),
+      p.readiness != null ? `How ready is ${p.code} to file?` : `Generate the Executive Readiness Digest for ${p.code}`,
+      `What reports can you run for ${p.code}?`,
       'Compare readiness across all my programs',
     ],
   };
@@ -431,8 +501,12 @@ interface ROSection {
 interface RenderedReport {
   reportTypeId: string;
   reportTypeLabel: string;
+  /** The report family, from the catalog type the run was made from. */
+  family?: string;
   scopeType: string;
   scopeId: string;
+  /** What the report is about, by name (the server's stored scope label, else the program's name). */
+  scopeLabel?: string;
   generatedAt: string;
   status: string;
   truthfulness: { allowedStatus: string; downgradedFrom: string; reasons: string[] };
@@ -441,24 +515,27 @@ interface RenderedReport {
 
 
 /* ── Intent router ── */
-interface ThreadMsg {
-  role: 'user' | 'ana';
+/* What "Find a report" shows for the last search: one result, replaced by the
+   next. It was a thread of `{ role: 'user' | 'ana' }` messages drawn as chat
+   bubbles beside AnA's mark (FILING_SPINE F6). */
+interface FoundResult {
   text: string;
   chips?: [string, string][];
   locked?: { feature: string; requiredTier: string; typeLabel: string };
-  question?: boolean;
-  tool?: string;
+  /** A destination the result sends the person to (a surface id and its button label). */
+  nav?: { surface: string; label: string };
 }
 
-interface AnaReply {
+interface RouteReply {
   tool: string;
   text: string;
   chips?: [string, string][];
   locked?: { feature: string; requiredTier: string; typeLabel: string };
   question?: boolean;
+  nav?: { surface: string; label: string };
   report: RenderedReport | null;
   dashboard: DashboardData | null;
-  /* When set, send() generates this report from the REAL governed backend
+  /* When set, findReport() generates this report from the REAL governed backend
      (POST /api/report-os/runs → GET /runs/:id/rendered) instead of the caller
      embedding a client-built report. `report` above stays null in that case. */
   reportType?: ReportType | null;
@@ -489,13 +566,13 @@ interface DashboardData {
  * "I will not show an estimated result" credited a judgement to AnA that a
  * `switch` had made. The routing is unchanged; the first person is gone.
  */
-function roRouteReply(utterance: string, seg: string, tier: string, ctx: { program: ProgramCtx; portfolio: CanvasPortfolio; report?: RenderedReport | null }): AnaReply {
+function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCtx; portfolio: CanvasPortfolio; types: ReportType[]; report?: RenderedReport | null }): RouteReply {
   const c = ctx;
   const route = roRouteIntent(utterance);
   const name = route.matched ? route.name! : (route.candidates && route.candidates[0]) || 'generate_report';
   const p = ctx.program;
   function cap(s: string) { return (RO_TIERS.find(t => t.id === s) || { label: s }).label; }
-  const lockMsg = (feature: string, typeLabel: string): AnaReply => ({ tool: name, text: `"${typeLabel}" needs the ${cap(RO_FEATURE_TIER[feature])} plan — it is a ${RO_FEATURE_LABEL[feature]} capability. No estimated result is shown on a plan that has not unlocked the governed model. What it includes, and how to unlock it:`, locked: { feature, requiredTier: RO_FEATURE_TIER[feature], typeLabel }, report: null, dashboard: null });
+  const lockMsg = (feature: string, typeLabel: string): RouteReply => ({ tool: name, text: `"${typeLabel}" needs the ${cap(RO_FEATURE_TIER[feature])} plan — it is a ${RO_FEATURE_LABEL[feature]} capability. No estimated result is shown on a plan that has not unlocked the governed model. What it includes, and how to unlock it:`, locked: { feature, requiredTier: RO_FEATURE_TIER[feature], typeLabel }, report: null, dashboard: null });
   const entitledFor = (t: ReportType) => roDecide(t.typeId, t.family, tier);
 
   if (name === 'portfolio_readiness') {
@@ -537,10 +614,36 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
       dashboard: null,
     };
   }
-  const resolved = roResolveType(utterance, seg);
+  /* QMS records are not a report type on this canvas: controlled documents,
+     their periodic review, change control and training are reported, sealed,
+     on Audit & compliance reports (Controlled document register). The request
+     is sent there, and nothing is run here (QA 2026-10-08, j8). */
+  if (RO_QMS_INTENT.test(utterance.toLowerCase())) {
+    return {
+      tool: 'route_qms',
+      text: 'Controlled documents, their periodic review, change control and training are reported on Audit & compliance reports, in the Controlled document register. No report is run here for this request.',
+      nav: { surface: 'compliance-reports', label: 'Open Audit & compliance reports' },
+      report: null,
+      dashboard: null,
+    };
+  }
+  const resolved = roResolveType(utterance, ctx.types);
   if (name === 'list_report_types' || !resolved) {
-    const cands = roFilterForSegment(RO_TYPES, seg).slice(0, 6);
+    const cands = ctx.types.filter((t) => t.runnable).slice(0, 6);
+    if (cands.length === 0) return { tool: 'list_report_types', text: `No governed report this release computes applies to ${p.code}. Nothing is run in its place.`, report: null, dashboard: null };
     return { tool: 'list_report_types', question: true, text: `For ${p.code}${p.filing ? ` (${p.filing})` : ''}, any of these can be run — or describe what you need in your own words and it is matched to the closest governed report type.`, chips: cands.map(t => [t.label, `Generate the ${t.label} for ${p.code}`]), report: null, dashboard: null };
+  }
+  /* A type no engine computes is said to be one, and not run: it came back as
+     the readiness digest under its own title (QA 2026-10-08, j8). */
+  if (!resolved.runnable) {
+    const alt = ctx.types.filter((t) => t.runnable).slice(0, 4);
+    return {
+      tool: 'generate_report',
+      text: `No engine computes the ${resolved.label} in this release, so it is not run, and no other report is shown under its name.${alt.length ? ` These run for ${p.code}:` : ''}`,
+      chips: alt.map(t => [t.label, `Generate the ${t.label} for ${p.code}`]),
+      report: null,
+      dashboard: null,
+    };
   }
   const dec = entitledFor(resolved);
   if (!dec.entitled) return lockMsg(dec.feature, resolved.label);
@@ -711,6 +814,11 @@ function ROBlock({ block }: { block: ROBlockData }) {
    it to final", which is the `truthfulness.reasons` list rendered by the
    `.ro-truth` band a few lines below, straight from the server's gate. Nothing
    was lost by removing it; something would have been invented by keeping it. */
+/** The family a report is filed under, and what it is about by name — never a row id. */
+function reportHeading(report: RenderedReport): { fam: { label?: string; region?: string }; scope: string } {
+  return { fam: RO_FAMILY[report.family ?? ''] || {}, scope: report.scopeLabel ?? 'This program' };
+}
+
 function ROReport({ report, onExport, onFinalize, seal, compact }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
@@ -720,7 +828,7 @@ function ROReport({ report, onExport, onFinalize, seal, compact }: {
   compact?: boolean;
 }) {
   if (!report) return null;
-  const fam = RO_FAMILY[(RO_TYPES.find(t => t.typeId === report.reportTypeId) || { family: '' }).family] || {};
+  const { fam, scope } = reportHeading(report);
   const stTone = report.status === 'final' ? 'ok' : report.status === 'partial' ? 'warn' : 'idle';
   const sections = compact ? report.sections.slice(0, 2) : report.sections;
   return (
@@ -729,7 +837,8 @@ function ROReport({ report, onExport, onFinalize, seal, compact }: {
         <div className="ro-rep-eyebrow">{fam.label || 'Governed report'}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
         <h2 className="ro-rep-title">{report.reportTypeLabel || report.reportTypeId}</h2>
         <div className="ro-rep-meta">
-          <span>{report.scopeType} — {report.scopeId}</span>
+          {/* The scope by name: "project — 1" named a database row (QA 2026-10-08, j8). */}
+          <span data-testid="ro-scope">{scope}</span>
           <span className={'ro-status st-' + stTone}>{report.status}</span>
           <span className="ro-gen">generated {new Date(report.generatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
         </div>
@@ -751,7 +860,7 @@ function ROReport({ report, onExport, onFinalize, seal, compact }: {
 /* ── RODashboard ── */
 /* `onAsk` is gone from here too — it was declared, threaded down from the
    canvas and never called once in the whole component. */
-function RODashboard({ dashboard, tier, onRun, canRun, scope }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void; canRun: boolean; scope: string }) {
+function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void; canRun: boolean; scope: string; catalog: ReportType[] }) {
   if (!dashboard) return null;
 
   if (dashboard.kind === 'portfolio') {
@@ -809,7 +918,11 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope }: { dashboard: Das
   }
 
   /* preset pack -- grid of governed report cards */
-  const types = (dashboard.types || []).map(id => RO_TYPES.find(t => t.typeId === id)).filter(Boolean) as ReportType[];
+  // A pack's types that apply to this program (the catalog is the program's)
+  // and that an engine computes (P-26): an engine-less type is listed once on
+  // the canvas, never as a tile inside a pack.
+  const types = ((dashboard.types || []).map(id => catalog.find(t => t.typeId === id)).filter(Boolean) as ReportType[])
+    .filter(t => t.runnable);
   return (
     <div className="ro-dash">
       {/* "AnA-curated" claimed a curator. The pack is RO_PRESETS[segment], a
@@ -900,13 +1013,17 @@ function runRefusalNote(label: string, status: unknown, payload: unknown): strin
 }
 
 /** POST /api/report-os/runs: the new run's id, or the sentence to show. */
-async function requestRun(type: ReportType, program: ProgramCtx): Promise<{ runId: number } | { note: string }> {
+/* With a program open, the run names THAT program (its regulatory_programs
+   UUID) and the server resolves its project record with the same strict anchor
+   resolver the overview used; the client carries no project id for it (QA
+   2026-10-08, j8: every report ran over project 1). */
+async function requestRun(type: ReportType, program: ProgramCtx, programId: string | null): Promise<{ runId: number } | { note: string }> {
   let res: Response;
   try {
     res = await apiRequest('POST', '/api/report-os/runs', {
       organizationId: Number(getOrgId()) || 0,
       scopeType: program.scope,
-      scopeId: program.scopeId,
+      ...(programId ? { programId } : { scopeId: program.scopeId }),
       reportTypeId: type.typeId,
     });
   } catch (e) {
@@ -932,8 +1049,10 @@ async function fetchRenderedRun(runId: number, type: ReportType, program: Progra
     return {
       reportTypeId: rendered.reportTypeId ?? type.typeId,
       reportTypeLabel: type.label,
+      family: type.family,
       scopeType: rendered.scopeType ?? program.scope,
       scopeId: rendered.scopeId ?? program.scopeId,
+      scopeLabel: typeof rendered.scopeLabel === 'string' && rendered.scopeLabel ? rendered.scopeLabel : program.label,
       generatedAt: rendered.generatedAt ?? new Date().toISOString(),
       status,
       truthfulness: (rendered.truthfulness && Array.isArray(rendered.truthfulness.reasons))
@@ -1079,8 +1198,12 @@ function ROReportActions({ report, onExport, onFinalize }: {
   );
 }
 
+/** A report segment (the program's recorded product type, server segment.ts) → the pack set. */
+const RO_PRESET_SEGMENT: Record<string, string> = {
+  pharma: 'pharma', biotech: 'biotech', device: 'medtech', ivd: 'diagnostics', cro: 'cro',
+};
+
 export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
-  const seg = segment || 'pharma';
 
   // Live canvas bootstrap — the org's REAL subscription tier, flagship program
   // readiness (computeInitialRun) and portfolio rollup (server
@@ -1089,10 +1212,24 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   // honest empty (no flagship program yet) → honest error.
   // Each retry is a new read (reporting review 2026-10-01, DESIGN-3).
   const [overviewAttempt, setOverviewAttempt] = useState(0);
-  const overview = useLiveData<CanvasOverview>('/api/insights-canvas/overview', ['/api/insights-canvas/overview', overviewAttempt]);
+  /* The program the shell has open leads the canvas (QA 2026-10-08, j1: with
+     HLV-333 open it spoke about the flagship, C2C-001). Named by its UUID; the
+     server resolves the anchored project the readiness runs are keyed on. */
+  const openProgramId = shellProgramId(useShellProject());
+  const overviewUrl =
+    '/api/insights-canvas/overview' + (openProgramId ? `?programId=${encodeURIComponent(openProgramId)}` : '');
+  const overview = useLiveData<CanvasOverview>(overviewUrl, [overviewUrl, overviewAttempt]);
   const data = overview.data;
   const program = data?.leadProgram ? leadToProgramCtx(data.leadProgram) : null;
-  const suggest = program ? roSuggestForClient(program, seg) : null;
+  /* The catalog and the packs follow the program's recorded product type (the
+     overview's `segments`), not the shell's segment preference, which offered a
+     device pack and a 510(k) prompt to a biologic program (QA 2026-10-08, j8). */
+  const catalog = catalogFrom(data?.reportTypes);
+  const programSegments = data?.segments ?? [];
+  const seg = (programSegments.length === 1 ? RO_PRESET_SEGMENT[programSegments[0]] : undefined) ?? (segment || 'pharma');
+  // A run names the open program when it is the one leading the canvas.
+  const runProgramId = data?.openProgram?.state === 'lead' ? data.openProgram.programId : null;
+  const suggest = program ? roSuggestForClient(program, seg, catalog) : null;
 
   // Real subscription tier comes from the overview; `tierOverride` is the local
   // "preview on another plan" control (canonical entitlement UX), not persisted.
@@ -1100,8 +1237,18 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const realTier = data?.tier ?? 'standard';
   const tier = tierOverride ?? realTier;
   const previewing = tierOverride != null && tierOverride !== realTier;
-  const [thread, setThread] = useState<ThreadMsg[]>([]);
-  const [draft, setDraft] = useState('');
+  /* "Find a report": the words in the field stay there after a search, as in
+     any search; the result is the router's answer to the last one. */
+  const [query, setQuery] = useState('');
+  const [found, setFoundState] = useState<FoundResult | null>(null);
+  /* Which result is on screen. A run states its outcome in the result only if
+     no later search, preset or tile has replaced the result meanwhile. */
+  const foundSeq = useRef(0);
+  const setFound = (next: FoundResult | null) => { foundSeq.current += 1; setFoundState(next); };
+  /* Why the last run produced no report (a refusal, a missing role, a failed
+     read), stated where the result is, never as an empty canvas. */
+  const [runNote, setRunNote] = useState<string | null>(null);
+  const fieldId = React.useId();
   const [report, setReport] = useState<RenderedReport | null>(null);
   // The governed run id behind the displayed report (report-os run), or null for
   // a re-shown report with no run. Drives the real finalize/seal on export.
@@ -1121,8 +1268,9 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setThread([]); setReport(null); setReportRunId(null); setSeal(null); setDashboard(null); }, [seg]);
-  useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [thread, busy]);
+  useEffect(() => { setFound(null); setRunNote(null); setReport(null); setReportRunId(null); setSeal(null); setDashboard(null); }, [seg]);
+  /* The result sits just above the field; keep it in view as it changes. */
+  useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [found, runNote, busy]);
 
   const pushCanvasTop = () => { const el = canvasRef.current; if (el) el.scrollTop = 0; };
 
@@ -1134,7 +1282,14 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      is fabricated, and an unentitled/unknown type is stated, never estimated. */
   const runReport = async (type: ReportType): Promise<void> => {
     if (!program) return;
-    const say = (text: string) => setThread(t => [...t, { role: 'ana', text, tool: 'generate_report' }]);
+    /* The result said "Running the …" when the run began. Once the run ends it
+       says what happened, so it never reports as current a run that finished or
+       never started. A run that produced no report drops the result's sentence
+       and the alert says why: one statement, not "Running" beside "wasn't run". */
+    const mine = foundSeq.current;
+    const settle = (next: FoundResult | null) => { if (foundSeq.current === mine) setFound(next); };
+    const say = (text: string) => { settle(null); setRunNote(text); };
+    setRunNote(null);
     if (!canWrite) {
       say(`"${type.label}" wasn't run. Running a report creates a governed record, which needs an editor role in this organization.`);
       return;
@@ -1142,29 +1297,32 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     setBusy(true);
     setDashboard(null);
     try {
-      const started = await requestRun(type, program);
+      const started = await requestRun(type, program, runProgramId);
       if ('note' in started) { say(started.note); return; }
       const adopted = await fetchRenderedRun(started.runId, type, program);
       if (!adopted) { say("The run completed but its rendered document didn't come back — reload and retry."); return; }
       setReport(adopted);
       setReportRunId(started.runId);
       setSeal(null);
+      settle({ text: `The ${type.label} for ${program.code} ran against the governed record and is shown in the report canvas. Every value is computed from the governed record; none is originated here.` });
       pushCanvasTop();
     } finally {
       setBusy(false);
     }
   };
 
-  const send = async (raw?: string) => {
-    const text = (raw == null ? draft : raw).trim();
+  /* A suggestion (an opener prompt, a result's choice) fills the field with the
+     words it searches for, so the field always shows what the result answers. */
+  const findReport = async (raw?: string) => {
+    const text = (raw == null ? query : raw).trim();
     if (!text || busy || !program || !data) return;
-    setThread(t => [...t, { role: 'user', text }]);
-    setDraft('');
+    if (raw != null) setQuery(raw);
+    setRunNote(null);
     // roRouteReply resolves intent, chips and the entitlement lock — all
     // deterministic. When it resolves a report type, generation goes to the REAL
     // backend via runReport, not to a client-built preview.
-    const reply = roRouteReply(text, seg, tier, { program, portfolio: data.portfolio, report });
-    setThread(t => [...t, { role: 'ana', text: reply.text, chips: reply.chips, locked: reply.locked, question: reply.question, tool: reply.tool }]);
+    const reply = roRouteReply(text, tier, { program, portfolio: data.portfolio, types: catalog, report });
+    setFound({ text: reply.text, chips: reply.chips, locked: reply.locked, nav: reply.nav });
     if (reply.reportType) {
       await runReport(reply.reportType);
     } else if (reply.report) {
@@ -1180,16 +1338,17 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      server bulk-run endpoint exists). Each tile runs its real report on click. */
   const buildPreset = (preset: Preset) => {
     if (!preset) return;
-    setThread(t => [...t, { role: 'user', text: `Build the ${preset.label}` }, { role: 'ana', text: `Building the ${preset.label}. ${preset.why} Each tile runs a governed report against the live record — pick any one to run it. Anything the plan has not unlocked shows as locked, never as an estimate.`, tool: 'preset' }]);
+    setRunNote(null);
+    setFound({ text: `${preset.label}: ${preset.why} Each tile runs a governed report against the live record; pick one to run it. Anything the plan has not unlocked shows as locked, never as an estimate.` });
     setDashboard({ kind: 'pack', label: preset.label, why: preset.why, types: preset.types });
     setReport(null);
     setReportRunId(null);
     pushCanvasTop();
   };
 
-  /* Run a report from a pack tile (announces it in the thread, then generates). */
+  /* Run a report from a pack tile (states it as the result, then generates). */
   const runFromTile = (type: ReportType) => {
-    setThread(th => [...th, { role: 'user', text: `Run the ${type.label}` }, { role: 'ana', text: `Running the ${type.label} for ${program?.code ?? 'this program'} against the governed record.`, tool: 'generate_report' }]);
+    setFound({ text: `Running the ${type.label} for ${program?.code ?? 'this program'} against the governed record.` });
     void runReport(type);
   };
 
@@ -1241,6 +1400,62 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
       </div>
     );
   }
+  /* The open program could not lead: say so FOR that program. Falling through
+     to the organisation's flagship is the defect this replaces. */
+  const openState = data?.openProgram?.state;
+  if (data && !program && (openState === 'unanchored' || openState === 'not-in-portfolio')) {
+    const name = shellProgramName() ?? 'This program';
+    return (
+      <div className="rc">
+        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+          <EmptyState
+            icon={I.barChart || I.fileText}
+            title={`${name} has no readiness or reports here yet`}
+            hint={
+              openState === 'unanchored'
+                ? "Readiness and governed reports are computed over a program's project record, and this program has none. Nothing from another program is shown in its place."
+                : "This program's project record is not among the programs whose readiness is computed for your organization (it may be archived or part of another program). Nothing from another program is shown in its place."
+            }
+            action={{ label: 'Audit & compliance reports', onAct: () => onNav && onNav('compliance-reports') }}
+          />
+        </div>
+      </div>
+    );
+  }
+  /* No program open: ask which, from the organisation's programs. The flagship
+     stood in here, and with no readiness computed anywhere it was the lowest
+     project id — every report and digest ran over project 1, a program nobody
+     had chosen (QA 2026-10-08, j8). Choosing opens the program across the app,
+     through the shell's one program channel, and the canvas then leads with it. */
+  const choices = data?.programs ?? [];
+  if (data && !program && !data.openProgram && choices.length > 0) {
+    return (
+      <div className="rc">
+        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+          <div className="rc-empty" data-testid="rc-program-picker">
+            <h2 className="rc-empty-h">Which program is the report for?</h2>
+            <p className="rc-empty-s">Governed reports and the readiness digest run over one program. Choose it here; it opens across the app, as it does from Projects.</p>
+            <div className="rc-empty-presets" role="group" aria-label="Programs">
+              {choices.map((pr) => (
+                <button
+                  key={pr.programId}
+                  type="button"
+                  className="rc-empty-preset"
+                  onClick={() => publishShellProject({ id: pr.programId, title: pr.label, ...(pr.code ? { code: pr.code } : {}) })}
+                >
+                  <div className="rc-ep-h">{pr.code ?? pr.label}</div>
+                  {pr.code ? <div className="rc-ep-s">{pr.label}</div> : null}
+                </button>
+              ))}
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <button type="button" className="btn ghost" onClick={() => onNav && onNav('compliance-reports')}>Audit & compliance reports</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!program || !data || !suggest) {
     return (
       <div className="rc">
@@ -1248,7 +1463,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
           <EmptyState
             icon={I.barChart || I.fileText}
             title="No program readiness yet"
-            hint="Once a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, computed from the governed record. Nothing is estimated."
+            hint="Once a program with a governed readiness run exists in your organization, the reporting canvas opens here — the program's readiness, the portfolio rollup, and every governed report, computed from the governed record. Nothing is estimated."
             /* Audit and compliance reports read the organisation's own records,
                not a program, so they stay reachable before any program exists. */
             action={{ label: 'Audit & compliance reports', onAct: () => onNav && onNav('compliance-reports') }}
@@ -1275,10 +1490,18 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
            The `rc-ana*` class names stay: they are internal selectors carried by
            insights-v2.css, renaming them would be churn across a stylesheet for
            no user-visible gain, and the cross-shell CSS collision guard counts
-           them. -- */}
+           them.
+
+           It also kept the SHAPE of a conversation: the person's words echoed
+           in a bubble, the answer in a bubble beside AnA's mark (the blue
+           asterisk), three dots while it "typed". There is one AnA, and she is
+           the conversation; a bubble beside her mark credits her with what a
+           router chose. So the pane is now what it is (FILING_SPINE F6): a
+           field labelled "Find a report", a Find button, and one result that
+           the next search replaces. `roRouteReply` is still its router. -- */}
       <div className="rc-ana">
         <div className="rc-ana-head">
-          <div className="rc-ana-id"><span className="rc-ana-mark">*</span><div><div className="nm">Report builder</div><div className="sub">{[p.code, p.filing, SEG_LABEL[seg] || seg].filter(Boolean).join(' — ')}</div></div></div>
+          <div className="rc-ana-id"><div><div className="nm">Report builder</div><div className="sub">{[p.code, p.filing, SEG_LABEL[seg] || seg].filter(Boolean).join(' — ')}</div></div></div>
           {/* The organisation-wide audit and compliance reports live on their own
               surface; this is the quiet way there from the program canvas. */}
           <button type="button" className="pj-card-h-go" onClick={() => onNav && onNav('compliance-reports')}>Audit & compliance reports</button>
@@ -1293,44 +1516,50 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
           {/* Opener. The program facts below are live; the preset is a static
               per-segment default, and says so. */}
           <div className="rc-opener">
-            <div className="rc-op-head"><span className="rc-ana-mark sm">*</span><span>Where to start</span></div>
+            <div className="ro-rep-eyebrow">Where to start</div>
             <div className="rc-op-headline">{suggest.headline}</div>
             <div className="rc-op-body">{suggest.body}</div>
-            <button className="rc-preset-btn" onClick={() => buildPreset(suggest.preset)}>{I.sparkles} Build the {suggest.preset.label} {I.right}</button>
-            <div className="rc-op-why">{suggest.preset.why}</div>
+            {suggest.preset && (
+              <>
+                <button className="rc-preset-btn" onClick={() => suggest.preset && buildPreset(suggest.preset)}>{I.barChart} Build the {suggest.preset.label} {I.right}</button>
+                <div className="rc-op-why">{suggest.preset.why}</div>
+              </>
+            )}
             <div className="rc-chips">
-              {suggest.prompts.map((q, i) => (<button key={i} className="rc-chip" onClick={() => send(q)}>{q}</button>))}
+              {suggest.prompts.map((q, i) => (<button key={i} className="rc-chip" onClick={() => findReport(q)}>{q}</button>))}
             </div>
           </div>
 
-          {/* Conversation thread */}
-          {thread.map((m, i) => m.role === 'user'
-            ? <div key={i} className="rc-msg rc-user"><div className="rc-bub">{m.text}</div></div>
-            : <div key={i} className="rc-msg rc-ana-msg">
-              <span className="rc-ana-mark sm">*</span>
-              <div className="rc-ana-body">
-                <div className="rc-bub rc-ana-bub">{m.text}</div>
-                {m.locked && (
-                  <div className="rc-lock">
-                    <div className="rc-lock-h">{I.lock} {(RO_TIERS.find(t => t.id === m.locked!.requiredTier) || { label: '' }).label} plan unlocks {m.locked.typeLabel}</div>
-                    <div className="rc-lock-s">{RO_FEATURE_LABEL[m.locked.feature]} is a paid capability. No estimated result is shown on a plan that has not unlocked the governed model.</div>
-                    <div className="rc-lock-acts">
-                      <button className="rc-lock-up" onClick={() => onNav && onNav('licensing')}>See plans {I.right}</button>
-                      <button className="rc-chip" onClick={() => setTierOverride(m.locked!.requiredTier)}>Preview on {(RO_TIERS.find(t => t.id === m.locked!.requiredTier) || { label: '' }).label}</button>
-                    </div>
-                  </div>
-                )}
-                {m.chips && m.chips.length ? <div className="rc-chips">{m.chips.map((c, ci) => (<button key={ci} className="rc-chip" onClick={() => send(c[1])}>{c[0]}</button>))}</div> : null}
+          {/* The result of the last search: the router's words, the choices it
+              offers and the plan lock, in one section the next search replaces.
+              Not a thread: the searched words stay in the field below. The
+              section and its live region stay mounted, empty until the first
+              search, so the first result is announced too (a live region
+              inserted already holding its text is often not read). It is named
+              "Result", a region, only while it holds one. */}
+          <section aria-label={found ? 'Result' : undefined} data-testid="rc-find-result" data-empty={found ? undefined : 'true'}>
+            {found && <div className="ro-rep-eyebrow">Result</div>}
+            <p className="rc-op-body" role="status" style={found ? undefined : { margin: 0 }}>{found?.text ?? ''}</p>
+            {found?.locked && (
+              <div className="rc-lock">
+                <div className="rc-lock-h">{I.lock} {tierLabel(found.locked.requiredTier)} plan unlocks {found.locked.typeLabel}</div>
+                <div className="rc-lock-s">{RO_FEATURE_LABEL[found.locked.feature]} is a paid capability. No estimated result is shown on a plan that has not unlocked the governed model.</div>
+                <div className="rc-lock-acts">
+                  <button className="rc-lock-up" onClick={() => onNav && onNav('licensing')}>See plans {I.right}</button>
+                  <button className="rc-chip" onClick={() => setTierOverride(found.locked!.requiredTier)}>Preview on {tierLabel(found.locked.requiredTier)}</button>
+                </div>
               </div>
-            </div>
-          )}
-          {/* Three empty coloured dots and nothing else — the whole report is
-              being composed and a screen reader was told nothing at all. The
-              dots are decoration; the sentence beside them is the status. */}
-          {busy && <div className="rc-msg rc-ana-msg" role="status"><span className="rc-ana-mark sm" aria-hidden="true">*</span><div className="rc-ana-body"><div className="rc-typing" aria-hidden="true"><span /><span /><span /></div><span className="sr-only">Preparing your report…</span></div></div>}
+            )}
+            {found?.chips && found.chips.length ? <div className="rc-chips">{found.chips.map((c, ci) => (<button key={ci} className="rc-chip" onClick={() => findReport(c[1])}>{c[0]}</button>))}</div> : null}
+            {found?.nav ? <div className="rc-chips"><button type="button" className="rc-chip" onClick={() => { if (found.nav && onNav) onNav(found.nav.surface); }}>{found.nav.label}</button></div> : null}
+          </section>
+          {/* A run in flight is a sentence in a status region. It was three
+              pulsing dots beside AnA's mark, which is how a chat says "typing". */}
+          {busy && <div className="ro-dash-note" role="status">{I.clock} Running the report…</div>}
+          {runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}
         </div>
 
-        {/* Composer + tier */}
+        {/* Find a report, and the plan it is read against */}
         <div className="rc-composer">
           <div className="rc-tier" role="group" aria-label="Subscription tier">
             <span className="rc-tier-lbl">Plan</span>
@@ -1344,11 +1573,14 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
               <button type="button" className="rc-chip" onClick={() => setTierOverride(null)}>Back to {tierLabel(realTier)}</button>
             </div>
           )}
+          <label className="gov-label" htmlFor={fieldId} style={{ display: 'block', marginBottom: 5 }}>Find a report</label>
           <div className="rc-input">
-            <textarea rows={1} aria-label="Describe the report or dashboard you need" value={draft} placeholder={`Describe the report or dashboard you need for ${p.code}...`}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
-            <button className="rc-send" disabled={!draft.trim() || busy} onClick={() => send()} aria-label="Send">{I.arrowUp || I.right}</button>
+            {/* One line: Enter finds, as the button does. The words stay after a
+                search, so the field always says what the result answers. */}
+            <textarea id={fieldId} rows={1} value={query} placeholder={`A report type, market or question for ${p.code}`}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void findReport(); } }} />
+            <button type="button" className="btn primary" disabled={!query.trim() || busy} onClick={() => void findReport()}>Find</button>
           </div>
           <div className="rc-guardrail">{I.shieldCheck} {RO_GUARDRAIL}</div>
         </div>
@@ -1362,26 +1594,36 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => setSigning(true) : undefined}
             seal={seal}
           />
-          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} scope={p.scope} />
+          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} scope={p.scope} catalog={catalog} />
           : (
             <div className="rc-empty">
-              <div className="rc-empty-mark">*</div>
               {/* "AnA builds the report" and "a pack AnA suggests … based on
                   your whole portfolio" were the same two claims as the opener:
                   a persona for a template matcher, and a portfolio-derived
                   recommendation for `roPresetsForSeg(seg)`, which reads neither
                   the portfolio nor the program. */}
               <h2 className="rc-empty-h">Governed reports, built to order.</h2>
-              <p className="rc-empty-s">Describe what you need on the left, or start from one of the standard packs for {p.code}. Every value is computed from the governed record; nothing is estimated.</p>
+              <p className="rc-empty-s">Find a report on the left, or start from one of the standard packs for {p.code}. Every value is computed from the governed record; nothing is estimated.</p>
               <div className="rc-empty-presets">
-                {roPresetsForSeg(seg).map(pr => (
+                {roPresetsForSeg(seg, catalog).map(pr => (
                   <button key={pr.id} className="rc-empty-preset" onClick={() => buildPreset(pr)}>
                     <div className="rc-ep-h">{I.barChart || I.grid} {pr.label}</div>
                     <div className="rc-ep-s">{pr.why}</div>
-                    <div className="rc-ep-types">{pr.types.length} governed reports</div>
+                    <div className="rc-ep-types">{pr.types.length} governed report{pr.types.length === 1 ? '' : 's'}</div>
                   </button>
                 ))}
               </div>
+              {/* P-26: the program's report types no engine computes, listed
+                  once, here, and never as tiles inside a pack. Asking for one
+                  by name says the same and runs nothing (roRouteReply). */}
+              {roNotComputed(catalog).length > 0 && (
+                <section aria-label="Not computed in this release" data-testid="ro-not-computed">
+                  <div className="ro-rep-eyebrow">Not computed in this release</div>
+                  <p className="rc-empty-s">
+                    No engine produces these reports for {p.code}, so no pack offers them and none is run: {roNotComputed(catalog).join('; ')}.
+                  </p>
+                </section>
+              )}
             </div>
           )}
       </div>

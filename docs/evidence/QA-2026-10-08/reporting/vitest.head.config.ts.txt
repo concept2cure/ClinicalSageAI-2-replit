@@ -1,0 +1,31 @@
+/**
+ * Runs the repo's vitest config with every source file this fix changed served
+ * as its committed HEAD content (git show HEAD:<path>), so the new tests can be
+ * shown failing on HEAD's code without touching the shared working tree.
+ * A file that does not exist at HEAD is served as a module that throws.
+ */
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+import { mergeConfig } from '/home/user/ClinicalSageAI-2-replit/node_modules/vitest/dist/config.js';
+import base from '/home/user/ClinicalSageAI-2-replit/vitest.config';
+
+const REPO = '/home/user/ClinicalSageAI-2-replit';
+const CHANGED = (process.env.HEAD_FILES ?? '').split(',').filter(Boolean);
+const NEW = new Set((process.env.HEAD_NEW ?? '').split(',').filter(Boolean));
+
+export default mergeConfig(base, {
+  root: REPO,
+  plugins: [
+    {
+      name: 'serve-head',
+      enforce: 'pre',
+      load(id: string) {
+        const file = id.split('?')[0];
+        const rel = path.relative(REPO, file);
+        if (NEW.has(rel)) return `throw new Error('${rel} does not exist at HEAD');`;
+        if (!CHANGED.includes(rel)) return null;
+        return execFileSync('git', ['-C', REPO, 'show', `HEAD:${rel}`], { encoding: 'utf8' });
+      },
+    },
+  ],
+});

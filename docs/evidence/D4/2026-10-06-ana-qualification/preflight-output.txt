@@ -1,0 +1,152 @@
+{"level":40,"time":"2026-10-06T17:24:33.010Z","pid":6,"hostname":"6bafce8f9cda","context":{},"msg":"[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable"}
+{
+  "kind": "ia-review-preflight",
+  "status": "PREPARED_NOT_QUALIFIED",
+  "gitSha": "73a151ec663b52c0d0964e7ce802123328518b78",
+  "gitWorkingTreeDirty": true,
+  "harnessSha256": "442f983d778deb83b5449ccc8f3cc45037ecb46b4af2b0e70279f56745d01ab7",
+  "runnerSha256": "3db1449ea7ad3302c0a445d9aca61fa32ed5f654a3ebcc0ab9b1a00bd48351d1",
+  "bankVersion": "0.1.0-reviewer-draft",
+  "bankSha256": "6af339f3edc102f4c195fa686781864d527e1ec2be0aabfab29f971bfec9fa5b",
+  "bankStatus": "reviewer-draft",
+  "caseCount": 34,
+  "plannedTurns": 39,
+  "sourceCount": 20,
+  "issues": [],
+  "credentialPresence": {
+    "ANTHROPIC_API_KEY": false,
+    "OPENAI_API_KEY": false,
+    "MOONSHOT_API_KEY": false,
+    "GOOGLE_API_KEY": false
+  },
+  "modelCounts": {
+    "registryEntries": 16,
+    "approvedForHighRiskRole": 5,
+    "passedPq": 0,
+    "highRiskRoleWithPassedPq": 0
+  },
+  "existingGold": {
+    "generationByDocType": {
+      "510k": 10,
+      "cer": 10,
+      "ind": 10
+    },
+    "extractionByDocType": {
+      "510k": 4,
+      "cer": 4,
+      "ind": 4
+    },
+    "requiredGenerationFloor": 10
+  },
+  "protocol": {
+    "protocolId": "PQ-DRAFT-001",
+    "status": "draft",
+    "approvedBy": null,
+    "approvedOn": null
+  },
+  "models": [
+    {
+      "id": "claude-opus-4",
+      "pinnedVersion": "claude-opus-5-5",
+      "provider": "anthropic",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "claude-opus-5",
+      "pinnedVersion": "claude-opus-5",
+      "provider": "anthropic",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "claude-opus-4-legacy",
+      "pinnedVersion": "claude-opus-4-8",
+      "provider": "anthropic",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "claude-sonnet-4",
+      "pinnedVersion": "claude-sonnet-5",
+      "provider": "anthropic",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "claude-sonnet-4-legacy",
+      "pinnedVersion": "claude-sonnet-4-6",
+      "provider": "anthropic",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "claude-haiku-4",
+      "pinnedVersion": "claude-haiku-4-5",
+      "provider": "anthropic",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "gpt-4o",
+      "pinnedVersion": "gpt-4o",
+      "provider": "openai",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "gpt-4o-mini",
+      "pinnedVersion": "gpt-4o-mini",
+      "provider": "openai",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "kimi-k2-0711",
+      "pinnedVersion": "kimi-k2-0711-preview",
+      "provider": "moonshot",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "moonshot-v1-128k",
+      "pinnedVersion": "moonshot-v1-128k",
+      "provider": "moonshot",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "moonshot-v1-32k",
+      "pinnedVersion": "moonshot-v1-32k",
+      "provider": "moonshot",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "claude-opus-4-bedrock",
+      "pinnedVersion": "anthropic.claude-opus-4-7",
+      "provider": "bedrock",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "claude-sonnet-4-bedrock",
+      "pinnedVersion": "anthropic.claude-sonnet-4-6",
+      "provider": "bedrock",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "claude-opus-4-vertex",
+      "pinnedVersion": "claude-opus-4-7",
+      "provider": "vertex",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "gpt-4o-azure",
+      "pinnedVersion": "gpt-4o",
+      "provider": "azure",
+      "pqStatus": "pending"
+    },
+    {
+      "id": "local-default",
+      "pinnedVersion": "local-default",
+      "provider": "local",
+      "pqStatus": "pending"
+    }
+  ],
+  "remaining": [
+    "Provision an authorized provider for the chosen registry model; presence alone does not verify credentials or provider identity.",
+    "Run IA capture and have qualified domain/market reviewers adjudicate the real transcripts and draft expectations.",
+    "Approve the canonical PQ protocol and acceptance criteria through the responsible system-owner process.",
+    "Populate and verify a tenant-scoped RAG evaluation corpus, resolve gold-source documents, and execute attributable RAG qualification.",
+    "Execute production-route acceptance and staging validation separately; this policy probe does not test them."
+  ]
+}

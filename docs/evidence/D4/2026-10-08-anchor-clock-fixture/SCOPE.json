@@ -1,0 +1,4942 @@
+{
+  "sourceBase": "c7ae8c0702c50f8ab37a688ef9a5a35079edf937",
+  "nativeRedSource": "099eb36d2914135989d85f1df927de26abf6904d",
+  "delivery": "W3/D4 archive clock fixture",
+  "allowedCodePaths": [
+    "server/services/audit/__tests__/chain-anchor.dbtest.ts",
+    "server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts"
+  ],
+  "candidateSources": [
+    {
+      "path": "server/services/audit/__tests__/chain-anchor.dbtest.ts",
+      "baseGitBlob": "d00d28e35d1a0c9604429cf757c975f85e8bc5f5",
+      "candidateGitBlob": "191c3f1d603a8dd294fd73d5755cbba74a03d38e"
+    },
+    {
+      "path": "server/services/audit/__tests__/chain-anchor-clock.pglite.integration.test.ts",
+      "baseGitBlob": null,
+      "candidateGitBlob": "7ec2d0796dd5e7185d864fc0621ce99cb4e50777"
+    }
+  ],
+  "protectedGitObjects": [
+    {
+      "path": ".github/workflows/c2c-agent.yml",
+      "gitObject": "64efb52753e4b19bf7e0beba1d19fea88ab7b137"
+    },
+    {
+      "path": ".github/workflows/cerv2-staging-deploy.yml",
+      "gitObject": "6746eb54a1692e31b4c15476001eaf7d1b55453c"
+    },
+    {
+      "path": ".github/workflows/ci-staging-integration.yml",
+      "gitObject": "ea850d98d865d3a62317500e638d92f87d07eb76"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "gitObject": "0bcde0d7cb8eddc4edaf0583b0064c6630df57eb"
+    },
+    {
+      "path": ".github/workflows/codeql.yml",
+      "gitObject": "b4833ac8b101e610c926a4784ca5e3a477b07696"
+    },
+    {
+      "path": ".github/workflows/danger.yml",
+      "gitObject": "265b87892e6edf3467b8ea00cff50fe7935d9cce"
+    },
+    {
+      "path": ".github/workflows/database-dr-restore-proof.yml",
+      "gitObject": "48555324823286ff63fba905f4b80d71173d11af"
+    },
+    {
+      "path": ".github/workflows/db-schema-validation.yml",
+      "gitObject": "493fec9f796f83609f6ba124f29c326c33839d9c"
+    },
+    {
+      "path": ".github/workflows/deploy-aws.yml",
+      "gitObject": "cc6454e8ae67325615966f296897587b20d619ab"
+    },
+    {
+      "path": ".github/workflows/neon-preview-db.yml",
+      "gitObject": "6e98ac23de2f0fdcf392a11e01b88e9297eece63"
+    },
+    {
+      "path": ".github/workflows/neon-provisioning.yml",
+      "gitObject": "94e7f78025fbcb85089b2c107c836bc37e68978e"
+    },
+    {
+      "path": ".github/workflows/ops-audit-plan.yml",
+      "gitObject": "a3f02cb1b98a8b1659feaab39fbb206f03da75ee"
+    },
+    {
+      "path": ".github/workflows/pr-checks.yml",
+      "gitObject": "93bbfea28b38fc23e064c0ac8ebfe3ca91dc01b4"
+    },
+    {
+      "path": ".github/workflows/provision-database.yml",
+      "gitObject": "4e5853a1f2ba7dfce7481c1f57f4e734cbea23d6"
+    },
+    {
+      "path": ".github/workflows/prune-agent-branches.yml",
+      "gitObject": "890b80fd6c816c141844e54f71eca8c263601498"
+    },
+    {
+      "path": ".github/workflows/release-evidence.yml",
+      "gitObject": "a2aa77097d72de5d6c2597a513bf71de66f5065b"
+    },
+    {
+      "path": ".github/workflows/repo-health-baseline-refresh.yml",
+      "gitObject": "8dde5a31e9e5b5c08f66211a95bfb4977e385129"
+    },
+    {
+      "path": ".github/workflows/semgrep.yml",
+      "gitObject": "531731830bf6c4a46ef90eb75eecf741bf70a505"
+    },
+    {
+      "path": ".github/workflows/terraform-compliance.yml",
+      "gitObject": "9e76054c705e6422b9943f1728f8b1d34c633ccd"
+    },
+    {
+      "path": ".github/workflows/terraform-tests.yml",
+      "gitObject": "365268aed12544b9e38a251ab15a50045066f6f0"
+    },
+    {
+      "path": ".github/workflows/test-assembly.yml",
+      "gitObject": "6dd75a5a0017bb2f8c588bc64714387a7c7f7bdf"
+    },
+    {
+      "path": ".github/workflows/tier5-browser-smoke.yml",
+      "gitObject": "53a8fe243a8b0a9e43f6b9816a63530f913312b4"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "gitObject": "73a7b0b59b71051eb914815a0c6533f810aa78cd"
+    },
+    {
+      "path": ".husky/pre-commit",
+      "gitObject": "f34550ef6bc560e191aa827b5f7dfee49734b56e"
+    },
+    {
+      "path": ".husky/pre-push",
+      "gitObject": "f46a7751b314f5e33c16cd9a8ac77d115d0d0305"
+    },
+    {
+      "path": ".typecheck-baseline.json",
+      "gitObject": "2a3cec07f7828f6765bd25c28f5a90acec581657"
+    },
+    {
+      "path": "db/migrations/000_gcc_bootstrap_core.sql",
+      "gitObject": "40b5dbee46fdf60b630bc35176260e5a30715c26"
+    },
+    {
+      "path": "db/migrations/001_gcc_core.sql",
+      "gitObject": "7a63c7cd70964ec97cd512f84234ed356fd4d6b1"
+    },
+    {
+      "path": "db/migrations/002_gcc_audit_immutability.sql",
+      "gitObject": "067be99e39c11cc678804e114f906e6e87425521"
+    },
+    {
+      "path": "db/migrations/003_gcc_prose_versioning.sql",
+      "gitObject": "1e903e86a184996ea0b5cdc4c4128fec5a547934"
+    },
+    {
+      "path": "db/migrations/004_gcc_enhanced_citations.sql",
+      "gitObject": "5e4df0a30253b3f2e029da46a7fc968a54d27ce4"
+    },
+    {
+      "path": "db/migrations/005_gcc_database_roles.sql",
+      "gitObject": "45d4bc56d58b573ab7088bbc04a0d6f7bb8c213c"
+    },
+    {
+      "path": "db/migrations/006_gcc_dashboard_views.sql",
+      "gitObject": "72fd7197864d59f048facbedae0d476a18da0fdb"
+    },
+    {
+      "path": "db/migrations/016_perf_indexes.sql",
+      "gitObject": "10373f32b1ab5fe2821a4f49285347577dd37b6f"
+    },
+    {
+      "path": "db/migrations/017_gcc_shadow_agent_rbac.sql",
+      "gitObject": "83521754a0cffb488fed069df7d265135f6e335e"
+    },
+    {
+      "path": "db/migrations/018_gcc_purge_workflow.sql",
+      "gitObject": "9a14e39de8ba07366c1e9b1a28e429d068d77e51"
+    },
+    {
+      "path": "db/migrations/019_gcc_idempotency_ratelimit.sql",
+      "gitObject": "131224f0c848e672d65e8e42052a48a64472affc"
+    },
+    {
+      "path": "db/migrations/020_new_process_wizard.sql",
+      "gitObject": "50f46217bd0f13c31f0f831bddeef8a407259045"
+    },
+    {
+      "path": "db/migrations/022_stability_v2.sql",
+      "gitObject": "1aaeb4ed7bc2ad20d8cdfc9b04ed5f821ec688d9"
+    },
+    {
+      "path": "db/migrations/023_stability_step2.sql",
+      "gitObject": "f7ec6ef3c8fbb795399180188fc2bd2b53d6617b"
+    },
+    {
+      "path": "db/migrations/024_stability_step3.sql",
+      "gitObject": "07410609a905d0e163acb1c74bfdff96735b3285"
+    },
+    {
+      "path": "db/migrations/026_stability_step4.sql",
+      "gitObject": "b93d27e7a2ef567b7cd73728e1f224f074926ca1"
+    },
+    {
+      "path": "db/migrations/028_strategy_core.sql",
+      "gitObject": "7bf0db59e35087cdcdad4f3685f6e1c379170ee5"
+    },
+    {
+      "path": "db/migrations/030_stability_results.sql",
+      "gitObject": "02ac6197305cde656475a34247e0db82bda847d1"
+    },
+    {
+      "path": "db/migrations/031_REGULATORY_AUDIT_REPORT.md",
+      "gitObject": "ff19ef360107f81545ca2c835ef2b221461e9899"
+    },
+    {
+      "path": "db/migrations/036_gcc_discovery_bridge.sql",
+      "gitObject": "356a7d265ada0958001c76f15e06584741cfedd0"
+    },
+    {
+      "path": "db/migrations/037_gcc_registry_trial_ledger.sql",
+      "gitObject": "3ad33d2bbcad533e29a5464c42684d1fa05d45b1"
+    },
+    {
+      "path": "db/migrations/038_gcc_ectd_seeder_service.sql",
+      "gitObject": "4b140b2623dfd0cc2a572c456ea73360639a388c"
+    },
+    {
+      "path": "db/migrations/039_gcc_label_impact_simulator.sql",
+      "gitObject": "1ed9673a2bb73d79e140c5dcfab3300a8d85cb1c"
+    },
+    {
+      "path": "db/migrations/040_gcc_site_intelligence.sql",
+      "gitObject": "cec9007694fda274640a7a3515e154f61b911ea9"
+    },
+    {
+      "path": "db/migrations/041_gcc_signing_gates.sql",
+      "gitObject": "819b1fdc4e7a4cd239c4359ec1c6526e29e9b00d"
+    },
+    {
+      "path": "db/migrations/044b_gcc_lumen_schema_prerequisite.sql",
+      "gitObject": "de79ec07386365c62bc3f79ad8912961616c75c6"
+    },
+    {
+      "path": "db/migrations/044c_gcc_vault_schema.sql",
+      "gitObject": "104817365875c4906eaee0c1f46e53170519b295"
+    },
+    {
+      "path": "db/migrations/047_quality_step6.sql",
+      "gitObject": "ff4ec82295307a5bcb761d3501c2465c4dfef03a"
+    },
+    {
+      "path": "db/migrations/048_quality_step7.sql",
+      "gitObject": "2b33067c41e6453617ccf90e7357e310c0072e7a"
+    },
+    {
+      "path": "db/migrations/049_quality_step8.sql",
+      "gitObject": "9f98353d4d46307eb2400417fc582074ee3ad784"
+    },
+    {
+      "path": "db/migrations/050_gcc_ectd_v4_domain_registry.sql",
+      "gitObject": "b21e8057f7bca8d5e608081a4866520f6de6e881"
+    },
+    {
+      "path": "db/migrations/051_gcc_multi_tenant_identity.sql",
+      "gitObject": "3c6ae16026d00e335e405dd8df2569f5dc68314a"
+    },
+    {
+      "path": "db/migrations/052_gcc_ectd_v4_cou_graph.sql",
+      "gitObject": "1165584def52c440f4decf4407b5cc4b985d63ab"
+    },
+    {
+      "path": "db/migrations/053_gcc_rls_policies.sql",
+      "gitObject": "0f2ba36acbdf3e028ab25a9a9b59a4372fe7188e"
+    },
+    {
+      "path": "db/migrations/054_gcc_part11_audit.sql",
+      "gitObject": "ba4d625722182935b6b6e240506619b41c5424d5"
+    },
+    {
+      "path": "db/migrations/055_gcc_test_scenarios.sql",
+      "gitObject": "afc45dbe51dfed14e9e063d4c7245df88ee4a21c"
+    },
+    {
+      "path": "db/migrations/056_gcc_test_runner.sql",
+      "gitObject": "3c0b3c701d2772403f87ce78e46d52a78bf3f290"
+    },
+    {
+      "path": "db/migrations/057_gcc_product_master.sql",
+      "gitObject": "5f9611d0356170a429b673b4508425e75995d009"
+    },
+    {
+      "path": "db/migrations/058_gcc_fhir_resources.sql",
+      "gitObject": "75e8c7c38f2e9c6654e0a3594b1deb29589a668e"
+    },
+    {
+      "path": "db/migrations/059_gcc_vector_embeddings.sql",
+      "gitObject": "2cf138c15f40175296b00f55d215ce8790abcda3"
+    },
+    {
+      "path": "db/migrations/063_gcc_cognitive_agent_runtime.sql",
+      "gitObject": "6a3b02f7c89d53a0280b037371619e3c18d69f33"
+    },
+    {
+      "path": "db/migrations/064_gcc_cognitive_audit_schema.sql",
+      "gitObject": "61754194bf8e582464f10a98749b4516aa4c2877"
+    },
+    {
+      "path": "db/migrations/065_gcc_global_dossier_schema.sql",
+      "gitObject": "f6ebf81aa2eb8344d46d9585ba098557f1bea40b"
+    },
+    {
+      "path": "db/migrations/066_gcc_manufacturing_digital_twins.sql",
+      "gitObject": "b88e793c445691539e711b9218590b95d492b7e6"
+    },
+    {
+      "path": "db/migrations/067_gcc_federated_learning_intelligence.sql",
+      "gitObject": "eafa8ad2c027834ca672f3d65026eb99d16675b5"
+    },
+    {
+      "path": "db/migrations/068_regulatory_schema_alignment.sql",
+      "gitObject": "353e3abae0f01a4f6d0dfcefa4fc6415be22de46"
+    },
+    {
+      "path": "db/migrations/069_gcc_multitenant_rls_expansion.sql",
+      "gitObject": "2e6412b68184d64a819b07c600f4821f103eb948"
+    },
+    {
+      "path": "db/migrations/070_gcc_rls_extended_ga.sql",
+      "gitObject": "a2e8c4d03368b57230c7cc76b5b382ea86a6e027"
+    },
+    {
+      "path": "db/migrations/072_gcc_innovation_platform_core.sql",
+      "gitObject": "6e890cbbf5b888da93b367681ce1ae3ed1681152"
+    },
+    {
+      "path": "db/migrations/074_gcc_regulatory_intuition_engine.sql",
+      "gitObject": "4fff628a83ca72befc69be0321ad66eb1ad163aa"
+    },
+    {
+      "path": "db/migrations/075_gcc_epistemic_intelligence.sql",
+      "gitObject": "781ed9d05427928d5b7c9594907891ff82e2b919"
+    },
+    {
+      "path": "db/migrations/076_gcc_causal_inference_engine.sql",
+      "gitObject": "8a50411a0125471a6eaec30cc2eff9180715be88"
+    },
+    {
+      "path": "db/migrations/077_gcc_self_evolving_intelligence.sql",
+      "gitObject": "4023f1c9831284ea1870f10018bd88a73e74cd74"
+    },
+    {
+      "path": "db/migrations/078_gcc_cross_domain_transfer.sql",
+      "gitObject": "483e187b197b1e8cf58f80fd247d5b078db752a9"
+    },
+    {
+      "path": "db/migrations/080_gcc_21cfr_part11_compliance.sql",
+      "gitObject": "9d89487588381650323d32579b63a2de2e6592d7"
+    },
+    {
+      "path": "db/migrations/081_grdhe_regulatory_mapping_layer.sql",
+      "gitObject": "a7a864417282a78621ca84e6953842684fd766b1"
+    },
+    {
+      "path": "db/migrations/082_ectd_submission_agent.sql",
+      "gitObject": "83d69e1399d385a755ccdf048e488d9be0f21207"
+    },
+    {
+      "path": "db/migrations/100_regulatory_templates.sql",
+      "gitObject": "72657d784d296d1d8d87f07c0667186595d951c4"
+    },
+    {
+      "path": "db/migrations/101_complete_template_catalog.sql",
+      "gitObject": "22da14882433a08d80ea74237256ca768e706f49"
+    },
+    {
+      "path": "db/migrations/102_load_all_templates.sql",
+      "gitObject": "bd976642a2cb4dce35bd690b24062ac477c582d7"
+    },
+    {
+      "path": "db/migrations/103_load_complete_templates.sql",
+      "gitObject": "84e27dd3e287fb5c80e20a8617cd6cf9ae57f6c2"
+    },
+    {
+      "path": "db/migrations/20260125_add_atom_embeddings.sql",
+      "gitObject": "4477fb11a00a8e554c391ce8c912fead6c633376"
+    },
+    {
+      "path": "db/migrations/20260125_ai_provider_audit_log.sql",
+      "gitObject": "f3a36890c800e2b0b937ee267a1a94be5a169e90"
+    },
+    {
+      "path": "db/migrations/20260125_enhanced_cortex_schema.sql",
+      "gitObject": "550e2e3ca733eefc9fe5b4c475d459b46a9222b1"
+    },
+    {
+      "path": "db/migrations/20260129_add_org_uuid_alignment.sql",
+      "gitObject": "ba5dfd330a70c1b67d40547785d716b52497751c"
+    },
+    {
+      "path": "db/migrations/20260129_phase5_intelligent_document_system.sql",
+      "gitObject": "c0d8450bf530330b0ae198e57096afa30d2236ea"
+    },
+    {
+      "path": "db/migrations/20260129_workflow_indexes_and_dlq.sql",
+      "gitObject": "768153aba149591acde56151d4b07d0e69e192fb"
+    },
+    {
+      "path": "db/migrations/20260130_add_assembly_audit_logs.sql",
+      "gitObject": "2288dff5f9a3542a4612bbd9a4e13797af0c38d0"
+    },
+    {
+      "path": "db/migrations/20260130_add_assembly_docs_table.sql",
+      "gitObject": "7a345ca24c1a3efe581bf4977bd8756d8464d142"
+    },
+    {
+      "path": "db/migrations/20260130_add_workflow_rls_and_step_runs_immutability.sql",
+      "gitObject": "2da2a6c44caedbfc2c636ea0bfd7a86a84c901da"
+    },
+    {
+      "path": "db/migrations/20260203_phase2_anchors_xrefs.sql",
+      "gitObject": "b0f6c0fd81eabdb3167f18dc998d6def38f186c2"
+    },
+    {
+      "path": "db/migrations/20260203_phase2_graph_rls_indexes_patch.sql",
+      "gitObject": "b67c9a2a6277894b19878a58adf26539a3efda7e"
+    },
+    {
+      "path": "db/migrations/20260203_phase2_review_batch_persistence.sql",
+      "gitObject": "ffea2a7658c0c2c858d267309c54996354e8b215"
+    },
+    {
+      "path": "db/migrations/20260203_phase2_review_batch_runner_hardening.sql",
+      "gitObject": "7d1dba7a2ca4f234eff7b24cb9a2e456bba76e88"
+    },
+    {
+      "path": "db/migrations/20260203_rps_event_store.sql",
+      "gitObject": "963cc3e06017eed4291ef8c85fef0431316ea883"
+    },
+    {
+      "path": "db/migrations/20260204_review_batch_worker.sql",
+      "gitObject": "962269fdc4d07a21dc150ca494f2731a57bad8c2"
+    },
+    {
+      "path": "db/migrations/20260205_review_batch_admin.sql",
+      "gitObject": "1b1e566bb7f8abaf2be997be780446afc5bde1b7"
+    },
+    {
+      "path": "db/migrations/20260206_phase4_orchestration_kernel.sql",
+      "gitObject": "87276650efd2d787f1a806042501da57f209c668"
+    },
+    {
+      "path": "db/migrations/20260206_phase5_contradiction_scanner.sql",
+      "gitObject": "a5fbadf24adfac924790c9d11f41097a036bb73b"
+    },
+    {
+      "path": "db/migrations/20260206_phase5_evidence_fabric.sql",
+      "gitObject": "6792f2ff307c4467476b15c7ec9de5d13b54f18a"
+    },
+    {
+      "path": "db/migrations/20260206_phase5_idempotent_provenance.sql",
+      "gitObject": "7dbe9ffc46910136d12d5a9d7bf924ec16d78344"
+    },
+    {
+      "path": "db/migrations/20260206_phase6_docx_factory.sql",
+      "gitObject": "5e1407fda1c82a0a1656aa8bc91a226db2031a65"
+    },
+    {
+      "path": "db/migrations/20260206_review_batch_ops_control.sql",
+      "gitObject": "b7a6fe174fef2125e116cd2150d32093d29ee7d8"
+    },
+    {
+      "path": "db/migrations/20260207_phase4_seed_templates.sql",
+      "gitObject": "9c1a443b0c0db5c5ff427d58a5257c48641a0a85"
+    },
+    {
+      "path": "db/migrations/20260207_phase6_6_predicate_intelligence.sql",
+      "gitObject": "ae1d4d7804d0941f8a476d514865bef4780c597d"
+    },
+    {
+      "path": "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql",
+      "gitObject": "3258c460065a761e9961cd942aca402dffca7d35"
+    },
+    {
+      "path": "db/migrations/20260208_phase6_6a_risk_rollups.sql",
+      "gitObject": "6d1c4b35cbd8430dd495c837c07a8e19b7ecb5b8"
+    },
+    {
+      "path": "db/migrations/20260209_phase6_6a_fda_ingest_runs.sql",
+      "gitObject": "cd97dd62e6a7225a33cceaf75e587ddd62af29c8"
+    },
+    {
+      "path": "db/migrations/20260211_phase6_6d_defense_packets.sql",
+      "gitObject": "bbf5ceff89782df852f4663e4e2c4a0219fd545e"
+    },
+    {
+      "path": "db/migrations/20260211_phase6_6e_proof_pack_exports.sql",
+      "gitObject": "094ce83b3979923dc5d5245783a78281da6e784b"
+    },
+    {
+      "path": "db/migrations/20260211_phase6_6g_proof_pack_trust_chain.sql",
+      "gitObject": "a26a8628a9e4d77c92041059e9e1ddb379c49048"
+    },
+    {
+      "path": "db/migrations/20260211_phase7_0a_render_jobs.sql",
+      "gitObject": "9fda6bc2f485f939c9eb5b7679f41ad3052cd139"
+    },
+    {
+      "path": "db/migrations/20260212_phase7_0c_render_tenant_safety.sql",
+      "gitObject": "50efd89facaacc09940cbaf36dffd02e7e2e489e"
+    },
+    {
+      "path": "db/migrations/20260220_ind_section_tracking.sql",
+      "gitObject": "2a6daadcce94d9c6f601abe3453b6f56b5e56788"
+    },
+    {
+      "path": "db/migrations/20260220_user_intelligence_platform.sql",
+      "gitObject": "8d102b558cb03f9e7d8a18f9f48938b7e13816fc"
+    },
+    {
+      "path": "db/migrations/20260222_audit_events_hash_chain.sql",
+      "gitObject": "f0652457eaebe0f3ecbe1e659a8a7aa84c5b70b6"
+    },
+    {
+      "path": "db/migrations/20260222_audit_events_immutability.sql",
+      "gitObject": "a2c0dbdce68f59cdf1c0b4725eaf667d2c8a80ab"
+    },
+    {
+      "path": "db/migrations/20260222_ivdr_schema_hardening.sql",
+      "gitObject": "2e1ffde26fee6583f39ab3dbe68606656993fa46"
+    },
+    {
+      "path": "db/migrations/20260223_ivdr_binder_packs.sql",
+      "gitObject": "9686cf433bfa52bf9fa2c811db1e01a22ddb20cb"
+    },
+    {
+      "path": "db/migrations/20260223_ivdr_packs_building_status.sql",
+      "gitObject": "174b77503799f3dd99053afe98c49322bf318ded"
+    },
+    {
+      "path": "db/migrations/20260224_ai_claims_verifier_flags.sql",
+      "gitObject": "310f91d457d0a1d359ec912b2bd85df48624da75"
+    },
+    {
+      "path": "db/migrations/20260224_ai_trace_chain.sql",
+      "gitObject": "6d6225954876a14261b3949cc002a10d514c3280"
+    },
+    {
+      "path": "db/migrations/20260224_binder_evidence_source_types.sql",
+      "gitObject": "6c607f1b90c9e8e69dfa6d038ef2756472a79f93"
+    },
+    {
+      "path": "db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql",
+      "gitObject": "8488194d82ed2b78da415dd07c1b20a30ab7382a"
+    },
+    {
+      "path": "db/migrations/20260305_projects_add_path_column.sql",
+      "gitObject": "f095699c895fb1e2c844d222a605f24c366fcbe9"
+    },
+    {
+      "path": "db/migrations/20260306_chat_tool_runs.sql",
+      "gitObject": "01aeb5761721e63d88062a2e83f4d11b49ec548b"
+    },
+    {
+      "path": "db/migrations/20260306_precedent_engine.sql",
+      "gitObject": "1c77cc6c2988b739b92bd094c950b4a676739b04"
+    },
+    {
+      "path": "db/migrations/20260314_phase12_multi_user_review.sql",
+      "gitObject": "ac3e19b8e9951223d007189b98e87377c328bf40"
+    },
+    {
+      "path": "db/migrations/20260317_global_regulatory_compliance.sql",
+      "gitObject": "a4491a9b1da1de9eafa01fef765af86710d8b62e"
+    },
+    {
+      "path": "db/migrations/20260317_submission_twin.sql",
+      "gitObject": "d597a8e254ba14ae8cecfebe9dab6b7aed739fce"
+    },
+    {
+      "path": "db/migrations/20260318_ga_immutability_hardening.sql",
+      "gitObject": "c71b9b026517c2aedc160cb1d6f74316d058963e"
+    },
+    {
+      "path": "db/migrations/20260319_evidence_fabric.sql",
+      "gitObject": "b347d941c71a9acf0b2a6ac99b7eaf0bc050f8be"
+    },
+    {
+      "path": "db/migrations/20260319_ga_indexes_and_fixes.sql",
+      "gitObject": "c47bf854bde574aa231081737cc2318e19aab3c0"
+    },
+    {
+      "path": "db/migrations/20260322_quality_checkpoints.sql",
+      "gitObject": "74800571231be399771f58db776a4b7fe20d6288"
+    },
+    {
+      "path": "db/migrations/20260322_regulatory_precedent_intelligence.sql",
+      "gitObject": "895c78a3c46916bb80a0e3dc6aec571cf84ecf32"
+    },
+    {
+      "path": "db/migrations/20260323_assumption_decision_contradiction.sql",
+      "gitObject": "ca148ff1e9c0cce969d4837f2044c83141941e1f"
+    },
+    {
+      "path": "db/migrations/20260323_reactive_dependency_layer.sql",
+      "gitObject": "8a07fa9aab2a196257f7e0f21bcc6725fa97f651"
+    },
+    {
+      "path": "db/migrations/20260324_ai_goal_plan_runs.sql",
+      "gitObject": "ee8b9e6e402313d267f091f206cf404fc0ee54af"
+    },
+    {
+      "path": "db/migrations/20260324_ai_kernel_agent_protocol_events.sql",
+      "gitObject": "f44babd7af5a61dea5f3d8ef2b24ee0e455e9aa3"
+    },
+    {
+      "path": "db/migrations/20260324_ai_kernel_decision_records.sql",
+      "gitObject": "9ba64adcaceb7e859358092d69aa460b98a0f453"
+    },
+    {
+      "path": "db/migrations/20260324_ai_kernel_policy_outcomes.sql",
+      "gitObject": "9b87e23d0ca2064f3feb01b064bc5745ab6a4e04"
+    },
+    {
+      "path": "db/migrations/20260324_ana_kernel_decision_log.sql",
+      "gitObject": "aaee6eb368f35f9c004374bdbc572b3e5eed1521"
+    },
+    {
+      "path": "db/migrations/20260325_ai_goal_plan_hardening.sql",
+      "gitObject": "17360861f315ec9f1e693a15598f6dbfe5127960"
+    },
+    {
+      "path": "db/migrations/20260325_ai_goal_plan_step_events.sql",
+      "gitObject": "9bad205426f63a981179cca79377d613eb187590"
+    },
+    {
+      "path": "db/migrations/20260325_ana_kernel_log_immutability_hashchain.sql",
+      "gitObject": "160920beff081f45c50f3b7faed45f89d1639e38"
+    },
+    {
+      "path": "db/migrations/20260325_decision_receipts.sql",
+      "gitObject": "af152b1c9c9070e50eeaa1453d8e306b452a41bc"
+    },
+    {
+      "path": "db/migrations/20260326_artifact_compute_plane.sql",
+      "gitObject": "b744e5cc64f61a9267761b087d7b50ded02e8633"
+    },
+    {
+      "path": "db/migrations/20260326_conversation_os_durability.sql",
+      "gitObject": "dd6706a18e065017fdc75f041446e9bb04ca764a"
+    },
+    {
+      "path": "db/migrations/20260326_conversation_os_durability_phase2.sql",
+      "gitObject": "533d1dba8a32fd3c7aeb845627e975e749414013"
+    },
+    {
+      "path": "db/migrations/20260331_communication_center_scaffold.sql",
+      "gitObject": "b6c9291673813a6193a16a7af4b40b235331ad8d"
+    },
+    {
+      "path": "db/migrations/20260331_regulatory_correspondence_os.sql",
+      "gitObject": "bb3f65792833954ef2d72f83febd655ec7408292"
+    },
+    {
+      "path": "db/migrations/20260401_cmc_convergence_os.sql",
+      "gitObject": "56460996698d9fc695fdfe875451269b584c7c24"
+    },
+    {
+      "path": "db/migrations/20260401_project_sharing_visibility.sql",
+      "gitObject": "b36d1d7b74fbac4d39a52ec8cb0ede841db3c751"
+    },
+    {
+      "path": "db/migrations/20260401_submission_center_items.sql",
+      "gitObject": "40be138d1eb265d4f5852bb2e98ac170eda2b7d4"
+    },
+    {
+      "path": "db/migrations/20260402_cmc_runtime_ddl_to_migration.sql",
+      "gitObject": "d4bf594e2040f50d64499b3c11efe92798243a94"
+    },
+    {
+      "path": "db/migrations/20260508_ana_submission_chat_proposals.sql",
+      "gitObject": "eb8d74f79cdc47201cedef5b87ea91726309e951"
+    },
+    {
+      "path": "db/migrations/20260508_artifact_citations.sql",
+      "gitObject": "b17e2d9505d79e26fc4d3dd308cf4eaa1e736f91"
+    },
+    {
+      "path": "db/migrations/20260508_authoring_plans.sql",
+      "gitObject": "9f938a4a71c52f9ca908482044f8d2bd4cbf7b78"
+    },
+    {
+      "path": "db/migrations/20260508_consistency_alerts.sql",
+      "gitObject": "56ad674a5eae3bed101ab9d92b27087b5b10910e"
+    },
+    {
+      "path": "db/migrations/20260508_guidance_alerts.sql",
+      "gitObject": "3af93f3c26df8827007fd79292636e88c78776a0"
+    },
+    {
+      "path": "db/migrations/20260508_project_therapeutic_area.sql",
+      "gitObject": "41c2e091bc0af081f5f66d45fbe842d5ef3f991b"
+    },
+    {
+      "path": "db/migrations/20260520_ana_failure_learning.sql",
+      "gitObject": "45f21627685c46899be102692ed57256a5e95eae"
+    },
+    {
+      "path": "db/migrations/20260520_document_templates.sql",
+      "gitObject": "02097bc5630a2ea4ccd23590d729aa06e6d138c8"
+    },
+    {
+      "path": "db/migrations/20260520_growth_mindset_extensions.sql",
+      "gitObject": "26c2cbcc16ee90b12477115fe09f151651fb1620"
+    },
+    {
+      "path": "db/migrations/20260520_regulatory_intelligence_layer.sql",
+      "gitObject": "5d84d2dcc9ed62699bd4aa8cd802dff34f0e85b3"
+    },
+    {
+      "path": "db/migrations/20260526_drop_invalid_cdisc_fks.sql",
+      "gitObject": "122f51e3adf8611a32140b925615ad898c6d7e96"
+    },
+    {
+      "path": "db/migrations/20260526_updated_at_triggers.sql",
+      "gitObject": "480058d867f78ce160ad282542e8fb4e3567414b"
+    },
+    {
+      "path": "db/migrations/20260609_scim_tenants.sql",
+      "gitObject": "683c9a48b10bbae93303fe03fba5e95adefb26c0"
+    },
+    {
+      "path": "db/migrations/20260611_organization_invitations.sql",
+      "gitObject": "f547608b8bd29ca4928a63a9c47b3bc4e345202c"
+    },
+    {
+      "path": "db/migrations/20260611_scim_ip_allowlist.sql",
+      "gitObject": "da5a619d1e4317b3322d20a490da32dee2d877b0"
+    },
+    {
+      "path": "db/migrations/20260612_org_client_type_user_preferences.sql",
+      "gitObject": "de0c1ffbd94e5690c49236c0f978925e8d37587c"
+    },
+    {
+      "path": "db/migrations/20260617_audit_events_hmac_seal.sql",
+      "gitObject": "2c6d0df44be91bf6e5a5818944a4b9b675a24b42"
+    },
+    {
+      "path": "db/migrations/20260617_audit_logs_immutability.sql",
+      "gitObject": "0886876fa9210df7661d3803ac13c1146e16491d"
+    },
+    {
+      "path": "db/migrations/20260617_precedent_org_isolation.sql",
+      "gitObject": "09ca7adc3c999c37c5ab5b64c775a69c9449cca3"
+    },
+    {
+      "path": "db/migrations/20260617_project_schedule_of_events.sql",
+      "gitObject": "2c4906820b71228f4b2519111963c0994f98defa"
+    },
+    {
+      "path": "db/migrations/20260621_intelligent_licensing_eula.sql",
+      "gitObject": "cf246a9e75c00c7f3b5e1b5cadf8e6523177e083"
+    },
+    {
+      "path": "db/migrations/20260621_weekly_usage_limits.sql",
+      "gitObject": "c6261b18882e1d2ca60d60e712a6ec7d54d3957e"
+    },
+    {
+      "path": "db/migrations/20260629_ana_artifact_thread_lookup.sql",
+      "gitObject": "48a706877345b472dcd198127523c7fddeeeb783"
+    },
+    {
+      "path": "db/migrations/20260716_biopharma_specialty.sql",
+      "gitObject": "8c3e69c531a6d63fd71a186442864763e70e9cf9"
+    },
+    {
+      "path": "db/migrations/20260716_change_assessments.sql",
+      "gitObject": "f0f22a857d7bb227269a313252ee94f3c3fedd37"
+    },
+    {
+      "path": "db/migrations/20260716_enablement.sql",
+      "gitObject": "e4d165c24e0e7d391eb6a767a0afa952d55eb96d"
+    },
+    {
+      "path": "db/migrations/20260716_nonclinical_display.sql",
+      "gitObject": "91f1a2dab897ea992c0ace1ef3050150f907a82a"
+    },
+    {
+      "path": "db/migrations/20260717_agency_meetings_store.sql",
+      "gitObject": "89a0ae20779640318c92f2fda5fac4815b4b1f42"
+    },
+    {
+      "path": "db/migrations/20260717_biostat_docs.sql",
+      "gitObject": "1072d89af88088645c81185fec3dfff9c7da83f6"
+    },
+    {
+      "path": "db/migrations/20260717_cro_portfolio_store.sql",
+      "gitObject": "38132d320aae31f32ea55c65ce1ada0a82b61e1a"
+    },
+    {
+      "path": "db/migrations/20260717_decision_lineage_store.sql",
+      "gitObject": "4073d72fd0ea8891dc6b8e4fe263a18d27d48181"
+    },
+    {
+      "path": "db/migrations/20260717_design_controls_store.sql",
+      "gitObject": "101c2e58d37bfcb00e66264def1f4f977e905e60"
+    },
+    {
+      "path": "db/migrations/20260717_doc_journey_store.sql",
+      "gitObject": "a8d233a550b1e9254ae26e2a75f2690e4349bcca"
+    },
+    {
+      "path": "db/migrations/20260717_dossier_map_store.sql",
+      "gitObject": "f3493db612235e0eced0c7dffb1409423af112a2"
+    },
+    {
+      "path": "db/migrations/20260717_evidence_asks_store.sql",
+      "gitObject": "434c91e037191ad805e5331e8613bcac11092b41"
+    },
+    {
+      "path": "db/migrations/20260717_evidence_objects_store.sql",
+      "gitObject": "b9e8476ee38c2df7a6b1847284484b02a189ed98"
+    },
+    {
+      "path": "db/migrations/20260717_human_factors_store.sql",
+      "gitObject": "4d7458620007671dfb5cad1c538cfc69f292f2c1"
+    },
+    {
+      "path": "db/migrations/20260717_ind_checklist_store.sql",
+      "gitObject": "a90e5d68ad7154ec417b53cb8ea6a4901e4c35ca"
+    },
+    {
+      "path": "db/migrations/20260717_labeling_pi_store.sql",
+      "gitObject": "2e95aaea29d881366c9ba24b6a0c506a9cc5e205"
+    },
+    {
+      "path": "db/migrations/20260717_maa_module1_store.sql",
+      "gitObject": "8282440c4473899e564240b51476eeacdc6b29b7"
+    },
+    {
+      "path": "db/migrations/20260717_market_access_store.sql",
+      "gitObject": "fc7947f1ec27a115714d7ec783f388ea9333bc69"
+    },
+    {
+      "path": "db/migrations/20260717_nda_m1_docs_store.sql",
+      "gitObject": "62051ecdfc62d2e9fa3dc07d6fc3bf9e6d6ec65e"
+    },
+    {
+      "path": "db/migrations/20260717_nda_modules_store.sql",
+      "gitObject": "2445d9b8dacf4981568adaa34abc834c6fdac866"
+    },
+    {
+      "path": "db/migrations/20260717_nda_rtf_store.sql",
+      "gitObject": "73305f07c5767352fca1e12a6df6f67360ffcd13"
+    },
+    {
+      "path": "db/migrations/20260717_program_journey_store.sql",
+      "gitObject": "96234dfe144de09a949a8d7d68fed88eab86a7b1"
+    },
+    {
+      "path": "db/migrations/20260717_protocol_dev_store.sql",
+      "gitObject": "11d0c1c43559577c7b9e11edbd219280a55b8fea"
+    },
+    {
+      "path": "db/migrations/20260717_reg_change_store.sql",
+      "gitObject": "03b327a4daa633e0e7f172d72064e41a969e3edf"
+    },
+    {
+      "path": "db/migrations/20260717_research_admin_store.sql",
+      "gitObject": "d9444d61b83ab35e0008264ec02ae58f51a26f38"
+    },
+    {
+      "path": "db/migrations/20260717_sae_cases_store.sql",
+      "gitObject": "8830708840962213d16f6bb45df4a6f11dae8695"
+    },
+    {
+      "path": "db/migrations/20260717_sae_reporting_clock.sql",
+      "gitObject": "b7bbda83a5966c47cc33d4525f7ef4131e90472c"
+    },
+    {
+      "path": "db/migrations/20260717_shadow_review_store.sql",
+      "gitObject": "0367568518aa64fcf6c07b416850ad625f13e50c"
+    },
+    {
+      "path": "db/migrations/20260718_cmc_changes_store.sql",
+      "gitObject": "cd2f0cf76e7cdff9ea574b931162558813b0d056"
+    },
+    {
+      "path": "db/migrations/20260718_pediatric_orphan_cards.sql",
+      "gitObject": "6e4e46198e4cd3b012f3a6bb91ae5525066b0026"
+    },
+    {
+      "path": "db/migrations/20260718_smpc_sections_store.sql",
+      "gitObject": "428ad764ef249fe0c915bad11d75f5d7044362a4"
+    },
+    {
+      "path": "db/migrations/20260724_clinical_regulatory_evidence_spine.sql",
+      "gitObject": "05d2990aa4efdc0736c09bb666f1cd2e6d411509"
+    },
+    {
+      "path": "db/migrations/20260724_qms_change_control_store.sql",
+      "gitObject": "3e6e290b1954246d80e78a674b3a3c31bdaa2944"
+    },
+    {
+      "path": "db/migrations/20260725_authoring_audit_trail.sql",
+      "gitObject": "85d1dbfe97aa97619e9ad1c02c7bb997f3fab6ac"
+    },
+    {
+      "path": "db/migrations/20260725_authoring_document_loop_tables.sql",
+      "gitObject": "6f7afb88519f11ac78c69795412e7e593a17e0bf"
+    },
+    {
+      "path": "db/migrations/20260725_authoring_signature_freeze_binding.sql",
+      "gitObject": "20c872da40cc2e769b002faada46439b62b43dca"
+    },
+    {
+      "path": "db/migrations/20260725_authoring_signatures_and_workflow.sql",
+      "gitObject": "4d87dd80f0a176221b9b49f899bc1e0f52597290"
+    },
+    {
+      "path": "db/migrations/20260725_bundle_execution_receipts.sql",
+      "gitObject": "edd52b7aea92efd1649adc414bbfc33bf6cbe55f"
+    },
+    {
+      "path": "db/migrations/20260725_drop_orphaned_foresight_prediction_tables.sql",
+      "gitObject": "f8709bd6beb5060423ccfc8c0170f6a86372d70a"
+    },
+    {
+      "path": "db/migrations/20260725_ectd_compilations_project_level.sql",
+      "gitObject": "50def106388afc2c914f0569c4409d5197a03b97"
+    },
+    {
+      "path": "db/migrations/20260725_esig_gate_columns_port.sql",
+      "gitObject": "f160e179760f48bcd9404374606c7b975655f761"
+    },
+    {
+      "path": "db/migrations/20260725_governance_boundary_tables.sql",
+      "gitObject": "009d2c1a2928034c93853c17c34b82185391aef2"
+    },
+    {
+      "path": "db/migrations/20260725_project_sections_content_columns.sql",
+      "gitObject": "90dc36747f48bd59cc407e16f6a8bb86cb3705e6"
+    },
+    {
+      "path": "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "gitObject": "a54597e5f94aaabf55c986062c3d304296b1c0c2"
+    },
+    {
+      "path": "db/migrations/20260725_submission_orchestrator_store_port.sql",
+      "gitObject": "67c852ac070f41567a931ea4a70b5fafcdb391ed"
+    },
+    {
+      "path": "db/migrations/20260725_users_signing_lockout_columns.sql",
+      "gitObject": "bf14942ee314bfe226a95bdc496d40dc5df59373"
+    },
+    {
+      "path": "db/migrations/20260727_authoring_object_permissions.sql",
+      "gitObject": "271c09fdb2aa305e7056b78994cb2c72706e22cd"
+    },
+    {
+      "path": "db/migrations/20260727_collab_document_state.sql",
+      "gitObject": "f7c4678c6b0674c63a3bca6882aa0720313da758"
+    },
+    {
+      "path": "db/migrations/20260727_drop_clinical_evidence_duplicate_lineage.sql",
+      "gitObject": "1c0a2dad95e707a86d46376c6cc2b377eeec332b"
+    },
+    {
+      "path": "db/migrations/20260727_drop_source_citations_phantom.sql",
+      "gitObject": "52685805b35659e98983fc78e6a13839ee683987"
+    },
+    {
+      "path": "db/migrations/20260727_industry_context_profiles.sql",
+      "gitObject": "1f0327572221f22371cb50432b4ada7ede8283b8"
+    },
+    {
+      "path": "db/migrations/20260727_prm_program_link.sql",
+      "gitObject": "740447b1251a6db8233a4bc2cfb9b345e2d0d95c"
+    },
+    {
+      "path": "db/migrations/20260727_unified_tasks_mdx_metadata.sql",
+      "gitObject": "abddd1ee33f884d834bd3a861a920d5c5f92e86a"
+    },
+    {
+      "path": "db/migrations/20260728_artifacts_table.sql",
+      "gitObject": "c46f10dc3711511290858408b3a591a78c3db3b8"
+    },
+    {
+      "path": "db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql",
+      "gitObject": "846a083b61e24e826d7adeade847bfc9d975f621"
+    },
+    {
+      "path": "db/migrations/20260728_stability_backing_tables.sql",
+      "gitObject": "cde5637b77a269d8fb550836712d50aef479db8f"
+    },
+    {
+      "path": "db/migrations/20260728_stability_tenant_isolation.sql",
+      "gitObject": "9cd60b304828d770fe8e9724e88699148aee257e"
+    },
+    {
+      "path": "db/migrations/20260730_authoring_comments_router_columns.sql",
+      "gitObject": "32c0f8c9643dcc68457b91076e4323f004211e8f"
+    },
+    {
+      "path": "db/migrations/20260730_authoring_runtime_ddl.sql",
+      "gitObject": "f2d82be9ab5805f32ea7d8909b4067c49244a2e5"
+    },
+    {
+      "path": "db/migrations/20260730_authoring_subsystem_schema.sql",
+      "gitObject": "6e7788f035a32b762a5301ddff9bf8c7f84514dc"
+    },
+    {
+      "path": "db/migrations/20260730_c2c_ana_actions_command_vocab.sql",
+      "gitObject": "8251c471c66efbe8b16b2499974a75827045e2b0"
+    },
+    {
+      "path": "db/migrations/20260730_cmc_change_control_store.sql",
+      "gitObject": "1261d53ab52695b99879b4d750cf439a758ccb48"
+    },
+    {
+      "path": "db/migrations/20260730_cmc_evidence_tables.sql",
+      "gitObject": "7864d24284e497d3dafc9bb0b99a008b56a784fb"
+    },
+    {
+      "path": "db/migrations/20260730_cmc_projects_reconstruction.sql",
+      "gitObject": "62ccb3350c0d94e1adc99029865ff76207739cb6"
+    },
+    {
+      "path": "db/migrations/20260730_ectd_compilations_leaf_manifest.sql",
+      "gitObject": "55bac7c74a305ced19ebd51f5aa9ad47c1ed1302"
+    },
+    {
+      "path": "db/migrations/20260730_ectd_compilations_sequence_columns.sql",
+      "gitObject": "f0e081bd2b59590271631409854ccb00017c26ed"
+    },
+    {
+      "path": "db/migrations/20260730_esign_audit_db_level_immutability.sql",
+      "gitObject": "fe6630710512e02e997a694f539b1a3309cd5a8a"
+    },
+    {
+      "path": "db/migrations/20260730_fix_atom_embedding_dimension.sql",
+      "gitObject": "fdc22811fdbd1184cf30f1c4a39cdad4d7117dc3"
+    },
+    {
+      "path": "db/migrations/20260730_fk_delete_policies_port.sql",
+      "gitObject": "d368aa94856de935a127f508b487b6dee728de76"
+    },
+    {
+      "path": "db/migrations/20260730_graphrag_knowledge_tables.sql",
+      "gitObject": "cf4ee7b4ce5be49bc4a37bb79f69583424b247ea"
+    },
+    {
+      "path": "db/migrations/20260730_licensing_ip_tables.sql",
+      "gitObject": "fcb46b34115ba86f3f6991f8f044a2a8857e9844"
+    },
+    {
+      "path": "db/migrations/20260730_manufacturing_processes_reconstruction.sql",
+      "gitObject": "20a892ea2eda776faf5e51584a083149b93b69f6"
+    },
+    {
+      "path": "db/migrations/20260730_orchestrator_run_ledger_hardening.sql",
+      "gitObject": "ec41d74d25a59722ffe1f1159bbef103a03fda7a"
+    },
+    {
+      "path": "db/migrations/20260730_project_milestones_reconciliation.sql",
+      "gitObject": "b4491ec342c688f86ee773bfd14459bea5bba7c9"
+    },
+    {
+      "path": "db/migrations/20260730_release_signature_uniqueness.sql",
+      "gitObject": "14e6322a668c8dceb1780327a74b47af63d55a08"
+    },
+    {
+      "path": "db/migrations/20260730_submission_center_tables.sql",
+      "gitObject": "1b4f64633b2bd8f1b0f27ec0b71f8f98ab2f3ba0"
+    },
+    {
+      "path": "db/migrations/20260731_retire_intelligence_cluster_blobs.sql",
+      "gitObject": "f49c8a1699b62ffd099ae19dd220d5ef006049c5"
+    },
+    {
+      "path": "db/migrations/20260801_atom_identity_existing_db_reconciliation.sql",
+      "gitObject": "66d649cb02046e1f8cf2bde7b24b0252c8bd1f9c"
+    },
+    {
+      "path": "db/migrations/20260801_consolidated_tree_reconciliation.sql",
+      "gitObject": "e3eaa0baa16b5780d81f79f1cc577f05c4e95fc1"
+    },
+    {
+      "path": "db/migrations/20260801_hf_files_store.sql",
+      "gitObject": "456cb2ca44fc6be4b794da87ef5bb889c34c6442"
+    },
+    {
+      "path": "db/migrations/20260801_labeling_pi_store.sql",
+      "gitObject": "b4396be51625a46cd908d690cfa0f6849e791da4"
+    },
+    {
+      "path": "db/migrations/20260801_market_access_store.sql",
+      "gitObject": "55976e635322afb683296d73d51e77cea7c79a3f"
+    },
+    {
+      "path": "db/migrations/20260801_program_journey_store.sql",
+      "gitObject": "94a0944c0b4aebd7ce65fb2d9c6f6c9481d4e1bb"
+    },
+    {
+      "path": "db/migrations/20260801_reg_change_store.sql",
+      "gitObject": "5e234aa68af92c1a15ed638e2c56df6504d3e224"
+    },
+    {
+      "path": "db/migrations/20260801_tenant_isolation_sweep.sql",
+      "gitObject": "f453e0014eb1d05956d34f6c4cc23f6822bbbe52"
+    },
+    {
+      "path": "db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql",
+      "gitObject": "9dcfc966ee48d3cdc539294ecaf6b7dc4be41f74"
+    },
+    {
+      "path": "db/migrations/20260803_document_span_lineage.sql",
+      "gitObject": "e35ba8961eb1d11c9cd2501432bdf3647162c8f0"
+    },
+    {
+      "path": "db/migrations/20260807_collab_section_locks.sql",
+      "gitObject": "45e83ecb9ba90ff48b2815935309c034a485f0e4"
+    },
+    {
+      "path": "db/migrations/20260807_task_graph_org_columns.sql",
+      "gitObject": "eb7d59d17410b579d22453aad1c27b7090b8f850"
+    },
+    {
+      "path": "db/migrations/20260807_unified_tasks_soft_delete.sql",
+      "gitObject": "a067b3fa81e82c6bf2cddd2d8e39e37a91046ff8"
+    },
+    {
+      "path": "db/migrations/20260809_source_attribution_draft_candidates.sql",
+      "gitObject": "81fcd2b2e3102e854fbb9f79c40eb93449c21cb2"
+    },
+    {
+      "path": "db/migrations/20260810_c2c_work_items_source_uniqueness.sql",
+      "gitObject": "1ed44935b9a5e5d80cde35808ff969aab5fd25b2"
+    },
+    {
+      "path": "db/migrations/20260810_reconcile_module_catalog.sql",
+      "gitObject": "fe277bd93a228f6f9395f29e41bc34f2efc4411b"
+    },
+    {
+      "path": "db/migrations/20260813_ai_gateway_audit_log.sql",
+      "gitObject": "f50fd9f95dd710691e4665dbf8f00dcacb749644"
+    },
+    {
+      "path": "db/migrations/20260813_audit_tamper_proof_log.sql",
+      "gitObject": "f9c71e7842e58608336e4fa4c2e3d9978966c5e1"
+    },
+    {
+      "path": "db/migrations/20260813_child_table_parent_scoped_rls.sql",
+      "gitObject": "3f08d36331a068950ba1276cba0b25347d919bc4"
+    },
+    {
+      "path": "db/migrations/20260813_knowledge_graph_tenant_keys.sql",
+      "gitObject": "c30a84863cb7ed1e65fb5346d83a06aa71693309"
+    },
+    {
+      "path": "db/migrations/20260817_doc_revisions_immutable_ledger.sql",
+      "gitObject": "1133caf39ea04b63b3b1c2db3f887fddea4cc3ec"
+    },
+    {
+      "path": "db/migrations/20260821_regulatory_twin_simulations_tenant_scope.sql",
+      "gitObject": "b248d78ea0a70b4763b7f6158f006d7c6ca85b9d"
+    },
+    {
+      "path": "db/migrations/20260821_uuid_org_guc_cast_heal.sql",
+      "gitObject": "2d54422d3e56d6740d28c1b0fd27e7fe00feff76"
+    },
+    {
+      "path": "db/migrations/20260823_fix_provision_org_modules_tier_ladder.sql",
+      "gitObject": "df0db9e433d95b6b8188e8d667e46315fa96118c"
+    },
+    {
+      "path": "db/migrations/20260823_module_catalog_commercial_packaging.sql",
+      "gitObject": "bbca70b18ea5f527d4ae145d85e68da76070ef2c"
+    },
+    {
+      "path": "db/migrations/20260823_module_catalog_customer_copy.sql",
+      "gitObject": "55c9f183c3e655ee45937727a392ade497273f9f"
+    },
+    {
+      "path": "db/migrations/20260823_module_catalog_mdx_registers.sql",
+      "gitObject": "2549f06520e7a0628725516fc9b03bedcb8e5876"
+    },
+    {
+      "path": "db/migrations/20260824_cmc_professional_tier.sql",
+      "gitObject": "3b351b6bf328f0a2a7b925c2dc495e13b8203381"
+    },
+    {
+      "path": "db/migrations/20260824_enforcement_mode_setting.sql",
+      "gitObject": "2d60582712bc25c1e70c4f1f014118525a5f29d8"
+    },
+    {
+      "path": "db/migrations/20260824_module_access_requests.sql",
+      "gitObject": "b28700c8dc33a09d1d7d38ef8bb60bad077165fc"
+    },
+    {
+      "path": "db/migrations/20260824_module_grant_expiry.sql",
+      "gitObject": "3db2fe4e271b9ed25149b8530814e40c06a72b5f"
+    },
+    {
+      "path": "db/migrations/20260828_align_written_columns_with_migrations.sql",
+      "gitObject": "bbd02ce73b262cf98b4936d07e7fd67537ec6758"
+    },
+    {
+      "path": "db/migrations/20260828_artifact_versions_updated_at.sql",
+      "gitObject": "7a6c6399faaf32feea4ce2a5e85788718bf781fc"
+    },
+    {
+      "path": "db/migrations/20260828_drop_orphaned_org_guc_policies.sql",
+      "gitObject": "5381cc7a6158df790ced40bd5191944067670b78"
+    },
+    {
+      "path": "db/migrations/20260828_ectd_compilations_submission_id.sql",
+      "gitObject": "43767f22b53f7fed529a0e82407b3bab0395336e"
+    },
+    {
+      "path": "db/migrations/20260828_fail_closed_insert_withcheck_policies.sql",
+      "gitObject": "1ae281f1ae88f7f39a6c1f3b5bc759cbeb668823"
+    },
+    {
+      "path": "db/migrations/20260828_fail_closed_org_coalesce_policies.sql",
+      "gitObject": "b404c2d6ffffc2234f090a2fdc460c284472a0be"
+    },
+    {
+      "path": "db/migrations/20260828_file_uploads_checksum.sql",
+      "gitObject": "9c91b02d2eeba57bf297ded77cb58623eeb1640d"
+    },
+    {
+      "path": "db/migrations/20260828_program_org_resolution_canonical.sql",
+      "gitObject": "2862a5629fad890c3d894ae4b81bc30dadda18a0"
+    },
+    {
+      "path": "db/migrations/20260830_reg_questions_response_doc.sql",
+      "gitObject": "b1b6d69f0dd3d14512e7647af165991548479da0"
+    },
+    {
+      "path": "db/migrations/20260901_cmc_container_closure_reference_standard_registers.sql",
+      "gitObject": "872158042cc6abf1b236922d580d7eb61b47ac23"
+    },
+    {
+      "path": "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "gitObject": "33c1ca8e8020fba170a830f3e9543d79eb621a0b"
+    },
+    {
+      "path": "db/migrations/20260902_clinical_ops_schema.sql",
+      "gitObject": "6c30e52411642e669244ca442cfc89d3d2be38bb"
+    },
+    {
+      "path": "db/migrations/20260902_cmc_impurity_dissolution_registers.sql",
+      "gitObject": "974034616fb1e604a07eb87124e6f7e31692c374"
+    },
+    {
+      "path": "db/migrations/20260902_manufacturing_responses.sql",
+      "gitObject": "7bf84d0d2f4c8374db2eb63b0a438636ecc38455"
+    },
+    {
+      "path": "db/migrations/20260903_cmc_impurity_route_of_administration.sql",
+      "gitObject": "c3320cc9d66491934902f8fbe7c4d54ff6402569"
+    },
+    {
+      "path": "db/migrations/20260903_cmc_manufacturing_characterization_registers.sql",
+      "gitObject": "0ffe185dad83e02b29a0de971f82a947f43172d2"
+    },
+    {
+      "path": "db/migrations/20260903_cmc_material_formulation_registers.sql",
+      "gitObject": "a29b553cf295f3523cfa789d37e404629ae4bec6"
+    },
+    {
+      "path": "db/migrations/20260905_gdpr_dsar_execution_evidence.sql",
+      "gitObject": "590ca149642461fc5db63570a4cf4468214e0f04"
+    },
+    {
+      "path": "db/migrations/20260906_cmc_formulation_development.sql",
+      "gitObject": "d97b83b2cc1497acf570a883c0942be95755f4b8"
+    },
+    {
+      "path": "db/migrations/20260906_cmc_impurity_m7_inputs.sql",
+      "gitObject": "c55256ead3aca41d8a66995e50413eee4b384c7c"
+    },
+    {
+      "path": "db/migrations/20260906_cmc_interview_sessions.sql",
+      "gitObject": "365751fae1972bebce19661b76276fb88f30ae36"
+    },
+    {
+      "path": "db/migrations/20260907_module_catalog_submission_orchestrator.sql",
+      "gitObject": "4c206eb311ad22da9290b7dd02bdbe6470242557"
+    },
+    {
+      "path": "db/migrations/20260907_qc_testing_batch_attribution.sql",
+      "gitObject": "089d78416bfa859f4366c4d4d92fe622fcfaa680"
+    },
+    {
+      "path": "db/migrations/20260910_contradiction_links_port.sql",
+      "gitObject": "706186dbd89615655d59f557de7ee377b7f8c802"
+    },
+    {
+      "path": "db/migrations/20260917_ana_runs.sql",
+      "gitObject": "ffb5ab7b99ea7432dd541eb23d8e800f852cb253"
+    },
+    {
+      "path": "db/migrations/20260919_c48_stage1_identity_org_bridge.sql",
+      "gitObject": "11142dc342f5aec800d863c163642f6fc76ebc96"
+    },
+    {
+      "path": "db/migrations/20260923_ectd_compilations_external_validation.sql",
+      "gitObject": "6854b74e1bb6587c54bf5070bb35586835603bcc"
+    },
+    {
+      "path": "db/migrations/20261001_collab_presence.sql",
+      "gitObject": "b02af9a480b329ea900ca3531d11c126bbd144e4"
+    },
+    {
+      "path": "db/migrations/_consolidated/0000_curious_vampiro.sql",
+      "gitObject": "2de36c1db3eca33992b8594ce8573eaea5349efb"
+    },
+    {
+      "path": "db/migrations/_consolidated/0001_breezy_clea.sql",
+      "gitObject": "a3cec82626a059712366d459a025a5c52e2a21ab"
+    },
+    {
+      "path": "db/migrations/_consolidated/0001_tenant_isolation.ts",
+      "gitObject": "136e78a86493109d4e82dad47fdd7d472669da3b"
+    },
+    {
+      "path": "db/migrations/_consolidated/0002_add_org_id_column.ts",
+      "gitObject": "a2d4f73701a9c8a414a94f249998337ac4561fce"
+    },
+    {
+      "path": "db/migrations/_consolidated/0002_add_organization_id.ts",
+      "gitObject": "11325747863c3fc70a1be7e4548416df3ef40bb8"
+    },
+    {
+      "path": "db/migrations/_consolidated/0003_enhance_document_chunks_metadata.sql",
+      "gitObject": "ddf0a5ba0346b89f865971c00914355865296dc7"
+    },
+    {
+      "path": "db/migrations/_consolidated/0003_setup_user_roles.ts",
+      "gitObject": "4cfe0a448b8fc91e44f7262d1f1737223a201059"
+    },
+    {
+      "path": "db/migrations/_consolidated/0004_add_tenant_indexes.ts",
+      "gitObject": "93e031f47fb593b73ce02febcd448e4ccd15384c"
+    },
+    {
+      "path": "db/migrations/_consolidated/001_analytical_methods_schema.sql",
+      "gitObject": "53e351157515ab1fe250621135a76382cd38fb59"
+    },
+    {
+      "path": "db/migrations/_consolidated/001_auth_security_tables.sql",
+      "gitObject": "4abae0bcca59d8eb09d800db7e4e892616cc75a9"
+    },
+    {
+      "path": "db/migrations/_consolidated/001_create_core_tables.sql",
+      "gitObject": "d79ea308797f9a8aa036ca7db509d8da76687dd5"
+    },
+    {
+      "path": "db/migrations/_consolidated/001_templates_table.sql",
+      "gitObject": "fcefcefa815ec793f7f23c66aa368b8f4d174950"
+    },
+    {
+      "path": "db/migrations/_consolidated/002_documents.sql",
+      "gitObject": "17c4b501dccc8fdb7d8555980771487d339bd893"
+    },
+    {
+      "path": "db/migrations/_consolidated/003_analytical_details.sql",
+      "gitObject": "9c333ac564e6a015cba6ec81a90230b3ae01778f"
+    },
+    {
+      "path": "db/migrations/_consolidated/003_versioning.sql",
+      "gitObject": "156d3d4aa9f82a242023374701b7d7462762d0fa"
+    },
+    {
+      "path": "db/migrations/_consolidated/004_fts.sql",
+      "gitObject": "815e8f90b79ae7d897d99bf93740ded3aaec0abf"
+    },
+    {
+      "path": "db/migrations/_consolidated/005_lock.sql",
+      "gitObject": "53a8e7f0cd0094fdb39cb1f7890200d51fb86b04"
+    },
+    {
+      "path": "db/migrations/_consolidated/006_analytical_guard.sql",
+      "gitObject": "fc48908eddf94de5c285cc8a8613ea52e7679b7e"
+    },
+    {
+      "path": "db/migrations/_consolidated/006_roles.sql",
+      "gitObject": "cc99d396afd18fef4d23c38b518ecb44ba8c0d6c"
+    },
+    {
+      "path": "db/migrations/_consolidated/007_dashboards.sql",
+      "gitObject": "f6120900bc91b6a20a17f2857e8fe11c98d15a9c"
+    },
+    {
+      "path": "db/migrations/_consolidated/007_guard_gaps_index.sql",
+      "gitObject": "5fb2a421b8899e2e8644d3f35892e2e2a7b975c9"
+    },
+    {
+      "path": "db/migrations/_consolidated/007_regulatory_validation_issues.sql",
+      "gitObject": "6c2d742773181b268b0be838ba6cbf5acfad86e2"
+    },
+    {
+      "path": "db/migrations/_consolidated/008_guard_tasks_index.sql",
+      "gitObject": "95ecbee2f1c75c1cf2be70859a88144efc041c76"
+    },
+    {
+      "path": "db/migrations/_consolidated/010_cmc_documents.sql",
+      "gitObject": "ad2a869cc54d2b861a9ffd94a8de9ed3b5ea4daf"
+    },
+    {
+      "path": "db/migrations/_consolidated/012_document_authoring_schema.sql",
+      "gitObject": "85346efec188c5f43390aae8cb34220d12d1099a"
+    },
+    {
+      "path": "db/migrations/_consolidated/20250108_add_versioning_audit_to_unified_documents.sql",
+      "gitObject": "4e18448d185aa1777c0fa074b63e1b903ab036e5"
+    },
+    {
+      "path": "db/migrations/_consolidated/20250108_unified_documents_complete_schema.sql",
+      "gitObject": "b6c6014224fbd749b2bd085e73ffaf7ae9a58641"
+    },
+    {
+      "path": "db/migrations/_consolidated/20250429_add_status_and_approvals.sql",
+      "gitObject": "398bf3e3eee5072a243887ce71d00006ad327972"
+    },
+    {
+      "path": "db/migrations/_consolidated/20250501-create-cer-jobs-table.sql",
+      "gitObject": "18a0026e1ded8763022783e8fc8db5161f3bb965"
+    },
+    {
+      "path": "db/migrations/_consolidated/20250512-create-maud-validations-table.sql",
+      "gitObject": "4f68c0af6d05a48aa0512d8842898e0a9465aa56"
+    },
+    {
+      "path": "db/migrations/_consolidated/20250512_literature_entries.sql",
+      "gitObject": "e76f6555af621e002d5ee34a9dc948bebe01fe55"
+    },
+    {
+      "path": "db/migrations/_consolidated/20250918_lumen_cortex.sql",
+      "gitObject": "9794bdeb8f5be92eb1372b65ef86b1d84b4177c2"
+    },
+    {
+      "path": "db/migrations/_consolidated/auth_schema.sql",
+      "gitObject": "46863a9fc407258d2c40d0ae6113079cc0a0de98"
+    },
+    {
+      "path": "db/migrations/_consolidated/create_cer_approvals_table.sql",
+      "gitObject": "585bf82974d62bf88db50c924df2efcd62a11520"
+    },
+    {
+      "path": "db/migrations/_consolidated/ind_wizard_schema.sql",
+      "gitObject": "d2ad41ca00c5aeca718b7d60691e9ffeb67d7866"
+    },
+    {
+      "path": "db/migrations/_consolidated/protocol_schema.sql",
+      "gitObject": "4196dba00b9b1f5c8dd7104f60418ec994460118"
+    },
+    {
+      "path": "db/migrations/_consolidated/regulatory_intelligence_schema.sql",
+      "gitObject": "30630266942acc01600dea4579ec3d3adc19f8be"
+    },
+    {
+      "path": "db/migrations/_legacy/003_gcc_prose_versioning.sql",
+      "gitObject": "2c3066293acb3baa29d0c2e4414165657251a84d"
+    },
+    {
+      "path": "db/migrations/_legacy/003_gcc_prose_versioning_verify.sql",
+      "gitObject": "9e166fd9190c58afadaffbba815cd81796484043"
+    },
+    {
+      "path": "db/migrations/_legacy/007_008_gcc_verify.sql",
+      "gitObject": "5a660863d2dfee9d2bfb00537094fb50c00f5269"
+    },
+    {
+      "path": "db/migrations/_legacy/007_gcc_heatmap_views.sql",
+      "gitObject": "bbec96e0b78c698e388c7d499b30159f26493c9a"
+    },
+    {
+      "path": "db/migrations/_legacy/007_gcc_shadow_run_groups.sql",
+      "gitObject": "775eadfdee62f015fea53f9a1ad429a128495e8c"
+    },
+    {
+      "path": "db/migrations/_legacy/008_gcc_snapshot_exports.sql",
+      "gitObject": "f7556fb8a74f351e62608d58bcf67e655051c116"
+    },
+    {
+      "path": "db/migrations/_legacy/008_gcc_submission_snapshots.sql",
+      "gitObject": "e1c6bc5daf5599fcf2dc3cddfa4c41a0ba74ef95"
+    },
+    {
+      "path": "db/migrations/_legacy/009_gcc_esign_and_submission_gate.sql",
+      "gitObject": "62a753cfc21ccf0a871bc402ce2c8bba69669105"
+    },
+    {
+      "path": "db/migrations/_legacy/009_process_core.sql",
+      "gitObject": "bbfc3e38df2fd796f552dad9f564b9e4cd15d35c"
+    },
+    {
+      "path": "db/migrations/_legacy/010_gcc_program_scoping_rls.sql",
+      "gitObject": "bf9a77bc43afa977ba5bc24c12c199313876cb67"
+    },
+    {
+      "path": "db/migrations/_legacy/010_process_design_ppq_cpv.sql",
+      "gitObject": "f5fbf81f1c1ad9bdb330f1fc73e77947996cd985"
+    },
+    {
+      "path": "db/migrations/_legacy/011_gcc_config_bundles.sql",
+      "gitObject": "e514411b997a650abbf7d4e1253fbab6b99bd50e"
+    },
+    {
+      "path": "db/migrations/_legacy/011_process_fmea_impact_doe.sql",
+      "gitObject": "fa2266f81448817a5b253c55dfd57b5e18928d20"
+    },
+    {
+      "path": "db/migrations/_legacy/012_gcc_retention_legal_hold.sql",
+      "gitObject": "5ba4f1454a7e1b0ad821ce6397863419d190043d"
+    },
+    {
+      "path": "db/migrations/_legacy/012_process_playbooks_layout.sql",
+      "gitObject": "a908fd7ece55a8f49679ca23dcbc8b5c8cb28075"
+    },
+    {
+      "path": "db/migrations/_legacy/013_documents_sections.sql",
+      "gitObject": "5388eb4414d9727cc091a19fc0fe775c99a020a8"
+    },
+    {
+      "path": "db/migrations/_legacy/013_gcc_drift_monitoring.sql",
+      "gitObject": "f91a281fc14c643e5e1de6b5255a5fc54d60ceef"
+    },
+    {
+      "path": "db/migrations/_legacy/014_gcc_regulatory_timeline.sql",
+      "gitObject": "a657e25083f968528c53ad596815442fd933fd0d"
+    },
+    {
+      "path": "db/migrations/_legacy/014_seed_cmc_documents.sql",
+      "gitObject": "1fd5c8d384e5ffabf463c2aa960244eaa4c29ba3"
+    },
+    {
+      "path": "db/migrations/_legacy/015_esign_cpvrules.sql",
+      "gitObject": "54f621dc7a04dba0e9ceeaaa571c4b8ab249bb92"
+    },
+    {
+      "path": "db/migrations/_legacy/015_gcc_submission_package.sql",
+      "gitObject": "6cf0489cd9e4b2e063ccc6876e387382ee84a627"
+    },
+    {
+      "path": "db/migrations/_legacy/029_strategy_step2.sql",
+      "gitObject": "22f0822c93a03efeeed0a4954f5be2a220fbfea0"
+    },
+    {
+      "path": "db/migrations/_legacy/031_gcc_enum_extensions_and_entity_utils.sql",
+      "gitObject": "2e1730fa5d66c06f1247dd3b33dabcd68d95c65d"
+    },
+    {
+      "path": "db/migrations/_legacy/031_stability_workflow.sql",
+      "gitObject": "89c37139f8b09e2ac023b0de35ce4cbbfeb2ed63"
+    },
+    {
+      "path": "db/migrations/_legacy/032_gcc_safety_signal_intelligence.sql",
+      "gitObject": "6e815760e9c28d6be8f8151ca1da12a38b826ba8"
+    },
+    {
+      "path": "db/migrations/_legacy/032_stability_assignments.sql",
+      "gitObject": "c69c4d0299a6e813ea585f4b6793b4663edd5631"
+    },
+    {
+      "path": "db/migrations/_legacy/033_gcc_cro_execution_intelligence.sql",
+      "gitObject": "ab47ecf0c9b165c33fd5764145e958c2dbdd0ff7"
+    },
+    {
+      "path": "db/migrations/_legacy/033_stability_tp_assignments.sql",
+      "gitObject": "22a0808b2e637ee604044d32f7e1f55503b30e24"
+    },
+    {
+      "path": "db/migrations/_legacy/034_gcc_intel_packs.sql",
+      "gitObject": "fed6f4bce18526e40131ae0d489c861a98378bdd"
+    },
+    {
+      "path": "db/migrations/_legacy/034_stability_samples.sql",
+      "gitObject": "7e79646ce421ca2cecef757a808fa909944f3913"
+    },
+    {
+      "path": "db/migrations/_legacy/035_gcc_entity_chain_events.sql",
+      "gitObject": "ea19dca519f44f907d65e7be3d4f6703c0a8181c"
+    },
+    {
+      "path": "db/migrations/_legacy/035_stability_sample_link_coc.sql",
+      "gitObject": "8053a3886e09c6da08e3814f041c63d80bb983ce"
+    },
+    {
+      "path": "db/migrations/_legacy/042_gcc_evidence_vault.sql",
+      "gitObject": "f41cb143f39ff95d8025687465097216f9e4c491"
+    },
+    {
+      "path": "db/migrations/_legacy/042_quality_base_tables.sql",
+      "gitObject": "9ebf3237ac949ccea21d7fc02dca914983cb7eeb"
+    },
+    {
+      "path": "db/migrations/_legacy/043_gcc_ectd_expanded_modules.sql",
+      "gitObject": "bc29d0cb6f507393a26d24f697f5ae56e8c65533"
+    },
+    {
+      "path": "db/migrations/_legacy/043_quality_step2_pro.sql",
+      "gitObject": "679cada923540d8acbf0d1218ec587b981e8de53"
+    },
+    {
+      "path": "db/migrations/_legacy/044_gcc_cognitive_fabric_rag.sql",
+      "gitObject": "0773a368acd95f1f499c7d818784070f4ca5f1ba"
+    },
+    {
+      "path": "db/migrations/_legacy/044_quality_step3.sql",
+      "gitObject": "26394e96f65a9b338a6ecf62a4b3e3304964064b"
+    },
+    {
+      "path": "db/migrations/_legacy/045_gcc_neuro_symbolic_knowledge_graph.sql",
+      "gitObject": "ee27b17f24c6d40a92913342398d2fc6ca02bad7"
+    },
+    {
+      "path": "db/migrations/_legacy/045_quality_step4.sql",
+      "gitObject": "d688ff62be8b5671859ecfac58ac8dfa0562aea7"
+    },
+    {
+      "path": "db/migrations/_legacy/045_quality_templates.sql",
+      "gitObject": "c1304d15d5d667e7aa063c2cbf14fe39a05ed957"
+    },
+    {
+      "path": "db/migrations/_legacy/046_gcc_multi_agent_council.sql",
+      "gitObject": "7091d76631c10475eb8073f0d57f2b47d75ce1b9"
+    },
+    {
+      "path": "db/migrations/_legacy/046_quality_step5.sql",
+      "gitObject": "a9cac40f45db4ee5e494703122ce3b0ff3593b77"
+    },
+    {
+      "path": "db/migrations/_legacy/060_gcc_glsos_enhancements.sql",
+      "gitObject": "123f2dcef502736b2eb10202ab800cd49ccc0898"
+    },
+    {
+      "path": "db/migrations/_legacy/060_regulatory_foundation.sql",
+      "gitObject": "d0560452df9e764e7f2f46411ac8668ea0f421cb"
+    },
+    {
+      "path": "db/migrations/_legacy/061_gcc_jsonb_indexes_and_constraints.sql",
+      "gitObject": "1d320eea38b5fe6042c74c82daac4420e0b607b3"
+    },
+    {
+      "path": "db/migrations/_legacy/061_regulatory_m3_builder.sql",
+      "gitObject": "842b8bf8d38f7a0f2f73173d2a211a37f336da81"
+    },
+    {
+      "path": "db/migrations/_legacy/062_gcc_schema_fixes.sql",
+      "gitObject": "8e61379df283d796ef901e71f3577ed3a1f5c524"
+    },
+    {
+      "path": "db/migrations/_legacy/062_reg_q12_autopilot.sql",
+      "gitObject": "713bb484cc90153d5e5eca9e2f910a18f6ed0f9d"
+    },
+    {
+      "path": "db/migrations/_legacy/063_gcc_cognitive_agent_runtime.sql",
+      "gitObject": "75968ecd443c59c7fea1269531b925da03fd1f6a"
+    },
+    {
+      "path": "db/migrations/_legacy/063_reg_questions_hub.sql",
+      "gitObject": "8bf3bd2fe109ca7494825b96830b1de656990936"
+    },
+    {
+      "path": "db/migrations/_legacy/071_gcc_rls_lumen_and_org_enforcement.sql",
+      "gitObject": "62a7389fd867a685d1bd8720bfa96b7c2896b7cf"
+    },
+    {
+      "path": "db/migrations/_legacy/071_portfolio.sql",
+      "gitObject": "4ddf057ef6873c27741375faba64092860b72dc6"
+    },
+    {
+      "path": "db/migrations/_legacy/073_cortex_prime_unified_brain.sql",
+      "gitObject": "ebcc3b2324f4fd7f88cfe290e34d5ebf93ab7ab1"
+    },
+    {
+      "path": "db/migrations/_legacy/079_gcc_unified_functions_views.sql",
+      "gitObject": "6c38baf08c98bd21b2a8e530b37663855e20aaec"
+    },
+    {
+      "path": "db/migrations/_legacy/20260128_concept2cure_foundation.sql",
+      "gitObject": "1070e0ea5309926262a9e5002aafe4c5394128fe"
+    },
+    {
+      "path": "db/migrations/_legacy/20260128_concept2cure_signatures.sql",
+      "gitObject": "21f355cedc80d5dfcdc65ff99a60b56261dd6736"
+    },
+    {
+      "path": "db/migrations/_legacy/20260128_concept2cure_wbs_assignments.sql",
+      "gitObject": "6bde89e3d1ecc18d5a975a9e078e1f58f609683f"
+    },
+    {
+      "path": "db/migrations/_legacy/20260129_add_org_industry_stripe_audit_logs.sql",
+      "gitObject": "7c1528af21bb7980d003e024b6e6e97ad65287a7"
+    },
+    {
+      "path": "db/migrations/_legacy/20260129_proof_audit_logs.sql",
+      "gitObject": "55f7a35891cf9fb4d0fc9627952869b6d791cf0e"
+    },
+    {
+      "path": "db/migrations/_legacy/20260209_create_pm_settings.sql",
+      "gitObject": "eaec5f800a8f23c0996ad016e0f8e042e78ada4e"
+    },
+    {
+      "path": "db/migrations/_legacy/20260216_enterprise_4pillar_expansion.sql",
+      "gitObject": "cd6d925c94567182ee847f093227c21ed3079df5"
+    },
+    {
+      "path": "db/migrations/_legacy/20260311_concept2cure_artifacts.sql",
+      "gitObject": "73595cfd6baedb7483d122573c31e2a65b1d7eee"
+    },
+    {
+      "path": "db/migrations/_legacy/20260311_concept2cure_provenance_events.sql",
+      "gitObject": "ae0be1a61571bc78aa5bbd95abf62629fb3761e0"
+    },
+    {
+      "path": "db/migrations/_legacy/20260313_concept2cure_submission_snapshots.sql",
+      "gitObject": "e11f8eab71bcf03157376ea3c752a13053b4544e"
+    },
+    {
+      "path": "db/migrations/_legacy/20260313_phase11_governed_workflow.sql",
+      "gitObject": "53a60c847e0ff4af3b3f6c7987b6151a70c5e9fb"
+    },
+    {
+      "path": "db/migrations/_legacy/20260319_billing_usage_budgets_alerts.sql",
+      "gitObject": "840bc7d352e33cb40000dad6eaf70d0fcd6a904d"
+    },
+    {
+      "path": "db/migrations/_legacy/20260402_supply_chain_tables.sql",
+      "gitObject": "cbbeab6dc57df5bd53198e0c7f40b0fe4fa20991"
+    },
+    {
+      "path": "db/migrations/_legacy/20260501_q_sub.sql",
+      "gitObject": "54e0f7972f69f67b180155de059a377a43fa5a4e"
+    },
+    {
+      "path": "db/migrations/_legacy/20260718_bla_assessments_store.sql",
+      "gitObject": "1cca86e8e7e6d3251fafdeeda2d83c00eeeffe1a"
+    },
+    {
+      "path": "db/migrations/_legacy/README.md",
+      "gitObject": "85ae478bcf92eedb016898a952f42962d817b103"
+    },
+    {
+      "path": "db/migrations/emergency_security_migration.sql",
+      "gitObject": "8b2bf7e6ce61e9868fba0ef8fabcd4889a64c726"
+    },
+    {
+      "path": "db/migrations/migrations_manifest.json",
+      "gitObject": "93b335b20287e87d8ea17102229abc13caebf19a"
+    },
+    {
+      "path": "migrations/.prefix-collisions-baseline.json",
+      "gitObject": "c10d233b8f1010f3519b8bfa79598b0d1d61db18"
+    },
+    {
+      "path": "migrations/0000_sweet_joseph.sql",
+      "gitObject": "6c62b62a4443432ab75abaac5c1f4319f4042603"
+    },
+    {
+      "path": "migrations/0001_phase13_full.sql",
+      "gitObject": "476fe8bbf86efb5ac675fe687be9ab1b37911d27"
+    },
+    {
+      "path": "migrations/0002_phase15_submission_ops.sql",
+      "gitObject": "4a4467737e4df16a078a464beac1ae4d4e15428a"
+    },
+    {
+      "path": "migrations/0003_billing_stripe.sql",
+      "gitObject": "ee2e63112fed06142d5cb007a16ab6e4d397a5f7"
+    },
+    {
+      "path": "migrations/0004_workflow_performance_indexes.sql",
+      "gitObject": "47a30d72955a6aa59f9dab58e96a38fb7a7e2f30"
+    },
+    {
+      "path": "migrations/0005_csr_knowledge_database.sql",
+      "gitObject": "0d87380579aa7e7f6d9c261fbdf571ba8c395aaf"
+    },
+    {
+      "path": "migrations/0006_regulatory_atoms.sql",
+      "gitObject": "e1053df8c4ecae10a3d2b7f2497add6b36d2614b"
+    },
+    {
+      "path": "migrations/0007_ctd_onboarding_pipeline.sql",
+      "gitObject": "67b078bcf34bf0707afbfd10b5afbde3db3914fd"
+    },
+    {
+      "path": "migrations/0007_gap_analysis_results.sql",
+      "gitObject": "d459211e3899f280e8dcec2d54136c159c626737"
+    },
+    {
+      "path": "migrations/0007_orchestration_phase3.sql",
+      "gitObject": "401b0f8f7fa71d9a9d1601267117306b77e8f4bf"
+    },
+    {
+      "path": "migrations/0007_support_admin.sql",
+      "gitObject": "77bd3d8cee68ea91f1fbff0e1f85cb29c97c94bd"
+    },
+    {
+      "path": "migrations/0007_tenant_isolation_fixes.sql",
+      "gitObject": "ba41be8b104be437b1d7d132e18e2d677a695cba"
+    },
+    {
+      "path": "migrations/0008_api_keys.sql",
+      "gitObject": "a80d821d13c6f8b50821ad042b76e2423469aaee"
+    },
+    {
+      "path": "migrations/0008_critical_fk_delete_policies.sql",
+      "gitObject": "5ee812d365fb3bf345848d76f4fb2f8432ed281a"
+    },
+    {
+      "path": "migrations/0008_ga_hardening.sql",
+      "gitObject": "1243c604f6a2c783cdfa3b5f473f9be7115994c7"
+    },
+    {
+      "path": "migrations/0009_email_otp_fields.sql",
+      "gitObject": "ff5924d17da8d97fdf2ac1a9b7e4c8418aef50f5"
+    },
+    {
+      "path": "migrations/0010_biostats_signal_engine.sql",
+      "gitObject": "538d80b389c1adb3b2ae92696ae6938cb4639bd0"
+    },
+    {
+      "path": "migrations/0011_ai_threads_title.sql",
+      "gitObject": "d8447049487ad9cdf6a870693e4de9b4388c2be6"
+    },
+    {
+      "path": "migrations/0011_governed_decision_transitions.sql",
+      "gitObject": "57a19ea70720be09180639da3eb076b1dc39a749"
+    },
+    {
+      "path": "migrations/0012_project_charter_timeline.sql",
+      "gitObject": "ef9cbd4fda2ce0b93b943afa3713978d875be1d6"
+    },
+    {
+      "path": "migrations/0013_ana_intelligence_system.sql",
+      "gitObject": "b61934abeccd35a90df1684d69677b4fa5f4a839"
+    },
+    {
+      "path": "migrations/0014_report_os_foundation.sql",
+      "gitObject": "d5e24635779c4e5e5497f595ce4218e3dc5e1eff"
+    },
+    {
+      "path": "migrations/0015_document_artifact_bridge.sql",
+      "gitObject": "69d665dfe8cb9463046e6f3dbe3f9ef2796085f3"
+    },
+    {
+      "path": "migrations/0016_module3_workflow_convergence.sql",
+      "gitObject": "b8c91a875450fe384bf6806bd578b995ef679540"
+    },
+    {
+      "path": "migrations/0017_module3_project_id_fix.sql",
+      "gitObject": "787e7d744d3de686c986a4146017d0ca4b64d63c"
+    },
+    {
+      "path": "migrations/0018_submission_orchestrator.sql",
+      "gitObject": "2bb47808f1092664baba95b0eb8f5bef8ad1d416"
+    },
+    {
+      "path": "migrations/0019_tenant_column_audit.sql",
+      "gitObject": "e0f3c89f8b0e0d22a8c6b3d2268fdc1fdaefa25e"
+    },
+    {
+      "path": "migrations/001_create_ivdr_tables.sql",
+      "gitObject": "96a95176aac38f34b8fa8068e9db7468da2948da"
+    },
+    {
+      "path": "migrations/0020_coerce_text_tenant_columns.sql",
+      "gitObject": "1affef893dca25be70db2ca6c8d1b94dd10020d5"
+    },
+    {
+      "path": "migrations/0021_enable_rls_everywhere.sql",
+      "gitObject": "545c16ff452a4aa733ed6577ce2fe89d49470da7"
+    },
+    {
+      "path": "migrations/20260327_data_lineage_tracking.sql",
+      "gitObject": "932ca0662b40f0eb9a57493c9eb00013558f2d95"
+    },
+    {
+      "path": "migrations/20260331_performance_indexes.sql",
+      "gitObject": "44b6598fa4a4cba2405a720cc002ee52ae81076a"
+    },
+    {
+      "path": "migrations/20260429_ai_ml_pccp.sql",
+      "gitObject": "3d11bbf59c89b1d3d3b1a15c70365c3d6814d089"
+    },
+    {
+      "path": "migrations/20260429_evidence_sufficiency.sql",
+      "gitObject": "9029197108cb25b114d44fad22ce81c7e99aa79a"
+    },
+    {
+      "path": "migrations/20260429_gspr_postmarket.sql",
+      "gitObject": "06b0bc3dd7904d623c4fd958b005e20e51447227"
+    },
+    {
+      "path": "migrations/20260429_regulatory_graph.sql",
+      "gitObject": "566f6a2fc65ca404a0d61536219cb3936bacca42"
+    },
+    {
+      "path": "migrations/20260429_reviewer_simulation.sql",
+      "gitObject": "2923add1a34ad0ccde4e0315ddb1d884bffb8e3e"
+    },
+    {
+      "path": "migrations/20260501_q_sub.sql",
+      "gitObject": "ee6f802ed8ab212eecaca0a72761c0ac002a02ef"
+    },
+    {
+      "path": "migrations/20260504_capa_mdr.sql",
+      "gitObject": "79657f6a534e12869e9c671c8108aea6ae29b767"
+    },
+    {
+      "path": "migrations/20260505_saved_precedent_queries.sql",
+      "gitObject": "ef6d69bf510a0732864b09232553084dd71a891f"
+    },
+    {
+      "path": "migrations/20260506_kit_section_draft_provenance.sql",
+      "gitObject": "8dab5e9b413a1edaff301caa033b4d2ccb4c4d71"
+    },
+    {
+      "path": "migrations/20260507_mdx_beta_surfaces.sql",
+      "gitObject": "b8462953cb2deeab4d54516dda4122452df8e8a6"
+    },
+    {
+      "path": "migrations/20260508_ivd_diagnostic_surfaces.sql",
+      "gitObject": "40238a02847c3fc54f833498f345af3d9aa20a4e"
+    },
+    {
+      "path": "migrations/20260508_preclinical_provenance.sql",
+      "gitObject": "95cfdbe402c463bd3edc20d390661e74128b9cd5"
+    },
+    {
+      "path": "migrations/20260509_submission_gateways.sql",
+      "gitObject": "96478c1b526c9c71c03d29a8f42ed93d5dc9c160"
+    },
+    {
+      "path": "migrations/20260510_notifications_and_clinical.sql",
+      "gitObject": "1f9627a1bc9172d38f320fa27973ad072202290e"
+    },
+    {
+      "path": "migrations/20260511_qms_and_labeling.sql",
+      "gitObject": "223c511e0c837e22456c51777700cc3f8b51c3b5"
+    },
+    {
+      "path": "migrations/20260512_legacy_imports.sql",
+      "gitObject": "90ace0fb208b4be50b14a79ad4073b5289875168"
+    },
+    {
+      "path": "migrations/20260520_pdev_workflow_activities.sql",
+      "gitObject": "d8cb7ff1b979f8c75a9de21ced8418d883e180b2"
+    },
+    {
+      "path": "migrations/20260521_org_lifecycle_state.sql",
+      "gitObject": "f8ec28ee62e9e12dba35f4b7c89f964bf8ba40fe"
+    },
+    {
+      "path": "migrations/20260524_c2c_blockers.sql",
+      "gitObject": "de0eeabe06120243421cc9e918e965887edeaaf6"
+    },
+    {
+      "path": "migrations/20260524_contradiction_engine_schema.sql",
+      "gitObject": "ad667346ba9b71c9146199fc3b13de78298308a0"
+    },
+    {
+      "path": "migrations/20260524_program_workbench_schema.sql",
+      "gitObject": "8f9df8784a9d5b456aff0177c5a4a78f741b56d8"
+    },
+    {
+      "path": "migrations/20260525_audit_logs_updated_at.sql",
+      "gitObject": "935a6a7835349fc44f22d847fd5a9c606ca5183e"
+    },
+    {
+      "path": "migrations/20260527_concept2cure_project_links.sql",
+      "gitObject": "aac0275222d4ac5e4fd895d1a9e555cb91f26cac"
+    },
+    {
+      "path": "migrations/20260527_mutation_primitives.sql",
+      "gitObject": "9a7d01735b3c314b39a8eee23a6e19d131e3545c"
+    },
+    {
+      "path": "migrations/20260528_phase9_document_schema.sql",
+      "gitObject": "85f29de0ea71e9450066acdeec8ada24f2349520"
+    },
+    {
+      "path": "migrations/20260529_phase10_schema.sql",
+      "gitObject": "a487e596ddc0760c1b88f0127a8cd32a65ff3973"
+    },
+    {
+      "path": "migrations/20260529_phase11_intelligence.sql",
+      "gitObject": "c4e79ea5b295cc2ac916bd45013d43df5a43e270"
+    },
+    {
+      "path": "migrations/20260529_phase9_backfill.sql",
+      "gitObject": "24343a8cfd60c757a3f1648a1f0a7eb700dcdf05"
+    },
+    {
+      "path": "migrations/20260530_csr_reports_nct_id.sql",
+      "gitObject": "3530a75d540d38a47cfd165f57ab6305eb7406f9"
+    },
+    {
+      "path": "migrations/20260531_template_specs.sql",
+      "gitObject": "274b10863855f805ba594ce602b3582edfbc9b59"
+    },
+    {
+      "path": "migrations/20260601_chat_message_metadata.sql",
+      "gitObject": "322483f5968b1121ee24b052d4e25c405cb83d41"
+    },
+    {
+      "path": "migrations/20260602_working_memory_embeddings.sql",
+      "gitObject": "92574fe207823f0a7fb290ddff58d164ea811756"
+    },
+    {
+      "path": "migrations/20260603_ai_capability_governance.sql",
+      "gitObject": "2667b4ec06244f022ad5b55dbb92e24107cf65b8"
+    },
+    {
+      "path": "migrations/20260603_commitments.sql",
+      "gitObject": "e7e8c9412e2198e65b8b06ca09a89e4664c4b187"
+    },
+    {
+      "path": "migrations/20260603_governance_permission_grants.sql",
+      "gitObject": "76995f5754ce940fb7bca6b48dac3f4c444d5b02"
+    },
+    {
+      "path": "migrations/20260603_living_record_program_link.sql",
+      "gitObject": "49d04a25d6547a7d5e6c277631be0c15eea1623e"
+    },
+    {
+      "path": "migrations/20260603_living_record_spine.sql",
+      "gitObject": "042237aeb7e54cc5f16fc5fa900c13d9a30874f3"
+    },
+    {
+      "path": "migrations/20260603_project_retrieval_mode.sql",
+      "gitObject": "2bd09308f4f1863cd192783ae1d33b4881687604"
+    },
+    {
+      "path": "migrations/20260603_pv_operational.sql",
+      "gitObject": "2abe4771cf2f66fab69e54cbb3242a1ea28c538e"
+    },
+    {
+      "path": "migrations/20260604_bla_workbench.sql",
+      "gitObject": "626b8b9b3c912d378c55d8b2f2a9a242548df20b"
+    },
+    {
+      "path": "migrations/20260604_evidence_graph_and_embeddings.sql",
+      "gitObject": "ba8492e6d0ab98ba76761187914f42a1d127dc3b"
+    },
+    {
+      "path": "migrations/20260604_shadow_review.sql",
+      "gitObject": "427d7dc5bdc23570881c90d03d38e271c11730c6"
+    },
+    {
+      "path": "migrations/20260604_study_twins.sql",
+      "gitObject": "362d400f56e91731844834c907ec97d306689c85"
+    },
+    {
+      "path": "migrations/20260604_submission_core_canonical.sql",
+      "gitObject": "442604f84c961f293671ddcc7fdfdccf953be887"
+    },
+    {
+      "path": "migrations/20260605_consistency_findings.sql",
+      "gitObject": "b3ecc2734e823afcdf7d0342dda13de8e1097643"
+    },
+    {
+      "path": "migrations/20260608_ai_placement_policies.sql",
+      "gitObject": "ed4914081193f0086cb6c962cb6d1a9dc22cf7b1"
+    },
+    {
+      "path": "migrations/20260608_submission_leaf_document_type.sql",
+      "gitObject": "61d38df3ef6eeb05be1f9c7f1ec976aca2234a88"
+    },
+    {
+      "path": "migrations/20260608_vault_retention.sql",
+      "gitObject": "69e843df4a61a0be18f956a5957099aa4c10dd15"
+    },
+    {
+      "path": "migrations/20260609_audit_hmac_seal.sql",
+      "gitObject": "e776cecbf582931098ea894c0436f313e786b5b9"
+    },
+    {
+      "path": "migrations/20260609_ind_master_data.sql",
+      "gitObject": "3f24c5edf7f760f82468c8f98275477267418ceb"
+    },
+    {
+      "path": "migrations/20260610_controlled_substances.sql",
+      "gitObject": "3ae9ccdb9d13de7ec4bd1983ee07ab459c8dd3c8"
+    },
+    {
+      "path": "migrations/20260610_egrants.sql",
+      "gitObject": "aeb4061eea0600326babc344639a80de7521b180"
+    },
+    {
+      "path": "migrations/20260610_etmf.sql",
+      "gitObject": "56abd71e8cdfeb010e0c9ef31bae584e343301d9"
+    },
+    {
+      "path": "migrations/20260610_financial_disclosure_21cfr54.sql",
+      "gitObject": "84605061395733e3a6162f710a45e85f83743d40"
+    },
+    {
+      "path": "migrations/20260610_ha_interactions_commitments.sql",
+      "gitObject": "af7980fd5690eb8a10dd4635822dfd199eedb194"
+    },
+    {
+      "path": "migrations/20260610_iacuc_animal_governance.sql",
+      "gitObject": "c40ea420191f1c132a6bd0d42740a9bad27ff2be"
+    },
+    {
+      "path": "migrations/20260610_ibc_biosafety.sql",
+      "gitObject": "6b61193f528581527f8609423c43242c172f1057"
+    },
+    {
+      "path": "migrations/20260610_ind_dispatch_snapshots.sql",
+      "gitObject": "7140c83946851de11b5a83e78f3dad3d5e4e0ee5"
+    },
+    {
+      "path": "migrations/20260610_inspection_readiness.sql",
+      "gitObject": "2ec03e402a089803165d0398386e0c457577502c"
+    },
+    {
+      "path": "migrations/20260610_irb_submissions.sql",
+      "gitObject": "c4de08d19728809a18efa8ccf437cd901299bb54"
+    },
+    {
+      "path": "migrations/20260610_ivd_assessments.sql",
+      "gitObject": "a2c74f976203467ad24f4c96358d278be56c46b0"
+    },
+    {
+      "path": "migrations/20260610_lifecycle_obligations.sql",
+      "gitObject": "b2d63de318f218881db374707c7cbc42f0749d0f"
+    },
+    {
+      "path": "migrations/20260610_nonclinical_send.sql",
+      "gitObject": "92dc1c9d052f33c5dc150a578c3d4af27c9f30a3"
+    },
+    {
+      "path": "migrations/20260610_rim_lite.sql",
+      "gitObject": "bbaa9041709e938ff4f9e24ce08c5931e6f449e0"
+    },
+    {
+      "path": "migrations/20260610_veeva_vault_links.sql",
+      "gitObject": "1cfcb0e86fa4cefde07fcddd34cdce4122ad3bd3"
+    },
+    {
+      "path": "migrations/20260611_drop_charter_staging_tables.sql",
+      "gitObject": "5f0de22af1469ee58bfa98e059111ecbb8f69bff"
+    },
+    {
+      "path": "migrations/20260611_effort_certification.sql",
+      "gitObject": "ce85fe037eb79740396e3cb0fccf1d72afed10a7"
+    },
+    {
+      "path": "migrations/20260611_research_compliance.sql",
+      "gitObject": "fc977c794e31e662fc5c045b19f58990365f326b"
+    },
+    {
+      "path": "migrations/20260611_research_security.sql",
+      "gitObject": "5380867aeec386d7526ffa46ba4dfcc8df151381"
+    },
+    {
+      "path": "migrations/20260612_ana_relational_external_intel.sql",
+      "gitObject": "f289eaea9f33b9aa4de6ff88a4620dad6179b956"
+    },
+    {
+      "path": "migrations/20260612_grant_budget.sql",
+      "gitObject": "3d465d68e3cb0cb99cd29d74bc9ee5fdeb4abd5b"
+    },
+    {
+      "path": "migrations/20260612_grant_closeout.sql",
+      "gitObject": "89afde61d554d2a930395a763299eb985613b541"
+    },
+    {
+      "path": "migrations/20260612_grant_costshare_nce.sql",
+      "gitObject": "71df7e9a98e458480e221b467531f60b41d4af1c"
+    },
+    {
+      "path": "migrations/20260612_grant_subawards.sql",
+      "gitObject": "8d8318bb26ee40040cad4668d447697304ab90e4"
+    },
+    {
+      "path": "migrations/20260612_rls_research_admin.sql",
+      "gitObject": "38828d40626c6a3d39e0523b3ede9402c792dc46"
+    },
+    {
+      "path": "migrations/20260614_ind_cross_references.sql",
+      "gitObject": "b1c03845cb0ed14e5079a353fe61aefdc2a5170b"
+    },
+    {
+      "path": "migrations/20260614_ind_safety_reports.sql",
+      "gitObject": "fc27fd6d56234584a3ac9edf1457cc6b78f6683d"
+    },
+    {
+      "path": "migrations/20260615_ind_amendments.sql",
+      "gitObject": "b30d2f0f7b47bcdca2fb6b6e87d5c82e15b26fc1"
+    },
+    {
+      "path": "migrations/20260615_ind_annual_reports.sql",
+      "gitObject": "c4f21baebdd3d753e1f185d5b91d252bb5de0214"
+    },
+    {
+      "path": "migrations/20260615_ind_icsr_transmissions.sql",
+      "gitObject": "2e348aacced5c08e51e5ac85b999baa9c37c8325"
+    },
+    {
+      "path": "migrations/20260615_regulatory_assessments.sql",
+      "gitObject": "d8684800e84c2d666a69d37fafef19f6c06f9338"
+    },
+    {
+      "path": "migrations/20260615_report_subscriptions.sql",
+      "gitObject": "6303fc367f399a8078ba9a948fb4dd7b085912cc"
+    },
+    {
+      "path": "migrations/20260615_tmf_artifact_filings.sql",
+      "gitObject": "ebb008187decfbfac6ea3a27eff82c857e87e63d"
+    },
+    {
+      "path": "migrations/20260616_drop_unused_cdisc_reference_tables.sql",
+      "gitObject": "fb133dc3eccba08582a17b9449d5db734b0cfa2b"
+    },
+    {
+      "path": "migrations/20260617_ai_provider_preference.sql",
+      "gitObject": "7561270118530976a28068c83bbfea6ccfc3a18b"
+    },
+    {
+      "path": "migrations/20260618_coverage_analysis.sql",
+      "gitObject": "757c5bd88372265bc7f488e77ddab40b33c1264b"
+    },
+    {
+      "path": "migrations/20260619_research_committees.sql",
+      "gitObject": "cba3197fef11de87ffaeef5fc8df6f05f71eeed7"
+    },
+    {
+      "path": "migrations/20260620_grant_funding_profiles.sql",
+      "gitObject": "9b845438f8a5905980742434acb704ef6f5333ab"
+    },
+    {
+      "path": "migrations/20260621_protocol_development.sql",
+      "gitObject": "58e8f764e33cde65391926a97b60283edbc547d3"
+    },
+    {
+      "path": "migrations/20260622_protocol_risks.sql",
+      "gitObject": "ebb79f369d536338748d842c878457345dbbf50c"
+    },
+    {
+      "path": "migrations/20260628_csr_job_state.sql",
+      "gitObject": "764b1457a5a96638a21885dc2bdaa246c542c0b8"
+    },
+    {
+      "path": "migrations/20260629_charter_tables_rebuild.sql",
+      "gitObject": "96a9deecde4451dce4e1b943c30fcaa5d614e1ad"
+    },
+    {
+      "path": "migrations/20260629_orchestrator_awaiting_async_status.sql",
+      "gitObject": "7ccd948bceacf2631b2254d1771f4b94bb600f3a"
+    },
+    {
+      "path": "migrations/20260629_orchestrator_awaiting_signature_status.sql",
+      "gitObject": "66d7ee174855a1864d1c1f16ec2c8dc418202032"
+    },
+    {
+      "path": "migrations/20260629_orchestrator_region_check_alignment.sql",
+      "gitObject": "1bbf4fccaf432a1f8fe9fc5fb6b9d78ed1d629bb"
+    },
+    {
+      "path": "migrations/20260629_orchestrator_submission_id_fk.sql",
+      "gitObject": "fad4081a06f7b46a6e8228b570a84af9de836081"
+    },
+    {
+      "path": "migrations/20260629_orchestrator_tenant_scope.sql",
+      "gitObject": "76d817d2b45378f139482ef63a4a524293d4c2ed"
+    },
+    {
+      "path": "migrations/20260629_protocol_amendments.sql",
+      "gitObject": "7771871514d5b8c71fa207a525ef74ec3ee8f04c"
+    },
+    {
+      "path": "migrations/20260629_protocol_consent.sql",
+      "gitObject": "a024455a69ab7988ed54a201b87ea1a01cf4ba9f"
+    },
+    {
+      "path": "migrations/20260629_protocol_deviations.sql",
+      "gitObject": "e42735f12c6f2a87bcc909fbb8dc3c3a97b1c82e"
+    },
+    {
+      "path": "migrations/20260629_protocol_reviews.sql",
+      "gitObject": "568e45a228c763ef1cc6f41d30507453e2d5984c"
+    },
+    {
+      "path": "migrations/20260629_rbm_surfaces.sql",
+      "gitObject": "77e1bee9aadd1281a4e05d34540b0a3646484625"
+    },
+    {
+      "path": "migrations/20260629_submission_transmittals_active_lock.sql",
+      "gitObject": "baaaad5f100b5aeb6c86d2d36fcd48980a4c92a6"
+    },
+    {
+      "path": "migrations/20260629_submission_transmittals_mdn_raw.sql",
+      "gitObject": "eec7ce341d078372580491e7bcdb26b48a18e664"
+    },
+    {
+      "path": "migrations/20260629_translation_platform.sql",
+      "gitObject": "b853809fd9ab4e17b460ea9bc0479162de95c31c"
+    },
+    {
+      "path": "migrations/20260630_protocol_milestones.sql",
+      "gitObject": "ca64ac82b39ac19bc493ebcabd5d584969ef3499"
+    },
+    {
+      "path": "migrations/20260630_protocol_templates.sql",
+      "gitObject": "32aabaa247d730e8bedd01a76cd6585bce5cee1e"
+    },
+    {
+      "path": "migrations/20260630_rbm_kri_values.sql",
+      "gitObject": "a585af607e627a3ad3abced387b7ace46b216d35"
+    },
+    {
+      "path": "migrations/20260701_protocol_soa.sql",
+      "gitObject": "aaf20b01b6bb6cb2aa63f00866884201aa10b8cb"
+    },
+    {
+      "path": "migrations/20260701_rbm_patient_profiles.sql",
+      "gitObject": "8755dc0477b73a88d6e088aa284f85ac796a12cd"
+    },
+    {
+      "path": "migrations/20260702_protocol_budget.sql",
+      "gitObject": "d8c1056ff2230a7194981f9e2377b8b8478437a2"
+    },
+    {
+      "path": "migrations/20260702_usage_model_credit_ledger.sql",
+      "gitObject": "674e31e4ba3cd92e4923d2916a13b4d42cd1a30f"
+    },
+    {
+      "path": "migrations/20260703_dmsp.sql",
+      "gitObject": "d3fa567ab76d7a3d70e2cdffb62e85e67d3946f7"
+    },
+    {
+      "path": "migrations/20260704_biosketch.sql",
+      "gitObject": "fec4613930c1785a508fb39ff76525a078931ff3"
+    },
+    {
+      "path": "migrations/20260704_other_support.sql",
+      "gitObject": "1df25cc5e6a597e23bfe3bcb2d1cb49f8beaa414"
+    },
+    {
+      "path": "migrations/20260705_export_control.sql",
+      "gitObject": "7fe94856ceefc249409b189695b3ff8c97efd607"
+    },
+    {
+      "path": "migrations/20260705_invention_disclosure.sql",
+      "gitObject": "e10394d0d58c77c332a947288cd329e89714ee7c"
+    },
+    {
+      "path": "migrations/20260705_research_agreements.sql",
+      "gitObject": "be13d15ca08fd62ef1e2886410c34271dec4baa3"
+    },
+    {
+      "path": "migrations/20260706_org_user_persona.sql",
+      "gitObject": "4fefca6df5c6a4a3c8077444b5ac069b72a0209b"
+    },
+    {
+      "path": "migrations/20260706_report_definitions.sql",
+      "gitObject": "b69a90f8de090c4f591aa2dcbf0112cbb4a511b0"
+    },
+    {
+      "path": "migrations/20260716_template_doc_types.sql",
+      "gitObject": "38cfd54e8ee50ec04d12565bd1387f5f78ee6cb8"
+    },
+    {
+      "path": "migrations/20260724_ana_deep_investigations.sql",
+      "gitObject": "ee7f1ace1359a0ab8ae4a9c1b3c72ca9f0b6651d"
+    },
+    {
+      "path": "migrations/20260724_lumen_council_provisioning.sql",
+      "gitObject": "e3ac2d7c83df1756bf9c6bc09d095956030e890b"
+    },
+    {
+      "path": "migrations/20260726_authoring_citation_source_usage.sql",
+      "gitObject": "b26731a77be046488fe14c14d8b8662d06be2b5a"
+    },
+    {
+      "path": "migrations/20260726_cre_source_program_scope.sql",
+      "gitObject": "af433f1a3c32dff13cb41621f38568e1448b0e20"
+    },
+    {
+      "path": "migrations/20260726_file_uploads_tenancy.sql",
+      "gitObject": "2344ed93862d89b760d0327e6a5953f7ef21b8e6"
+    },
+    {
+      "path": "migrations/20260726_rbm_metric_ingestion.sql",
+      "gitObject": "eb7e45927d69e60ee5804256e7accf01704a52ad"
+    },
+    {
+      "path": "migrations/20260726_rbm_not_evaluated_backfill.sql",
+      "gitObject": "155ecc09038ee30a281dccc38a7ba7e6280ecc9b"
+    },
+    {
+      "path": "migrations/20260727_authoring_document_program_scope.sql",
+      "gitObject": "852a04d212bbd1e3e388c074f43470c947215ddb"
+    },
+    {
+      "path": "migrations/20260727_onboarding_proposal_runs.sql",
+      "gitObject": "31b2c56ed421ccddd91d5fe8a598be92db483a2d"
+    },
+    {
+      "path": "migrations/20260728_authoring_comments_threading.sql",
+      "gitObject": "dde2cc84e949820f6333a6276faf044dc54a6133"
+    },
+    {
+      "path": "migrations/20260728_authoring_document_governed_binding.sql",
+      "gitObject": "eb5ac532442c15008befd68cbc2604b9a17d7e7a"
+    },
+    {
+      "path": "migrations/20260728_authoring_reviews.sql",
+      "gitObject": "613a455d32a56f2fecb6ce0cf4d129b2bcecbcde"
+    },
+    {
+      "path": "migrations/20260728_c2c_document_sections_timestamps.sql",
+      "gitObject": "a936230318317f01be7ae8998c2d50a689bdf8fa"
+    },
+    {
+      "path": "migrations/20260728_c2c_section_version_author_kind.sql",
+      "gitObject": "2824c24909b77b4646981c6678d54e043a4b3296"
+    },
+    {
+      "path": "migrations/20260728_chat_thread_store.sql",
+      "gitObject": "af746a4bab599a9ca73b422576617fa6f913247f"
+    },
+    {
+      "path": "migrations/20260728_cmc_module3_org_scoped_uniqueness.sql",
+      "gitObject": "54ada6e47b8d3749adde161e1d38167621871187"
+    },
+    {
+      "path": "migrations/20260729_unified_documents_provision.sql",
+      "gitObject": "d57b7cb6b92ff90204c76a7badfb0e46c6231123"
+    },
+    {
+      "path": "migrations/20260729b_unified_workflow_companion_tables.sql",
+      "gitObject": "e384395e94baf3ed68faac1af453ce4df8d9f3a9"
+    },
+    {
+      "path": "migrations/20260730_estar_registration.sql",
+      "gitObject": "ca69d8d46e3731fe3f6a79fb5b5b8bbb905ac284"
+    },
+    {
+      "path": "migrations/20260730_estar_submission.sql",
+      "gitObject": "31bfc1609d3551486c3ad50de8baa88a955cdb07"
+    },
+    {
+      "path": "migrations/20260730_estar_submission_project_link.sql",
+      "gitObject": "4839e507267d3e4fe3563226eb06b6ecf0d60986"
+    },
+    {
+      "path": "migrations/20260730_work_item_source_ref.sql",
+      "gitObject": "8b44c0463054828d0ca2645bd2ddfa0582303f6e"
+    },
+    {
+      "path": "migrations/20260730_workflow_doc_versions_org_id.sql",
+      "gitObject": "bb354f5f6f1609e6f5d173e56900fb4891144d2d"
+    },
+    {
+      "path": "migrations/20260731_workflow_doc_versions_org_not_null.sql",
+      "gitObject": "e58c8635d81b84b538900c16744f7e9267c65a08"
+    },
+    {
+      "path": "migrations/20260731c_canonical_documents.sql",
+      "gitObject": "15a0cb22e253d37fe99237b44c8643c2628dbfeb"
+    },
+    {
+      "path": "migrations/20260804_phase9_rule_pack_outlines.sql",
+      "gitObject": "d18a588633ba83a3b2f43f1c9342f5acef342566"
+    },
+    {
+      "path": "migrations/20260806_cta_ema_ctr536_outline.sql",
+      "gitObject": "5d793caa116313fbf66d422e5ef4f0b3867f7f3a"
+    },
+    {
+      "path": "migrations/20260806b_anda_ide_filing_types.sql",
+      "gitObject": "3cb97436346107525f64231d345709819ee5ca43"
+    },
+    {
+      "path": "migrations/20260810_pma_fda_814_20_outline.sql",
+      "gitObject": "4f14986ada14a2e5142efddc3473fcb093c06839"
+    },
+    {
+      "path": "migrations/20260810b_eu_mdr_ivdr_outlines.sql",
+      "gitObject": "9dadf5bd0d7fbb718beb256a9a6047c478807e5e"
+    },
+    {
+      "path": "migrations/20260810c_rule_pack_provenance.sql",
+      "gitObject": "2df5b4b07b0fffda77029ffc12259f59cf2b0721"
+    },
+    {
+      "path": "migrations/20260810d_rule_pack_review_attribution.sql",
+      "gitObject": "4b08b381f5be4e5f78e3c3b5f2b7e00dbf4aefc0"
+    },
+    {
+      "path": "migrations/20260813_tenant_offboarding_lifecycle.sql",
+      "gitObject": "69ea347b3dfcaa56681f3d06240f105911568c81"
+    },
+    {
+      "path": "migrations/20260813b_tenant_export_receipts.sql",
+      "gitObject": "218c20a49b1a723f10002fd559e650fd53b862b2"
+    },
+    {
+      "path": "migrations/20260813c2_electronic_signatures_tenant_key.sql",
+      "gitObject": "fe5528ab8dc399640beb2cc5409fe279a28156e3"
+    },
+    {
+      "path": "migrations/20260813c_ivdr_schema_reconciliation.sql",
+      "gitObject": "0428e6f6ad0db7828b34c38df65bec7c3db82cfd"
+    },
+    {
+      "path": "migrations/20260813d_esignature_governed_unification.sql",
+      "gitObject": "2a04724560921f9bcd8fc7ddba22777dbb86130c"
+    },
+    {
+      "path": "migrations/20260814_projects_regulatory_program_anchor.sql",
+      "gitObject": "8260298cbfee12100928f3b875c5b0a8426e5459"
+    },
+    {
+      "path": "migrations/20260814b_literature_screening_decisions.sql",
+      "gitObject": "7ca1f144351abd6e599b6cb0dd51ee8c4ad2f8c9"
+    },
+    {
+      "path": "migrations/20260814c_pmcf_enrollment_records.sql",
+      "gitObject": "f4844c016c1c445b0888523fc7d54d77e652410c"
+    },
+    {
+      "path": "migrations/20260814d_document_alias_map.sql",
+      "gitObject": "28da45cf6690b89214681208b90dbab29053ee2c"
+    },
+    {
+      "path": "migrations/20260814e_submission_leaf_source_pin.sql",
+      "gitObject": "7a510b222139bac1b65d4aaadf577d7b22e4bc9a"
+    },
+    {
+      "path": "migrations/20260814f_section_version_ana_action_backlink.sql",
+      "gitObject": "5658b4ac0c157b20e1c9edfb322b49cc011e4a73"
+    },
+    {
+      "path": "migrations/20260814g_section_version_reason_required.sql",
+      "gitObject": "da8d57964ab74378b95fc69983c0a0e9e79bd0a6"
+    },
+    {
+      "path": "migrations/20260814h_review_task_type_domain_repair.sql",
+      "gitObject": "fecae3e1165c3abedc422fc1b56aae0e18d7554d"
+    },
+    {
+      "path": "migrations/20260814i_draft_candidate_generator.sql",
+      "gitObject": "ba67fdc07c5038144c141992c3a811b5592fee35"
+    },
+    {
+      "path": "migrations/20260814j_catalog_missing_product_surfaces.sql",
+      "gitObject": "d452c62cb47051897166496562c1ec888025a868"
+    },
+    {
+      "path": "migrations/20260814k_catalog_mission_control.sql",
+      "gitObject": "bbd614c4ffc282ccb503cf24652b1106a73ea237"
+    },
+    {
+      "path": "migrations/20260814l_catalog_filing_strategy.sql",
+      "gitObject": "85f075979b028c5d1cbfb75d5899fb61e2d2b505"
+    },
+    {
+      "path": "migrations/20260814m_catalog_honest_module_descriptions.sql",
+      "gitObject": "d740ba8ae75a3a31202a5bdb2edd301e46f237c0"
+    },
+    {
+      "path": "migrations/20260814m_regulatory_intel_platform_tier.sql",
+      "gitObject": "e1d6060260eedc97ccc56189b1442e13097db0af"
+    },
+    {
+      "path": "migrations/20260814n_seed_regulatory_intel_platform_knowledge.sql",
+      "gitObject": "8b2ea57eda1c484eca938a851197d19279370d75"
+    },
+    {
+      "path": "migrations/20260814o_catalog_retire_duplicate_ind_lifecycle.sql",
+      "gitObject": "726b5745ed331bbb3625cdc217d28c6800d17dbf"
+    },
+    {
+      "path": "migrations/20260815_workflow_approval_tables.sql",
+      "gitObject": "df00c2d78522b24a181c0f0b7dd4308b22d4097d"
+    },
+    {
+      "path": "migrations/20260817_reconcile_declared_updated_at_columns.sql",
+      "gitObject": "0aad4debca04a010bc77fad3d49ddb69650b98f7"
+    },
+    {
+      "path": "migrations/20260820_working_memory_project_id.sql",
+      "gitObject": "f321c5899045b7cc46dd32ee5f0041fa6ceb340d"
+    },
+    {
+      "path": "migrations/20260820b_rim_learned_patterns.sql",
+      "gitObject": "e7c0f943399b3fcbd259f1e246d0eca9ae49d5cf"
+    },
+    {
+      "path": "migrations/20260820c_catalog_maa_module1_regional.sql",
+      "gitObject": "0afd3a7782980e017eee5ecaec887cb3fbac63ee"
+    },
+    {
+      "path": "migrations/20260821_regulatory_twin_simulations.sql",
+      "gitObject": "154247506cad9e2ebb5286155ad39749365660d7"
+    },
+    {
+      "path": "migrations/20260821_vault_documents_canonical_shape.sql",
+      "gitObject": "e5baa1eebf2192d626a62afeec4aac153a8c8998"
+    },
+    {
+      "path": "migrations/20260822_section_version_author_kind_unspecified.sql",
+      "gitObject": "a991db90937bae02db8f1cabea094853cf797de9"
+    },
+    {
+      "path": "migrations/20260823_cmc_register_store_parity.sql",
+      "gitObject": "23b91e2750e648e8dedd33feae80ee559d239360"
+    },
+    {
+      "path": "migrations/20260823_drop_dead_c2c_cmc_changes.sql",
+      "gitObject": "f3a28eca7f98d12a22f23a5fa02318898a9c0f10"
+    },
+    {
+      "path": "migrations/20260823_vault_document_placement.sql",
+      "gitObject": "d9ea313f7281f9f7c1bf9c08ea3b4c00d3bb69e9"
+    },
+    {
+      "path": "migrations/20260829_cre_source_versioning.sql",
+      "gitObject": "94fdbc08a3ccbef0c6a8b2f50b2cf251dba4d99b"
+    },
+    {
+      "path": "migrations/20260901_ind_fda_m1_v2_3_outline.sql",
+      "gitObject": "a6557b1633fb1ee85e7aaa817d8d7fa92db7df67"
+    },
+    {
+      "path": "migrations/20260901b_estar_510k_denovo_outlines.sql",
+      "gitObject": "3780f18f04c3ab115184fc07614dc81279b0379d"
+    },
+    {
+      "path": "migrations/20260902_ind_fda_outline_v2_2_initial_ind_flags.sql",
+      "gitObject": "40a2cdf9d22580b2a134a232707764f0f30b8037"
+    },
+    {
+      "path": "migrations/20260902_ind_icsr_transmissions_transport_receipt.sql",
+      "gitObject": "85b5e7bd3b3f91502cda3c5ae436163e7bcd7dea"
+    },
+    {
+      "path": "migrations/20260903_estar_registration_correspondent.sql",
+      "gitObject": "3ab122b837f29555b8b1cc927f066ab5c04e4524"
+    },
+    {
+      "path": "migrations/20260903_regulatory_programs_estar_device_fields.sql",
+      "gitObject": "f02cc623f897663ec9d31795b478f18c200f9273"
+    },
+    {
+      "path": "migrations/20260903_rendered_leaf_files.sql",
+      "gitObject": "915deda1afadf045852e95b0d599828a1d23fdbb"
+    },
+    {
+      "path": "migrations/20260904_estar_registration_declaration_company_name.sql",
+      "gitObject": "84abee9df15b40b7e54da7f44c1a4422ec52cf00"
+    },
+    {
+      "path": "migrations/20260905_document_catalog.sql",
+      "gitObject": "9bb4e8fc3edb78d2cc0f382ee7df78a0b56046e3"
+    },
+    {
+      "path": "migrations/20260905_vault_documents_organization_id.sql",
+      "gitObject": "6f68a33ad0a931a2f05298d9d46122cce8fe1f3e"
+    },
+    {
+      "path": "migrations/20260905b_vault_document_chunks.sql",
+      "gitObject": "3e16682b3ae5259687e01c872741ec6040568637"
+    },
+    {
+      "path": "migrations/20260906_artifact_section_map_unique.sql",
+      "gitObject": "2e325b0f34c52b332413114c72b2e701a63b62d7"
+    },
+    {
+      "path": "migrations/20260906_ivdr_history_tenant_isolation.sql",
+      "gitObject": "27fb922758590bce86e47e07a4b76735f38970ed"
+    },
+    {
+      "path": "migrations/20260906_vault_documents_fulltext.sql",
+      "gitObject": "823c392704e32ec436e1eda5fa4a1089367e0218"
+    },
+    {
+      "path": "migrations/20260906b_vault_legal_holds.sql",
+      "gitObject": "78a506d1f7e21e83fd3587aa474a65f829502e8e"
+    },
+    {
+      "path": "migrations/20260906c_draft_candidate_assertions.sql",
+      "gitObject": "abef7f86488421d30b3cd601120fcd7ff5f2ebb7"
+    },
+    {
+      "path": "migrations/20260906c_vault_documents_content_hash_idx.sql",
+      "gitObject": "f0dfa86091bc35ee95dc007969d9b21267620922"
+    },
+    {
+      "path": "migrations/20260907_cmc_comparability_register_reachable.sql",
+      "gitObject": "b2700fd974bf46e3c456df80a112761aa678a84d"
+    },
+    {
+      "path": "migrations/20260907_quality_specifications_tenant_required.sql",
+      "gitObject": "cdf5d4699742ddebf8fcdd1f093ded12d507c884"
+    },
+    {
+      "path": "migrations/20260907_regulatory_programs_application_number.sql",
+      "gitObject": "43ca4903bc17a616ec54c98336057a5be3777445"
+    },
+    {
+      "path": "migrations/20260907_span_lineage_accepted_machine_draft.sql",
+      "gitObject": "47b9076a6fb15e1dff26706ab81bc078296a3552"
+    },
+    {
+      "path": "migrations/20260908_compliance_tracking_organization_backfill.sql",
+      "gitObject": "42d66c36d9b4e232e65f55a5da05b2bc96bbe067"
+    },
+    {
+      "path": "migrations/20260908_drug_substance_biologic_origin.sql",
+      "gitObject": "68e3c0622b8741902db05eb1446f9f3c2aa8e8a8"
+    },
+    {
+      "path": "migrations/20260908_span_lineage_machine_draft.sql",
+      "gitObject": "367db3a49086a074bb5aac0baeb8676a7c13883a"
+    },
+    {
+      "path": "migrations/20260908b_estar_submissions_filed_artifact.sql",
+      "gitObject": "a596c4418025158581719b84e429bfde50dbf3ce"
+    },
+    {
+      "path": "migrations/20260911_charter_audit_immutability.sql",
+      "gitObject": "4a250744b867d3af0d4a1ab8e9b7ff95f645eb9a"
+    },
+    {
+      "path": "migrations/20260911_contradiction_consequence_log_convergence.sql",
+      "gitObject": "a433b6316abbf761a8461354f40c2c4f6d3cbc9d"
+    },
+    {
+      "path": "migrations/20260911_vault_evidence_citations.sql",
+      "gitObject": "8912db4659ab1a57a1db57d5d0aacb1c9767a1c6"
+    },
+    {
+      "path": "migrations/20260917_project_charters_declared_columns.sql",
+      "gitObject": "dd930a60de40e83d92b6edc281373d6191674cf0"
+    },
+    {
+      "path": "migrations/20260917_vault_documents_storage_version.sql",
+      "gitObject": "af2ab7e919e420f1382689f75739eab8a2ed7153"
+    },
+    {
+      "path": "migrations/20260917b_submission_leaf_document_uuid.sql",
+      "gitObject": "3e9a6ed59e61826f156515baa20230e6cf92c36e"
+    },
+    {
+      "path": "migrations/20260918_rbm_author_attribution.sql",
+      "gitObject": "acd64f879cb93b274a66e6c216093f5724a6ef75"
+    },
+    {
+      "path": "migrations/20260919_capa_code_uniqueness_per_program.sql",
+      "gitObject": "bd3b198a19e679bd5a8347c2a1923f4aeb217f27"
+    },
+    {
+      "path": "migrations/20260919_cmc_playbook_schema.sql",
+      "gitObject": "178a547fe734a14d344f506d6a174d50d4ae3253"
+    },
+    {
+      "path": "migrations/20260920_mcp_oauth.sql",
+      "gitObject": "ab7dfdf17bdabd54f66e58ce1c2721bf0faf403c"
+    },
+    {
+      "path": "migrations/20260921_audit_logs_chain_seq.sql",
+      "gitObject": "1498ac2ae2342f87e63f32af153c2c9a379c3308"
+    },
+    {
+      "path": "migrations/20260921_authoring_document_provenance.sql",
+      "gitObject": "b6753da0d54ebea1070d866adfde054ea1a92a34"
+    },
+    {
+      "path": "migrations/20260921_protocol_documents_sponsor_pi.sql",
+      "gitObject": "2d6e6d43e0585fbf8d32403c32e69b8c626c70ea"
+    },
+    {
+      "path": "migrations/20260922_protocol_document_study_design.sql",
+      "gitObject": "fa649cd0c5aaba175833e19afa0ec503dccd86c3"
+    },
+    {
+      "path": "migrations/20260922b_protocol_discontinuation_section.sql",
+      "gitObject": "94e63610c67c2912ccafc1ee41ad5571a6365dd1"
+    },
+    {
+      "path": "migrations/20260922c_amendment_design_snapshot.sql",
+      "gitObject": "373b5023bebec7bf328400c724f54ddc4340a954"
+    },
+    {
+      "path": "migrations/20260922d_irb_submission_context.sql",
+      "gitObject": "0ccc7cd62d80360f6403627257bd94f9a6e23a99"
+    },
+    {
+      "path": "migrations/20260922e_amendment_declarations_nullable.sql",
+      "gitObject": "66bad922cccd6ce9a40c4bd9fd0a0454c0ee8b92"
+    },
+    {
+      "path": "migrations/20260922f_protocol_deviation_assessment.sql",
+      "gitObject": "bdd97c6d22e7c10ac8125368b6a6355bfee75d99"
+    },
+    {
+      "path": "migrations/20260923_organization_default_client_workspace.sql",
+      "gitObject": "9abc44e92023465777d6118c5a7a2605994d5ae8"
+    },
+    {
+      "path": "migrations/20260923_users_mfa_totp_last_step.sql",
+      "gitObject": "a46bc66f1a1482ce77897cc4242774979d622a7b"
+    },
+    {
+      "path": "migrations/20260923b_artifact_approval_follows_status.sql",
+      "gitObject": "abbc3923069ab6d89297ba98d05d95e27df2afcc"
+    },
+    {
+      "path": "migrations/20260924_license_requests.sql",
+      "gitObject": "9affc6b36e3d5ed5456d38023ff0c17701b2dc01"
+    },
+    {
+      "path": "migrations/20260924_org_relationships_sponsor_rls.sql",
+      "gitObject": "7d0c4b9491d472ac45487b162f04b9861c603328"
+    },
+    {
+      "path": "migrations/20260925_canonical_documents_append_only.sql",
+      "gitObject": "f74a58ac23331ff31cdb88502e271b99063f8763"
+    },
+    {
+      "path": "migrations/20260925_organizations_tenant_key_immutable.sql",
+      "gitObject": "c94620cda944e22a644460173ef5d844d49ce5a7"
+    },
+    {
+      "path": "migrations/20260925b_submissions_program_anchor.sql",
+      "gitObject": "50585a227be943a50b2e7984a832d9c253efee3a"
+    },
+    {
+      "path": "migrations/20260926_ana_turn_records.sql",
+      "gitObject": "c794e48e905da4aaf553819e090052b352885958"
+    },
+    {
+      "path": "migrations/20260926_organization_users_own_writes.sql",
+      "gitObject": "47f641c398d746cc116d5ff53f13685d166af171"
+    },
+    {
+      "path": "migrations/20260926_organizations_own_writes.sql",
+      "gitObject": "37e8a96520f229bbfba10e3ec4485be7d65257e1"
+    },
+    {
+      "path": "migrations/20260926_vault_documents_record_immutability.sql",
+      "gitObject": "5c563c3b747ba5ca29263669d214d1b6eaec4e96"
+    },
+    {
+      "path": "migrations/20260926b_program_same_org_keys.sql",
+      "gitObject": "54f03660a20cb7516f3680cef36dedaffca3b969"
+    },
+    {
+      "path": "migrations/20260928_invitations_for_member.sql",
+      "gitObject": "9bd9b7ea1aa2bdfb101f2edcd842525c956d42db"
+    },
+    {
+      "path": "migrations/20260928_platform_role_grants_platform_writes.sql",
+      "gitObject": "2e97de0df2029308deb137df6acb4586e7f545d7"
+    },
+    {
+      "path": "migrations/20260928_users_membership_rls.sql",
+      "gitObject": "fd31e41ed583574bb4d57f4cacd67f92c43c0f8e"
+    },
+    {
+      "path": "migrations/20260929_actor_names.sql",
+      "gitObject": "ade090cae97f63b14a25715502709bf83aa373eb"
+    },
+    {
+      "path": "migrations/20260929_concept2cure_signatures_append_only.sql",
+      "gitObject": "ad78882067d040845e300c765b88fc152e50db8d"
+    },
+    {
+      "path": "migrations/20260930_rbm_ingest_idempotency.sql",
+      "gitObject": "4a9d841b3120ce98ce593e861b38f95f752937af"
+    },
+    {
+      "path": "migrations/20260930_rbm_plan_versioning.sql",
+      "gitObject": "fa7cb899ba98d1477e6f9cb58c6c0ec4fa566c22"
+    },
+    {
+      "path": "migrations/20260930_rbm_qtl_direction.sql",
+      "gitObject": "371a67110410ed0ac0c15edd2432e166c588cfe6"
+    },
+    {
+      "path": "migrations/20260930_report_type_registry_seed.sql",
+      "gitObject": "d486d96d1caad9978e00d942cb10d18c0fdb818e"
+    },
+    {
+      "path": "migrations/20260930_vault_documents_version_lineage.sql",
+      "gitObject": "84b34458acbccd6e5a6d45c57f9d3597ce7b7ca5"
+    },
+    {
+      "path": "migrations/20261001_canonical_documents_vault_version.sql",
+      "gitObject": "80d7d643b8b5b64cc1cf24d90cdf7c99502b54f0"
+    },
+    {
+      "path": "migrations/20261001_compliance_review_records.sql",
+      "gitObject": "6ae9d57b14dbba4ee43cdb22e5a4690a07cba353"
+    },
+    {
+      "path": "migrations/20261001_cre_evidence_sources_capture_immutability.sql",
+      "gitObject": "6bc6b9dc9e8d94a8e25ea9637dadfe987b8da256"
+    },
+    {
+      "path": "migrations/20261001_domain_history_append_only.sql",
+      "gitObject": "cf1e744c3747da5f2e643b6bc3f314da4f572198"
+    },
+    {
+      "path": "migrations/20261001_integer_project_same_org_keys.sql",
+      "gitObject": "4df46414931736d6469c180d0507bcda2aca26ab"
+    },
+    {
+      "path": "migrations/20261001_organization_retention_settings.sql",
+      "gitObject": "8a6ea3252c76c9212481ebdcae3dcf90db86e6c8"
+    },
+    {
+      "path": "migrations/20261001_project_continuity_snapshots.sql",
+      "gitObject": "629993d2b20e93706b699d26e0450d43cf9a58bf"
+    },
+    {
+      "path": "migrations/20261001_qms_document_signature_required.sql",
+      "gitObject": "e4d382c12c655515faaf104cb9ff8cadfd963757"
+    },
+    {
+      "path": "migrations/20261001_review_comments_record.sql",
+      "gitObject": "228bec20c26321d8389caa552cb609d9a0d1e0a0"
+    },
+    {
+      "path": "migrations/20261001_users_sessions_ended_at.sql",
+      "gitObject": "1d7b741c411eea07c962f1d2dca56c6d1d45c8a9"
+    },
+    {
+      "path": "migrations/20261001_vault_document_relationships.sql",
+      "gitObject": "02bee233ff22dd763c651a51dc5affec9411e80d"
+    },
+    {
+      "path": "migrations/20261001_vault_version_annotations.sql",
+      "gitObject": "f8fb5c379340038f0531ebfed45ff54d68c4b3b9"
+    },
+    {
+      "path": "migrations/20261001b_projects_one_anchor_per_program.sql",
+      "gitObject": "cc071dcb7c81449c3f5d056563850cc2ab8aa38f"
+    },
+    {
+      "path": "migrations/20261001c_chat_threads_program_key.sql",
+      "gitObject": "11e686aa275c467dd35c68ee904c533510736ef8"
+    },
+    {
+      "path": "migrations/20261001d_scheduled_job_claims.sql",
+      "gitObject": "6683ca3f0f0e376bbcb4cbb24a71fbf2e93d6430"
+    },
+    {
+      "path": "migrations/20261001e_session_activity.sql",
+      "gitObject": "92c4fefeb307ab1bd174f2f675733f6b1a4fbd48"
+    },
+    {
+      "path": "migrations/20261001f_coordination_leases.sql",
+      "gitObject": "3e75dc246aa9b24cacb0b1d91072a485045ddbc1"
+    },
+    {
+      "path": "migrations/20261001g_organization_gateway_accounts.sql",
+      "gitObject": "34eeb427a64b7dac74b6dc57e1d3e74ba1232076"
+    },
+    {
+      "path": "migrations/20261004_user_presence_rls.sql",
+      "gitObject": "2f7649586532d49b2377efe0718344d9fd3a8676"
+    },
+    {
+      "path": "migrations/20261005_cmc_core_registers_project.sql",
+      "gitObject": "c5b9be97142faadcc28e50b5b2e947c297b9b1eb"
+    },
+    {
+      "path": "migrations/20261005_fda_jnda_m1_outline_v2_2.sql",
+      "gitObject": "fa061fc1db8199f39c9075454a79756b1ae12669"
+    },
+    {
+      "path": "migrations/20261005b_cmc_source_evidence.sql",
+      "gitObject": "693f3a2b8443a589b92c6811c6a9df2b605e7b3f"
+    },
+    {
+      "path": "migrations/20261005b_pma_fda_outline_v1_1_software_documentation_level.sql",
+      "gitObject": "5484eff58891512bc4961c5978b6641da114d961"
+    },
+    {
+      "path": "migrations/20261005c_cmc_module3_history_append_only.sql",
+      "gitObject": "6f7391317535791fada7393a96ae9a199ea7341b"
+    },
+    {
+      "path": "migrations/20261006_document_data_dispositions.sql",
+      "gitObject": "c31cbd1c55fb4e74ff399564e15e3bc58407805b"
+    },
+    {
+      "path": "migrations/_generated/phase9_rule_packs.json",
+      "gitObject": "e672b7572e0985e9d90bbdf88d41e1535aad8f19"
+    },
+    {
+      "path": "migrations/_legacy/0010_resolution_orchestration.sql",
+      "gitObject": "b657410517bddd400fcf70746dcbf6a479154492"
+    },
+    {
+      "path": "migrations/_legacy/20260524_udi_records.sql",
+      "gitObject": "d9642bd4902fc14940e29b7415284424ed91ce2d"
+    },
+    {
+      "path": "migrations/_legacy/README.md",
+      "gitObject": "80ae0049862b8132c12570cd8be907114b0fdd61"
+    },
+    {
+      "path": "migrations/meta/0000_snapshot.json",
+      "gitObject": "3a77d8640da533a855729ad4afb90381f994276f"
+    },
+    {
+      "path": "migrations/meta/_journal.json",
+      "gitObject": "a9885854fe364981a1b58dadd77c3ea3741c9b63"
+    },
+    {
+      "path": "migrations/phase13_review_threads_tasks.sql",
+      "gitObject": "d1b6284c6441acf82959eacb4e3873cbb416a067"
+    },
+    {
+      "path": "package-lock.json",
+      "gitObject": "a4e96f97a62b2a6304968ef85a073a3e448b2cbd"
+    },
+    {
+      "path": "package.json",
+      "gitObject": "e4eedaafcb063557958f769ff7f697106d252fd0"
+    },
+    {
+      "path": "scripts/ci/__tests__/action-overclaim-strings.test.mjs",
+      "gitObject": "da4d8d77a3943b683ce0bc56ba4878c623717288"
+    },
+    {
+      "path": "scripts/ci/__tests__/bundle-reachability-strings.test.mjs",
+      "gitObject": "d13625f142a6e995d51f34cc3c0c464496d938a2"
+    },
+    {
+      "path": "scripts/ci/__tests__/canonicalizers-shape.test.mjs",
+      "gitObject": "661bb0a8298c463ae98d0eb87be6e560a9098a3a"
+    },
+    {
+      "path": "scripts/ci/__tests__/commonjs-require-strings.test.mjs",
+      "gitObject": "bbcb2cfd4c9fb7be891c8155b9b17347e158a708"
+    },
+    {
+      "path": "scripts/ci/__tests__/component-class-coverage.test.mjs",
+      "gitObject": "af56b031c9a49b496643f60869a53227cb44b8d5"
+    },
+    {
+      "path": "scripts/ci/__tests__/db-test-isolation.test.mjs",
+      "gitObject": "3d3ef8d746f7f61ace29e1d792337eeece6259a5"
+    },
+    {
+      "path": "scripts/ci/__tests__/dependency-risk-gate.test.mjs",
+      "gitObject": "0d8bc5cd2903cab4c62c32d9e5245a251813dd4e"
+    },
+    {
+      "path": "scripts/ci/__tests__/ecs-one-off-task.test.mjs",
+      "gitObject": "56c9f3af6c70f9af7f04c50daea5be108ef0e952"
+    },
+    {
+      "path": "scripts/ci/__tests__/empty-state-honesty-strings.test.mjs",
+      "gitObject": "fa471329291189ab98e0ed64389d4fe1f8ad84ea"
+    },
+    {
+      "path": "scripts/ci/__tests__/eslint-warning-ratchet.test.mjs",
+      "gitObject": "3995aa4ed5b4be13cb50eee8418627f45c3139d8"
+    },
+    {
+      "path": "scripts/ci/__tests__/fabricated-identity-strings.test.mjs",
+      "gitObject": "f2f145133d2cc2c3bd10580692030641c2457d5f"
+    },
+    {
+      "path": "scripts/ci/__tests__/helpers/scratch-repo-gate.mjs",
+      "gitObject": "b68b329e9644e9e70d6983388fcb0508f9d84e8d"
+    },
+    {
+      "path": "scripts/ci/__tests__/image-document-runtime.test.mjs",
+      "gitObject": "a3b7ab2699e0731d7757ea9ab69d33512a067b17"
+    },
+    {
+      "path": "scripts/ci/__tests__/internals-in-copy-strings.test.mjs",
+      "gitObject": "821b86357bf227e0cb45b60a6fdb8e927317b309"
+    },
+    {
+      "path": "scripts/ci/__tests__/lineage-save-gate-strings.test.mjs",
+      "gitObject": "c421d034adb49f06f56d0e65b743675ec0673398"
+    },
+    {
+      "path": "scripts/ci/__tests__/native-db-early-verdict.test.mjs",
+      "gitObject": "cfe6a5e5d5d09bfc651245d4f60217d7761fc432"
+    },
+    {
+      "path": "scripts/ci/__tests__/no-mock-in-prod-routes-strings.test.mjs",
+      "gitObject": "6c794ecb298f3fea02286559804df1e07b706596"
+    },
+    {
+      "path": "scripts/ci/__tests__/pushed-typecheck.test.mjs",
+      "gitObject": "fa47492cde956fb48be6573194b21ef47d33f5d0"
+    },
+    {
+      "path": "scripts/ci/__tests__/recorded-lineage-query-bindings.test.mjs",
+      "gitObject": "a1c570fa26239b039fd42dddcb71aa7cf266554f"
+    },
+    {
+      "path": "scripts/ci/__tests__/server-error-leaks-strings.test.mjs",
+      "gitObject": "219495551cd9326442edf591b9a4a6b86f3fba2f"
+    },
+    {
+      "path": "scripts/ci/__tests__/session-scoped-rls-bypass-strings.test.mjs",
+      "gitObject": "26c37017e7ec1b2f5106b25e944d39deeaf6bd7e"
+    },
+    {
+      "path": "scripts/ci/__tests__/strip-comments.test.mjs",
+      "gitObject": "2209f64bbf70ae0e2468f08b7416cf2854789cb0"
+    },
+    {
+      "path": "scripts/ci/__tests__/success-before-ok-strings.test.mjs",
+      "gitObject": "de9560204d7ba500a0246c8ea13e2be35e351cd0"
+    },
+    {
+      "path": "scripts/ci/__tests__/tenant-entry-points-code-only.test.mjs",
+      "gitObject": "5f8a354d44195cdceba1c02cd8f599bf30e76ebd"
+    },
+    {
+      "path": "scripts/ci/__tests__/unbacked-tables-strings.test.mjs",
+      "gitObject": "04924c7102e4d7391e0f5a0090d166e9220eb943"
+    },
+    {
+      "path": "scripts/ci/__tests__/ungated-fixture-fallback-strings.test.mjs",
+      "gitObject": "8b3a46638f32dedd468e054996804a505a2a7b4c"
+    },
+    {
+      "path": "scripts/ci/action-overclaim-baseline.json",
+      "gitObject": "046955d4b9cdd4a5e628876ee021d8cfc5cef348"
+    },
+    {
+      "path": "scripts/ci/audit-requestdb-coverage.mjs",
+      "gitObject": "a2a3be9206f22c8f92399b75ff0a44e1aa8e9cde"
+    },
+    {
+      "path": "scripts/ci/audit-route-mounts.mjs",
+      "gitObject": "21edb5ad8bd287b1ca02cc9a7edc5740930c8600"
+    },
+    {
+      "path": "scripts/ci/audit-route-mounts.selftest.mjs",
+      "gitObject": "4da978209149491e07bb71f8890291a67afb7d65"
+    },
+    {
+      "path": "scripts/ci/ban-new-pool.sh",
+      "gitObject": "1de085e9f99f99979e08a78ada429585dca51d7c"
+    },
+    {
+      "path": "scripts/ci/canonicalizers-baseline.json",
+      "gitObject": "8e9ca62150c7fc98c39d7e0d19805229d2ad80ae"
+    },
+    {
+      "path": "scripts/ci/check-action-overclaim.mjs",
+      "gitObject": "4d9d544bc6130a7dd14184a9826ea5abd71a4b6b"
+    },
+    {
+      "path": "scripts/ci/check-ai-tenant-binding.mjs",
+      "gitObject": "8b965ce94d21e36caf94658258654d19c4a17c46"
+    },
+    {
+      "path": "scripts/ci/check-ana-surface-context.mjs",
+      "gitObject": "b1f8eb1139ae25ed2a1449410b88735ac202ea9b"
+    },
+    {
+      "path": "scripts/ci/check-artifact-provenance.mjs",
+      "gitObject": "6d09fe04fd1e4c07b8a31e0bfaee8f38d990d1f3"
+    },
+    {
+      "path": "scripts/ci/check-audit-logs-fixture.mjs",
+      "gitObject": "d9530fad41b15bed58df80b059a2186d06b0685f"
+    },
+    {
+      "path": "scripts/ci/check-audit-logs-fixture.selftest.mjs",
+      "gitObject": "d3805170f34a6cdff49deb46e6865eb90b8aa67b"
+    },
+    {
+      "path": "scripts/ci/check-baseline-justifications.mjs",
+      "gitObject": "24a90b2dbc42ea6548e41ee69635b00439621e3f"
+    },
+    {
+      "path": "scripts/ci/check-baseline-justifications.selftest.mjs",
+      "gitObject": "d4c743d6b2caac9a71835707a192c2c5db665e00"
+    },
+    {
+      "path": "scripts/ci/check-biostat-calculator-keys.mjs",
+      "gitObject": "bcebc6534779e035044e1612465de3f333c4909b"
+    },
+    {
+      "path": "scripts/ci/check-bundle-reachability.mjs",
+      "gitObject": "47043a6e61c18bc24eac91136f06e364af1e1ccb"
+    },
+    {
+      "path": "scripts/ci/check-canonicalizers.mjs",
+      "gitObject": "746e409d9082499e21906c1a9d222af1df55d4c6"
+    },
+    {
+      "path": "scripts/ci/check-canvas-path.mjs",
+      "gitObject": "5d5edc629bbeb8911f81061a27559fc6bcd234e5"
+    },
+    {
+      "path": "scripts/ci/check-canvas-path.selftest.mjs",
+      "gitObject": "4f19f19c0a16320ce8390865b70a3eb4ad5cdd17"
+    },
+    {
+      "path": "scripts/ci/check-catalog-copy.mjs",
+      "gitObject": "e198cc31dd6978816c482a82f8e0f52f6b13eefc"
+    },
+    {
+      "path": "scripts/ci/check-chip-tones.mjs",
+      "gitObject": "0053b035676475d72a98c97655af32f19f1e1c7a"
+    },
+    {
+      "path": "scripts/ci/check-client-api-calls-resolve.mjs",
+      "gitObject": "a8b2b797ddc2d5b474898a4a0956702668431b52"
+    },
+    {
+      "path": "scripts/ci/check-client-ip-single-source.mjs",
+      "gitObject": "abcc524c5a1bf9bf32b10a57e1b98569299268ea"
+    },
+    {
+      "path": "scripts/ci/check-client-reachability.mjs",
+      "gitObject": "0a236e2fcfc9ea28bffdbab905376d5f8843e626"
+    },
+    {
+      "path": "scripts/ci/check-column-reachability.mjs",
+      "gitObject": "b98ac7ded474d7a556a61441983c8468a67f79cd"
+    },
+    {
+      "path": "scripts/ci/check-committed-secrets.mjs",
+      "gitObject": "12533073ece3b19a9c16aa2172caf056e8d57d74"
+    },
+    {
+      "path": "scripts/ci/check-committed-secrets.selftest.mjs",
+      "gitObject": "868108c16ae32aecf8a701fae53b452f5f99a832"
+    },
+    {
+      "path": "scripts/ci/check-commonjs-require.mjs",
+      "gitObject": "d46ee19bbeda918c55d1f430e372b6832e5a8050"
+    },
+    {
+      "path": "scripts/ci/check-compliance-claims.mjs",
+      "gitObject": "6b0b612833071b4d7a34f4db9b40772c8a51c26e"
+    },
+    {
+      "path": "scripts/ci/check-component-class-coverage.mjs",
+      "gitObject": "4a60be8966a1f00c636a72a4a3d4abab73a49758"
+    },
+    {
+      "path": "scripts/ci/check-compose-boot-contract.mjs",
+      "gitObject": "57b7a26221ebf8b4503878c2fd59bff411ed9cc1"
+    },
+    {
+      "path": "scripts/ci/check-coverage-ratchet.mjs",
+      "gitObject": "53fc842d4c62dc8771790eba53b32faa9ee9ef21"
+    },
+    {
+      "path": "scripts/ci/check-css-selector-shadowing.mjs",
+      "gitObject": "4ba19c0dba5b09f96624bf749a3a66809ee9308b"
+    },
+    {
+      "path": "scripts/ci/check-db-test-isolation.mjs",
+      "gitObject": "80df74b104212ddd6e8348728192a75ae04354c4"
+    },
+    {
+      "path": "scripts/ci/check-dead-audit-catch.mjs",
+      "gitObject": "d28458039f02575a24e09a43be6f59b25571f1db"
+    },
+    {
+      "path": "scripts/ci/check-dead-audit-tables.mjs",
+      "gitObject": "01ee6c55597a1b6f4e219dfc8ff1f686184e4922"
+    },
+    {
+      "path": "scripts/ci/check-dead-audit-tables.selftest.mjs",
+      "gitObject": "2e6518aefa2e85b99a474a2e41af2a395e097ebe"
+    },
+    {
+      "path": "scripts/ci/check-dependency-risk.mjs",
+      "gitObject": "d0e560b90c85f2e273cfb7b9cf2b1cdfed61649e"
+    },
+    {
+      "path": "scripts/ci/check-design-system-compliance.mjs",
+      "gitObject": "a18dcde7a64dc1ef249f4546db8005e83fef12d4"
+    },
+    {
+      "path": "scripts/ci/check-discarded-audit-write.mjs",
+      "gitObject": "f48f72581592138cb58bfa2a8fc253dcaae4ea64"
+    },
+    {
+      "path": "scripts/ci/check-document-alias-attribute-free.mjs",
+      "gitObject": "eee08326648ae793f7188492897c0b1e4466b75b"
+    },
+    {
+      "path": "scripts/ci/check-docx-runtime-canonicality.mjs",
+      "gitObject": "b0b94fb639681c4b9afc7065d7cfb1c7f8443816"
+    },
+    {
+      "path": "scripts/ci/check-drizzle-tenant-scope.mjs",
+      "gitObject": "93a4eaa2baa536e0e390cfa25157532d17efde22"
+    },
+    {
+      "path": "scripts/ci/check-drizzle-tenant-scope.selftest.mjs",
+      "gitObject": "9b17daa07f801f02be0ce5e1b9cde16acf6a61ed"
+    },
+    {
+      "path": "scripts/ci/check-duplicate-exported-types.mjs",
+      "gitObject": "5ac86ce79e4e3fb7816160281f44b30125bb0a2d"
+    },
+    {
+      "path": "scripts/ci/check-duplicate-table-ddl.mjs",
+      "gitObject": "dae7ef0927260f02b6006b3cd3e9aaedcd4a3781"
+    },
+    {
+      "path": "scripts/ci/check-editor-extension-integrity.mjs",
+      "gitObject": "d5cae128fa7411a41e8f1b989a77883e9ac9b949"
+    },
+    {
+      "path": "scripts/ci/check-embedding-runtime-canonicality.mjs",
+      "gitObject": "c7f3f716264a6ef8eac085a3e111f8446ce645c7"
+    },
+    {
+      "path": "scripts/ci/check-empty-state-honesty.mjs",
+      "gitObject": "0652349ba9a4e3efb5abce5722a5698abea2396b"
+    },
+    {
+      "path": "scripts/ci/check-env-var-docs.mjs",
+      "gitObject": "08ae7e65b2b743c0c0f2a244e83da38dee96352c"
+    },
+    {
+      "path": "scripts/ci/check-error-envelope-reads.mjs",
+      "gitObject": "2f1f05c3a762f2857890c3b9577567b1ebefb526"
+    },
+    {
+      "path": "scripts/ci/check-eslint-warning-ratchet.mjs",
+      "gitObject": "d2f80f34fed9d39fcedd1f5e81ee6d40680511a7"
+    },
+    {
+      "path": "scripts/ci/check-fabricated-identity.mjs",
+      "gitObject": "68c92c01e10315a221e3c9bba8ce531026cab5b1"
+    },
+    {
+      "path": "scripts/ci/check-frontend-sync-coverage.mjs",
+      "gitObject": "04422cfe40f2ddefa1f6c03fc7d6949e9d268f62"
+    },
+    {
+      "path": "scripts/ci/check-frozen-theme-aliases.mjs",
+      "gitObject": "5abb9edee50c04925ff57262ce61831b6a336bcb"
+    },
+    {
+      "path": "scripts/ci/check-gateway-bypass.mjs",
+      "gitObject": "44997e1b3f7e0f41e5dc55c023d6bf9d99ace99a"
+    },
+    {
+      "path": "scripts/ci/check-gateway-bypass.selftest.mjs",
+      "gitObject": "566fa0b797b98363ebdc7abbb36d927dd2aa22ad"
+    },
+    {
+      "path": "scripts/ci/check-governed-export-consequence-shape.mjs",
+      "gitObject": "38855feca9e5f0ceb2ab3992e74a5f403d7b1a1d"
+    },
+    {
+      "path": "scripts/ci/check-governed-export-consequence-shape.selftest.mjs",
+      "gitObject": "afe4b13f36aa8e0f742575b2b0f048155c2a1394"
+    },
+    {
+      "path": "scripts/ci/check-governed-export-routes.mjs",
+      "gitObject": "2c8ba412dfcfa5041965a2cbb8e022668794cfae"
+    },
+    {
+      "path": "scripts/ci/check-i18n-integrity.mjs",
+      "gitObject": "8cf26771286f4e48a5ec770af5410c8e39f84293"
+    },
+    {
+      "path": "scripts/ci/check-image-document-runtime.mjs",
+      "gitObject": "dcbfcb15099bf9e6d85ff4a78d18f23182331c5b"
+    },
+    {
+      "path": "scripts/ci/check-image-runtime-assets.mjs",
+      "gitObject": "1502df6f2b7f52393c0eea631c4a30d826a2682d"
+    },
+    {
+      "path": "scripts/ci/check-image-runtime-assets.selftest.mjs",
+      "gitObject": "cf263439d3ac2da29216fcb9ca89e1094870e658"
+    },
+    {
+      "path": "scripts/ci/check-insert-columns-declared.mjs",
+      "gitObject": "b4a91dc320648ec679bc1f8cd2e198b5a2fe3239"
+    },
+    {
+      "path": "scripts/ci/check-insert-columns-declared.selftest.mjs",
+      "gitObject": "5437c75e3d318096f7941e3c2d8db401951ecc8d"
+    },
+    {
+      "path": "scripts/ci/check-internals-in-copy.mjs",
+      "gitObject": "126261c775a91ff8ed5554c63631763c0617f88a"
+    },
+    {
+      "path": "scripts/ci/check-journey-migration-reachability.mjs",
+      "gitObject": "9a5523b6ad07de04eeede32321e66b88c5825f81"
+    },
+    {
+      "path": "scripts/ci/check-js-ts-shadows.mjs",
+      "gitObject": "1b2571ec423952854fa01852b66250008d1153f6"
+    },
+    {
+      "path": "scripts/ci/check-json-operator-types.mjs",
+      "gitObject": "dcc463d2edbefb9ba8502cf5a2e5f9418713108b"
+    },
+    {
+      "path": "scripts/ci/check-jwt-verify-pinned.mjs",
+      "gitObject": "ee7922dc084dba374c2574d041652a723023154c"
+    },
+    {
+      "path": "scripts/ci/check-launch-scope-api.ts",
+      "gitObject": "4297348b1a400b39c6182a2b540bd82a4b9020fe"
+    },
+    {
+      "path": "scripts/ci/check-launch-scope.mjs",
+      "gitObject": "02e6a3baa9c6f8c383f09ca7d983a904714f2ecf"
+    },
+    {
+      "path": "scripts/ci/check-launch-scope.selftest.mjs",
+      "gitObject": "1d6f9c5e386c21c74a029d7d7748f88ae0f41fee"
+    },
+    {
+      "path": "scripts/ci/check-legacy-dep-quarantine.mjs",
+      "gitObject": "2e8b8926698618483bbdfad8ff1003c5386fcc97"
+    },
+    {
+      "path": "scripts/ci/check-lineage-save-gate.mjs",
+      "gitObject": "3f33bf9a8cad50bb0f470a2aeae8c946ccd43a3c"
+    },
+    {
+      "path": "scripts/ci/check-microcopy.mjs",
+      "gitObject": "6553dfcacd734176949e3f6a50602b021ebb41de"
+    },
+    {
+      "path": "scripts/ci/check-migration-deploy-path.mjs",
+      "gitObject": "b790c764e3653f3b08dc25a95cda52e3808aa366"
+    },
+    {
+      "path": "scripts/ci/check-migration-drop-safety.mjs",
+      "gitObject": "065985dad5524a83fd17eef985956f54928ddae2"
+    },
+    {
+      "path": "scripts/ci/check-migration-drop-safety.selftest.mjs",
+      "gitObject": "25086c27e3dba9853f86938d9bac5e63dec6ad88"
+    },
+    {
+      "path": "scripts/ci/check-migration-prefix-collisions.mjs",
+      "gitObject": "461ffa9542ec0ac2058bc4209b3f4f90e82365cc"
+    },
+    {
+      "path": "scripts/ci/check-migration-reachability.mjs",
+      "gitObject": "faa632a95b952611ad0f9bc47672b898dbaac43c"
+    },
+    {
+      "path": "scripts/ci/check-migration-set-order.mjs",
+      "gitObject": "5bee90338c0be2527c450c18cf336dcd0961059e"
+    },
+    {
+      "path": "scripts/ci/check-model-migration-agreement.mjs",
+      "gitObject": "f033065a4c2e3139fce5e4a6a79fcfb59a205d59"
+    },
+    {
+      "path": "scripts/ci/check-no-dev-auth-in-prod.mjs",
+      "gitObject": "8b6a4bbcb7615c92c57c870c28ca68506621b354"
+    },
+    {
+      "path": "scripts/ci/check-no-dev-auth-in-prod.selftest.mjs",
+      "gitObject": "915b1581d9a9685a856f2245b01b9e9e16429276"
+    },
+    {
+      "path": "scripts/ci/check-no-mock-in-prod-routes.mjs",
+      "gitObject": "5d917329dd9d75f7aca429af7b5503b8c9c05a23"
+    },
+    {
+      "path": "scripts/ci/check-node-runtime.mjs",
+      "gitObject": "0a784607e4ec23b726ea94ce4682e0b88908bcfd"
+    },
+    {
+      "path": "scripts/ci/check-org-path-param-guards.mjs",
+      "gitObject": "33df4c7041de6899867832c8858b00b2e63a4b8d"
+    },
+    {
+      "path": "scripts/ci/check-org-path-param-guards.selftest.mjs",
+      "gitObject": "705df2c2a0c79e49609bd43ec5ea2543993991bd"
+    },
+    {
+      "path": "scripts/ci/check-orm-table-reachability.mjs",
+      "gitObject": "8ffaacebde0ee90e2b2151b12d1854ac7502860e"
+    },
+    {
+      "path": "scripts/ci/check-orphaned-stylesheets.mjs",
+      "gitObject": "49ec9ef8a4b6241dbfd7aca8a78aac4d31181eef"
+    },
+    {
+      "path": "scripts/ci/check-password-hygiene.mjs",
+      "gitObject": "45facc9deb7c05ba8e3b826c73d8bbd43b922162"
+    },
+    {
+      "path": "scripts/ci/check-password-hygiene.selftest.mjs",
+      "gitObject": "f8050199f901a523b074bdd843361e8102a739b5"
+    },
+    {
+      "path": "scripts/ci/check-path-containment.mjs",
+      "gitObject": "d5924525b44e8d134c0b37a324a47bf1cca1b173"
+    },
+    {
+      "path": "scripts/ci/check-pdf-runtime-canonicality.mjs",
+      "gitObject": "6ab8023b3fa8050063cac009f4dad4bd31d50405"
+    },
+    {
+      "path": "scripts/ci/check-phantom-tokens.mjs",
+      "gitObject": "105bf7a13c5001439058a35b48bb01415aafe1d8"
+    },
+    {
+      "path": "scripts/ci/check-pptx-image-reachability.mjs",
+      "gitObject": "f24337e77c4fb4e40eafe9fa5a99e600c5e18104"
+    },
+    {
+      "path": "scripts/ci/check-pq-evaluation-callers.mjs",
+      "gitObject": "30cdf892d54abeca218c66aa6560c2d6248ba339"
+    },
+    {
+      "path": "scripts/ci/check-program-ownership-single-source.mjs",
+      "gitObject": "8c9ac32eb25342becc69dc1632214ec13172caa5"
+    },
+    {
+      "path": "scripts/ci/check-proof-tier.mjs",
+      "gitObject": "c254d77d4637ec57bb32c3f79810d146320b8002"
+    },
+    {
+      "path": "scripts/ci/check-purge-coverage.mjs",
+      "gitObject": "d50d356dbf4352d4f862a4bdea7075e29513c236"
+    },
+    {
+      "path": "scripts/ci/check-purge-coverage.selftest.mjs",
+      "gitObject": "6eaa6ac8a6aec26e08f7febf5669d7d5279eec71"
+    },
+    {
+      "path": "scripts/ci/check-pushed-lint-errors.mjs",
+      "gitObject": "548a6b19fa0f70b714a4356774b2a79403f45d51"
+    },
+    {
+      "path": "scripts/ci/check-pushed-lint-warnings.mjs",
+      "gitObject": "04a7dd123d6c9178f76af863ef87cbd5675ef89b"
+    },
+    {
+      "path": "scripts/ci/check-pushed-typecheck.mjs",
+      "gitObject": "f6f18788c3e4f237c7fb2ac865199cdd1d1d5b32"
+    },
+    {
+      "path": "scripts/ci/check-reasoning-tier-ga-readiness.mjs",
+      "gitObject": "3b4b3e331ad5fdd36514dbfad7c5162c6e122c52"
+    },
+    {
+      "path": "scripts/ci/check-reasoning-tier-readiness-suite.mjs",
+      "gitObject": "10da331998c1d7004b6076dfe4bba7cb9fb633df"
+    },
+    {
+      "path": "scripts/ci/check-reasoning-tier-uat-evidence.mjs",
+      "gitObject": "4fb9951aac28a40918394b7f681d0f8a4f9bac0a"
+    },
+    {
+      "path": "scripts/ci/check-regulated-delete-audit.mjs",
+      "gitObject": "d78af8114d9a72c456038faf6955f54fe9fc4839"
+    },
+    {
+      "path": "scripts/ci/check-regulated-delete-audit.selftest.mjs",
+      "gitObject": "ce4e9ed42cea4f13ea7ba5f3a6a951004f237b92"
+    },
+    {
+      "path": "scripts/ci/check-regulatory-reference-data-single-copy.mjs",
+      "gitObject": "73cf82528758f65afc4745de22c9577edf2ce99e"
+    },
+    {
+      "path": "scripts/ci/check-replay-rebuilds-nothing.mjs",
+      "gitObject": "09063f7111c520e4a87319f7a64600ef162c6284"
+    },
+    {
+      "path": "scripts/ci/check-required-workflow-concurrency.mjs",
+      "gitObject": "3766749bf3d66ca488daaf30f1b983050cedb787"
+    },
+    {
+      "path": "scripts/ci/check-requirements-pins.mjs",
+      "gitObject": "6bc9a5bc4fecf17cf11d4949dd7b80f4fbef1ab0"
+    },
+    {
+      "path": "scripts/ci/check-rls-allowlist-sync.mjs",
+      "gitObject": "d9adf11cc0795735734238c276d241f213daea56"
+    },
+    {
+      "path": "scripts/ci/check-rls-allowlist-sync.selftest.mjs",
+      "gitObject": "a1ece1c8c0e9523c00b8d1dfce95ba4bf4abb436"
+    },
+    {
+      "path": "scripts/ci/check-route-collisions.mjs",
+      "gitObject": "396d094f0866cafed331fcc95783cb715d38e119"
+    },
+    {
+      "path": "scripts/ci/check-route-ownership-matrix.mjs",
+      "gitObject": "7a618cef7715b57514387cb771ad52c8f6c09605"
+    },
+    {
+      "path": "scripts/ci/check-route-ownership-matrix.selftest.mjs",
+      "gitObject": "91e452a7b667fc6033d84ef271ab0d1e7cb0cd31"
+    },
+    {
+      "path": "scripts/ci/check-rule-pack-provenance.mjs",
+      "gitObject": "d34b77bede4019cb420377f35bab9a002918c774"
+    },
+    {
+      "path": "scripts/ci/check-runtime-ddl.mjs",
+      "gitObject": "164efcd741730d7921280a975b4cd1f5defccc3a"
+    },
+    {
+      "path": "scripts/ci/check-runtime-ddl.selftest.mjs",
+      "gitObject": "03d8188b4f3fca33c1658174317ce40b94bb60e9"
+    },
+    {
+      "path": "scripts/ci/check-saml-fail-closed.mjs",
+      "gitObject": "3f01e7323c59668ddf62775945cc523cad623766"
+    },
+    {
+      "path": "scripts/ci/check-server-bundle-prod-imports.mjs",
+      "gitObject": "ae60e4c4cf9cc92c0487182f438e9a5fb9d16890"
+    },
+    {
+      "path": "scripts/ci/check-server-bundle-prod-imports.selftest.mjs",
+      "gitObject": "9f0e34a385e5180ee5d9caa5e400a04afaa426bf"
+    },
+    {
+      "path": "scripts/ci/check-server-error-leaks.mjs",
+      "gitObject": "974369356081d21bc0f337ddeaff54503172afb9"
+    },
+    {
+      "path": "scripts/ci/check-server-error-leaks.selftest.mjs",
+      "gitObject": "52f67db87537397abb01e14b20b73f31b69d9544"
+    },
+    {
+      "path": "scripts/ci/check-session-scoped-rls-bypass.mjs",
+      "gitObject": "5806dd0601bf8df5a2eb5ccdbf714547a55b5977"
+    },
+    {
+      "path": "scripts/ci/check-session-scoped-rls-bypass.selftest.mjs",
+      "gitObject": "873c548f31dd376742c31d0cd36b54bd9e5e8c08"
+    },
+    {
+      "path": "scripts/ci/check-shell-css-collisions.mjs",
+      "gitObject": "61f9a43bef7f8457a4ae3f4d8e76dc20d6036774"
+    },
+    {
+      "path": "scripts/ci/check-sign-ceremony.mjs",
+      "gitObject": "95b9d8e83882d669079968477d5f953e99f690dd"
+    },
+    {
+      "path": "scripts/ci/check-sign-ceremony.selftest.mjs",
+      "gitObject": "e2adead8855ab1785e3170f7b744602ddfa80470"
+    },
+    {
+      "path": "scripts/ci/check-single-native-canvas.mjs",
+      "gitObject": "2281942b60b41ea4b1c3c0cc18842eecdc08c62f"
+    },
+    {
+      "path": "scripts/ci/check-success-before-ok.mjs",
+      "gitObject": "28ac88955494938a7d4fda711203e3f4b588489a"
+    },
+    {
+      "path": "scripts/ci/check-surface-discoverability.mjs",
+      "gitObject": "e467cc4c3cc86a35b1f460cd1f31e0576ddec4fb"
+    },
+    {
+      "path": "scripts/ci/check-tables-against-live-schema.mjs",
+      "gitObject": "e53bfebf36f9571b139f10eb5cba107f02ec07f2"
+    },
+    {
+      "path": "scripts/ci/check-tenant-blind-models.mjs",
+      "gitObject": "312c54e1154dd4bf8d9e224fc0e885d9e0cdd851"
+    },
+    {
+      "path": "scripts/ci/check-tenant-blind-models.selftest.mjs",
+      "gitObject": "9bb98e483aa57b9d7e2c5285fcec7c856da19ae2"
+    },
+    {
+      "path": "scripts/ci/check-tenant-column-types.mjs",
+      "gitObject": "dc900178a8ccbb4be38b948f29bb22f6d100a721"
+    },
+    {
+      "path": "scripts/ci/check-tenant-column-types.selftest.mjs",
+      "gitObject": "3c83fbbd7de4bfd235a52463bb86e51e8be9bcfa"
+    },
+    {
+      "path": "scripts/ci/check-tenant-entry-points.mjs",
+      "gitObject": "ceaa24699eda07d735bbdde9957a6507d6a39276"
+    },
+    {
+      "path": "scripts/ci/check-tenant-entry-points.selftest.mjs",
+      "gitObject": "3208590b9bcd00d7901a3b2d934b4c145f9c2631"
+    },
+    {
+      "path": "scripts/ci/check-tenant-isolation.mjs",
+      "gitObject": "d1fdd54bb5d8e27a580d703c6a1637924c8d408b"
+    },
+    {
+      "path": "scripts/ci/check-tenant-isolation.selftest.mjs",
+      "gitObject": "4686d812fde60b86969a0de0fca7d05a3dcdd92b"
+    },
+    {
+      "path": "scripts/ci/check-tenant-resolvers.mjs",
+      "gitObject": "8383a8b55b8339151e81762903ffe4bc2bbd51c8"
+    },
+    {
+      "path": "scripts/ci/check-tenant-resolvers.selftest.mjs",
+      "gitObject": "f51bda10413de6bf0545c90067f662882ae3ad6c"
+    },
+    {
+      "path": "scripts/ci/check-test-imports.mjs",
+      "gitObject": "479a78bdd8f4f00ec6c0fc45211616ae7f888878"
+    },
+    {
+      "path": "scripts/ci/check-toast-canonicality.mjs",
+      "gitObject": "253f3ea69e87f00809d522a5f208c7269dd7708f"
+    },
+    {
+      "path": "scripts/ci/check-token-cascade.mjs",
+      "gitObject": "09b7060adc4eb9248758627a733c21fca6499e4f"
+    },
+    {
+      "path": "scripts/ci/check-token-contrast.mjs",
+      "gitObject": "99c06a070dad2e5dd4cc46dbdc3d73422f5d5766"
+    },
+    {
+      "path": "scripts/ci/check-trivy-inline-ignores.mjs",
+      "gitObject": "fbefb902d885b58931ccaf0c2434a73775099a58"
+    },
+    {
+      "path": "scripts/ci/check-trivyignore-hygiene.mjs",
+      "gitObject": "233b2c1b948ca4439a64a35a2e44fbc5e3656de8"
+    },
+    {
+      "path": "scripts/ci/check-unapproved-model-pins.mjs",
+      "gitObject": "8f048d57827f4673430382eb38684e107e46ff5f"
+    },
+    {
+      "path": "scripts/ci/check-unauthenticated-fetch.mjs",
+      "gitObject": "f9212772e648226b25799567b9d76a08facec481"
+    },
+    {
+      "path": "scripts/ci/check-unauthenticated-fetch.selftest.mjs",
+      "gitObject": "da8a39aa8d42fbdab73ad658447d2492079fd8ed"
+    },
+    {
+      "path": "scripts/ci/check-unbacked-tables.mjs",
+      "gitObject": "2c54a799c63e054cc7f061477d8197ae4158a8ee"
+    },
+    {
+      "path": "scripts/ci/check-undefined-css-classes.mjs",
+      "gitObject": "a094e2704d9b95b3164e60c05ec61a8428db63d7"
+    },
+    {
+      "path": "scripts/ci/check-undefined-css-classes.selftest.mjs",
+      "gitObject": "500f963d7cf145ce3452253896d6048ad383777c"
+    },
+    {
+      "path": "scripts/ci/check-ungated-fixture-fallback.mjs",
+      "gitObject": "53d077142d23815677f6911368666daf675bf963"
+    },
+    {
+      "path": "scripts/ci/check-unkeyed-request-tables.mjs",
+      "gitObject": "89ce7406bab33e9b5504e12afaae0b8ee7faad6f"
+    },
+    {
+      "path": "scripts/ci/check-unkeyed-request-tables.selftest.mjs",
+      "gitObject": "72ed7a6e682d5b6a0ff06867eb007dbb7ade871e"
+    },
+    {
+      "path": "scripts/ci/check-unreferenced-modules.mjs",
+      "gitObject": "78983fe5a2484a943940cc13c6d16c7446c69dcd"
+    },
+    {
+      "path": "scripts/ci/check-unrun-tests.mjs",
+      "gitObject": "d987ac747d2418ab5e310f6b40f245972ad8f6cc"
+    },
+    {
+      "path": "scripts/ci/check-untracked-imports.mjs",
+      "gitObject": "f2c77951bef8fb44b6de5e4bfafdea697929da40"
+    },
+    {
+      "path": "scripts/ci/check-untracked-imports.selftest.mjs",
+      "gitObject": "70e516eee111da931615ccc91f23a20b11bf1ef6"
+    },
+    {
+      "path": "scripts/ci/check-unverified-verdicts.mjs",
+      "gitObject": "a101a82dcbc40e1da5ef05919ef5d734a9e25352"
+    },
+    {
+      "path": "scripts/ci/check-upload-guards.mjs",
+      "gitObject": "4845d891d9630bc6e8e80f048ff24b68fe8fc9d8"
+    },
+    {
+      "path": "scripts/ci/check-validation-traceability.mjs",
+      "gitObject": "63d3f9d9b540733a591254482376128e0200c1ba"
+    },
+    {
+      "path": "scripts/ci/check-vault-document-writers.mjs",
+      "gitObject": "da57bbaf78f4ebbf2567357495b198cfd105f096"
+    },
+    {
+      "path": "scripts/ci/check-vault-document-writers.selftest.mjs",
+      "gitObject": "8392f34f25afdd35449f181d046dc85b50b2d0d3"
+    },
+    {
+      "path": "scripts/ci/check-workflow-targets.mjs",
+      "gitObject": "fe56f1ad3f3f6fc6e4320484b72c39044ddfd95f"
+    },
+    {
+      "path": "scripts/ci/check-writerless-stores.mjs",
+      "gitObject": "b2defca03b6913f1b728570bea3f6259fa12c8fa"
+    },
+    {
+      "path": "scripts/ci/client-reachability-baseline.json",
+      "gitObject": "ab2f44f8eda79f5f2d5fc14423374f22ad6584fd"
+    },
+    {
+      "path": "scripts/ci/column-reachability-baseline.json",
+      "gitObject": "02ca6b18dcec5290a56aa44c4932ce835eacb139"
+    },
+    {
+      "path": "scripts/ci/commonjs-require-baseline.json",
+      "gitObject": "b0ef15c86729f426da9c50e85ade7061273ea26c"
+    },
+    {
+      "path": "scripts/ci/compliance-claims.rules.mjs",
+      "gitObject": "61a90d5c2dcf014ebdd152d57e05d9b3028f0f16"
+    },
+    {
+      "path": "scripts/ci/component-class-coverage-baseline.json",
+      "gitObject": "544166f63a1784a66e7229094b169bf8f74f48c7"
+    },
+    {
+      "path": "scripts/ci/coverage-baseline.json",
+      "gitObject": "4e1643de6b9f4b18e2bd01e1c33743fcdda1a059"
+    },
+    {
+      "path": "scripts/ci/css-selector-shadowing-baseline.json",
+      "gitObject": "c6a438e9706bd618f30b1f9e2026cf203eb49ecb"
+    },
+    {
+      "path": "scripts/ci/dead-audit-catch-baseline.json",
+      "gitObject": "d946318dcb5cfd460d5597707c74c7dd893d997e"
+    },
+    {
+      "path": "scripts/ci/dead-audit-tables-baseline.json",
+      "gitObject": "0e70b63e06f50d2b14537a005e108cd9d506b74f"
+    },
+    {
+      "path": "scripts/ci/discarded-audit-write-baseline.json",
+      "gitObject": "28b634a173ac0113f925be06bd25fa3ae0b042b6"
+    },
+    {
+      "path": "scripts/ci/drizzle-tenant-scope-baseline.json",
+      "gitObject": "58b93701b62535fba454f4351a17ceea56a5e309"
+    },
+    {
+      "path": "scripts/ci/duplicate-exported-types-baseline.json",
+      "gitObject": "9cb666e70d6df1c267da3a762f52f72981eea9c1"
+    },
+    {
+      "path": "scripts/ci/duplicate-table-ddl-baseline.json",
+      "gitObject": "210fb603c0924d97e26bbd57ce6abdfa8aa611a1"
+    },
+    {
+      "path": "scripts/ci/empty-state-honesty-baseline.json",
+      "gitObject": "c6e1fe329b5fd4b31a53b30e6d34916848891475"
+    },
+    {
+      "path": "scripts/ci/error-envelope-reads-baseline.json",
+      "gitObject": "cd83cfb207b96491b48b46a0b8dc1b82c575da21"
+    },
+    {
+      "path": "scripts/ci/eslint-warning-baseline.json",
+      "gitObject": "14d6699d6db254304e3aed42c73499df4404b69a"
+    },
+    {
+      "path": "scripts/ci/fabricated-identity-baseline.json",
+      "gitObject": "01ae2ee3e091521c0295b421c79c1d5db365e09b"
+    },
+    {
+      "path": "scripts/ci/gateway-bypass-baseline.json",
+      "gitObject": "d8542a91f45f35d36a90ccf82fce2eec75c1bdbf"
+    },
+    {
+      "path": "scripts/ci/generate-test-summary.js",
+      "gitObject": "9c2efa9cba20da8c5bcee0b6914b4e6f336d4723"
+    },
+    {
+      "path": "scripts/ci/image-boot-signin.mjs",
+      "gitObject": "ac2460695c0288ce2914288a05be63e12ac35fad"
+    },
+    {
+      "path": "scripts/ci/insert-columns-baseline.json",
+      "gitObject": "5491e88079a19f9f15888cc8900c4cee780824c4"
+    },
+    {
+      "path": "scripts/ci/internals-in-copy-baseline.json",
+      "gitObject": "d946318dcb5cfd460d5597707c74c7dd893d997e"
+    },
+    {
+      "path": "scripts/ci/json-operator-types-baseline.json",
+      "gitObject": "36af1f754698f63c565dab4626e32fa6f48d8a8a"
+    },
+    {
+      "path": "scripts/ci/launch-scope-fixture-allowlist.json",
+      "gitObject": "a7d0c392709fa35ef1b7342c6f0162db0294c7b4"
+    },
+    {
+      "path": "scripts/ci/launch-scope-route-inventory.ts",
+      "gitObject": "e9a7f2ffaf958e11698a7b2d553a519282aff38c"
+    },
+    {
+      "path": "scripts/ci/lib/allowlist-paths.mjs",
+      "gitObject": "fd9210133ba4f9e8e69dedfa39d2b8f9d0849b6f"
+    },
+    {
+      "path": "scripts/ci/lib/baseline-drift.mjs",
+      "gitObject": "58f207e616dcc12f224bc3307fdbb2d4bd52d217"
+    },
+    {
+      "path": "scripts/ci/lib/extract-string-literals.mjs",
+      "gitObject": "cf4caa80169ee8cae0245a4014c8ea27d049fb6a"
+    },
+    {
+      "path": "scripts/ci/lib/inline-suppression.mjs",
+      "gitObject": "b5a3835a340b3f94934945dcdfc7b382abdc9dd4"
+    },
+    {
+      "path": "scripts/ci/lib/push-range.mjs",
+      "gitObject": "4c39c5b5951ba2504c2b24d1c38df78f41e38de7"
+    },
+    {
+      "path": "scripts/ci/lib/scan-roots.mjs",
+      "gitObject": "cd0cde89497c7e08279f4fd755656d62d11fd804"
+    },
+    {
+      "path": "scripts/ci/lib/sql-columns.mjs",
+      "gitObject": "4121040cc31a200a3497368f4f736e12c0c98fa8"
+    },
+    {
+      "path": "scripts/ci/lib/strip-comments.mjs",
+      "gitObject": "a364fbd256581fdf4071b782e3769567c661d9d6"
+    },
+    {
+      "path": "scripts/ci/lib/verdict-inspector.d.mts",
+      "gitObject": "f9b021ccfbcfe55cbe42a153a04572761b156911"
+    },
+    {
+      "path": "scripts/ci/lib/verdict-inspector.mjs",
+      "gitObject": "6a4f215445ec4b7a21b31d374afac5bdeda649ab"
+    },
+    {
+      "path": "scripts/ci/migration-deploy-path-baseline.json",
+      "gitObject": "a3945dc23293c07473294add3764f45dae285259"
+    },
+    {
+      "path": "scripts/ci/migration-drop-safety-baseline.json",
+      "gitObject": "91e49666834a1b20cc1b8cc8d8923d94ee1219d5"
+    },
+    {
+      "path": "scripts/ci/migration-reachability-baseline.json",
+      "gitObject": "daac3d253cceeb86b84254e47e32cc0e073d5fc4"
+    },
+    {
+      "path": "scripts/ci/model-migration-agreement-baseline.json",
+      "gitObject": "8ba60d785122266f7de5f1d56516ff06a2e5a3ca"
+    },
+    {
+      "path": "scripts/ci/orm-table-reachability-baseline.json",
+      "gitObject": "827b7d1211d2488b1744f6b88bc96f2b08719193"
+    },
+    {
+      "path": "scripts/ci/orphaned-stylesheets-baseline.json",
+      "gitObject": "6a305601de2458cba80710d4d2babc382b374850"
+    },
+    {
+      "path": "scripts/ci/phantom-tokens-baseline.json",
+      "gitObject": "c6d2c946688f199237722101f5bf751144ebdd53"
+    },
+    {
+      "path": "scripts/ci/proof-tier-baseline.json",
+      "gitObject": "adf5d88804868af84588aec7e00a1d6d83e2b822"
+    },
+    {
+      "path": "scripts/ci/prove-module-unused.mjs",
+      "gitObject": "79b43ee9eb18b5d9ab3b8850a534cef8b0afa79c"
+    },
+    {
+      "path": "scripts/ci/report-branch-drift.mjs",
+      "gitObject": "1ce26d2536284c3101f37b651bf16bccec8fe3ec"
+    },
+    {
+      "path": "scripts/ci/require-migration-headers.sh",
+      "gitObject": "aecc2523ca937b0920531fdb3db497a418a100c3"
+    },
+    {
+      "path": "scripts/ci/reseal-dependency-risk-ledger.mjs",
+      "gitObject": "6236eaf44b9db58606602611b74d555dfb2e0750"
+    },
+    {
+      "path": "scripts/ci/runtime-ddl-baseline.json",
+      "gitObject": "93446019f75cd1c58767e6c5eddf251649a910d1"
+    },
+    {
+      "path": "scripts/ci/server-error-leaks-baseline.json",
+      "gitObject": "e14ca5101049e2bbe1e549ddee6ebc4014240436"
+    },
+    {
+      "path": "scripts/ci/shell-css-collisions-baseline.json",
+      "gitObject": "aefb271ac8e3160523a4579339eba9385f45676c"
+    },
+    {
+      "path": "scripts/ci/sign-ceremony-baseline.json",
+      "gitObject": "5304f21db74fe9cee39fb1059b00587ece1e8e84"
+    },
+    {
+      "path": "scripts/ci/tables-live-schema-baseline.json",
+      "gitObject": "d9cdb02c571454e0d96dbeddd69ab16a263a7693"
+    },
+    {
+      "path": "scripts/ci/tenant-resolvers-baseline.json",
+      "gitObject": "985b012acc20bfce7dedc80aa78e71bbec730331"
+    },
+    {
+      "path": "scripts/ci/typecheck-no-regression.mjs",
+      "gitObject": "f4d812afe2285d9686a734dcbdd694130813fc35"
+    },
+    {
+      "path": "scripts/ci/unapproved-model-pins-baseline.json",
+      "gitObject": "0ceb2b0a8dfc87df1d228a9ac5290a4dfcdff7fd"
+    },
+    {
+      "path": "scripts/ci/unauthenticated-fetch-baseline.json",
+      "gitObject": "58e10c8797cdddc4f895e68c285e51a1225db146"
+    },
+    {
+      "path": "scripts/ci/unbacked-tables-baseline.json",
+      "gitObject": "a32c74c5072a2c3c57cd814a697ad67fa5f8f73e"
+    },
+    {
+      "path": "scripts/ci/undefined-css-classes-baseline.json",
+      "gitObject": "9343fbc6e42690ebf98dbdb3d0cf94af6bc32f23"
+    },
+    {
+      "path": "scripts/ci/unkeyed-request-tables-baseline.json",
+      "gitObject": "09e2d6daf9c79db8dc80d8b3ba4af30f07fb38ef"
+    },
+    {
+      "path": "scripts/ci/unreferenced-modules-baseline.json",
+      "gitObject": "67fa81cd878485a8ed91389d9ebe4da1eb2d2adc"
+    },
+    {
+      "path": "scripts/ci/upload-guards-baseline.json",
+      "gitObject": "7748e3846fb892dcb86912c90a6c7b5c25c2794b"
+    },
+    {
+      "path": "scripts/ci/writerless-stores-baseline.json",
+      "gitObject": "137acdb04a2f4cffc33fb4909e8d6806a43336de"
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-account-standing.dbtest.ts",
+      "gitObject": "6ff209cb8d5f9825125a1caa45a79996d8829493"
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-connector-enablement.dbtest.ts",
+      "gitObject": "27046cd9a429ce155bbc4944d82d791f5f6a1743"
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-connector.dbtest.ts",
+      "gitObject": "c3a1ac948801487572be049137f8e3586b0aaa7b"
+    },
+    {
+      "path": "server/mcp/__tests__/mcp-consent-delegated.dbtest.ts",
+      "gitObject": "fb4115fdbbb9e78503184ff72ec56d1c1f2af45c"
+    },
+    {
+      "path": "server/middleware/__tests__/delegated-credential-scope.dbtest.ts",
+      "gitObject": "b673eb2e77a9c23b3fb7407b13d042ea40ed3c85"
+    },
+    {
+      "path": "server/services/__tests__/embedding-corpus-policy.dbtest.ts",
+      "gitObject": "e21f16bfe1322224a581dd791e5f6ed7309d929b"
+    },
+    {
+      "path": "server/services/ana/__tests__/run-control-cross-instance.dbtest.ts",
+      "gitObject": "c8ef55f6bc6fd2bd3b56d03867d64d242a0408c4"
+    },
+    {
+      "path": "server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts",
+      "gitObject": "a254a5ede4deaf8e672a23de7ef9ab6bb91e87f8"
+    },
+    {
+      "path": "server/services/audit/__tests__/audit-archive.test.ts",
+      "gitObject": "2d10622fd2549c05a76234c30769c3fce4e8147e"
+    },
+    {
+      "path": "server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts",
+      "gitObject": "01de8bd32befb65e46dab390616ae768a61280e4"
+    },
+    {
+      "path": "server/services/audit/__tests__/audit-immutability-triggers.test.ts",
+      "gitObject": "b739f3965500700f7de5bf26851ff9ae137b7963"
+    },
+    {
+      "path": "server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts",
+      "gitObject": "dff71d9b969acc11753eac69f351ce584a1e6a49"
+    },
+    {
+      "path": "server/services/audit/__tests__/audit-row-headers.test.ts",
+      "gitObject": "07662ec3b358e135e35245c6a00d5352ef32d790"
+    },
+    {
+      "path": "server/services/audit/__tests__/auditExportKeyPosture.test.ts",
+      "gitObject": "32334914151ecfccfa827a6a065867ccf6595300"
+    },
+    {
+      "path": "server/services/audit/__tests__/auditSealPosture.test.ts",
+      "gitObject": "e993149b94eeec3c482c7767a8234aff08f8c6d1"
+    },
+    {
+      "path": "server/services/audit/__tests__/audited-export.test.ts",
+      "gitObject": "6d754a06e34768bb171055648c0f589bc2a61793"
+    },
+    {
+      "path": "server/services/audit/__tests__/auth-event-audit.test.ts",
+      "gitObject": "238b215dc3197404d60323c79d8995c7a5bd6a86"
+    },
+    {
+      "path": "server/services/audit/__tests__/chain-anchor.test.ts",
+      "gitObject": "4c34c9a3ebf92dcd4290792ac4a0e3df90835a9e"
+    },
+    {
+      "path": "server/services/audit/__tests__/chain-concurrency.dbtest.ts",
+      "gitObject": "474691b37f3e929366a927c285c5b8ec98e2aefc"
+    },
+    {
+      "path": "server/services/audit/__tests__/chain-head-on-demand.test.ts",
+      "gitObject": "0b1b143272bf566a0ec75bffd2d1c6ef4f7d7706"
+    },
+    {
+      "path": "server/services/audit/__tests__/chain-order.pglite.test.ts",
+      "gitObject": "9133fe38ef9a151968b071799142ee3fb4ee4644"
+    },
+    {
+      "path": "server/services/audit/__tests__/chain.test.ts",
+      "gitObject": "fd90b68dae21da5df900c9ed17ab08763a341464"
+    },
+    {
+      "path": "server/services/audit/__tests__/chainIntegrityMonitor.failure-event-org.test.ts",
+      "gitObject": "29a684436816795f7bc95a724102722eb4bf1f8c"
+    },
+    {
+      "path": "server/services/audit/__tests__/chainIntegrityMonitor.once-per-window.test.ts",
+      "gitObject": "ff1f6ffc74182a201e0d985ef7d0ce4d365e5687"
+    },
+    {
+      "path": "server/services/audit/__tests__/chainIntegrityMonitor.test.ts",
+      "gitObject": "2fb414fe086b59bf6f1c25ab84c693056816806a"
+    },
+    {
+      "path": "server/services/audit/__tests__/compliance-reviews.test.ts",
+      "gitObject": "2c8cdecdcb6daff90deadf8fc980fa787ddfb237"
+    },
+    {
+      "path": "server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts",
+      "gitObject": "50947b49f515974d6566635b82bc8175365228fb"
+    },
+    {
+      "path": "server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts",
+      "gitObject": "b5fbdad13a6136b65367893a5d3f09ecd3542ace"
+    },
+    {
+      "path": "server/services/audit/__tests__/signed-audit-export-key-id.test.ts",
+      "gitObject": "5d86d65f41e57a1e5a0eb68c5f003796aac0153b"
+    },
+    {
+      "path": "server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts",
+      "gitObject": "0d014d1af547c900cec29a92ce4120e311ccf665"
+    },
+    {
+      "path": "server/services/audit/audit-api-authority.ts",
+      "gitObject": "75ea814120b67d98577e50d13d8e8db961fe8b8a"
+    },
+    {
+      "path": "server/services/audit/audit-archive.service.ts",
+      "gitObject": "c6b8618fe0f551c22d51fa2f247dbd268a5ca0fb"
+    },
+    {
+      "path": "server/services/audit/audit-hmac-seal.ts",
+      "gitObject": "6cf5f2b9a3d4f11394a097ba1618e12b6aec23dc"
+    },
+    {
+      "path": "server/services/audit/audit-immutability-triggers.ts",
+      "gitObject": "a42be3423e93efafc2bed2f852f78a559655bc54"
+    },
+    {
+      "path": "server/services/audit/audit-integrity-service.ts",
+      "gitObject": "cb46931bee339902a1e8b0e8049f6989c2a05ba5"
+    },
+    {
+      "path": "server/services/audit/audit-write-outcome.ts",
+      "gitObject": "7091aa62dab2f16e2a68549fcef3baef12843f5c"
+    },
+    {
+      "path": "server/services/audit/auditExportKeyPosture.ts",
+      "gitObject": "0c9a37ccbfdcb8830b19d65c1a7c34d75d775605"
+    },
+    {
+      "path": "server/services/audit/auditLogger.ts",
+      "gitObject": "6765ffa536c42ffce4b12ac0575a7bfad9c4be22"
+    },
+    {
+      "path": "server/services/audit/auditSealPosture.ts",
+      "gitObject": "f42ecdfff67622571043f6642f9d082121b89e94"
+    },
+    {
+      "path": "server/services/audit/audited-export.ts",
+      "gitObject": "891b3e74fe2184dbc41c4ce02f1f6b1defc87ea4"
+    },
+    {
+      "path": "server/services/audit/auth-event-audit.ts",
+      "gitObject": "be4e3cca5ff729ca4fcc3b79e8517fd0a9256c70"
+    },
+    {
+      "path": "server/services/audit/chain-anchor.ts",
+      "gitObject": "cee8d0791b475f34bb9270143fbe0343ec47547b"
+    },
+    {
+      "path": "server/services/audit/chain-row.ts",
+      "gitObject": "b7dfd5c66bb7c6f7ed37fab77747de4bf18c9d21"
+    },
+    {
+      "path": "server/services/audit/chain.ts",
+      "gitObject": "f05dcb5411be28fbe2a8247fdd40707a18a4bfb7"
+    },
+    {
+      "path": "server/services/audit/chainIntegrityMonitor.ts",
+      "gitObject": "76a53ad3fbd40c9e763cbf62d8a9c208b9df53e5"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/__tests__/catalog.test.ts",
+      "gitObject": "57dc9cbe03d1876c7c59e00865a22e79fcc73299"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/__tests__/csv.test.ts",
+      "gitObject": "223cd719a9bc596b90b849a86d51d209dca9fdc1"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/__tests__/integrity-report.test.ts",
+      "gitObject": "22c3352c90bc99642f84d7a83b8b18eadb222f43"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/__tests__/period.test.ts",
+      "gitObject": "bc05d03d6cb8463f63fd3e90ba3170bafb80b3d7"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/__tests__/review-round-1.test.ts",
+      "gitObject": "f3f5ec1c9af07ea998cb3fcf85c477dd44c41ca7"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts",
+      "gitObject": "32edf9dd98b393c8330bbb1a313e971f3e516d92"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/__tests__/signed-report.test.ts",
+      "gitObject": "8fac44bed17830c5614a16020274f38c947127e6"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts",
+      "gitObject": "06c2a66d060bc4a497a0ae5a65662e83185ef371"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/catalog.ts",
+      "gitObject": "351bcaa66b4aa029a1a014abb34de7c7109f133f"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/csv.ts",
+      "gitObject": "300e80c63ed3ed628253569fb59bc70730a78e1f"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/generate.ts",
+      "gitObject": "7d88e3cd1d5815460c7defc38d9965c58042cb6a"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/integrity-checks.ts",
+      "gitObject": "8a4b474a023756e0b0116c1aae92b357aaab9d35"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/period.ts",
+      "gitObject": "787bf7b256870952542844ebc5fba210b0e10181"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/queries/access-review.ts",
+      "gitObject": "b807d318039175962bda105779614665cda6a91d"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/queries/administrative-changes.ts",
+      "gitObject": "9ee4d368f0fb18fd9d8977a186951dd64dca4310"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/queries/audit-trail-integrity.ts",
+      "gitObject": "a617b6e1c26a14378a707615b90db9b8b7a41c03"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/queries/authentication-events.ts",
+      "gitObject": "e647028a5a564e3f6e05fb2f3eba0c222316245b"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/queries/controlled-documents.ts",
+      "gitObject": "65e882c3384a7dedfed188c9ab26fac176451884"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/queries/electronic-signatures.ts",
+      "gitObject": "1ffba9a777f7f26375154b349493ba08b6a87ed1"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/queries/retention-legal-holds.ts",
+      "gitObject": "a07dfd2c0e1837e5f0511c3a9cbd8d0dd78bc620"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/queries/review-record.ts",
+      "gitObject": "483fd2848e39b84c1520b7c421ca3ec464113782"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/queries/section.ts",
+      "gitObject": "f6f9306d5f984503c43cdd2a5e426bb1522ea0f7"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/run-limits.ts",
+      "gitObject": "ed57987c79d84fbbba4b74b95a2c2f356d97ccbf"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/signed-report.ts",
+      "gitObject": "36e29e27292c86e790abe4a1d4546cb4592b7334"
+    },
+    {
+      "path": "server/services/audit/compliance-reports/types.ts",
+      "gitObject": "814c713bf8f233bb92ae354c766f069567a03de8"
+    },
+    {
+      "path": "server/services/audit/compliance-reviews.ts",
+      "gitObject": "7fa28a7dcf73a4e467eed1a10fc8fef22f394210"
+    },
+    {
+      "path": "server/services/audit/domain-history-link.ts",
+      "gitObject": "28c9f05b505e207fc9d80af63e3610a5afc231a1"
+    },
+    {
+      "path": "server/services/audit/signedAuditExport.ts",
+      "gitObject": "ecc1a1a7d42eb164dccdb6a49d5ddcaa8ca56485"
+    },
+    {
+      "path": "server/services/audit/tenant-chain-verdict.ts",
+      "gitObject": "86dcbc40db4cd8e27130b4291d64aa7566849ca6"
+    },
+    {
+      "path": "server/services/c2c/__tests__/project-retention-locks.dbtest.ts",
+      "gitObject": "9d3018a42cc9e8830062b84e2821dcd0145becb0"
+    },
+    {
+      "path": "tests/db/account-standing-time-zone.dbtest.ts",
+      "gitObject": "adecf098ec67bad129e8727fbbc5b855a986579c"
+    },
+    {
+      "path": "tests/db/account-standing.dbtest.ts",
+      "gitObject": "463fd85984efe4e44fe882fc4269de084b83d91d"
+    },
+    {
+      "path": "tests/db/actor-displays.dbtest.ts",
+      "gitObject": "cc7c9b1eafbfa4d1ef6709e188b1db9985f4d9af"
+    },
+    {
+      "path": "tests/db/actor-names.dbtest.ts",
+      "gitObject": "ad9325d4cd96e5bb2279e71a39386140c7d3e157"
+    },
+    {
+      "path": "tests/db/actor-vanishing.dbtest.ts",
+      "gitObject": "0e1e1e7c4c85c8337b61e3b4bb47179634efceb4"
+    },
+    {
+      "path": "tests/db/admin-change-audit.dbtest.ts",
+      "gitObject": "be05c0c8f0037a6d0bc355cd7eb4c2d3b3ecf1f3"
+    },
+    {
+      "path": "tests/db/ai-action-leases-across-tasks.dbtest.ts",
+      "gitObject": "33af86ca805d6d851702fc5002848143e49ab1d3"
+    },
+    {
+      "path": "tests/db/ai-gateway-audit-log.dbtest.ts",
+      "gitObject": "cff68be1419ac3e8c574f00e14c46cc4fe8deddf"
+    },
+    {
+      "path": "tests/db/ana-vault-search-no-key.dbtest.ts",
+      "gitObject": "c1370c5284e0a0bfde616984e54c3868939827a1"
+    },
+    {
+      "path": "tests/db/app-role-provisioning-rds-shape.dbtest.ts",
+      "gitObject": "31138a59b8a055ea80f27c4c6e6212bfe1792e5a"
+    },
+    {
+      "path": "tests/db/append-only-store-grants.dbtest.ts",
+      "gitObject": "6b94fad93142403d04070caf2d782140e5c1dccb"
+    },
+    {
+      "path": "tests/db/atom-search-tenant-key.dbtest.ts",
+      "gitObject": "9f3e6fe47b35ff3541860dc090b1d1ef892090c1"
+    },
+    {
+      "path": "tests/db/atom-search.dbtest.ts",
+      "gitObject": "1b18a7617ce4013367307f17211f91a47295d765"
+    },
+    {
+      "path": "tests/db/authoring-governed-delete-signed-freeze.dbtest.ts",
+      "gitObject": "b2a3efba0d5bc49f675029be3572b11ab1755869"
+    },
+    {
+      "path": "tests/db/authoring-section-concurrency.dbtest.ts",
+      "gitObject": "37188d86a02932d4f921510cc65f7cd747d8d972"
+    },
+    {
+      "path": "tests/db/authoring-stability-table.dbtest.ts",
+      "gitObject": "e9a54997a86431ab9315e9080b5188a7e71fa69f"
+    },
+    {
+      "path": "tests/db/c2c-project-persistence.dbtest.ts",
+      "gitObject": "0f6064b79857db8eb0f94b4770d5b80e7f4015c1"
+    },
+    {
+      "path": "tests/db/canonical-documents-append-only.dbtest.ts",
+      "gitObject": "06d2613af008e1aaa7614eb48287c720729736b8"
+    },
+    {
+      "path": "tests/db/capa-code-uniqueness.dbtest.ts",
+      "gitObject": "f763cee42c006f0f719043c153a9d41eabb2fd9a"
+    },
+    {
+      "path": "tests/db/chat-upload.dbtest.ts",
+      "gitObject": "d9140f2042472be5841371878ecb3355654f93c6"
+    },
+    {
+      "path": "tests/db/child-table-parent-scoped-rls.dbtest.ts",
+      "gitObject": "f8668c97982e9e6ddc33970f24d167911b252d7d"
+    },
+    {
+      "path": "tests/db/cmc-module3-history-append-only.dbtest.ts",
+      "gitObject": "5dfc1c678a529148bdccea44e120ac477f3fb428"
+    },
+    {
+      "path": "tests/db/cmc-source-evidence.dbtest.ts",
+      "gitObject": "35ad28a570c255c2804ef8f948b9c060f07e505f"
+    },
+    {
+      "path": "tests/db/collab-presence.dbtest.ts",
+      "gitObject": "a1863385d1c8b97b29c4ffdbd320b99c2ec07912"
+    },
+    {
+      "path": "tests/db/compliance-reports.dbtest.ts",
+      "gitObject": "ae117359bb61efcf2568769c94b1328767912eff"
+    },
+    {
+      "path": "tests/db/compliance-review-fix-round.dbtest.ts",
+      "gitObject": "106bd70cbf2452e69ae62e440c6e336c0c3b614d"
+    },
+    {
+      "path": "tests/db/compliance-review-records.dbtest.ts",
+      "gitObject": "c5c5f468ca8d1be01f04d75e8167e52ccf49adb2"
+    },
+    {
+      "path": "tests/db/compliance-review-reports.dbtest.ts",
+      "gitObject": "36ffabe4f3d5b7e1784df750e0e6451354c969db"
+    },
+    {
+      "path": "tests/db/continuity-baseline.dbtest.ts",
+      "gitObject": "8a4e7f87404caabf122aefad36336d84d61939ce"
+    },
+    {
+      "path": "tests/db/control-plane-access.dbtest.ts",
+      "gitObject": "a5e8d12c0e402bae3b588cd7a6c5c2d14fb1f8aa"
+    },
+    {
+      "path": "tests/db/correspondence-work-items.dbtest.ts",
+      "gitObject": "f5c5174859dae89820b73f995ae63d2043ef1f92"
+    },
+    {
+      "path": "tests/db/cortex-query-tenant-header.dbtest.ts",
+      "gitObject": "440706eb570a0a648dca11253ea86af581579f5e"
+    },
+    {
+      "path": "tests/db/cre-capture-immutability.dbtest.ts",
+      "gitObject": "6fc7aa43e09773b24e40f7bb87405965ea76959c"
+    },
+    {
+      "path": "tests/db/cross-object-resolver.dbtest.ts",
+      "gitObject": "b09d04332bec981c35d86d7c83db52e696b66b42"
+    },
+    {
+      "path": "tests/db/data-room-capture-provenance.dbtest.ts",
+      "gitObject": "491e16e8de8e391a64ff963aaf69171e01997219"
+    },
+    {
+      "path": "tests/db/document-catalog-recall.dbtest.ts",
+      "gitObject": "2546f07d0e641ef7cac09cc7682c6cc35c3cd1c0"
+    },
+    {
+      "path": "tests/db/document-catalog-role.dbtest.ts",
+      "gitObject": "c4dbb46aa1c62ee14a8b56cd7ad4e02c72ecad23"
+    },
+    {
+      "path": "tests/db/document-catalog-toggles.dbtest.ts",
+      "gitObject": "fa8407bd0722ef2c7e08772b7d63064b572d6719"
+    },
+    {
+      "path": "tests/db/document-catalog.dbtest.ts",
+      "gitObject": "714d74e225a50e57a236e31c054e3a47b851aef3"
+    },
+    {
+      "path": "tests/db/domain-history-append-only.dbtest.ts",
+      "gitObject": "459a76cebff32834903f2372fc27cf440eb0e392"
+    },
+    {
+      "path": "tests/db/domain-sign-ceremony.dbtest.ts",
+      "gitObject": "39f781349d4b8ea166fd8029262730ccdcf3c291"
+    },
+    {
+      "path": "tests/db/drafting-tasks-tenant-scope.dbtest.ts",
+      "gitObject": "fcf5a523ccece1383428e9e5d5ba70c394e3f13b"
+    },
+    {
+      "path": "tests/db/enterprise-onboarding-intake.dbtest.ts",
+      "gitObject": "a3b5e287b4c4f42566b50038e1ede77e292e3528"
+    },
+    {
+      "path": "tests/db/entitlement-grants-resolution.dbtest.ts",
+      "gitObject": "15149e27f0921aa5bc18faec542761d4a19651b8"
+    },
+    {
+      "path": "tests/db/entitlement-schema-posture.dbtest.ts",
+      "gitObject": "4ec9e144679093d8e281beda30957fbc90d8d1a5"
+    },
+    {
+      "path": "tests/db/feature-toggle-workspace-header.dbtest.ts",
+      "gitObject": "8f01f80f3f45afc7379264d9151c5f270bcc19a8"
+    },
+    {
+      "path": "tests/db/gateway-accounts.dbtest.ts",
+      "gitObject": "a16809f1dd41fb4b24c31b40c95dc54d2727b5fc"
+    },
+    {
+      "path": "tests/db/gdpr-service-runtime-role.dbtest.ts",
+      "gitObject": "d15529b190075033495df905fdf2a7bd3df96212"
+    },
+    {
+      "path": "tests/db/governed-edit-boundary.dbtest.ts",
+      "gitObject": "279b3f4fef41e6d69d49320f896aea149dedd4c9"
+    },
+    {
+      "path": "tests/db/invitation-acceptance.dbtest.ts",
+      "gitObject": "dd537089f491cb0a56becde0cc9d9598957b77cd"
+    },
+    {
+      "path": "tests/db/knowledge-graph-tenant-isolation.dbtest.ts",
+      "gitObject": "8977f9d834f6ed4d6bc2c6d0af155c64df8370d2"
+    },
+    {
+      "path": "tests/db/licensing-history.dbtest.ts",
+      "gitObject": "d7268f0e9676ed2173ae8bca6f2b64b4976c02bf"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "gitObject": "fce3c88f20e7a04c475cbb9968f59d4bc80a1025"
+    },
+    {
+      "path": "tests/db/lifecycle-signature-binding.dbtest.ts",
+      "gitObject": "f39ca6d9581e74ea70404b61ed273997429c3f53"
+    },
+    {
+      "path": "tests/db/master-enterprise-requests.dbtest.ts",
+      "gitObject": "9a47c80566582470bf0905a4d738d4b4a68c97de"
+    },
+    {
+      "path": "tests/db/master-licensing-console.dbtest.ts",
+      "gitObject": "33ad353f7ccdf128ac83bdd4e278f720762da6b6"
+    },
+    {
+      "path": "tests/db/memberships.dbtest.ts",
+      "gitObject": "e35e78854d51a2554a3dc34e9343be21a5f505ca"
+    },
+    {
+      "path": "tests/db/migration-lock-timeout.dbtest.ts",
+      "gitObject": "6b83538c1b8331bba3da0b06d8f1390e0bfb13ad"
+    },
+    {
+      "path": "tests/db/module-access-requests.dbtest.ts",
+      "gitObject": "ba595c1559b782a53d24c78444669ed50af56e03"
+    },
+    {
+      "path": "tests/db/nonpublic-uuid-tenant-isolation.dbtest.ts",
+      "gitObject": "8eef2582d70828134bd4732e2d9460278b673252"
+    },
+    {
+      "path": "tests/db/one-time-credentials.dbtest.ts",
+      "gitObject": "39d8679af4803ff0311b580e0dd9bdf03bd97d42"
+    },
+    {
+      "path": "tests/db/org-retention-period.dbtest.ts",
+      "gitObject": "49ac000ce57b6993e21c015703dca820f0cd853b"
+    },
+    {
+      "path": "tests/db/organizations-writes.dbtest.ts",
+      "gitObject": "65d8392910938bfb09bb1d42fc23316ed881dbfa"
+    },
+    {
+      "path": "tests/db/part11-audit-store.dbtest.ts",
+      "gitObject": "9f660b06aa931c65031abc9f53007c4f22374c07"
+    },
+    {
+      "path": "tests/db/pdfa-requirement.dbtest.ts",
+      "gitObject": "58c99437bf8211da53e300987faf7a119e617b33"
+    },
+    {
+      "path": "tests/db/pg-mock-scoping.dbtest.ts",
+      "gitObject": "28275dd04068ae3794873bc3d2d3571979156d8c"
+    },
+    {
+      "path": "tests/db/phase5-intelligent-docs.dbtest.ts",
+      "gitObject": "eb3e64345553cc747565abc7dcf015639ecf54fa"
+    },
+    {
+      "path": "tests/db/platform-role-grant-record.dbtest.ts",
+      "gitObject": "3be9f8cf6e1c0383020ac162ad56d9b904d6c22d"
+    },
+    {
+      "path": "tests/db/platform-role-grants.dbtest.ts",
+      "gitObject": "cb10febff5bda1b7cf021332e643273741644454"
+    },
+    {
+      "path": "tests/db/pre-auth-narrowing.dbtest.ts",
+      "gitObject": "0adeb5c85b2038a400e9ccb838453acee4833eff"
+    },
+    {
+      "path": "tests/db/pre-auth-user-lookup.dbtest.ts",
+      "gitObject": "5e7d1df1043b9c12eaed4ca7a6ecc0df3a716082"
+    },
+    {
+      "path": "tests/db/program-ownership.dbtest.ts",
+      "gitObject": "25c66f422918f727ca214cafbc1731f2e021f5f3"
+    },
+    {
+      "path": "tests/db/project-delete-held-by-store.dbtest.ts",
+      "gitObject": "13cc76f8caf203593995fc5140182fc2a46bbe04"
+    },
+    {
+      "path": "tests/db/project-scope-boundary.dbtest.ts",
+      "gitObject": "5eb4a39ddbeb886749b7acbe031c399cbf4aaaf2"
+    },
+    {
+      "path": "tests/db/provisioned-tenant-tables-rls.dbtest.ts",
+      "gitObject": "5b592e4b6d46e4253d57085ab343aa3c88deccae"
+    },
+    {
+      "path": "tests/db/qms-document-signature-required.dbtest.ts",
+      "gitObject": "b9338a5c2cc474a2f691db402436d78bbea5ccb4"
+    },
+    {
+      "path": "tests/db/rag-pipeline-tenant-scope.dbtest.ts",
+      "gitObject": "e18e5b4cc2aafa5858c4666f56de3182d518e749"
+    },
+    {
+      "path": "tests/db/report-os-delivery-recording.dbtest.ts",
+      "gitObject": "20ef7fdc0a77e51ceb66cb0bb16a571da1f97de9"
+    },
+    {
+      "path": "tests/db/report-os-registry-seed.dbtest.ts",
+      "gitObject": "b596da967417e6d798fdfb192d55d600686a8236"
+    },
+    {
+      "path": "tests/db/report-os-tenant-from-session.dbtest.ts",
+      "gitObject": "836e191fc198fa900ac672ea5fab7b06e66a926c"
+    },
+    {
+      "path": "tests/db/request-parent-boundary.dbtest.ts",
+      "gitObject": "2f3c585a2a4e33c2dcdea0d522d20298f3782e79"
+    },
+    {
+      "path": "tests/db/research-admin-sign-ceremony.dbtest.ts",
+      "gitObject": "aec353d75218c02e1ab922f787119e0ae7104d65"
+    },
+    {
+      "path": "tests/db/retrieval-floor.dbtest.ts",
+      "gitObject": "c73b3153bcadae47b81825b04cf3f9fad02d7c08"
+    },
+    {
+      "path": "tests/db/review-comments-record.dbtest.ts",
+      "gitObject": "93328b9d6d9fd8a3a7fbc8ca5fb442a3720a3db1"
+    },
+    {
+      "path": "tests/db/review-record-export.dbtest.ts",
+      "gitObject": "05c09e464703ff177fcaac63a53054daadf0bb81"
+    },
+    {
+      "path": "tests/db/rls-bypass-does-not-outlive-release.dbtest.ts",
+      "gitObject": "47e4fdb8a2140a65e28cff905c2752c5905d5d3a"
+    },
+    {
+      "path": "tests/db/rls-policy-inputs.dbtest.ts",
+      "gitObject": "ab45cce3b3897a6bcef9614a37d9a5474fa01acb"
+    },
+    {
+      "path": "tests/db/rls-tenant-isolation.dbtest.ts",
+      "gitObject": "82c8a1b79b778f9d2018457420121af9c9a32ed8"
+    },
+    {
+      "path": "tests/db/role-config-change-audit.dbtest.ts",
+      "gitObject": "7e5dcb760c4334ac09d26ee3b264972bd9bdd83c"
+    },
+    {
+      "path": "tests/db/scheduled-once-lease.dbtest.ts",
+      "gitObject": "4cc7ee424ea5e0d38fa7adfd5022bdbc0b02c87f"
+    },
+    {
+      "path": "tests/db/scheduled-once-window.dbtest.ts",
+      "gitObject": "cb85831fa8e88b12b53e505bf56adb2d4189caa5"
+    },
+    {
+      "path": "tests/db/scheduler-jobs-under-rls.dbtest.ts",
+      "gitObject": "277b1f91b7f0d7fdb19c58106ec040acaab12350"
+    },
+    {
+      "path": "tests/db/second-factor-binding.dbtest.ts",
+      "gitObject": "bbfa7e467463712b38d06fe4c774729e8a32b512"
+    },
+    {
+      "path": "tests/db/security-definer-functions.dbtest.ts",
+      "gitObject": "83213044c9a5479a618491d30097db109e05502a"
+    },
+    {
+      "path": "tests/db/session-activity-across-tasks.dbtest.ts",
+      "gitObject": "1e9e6c80a87e2811c6c11c33fc4d9c62187c8258"
+    },
+    {
+      "path": "tests/db/session-termination.dbtest.ts",
+      "gitObject": "f345af5f8090cb179f0e5c0b2d24df395c8f61a9"
+    },
+    {
+      "path": "tests/db/sign-in-audit-trail.dbtest.ts",
+      "gitObject": "a87fbdf4eea1fbd54155e4fe2f61065704c5d48e"
+    },
+    {
+      "path": "tests/db/sign-in-posture.dbtest.ts",
+      "gitObject": "df21366b414ce4353a584b09f06f2ff5a08d1098"
+    },
+    {
+      "path": "tests/db/signed-act-meaning-and-lock.dbtest.ts",
+      "gitObject": "a251d231866a3a9797ae178dd21ff218a482f130"
+    },
+    {
+      "path": "tests/db/signing-lockout.dbtest.ts",
+      "gitObject": "1da89753fcea483e48591c1f1ddc31f14384ca9c"
+    },
+    {
+      "path": "tests/db/signup-launch-catalog.dbtest.ts",
+      "gitObject": "8e97ab406537e361f171d5017d2a2f3adf96cb2c"
+    },
+    {
+      "path": "tests/db/tamper-proof-log-tenant-column.dbtest.ts",
+      "gitObject": "4ffab96c8a1e6cd41d8b563f9fa0cf2b4e10dc99"
+    },
+    {
+      "path": "tests/db/task-board-every-store.dbtest.ts",
+      "gitObject": "79b642149802c5bfee26772145f3fdc76152dde0"
+    },
+    {
+      "path": "tests/db/task-link-completion-lock-order.dbtest.ts",
+      "gitObject": "3ccd17a01cf415ce2fbaa40e58d5902a567e5a6b"
+    },
+    {
+      "path": "tests/db/tenant-export-withheld-columns.dbtest.ts",
+      "gitObject": "8583a2c9b51c1d9eb9218e1bde42670bf6cd774b"
+    },
+    {
+      "path": "tests/db/tenant-purge-artifact-records.dbtest.ts",
+      "gitObject": "5ac1ef9b87b7e825ed670047383a9c87b5f6afa6"
+    },
+    {
+      "path": "tests/db/tenant-purge-audit.dbtest.ts",
+      "gitObject": "8f77551ea74d013a6dd12665dcba6e6685fc0a70"
+    },
+    {
+      "path": "tests/db/tenant-purge.dbtest.ts",
+      "gitObject": "b39e5092a59b256d22223e91c28e7b6ee19207a0"
+    },
+    {
+      "path": "tests/db/traceability-update-boundary.dbtest.ts",
+      "gitObject": "7db5212cf1c972d79ca87c592570e86301dfe87a"
+    },
+    {
+      "path": "tests/db/turn-record-purge-door.dbtest.ts",
+      "gitObject": "05dcb7e0789aaf897822535aaf7d26dfbd516648"
+    },
+    {
+      "path": "tests/db/two-tenant-application-rls.dbtest.ts",
+      "gitObject": "d2acf0c95c6aff27163d3fe45ff34d817aff67a1"
+    },
+    {
+      "path": "tests/db/upload-integrity-check.dbtest.ts",
+      "gitObject": "3f28b730d7323da25e21c670238ea46fd7223b7a"
+    },
+    {
+      "path": "tests/db/user-presence-rls.dbtest.ts",
+      "gitObject": "39bf8b9a87596f055d6ad11622956cfa93ff07f4"
+    },
+    {
+      "path": "tests/db/users-rls.dbtest.ts",
+      "gitObject": "46f7dd85d752c11fb6b9455a58db92e741670457"
+    },
+    {
+      "path": "tests/db/vault-catalog-tenant-isolation.dbtest.ts",
+      "gitObject": "3fb653d7711de56cd3992265c948b883112b1478"
+    },
+    {
+      "path": "tests/db/vault-chunk-backfill.dbtest.ts",
+      "gitObject": "f9178a5ea9497364330754dc101dff680d8db0a5"
+    },
+    {
+      "path": "tests/db/vault-chunking-off.dbtest.ts",
+      "gitObject": "5dbed77ecc475ae5792c257bff001f77dd2d3838"
+    },
+    {
+      "path": "tests/db/vault-coverage.dbtest.ts",
+      "gitObject": "36bdbba30c21833431e92463c21aea9820e37177"
+    },
+    {
+      "path": "tests/db/vault-data-room-file.dbtest.ts",
+      "gitObject": "0f32d267f9e867a753cb81080125f70c22def892"
+    },
+    {
+      "path": "tests/db/vault-document-archives.dbtest.ts",
+      "gitObject": "2f0edb689d2cf5a49c0c5c4f6e7d3145197e9a31"
+    },
+    {
+      "path": "tests/db/vault-document-relationships.dbtest.ts",
+      "gitObject": "64ab9d4123373f90c3f9314b40596d046a208a69"
+    },
+    {
+      "path": "tests/db/vault-filing-vocabulary.dbtest.ts",
+      "gitObject": "b7507683b8a4ceca38c3f9e52d7fa7d032dad140"
+    },
+    {
+      "path": "tests/db/vault-fixity.dbtest.ts",
+      "gitObject": "e519aab7ad352025134cd9f12cfee7796302ef1f"
+    },
+    {
+      "path": "tests/db/vault-ingest.dbtest.ts",
+      "gitObject": "4bff3516ffaa1d6ef4f277400f8a9def4b782105"
+    },
+    {
+      "path": "tests/db/vault-library-search.dbtest.ts",
+      "gitObject": "96d942249f72231fd7c142330ee04458e8cbf359"
+    },
+    {
+      "path": "tests/db/vault-lifecycle.dbtest.ts",
+      "gitObject": "b47b5bc7d1f56b9e2863a3ff386c542f0a12fe36"
+    },
+    {
+      "path": "tests/db/vault-metadata-edit.dbtest.ts",
+      "gitObject": "791945d54f07b8b6227af81604656dc7075f97fa"
+    },
+    {
+      "path": "tests/db/vault-passage-search.dbtest.ts",
+      "gitObject": "13bc108cd9ec6891e9c4907c3e6afe1879a5db8c"
+    },
+    {
+      "path": "tests/db/vault-placement-batch.dbtest.ts",
+      "gitObject": "244abcdf1153c917aff5b65d2310b28319e3430b"
+    },
+    {
+      "path": "tests/db/vault-placement.dbtest.ts",
+      "gitObject": "42f8a9a9d4bbad98234d43d265bec07da52db20c"
+    },
+    {
+      "path": "tests/db/vault-program-ownership.dbtest.ts",
+      "gitObject": "a5e7abc61ecc5513206e36ae716ec3e1398ac0bd"
+    },
+    {
+      "path": "tests/db/vault-record-immutability.dbtest.ts",
+      "gitObject": "128c173db372135172b8539ecd7a66810f72540d"
+    },
+    {
+      "path": "tests/db/vault-reupload.dbtest.ts",
+      "gitObject": "ee3857d792edbb0429494cbd33e5cdc5ab16b205"
+    },
+    {
+      "path": "tests/db/vault-version-annotations-record.dbtest.ts",
+      "gitObject": "783421fae72b83dd17298c3ba9a59d73f73462c2"
+    },
+    {
+      "path": "tests/db/vault-version-annotations.dbtest.ts",
+      "gitObject": "b99aeafb9dd94ead315577fe569ce213f57b2444"
+    },
+    {
+      "path": "tests/db/vault-version-checkin.dbtest.ts",
+      "gitObject": "53f8b16f717c691c4bca26b2065323fd33671c8a"
+    },
+    {
+      "path": "tests/db/vault-version-compare.dbtest.ts",
+      "gitObject": "69f117baed75db80a09d6052ae8e6ec65b9a59cb"
+    },
+    {
+      "path": "tests/db/vault-versions.dbtest.ts",
+      "gitObject": "53444e4950fa8c3231128a4496b46ccadf0ec464"
+    },
+    {
+      "path": "tests/db/vault-where-used.dbtest.ts",
+      "gitObject": "676089ac46e4d21cbb16a373a44be452c9d05f7e"
+    },
+    {
+      "path": "tests/db/workflow-approval-tables.dbtest.ts",
+      "gitObject": "475a4623565f8415f092828e6a4ab6b74b063dde"
+    },
+    {
+      "path": "vitest.config.ts",
+      "gitObject": "8935bc6c016ffc6bbfbb41cb54e2f5220f7f2215"
+    },
+    {
+      "path": "vitest.db.config.ts",
+      "gitObject": "e1be1748b9ce90e92c32d864a457dc42b029b73b"
+    }
+  ],
+  "nativePhysicalFilePopulation": 150,
+  "nativeCasesRemoved": 0,
+  "productionVerifierAndArchiveDoorUnchanged": true,
+  "fullExistingVerdictAndDeletionAssertionsUnchanged": true,
+  "everyByteOutsideCase12CallbackUnchanged": true,
+  "compiler": "Required exact-source remote gate; no full local compiler on 8-GiB host.",
+  "nativePostgresql": "Required exact-source remote rerun; PGlite focused proof does not qualify native PostgreSQL."
+}

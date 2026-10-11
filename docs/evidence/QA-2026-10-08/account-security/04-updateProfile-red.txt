@@ -1,0 +1,12 @@
+# Item 4 RED — authService.updateProfile calls PATCH /profile, which the auth router does not serve
+# authService.tsx still has updateProfile
+$ npx vitest run client/src/services/portal/__tests__/authService-routes-exist.test.ts
+ ✓ client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > the client singleton addresses /api/v1/auth, where the auth router is mounted 5ms
+ ✓ client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > reads every api call in the client (none is skipped for its shape) 5ms
+ × client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > each one is registered on server/routes/auth.ts 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/services/portal/__tests__/authService-routes-exist.test.ts > the auth client calls only routes the auth router serves > each one is registered on server/routes/auth.ts
+AssertionError: authService calls a route the auth router does not serve: expected [ 'PATCH /profile' ] to deeply equal []
++   "PATCH /profile",
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)

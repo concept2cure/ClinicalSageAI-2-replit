@@ -1,0 +1,10 @@
+{
+  "base": "bf80e2fa922a0261edadf403da732983cc55c9b7",
+  "branch": "concept2cure-v2",
+  "client_tree": "f4a50c306387585250e354c68e08a099362e3823",
+  "production_source": "server/services/ana-ri/command-executor.ts",
+  "production_blob": "0cb11c5e1cb6ab6a55ff58540f120219c25b69a4",
+  "workstream": "W3",
+  "row": "D4",
+  "original_base": "dc1927938a13c46153a3a2132f958dbada138435"
+}

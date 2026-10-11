@@ -1,0 +1,10 @@
+ × client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx > Insights — the open program > names the open program to the overview and leads with it 74ms
+   → expected [ '/api/insights-canvas/overview' ] to deeply equal [ Array(1) ]
+ × client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx > Insights — the open program > a program with no project record is stated for that program, not replaced by another 5009ms
+   → Unable to find an element with the text: /BX-256 has no readiness or reports here yet/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx > Insights — the open program > with no program open, the organisation view is read as before 18ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx > Insights — the open program > names the open program to the overview and leads with it
+ FAIL  client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx > Insights — the open program > a program with no project record is stated for that program, not replaced by another
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)

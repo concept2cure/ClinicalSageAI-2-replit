@@ -1,0 +1,92 @@
+{
+  "before": {
+    "header": "Module 3 · quality - Emily Watson - updated 1h ago",
+    "headerTitle": "Vorelinib-DS-Specification-J3",
+    "detailsBlocks": [
+      {
+        "title": "Protocol-Stability",
+        "type": "Other",
+        "classification": "Internal"
+      },
+      {
+        "title": "Vorelinib-DS-Specification-J3",
+        "type": "Module 3 · quality",
+        "classification": "Internal"
+      }
+    ],
+    "note": null,
+    "lane": [
+      {
+        "kind": "Module 3 · quality",
+        "name": "Vorelinib-DS-Specification-J3"
+      }
+    ],
+    "listRow": [
+      "Module 3 · quality · Not sent for review",
+      "Module 3 · quality · Not sent for review"
+    ],
+    "treeRow": null
+  },
+  "docId": "805b9144-9227-45c2-8c0e-34d6b05210c7",
+  "treeBefore": {
+    "type": "Module 3 · quality",
+    "details": {
+      "documentTitle": "Vorelinib-DS-Specification-J3",
+      "documentType": "MODULE_3",
+      "classification": "INTERNAL"
+    },
+    "evidence": null
+  },
+  "blocksTotal": 2,
+  "targetBlockIndex": 1,
+  "saveResponse": {
+    "status": 200,
+    "url": "/api/c2c/project-vault/50c41bb6-5796-4dc6-a848-72e4d1246ebd/documents/805b9144-9227-45c2-8c0e-34d6b05210c7/details",
+    "body": "{\"success\":true,\"unchanged\":false,\"changes\":[{\"field\":\"document_type\",\"from\":\"MODULE_3\",\"to\":\"REPORT\"}]}"
+  },
+  "noteImmediately": null,
+  "afterSave": {
+    "header": "Report - Emily Watson - updated just now",
+    "headerTitle": "Vorelinib-DS-Specification-J3",
+    "detailsBlocks": [
+      {
+        "title": "Vorelinib-DS-Specification-J3",
+        "type": "Report",
+        "classification": "Internal"
+      }
+    ],
+    "note": null,
+    "lane": [
+      {
+        "kind": "Report",
+        "name": "Vorelinib-DS-Specification-J3"
+      }
+    ],
+    "listRow": [
+      "Report · Not sent for review",
+      "Module 3 · quality · Not sent for review"
+    ],
+    "treeRow": null
+  },
+  "noteAfter2s": null,
+  "listGetAfterSave": {
+    "status": 200
+  },
+  "treeAfter": {
+    "type": "Report",
+    "details": {
+      "documentTitle": "Vorelinib-DS-Specification-J3",
+      "documentType": "REPORT",
+      "classification": "INTERNAL"
+    },
+    "evidence": null
+  },
+  "searchRows": [
+    "Vorelinib-DS-Specification-J3 Report AUTO-FILED · CONFIRM"
+  ],
+  "historyApi": {
+    "status": 429,
+    "entries": []
+  },
+  "historyPaneText": "HISTORY\nThis document's history could not be read. Nothing is shown rather than an incomplete history."
+}

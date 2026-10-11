@@ -21,6 +21,7 @@ import { AUTO_TIME_WORDS, PAUSE_WORDS, isPolicyHoldOutcome, stepLabels } from '@
 import type { TurnPlanStep } from './turn-plan.js';
 import { agentResultSummary, agentTraceStatus } from './sub-agent-result.js';
 import { RUN_AGENT_TOOL } from '@shared/ana/run-control-limits';
+import type { StepFact, StepSource } from '@shared/ana/step-verbs';
 
 export interface ToolTraceEntry {
   tool: string;
@@ -34,6 +35,17 @@ export interface ToolTraceEntry {
   status: 'success' | 'error' | 'not_found' | 'cancelled' | 'incomplete';
   /** One-line summary of the tool's result. */
   resultSummary: string;
+  /*
+   * How the step read when it finished (ANA-SUMMARY S3, step-presentation.ts),
+   * kept so a reopened turn reads the same as the live one. Absent from traces
+   * written before S3. Never rendered from resultSummary.
+   */
+  source?: StepSource;
+  preview?: string | null;
+  facts?: StepFact[];
+  usedModel?: boolean | null;
+  /** The server's status sentence for a step that did not succeed (stepMessage). */
+  message?: string;
 }
 
 function truncate(s: string, max: number): string {
@@ -41,12 +53,36 @@ function truncate(s: string, max: number): string {
   return t.length > max ? t.slice(0, max - 1) + '…' : t;
 }
 
+/** The refusal's sentence when the tool gave none of its own. */
+export const NO_REFUSAL_SENTENCE = 'The step answered that it did not do what was asked, and gave no reason.';
+
 /**
- * The refusal a handler returned instead of throwing: a JSON object whose own
- * top-level `error` is a non-empty string. Handlers across the tool set say "I
- * could not do this" that way (`{ error: 'needs an open project …' }`), and a
- * step that did not happen must not be reported — or drawn with a check mark —
- * as one that did. Anything else, including a non-JSON result, is null.
+ * Fields with which a result carries the work its `ok` is a verdict on: a
+ * check's findings (check_grounding's `ungroundedClaims`, validate_docx's
+ * `validation`, verify_docx_against_source's `missingRequiredStrings`), an
+ * insertion's `applied` list, a script's `stdout`. Such a result did what it
+ * was asked; `ok: false` there says what it found, not that it refused.
+ */
+const VERDICT_FIELDS = ['ungroundedClaims', 'validation', 'missingRequiredStrings', 'applied', 'stdout'] as const;
+
+const sentence = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v.trim() : null);
+
+/**
+ * The refusal a handler returned instead of throwing, in its own words, or
+ * null. A step that did not happen must not be reported — or drawn with a
+ * check mark — as one that did. Handlers say "I could not do this" three ways:
+ *
+ *   `{ error: '…' }`                    the sentence is `error`
+ *   `{ refused: true | '<code>', … }`   the sentence is `reason`, then `message`
+ *   `{ ok: false, … }`                  likewise, unless the result carries the
+ *                                       work its `ok` judges (VERDICT_FIELDS)
+ *
+ * The second and third were read as successes until ANA-SUMMARY S4: 36
+ * refusals under server/services/ana answer `{ ok: false, reason | message }`
+ * with no `error` (a filing only a person confirms, a signature AnA cannot
+ * give, a document with no extracted text), and each was recorded, noted to
+ * the model and counted as a step that worked. One that gives no sentence
+ * reads NO_REFUSAL_SENTENCE. Anything else, including a non-JSON result, is null.
  */
 export function refusalOf(resultContent: string): string | null {
   let parsed: unknown;
@@ -56,8 +92,13 @@ export function refusalOf(resultContent: string): string | null {
     return null;
   }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-  const error = (parsed as { error?: unknown }).error;
-  return typeof error === 'string' && error.trim() ? error.trim() : null;
+  const r = parsed as Record<string, unknown>;
+  const error = sentence(r.error);
+  if (error) return error;
+  const refused = r.refused === true || Boolean(sentence(r.refused));
+  const notOk = r.ok === false && !VERDICT_FIELDS.some(f => f in r);
+  if (!refused && !notOk) return null;
+  return sentence(r.reason) ?? sentence(r.message) ?? NO_REFUSAL_SENTENCE;
 }
 
 /**
@@ -76,6 +117,21 @@ export function summarizeToolResult(content: string, max = 180): string {
 
   if (parsed.error) return truncate(`error: ${parsed.error}`, max);
   if (parsed.note && Object.keys(parsed).length <= 2) return truncate(String(parsed.note), max);
+
+  /* A result that names the authoring document a step built keeps the ids
+     whole, first, whatever else the result held. A reopened conversation finds
+     its documents in this summary (ConversationThread authoringDocFromToolResult);
+     the 180-character cut of the raw JSON dropped the id whenever the tool put
+     other fields (its source references) ahead of it, and the reopened
+     conversation then showed no document at all (real-browser capture,
+     docs/evidence/D2-ONE-ANA/2026-10-08/ana-1-canvas-opens/screens/). */
+  if (typeof parsed.authoringDocId === 'string' && parsed.authoringDocId) {
+    const kept: Record<string, string> = { authoringDocId: parsed.authoringDocId };
+    if (typeof parsed.programId === 'string' && parsed.programId) kept.programId = parsed.programId;
+    if (typeof parsed.status === 'string' && parsed.status) kept.status = parsed.status;
+    if (typeof parsed.title === 'string' && parsed.title) kept.title = truncate(parsed.title, 80);
+    return JSON.stringify(kept);
+  }
 
   const bits: string[] = [];
   if (typeof parsed.totalMatches === 'number') {
@@ -443,6 +499,11 @@ function stopWords(
       );
     case 'answer_cut_off':
       return `The answer was cut off${ran}, before AnA finished writing it. What the person saw ends where it stopped.`;
+    case 'client_disconnected':
+      return (
+        `The page lost its connection${ran}, before AnA said she was done, so the run was stopped. ` +
+        `The answer is what she had written by then.${notRunSentence(pendingSteps)}`
+      );
     default:
       // A reason this module has no words for. Said plainly rather than
       // dropped, so a record can never be silent about a stop.
@@ -500,6 +561,8 @@ const UNFINISHED_STOP: ReadonlyMap<string, (rounds: number | null) => string> = 
   ['hold_expired', () => `stopped after waiting ${PAUSE_WORDS} for the person to say whether to go on,`],
   ['hold_unavailable', () => 'stopped where it would have asked the person (Manual could not hold this turn)'],
   ['answer_cut_off', () => 'had its answer cut off'],
+  // The page lost its connection (a phone locked, a tab closed): Continue picks it up (S4).
+  ['client_disconnected', () => 'was stopped when the page lost its connection,'],
 ]);
 
 /**

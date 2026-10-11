@@ -149,6 +149,11 @@ async function draftDoc(label: string): Promise<number> {
   return Number(rows[0].id);
 }
 
+/** Send a draft for review: the only state an approval signs (QA walk 2026-10-08, J8 — a draft is no longer approvable). */
+async function toReview(docId: number): Promise<void> {
+  await owner.query(`UPDATE qms_documents SET status = 'in_review' WHERE id = $1`, [docId]);
+}
+
 interface SigOpts { type?: string; org?: number; revoked?: boolean }
 
 /** A signature row shaped as the governed writer anchors one, on the caller's transaction. */
@@ -291,6 +296,7 @@ describe('P0-18: the database refuses an effective or retired controlled documen
 
   it('an approval written by an earlier transaction does not make a revised version effective', async () => {
     const id = await draftDoc('revised');
+    await toReview(id);
     expect((await approve(id)).status).toBe(200);
     expect((await revise(id)).status).toBe(200);
     expect(await statusOf(id)).toBe('draft');
@@ -304,6 +310,7 @@ describe('P0-18: the database refuses an effective or retired controlled documen
 describe('P0-18: the governed path, and fixtures that sign, still commit', () => {
   it('approve: the route makes the document effective with one approval signature from the same transaction', async () => {
     const id = await draftDoc('route-approve');
+    await toReview(id);
     const res = await approve(id);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     const doc = await owner.query('SELECT status, approver_id, xmin::text AS xmin FROM qms_documents WHERE id = $1', [id]);
@@ -315,6 +322,7 @@ describe('P0-18: the governed path, and fixtures that sign, still commit', () =>
 
   it('retire: the route retires the effective document with its retirement signature', async () => {
     const id = await draftDoc('route-retire');
+    await toReview(id);
     expect((await approve(id)).status).toBe(200);
     const res = await retire(id);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -324,8 +332,10 @@ describe('P0-18: the governed path, and fixtures that sign, still commit', () =>
 
   it('a revised document is approved again through the route', async () => {
     const id = await draftDoc('route-reapprove');
+    await toReview(id);
     expect((await approve(id)).status).toBe(200);
     expect((await revise(id)).status).toBe(200);
+    await toReview(id);
     const res = await approve(id);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(await statusOf(id)).toBe('effective');
@@ -339,15 +349,17 @@ describe('P0-18: the governed path, and fixtures that sign, still commit', () =>
       authenticationMethod: 'password' as const, secondFactorVerified: false, ipAddress: null,
     });
     const immediate = await draftDoc('immediate');
+    await toReview(immediate);
     await expect(
       asRuntime(async (c) => {
         await c.query('SET CONSTRAINTS trg_qms_documents_signed_status_upd IMMEDIATE');
         await approveQmsDocumentSigned(c as never, params(immediate));
       }),
     ).rejects.toThrow(REFUSED);
-    expect(await statusOf(immediate)).toBe('draft');
+    expect(await statusOf(immediate)).toBe('in_review');
     expect(await signaturesOn(immediate)).toEqual([]);
     const deferred = await draftDoc('deferred');
+    await toReview(deferred);
     await asRuntime((c) => approveQmsDocumentSigned(c as never, params(deferred)));
     expect(await statusOf(deferred)).toBe('effective');
   });

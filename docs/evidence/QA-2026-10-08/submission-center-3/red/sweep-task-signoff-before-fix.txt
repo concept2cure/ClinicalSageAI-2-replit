@@ -1,0 +1,20 @@
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > not required for a non-completion transition 2ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > not required when the task carries no approval gate 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > not required while the gate still reads approved 0ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > required again after a reopen has retired the signature 2ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > 428 ESIGN_REQUIRED when completing the gate without a signature 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > rejects an unknown meaning before any credential is checked 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > requires a reason 0ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > requires a signer the server can re-verify (an account id) 0ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > a signing PIN signs nothing: the password is required 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > refuses a wrong password as the refusal of the act (403), not of the session, and counts it 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > requires the enrolled code, and refuses a wrong one 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > a locked account cannot sign 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > a verified signer yields the §11.50 manifestation, recording what was verified and never the credentials 3ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > records a password-only signature as such 1ms
+ × server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — signing authority before the password > a manager is refused 403 ESIGNATURE_NO_AUTHORITY, and no password is compared 8ms
+ × server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — signing authority before the password > a member is refused 403 ESIGNATURE_NO_AUTHORITY, and no password is compared 2ms
+ × server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — signing authority before the password > a role lookup that cannot run refuses 503 and compares no password 4ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — signing authority before the password > a transition that needs no signature asks nothing of the role 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 15 passed (18)

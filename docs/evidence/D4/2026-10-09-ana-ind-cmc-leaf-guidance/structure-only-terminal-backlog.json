@@ -1,0 +1,2040 @@
+{
+  "captured_at_utc": "2026-10-09T20:39:45.001Z",
+  "canonical_branch": "concept2cure-v2",
+  "local_head_at_capture": "5d5772f0d3211193fdb46489595d22539d49a061",
+  "runtime": "v22.23.3",
+  "scope": "Encoded CTD IND/NDA/BLA lifecycle catalogue only; no initial-IND requirement or scientific qualification is inferred.",
+  "derivation": {
+    "terminal": "A code has no modeled descendant with the code plus dot as prefix in the union of exact guidance and structural headings.",
+    "structure_only": "A terminal is in ICH_M4_HEADINGS and has no exact CTD_AUTHORING_GUIDANCE entry.",
+    "ancestor": "Longest dot-delimited strict prefix present in CTD_AUTHORING_GUIDANCE; verified against resolveSectionBriefSource.",
+    "applicability": "Every row remains undetermined; neither structural presence nor ancestor necessity tags resolve initial IND applicability.",
+    "reproduction": "See docs/design/ANA_IND_REQUIREMENTS_BACKLOG.md, Reproduce and verify."
+  },
+  "counts": {
+    "canonical_guidance_entries": 127,
+    "canonical_structural_entries": 122,
+    "combined_entries": 249,
+    "structure_only_terminals": 100,
+    "by_module": {
+      "2": 67,
+      "3": 2,
+      "4": 17,
+      "5": 14
+    },
+    "inherited_exact_ancestor": 96,
+    "without_exact_ancestor": 4,
+    "by_proposed_content_batch": {
+      "A": 7,
+      "B": 10,
+      "C": 10,
+      "D": 2,
+      "E": 4,
+      "F": 7,
+      "G": 3,
+      "H": 4,
+      "I": 5,
+      "J": 8,
+      "K": 21,
+      "L": 4,
+      "M": 3,
+      "N": 5,
+      "O": 2,
+      "P": 5
+    }
+  },
+  "source_pins": [
+    {
+      "path": "server/services/ind/ctd/authoring-guidance.ts",
+      "bytes": 515739,
+      "sha256": "87875a27d80db335e166b9e055d0bf1699d7344e9019e0f05c36f42697fc0d26"
+    },
+    {
+      "path": "server/services/ind/ctd/ich-m4-headings.ts",
+      "bytes": 14577,
+      "sha256": "c063ac55b664fb33a1dc20ba05fb3633cda8796f1eba214c45a7369dd2de6e2b"
+    },
+    {
+      "path": "server/services/ind/ctd/section-brief.ts",
+      "bytes": 16786,
+      "sha256": "ad91f99559c77ed40a972cab1292e3729f07011f8cf13bf8a84e9c2255395082"
+    },
+    {
+      "path": "server/services/ind/ctd/regulatory-basis.ts",
+      "bytes": 7686,
+      "sha256": "c295e55494948c99384c871ff0201e93ae7642b7a73e735f172cde054506e826"
+    },
+    {
+      "path": "shared/regulatory/section-code.ts",
+      "bytes": 11171,
+      "sha256": "e4847c9c4258140212be071e0eadac75acd3cd8fe68557c9534225148bbff3ad"
+    }
+  ],
+  "rows": [
+    {
+      "code": "2.1",
+      "heading": "Common Technical Document Table of Contents (Modules 2–5)",
+      "module": 2,
+      "record_parent": "2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": null,
+      "current_requirements_match": "not_indexed",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4(R4), Organisation of the CTD",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "P"
+    },
+    {
+      "code": "2.5.7",
+      "heading": "Literature References",
+      "module": 2,
+      "record_parent": "2.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.5",
+        "title": "Clinical Overview"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "P"
+    },
+    {
+      "code": "2.6.2.1",
+      "heading": "Brief Summary",
+      "module": 2,
+      "record_parent": "2.6.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.2",
+        "title": "Pharmacology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.2.1",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "A"
+    },
+    {
+      "code": "2.6.2.2",
+      "heading": "Primary Pharmacodynamics",
+      "module": 2,
+      "record_parent": "2.6.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.2",
+        "title": "Pharmacology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.2.2",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "A"
+    },
+    {
+      "code": "2.6.2.3",
+      "heading": "Secondary Pharmacodynamics",
+      "module": 2,
+      "record_parent": "2.6.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.2",
+        "title": "Pharmacology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.2.3",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "A"
+    },
+    {
+      "code": "2.6.2.4",
+      "heading": "Safety Pharmacology",
+      "module": 2,
+      "record_parent": "2.6.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.2",
+        "title": "Pharmacology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.2.4",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "A"
+    },
+    {
+      "code": "2.6.2.5",
+      "heading": "Pharmacodynamic Drug Interactions",
+      "module": 2,
+      "record_parent": "2.6.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.2",
+        "title": "Pharmacology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.2.5",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "A"
+    },
+    {
+      "code": "2.6.2.6",
+      "heading": "Discussion and Conclusions",
+      "module": 2,
+      "record_parent": "2.6.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.2",
+        "title": "Pharmacology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.2.6",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "A"
+    },
+    {
+      "code": "2.6.2.7",
+      "heading": "Tables and Figures",
+      "module": 2,
+      "record_parent": "2.6.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.2",
+        "title": "Pharmacology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.2.7",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "A"
+    },
+    {
+      "code": "2.6.4.1",
+      "heading": "Brief Summary",
+      "module": 2,
+      "record_parent": "2.6.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.4",
+        "title": "Pharmacokinetics Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.4.1",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "B"
+    },
+    {
+      "code": "2.6.4.2",
+      "heading": "Methods of Analysis",
+      "module": 2,
+      "record_parent": "2.6.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.4",
+        "title": "Pharmacokinetics Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.4.2",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "B"
+    },
+    {
+      "code": "2.6.4.3",
+      "heading": "Absorption",
+      "module": 2,
+      "record_parent": "2.6.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.4",
+        "title": "Pharmacokinetics Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.4.3",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "B"
+    },
+    {
+      "code": "2.6.4.4",
+      "heading": "Distribution",
+      "module": 2,
+      "record_parent": "2.6.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.4",
+        "title": "Pharmacokinetics Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.4.4",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "B"
+    },
+    {
+      "code": "2.6.4.5",
+      "heading": "Metabolism (Interspecies Comparison)",
+      "module": 2,
+      "record_parent": "2.6.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.4",
+        "title": "Pharmacokinetics Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.4.5",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "B"
+    },
+    {
+      "code": "2.6.4.6",
+      "heading": "Excretion",
+      "module": 2,
+      "record_parent": "2.6.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.4",
+        "title": "Pharmacokinetics Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.4.6",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "B"
+    },
+    {
+      "code": "2.6.4.7",
+      "heading": "Pharmacokinetic Drug Interactions",
+      "module": 2,
+      "record_parent": "2.6.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.4",
+        "title": "Pharmacokinetics Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.4.7",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "B"
+    },
+    {
+      "code": "2.6.4.8",
+      "heading": "Other Pharmacokinetic Studies",
+      "module": 2,
+      "record_parent": "2.6.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.4",
+        "title": "Pharmacokinetics Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.4.8",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "B"
+    },
+    {
+      "code": "2.6.4.9",
+      "heading": "Discussion and Conclusions",
+      "module": 2,
+      "record_parent": "2.6.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.4",
+        "title": "Pharmacokinetics Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.4.9",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "B"
+    },
+    {
+      "code": "2.6.4.10",
+      "heading": "Tables and Figures",
+      "module": 2,
+      "record_parent": "2.6.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.4",
+        "title": "Pharmacokinetics Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.4.10",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "B"
+    },
+    {
+      "code": "2.6.6.1",
+      "heading": "Brief Summary",
+      "module": 2,
+      "record_parent": "2.6.6",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.6",
+        "title": "Toxicology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.6.1",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "C"
+    },
+    {
+      "code": "2.6.6.2",
+      "heading": "Single-Dose Toxicity",
+      "module": 2,
+      "record_parent": "2.6.6",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.6",
+        "title": "Toxicology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.6.2",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "C"
+    },
+    {
+      "code": "2.6.6.3",
+      "heading": "Repeat-Dose Toxicity",
+      "module": 2,
+      "record_parent": "2.6.6",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.6",
+        "title": "Toxicology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.6.3",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "C"
+    },
+    {
+      "code": "2.6.6.4",
+      "heading": "Genotoxicity",
+      "module": 2,
+      "record_parent": "2.6.6",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.6",
+        "title": "Toxicology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.6.4",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "C"
+    },
+    {
+      "code": "2.6.6.5",
+      "heading": "Carcinogenicity",
+      "module": 2,
+      "record_parent": "2.6.6",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.6",
+        "title": "Toxicology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.6.5",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "C"
+    },
+    {
+      "code": "2.6.6.6",
+      "heading": "Reproductive and Developmental Toxicity",
+      "module": 2,
+      "record_parent": "2.6.6",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.6",
+        "title": "Toxicology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.6.6",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "C"
+    },
+    {
+      "code": "2.6.6.7",
+      "heading": "Local Tolerance",
+      "module": 2,
+      "record_parent": "2.6.6",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.6",
+        "title": "Toxicology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.6.7",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "C"
+    },
+    {
+      "code": "2.6.6.8",
+      "heading": "Other Toxicity Studies",
+      "module": 2,
+      "record_parent": "2.6.6",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.6",
+        "title": "Toxicology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.6.8",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "C"
+    },
+    {
+      "code": "2.6.6.9",
+      "heading": "Discussion and Conclusions",
+      "module": 2,
+      "record_parent": "2.6.6",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.6",
+        "title": "Toxicology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.6.9",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "C"
+    },
+    {
+      "code": "2.6.6.10",
+      "heading": "Tables and Figures",
+      "module": 2,
+      "record_parent": "2.6.6",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.6.6",
+        "title": "Toxicology Written Summary"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 2.6.6.10",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "C"
+    },
+    {
+      "code": "2.7.1.1",
+      "heading": "Background and Overview",
+      "module": 2,
+      "record_parent": "2.7.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.1",
+        "title": "Summary of Biopharmaceutic Studies and Associated Analytical Methods"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.1.1",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "H"
+    },
+    {
+      "code": "2.7.1.2",
+      "heading": "Summary of Results of Individual Studies",
+      "module": 2,
+      "record_parent": "2.7.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.1",
+        "title": "Summary of Biopharmaceutic Studies and Associated Analytical Methods"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.1.2",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "H"
+    },
+    {
+      "code": "2.7.1.3",
+      "heading": "Comparison and Analyses of Results Across Studies",
+      "module": 2,
+      "record_parent": "2.7.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.1",
+        "title": "Summary of Biopharmaceutic Studies and Associated Analytical Methods"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.1.3",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "H"
+    },
+    {
+      "code": "2.7.1.4",
+      "heading": "Appendix",
+      "module": 2,
+      "record_parent": "2.7.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.1",
+        "title": "Summary of Biopharmaceutic Studies and Associated Analytical Methods"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.1.4",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "H"
+    },
+    {
+      "code": "2.7.2.1",
+      "heading": "Background and Overview",
+      "module": 2,
+      "record_parent": "2.7.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.2",
+        "title": "Summary of Clinical Pharmacology Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.2.1",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "I"
+    },
+    {
+      "code": "2.7.2.2",
+      "heading": "Summary of Results of Individual Studies",
+      "module": 2,
+      "record_parent": "2.7.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.2",
+        "title": "Summary of Clinical Pharmacology Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.2.2",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "I"
+    },
+    {
+      "code": "2.7.2.3",
+      "heading": "Comparison and Analyses of Results Across Studies",
+      "module": 2,
+      "record_parent": "2.7.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.2",
+        "title": "Summary of Clinical Pharmacology Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.2.3",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "I"
+    },
+    {
+      "code": "2.7.2.4",
+      "heading": "Special Studies",
+      "module": 2,
+      "record_parent": "2.7.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.2",
+        "title": "Summary of Clinical Pharmacology Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "I"
+    },
+    {
+      "code": "2.7.2.5",
+      "heading": "Appendix",
+      "module": 2,
+      "record_parent": "2.7.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.2",
+        "title": "Summary of Clinical Pharmacology Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.2.5",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "I"
+    },
+    {
+      "code": "2.7.3.1",
+      "heading": "Background and Overview of Clinical Efficacy",
+      "module": 2,
+      "record_parent": "2.7.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.3",
+        "title": "Summary of Clinical Efficacy"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.3.1",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "J"
+    },
+    {
+      "code": "2.7.3.2",
+      "heading": "Summary of Results of Individual Studies",
+      "module": 2,
+      "record_parent": "2.7.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.3",
+        "title": "Summary of Clinical Efficacy"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.3.2",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "J"
+    },
+    {
+      "code": "2.7.3.3.1",
+      "heading": "Study Populations",
+      "module": 2,
+      "record_parent": "2.7.3.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.3",
+        "title": "Summary of Clinical Efficacy"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.3.3.1",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "J"
+    },
+    {
+      "code": "2.7.3.3.2",
+      "heading": "Comparison of Efficacy Results of All Studies",
+      "module": 2,
+      "record_parent": "2.7.3.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.3",
+        "title": "Summary of Clinical Efficacy"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.3.3.2",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "J"
+    },
+    {
+      "code": "2.7.3.3.3",
+      "heading": "Comparison of Results in Sub-populations",
+      "module": 2,
+      "record_parent": "2.7.3.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.3",
+        "title": "Summary of Clinical Efficacy"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.3.3.3",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "J"
+    },
+    {
+      "code": "2.7.3.4",
+      "heading": "Analysis of Clinical Information Relevant to Dosing Recommendations",
+      "module": 2,
+      "record_parent": "2.7.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.3",
+        "title": "Summary of Clinical Efficacy"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "J"
+    },
+    {
+      "code": "2.7.3.5",
+      "heading": "Persistence of Efficacy and/or Tolerance Effects",
+      "module": 2,
+      "record_parent": "2.7.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.3",
+        "title": "Summary of Clinical Efficacy"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "J"
+    },
+    {
+      "code": "2.7.3.6",
+      "heading": "Appendix",
+      "module": 2,
+      "record_parent": "2.7.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.3",
+        "title": "Summary of Clinical Efficacy"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.3.6",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "J"
+    },
+    {
+      "code": "2.7.4.1.1",
+      "heading": "Overall Safety Evaluation Plan and Narratives of Safety Studies",
+      "module": 2,
+      "record_parent": "2.7.4.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.1.1",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.1.2",
+      "heading": "Overall Extent of Exposure",
+      "module": 2,
+      "record_parent": "2.7.4.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.1.2",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.1.3",
+      "heading": "Demographic and Other Characteristics of Study Population",
+      "module": 2,
+      "record_parent": "2.7.4.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.1.3",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.2.1.1",
+      "heading": "Common Adverse Events",
+      "module": 2,
+      "record_parent": "2.7.4.2.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.2.1.1",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.2.1.2",
+      "heading": "Deaths",
+      "module": 2,
+      "record_parent": "2.7.4.2.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.2.1.2",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.2.1.3",
+      "heading": "Other Serious Adverse Events",
+      "module": 2,
+      "record_parent": "2.7.4.2.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.2.1.3",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.2.1.4",
+      "heading": "Other Significant Adverse Events",
+      "module": 2,
+      "record_parent": "2.7.4.2.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.2.1.4",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.2.1.5",
+      "heading": "Analysis of Adverse Events by Organ System or Syndrome",
+      "module": 2,
+      "record_parent": "2.7.4.2.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.2.1.5",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.2.2",
+      "heading": "Narratives",
+      "module": 2,
+      "record_parent": "2.7.4.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.2.2",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.3",
+      "heading": "Clinical Laboratory Evaluations",
+      "module": 2,
+      "record_parent": "2.7.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.4",
+      "heading": "Vital Signs, Physical Findings, and Other Observations Related to Safety",
+      "module": 2,
+      "record_parent": "2.7.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.4",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.5.1",
+      "heading": "Intrinsic Factors",
+      "module": 2,
+      "record_parent": "2.7.4.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.5.1",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.5.2",
+      "heading": "Extrinsic Factors",
+      "module": 2,
+      "record_parent": "2.7.4.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.5.2",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.5.3",
+      "heading": "Drug Interactions",
+      "module": 2,
+      "record_parent": "2.7.4.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.5.3",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.5.4",
+      "heading": "Use in Pregnancy and Lactation",
+      "module": 2,
+      "record_parent": "2.7.4.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.5.4",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.5.5",
+      "heading": "Overdose",
+      "module": 2,
+      "record_parent": "2.7.4.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.5.5",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.5.6",
+      "heading": "Drug Abuse",
+      "module": 2,
+      "record_parent": "2.7.4.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.5.6",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.5.7",
+      "heading": "Withdrawal and Rebound",
+      "module": 2,
+      "record_parent": "2.7.4.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.5.7",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.5.8",
+      "heading": "Effects on Ability to Drive or Operate Machinery or Impairment of Mental Ability",
+      "module": 2,
+      "record_parent": "2.7.4.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.5.8",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.6",
+      "heading": "Post-marketing Data",
+      "module": 2,
+      "record_parent": "2.7.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "2.7.4.7",
+      "heading": "Appendix",
+      "module": 2,
+      "record_parent": "2.7.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "2.7.4",
+        "title": "Summary of Clinical Safety"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 2.7.4.7",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "K"
+    },
+    {
+      "code": "3.1",
+      "heading": "Table of Contents of Module 3",
+      "module": 3,
+      "record_parent": "3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": null,
+      "current_requirements_match": "not_indexed",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4(R4), Organisation of the CTD",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "P"
+    },
+    {
+      "code": "3.3",
+      "heading": "Literature References",
+      "module": 3,
+      "record_parent": "3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": null,
+      "current_requirements_match": "not_indexed",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4(R4), Organisation of the CTD",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "P"
+    },
+    {
+      "code": "4.1",
+      "heading": "Table of Contents of Module 4",
+      "module": 4,
+      "record_parent": "4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": null,
+      "current_requirements_match": "not_indexed",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4(R4), Organisation of the CTD",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "P"
+    },
+    {
+      "code": "4.2.3.3.1",
+      "heading": "In Vitro",
+      "module": 4,
+      "record_parent": "4.2.3.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.3",
+        "title": "Genotoxicity"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.3.1",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "D"
+    },
+    {
+      "code": "4.2.3.3.2",
+      "heading": "In Vivo",
+      "module": 4,
+      "record_parent": "4.2.3.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.3",
+        "title": "Genotoxicity"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.3.2",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "D"
+    },
+    {
+      "code": "4.2.3.4.1",
+      "heading": "Long-term Studies",
+      "module": 4,
+      "record_parent": "4.2.3.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.4",
+        "title": "Carcinogenicity"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.4.1",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "G"
+    },
+    {
+      "code": "4.2.3.4.2",
+      "heading": "Short- or Medium-term Studies",
+      "module": 4,
+      "record_parent": "4.2.3.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.4",
+        "title": "Carcinogenicity"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.4.2",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "G"
+    },
+    {
+      "code": "4.2.3.4.3",
+      "heading": "Other Studies",
+      "module": 4,
+      "record_parent": "4.2.3.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.4",
+        "title": "Carcinogenicity"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.4.3",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "G"
+    },
+    {
+      "code": "4.2.3.5.1",
+      "heading": "Fertility and Early Embryonic Development",
+      "module": 4,
+      "record_parent": "4.2.3.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.5",
+        "title": "Reproductive and Developmental Toxicity"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.5.1",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "E"
+    },
+    {
+      "code": "4.2.3.5.2",
+      "heading": "Embryo-fetal Development",
+      "module": 4,
+      "record_parent": "4.2.3.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.5",
+        "title": "Reproductive and Developmental Toxicity"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.5.2",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "E"
+    },
+    {
+      "code": "4.2.3.5.3",
+      "heading": "Prenatal and Postnatal Development, Including Maternal Function",
+      "module": 4,
+      "record_parent": "4.2.3.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.5",
+        "title": "Reproductive and Developmental Toxicity"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.5.3",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "E"
+    },
+    {
+      "code": "4.2.3.5.4",
+      "heading": "Studies in Which the Offspring (Juvenile Animals) Are Dosed and/or Further Evaluated",
+      "module": 4,
+      "record_parent": "4.2.3.5",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.5",
+        "title": "Reproductive and Developmental Toxicity"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.5.4",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "E"
+    },
+    {
+      "code": "4.2.3.7.1",
+      "heading": "Antigenicity",
+      "module": 4,
+      "record_parent": "4.2.3.7",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.7",
+        "title": "Other Toxicity Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.7.1",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "F"
+    },
+    {
+      "code": "4.2.3.7.2",
+      "heading": "Immunotoxicity",
+      "module": 4,
+      "record_parent": "4.2.3.7",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.7",
+        "title": "Other Toxicity Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.7.2",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "F"
+    },
+    {
+      "code": "4.2.3.7.3",
+      "heading": "Mechanistic Studies",
+      "module": 4,
+      "record_parent": "4.2.3.7",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.7",
+        "title": "Other Toxicity Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.7.3",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "F"
+    },
+    {
+      "code": "4.2.3.7.4",
+      "heading": "Dependence",
+      "module": 4,
+      "record_parent": "4.2.3.7",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.7",
+        "title": "Other Toxicity Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.7.4",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "F"
+    },
+    {
+      "code": "4.2.3.7.5",
+      "heading": "Metabolites",
+      "module": 4,
+      "record_parent": "4.2.3.7",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.7",
+        "title": "Other Toxicity Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.7.5",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "F"
+    },
+    {
+      "code": "4.2.3.7.6",
+      "heading": "Impurities",
+      "module": 4,
+      "record_parent": "4.2.3.7",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.7",
+        "title": "Other Toxicity Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.7.6",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "F"
+    },
+    {
+      "code": "4.2.3.7.7",
+      "heading": "Other",
+      "module": 4,
+      "record_parent": "4.2.3.7",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "4.2.3.7",
+        "title": "Other Toxicity Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4S(R2) 4.2.3.7.7",
+        "confidence": "recall",
+        "note": "wording matched against a search extract of the FDA-hosted copy on 2026-10-05; regulator-text once its constant is declared in regulatory-basis.ts"
+      },
+      "proposed_content_batch": "F"
+    },
+    {
+      "code": "5.3.1.1",
+      "heading": "Bioavailability (BA) Study Reports",
+      "module": 5,
+      "record_parent": "5.3.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.1",
+        "title": "Reports of Biopharmaceutic Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "L"
+    },
+    {
+      "code": "5.3.1.2",
+      "heading": "Comparative BA and Bioequivalence (BE) Study Reports",
+      "module": 5,
+      "record_parent": "5.3.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.1",
+        "title": "Reports of Biopharmaceutic Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "L"
+    },
+    {
+      "code": "5.3.1.3",
+      "heading": "In Vitro–In Vivo Correlation Study Reports",
+      "module": 5,
+      "record_parent": "5.3.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.1",
+        "title": "Reports of Biopharmaceutic Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "L"
+    },
+    {
+      "code": "5.3.1.4",
+      "heading": "Reports of Bioanalytical and Analytical Methods for Human Studies",
+      "module": 5,
+      "record_parent": "5.3.1",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.1",
+        "title": "Reports of Biopharmaceutic Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 5.3.1.4",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "L"
+    },
+    {
+      "code": "5.3.2.1",
+      "heading": "Plasma Protein Binding Study Reports",
+      "module": 5,
+      "record_parent": "5.3.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.2",
+        "title": "Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "M"
+    },
+    {
+      "code": "5.3.2.2",
+      "heading": "Reports of Hepatic Metabolism and Drug Interaction Studies",
+      "module": 5,
+      "record_parent": "5.3.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.2",
+        "title": "Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "M"
+    },
+    {
+      "code": "5.3.2.3",
+      "heading": "Reports of Studies Using Other Human Biomaterials",
+      "module": 5,
+      "record_parent": "5.3.2",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.2",
+        "title": "Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 5.3.2.3",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "M"
+    },
+    {
+      "code": "5.3.3.1",
+      "heading": "Healthy Subject PK and Initial Tolerability Study Reports",
+      "module": 5,
+      "record_parent": "5.3.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.3",
+        "title": "Reports of Human Pharmacokinetic (PK) Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "N"
+    },
+    {
+      "code": "5.3.3.2",
+      "heading": "Patient PK and Initial Tolerability Study Reports",
+      "module": 5,
+      "record_parent": "5.3.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.3",
+        "title": "Reports of Human Pharmacokinetic (PK) Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 5.3.3.2",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "N"
+    },
+    {
+      "code": "5.3.3.3",
+      "heading": "Intrinsic Factor PK Study Reports",
+      "module": 5,
+      "record_parent": "5.3.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.3",
+        "title": "Reports of Human Pharmacokinetic (PK) Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "N"
+    },
+    {
+      "code": "5.3.3.4",
+      "heading": "Extrinsic Factor PK Study Reports",
+      "module": 5,
+      "record_parent": "5.3.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.3",
+        "title": "Reports of Human Pharmacokinetic (PK) Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 5.3.3.4",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "N"
+    },
+    {
+      "code": "5.3.3.5",
+      "heading": "Population PK Study Reports",
+      "module": 5,
+      "record_parent": "5.3.3",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.3",
+        "title": "Reports of Human Pharmacokinetic (PK) Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "N"
+    },
+    {
+      "code": "5.3.4.1",
+      "heading": "Healthy Subject PD and PK/PD Study Reports",
+      "module": 5,
+      "record_parent": "5.3.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.4",
+        "title": "Reports of Human Pharmacodynamic (PD) Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2) 5.3.4.1",
+        "confidence": "recall"
+      },
+      "proposed_content_batch": "O"
+    },
+    {
+      "code": "5.3.4.2",
+      "heading": "Patient PD and PK/PD Study Reports",
+      "module": 5,
+      "record_parent": "5.3.4",
+      "coverage": "structure-only terminal",
+      "has_exact_guidance": false,
+      "nearest_exact_guidance_ancestor": {
+        "code": "5.3.4",
+        "title": "Reports of Human Pharmacodynamic (PD) Studies"
+      },
+      "current_requirements_match": "ancestor",
+      "initial_ind_applicability": "undetermined",
+      "recorded_heading_basis": {
+        "ref": "ICH M4E(R2), as published by FDA",
+        "confidence": "regulator-text",
+        "url": "https://www.fda.gov/media/93569/download",
+        "checked": "2026-10-04"
+      },
+      "proposed_content_batch": "O"
+    }
+  ]
+}

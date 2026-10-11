@@ -1,0 +1,2896 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > POSTs request-review for the open document with the reviewer’s user id and the reason, and shows the server’s answer 943ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > sends every chosen reviewer in one request, and gives each a task 489ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the workbench records a review request the Review board reads > requires a reviewer and a reason at the server’s floor before anything is sent 285ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > shows a refusal in the server’s words, creates no task, and lets the person send again 366ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > an outcome nobody can confirm is unknown: no task, no second send, and the board is offered to check 468ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a success that names another document is not a receipt for this one 305ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task that failed after the request is reported as not created; the request still stands 361ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a refusal, an unknown outcome and a failed task are each told as what they are > a task whose creation could not be confirmed offers the task list, not a retry 415ms
+ ✓ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the Tasks rail > the Tasks rail offers Send for review, not a task-only assignment 249ms
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a task whose answer was lost is unknown, not absent > says the outcome is unknown in the receipt and the toast, never "no task" and never "not created" 50ms
+   → expected ' OQ Signer: no task. The review task …' not to match /no task/i
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > is shown with that request and cannot be chosen; the others can 17ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a row that comes back with a verdict gets no task, and is never reported as requested 5037ms
+   → expected [ [ 'POST', …(2) ], [ 'POST', …(2) ] ] to have a length of 1 but got 2
+
+Ignored nodes: comments, script, style
+<html
+  dir="ltr"
+  lang="en"
+>
+  <head />
+  <body>
+    <div>
+      <div
+        class="de-bd"
+      >
+        <div
+          aria-labelledby="sfr-title"
+          aria-modal="true"
+          class="de"
+          data-testid="send-for-review-dialog"
+          role="dialog"
+          tabindex="-1"
+        >
+          <div
+            class="de-h"
+          >
+            <div>
+              <div
+                class="de-h-eye"
+              >
+                Review
+              </div>
+              <div
+                class="de-h-t"
+                id="sfr-title"
+              >
+                Send for review
+              </div>
+              <div
+                class="de-h-s"
+              >
+                Asks the people you choose to review “
+                Module 2.5 Clinical Overview
+                ”.
+              </div>
+            </div>
+            <button
+              aria-label="Close"
+              class="de-x"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-x"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M18 6 6 18"
+                />
+                <path
+                  d="m6 6 12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="de-body"
+          >
+            <div
+              data-testid="sfr-result"
+            >
+              <div
+                class="de-gov"
+                role="status"
+              >
+                <span
+                  class="ico"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-circle-check-big"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M21.801 10A10 10 0 1 1 17 3.335"
+                    />
+                    <path
+                      d="m9 11 3 3L22 4"
+                    />
+                  </svg>
+                </span>
+                <span
+                  class="de-gov-t"
+                >
+                  Review requested. The server recorded 
+                  2 requests
+                   on this document, listed on the Review board.
+                </span>
+              </div>
+              <ul
+                aria-label="Review requests recorded"
+                data-testid="sfr-reviews"
+                style="list-style: none; padding: 0px; margin: 10px 0px; font-size: 13px;"
+              >
+                <li
+                  style="padding: 4px 0px;"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-user"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+                    />
+                    <circle
+                      cx="12"
+                      cy="7"
+                      r="4"
+                    />
+                  </svg>
+                   
+                  OQ Signer
+                   · 
+                  Changes requested: an earlier verdict, which a new request does not reset
+                   · 
+                  <span
+                    class="mono"
+                    style="font-size: 11.5px;"
+                  >
+                    request 
+                    rev-42
+                  </span>
+                </li>
+                <li
+                  style="padding: 4px 0px;"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-user"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+                    />
+                    <circle
+                      cx="12"
+                      cy="7"
+                      r="4"
+                    />
+                  </svg>
+                   
+                  Dana Chen
+                   · 
+                  Pending
+                   · 
+                  <span
+                    class="mono"
+                    style="font-size: 11.5px;"
+                  >
+                    request 
+                    rev-7
+                  </span>
+                </li>
+              </ul>
+              <ul
+                aria-label="Review tasks"
+                data-testid="sfr-tasks"
+                style="list-style: none; padding: 0px; margin: 10px 0px; font-size: 13px;"
+              >
+                <li
+                  data-ok="true"
+                  style="padding: 4px 0px;"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-square-check-big"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"
+                    />
+                    <path
+                      d="m9 11 3 3L22 4"
+                    />
+                  </svg>
+                   
+                  Task TASK-1758-1 in OQ Signer’s My work
+                </li>
+                <li
+                  data-ok="true"
+                  style="padding: 4px 0px;"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-square-check-big"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"
+                    />
+                    <path
+                      d="m9 11 3 3L22 4"
+                    />
+                  </svg>
+                   
+                  Task TASK-1758-2 in Dana Chen’s My work
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div
+            class="de-f"
+          >
+            <button
+              class="de-btn ghost"
+            >
+              Open the Review board
+            </button>
+            <button
+              class="de-btn primary"
+              data-testid="sfr-done"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > when no row was reopened, nothing is reported as requested and no task is made 67ms
+   → expected [ Array(1) ] to have a length of +0 but got 1
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > existing requests that could not be read: no one can be chosen, and reading them again recovers 5025ms
+   → Unable to find an element by: [data-testid="sfr-standing-error"]
+
+Ignored nodes: comments, script, style
+<div
+  aria-labelledby="sfr-title"
+  aria-modal="true"
+  class="de"
+  data-testid="send-for-review-dialog"
+  role="dialog"
+  tabindex="-1"
+>
+  <div
+    class="de-h"
+  >
+    <div>
+      <div
+        class="de-h-eye"
+      >
+        Review
+      </div>
+      <div
+        class="de-h-t"
+        id="sfr-title"
+      >
+        Send for review
+      </div>
+      <div
+        class="de-h-s"
+      >
+        Asks the people you choose to review “
+        Module 2.5 Clinical Overview
+        ”.
+      </div>
+    </div>
+    <button
+      aria-label="Close"
+      class="de-x"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="de-body"
+  >
+    <fieldset
+      class="de-field"
+      data-testid="sfr-reviewers"
+    >
+      <legend
+        class="de-label"
+      >
+        Reviewers
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </legend>
+      <div
+        style="display: flex; flex-direction: column; gap: 2px; max-height: 200px; overflow-y: auto;"
+      >
+        <label
+          style="display: flex; align-items: center; gap: 8px; font-size: 13px;"
+        >
+          <input
+            data-testid="sfr-reviewer-42"
+            type="checkbox"
+          />
+          OQ Signer
+        </label>
+        <label
+          style="display: flex; align-items: center; gap: 8px; font-size: 13px;"
+        >
+          <input
+            data-testid="sfr-reviewer-7"
+            type="checkbox"
+          />
+          Dana Chen
+        </label>
+        <label
+          style="display: flex; align-items: center; gap: 8px; font-size: 13px;"
+        >
+          <input
+            data-testid="sfr-reviewer-9"
+            type="checkbox"
+          />
+          Ira Patel
+        </label>
+      </div>
+    </fieldset>
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="sfr-reason"
+      >
+        Reason for the request
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </label>
+      <div
+        class="de-desc"
+        id="sfr-reason-note"
+      >
+        Recorded with the request on the document’s audit trail, and given to each reviewer in their task. At least 
+        8
+         characters.
+      </div>
+      <textarea
+        aria-describedby="sfr-reason-note"
+        aria-required="true"
+        class="c2c-input"
+        data-testid="sfr-reason"
+        id="sfr-reason"
+        placeholder="e.g. Ready for medical review before the pre-IND package."
+        style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+      />
+    </div>
+    <fieldset
+      class="de-field"
+    >
+      <legend
+        class="de-label"
+      >
+        In each reviewer’s My work
+      </legend>
+      <div
+        class="de-field"
+      >
+        <label
+          class="de-label"
+          for="sfr-instructions"
+        >
+          Instructions to the reviewers
+        </label>
+        <textarea
+          class="c2c-input"
+          data-testid="sfr-instructions"
+          id="sfr-instructions"
+          placeholder="e.g. Check the clinical claims against the cited sources."
+          style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-due"
+        >
+          Due date
+        </label>
+        <input
+          class="c2c-input"
+          data-testid="sfr-due"
+          id="sfr-due"
+          type="date"
+          value=""
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-priority"
+        >
+          Priority
+        </label>
+        <select
+          class="c2c-input"
+          id="sfr-priority"
+        >
+          <option
+            value="low"
+          >
+            low
+          </option>
+          <option
+            value="medium"
+          >
+            medium
+          </option>
+          <option
+            value="high"
+          >
+            high
+          </option>
+          <option
+            value="critical"
+          >
+            critical
+          </option>
+        </select>
+      </div>
+    </fieldset>
+    <div
+      class="de-gov"
+    >
+      <span
+        class="ico"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-lock"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="11"
+            rx="2"
+            ry="2"
+            width="18"
+            x="3"
+            y="11"
+          />
+          <path
+            d="M7 11V7a5 5 0 0 1 10 0v4"
+          />
+        </svg>
+      </span>
+      <span
+        class="de-gov-t"
+      >
+        One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board; a binding §11.50 signature is applied on the document.
+      </span>
+    </div>
+    <div
+      class="de-desc"
+      data-testid="sfr-send-note"
+      id="sfr-send-note"
+      style="margin-top: 10px;"
+    >
+      Choose at least one reviewer. A reason of at least 8 characters is required.
+    </div>
+  </div>
+  <div
+    class="de-f"
+  >
+    <button
+      class="de-btn ghost"
+    >
+      Cancel
+    </button>
+    <button
+      aria-describedby="sfr-send-note"
+      class="de-btn primary"
+      data-testid="sfr-submit"
+      disabled=""
+    >
+      Send for review
+    </button>
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<div
+  aria-labelledby="sfr-title"
+  aria-modal="true"
+  class="de"
+  data-testid="send-for-review-dialog"
+  role="dialog"
+  tabindex="-1"
+>
+  <div
+    class="de-h"
+  >
+    <div>
+      <div
+        class="de-h-eye"
+      >
+        Review
+      </div>
+      <div
+        class="de-h-t"
+        id="sfr-title"
+      >
+        Send for review
+      </div>
+      <div
+        class="de-h-s"
+      >
+        Asks the people you choose to review “
+        Module 2.5 Clinical Overview
+        ”.
+      </div>
+    </div>
+    <button
+      aria-label="Close"
+      class="de-x"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="de-body"
+  >
+    <fieldset
+      class="de-field"
+      data-testid="sfr-reviewers"
+    >
+      <legend
+        class="de-label"
+      >
+        Reviewers
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </legend>
+      <div
+        style="display: flex; flex-direction: column; gap: 2px; max-height: 200px; overflow-y: auto;"
+      >
+        <label
+          style="display: flex; align-items: center; gap: 8px; font-size: 13px;"
+        >
+          <input
+            data-testid="sfr-reviewer-42"
+            type="checkbox"
+          />
+          OQ Signer
+        </label>
+        <label
+          style="display: flex; align-items: center; gap: 8px; font-size: 13px;"
+        >
+          <input
+            data-testid="sfr-reviewer-7"
+            type="checkbox"
+          />
+          Dana Chen
+        </label>
+        <label
+          style="display: flex; align-items: center; gap: 8px; font-size: 13px;"
+        >
+          <input
+            data-testid="sfr-reviewer-9"
+            type="checkbox"
+          />
+          Ira Patel
+        </label>
+      </div>
+    </fieldset>
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="sfr-reason"
+      >
+        Reason for the request
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </label>
+      <div
+        class="de-desc"
+        id="sfr-reason-note"
+      >
+        Recorded with the request on the document’s audit trail, and given to each reviewer in their task. At least 
+        8
+         characters.
+      </div>
+      <textarea
+        aria-describedby="sfr-reason-note"
+        aria-required="true"
+        class="c2c-input"
+        data-testid="sfr-reason"
+        id="sfr-reason"
+        placeholder="e.g. Ready for medical review before the pre-IND package."
+        style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+      />
+    </div>
+    <fieldset
+      class="de-field"
+    >
+      <legend
+        class="de-label"
+      >
+        In each reviewer’s My work
+      </legend>
+      <div
+        class="de-field"
+      >
+        <label
+          class="de-label"
+          for="sfr-instructions"
+        >
+          Instructions to the reviewers
+        </label>
+        <textarea
+          class="c2c-input"
+          data-testid="sfr-instructions"
+          id="sfr-instructions"
+          placeholder="e.g. Check the clinical claims against the cited sources."
+          style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-due"
+        >
+          Due date
+        </label>
+        <input
+          class="c2c-input"
+          data-testid="sfr-due"
+          id="sfr-due"
+          type="date"
+          value=""
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-priority"
+        >
+          Priority
+        </label>
+        <select
+          class="c2c-input"
+          id="sfr-priority"
+        >
+          <option
+            value="low"
+          >
+            low
+          </option>
+          <option
+            value="medium"
+          >
+            medium
+          </option>
+          <option
+            value="high"
+          >
+            high
+          </option>
+          <option
+            value="critical"
+          >
+            critical
+          </option>
+        </select>
+      </div>
+    </fieldset>
+    <div
+      class="de-gov"
+    >
+      <span
+        class="ico"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-lock"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="11"
+            rx="2"
+            ry="2"
+            width="18"
+            x="3"
+            y="11"
+          />
+          <path
+            d="M7 11V7a5 5 0 0 1 10 0v4"
+          />
+        </svg>
+      </span>
+      <span
+        class="de-gov-t"
+      >
+        One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board; a binding §11.50 signature is applied on the document.
+      </span>
+    </div>
+    <div
+      class="de-desc"
+      data-testid="sfr-send-note"
+      id="sfr-send-note"
+      style="margin-top: 10px;"
+    >
+      Choose at least one reviewer. A reason of at least 8 characters is required.
+    </div>
+  </div>
+  <div
+    class="de-f"
+  >
+    <button
+      class="de-btn ghost"
+    >
+      Cancel
+    </button>
+    <button
+      aria-describedby="sfr-send-note"
+      class="de-btn primary"
+      data-testid="sfr-submit"
+      disabled=""
+    >
+      Send for review
+    </button>
+  </div>
+</div>
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > a roster that could not be read offers to read it again, and does 5052ms
+   → Unable to find an element by: [data-testid="sfr-roster-error"]
+
+Ignored nodes: comments, script, style
+<div
+  aria-labelledby="sfr-title"
+  aria-modal="true"
+  class="de"
+  data-testid="send-for-review-dialog"
+  role="dialog"
+  tabindex="-1"
+>
+  <div
+    class="de-h"
+  >
+    <div>
+      <div
+        class="de-h-eye"
+      >
+        Review
+      </div>
+      <div
+        class="de-h-t"
+        id="sfr-title"
+      >
+        Send for review
+      </div>
+      <div
+        class="de-h-s"
+      >
+        Asks the people you choose to review “
+        Module 2.5 Clinical Overview
+        ”.
+      </div>
+    </div>
+    <button
+      aria-label="Close"
+      class="de-x"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="de-body"
+  >
+    <div
+      class="de-field"
+    >
+      <div
+        class="de-label"
+      >
+        Reviewers
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </div>
+      <div
+        class="de-err"
+        role="status"
+      >
+        The reviewer roster could not be read, so no one can be chosen. Retry after checking the service is reachable.
+      </div>
+    </div>
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="sfr-reason"
+      >
+        Reason for the request
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </label>
+      <div
+        class="de-desc"
+        id="sfr-reason-note"
+      >
+        Recorded with the request on the document’s audit trail, and given to each reviewer in their task. At least 
+        8
+         characters.
+      </div>
+      <textarea
+        aria-describedby="sfr-reason-note"
+        aria-required="true"
+        class="c2c-input"
+        data-testid="sfr-reason"
+        id="sfr-reason"
+        placeholder="e.g. Ready for medical review before the pre-IND package."
+        style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+      />
+    </div>
+    <fieldset
+      class="de-field"
+    >
+      <legend
+        class="de-label"
+      >
+        In each reviewer’s My work
+      </legend>
+      <div
+        class="de-field"
+      >
+        <label
+          class="de-label"
+          for="sfr-instructions"
+        >
+          Instructions to the reviewers
+        </label>
+        <textarea
+          class="c2c-input"
+          data-testid="sfr-instructions"
+          id="sfr-instructions"
+          placeholder="e.g. Check the clinical claims against the cited sources."
+          style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-due"
+        >
+          Due date
+        </label>
+        <input
+          class="c2c-input"
+          data-testid="sfr-due"
+          id="sfr-due"
+          type="date"
+          value=""
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-priority"
+        >
+          Priority
+        </label>
+        <select
+          class="c2c-input"
+          id="sfr-priority"
+        >
+          <option
+            value="low"
+          >
+            low
+          </option>
+          <option
+            value="medium"
+          >
+            medium
+          </option>
+          <option
+            value="high"
+          >
+            high
+          </option>
+          <option
+            value="critical"
+          >
+            critical
+          </option>
+        </select>
+      </div>
+    </fieldset>
+    <div
+      class="de-gov"
+    >
+      <span
+        class="ico"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-lock"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="11"
+            rx="2"
+            ry="2"
+            width="18"
+            x="3"
+            y="11"
+          />
+          <path
+            d="M7 11V7a5 5 0 0 1 10 0v4"
+          />
+        </svg>
+      </span>
+      <span
+        class="de-gov-t"
+      >
+        One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board; a binding §11.50 signature is applied on the document.
+      </span>
+    </div>
+    <div
+      class="de-desc"
+      data-testid="sfr-send-note"
+      id="sfr-send-note"
+      style="margin-top: 10px;"
+    >
+      Choose at least one reviewer. A reason of at least 8 characters is required.
+    </div>
+  </div>
+  <div
+    class="de-f"
+  >
+    <button
+      class="de-btn ghost"
+    >
+      Cancel
+    </button>
+    <button
+      aria-describedby="sfr-send-note"
+      class="de-btn primary"
+      data-testid="sfr-submit"
+      disabled=""
+    >
+      Send for review
+    </button>
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<div
+  aria-labelledby="sfr-title"
+  aria-modal="true"
+  class="de"
+  data-testid="send-for-review-dialog"
+  role="dialog"
+  tabindex="-1"
+>
+  <div
+    class="de-h"
+  >
+    <div>
+      <div
+        class="de-h-eye"
+      >
+        Review
+      </div>
+      <div
+        class="de-h-t"
+        id="sfr-title"
+      >
+        Send for review
+      </div>
+      <div
+        class="de-h-s"
+      >
+        Asks the people you choose to review “
+        Module 2.5 Clinical Overview
+        ”.
+      </div>
+    </div>
+    <button
+      aria-label="Close"
+      class="de-x"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="de-body"
+  >
+    <div
+      class="de-field"
+    >
+      <div
+        class="de-label"
+      >
+        Reviewers
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </div>
+      <div
+        class="de-err"
+        role="status"
+      >
+        The reviewer roster could not be read, so no one can be chosen. Retry after checking the service is reachable.
+      </div>
+    </div>
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="sfr-reason"
+      >
+        Reason for the request
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </label>
+      <div
+        class="de-desc"
+        id="sfr-reason-note"
+      >
+        Recorded with the request on the document’s audit trail, and given to each reviewer in their task. At least 
+        8
+         characters.
+      </div>
+      <textarea
+        aria-describedby="sfr-reason-note"
+        aria-required="true"
+        class="c2c-input"
+        data-testid="sfr-reason"
+        id="sfr-reason"
+        placeholder="e.g. Ready for medical review before the pre-IND package."
+        style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+      />
+    </div>
+    <fieldset
+      class="de-field"
+    >
+      <legend
+        class="de-label"
+      >
+        In each reviewer’s My work
+      </legend>
+      <div
+        class="de-field"
+      >
+        <label
+          class="de-label"
+          for="sfr-instructions"
+        >
+          Instructions to the reviewers
+        </label>
+        <textarea
+          class="c2c-input"
+          data-testid="sfr-instructions"
+          id="sfr-instructions"
+          placeholder="e.g. Check the clinical claims against the cited sources."
+          style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-due"
+        >
+          Due date
+        </label>
+        <input
+          class="c2c-input"
+          data-testid="sfr-due"
+          id="sfr-due"
+          type="date"
+          value=""
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-priority"
+        >
+          Priority
+        </label>
+        <select
+          class="c2c-input"
+          id="sfr-priority"
+        >
+          <option
+            value="low"
+          >
+            low
+          </option>
+          <option
+            value="medium"
+          >
+            medium
+          </option>
+          <option
+            value="high"
+          >
+            high
+          </option>
+          <option
+            value="critical"
+          >
+            critical
+          </option>
+        </select>
+      </div>
+    </fieldset>
+    <div
+      class="de-gov"
+    >
+      <span
+        class="ico"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-lock"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="11"
+            rx="2"
+            ry="2"
+            width="18"
+            x="3"
+            y="11"
+          />
+          <path
+            d="M7 11V7a5 5 0 0 1 10 0v4"
+          />
+        </svg>
+      </span>
+      <span
+        class="de-gov-t"
+      >
+        One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board; a binding §11.50 signature is applied on the document.
+      </span>
+    </div>
+    <div
+      class="de-desc"
+      data-testid="sfr-send-note"
+      id="sfr-send-note"
+      style="margin-top: 10px;"
+    >
+      Choose at least one reviewer. A reason of at least 8 characters is required.
+    </div>
+  </div>
+  <div
+    class="de-f"
+  >
+    <button
+      class="de-btn ghost"
+    >
+      Cancel
+    </button>
+    <button
+      aria-describedby="sfr-send-note"
+      class="de-btn primary"
+      data-testid="sfr-submit"
+      disabled=""
+    >
+      Send for review
+    </button>
+  </div>
+</div>
+ × client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the task says where the verdict goes > each reviewer’s task says the verdict is recorded on the Review board, not by completing the task 43ms
+   → expected 'Reason for the review request: Ready …' to contain 'Record your verdict on the Review boa…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a task whose answer was lost is unknown, not absent > says the outcome is unknown in the receipt and the toast, never "no task" and never "not created"
+AssertionError: expected ' OQ Signer: no task. The review task …' not to match /no task/i
+
+- Expected:
+/no task/i
+
++ Received:
+" OQ Signer: no task. The review task outcome is unknown — Response lost after commit. Reload the task list before retrying."
+
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:333:34
+    331|     const line = tasks.querySelector('li') as HTMLElement;
+    332|     // The task may exist: its line never says there is none…
+    333|     expect(line.textContent).not.toMatch(/no task/i);
+       |                                  ^
+    334|     expect(line.textContent).toContain('OQ Signer: The review task out…
+    335|     // …and the toast never counts it as not created.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > is shown with that request and cannot be chosen; the others can
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:351:30
+    349|     const { dlg } = await openOwnDialog();
+    350|     const decided = (await within(dlg).findByTestId('sfr-reviewer-42')…
+    351|     expect(decided.disabled).toBe(true);
+       |                              ^
+    352|     const decidedNote = within(dlg).getByTestId('sfr-prior-42');
+    353|     expect(decidedNote.textContent).toMatch(/^Changes requested on .+\…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > a row that comes back with a verdict gets no task, and is never reported as requested
+AssertionError: expected [ [ 'POST', …(2) ], [ 'POST', …(2) ] ] to have a length of 1 but got 2
+
+Ignored nodes: comments, script, style
+<html
+  dir="ltr"
+  lang="en"
+>
+  <head />
+  <body>
+    <div>
+      <div
+        class="de-bd"
+      >
+        <div
+          aria-labelledby="sfr-title"
+          aria-modal="true"
+          class="de"
+          data-testid="send-for-review-dialog"
+          role="dialog"
+          tabindex="-1"
+        >
+          <div
+            class="de-h"
+          >
+            <div>
+              <div
+                class="de-h-eye"
+              >
+                Review
+              </div>
+              <div
+                class="de-h-t"
+                id="sfr-title"
+              >
+                Send for review
+              </div>
+              <div
+                class="de-h-s"
+              >
+                Asks the people you choose to review “
+                Module 2.5 Clinical Overview
+                ”.
+              </div>
+            </div>
+            <button
+              aria-label="Close"
+              class="de-x"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-x"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M18 6 6 18"
+                />
+                <path
+                  d="m6 6 12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="de-body"
+          >
+            <div
+              data-testid="sfr-result"
+            >
+              <div
+                class="de-gov"
+                role="status"
+              >
+                <span
+                  class="ico"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-circle-check-big"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M21.801 10A10 10 0 1 1 17 3.335"
+                    />
+                    <path
+                      d="m9 11 3 3L22 4"
+                    />
+                  </svg>
+                </span>
+                <span
+                  class="de-gov-t"
+                >
+                  Review requested. The server recorded 
+                  2 requests
+                   on this document, listed on the Review board.
+                </span>
+              </div>
+              <ul
+                aria-label="Review requests recorded"
+                data-testid="sfr-reviews"
+                style="list-style: none; padding: 0px; margin: 10px 0px; font-size: 13px;"
+              >
+                <li
+                  style="padding: 4px 0px;"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-user"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+                    />
+                    <circle
+                      cx="12"
+                      cy="7"
+                      r="4"
+                    />
+                  </svg>
+                   
+                  OQ Signer
+                   · 
+                  Changes requested: an earlier verdict, which a new request does not reset
+                   · 
+                  <span
+                    class="mono"
+                    style="font-size: 11.5px;"
+                  >
+                    request 
+                    rev-42
+                  </span>
+                </li>
+                <li
+                  style="padding: 4px 0px;"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-user"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+                    />
+                    <circle
+                      cx="12"
+                      cy="7"
+                      r="4"
+                    />
+                  </svg>
+                   
+                  Dana Chen
+                   · 
+                  Pending
+                   · 
+                  <span
+                    class="mono"
+                    style="font-size: 11.5px;"
+                  >
+                    request 
+                    rev-7
+                  </span>
+                </li>
+              </ul>
+              <ul
+                aria-label="Review tasks"
+                data-testid="sfr-tasks"
+                style="list-style: none; padding: 0px; margin: 10px 0px; font-size: 13px;"
+              >
+                <li
+                  data-ok="true"
+                  style="padding: 4px 0px;"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-square-check-big"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"
+                    />
+                    <path
+                      d="m9 11 3 3L22 4"
+                    />
+                  </svg>
+                   
+                  Task TASK-1758-1 in OQ Signer’s My work
+                </li>
+                <li
+                  data-ok="true"
+                  style="padding: 4px 0px;"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-square-check-big"
+                    fill="none"
+                    focusable="false"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M21 10.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.5"
+                    />
+                    <path
+                      d="m9 11 3 3L22 4"
+                    />
+                  </svg>
+                   
+                  Task TASK-1758-2 in Dana Chen’s My work
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div
+            class="de-f"
+          >
+            <button
+              class="de-btn ghost"
+            >
+              Open the Review board
+            </button>
+            <button
+              class="de-btn primary"
+              data-testid="sfr-done"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:382:67
+    380|     fireEvent.click(within(dlg).getByTestId('sfr-submit'));
+    381|     const result = await within(dlg).findByTestId('sfr-result');
+    382|     await waitFor(() => expect(calls('POST', '/api/tasks/tasks')).toHa…
+       |                                                                   ^
+    383|     expect((calls('POST', '/api/tasks/tasks')[0][2] as { assigneeId: n…
+    384|     const reviews = within(result).getByTestId('sfr-reviews').textCont…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — a member who already has a review request > when no row was reopened, nothing is reported as requested and no task is made
+AssertionError: expected [ Array(1) ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:401:47
+    399|     const result = await within(dlg).findByTestId('sfr-result');
+    400|     await waitFor(() => expect(fireToast).toHaveBeenCalled());
+    401|     expect(calls('POST', '/api/tasks/tasks')).toHaveLength(0);
+       |                                               ^
+    402|     expect(fireToast).toHaveBeenCalledWith('Not reopened; the earlier …
+    403|     expect(within(result).getByTestId('sfr-headline').textContent).toM…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > existing requests that could not be read: no one can be chosen, and reading them again recovers
+TestingLibraryElementError: Unable to find an element by: [data-testid="sfr-standing-error"]
+
+Ignored nodes: comments, script, style
+<div
+  aria-labelledby="sfr-title"
+  aria-modal="true"
+  class="de"
+  data-testid="send-for-review-dialog"
+  role="dialog"
+  tabindex="-1"
+>
+  <div
+    class="de-h"
+  >
+    <div>
+      <div
+        class="de-h-eye"
+      >
+        Review
+      </div>
+      <div
+        class="de-h-t"
+        id="sfr-title"
+      >
+        Send for review
+      </div>
+      <div
+        class="de-h-s"
+      >
+        Asks the people you choose to review “
+        Module 2.5 Clinical Overview
+        ”.
+      </div>
+    </div>
+    <button
+      aria-label="Close"
+      class="de-x"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="de-body"
+  >
+    <fieldset
+      class="de-field"
+      data-testid="sfr-reviewers"
+    >
+      <legend
+        class="de-label"
+      >
+        Reviewers
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </legend>
+      <div
+        style="display: flex; flex-direction: column; gap: 2px; max-height: 200px; overflow-y: auto;"
+      >
+        <label
+          style="display: flex; align-items: center; gap: 8px; font-size: 13px;"
+        >
+          <input
+            data-testid="sfr-reviewer-42"
+            type="checkbox"
+          />
+          OQ Signer
+        </label>
+        <label
+          style="display: flex; align-items: center; gap: 8px; font-size: 13px;"
+        >
+          <input
+            data-testid="sfr-reviewer-7"
+            type="checkbox"
+          />
+          Dana Chen
+        </label>
+        <label
+          style="display: flex; align-items: center; gap: 8px; font-size: 13px;"
+        >
+          <input
+            data-testid="sfr-reviewer-9"
+            type="checkbox"
+          />
+          Ira Patel
+        </label>
+      </div>
+    </fieldset>
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="sfr-reason"
+      >
+        Reason for the request
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </label>
+      <div
+        class="de-desc"
+        id="sfr-reason-note"
+      >
+        Recorded with the request on the document’s audit trail, and given to each reviewer in their task. At least 
+        8
+         characters.
+      </div>
+      <textarea
+        aria-describedby="sfr-reason-note"
+        aria-required="true"
+        class="c2c-input"
+        data-testid="sfr-reason"
+        id="sfr-reason"
+        placeholder="e.g. Ready for medical review before the pre-IND package."
+        style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+      />
+    </div>
+    <fieldset
+      class="de-field"
+    >
+      <legend
+        class="de-label"
+      >
+        In each reviewer’s My work
+      </legend>
+      <div
+        class="de-field"
+      >
+        <label
+          class="de-label"
+          for="sfr-instructions"
+        >
+          Instructions to the reviewers
+        </label>
+        <textarea
+          class="c2c-input"
+          data-testid="sfr-instructions"
+          id="sfr-instructions"
+          placeholder="e.g. Check the clinical claims against the cited sources."
+          style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-due"
+        >
+          Due date
+        </label>
+        <input
+          class="c2c-input"
+          data-testid="sfr-due"
+          id="sfr-due"
+          type="date"
+          value=""
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-priority"
+        >
+          Priority
+        </label>
+        <select
+          class="c2c-input"
+          id="sfr-priority"
+        >
+          <option
+            value="low"
+          >
+            low
+          </option>
+          <option
+            value="medium"
+          >
+            medium
+          </option>
+          <option
+            value="high"
+          >
+            high
+          </option>
+          <option
+            value="critical"
+          >
+            critical
+          </option>
+        </select>
+      </div>
+    </fieldset>
+    <div
+      class="de-gov"
+    >
+      <span
+        class="ico"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-lock"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="11"
+            rx="2"
+            ry="2"
+            width="18"
+            x="3"
+            y="11"
+          />
+          <path
+            d="M7 11V7a5 5 0 0 1 10 0v4"
+          />
+        </svg>
+      </span>
+      <span
+        class="de-gov-t"
+      >
+        One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board; a binding §11.50 signature is applied on the document.
+      </span>
+    </div>
+    <div
+      class="de-desc"
+      data-testid="sfr-send-note"
+      id="sfr-send-note"
+      style="margin-top: 10px;"
+    >
+      Choose at least one reviewer. A reason of at least 8 characters is required.
+    </div>
+  </div>
+  <div
+    class="de-f"
+  >
+    <button
+      class="de-btn ghost"
+    >
+      Cancel
+    </button>
+    <button
+      aria-describedby="sfr-send-note"
+      class="de-btn primary"
+      data-testid="sfr-submit"
+      disabled=""
+    >
+      Send for review
+    </button>
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<div
+  aria-labelledby="sfr-title"
+  aria-modal="true"
+  class="de"
+  data-testid="send-for-review-dialog"
+  role="dialog"
+  tabindex="-1"
+>
+  <div
+    class="de-h"
+  >
+    <div>
+      <div
+        class="de-h-eye"
+      >
+        Review
+      </div>
+      <div
+        class="de-h-t"
+        id="sfr-title"
+      >
+        Send for review
+      </div>
+      <div
+        class="de-h-s"
+      >
+        Asks the people you choose to review “
+        Module 2.5 Clinical Overview
+        ”.
+      </div>
+    </div>
+    <button
+      aria-label="Close"
+      class="de-x"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="de-body"
+  >
+    <fieldset
+      class="de-field"
+      data-testid="sfr-reviewers"
+    >
+      <legend
+        class="de-label"
+      >
+        Reviewers
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </legend>
+      <div
+        style="display: flex; flex-direction: column; gap: 2px; max-height: 200px; overflow-y: auto;"
+      >
+        <label
+          style="display: flex; align-items: center; gap: 8px; font-size: 13px;"
+        >
+          <input
+            data-testid="sfr-reviewer-42"
+            type="checkbox"
+          />
+          OQ Signer
+        </label>
+        <label
+          style="display: flex; align-items: center; gap: 8px; font-size: 13px;"
+        >
+          <input
+            data-testid="sfr-reviewer-7"
+            type="checkbox"
+          />
+          Dana Chen
+        </label>
+        <label
+          style="display: flex; align-items: center; gap: 8px; font-size: 13px;"
+        >
+          <input
+            data-testid="sfr-reviewer-9"
+            type="checkbox"
+          />
+          Ira Patel
+        </label>
+      </div>
+    </fieldset>
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="sfr-reason"
+      >
+        Reason for the request
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </label>
+      <div
+        class="de-desc"
+        id="sfr-reason-note"
+      >
+        Recorded with the request on the document’s audit trail, and given to each reviewer in their task. At least 
+        8
+         characters.
+      </div>
+      <textarea
+        aria-describedby="sfr-reason-note"
+        aria-required="true"
+        class="c2c-input"
+        data-testid="sfr-reason"
+        id="sfr-reason"
+        placeholder="e.g. Ready for medical review before the pre-IND package."
+        style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+      />
+    </div>
+    <fieldset
+      class="de-field"
+    >
+      <legend
+        class="de-label"
+      >
+        In each reviewer’s My work
+      </legend>
+      <div
+        class="de-field"
+      >
+        <label
+          class="de-label"
+          for="sfr-instructions"
+        >
+          Instructions to the reviewers
+        </label>
+        <textarea
+          class="c2c-input"
+          data-testid="sfr-instructions"
+          id="sfr-instructions"
+          placeholder="e.g. Check the clinical claims against the cited sources."
+          style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-due"
+        >
+          Due date
+        </label>
+        <input
+          class="c2c-input"
+          data-testid="sfr-due"
+          id="sfr-due"
+          type="date"
+          value=""
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-priority"
+        >
+          Priority
+        </label>
+        <select
+          class="c2c-input"
+          id="sfr-priority"
+        >
+          <option
+            value="low"
+          >
+            low
+          </option>
+          <option
+            value="medium"
+          >
+            medium
+          </option>
+          <option
+            value="high"
+          >
+            high
+          </option>
+          <option
+            value="critical"
+          >
+            critical
+          </option>
+        </select>
+      </div>
+    </fieldset>
+    <div
+      class="de-gov"
+    >
+      <span
+        class="ico"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-lock"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="11"
+            rx="2"
+            ry="2"
+            width="18"
+            x="3"
+            y="11"
+          />
+          <path
+            d="M7 11V7a5 5 0 0 1 10 0v4"
+          />
+        </svg>
+      </span>
+      <span
+        class="de-gov-t"
+      >
+        One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board; a binding §11.50 signature is applied on the document.
+      </span>
+    </div>
+    <div
+      class="de-desc"
+      data-testid="sfr-send-note"
+      id="sfr-send-note"
+      style="margin-top: 10px;"
+    >
+      Choose at least one reviewer. A reason of at least 8 characters is required.
+    </div>
+  </div>
+  <div
+    class="de-f"
+  >
+    <button
+      class="de-btn ghost"
+    >
+      Cancel
+    </button>
+    <button
+      aria-describedby="sfr-send-note"
+      class="de-btn primary"
+      data-testid="sfr-submit"
+      disabled=""
+    >
+      Send for review
+    </button>
+  </div>
+</div>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:416:38
+    414|     };
+    415|     const { dlg } = await openOwnDialog();
+    416|     const failed = await within(dlg).findByTestId('sfr-standing-error'…
+       |                                      ^
+    417|     expect(failed.textContent).toContain('existing review requests cou…
+    418|     expect(within(dlg).queryByTestId('sfr-reviewer-42')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — reads that failed can be read again > a roster that could not be read offers to read it again, and does
+TestingLibraryElementError: Unable to find an element by: [data-testid="sfr-roster-error"]
+
+Ignored nodes: comments, script, style
+<div
+  aria-labelledby="sfr-title"
+  aria-modal="true"
+  class="de"
+  data-testid="send-for-review-dialog"
+  role="dialog"
+  tabindex="-1"
+>
+  <div
+    class="de-h"
+  >
+    <div>
+      <div
+        class="de-h-eye"
+      >
+        Review
+      </div>
+      <div
+        class="de-h-t"
+        id="sfr-title"
+      >
+        Send for review
+      </div>
+      <div
+        class="de-h-s"
+      >
+        Asks the people you choose to review “
+        Module 2.5 Clinical Overview
+        ”.
+      </div>
+    </div>
+    <button
+      aria-label="Close"
+      class="de-x"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="de-body"
+  >
+    <div
+      class="de-field"
+    >
+      <div
+        class="de-label"
+      >
+        Reviewers
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </div>
+      <div
+        class="de-err"
+        role="status"
+      >
+        The reviewer roster could not be read, so no one can be chosen. Retry after checking the service is reachable.
+      </div>
+    </div>
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="sfr-reason"
+      >
+        Reason for the request
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </label>
+      <div
+        class="de-desc"
+        id="sfr-reason-note"
+      >
+        Recorded with the request on the document’s audit trail, and given to each reviewer in their task. At least 
+        8
+         characters.
+      </div>
+      <textarea
+        aria-describedby="sfr-reason-note"
+        aria-required="true"
+        class="c2c-input"
+        data-testid="sfr-reason"
+        id="sfr-reason"
+        placeholder="e.g. Ready for medical review before the pre-IND package."
+        style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+      />
+    </div>
+    <fieldset
+      class="de-field"
+    >
+      <legend
+        class="de-label"
+      >
+        In each reviewer’s My work
+      </legend>
+      <div
+        class="de-field"
+      >
+        <label
+          class="de-label"
+          for="sfr-instructions"
+        >
+          Instructions to the reviewers
+        </label>
+        <textarea
+          class="c2c-input"
+          data-testid="sfr-instructions"
+          id="sfr-instructions"
+          placeholder="e.g. Check the clinical claims against the cited sources."
+          style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-due"
+        >
+          Due date
+        </label>
+        <input
+          class="c2c-input"
+          data-testid="sfr-due"
+          id="sfr-due"
+          type="date"
+          value=""
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-priority"
+        >
+          Priority
+        </label>
+        <select
+          class="c2c-input"
+          id="sfr-priority"
+        >
+          <option
+            value="low"
+          >
+            low
+          </option>
+          <option
+            value="medium"
+          >
+            medium
+          </option>
+          <option
+            value="high"
+          >
+            high
+          </option>
+          <option
+            value="critical"
+          >
+            critical
+          </option>
+        </select>
+      </div>
+    </fieldset>
+    <div
+      class="de-gov"
+    >
+      <span
+        class="ico"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-lock"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="11"
+            rx="2"
+            ry="2"
+            width="18"
+            x="3"
+            y="11"
+          />
+          <path
+            d="M7 11V7a5 5 0 0 1 10 0v4"
+          />
+        </svg>
+      </span>
+      <span
+        class="de-gov-t"
+      >
+        One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board; a binding §11.50 signature is applied on the document.
+      </span>
+    </div>
+    <div
+      class="de-desc"
+      data-testid="sfr-send-note"
+      id="sfr-send-note"
+      style="margin-top: 10px;"
+    >
+      Choose at least one reviewer. A reason of at least 8 characters is required.
+    </div>
+  </div>
+  <div
+    class="de-f"
+  >
+    <button
+      class="de-btn ghost"
+    >
+      Cancel
+    </button>
+    <button
+      aria-describedby="sfr-send-note"
+      class="de-btn primary"
+      data-testid="sfr-submit"
+      disabled=""
+    >
+      Send for review
+    </button>
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<div
+  aria-labelledby="sfr-title"
+  aria-modal="true"
+  class="de"
+  data-testid="send-for-review-dialog"
+  role="dialog"
+  tabindex="-1"
+>
+  <div
+    class="de-h"
+  >
+    <div>
+      <div
+        class="de-h-eye"
+      >
+        Review
+      </div>
+      <div
+        class="de-h-t"
+        id="sfr-title"
+      >
+        Send for review
+      </div>
+      <div
+        class="de-h-s"
+      >
+        Asks the people you choose to review “
+        Module 2.5 Clinical Overview
+        ”.
+      </div>
+    </div>
+    <button
+      aria-label="Close"
+      class="de-x"
+    >
+      <svg
+        aria-hidden="true"
+        class="lucide lucide-x"
+        fill="none"
+        focusable="false"
+        height="1em"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.75"
+        viewBox="0 0 24 24"
+        width="1em"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M18 6 6 18"
+        />
+        <path
+          d="m6 6 12 12"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="de-body"
+  >
+    <div
+      class="de-field"
+    >
+      <div
+        class="de-label"
+      >
+        Reviewers
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </div>
+      <div
+        class="de-err"
+        role="status"
+      >
+        The reviewer roster could not be read, so no one can be chosen. Retry after checking the service is reachable.
+      </div>
+    </div>
+    <div
+      class="de-field"
+    >
+      <label
+        class="de-label"
+        for="sfr-reason"
+      >
+        Reason for the request
+        <span
+          class="req"
+        >
+          *
+        </span>
+      </label>
+      <div
+        class="de-desc"
+        id="sfr-reason-note"
+      >
+        Recorded with the request on the document’s audit trail, and given to each reviewer in their task. At least 
+        8
+         characters.
+      </div>
+      <textarea
+        aria-describedby="sfr-reason-note"
+        aria-required="true"
+        class="c2c-input"
+        data-testid="sfr-reason"
+        id="sfr-reason"
+        placeholder="e.g. Ready for medical review before the pre-IND package."
+        style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+      />
+    </div>
+    <fieldset
+      class="de-field"
+    >
+      <legend
+        class="de-label"
+      >
+        In each reviewer’s My work
+      </legend>
+      <div
+        class="de-field"
+      >
+        <label
+          class="de-label"
+          for="sfr-instructions"
+        >
+          Instructions to the reviewers
+        </label>
+        <textarea
+          class="c2c-input"
+          data-testid="sfr-instructions"
+          id="sfr-instructions"
+          placeholder="e.g. Check the clinical claims against the cited sources."
+          style="width: 100%; min-height: 64px; resize: vertical; font-size: 13px;"
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-due"
+        >
+          Due date
+        </label>
+        <input
+          class="c2c-input"
+          data-testid="sfr-due"
+          id="sfr-due"
+          type="date"
+          value=""
+        />
+      </div>
+      <div
+        class="de-field half"
+      >
+        <label
+          class="de-label"
+          for="sfr-priority"
+        >
+          Priority
+        </label>
+        <select
+          class="c2c-input"
+          id="sfr-priority"
+        >
+          <option
+            value="low"
+          >
+            low
+          </option>
+          <option
+            value="medium"
+          >
+            medium
+          </option>
+          <option
+            value="high"
+          >
+            high
+          </option>
+          <option
+            value="critical"
+          >
+            critical
+          </option>
+        </select>
+      </div>
+    </fieldset>
+    <div
+      class="de-gov"
+    >
+      <span
+        class="ico"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-lock"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="11"
+            rx="2"
+            ry="2"
+            width="18"
+            x="3"
+            y="11"
+          />
+          <path
+            d="M7 11V7a5 5 0 0 1 10 0v4"
+          />
+        </svg>
+      </span>
+      <span
+        class="de-gov-t"
+      >
+        One act, two records. A review request is recorded on the document for each reviewer, with your reason on the audit trail, and the Review board lists it. Then a review task is added to each reviewer’s My work. Reviewers record their verdicts on the Review board; a binding §11.50 signature is applied on the document.
+      </span>
+    </div>
+    <div
+      class="de-desc"
+      data-testid="sfr-send-note"
+      id="sfr-send-note"
+      style="margin-top: 10px;"
+    >
+      Choose at least one reviewer. A reason of at least 8 characters is required.
+    </div>
+  </div>
+  <div
+    class="de-f"
+  >
+    <button
+      class="de-btn ghost"
+    >
+      Cancel
+    </button>
+    <button
+      aria-describedby="sfr-send-note"
+      class="de-btn primary"
+      data-testid="sfr-submit"
+      disabled=""
+    >
+      Send for review
+    </button>
+  </div>
+</div>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:430:38
+    428|     answerRoster = () => (fail ? ok({ success: false, error: 'Failed t…
+    429|     const { dlg } = await openOwnDialog();
+    430|     const failed = await within(dlg).findByTestId('sfr-roster-error');
+       |                                      ^
+    431|     expect(failed.textContent).toContain('The reviewer roster could no…
+    432|     fail = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/sendForReview.test.tsx > Send for review — the task says where the verdict goes > each reviewer’s task says the verdict is recorded on the Review board, not by completing the task
+AssertionError: expected 'Reason for the review request: Ready …' to contain 'Record your verdict on the Review boa…'
+
+Expected: "Record your verdict on the Review board; completing this task does not record one."
+Received: "Reason for the review request: Ready for medical review before the pre-IND package."
+
+ ❯ client/src/concept2cure/v2/__tests__/sendForReview.test.tsx:445:8
+    443|     await waitFor(() => expect(calls('POST', '/api/tasks/tasks')).toHa…
+    444|     expect(String((calls('POST', '/api/tasks/tasks')[0][2] as { descri…
+    445|       .toContain('Record your verdict on the Review board; completing …
+       |        ^
+    446|   });
+    447| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 9 passed (16)
+   Start at  06:01:07
+   Duration  24.70s (transform 3.26s, setup 276ms, import 3.97s, tests 19.18s, environment 875ms)
+

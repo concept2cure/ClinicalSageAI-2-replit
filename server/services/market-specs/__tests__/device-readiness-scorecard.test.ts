@@ -84,3 +84,36 @@ describe('readiness scorecard — from blueprint', () => {
     expect(sc.dimensions.find((d) => d.id === 'evidence:risk_management')?.status).toBe('ready');
   });
 });
+
+describe('readiness scorecard — a class the engine could not determine is not "determined"', () => {
+  // The MDR/IVDR engine returns class null with the facts it needs (963c2167). A
+  // classification object that carries no class is not a determined classification.
+  it('scores an MDR classification with a missing deciding fact as not started, naming the fact', () => {
+    const bp = buildDeviceBlueprint({
+      submissionType: 'mdr_td',
+      classification: { framework: 'mdr', facts: { surgicallyInvasive: true } },
+    });
+    const sc = scorecardFromBlueprint(bp);
+    const dim = sc.dimensions.find((d) => d.id === 'classification')!;
+    expect(dim.status).toBe('not_started');
+    expect(dim.score).toBe(0);
+    expect(sc.topGaps.join(' ')).toMatch(/classification not yet determined[\s\S]*duration/i);
+  });
+
+  it('scores an IVDR classification with a missing deciding fact as not started', () => {
+    const bp = buildDeviceBlueprint({
+      submissionType: 'ivdr_td',
+      classification: { framework: 'ivdr', facts: { bloodGrouping: true } },
+    });
+    const sc = scorecardFromBlueprint(bp);
+    expect(sc.dimensions.find((d) => d.id === 'classification')?.status).toBe('not_started');
+  });
+
+  it('still credits a determined class', () => {
+    const bp = buildDeviceBlueprint({
+      submissionType: 'mdr_td',
+      classification: { framework: 'mdr', facts: { implantable: true } },
+    });
+    expect(scorecardFromBlueprint(bp).dimensions.find((d) => d.id === 'classification')?.status).toBe('ready');
+  });
+});

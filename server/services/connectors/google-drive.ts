@@ -136,15 +136,25 @@ export class GoogleDriveConnector implements DataConnector {
 
     const limit = Math.min(query.limit || 25, 100);
 
-    // Build Google Drive search query
-    // fullText contains 'keyword' AND trashed = false
-    const q = `fullText contains '${searchText.replace(/'/g, "\\'")}' and trashed = false`;
+    // fullText contains '<text>' and trashed = false. In the Drive query
+    // language `\` escapes inside a string, so it is escaped first, then `'`:
+    // O'Brien \ x → 'O\'Brien \\ x'. Escaping only the quote let a backslash
+    // change the query, and a trailing one swallow the closing quote.
+    const q = `fullText contains '${driveQueryString(searchText)}' and trashed = false`;
 
+    // No orderBy: files.list refuses sorting on a query with fullText terms
+    // ("Results are always in descending relevance order"), so sending one
+    // failed every search. The relevance scores below follow that order.
     const data = await this.driveGet('/files', {
       q,
       pageSize: String(limit),
       fields: 'files(id,name,mimeType,size,modifiedTime,webViewLink,owners,description)',
-      orderBy: 'modifiedTime desc',
+      // Shared drives too: without these, files.list searches only My Drive
+      // and files shared with the account, and a regulatory team's controlled
+      // copies usually live in a shared drive (AnA Summary S2).
+      supportsAllDrives: 'true',
+      includeItemsFromAllDrives: 'true',
+      corpora: 'allDrives',
     });
 
     const files = (data.files as Array<Record<string, unknown>>) || [];
@@ -254,6 +264,11 @@ export class GoogleDriveConnector implements DataConnector {
     const data = await res.json() as Record<string, unknown>;
     return { id: String(data.id), url: String(data.webViewLink || '') };
   }
+}
+
+/** A value for a single-quoted Drive query string: `\` first, then `'`. */
+function driveQueryString(text: string): string {
+  return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
 function base64url(input: string | Buffer): string {

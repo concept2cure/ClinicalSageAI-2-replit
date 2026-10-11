@@ -68,6 +68,7 @@ vi.mock('../../vault/document-catalog.service.js', () => ({
 }));
 
 import { registerDocumentCatalogHandlers } from '../document-catalog-tools.js';
+import { readReceiptContext, type DeferredReadReceipts } from '../read-receipts.js';
 
 type Handler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
 const handlers = new Map<string, Handler>();
@@ -160,9 +161,14 @@ describe('the by-id tools: the open project\'s documents only', () => {
 
   it("the open project's own document is read", async () => {
     h.docOf.mockResolvedValue(docOf(A));
-    const r = await call('read_project_document', { document_id: 'dddddddd-0000-4000-8000-000000000001' }, V2_A);
+    // The receipt waits on delivery (ANA-SUMMARY S1, read-receipts.ts): the read
+    // registers it with its loop host, which writes it once the model has the
+    // window whole. The read itself writes nothing.
+    const deferred: DeferredReadReceipts = new Map();
+    const r = await call('read_project_document', { document_id: 'dddddddd-0000-4000-8000-000000000001' }, { ...V2_A, ...readReceiptContext(deferred, 'tu_1') });
     expect(r.code).toBeUndefined();
-    expect(h.receipt).toHaveBeenCalled();
+    expect(deferred.get('tu_1')).toMatchObject({ documentId: 'dddddddd-0000-4000-8000-000000000001', span: { start: 0, end: 10 } });
+    expect(h.receipt).not.toHaveBeenCalled();
   });
 });
 

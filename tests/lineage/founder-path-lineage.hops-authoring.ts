@@ -25,6 +25,9 @@ export async function hopProject(w: World): Promise<void> {
     productType: 'drug',
     primaryAgency: 'FDA',
     indication: 'Moderate-to-severe disease',
+    // The IND number FDA pre-assigned. A package names only the number its
+    // project records, never the program code (package-identity.ts, QA j6).
+    applicationNumber: '123456',
   });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
   k.programId = String(res.body.data.id);
@@ -282,10 +285,13 @@ export async function hopSeal(w: World): Promise<void> {
     k.approvedSealHash = approved?.content_hash;
     expect((await q<{ status: string }>('SELECT status FROM authoring_documents WHERE id = $1', [k.docId]))[0].status).toBe('APPROVED');
   });
-  await hop.check('signature-binds-seal', 'the APPROVER signature names the freeze it covered, by version and content hash', async (observe) => {
+  // Since a056eb9ea (QA 2026-10-08, j4) the approval writes its own sealed
+  // snapshot BEFORE the signature and the signature is bound to it: the approval
+  // attests to the snapshot it sealed, not to the earlier freeze.
+  await hop.check('signature-binds-seal', 'the APPROVER signature names the snapshot its approval sealed, by version and content hash', async (observe) => {
     const [sig] = await q('SELECT meaning, covered_freeze_version, covered_content_hash, signature_digest FROM authoring_signatures WHERE id = $1', [es.body.signatureId]);
     observe(sig?.covered_freeze_version);
-    expect(sig).toMatchObject({ meaning: 'APPROVER', covered_freeze_version: 'v1.0.frozen', covered_content_hash: k.freezeHash });
+    expect(sig).toMatchObject({ meaning: 'APPROVER', covered_freeze_version: 'approved', covered_content_hash: k.approvedSealHash });
     expect(String(sig.signature_digest)).toMatch(HEX64);
   });
   await hop.check('seal-binds-revision-and-lineage', 'the seal names each section’s doc_revisions head, and each head carries a lineage digest', async (observe) => {
@@ -369,6 +375,16 @@ export async function hopAdopt(w: World): Promise<void> {
     cwd.mockRestore();
   }
   const fileId = String(upload.body?.fileId);
+  // Adoption now proves actual upload bytes. Resolve its relative storage
+  // path against the same isolated root used by this fixture's upload.
+  async function adoptConversationFile() {
+    const adoptCwd = vi.spyOn(process, 'cwd').mockReturnValue(tmp);
+    try {
+      return await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
+    } finally {
+      adoptCwd.mockRestore();
+    }
+  }
 
   await hop.check('unscoped-upload-is-a-conversation-file', 'an upload with no project open records no Data Room source', async (observe) => {
     const sources = await q(`SELECT id FROM cre_evidence_sources WHERE provenance->>'fileUploadId' = $1`, [fileId]);
@@ -392,7 +408,7 @@ export async function hopAdopt(w: World): Promise<void> {
     expect(ids).not.toContain('colleague-file');
   });
   await hop.check('adopt-makes-it-the-projects-source', 'one audited adopt makes the file a source of the project, keyed to it', async (observe) => {
-    const res = await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
+    const res = await adoptConversationFile();
     const [src] = await q<{ client_program_id: string; organization_id: number; checksum: string }>(
       'SELECT client_program_id, organization_id, checksum FROM cre_evidence_sources WHERE id = $1', [res.body?.sourceId]);
     const audit = await q(`SELECT 1 FROM audit_logs WHERE action = 'c2c.project.adopt' AND record_id = $1`, [k.programId]);
@@ -402,7 +418,7 @@ export async function hopAdopt(w: World): Promise<void> {
     expect(audit).toHaveLength(1);
   });
   await hop.check('adopt-is-once', 'adopting the same file again is not a second source and writes no second audit row', async (observe) => {
-    const again = await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
+    const again = await adoptConversationFile();
     const sources = await q(`SELECT id FROM cre_evidence_sources WHERE client_program_id = $1 AND checksum = $2`, [k.programId, sha256(bytes)]);
     const audit = await q(`SELECT 1 FROM audit_logs WHERE action = 'c2c.project.adopt' AND record_id = $1`, [k.programId]);
     observe({ status: again.status, sources: sources.length, audited: audit.length });

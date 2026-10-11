@@ -24,11 +24,20 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { load as loadYaml } from 'js-yaml';
 import { assembleInput, AssemblyError, normalizeConclusion, PRIMARY_DIR, UPGRADE_STEPS } from '../../scripts/release-evidence/assemble-input.mjs';
-import { RESULT_KEYS } from '../../scripts/release-evidence/lib.mjs';
+import { DISCLAIMER, RESULT_KEYS, validateManifest } from '../../scripts/release-evidence/lib.mjs';
 import { makeRepo, repoRoot, runCli, writeInput } from './helpers.mjs';
 
 const policy = JSON.parse(await readFile(path.join(repoRoot, 'config', 'release-evidence-policy.v1.json'), 'utf8'));
+const workflow = loadYaml(await readFile(path.join(repoRoot, '.github/workflows/ci.yml'), 'utf8'));
+const blankDbWorkflow = workflow.jobs['blank-db-provisioning'];
+const liveUpgradeSteps = [
+  blankDbWorkflow.steps.find(step => step.run === 'node scripts/db/deploy-migrate.mjs'),
+  blankDbWorkflow.steps.find(step => step.run === 'npm run ci:replay-rebuilds-nothing'),
+];
+assert.ok(liveUpgradeSteps.every(Boolean), 'both reviewed upgrade commands exist in the live workflow');
+const liveUpgradeNames = liveUpgradeSteps.map(step => step.name);
 
 const RUN_ID = 424242;
 const SHA = '1'.repeat(40);
@@ -44,7 +53,7 @@ function ciJobs() {
     completedJob('Blank DB Provisioning + Deploy Migration', {
       steps: [
         { name: 'Provision from scratch', status: 'completed', conclusion: 'success' },
-        ...UPGRADE_STEPS.map(name => ({ name, status: 'completed', conclusion: 'success' })),
+        ...liveUpgradeNames.map(name => ({ name, status: 'completed', conclusion: 'success' })),
       ],
     }),
     completedJob('Production Boot Smoke (RLS on, non-superuser role)'),
@@ -121,6 +130,75 @@ const rejectsClosed = (opts, pattern) =>
     assert.match(error.message, pattern);
     return true;
   });
+
+test('upgrade binding matches the two live CI commands exactly', () => {
+  assert.deepEqual(UPGRADE_STEPS, liveUpgradeNames);
+  for (const name of UPGRADE_STEPS) {
+    assert.equal(blankDbWorkflow.steps.filter(step => step.name === name).length, 1);
+  }
+});
+
+test('upgrade record retains the live replay result and omits unrelated steps', async () => {
+  const { input, files } = await assembleInput(options({ env: baseEnv({ RELEASE_EVIDENCE_NPM_AUDIT: 'AUDIT' }) }));
+  assert.equal(input.automatedEvidence.upgrade.status, 'passed');
+  assert.deepEqual(input.automatedEvidence.upgrade.summary, { total: 2, passed: 2, failed: 0, skipped: 0, unknown: 0 });
+  const record = JSON.parse(files.find(file => file.path.endsWith('ci-upgrade-step-records.json')).contents);
+  assert.deepEqual(record.steps.map(step => step.name), liveUpgradeNames);
+});
+
+for (const name of liveUpgradeNames) {
+  test(`upgrade binding refuses a missing live step: ${name}`, async () => {
+    const jobs = ciJobs();
+    const blankDb = jobs.find(job => job.name === 'Blank DB Provisioning + Deploy Migration');
+    blankDb.steps = blankDb.steps.filter(step => step.name !== name);
+    await rejectsClosed(options({ fetchJson: fakeApi({ jobs }) }), /upgrade evidence step .* was not found/);
+  });
+  for (const order of ['success first', 'failure first']) {
+    test(`upgrade binding refuses ambiguous records (${order}): ${name}`, async () => {
+      const jobs = ciJobs();
+      const blankDb = jobs.find(job => job.name === 'Blank DB Provisioning + Deploy Migration');
+      const duplicate = { name, status: 'completed', conclusion: 'failure' };
+      if (order === 'success first') blankDb.steps.push(duplicate);
+      else blankDb.steps.unshift(duplicate);
+      await rejectsClosed(options({ fetchJson: fakeApi({ jobs }), env: baseEnv({ RELEASE_EVIDENCE_NPM_AUDIT: 'AUDIT' }) }), /more than one upgrade evidence step/);
+    });
+  }
+  test(`upgrade binding refuses an incomplete record carrying success: ${name}`, async () => {
+    const jobs = ciJobs();
+    jobs.find(job => job.name === 'Blank DB Provisioning + Deploy Migration').steps.find(step => step.name === name).status = 'in_progress';
+    await rejectsClosed(options({ fetchJson: fakeApi({ jobs }), env: baseEnv({ RELEASE_EVIDENCE_NPM_AUDIT: 'AUDIT' }) }), /upgrade evidence step .* has not completed/);
+  });
+}
+
+for (const [conclusion, expectedStatus, counts] of [
+  ['failure', 'failed', { failed: 1, skipped: 0, unknown: 0 }],
+  ['timed_out', 'failed', { failed: 1, skipped: 0, unknown: 0 }],
+  ['skipped', 'unknown', { failed: 0, skipped: 1, unknown: 0 }],
+  ['cancelled', 'unknown', { failed: 0, skipped: 0, unknown: 1 }],
+  [null, 'unknown', { failed: 0, skipped: 0, unknown: 1 }],
+]) {
+  test(`upgrade binding emits ${String(conclusion)} honestly`, async () => {
+    const jobs = ciJobs();
+    jobs.find(job => job.name === 'Blank DB Provisioning + Deploy Migration').steps.find(step => step.name === liveUpgradeNames[1]).conclusion = conclusion;
+    const { input } = await assembleInput(options({ fetchJson: fakeApi({ jobs }), env: baseEnv({ RELEASE_EVIDENCE_NPM_AUDIT: 'AUDIT' }) }));
+    assert.equal(input.automatedEvidence.upgrade.status, expectedStatus);
+    assert.deepEqual(input.automatedEvidence.upgrade.summary, { total: 2, passed: 1, ...counts });
+    const manifest = {
+      schemaVersion: '1.0.0',
+      repository: { commit: SHA, tree: TREE, dirty: false },
+      fingerprints: { dependencyLockSha256: 'missing', migrationSetSha256: 'missing', schemaSha256: 'missing' },
+      artifacts: input.artifacts.map(artifact => ({ ...artifact, status: 'verified' })),
+      workflows: input.workflowJobs.map(job => ({ ...job, required: true })),
+      automatedEvidence: input.automatedEvidence,
+      humanApprovals: policy.humanApprovalRoles.map(role => ({ role, status: 'unapproved', signer: null, signedAt: null, signature: null, authorizationEvidence: null })),
+      disclaimer: DISCLAIMER,
+    };
+    assert.deepEqual(validateManifest(manifest, { policy }), [`upgrade automated proof is ${expectedStatus}`]);
+    const validControl = { ...manifest, automatedEvidence: { ...manifest.automatedEvidence,
+      upgrade: { ...manifest.automatedEvidence.upgrade, status: 'passed', summary: { total: 2, passed: 2, failed: 0, skipped: 0, unknown: 0 } } } };
+    assert.deepEqual(validateManifest(validControl, { policy }), [], 'the upgrade verdict is the sole refusal');
+  });
+}
 
 // ── Fail-closed refusals, each shown firing with its named reason ────────────
 

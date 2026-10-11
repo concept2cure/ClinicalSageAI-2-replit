@@ -1,0 +1,108 @@
+Canonical pre-push checks preceding the independently attempted full TypeScript gate. This is not a full pre-push pass.
+🔒 Pre-push: Running eCTD contract enforcement gates...
+   Validating eCTD stubs bundle against schema (AJV)...
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+   ✅ eCTD bundle validation passed.
+   Validating risk code contracts...
+OK: Generated risk code types are up to date.
+   ✅ Risk code validation passed.
+   Validating migration apply-order invariants...
+[ci:migration-set-order] OK — 362 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+   ✅ Migration apply-order passed.
+   Validating DROPs are replay-safe...
+[ci:migration-drop-safety] OK — 362 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+   ✅ Replay-safe DROPs passed.
+   Validating new migrations are on a deploy path...
+[ci:migration-deploy-path] OK — 112 baselined file(s) on no deploy path, none new.
+   ✅ Deploy-path check passed.
+   Validating queried columns are reachable...
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+   ✅ Column reachability passed.
+   Validating server code runs no DDL on the runtime connection...
+[ci:runtime-ddl] 84 DDL statement(s) in 14 runtime server file(s); 14 baselined
+[ci:runtime-ddl] ✅ no new runtime DDL.
+   ✅ No runtime DDL.
+   Validating jsonb operators are not applied to json columns...
+[ci:json-operator-types] 961 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3055 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+   ✅ No jsonb operator on a json column.
+   Validating the migration manifest tracks db/migrations...
+Manifest is in sync.
+   ✅ Migration manifest in sync.
+   Validating no new unscoped Drizzle query on tenant data...
+[ci:drizzle-tenant-scope] OK — 110 site(s), all baselined; 17 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 17 fix(es).
+   ✅ Drizzle tenant scope passed.
+   Validating every v2 className is defined in a stylesheet...
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+   ✅ v2 class names passed.
+   Validating every raw client fetch() sends the bearer token...
+✅ ci:unauthenticated-fetch — 70 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+   ✅ Client fetch() authentication passed.
+   Validating no new session-scoped RLS bypass...
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 34 baselined occurrence(s) remain in 7 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+   ✅ No new session-scoped RLS bypass.
+   Validating ledger integrity (row ids, evidence paths)...
+   ✅ Ledger integrity passed.
+   Validating module catalog copy...
+[ci:catalog-copy] OK — 119 catalog description(s) across 3 migration(s) read as product copy.
+   ✅ Catalog copy passed.
+   Checking for fixture fallback in client surfaces...
+[ci:fixture-fallback] `live ?? FIXTURE` and `live?.length ? live : FIXTURE` in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+   ✅ No ungated fixture fallback.
+   Checking for mock data in production routes...
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+   ✅ No mock data in production routes.
+   Checking for manufactured signer identity...
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+   ✅ Fabricated-identity check passed.
+   Checking that every program-ownership check is the one check...
+[self-test] OK — 10 copies found, 6 reads passed.
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+   ✅ One program-ownership check.
+   Checking for a discarded Part 11 audit-write outcome...
+check-discarded-audit-write: no new occurrences. 112 baselined across 50 file(s).
+  5 baselined file(s) now below their count — run --write-baseline to shrink it.
+   ✅ No discarded audit-write outcome.
+   Checking that the client address has one source...
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+   ✅ One source for the client address.
+   Checking that every sign ledger row comes from a signature ceremony...
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.
+   ✅ Every new sign ledger row has its ceremony.
+   Checking that every upload site is bounded, filtered and byte-checked...
+[ci:upload-guards] OK — 1 unguarded multer site(s) across 1 file(s), none new; 19 file(s) build uploads.
+   ✅ Every upload site is guarded, or baselined with a reason.
+   Checking .trivyignore hygiene (expiry, owner, reason; no tree-wide resource ignores)...
+[ci:trivyignore-hygiene] OK — 3 suppression(s) in /workspace/scratch/bd36ee581acd/concept2cure/.trivyignore, each with an owner, a reason and an expiry within 180 days.
+   ✅ .trivyignore entries are bounded and owned.
+   Checking that no 5xx body carries the caught error's text...
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+   ✅ No 5xx body carries the caught error's text.
+   Checking that pushed imports resolve to tracked files...
+[ci:untracked-imports] OK — every relative import in 16 file(s) resolves to a tracked file.
+   ✅ Pushed imports all resolve to tracked files.
+   Checking for ESLint errors in the pushed files...
+[ci:pushed-lint-errors] OK — no ESLint errors in 16 changed file(s) against origin/concept2cure-v2.
+   ✅ No ESLint errors in the pushed files.
+   Checking that the pushed files gained no ESLint warnings...
+[ci:eslint-warning-ratchet] --since 2c989403a8f8e92c0a4a5d2451524c106091d49d (2c989403a) -- 16 lintable file(s) changed; linting both versions of each...
+
+    -1  server/services/ana/AnaDocumentDraftingService.ts  (8 -> 7)
+
+[ci:eslint-warning-ratchet] net -1 warning(s) across the files changed since 2c989403a8f8e92c0a4a5d2451524c106091d49d.
+   ✅ The pushed files gained no ESLint warnings.

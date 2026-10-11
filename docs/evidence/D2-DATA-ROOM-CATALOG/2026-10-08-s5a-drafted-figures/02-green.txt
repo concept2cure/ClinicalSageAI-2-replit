@@ -1,0 +1,2193 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T19:57:29.827Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > retains current, project-verified source references in saved provenance and CREATE audit metadata
+{
+  "timestamp": "2026-10-08T19:57:41.337Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 167ecc65-1bf0-47b1-8788-027bf1832f6e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > checks each figure of the section against the cited source: found with where, or unverified and said (S5a)
+{
+  "timestamp": "2026-10-08T19:57:41.409Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d59b9a4c-5407-463f-9e75-d7ca3ad006e8 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > retains current, project-verified source references in saved provenance and CREATE audit metadata 305ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > checks each figure of the section against the cited source: found with where, or unverified and said (S5a) 57ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > retains the original legacy NULL-organization source as a no-write admission refusal 32ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses wrong-project, foreign-tenant or stale-version source 10000000-0000-4000-8000-000000000002 before creating anything 22ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses wrong-project, foreign-tenant or stale-version source 10000000-0000-4000-8000-000000000003 before creating anything 23ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses wrong-project, foreign-tenant or stale-version source 10000000-0000-4000-8000-000000000001 before creating anything 22ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses a failed-extraction catalog record without creating a document 29ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — durable project source references > refuses a stale-extraction catalog record without creating a document 25ms
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows
+{
+  "timestamp": "2026-10-08T19:57:41.605Z",
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — attempting non-vector catalog write",
+  "context": {
+    "documentId": "10000000-0000-4000-8000-000000000001",
+    "err": "Test embedding unavailable"
+  }
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "timestamp": "2026-10-08T19:57:41.654Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a3ddfddb-2047-4731-922b-fa72c1bf7754 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "timestamp": "2026-10-08T19:57:41.670Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a3ddfddb-2047-4731-922b-fa72c1bf7754 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+{
+  "timestamp": "2026-10-08T19:57:41.683Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc a3ddfddb-2047-4731-922b-fa72c1bf7754 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "timestamp": "2026-10-08T19:57:41.744Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8887b1b0-683d-4a31-98db-b9a653ab34df by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "timestamp": "2026-10-08T19:57:41.764Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8887b1b0-683d-4a31-98db-b9a653ab34df by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+{
+  "timestamp": "2026-10-08T19:57:41.784Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8887b1b0-683d-4a31-98db-b9a653ab34df by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > refuses stale comprehension without read receipts or backfill, and lists the file as unstudied 23ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > project catalog — source-version truth > does not report success when the non-vector catalog compare-and-set updates zero rows 14ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > is in the tool catalog the model sees 1ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses verbatim without an open project, and writes nothing 4ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses a project another organization owns as "no project" — never a cross-tenant write 3ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist 77ms
+stderr | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a failed write reaches the model as a plain refusal, never the driver’s message
+{
+  "timestamp": "2026-10-08T19:57:41.843Z",
+  "level": "error",
+  "message": "[draft-authoring-document-tool] draft_authoring_document failed",
+  "context": {
+    "err": "relation \"authoring_sections\" does not exist"
+  }
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "timestamp": "2026-10-08T19:57:41.892Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fc3b423f-30f8-480c-b378-8f93a9fae876 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "timestamp": "2026-10-08T19:57:41.912Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fc3b423f-30f8-480c-b378-8f93a9fae876 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+{
+  "timestamp": "2026-10-08T19:57:41.934Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fc3b423f-30f8-480c-b378-8f93a9fae876 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor 105ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses a legacy project whose anchor names another organization’s program, and writes nothing (PF-04 P2) 8ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a failed write reaches the model as a plain refusal, never the driver’s message 37ms
+stdout | server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > CONTROL: an unchanged eligible source still saves through the registered tool
+{
+  "timestamp": "2026-10-08T19:57:42.002Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b7aeda15-a6b4-490d-8863-69819a069668 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program) 105ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses malformed input as an error the model can read, not a crash 3ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > CONTROL: an unchanged eligible source still saves through the registered tool 65ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > refuses when normal remove_data commits immediately before authoring connect, without any authoring writes 177ms
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document — governed source withdrawal before save > CONTROL: a source already withdrawn by normal apply refuses with zero authoring writes 130ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > lists the program's documents, oldest first, with their section counts — and no other program's 10ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > orders sections by CTD code (2.5 < 2.5.1 < 2.5.10; S before P), uncoded last, with depth from the code 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > describes each section without its content: length, SQL sha256, drafted, pending changes 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > an empty-string code has no place in the CTD order either: it follows the coded sections, like null 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > flags pending changes from <ins>/<del> tags in any case, and not from prose that starts like one 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram > narrows to one document of the program; another program's or tenant's document is not found 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > pages with a cursor: walking limit=2 yields the single-page order exactly, then a null cursor 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > pages the documents too: each is listed once, where the walk reaches it, and the count still to come is exact 10ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > a cursor still resumes after the section it names has been deleted 5ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > outlineForProgram paging > refuses a cursor it did not issue 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > keeps block structure and labels pending tracked changes as proposals, never as settled text 13ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > windows by offset/maxChars; the windows concatenate to the whole section 5ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > caps a window at 4000 characters whatever is asked for 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > a pending insertion that straddles the window boundary stays labelled on both sides of the cut 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > a window asked to start inside a label starts at the proposal's text, re-labelled 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > brackets in proposed text or an author's name cannot end a label early; the label delimiters never occur in content 5ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > labels a figure inside a pending insertion as proposed, in a paragraph and in a table cell 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > reads textarea-era plain text line by line, and reports the same base as the outline 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > an offset past the end reads nothing and ends the walk 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once 62ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > labels proposed text in a table caption, and reads only the table's own caption, never a nested table's 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > a figure the parser skipped never shifts a later copy's proposal state, in either order 3ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > finds a phrase in tag-stripped content, with a snippet around the hit 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > matches section codes and titles too 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > treats % and _ in the query as literal characters, not wildcards 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > keeps snippets short in a long section 4ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > honours the limit and says the list was cut 4ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > orders matches in CTD order BEFORE the limit, so the first hit is the first section, not the first stored 2ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > says so when more sections matched than are ranked 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > pages by offset: the pages together are every match once, in CTD order 8ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet deep inside a pending insertion, or a deletion, is labelled as proposed 7ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet whose hit spans settled and proposed text still finds the hit and labels the proposed part 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks 4ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > refuses a query too short to mean anything 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > another program and another tenant are invisible to the outline 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > another program's and another tenant's sections are not found by id 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > search never returns another program's or tenant's text 1ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > tenant and program scope > the other tenant, asking for the same program id, sees only its own document 0ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > lists the program's documents, oldest first, with their section counts — and no other program's 24ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > orders sections by CTD code (2.5 < 2.5.1 < 2.5.10; S before P), uncoded last, with depth from the code 14ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > describes each section without its content: length, SQL sha256, drafted, pending changes 14ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > an empty-string code has no place in the CTD order either: it follows the coded sections, like null 16ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > flags pending changes from <ins>/<del> tags in any case, and not from prose that starts like one 14ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram > narrows to one document of the program; another program's or tenant's document is not found 13ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > pages with a cursor: walking limit=2 yields the single-page order exactly, then a null cursor 30ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > pages the documents too: each is listed once, where the walk reaches it, and the count still to come is exact 75ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > a cursor still resumes after the section it names has been deleted 15ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > outlineForProgram paging > refuses a cursor it did not issue 8ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > keeps block structure and labels pending tracked changes as proposals, never as settled text 11ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > windows by offset/maxChars; the windows concatenate to the whole section 16ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > caps a window at 4000 characters whatever is asked for 16ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > a pending insertion that straddles the window boundary stays labelled on both sides of the cut 19ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > a window asked to start inside a label starts at the proposal's text, re-labelled 16ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > brackets in proposed text or an author's name cannot end a label early; the label delimiters never occur in content 19ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > labels a figure inside a pending insertion as proposed, in a paragraph and in a table cell 17ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > reads textarea-era plain text line by line, and reports the same base as the outline 21ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > an offset past the end reads nothing and ends the walk 15ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once 95ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > labels proposed text in a table caption, and reads only the table's own caption, never a nested table's 30ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > a figure the parser skipped never shifts a later copy's proposal state, in either order 36ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > finds a phrase in tag-stripped content, with a snippet around the hit 21ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > matches section codes and titles too 27ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > treats % and _ in the query as literal characters, not wildcards 24ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > keeps snippets short in a long section 23ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > honours the limit and says the list was cut 24ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > orders matches in CTD order BEFORE the limit, so the first hit is the first section, not the first stored 22ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > says so when more sections matched than are ranked 19ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > pages by offset: the pages together are every match once, in CTD order 34ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet deep inside a pending insertion, or a deletion, is labelled as proposed 28ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet whose hit spans settled and proposed text still finds the hit and labels the proposed part 18ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks 36ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > refuses a query too short to mean anything 7ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > another program and another tenant are invisible to the outline 12ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > another program's and another tenant's sections are not found by id 12ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > search never returns another program's or tenant's text 12ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > tenant and program scope > the other tenant, asking for the same program id, sees only its own document 13ms
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > sectionDepth > counts dotted segments of a numeric-led code, and calls anything else depth 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > loads the document, opens its section, and shows the real server content in the editor 375ms
+stderr | client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > saves edited content via PATCH and reports that a revision was recorded
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > saves edited content via PATCH and reports that a revision was recorded 562ms
+stderr | client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > surfaces a failed save honestly and keeps the user’s text (no fabrication)
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > surfaces a failed save honestly and keeps the user’s text (no fabrication) 572ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — real editable canvas > moves the open section — server-validated reorder, tree redrawn from the canonical order 660ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — document-level section structure > names a section code that is used twice 133ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — document-level section structure > says when the stored order differs from the section codes 142ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — document-level section structure > says nothing when the document is structurally clean 183ms
+ ✓ client/src/concept2cure/v2/__tests__/documentAuthoringEditor.test.tsx > DocumentAuthoring — document-level section structure > claims nothing when the server sent no structure at all 146ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status content drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-08T19:57:56.188Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "0e60afc3-d1ab-4240-a48a-358cb4140be7",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status title drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-08T19:57:56.240Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "6a0615de-935e-4df9-8589-6e0194d52420",
+    "why": "document sections changed during filing"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status content drift during ingestion and compensates admission 860ms
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status order drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-08T19:57:56.275Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "3b1e4b18-5925-465e-b423-739e836e5a1b",
+    "why": "document sections changed during filing"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status added section drift during ingestion and compensates admission
+{
+  "timestamp": "2026-10-08T19:57:56.311Z",
+  "level": "error",
+  "message": "[authoring-file-to-vault] file-to-vault record transaction failed; reverting the ingested vault row",
+  "context": {
+    "docId": "ed5c394e-e378-4b66-a163-5839c5981f86",
+    "why": "document sections changed during filing"
+  }
+}
+
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status title drift during ingestion and compensates admission 45ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status order drift during ingestion and compensates admission 35ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > refuses unchanged-status added section drift during ingestion and compensates admission 35ms
+ ✓ server/services/authoring/__tests__/authoring-file-to-vault-snapshot.pglite.integration.test.ts > file-to-Vault records the same section snapshot it rendered > files a stable working snapshot with its canonical digest and locks sections before the final read/history 35ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a date, an age or a page does not find a fabricated figure 26ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > the figures the record does hold are found by their measure 14ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a p-value is not a percentage, and a percentage is not a p-value 5ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > an outage envelope finds nothing through its percent-encoded URL (F3) 2ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a figure in a returned abstract is found, though the model searched for it (HS-5) 11ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure is found only with its own measure (F4, HS-2) > a figure the model chose as an input and a tool echoes is AnA's input, not a result (HS-5) 2ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "The response rate was 47 percent." 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "hazard ratio, 0.31; 95% CI, 0.50 to 0.77" 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "The p-value = 0.0003." 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "A P value of 0.0003 was reported." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Enrollment was 212 pts." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "A total of 212 randomized patients." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "212 women were enrolled." 2ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Median OS was 31.2 mo." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Treatment lasted 48 h." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Dosed at 100 μg daily." 1ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "95% CI [0.41, 0.77]" 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "HR (95% CI) 0.62 (0.50–0.77)" 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > reads "Responses ranged from 38–56%." 0ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > a range checks both ends, and a sign or a proportion is read as written (F8) 2ms
+ ✓ tests/services/answer-check-r2.test.ts > figures the check reads (F8) > "or" in prose is not an odds ratio (HS-7) 2ms
+ ✓ tests/services/answer-check-r2.test.ts > the person's own message is never a source (F1, HS-3) > a claim found only in the question is reported as theirs, not found 1ms
+ ✓ tests/services/answer-check-r2.test.ts > the person's own message is never a source (F1, HS-3) > with nothing consulted, a claim in the question is still the person's, and the rest unchecked 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a citation check that did not find the PMID does not find it 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a verified citation confirms the identifier it matched, not what the model packed beside it 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > an identifier in a fetched URL is not found; the page must hold it 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a tool that searches text the model supplied returns only the model's words 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > echoes nested under other keys, in bare lists or in a not-found list find nothing 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an echo of the model's input is never a confirmation (F2, F6) > a registry record about the identifier the model searched for confirms it 1ms
+ ✓ tests/services/answer-check-r2.test.ts > identifiers and regulations are matched as themselves (F7) > an ICH code is not found inside another word or beside an unrelated number 2ms
+ ✓ tests/services/answer-check-r2.test.ts > identifiers and regulations are matched as themselves (F7) > a labelled submission number needs its label in the source, not any equal number 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a source the check cannot read leaves its claims unchecked (HS-4) > claims not found elsewhere are not checked, naming the unread source 0ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > names the verdicts stated 2ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts (F9, HS-6) > does not name a verdict declined, made conditional, or about a workflow step 1ms
+ ✓ tests/services/answer-check-r2.test.ts > cost and shape (F10) > long whitespace runs in an answer stay linear 2ms
+ ✓ tests/services/answer-check-r2.test.ts > cost and shape (F10) > a deeply nested result does not throw 6ms
+ ✓ tests/services/answer-check-r2.test.ts > cost and shape (F10) > names the round-2 engine 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a proportion she passed, restated as a percentage, is her input 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a percentage she passed, restated as a proportion, is her input 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a figure she searched for is still found in a passage the source returns (HS-5 holds) 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an engine restating AnA's own input, in another form, does not confirm it (probe p3 A2/A3) > a figure one tool restates from her input is found in another tool that returns it 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an identifier the citation tool verified is found (probe p5 G1) > a labelled PMID the tool verified is found 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an identifier the citation tool verified is found (probe p5 G1) > what the model packed beside it is still not found 1ms
+ ✓ tests/services/answer-check-r2.test.ts > regulations cited as a list are each read (probe p9 I7) > reads "21 CFR Parts 50 and 56" as two parts 1ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts, re-run (probes p8 and probe-verdicts) > names the verdicts round 2 still missed 2ms
+ ✓ tests/services/answer-check-r2.test.ts > verdicts, re-run (probes p8 and probe-verdicts) > does not name a verdict asked, doubted, or made conditional after it 1ms
+ ✓ tests/services/answer-check-r2.test.ts > cost at scale (probe p6) > 200 identifiers and 200 figures against 25 sources of 60k characters take well under two seconds 371ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a p-value needs p: alpha is not a p-value 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a hazard ratio needs its name: a dose is not a hazard ratio 0ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > n and a count need what they count: a page number is neither 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a dose needs its unit: a duration in days is not a dose in mg 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > a date is not a count, even in a field named for a cohort or a sample 0ms
+ ✓ tests/services/answer-check-r2.test.ts > a figure needs its own measure, kind by kind (round-2 mutants) > "or" in a source's prose is not an odds ratio 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > two bounds far apart in one text are not an interval 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > two numbers that are not a CI are not an interval 0ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > bounds from two different records are not one interval 1ms
+ ✓ tests/services/answer-check-r2.test.ts > an interval needs both bounds together, beside CI (round-2 mutants) > an interval returned as a pair of numbers is found 1ms
+ ✓ tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record that says it was not found confirms nothing it names 0ms
+ ✓ tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record holding only the model's own identifier and a position confirms nothing 0ms
+ ✓ tests/services/answer-check-r2.test.ts > what a record must hold before it confirms what the model asked for (round-2 mutants) > a record whose own value is a figure ("47%") does confirm the identifier it is about 1ms
+ ✓ tests/services/answer-check-r2.test.ts > a malformed identifier is flagged, not skipped (round-2 mutants) > a nine-digit NCT number is a claim of its own, not the trial inside it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > creates the document, saves the markdown as a section, then navigates 578ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > never writes the retired localStorage note 172ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > scopes the document to the open project, like every project-aware surface 147ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > does NOT navigate when the document create fails — and saves no section 255ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > says so, and stays put, when the session is not authenticated 208ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > does NOT navigate when the section create fails — the text would be lost 167ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > does NOT navigate when the request throws 139ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > a double click creates ONE document, not two 121ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > hands off the document the user actually chose 170ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > creates the document and section from the AnswerLead action, then navigates 101ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > the document-bar button runs the same handoff 64ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > does NOT navigate when the document create fails 80ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > does NOT navigate when the section create fails 99ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > creates the document and section carrying the assessment, then navigates 290ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > does NOT navigate when the document create fails — the assessment stays on screen 411ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > does NOT navigate when the section create fails 401ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > Biostatistics posts nothing, stays put, and says to open a project 256ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > a legacy numeric workspace id is not a project — Biostatistics still posts nothing 262ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > ReportEngine posts nothing, stays put, and says to open a project 141ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > CmcModule change simulator posts nothing, stays put, and says to open a project 440ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > does not save prose typed during the wait under the system reason, and anchors the quoted words 600ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > follows the range through the tracking plugin's own transactions 195ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > saves only the anchor under the system reason once the author saved their own edits during the wait 181ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > refuses the anchor when the quoted words themselves changed during the wait 127ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > SEC-B-3 — commenting on a selection while the canvas stays editable > CONTROL: an untouched buffer is anchored and saved under the system reason, as before 147ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: text typed while the save is in flight stays unsaved, guarded and cached 56ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: a keystroke during the save does not claim the save has settled 66ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode autosave: the debounced save sends the latest keystroke, not the one before it 128ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > source mode: a restored device draft is what the next save sends 62ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — source mode reports "saved" only for the text it sent > CONTROL: source mode with nothing typed mid-save is saved and leaves no device draft 52ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorSaveIntegrity.test.tsx > V-2 — the rich canvas keeps its device draft the same way > rich mode: an edit made while the save is in flight keeps its device draft 111ms
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-10-08T19:58:09.701Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-10-08T19:58:09.817Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-10-08T19:58:09.851Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element
+{
+  "timestamp": "2026-10-08T19:58:09.880Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-10-08T19:58:09.901Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored 120ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored 35ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored 29ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element 21ms
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-10-08T19:58:09.926Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-10-08T19:58:09.942Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-10-08T19:58:09.957Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-10-08T19:58:09.976Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-10-08T19:58:10.005Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-10-08T19:58:10.024Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote 25ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote 16ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote 15ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote 19ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote 29ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote 19ms
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and &, inside one paragraph (guard)
+{
+  "timestamp": "2026-10-08T19:58:10.047Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard)
+{
+  "timestamp": "2026-10-08T19:58:10.048Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a body written with CRLF line endings as the same paragraphs and line breaks (guard)
+{
+  "timestamp": "2026-10-08T19:58:10.067Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'only the JSON trailer': the draft and the result body are "", and the trailer is still read
+{
+  "timestamp": "2026-10-08T19:58:10.069Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'only a trailer listing what the evide…': the draft and the result body are "", and the trailer is still read
+{
+  "timestamp": "2026-10-08T19:58:10.078Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'an empty completion': the draft and the result body are "", and the trailer is still read
+{
+  "timestamp": "2026-10-08T19:58:10.086Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a completion of whitespace': the draft and the result body are "", and the trailer is still read
+{
+  "timestamp": "2026-10-08T19:58:10.094Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a zero-width space before the trailer': the draft and the result body are "", and the trailer is still read
+{
+  "timestamp": "2026-10-08T19:58:10.103Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a zero-width joiner': the draft and the result body are "", and the trailer is still read
+{
+  "timestamp": "2026-10-08T19:58:10.110Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a soft hyphen': the draft and the result body are "", and the trailer is still read
+{
+  "timestamp": "2026-10-08T19:58:10.118Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a word joiner and a byte-order mark': the draft and the result body are "", and the trailer is still read
+{
+  "timestamp": "2026-10-08T19:58:10.135Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote 23ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and &, inside one paragraph (guard) 1ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard) 19ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a body written with CRLF line endings as the same paragraphs and line breaks (guard) 1ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > the editor converts plain text with the function that stores it (one implementation) 0ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'only the JSON trailer': the draft and the result body are "", and the trailer is still read 9ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'only a trailer listing what the evide…': the draft and the result body are "", and the trailer is still read 8ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'an empty completion': the draft and the result body are "", and the trailer is still read 8ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a completion of whitespace': the draft and the result body are "", and the trailer is still read 9ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a zero-width space before the trailer': the draft and the result body are "", and the trailer is still read 7ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a zero-width joiner': the draft and the result body are "", and the trailer is still read 8ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a soft hyphen': the draft and the result body are "", and the trailer is still read 17ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores an empty body as an empty draft > 'a word joiner and a byte-order mark': the draft and the result body are "", and the trailer is still read 8ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB section registry (ICH E6(R2) §7) > exposes the full ICH E6(R2) §7 section set in order 6ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB section registry (ICH E6(R2) §7) > covers every IB content domain via at least one section 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB section registry (ICH E6(R2) §7) > returns a deep copy from getIBStructure so the registry is immutable 2ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB section registry (ICH E6(R2) §7) > flattens parents and their children into a single ordered list 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > input availability resolution > flags every domain absent for a bare product-only request 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > input availability resolution > detects each domain from its respective inputs 0ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > gap detection and section verdict > reports no gaps and renders boilerplate sections regardless of inputs 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > gap detection and section verdict > marks a single-domain section MISSING when its input is absent 0ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > gap detection and section verdict > marks a single-domain section RENDERED when its input is present 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > gap detection and section verdict > marks a multi-domain section PARTIAL when only some inputs are present 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > buildInvestigatorBrochure (deterministic with mocked AI) > produces a result for every section, with verdicts driven by inputs 2ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > buildInvestigatorBrochure (deterministic with mocked AI) > uses deterministic templates (and embeds the product name) when templateOnly is set 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > buildInvestigatorBrochure (deterministic with mocked AI) > renders nonclinical/clinical/safety sections once their inputs are supplied 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > buildInvestigatorBrochure (deterministic with mocked AI) > drives completeness down when only some domains are present 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB template mode does not report un-drafted sections complete > §1 Summary is NOT rendered in template mode — it still carries the "to be drafted" placeholder 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB template mode does not report un-drafted sections complete > §5.3 Marketing Experience does not assert "not currently marketed" when unknown 1ms
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB template mode does not report un-drafted sections complete > a boilerplate section with an optional [Sponsor] placeholder still renders 0ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > a reasoned construction says so, and says to check it against the regulation 413ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > an unreviewed transcription is not painted as verified 199ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > a server that sends no provenance renders "basis undeclared", not nothing 223ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > a sign-off whose outline changed since does not read as approved 247ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > a current sign-off names the reviewer on screen 215ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > an unrecognised basis is refused rather than shown to the filer 166ms
+ ✓ client/src/concept2cure/v2/__tests__/outlineProvenanceVisible.test.tsx > the filing outline says what it was built from > two different provenances produce two different statements 356ms
+stdout | server/services/authoring/__tests__/m4-nonclinical-qc.test.ts
+{
+  "timestamp": "2026-10-08T19:58:15.263Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T19:58:15.264Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/authoring/__tests__/m4-nonclinical-qc.test.ts
+{
+  "timestamp": "2026-10-08T19:58:15.264Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/authoring/__tests__/m4-nonclinical-qc.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/authoring/__tests__/m4-nonclinical-qc.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/authoring/__tests__/m4-nonclinical-qc.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — verdict > ready for a complete ICH M3(R2) program with correct placement 11ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — coverage > warns (default) on a missing recommended study type, staying ready 1ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — coverage > blocks when requireCoverage makes a gap an error 1ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — sections > errors on a required section that is missing 1ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — sections > warns on a partially rendered required section 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — structure coverage > warns by default on an entirely absent required section (stays ready) 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — structure coverage > errors on an absent required section under requireFullStructure 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement, GLP, structure > errors when the CTD 4.2.x placement is wrong for the study type 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement, GLP, structure > errors on empty placement 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement, GLP, structure > warns on a non-GLP toxicology study 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement, GLP, structure > errors on a duplicate study id 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts secondary_pharmacodynamics filed at 4.2.1.2 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts pd_drug_interactions filed at 4.2.1.4 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts antigenicity filed at 4.2.3.7.1 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts immunotoxicity filed at 4.2.3.7.2 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts mechanistic_tox filed at 4.2.3.7.3 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts dependence filed at 4.2.3.7.4 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts metabolites filed at 4.2.3.7.5 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts impurities filed at 4.2.3.7.6 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > does not claim a study type it cannot place belongs at the module root 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > still refuses a study with no placement at all 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > still catches a genuinely misplaced study 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — an empty program is unassessed, not clean > does not report ready over zero study reports 0ms
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — an empty program is unassessed, not clean > is assessed as soon as there is a report to assess 0ms
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > derives the BX-204 demo shape: nonclinical + clinical(ops) + safety(AE), product absent 48ms
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > lights up every domain when all four stores hold org rows (completeness 100) 28ms
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > treats an empty-default RMP as no safety evidence (mirrors resolveAvailability) 25ms
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > is soft-delete aware for the deleted_at stores 20ms
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > is strictly tenant-scoped 20ms
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > returns the honest all-absent skeleton for an org with no upstream evidence 19ms
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > guards each store with to_regclass — an unmigrated store is an absent domain, not a 42P01 1949ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > withholds the figure the stored check did not find, in every field the reader renders 153ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > reads the current answer's check, which may not be stored yet 5ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > fails closed when the thread cannot be read: only what claims nothing stands, and the row is still written 4ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > writes the row when the summarizer returns a malformed shape, never one letter per fact 4ms
+ ✓ server/services/__tests__/working-memory-fact-check.test.ts > the write-back keeps only what a checked answer found > below the refresh threshold, neither summarises nor reads the thread 3ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > finds a figure a tool returned, and flags one it did not 29ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > reads a percentage as its proportion too 14ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > needs both bounds of a confidence interval, and does not read "95% CI" as a result 5ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a tool only echoed from what the model passed in 4ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > does not credit a figure a model wrote inside the tool call 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — figures > a figure an engine returned beside a model-written one is still found 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > finds the identifiers the evidence holds 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not find a truncated or altered identifier inside a longer one 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — identifiers are matched whole > does not credit an identifier a model wrote inside the tool call 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > an outage envelope that echoes the query finds nothing 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a zero-hit result finds nothing, and neither does the query its provenance echoes 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a hit returns the identifier in a record, and is found 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a result that is not structured cannot tell an echo from data, and finds nothing the model asked for 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a quote the model searched for is found only in a returned passage 3ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > an identifier the model did not ask for is found wherever the result holds it 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation looked up is found in the record the lookup returns, not in the echo of a miss 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation formatted from what the model gave, and not verified, finds nothing 2ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a citation the tool verified against a source is found 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — an identifier the model asked for is not found by the echo of its own request > a regulation a model wrote inside the tool call is not credited by it 1ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a successful result is a source, named by its tool 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a failed, stopped or empty step is not 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a governed write is not: its output is the content it stored 0ms
+ ✓ tests/services/answer-check.test.ts > toolEvidence — what is a source > a result whose generations are unknown, or too many to keep, is not 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > with only the person's own message, claims are unchecked or theirs, never "not found" 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > a source the check cannot read is named, not counted as read 1ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — the basis > names the engine that checked 0ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — verdicts > names a readiness, compliance or approval verdict the answer states 3ms
+ ✓ tests/services/answer-check.test.ts > checkAnswer — verdicts > includes the §14 prohibited claims, and not a verdict the answer declines to give 1ms
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > reconstructs the full lifecycle into ordered, real-column-mapped stages 28ms
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > emits only the created stage for a bare draft, marked active (in progress) 6ms
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > omits milestones the store never recorded — never fabricates a stage 7ms
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > is strictly tenant-scoped and never crosses orgs 7ms
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > selects the org’s most-recently-updated document 6ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > ready when all supplied module verdicts are ready 3ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > not ready when the Module 1 forms verdict is not ready 1ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > not ready when the Module 5 verdict is not ready 13ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > not ready when a module verdict is not ready 1ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > rolls up errors from multiple not-ready modules 1ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > warns (non-blocking) when a module QC verdict is absent 0ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > is not ready when no module QC verdict was supplied at all 1ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.4 ← M4 feed-forward > passes when every cited 4.2.x section has a corresponding report 1ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.4 ← M4 feed-forward > errors when the overview cites a section with no Module 4 report 1ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.4 ← M4 feed-forward > a report at the module ROOT does not vouch for every 4.2.x citation 1ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.4 ← M4 feed-forward > a MORE SPECIFIC report still satisfies a broader citation 0ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.4 ← M4 feed-forward > matches on section boundaries, not on characters 0ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.4 ← M4 feed-forward > is skipped when the feed-forward inputs are not supplied 0ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.5/2.7 ← M5 feed-forward > passes when every cited CSR exists in the M5 program 0ms
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.5/2.7 ← M5 feed-forward > errors when a clinical summary cites a CSR with no Module 5 report 1ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > seeds every document creator as OWNER and AUTHOR atomically 5ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > allows the creator to edit and manage the document 8ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > denies a same-tenant user with no object permission 4ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > grants reviewer and approver authority explicitly, without edit escalation 14ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > does not let a permission on one section authorize a different section 4ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > rejects cross-tenant document and section permission links at the database boundary 8ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > blocks edits after the document becomes immutable 3ms
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > prevents revocation of the final active owner 4ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/../../tenant-export/full 25ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/%2e%2e/%2e%2e/users/me 6ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/..\..\tenant-export\full 5ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/file_1_a?download=1 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: https://collector.example/p.png?d=secret 4ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: //collector.example/p.png 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/svg+xml;base64,PHN2Zz4= 10ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:text/html;base64,PHNjcmlwdD4= 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/webp;base64,UklGRg== 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: javascript:alert(1) 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > keeps a governed reference and an inline PNG exactly as written 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > finds the image wherever the parse puts it: inside a table cell, and in upper case 5ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > still strips scripts and handlers, and leaves the chat-safe rest alone 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > does not leave its image rule on the shared DOMPurify instance 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names nothing in prose, a governed reference, an inline PNG, or an image with no src 355ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/../../tenant-export/full 4ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/%2e%2e/%2e%2e/users/me 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/..\..\tenant-export\full 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/file_1_a?download=1 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: https://collector.example/p.png?d=secret 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: //collector.example/p.png 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:image/svg+xml;base64,PHN2Zz4= 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:text/html;base64,PHNjcmlwdD4= 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:image/webp;base64,UklGRg== 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: javascript:alert(1) 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > reads the markup the way a browser does 7ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > says which images, by position and kind, without echoing an application path 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > a duplicated src: shown as the first, filed as the second 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > an image inside a template 5ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > an image inside a bogus comment 3ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > an image inside a text box 4ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > a source a reader loads that is not a figure: a srcset on an image with no src 1ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > a source a reader loads that is not a figure: a picture source 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > a source a reader loads that is not a figure: an SVG image 2ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > two figures written plainly are refused for nothing (guard) 4ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > says what to do about a misread image, without the not-a-figure advice 0ms
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — a figure inside a <pre> is read alike by both readers (D2) > is not refused 3ms
+stdout | server/services/authoring/__tests__/create-section-placement.pglite.test.ts
+{
+  "timestamp": "2026-10-08T19:58:32.227Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T19:58:32.229Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/authoring/__tests__/create-section-placement.pglite.test.ts
+{
+  "timestamp": "2026-10-08T19:58:32.229Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/authoring/__tests__/create-section-placement.pglite.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/authoring/__tests__/create-section-placement.pglite.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/authoring/__tests__/create-section-placement.pglite.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/authoring/__tests__/create-section-placement.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/create-section-placement.pglite.test.ts
+{
+  "timestamp": "2026-10-08T19:58:32.291Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > 2.5.8 created after a seeded 2.5 template assembles LAST, not first (the walk’s case) 46ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > a code that belongs in the middle lands in the middle, and nothing else changes order 16ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > a code that belongs first lands first 18ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > sections created into an empty document still converge on code order, at contiguous indexes 19ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a new section is stored where its code belongs among template-seeded sections > an explicit order_index is still honoured 14ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a code the document already has is refused as a conflict > answers 409 SECTION_CODE_EXISTS naming the code — not 500 lineage — and writes nothing 22ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a code the document already has is refused as a conflict > compares codes as the structure check does, so 3.2.s is the 3.2.S the document already has 9ms
+ ✓ server/services/authoring/__tests__/create-section-placement.pglite.test.ts > a code the document already has is refused as a conflict > recognises the unique-index violation a concurrent create loses with, so it too reads as a conflict 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > publishes the selected section on the editor deep-link channel before navigating 152ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > carries the section but NOT an invented family for a dossier the channel cannot name 66ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > leaves no stale target behind for the next, unrelated visit to the editor 63ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the stored check, as the server reads it > is this engine's check, from the stored metadata 2ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the stored check, as the server reads it > is nothing when it is another engine's, malformed or absent 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds the figure the check did not find, wherever the summarizer put it 2ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > keeps what the check found, and words that claim nothing 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds a stated verdict 2ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds what is not a sentence 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > never recombines two answers' findings into a claim neither made 2ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > a value one answer found never vouches for the same value another answer could not find 2ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > credits a figure's own number, never another number written beside it 2ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > a check that does not describe its text vouches for nothing 1ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds a value only the person stated (the person's, not a finding) 3ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > keeps every field the reader renders only as far as it was found, and records what it withheld 4ms
+ ✓ server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > with no checked answer to stand on, keeps only what claims nothing 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > set / peek / consume / clear > round-trips a target, normalizing code to a trimmed string 2ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > set / peek / consume / clear > peek does not clear; consume does 1ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > set / peek / consume / clear > clear removes a pending target 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > set / peek / consume / clear > empty/whitespace section fields normalize to null rather than empty claims 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > stale-context safety > refuses a target older than the TTL, honours one inside it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > stale-context safety > refuses a target stamped in the future (an untrustworthy clock) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > stale-context safety > consume clears even a stale or malformed entry — nothing lingers 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > hostile / malformed window values > a string on the window is refused without throwing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > hostile / malformed window values > a number on the window is refused without throwing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > hostile / malformed window values > an empty object on the window is refused without throwing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > hostile / malformed window values > a non-string docType on the window is refused without throwing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > hostile / malformed window values > an empty-string docType on the window is refused without throwing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > hostile / malformed window values > a missing setAt on the window is refused without throwing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > hostile / malformed window values > a non-numeric setAt on the window is refused without throwing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > matchEditorTargetSection > matches by exact code, case-insensitively 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > matchEditorTargetSection > matches numerically when formats differ (11 vs 011) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > matchEditorTargetSection > falls back to a normalized label match 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > matchEditorTargetSection > prefers the code match over a label match 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > matchEditorTargetSection > a null authored code never matches — fail closed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > matchEditorTargetSection > returns null when nothing matches 0ms
+ ✓ client/src/concept2cure/v2/__tests__/editorTarget.test.ts > describeEditorTarget > names what it can and claims nothing it cannot 0ms
+stdout | server/services/authoring/__tests__/m5-clinical-qc.test.ts
+{
+  "timestamp": "2026-10-08T19:58:39.331Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T19:58:39.333Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/authoring/__tests__/m5-clinical-qc.test.ts
+{
+  "timestamp": "2026-10-08T19:58:39.333Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/authoring/__tests__/m5-clinical-qc.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/authoring/__tests__/m5-clinical-qc.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/authoring/__tests__/m5-clinical-qc.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — verdict > ready when CSRs are well-placed with drafted required sections 11ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — sections > errors on a required section that is empty 1ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — sections > warns (non-blocking) on a required section still drafting 0ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — sections > ignores non-required sections 0ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — placement > errors when not under Module 5.3.x 0ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — placement > accepts the 5.3.x form without the m prefix 0ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — placement > errors on empty placement 0ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — structure coverage > warns by default on a required ICH E3 section that is entirely absent (stays ready) 0ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — structure coverage > errors on an absent required section under requireFullStructure 0ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — structure coverage > does not flag absence when all required top-level sections are represented 0ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — coverage + structure > errors on a missing expected phase only when expectedPhases is supplied 0ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — coverage + structure > errors on a duplicate study id 0ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — an empty program is unassessed, not clean > does not report ready over zero clinical study reports 0ms
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — an empty program is unassessed, not clean > is assessed as soon as there is a CSR to assess 0ms
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > refuses a silent tab close while dirty, and stops once saved
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > refuses a silent tab close while dirty, and stops once saved
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > refuses a silent tab close while dirty, and stops once saved
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > refuses a silent tab close while dirty, and stops once saved 290ms
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > releases the guard when the canvas goes away
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > flushes work still inside the debounce window
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > does not hold a read-only canvas hostage 42ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > the browser is asked to confirm before unsaved work is discarded > releases the guard when the canvas goes away 70ms
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > flushes work still inside the debounce window
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when the autosave already landed
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when the autosave already landed
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when the autosave already landed
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when the autosave already landed
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > flushes work still inside the debounce window 83ms
+stderr | client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when no autosave was ever armed
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when the autosave already landed 84ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorUnsaved.test.tsx > a debounced autosave survives the unmount that interrupts it > writes nothing on unmount when no autosave was ever armed 71ms
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > 2.7.3: the requirements are the Summary of Clinical Efficacy brief, exact
+{
+  "timestamp": "2026-10-08T19:58:42.819Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.7.3",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a code nothing indexes: the requirements say so, source none
+{
+  "timestamp": "2026-10-08T19:58:42.824Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "9.9",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a container code: source parent
+{
+  "timestamp": "2026-10-08T19:58:42.826Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.7",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a sub-section deeper than any entry: source ancestor
+{
+  "timestamp": "2026-10-08T19:58:42.828Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.5.4.xxx",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > section-generation@v1.1 at the gateway, on the draft and in the audit row, with the source
+{
+  "timestamp": "2026-10-08T19:58:42.830Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.7.3",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > the system prompt asks for the impersonal register, labelled platform convention, not second person
+{
+  "timestamp": "2026-10-08T19:58:42.831Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.7.3",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > 2.7.3: the requirements are the Summary of Clinical Efficacy brief, exact 11ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a code nothing indexes: the requirements say so, source none 2ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a container code: source parent 2ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > section generation is given the canonical requirements for the section > a sub-section deeper than any entry: source ancestor 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > section-generation@v1.1 at the gateway, on the draft and in the audit row, with the source 2ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > the prompt and its version > the system prompt asks for the impersonal register, labelled platform convention, not second person 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.1.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.1.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.1.3 1ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.1.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.3.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.3.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.3.5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.9 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.12.14 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.14.1.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.14.1.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.14.4.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.14.4.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 1.20 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3.A 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3.P 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3.R 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.3.S 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.5.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.6.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 2.7.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.A 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.3.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.5.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.P.8 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.R 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.2.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.3.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.3.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.4.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.5 7ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 3.2.S.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.1.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.1.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.1.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.1.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.2.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.5 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.2.3.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 4.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.5.1 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.5.2 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.5.3 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.5.4 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.6 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.3.7 0ms
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts > every registered section keeps its required elements in the drafting input > 5.4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx > RichSectionEditor — authoring affordances (BP-W1-1) > the ribbon offers table insertion for rich content 478ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx > RichSectionEditor — authoring affordances (BP-W1-1) > stored superscript/subscript open in rich mode with the marks intact 77ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx > RichSectionEditor — authoring affordances (BP-W1-1) > content carrying an image opens RICH with the figure held, not refused to source mode 116ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx > RichSectionEditor — authoring affordances (BP-W1-1) > markup the schema still cannot hold (a <figure>) keeps failing closed into source mode 34ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx > RichSectionEditor — authoring affordances (BP-W1-1) > plain-text content the parse would rewrite (a space-aligned column) opens in source mode 44ms
+ ✓ client/src/concept2cure/v2/__tests__/richSectionEditorAuthoring.test.tsx > RichSectionEditor — authoring affordances (BP-W1-1) > ordinary plain text still opens rich 66ms
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > which statuses seal a record > locks FROZEN and APPROVED 2ms
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > which statuses seal a record > does NOT lock IN_REVIEW — review is a state a document is edited during 1ms
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > refuses FROZEN and says why 1ms
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > refuses APPROVED and says why 1ms
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > is case-insensitive, because the router writes both cases 0ms
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > refuses when locked_at is set even if the status looks editable 0ms
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > refuses a document that is not in the caller’s tenant 0ms
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > allows an editable document 0ms
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > reads through the executor it is given, so it can run inside the write’s transaction 2ms
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkSectionWritable resolves the parent document > refuses a section whose document is frozen 1ms
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkSectionWritable resolves the parent document > scopes the section by tenant, so a guessed id cannot reach another org 1ms
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkSectionWritable resolves the parent document > refuses an unknown section 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > mounts the canonical rich section editor on the stored content 372ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > refuses to save until a governed reason is given, and writes nothing 193ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > saves through the section PATCH with the reason and the concurrency token 179ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > reports a concurrent change as a refusal, and does not report a save 159ms
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > an honest history verifies intact 7ms
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > CATCHES content altered after the fact (the §11.10(e) tamper) 1ms
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > CATCHES a deleted revision (the chain no longer links) 1ms
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > CATCHES a re-pointed link and a forged chain value 2ms
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > CATCHES attribution rewritten under an intact content hash 0ms
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > CATCHES a fork — two revisions extending the same head 0ms
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > reports pre-ledger rows honestly, and refuses unchained rows after adoption 0ms
+stdout | server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts
+{
+  "timestamp": "2026-10-08T19:58:49.168Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T19:58:49.170Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts
+{
+  "timestamp": "2026-10-08T19:58:49.171Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > NONCLINICAL_STUDY_REPORT_STRUCTURE > defines a non-empty, well-formed section registry 3ms
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > NONCLINICAL_STUDY_REPORT_STRUCTURE > has unique section numbers 1ms
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > NONCLINICAL_STUDY_REPORT_STRUCTURE > covers the standard study-report skeleton (summary, methods, results, conclusion) 1ms
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > disciplineFor > maps pharmacology study types 0ms
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > disciplineFor > maps PK/ADME study types 0ms
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > disciplineFor > maps toxicology study types 0ms
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > disciplineFor > returns a valid discipline for an unknown study type (deterministic default) 1ms
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > normalizeStudy > normalizes a minimal study input without throwing, preserving the study type 1ms
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > gap engine does not report a section complete over unfilled critical data > §4 Materials & Methods is partial (not rendered) when dose-group design is absent 1ms
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > gap engine does not report a section complete over unfilled critical data > §4 becomes rendered once dose groups are present 0ms
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > gap engine does not report a section complete over unfilled critical data > §6 Discussion & Conclusion is partial (not rendered) when NOAEL is absent, even with key findings 0ms
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — verdict > ready when all expected summaries are present, traceable, and complete 6ms
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — presence > flags a missing expected summary as an error and not ready 1ms
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — presence > honors a custom expected set 1ms
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — traceability > errors when a summary declares no upstream inputs 1ms
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — traceability > errors on an orphan input when the upstream key set is supplied 1ms
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — traceability > passes traceability when all declared inputs exist upstream 0ms
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — content, completeness, gaps, structure > errors on an empty narrative 0ms
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — content, completeness, gaps, structure > warns (not error) on low completeness, staying ready 0ms
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — content, completeness, gaps, structure > surfaces each builder-reported gap as a warning 2ms
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — content, completeness, gaps, structure > errors on a duplicate section key 0ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > reserves predecessor/successor writes before reading sources and keeps the receipt inside the same transaction 9ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > a source made unavailable before reservation produces no rendition receipt 4ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > refused source-store locking fails closed before work 2ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > a failed renderer or receipt rolls back and preserves the failure 3ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-reservation.test.ts > source reservations contain new rendition receipts > a legacy/manual rendition uses the existing path without claiming a source reservation 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > keeps an entry whose author is a known machine author and whose text is non-empty 4ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops an author id the server does not name, rather than letting a caller attribute text to anyone 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops empty, whitespace-only and non-string text 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > returns nothing for anything that is not an array 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "constructor", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "__proto__", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "toString", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "hasOwnProperty", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "valueOf", a name every object inherits 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops "isPrototypeOf", a name every object inherits 0ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > the vocabulary inherits nothing, so no reader of it can be handed a name it does not hold 1ms
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > caps the list and drops an entry whose text exceeds the cap rather than truncating it 2ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > keeps a recognised machine author 4ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > takes the display name from the server, never from the request 1ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > drops ids it does not recognise, so a caller cannot invent an author 1ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > records a human co-author as nothing — created_by already names them 1ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > de-duplicates, so accepting six AnA suggestions names AnA once 2ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > treats malformed input as no attribution rather than as a guess 1ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > bounds the list so a save cannot carry an unbounded attribution payload 0ms
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > the origin a save records > is decided by whether machine-authored text was incorporated 0ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence null 6ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"},"disposition":"remove_data"} 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"},"disposition":"supersede"} 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"}} 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"}} 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"Exact study evidence","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extraction_failed","extractionMethod":"pdf-text"}} 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > refuses unavailable or changed saved evidence {"id":"10000000-0000-4000-8000-000000000001","programId":"20000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","fileName":"validated-tlf.pdf","documentTitle":"Study TLFs","extractedText":"shorter","catalog":{"contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"extracted","extractionMethod":"pdf-text"}} 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > keeps valid retained data usable and verifies through the caller executor 976ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > does not invent source qualification for legacy or manually authored documents 2ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > does not discard malformed persisted source groups or a conflicting saved source scope 1ms
+ ✓ server/services/authoring/__tests__/saved-draft-source-export.test.ts > new source-linked Authoring renditions reverify their saved evidence > fails closed when the current source read fails 2ms
+stdout | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+{
+  "timestamp": "2026-10-08T19:58:53.010Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T19:58:53.011Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+{
+  "timestamp": "2026-10-08T19:58:53.012Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/create-document-program-anchor.test.ts
+{
+  "timestamp": "2026-10-08T19:58:53.072Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses another organization’s project, before anything is written 5ms
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses a project that does not exist, before anything is written 1ms
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses a deleted project, before anything is written 1ms
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > still refuses a malformed id with 400 1ms
+ ✓ server/services/authoring/__tests__/draft-figure-check.test.ts > checkSectionFigures > finds each figure the cited source states, with the document and the offset where it stands 24ms
+ ✓ server/services/authoring/__tests__/draft-figure-check.test.ts > checkSectionFigures > flags a figure the source does not state as unverified, listed first 6ms
+ ✓ server/services/authoring/__tests__/draft-figure-check.test.ts > checkSectionFigures > does not take a number that stands without its measure: 31 sites is not 31% 1ms
+ ✓ server/services/authoring/__tests__/draft-figure-check.test.ts > checkSectionFigures > with no cited source every figure is unverified 1ms
+ ✓ server/services/authoring/__tests__/draft-figure-check.test.ts > checkSectionFigures > names the document but no position when the reader could not confirm one (a link shifts its count) 1ms
+ ✓ server/services/authoring/__tests__/draft-figure-check.test.ts > checkSectionFigures > keeps complete counts when the findings kept are bounded 6ms
+stdout | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-08T19:58:56.355Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T19:58:56.357Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-08T19:58:56.357Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/authoring/__tests__/draft-source-references.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/authoring/__tests__/draft-source-references.test.ts
+{
+  "timestamp": "2026-10-08T19:58:56.402Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > keeps only identity/version/span, never caller qualification or source text 3ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references null 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references undefined 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"file_9_chat","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"missing","span":{"start":0,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":1,"end":10,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":-1,"totalChars":20}} 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":21,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":12001,"totalChars":20000}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references {"documentId":"10000000-0000-4000-8000-000000000001","contentHash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","span":{"start":0,"end":1.5,"totalChars":20}} 0ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses aggregate excerpt budget overflow 1ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > retains source references but strips fabricated document-level verified provenance 2ms
+ ✓ server/services/authoring/__tests__/draft-source-references.test.ts > saved draft source reference contract > refuses malformed references rather than silently dropping them on parse 1ms
+ ✓ server/services/authoring/__tests__/ctd-readiness-renderer.test.ts > renderCtdReadinessPdf > renders valid PDF bytes 97ms
+ ✓ server/services/authoring/__tests__/ctd-readiness-renderer.test.ts > renderCtdReadinessPdf > is deterministic for the same verdict 19ms
+ ✓ server/services/authoring/__tests__/ctd-readiness-renderer.test.ts > renderCtdReadinessPdf > renders a not-ready verdict without throwing 8ms
+ ✓ server/services/authoring/__tests__/ctd-readiness-renderer.test.ts > renderCtdReadinessPdf > handles an empty rollup (no modules / findings) — and never calls it ready 8ms
+ ✓ server/services/authoring/__tests__/authoring-export-xml-figures.test.ts > the XML export carries only the figures the other formats file > an external image URL is not in the file; its placeholder is 1591ms
+ ✓ server/services/authoring/__tests__/authoring-export-xml-figures.test.ts > the XML export carries only the figures the other formats file > a WebP payload is not printed into the file 6ms
+ ✓ server/services/authoring/__tests__/authoring-export-xml-figures.test.ts > the XML export carries only the figures the other formats file > a figure is kept as written: a governed reference and an inline PNG 5ms
+ ✓ server/services/authoring/__tests__/m2-summary-renderer.test.ts > m2SummaryToSections > produces a narrative section, one section per table, and a gaps section 6ms
+ ✓ server/services/authoring/__tests__/m2-summary-renderer.test.ts > m2SummaryToSections > omits the gaps section when there are no gaps 1ms
+ ✓ server/services/authoring/__tests__/m2-summary-renderer.test.ts > renderM2SummaryPdf > renders a valid, navigable, deterministic PDF 63ms
+ ✓ client/src/concept2cure/v2/__tests__/draftFigureLine.test.tsx > describeFigureCheck > sums the sections and lists each unverified figure with its section 3ms
+ ✓ client/src/concept2cure/v2/__tests__/draftFigureLine.test.tsx > describeFigureCheck > is null when no check was recorded, so nothing reads as all clear 2ms
+ ✓ client/src/concept2cure/v2/__tests__/draftFigureLine.test.tsx > DraftFigureLine > names the unverified figure and its section 33ms
+ ✓ client/src/concept2cure/v2/__tests__/draftFigureLine.test.tsx > DraftFigureLine > says when every figure was found 4ms
+ ✓ server/services/authoring/__tests__/section-validation.test.ts > validateDraftSection > returns a well-formed snapshot for empty / trivial text 3ms
+ ✓ server/services/authoring/__tests__/section-validation.test.ts > validateDraftSection > flags an unsupported absolute overclaim as not compliant 5ms
+ ✓ server/services/authoring/__tests__/section-validation.test.ts > validateDraftSection > exposes the full verdict (counts) for a UI to render 1ms
+
+ Test Files  43 passed (43)
+      Tests  694 passed (694)
+   Start at  19:57:27
+   Duration  95.50s (transform 11.79s, setup 1.65s, import 35.49s, tests 43.28s, environment 6.29s)
+

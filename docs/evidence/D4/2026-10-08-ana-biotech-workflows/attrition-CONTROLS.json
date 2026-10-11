@@ -1,0 +1,105 @@
+{
+  "sourceHead": "e7129de74f4f432d629a68b0fffa1a311f6a41a9",
+  "sourceFrozen": true,
+  "red": {
+    "exitCode": 1,
+    "numTotalTests": 10,
+    "numPassedTests": 8,
+    "numFailedTests": 2,
+    "numPendingTests": 0,
+    "success": false
+  },
+  "green": {
+    "exitCode": 0,
+    "physicalFiles": 3,
+    "numTotalTests": 38,
+    "numPassedTests": 38,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "success": true
+  },
+  "lint": {
+    "exitCode": 0,
+    "files": 2,
+    "errors": 0,
+    "warnings": 3,
+    "baselineWarnings": 3,
+    "exactBaselineWarningMessagesUnchanged": true,
+    "newWarnings": 0
+  },
+  "behaviorControls": [
+    {
+      "control": "omitted",
+      "onlyExpectedAttributionChange": true
+    },
+    {
+      "control": "undefined",
+      "onlyExpectedAttributionChange": true
+    },
+    {
+      "control": "null",
+      "onlyExpectedAttributionChange": true
+    },
+    {
+      "control": "zero",
+      "onlyExpectedAttributionChange": true
+    },
+    {
+      "control": "nonzero",
+      "onlyExpectedAttributionChange": true
+    },
+    {
+      "control": "negative",
+      "onlyExpectedAttributionChange": true
+    },
+    {
+      "control": "one",
+      "onlyExpectedAttributionChange": true
+    }
+  ],
+  "protectedSourcesUnchanged": true,
+  "protectedSources": [
+    {
+      "path": "server/services/ana-biostats/computation-engine.ts",
+      "gitBlob": "9f61dac1194391703a208f214abc5db05bffffdd"
+    },
+    {
+      "path": "server/services/ana-biostats/orchestrator.ts",
+      "gitBlob": "a48ac9a3f7fce0717d2cb76c262f7daa69e42071"
+    },
+    {
+      "path": "server/services/ana-biostats/judgment-engine.ts",
+      "gitBlob": "854bd37d1b98887232e0078e76fe1e816f67ac93"
+    },
+    {
+      "path": "server/services/ana-biostats/document-generator.ts",
+      "gitBlob": "bdda9f6453168c50d91f67f1dd95dd0872208618"
+    },
+    {
+      "path": "server/services/ana-biostats/types.ts",
+      "gitBlob": "3f9b5f1c5e8665c0c68dd148a66f5b5d3470dcba"
+    },
+    {
+      "path": "server/services/ana/AnaToolExecutor.ts",
+      "gitBlob": "b7172d4129e7213e0c33ece5f39eb0252fd775dd"
+    },
+    {
+      "path": "server/services/ana/document-intake-tool-defs.ts",
+      "gitBlob": "2ad78de3efc51c097b8be5432a89d0369a4d9883"
+    }
+  ],
+  "candidateSources": [
+    {
+      "path": "server/services/ana-biostats/input-normalizer.ts",
+      "gitBlob": "3c65a9a6a761d1a3f4f9c8058545f39867337417"
+    },
+    {
+      "path": "server/services/ana-biostats/__tests__/input-normalizer-defaults.test.ts",
+      "gitBlob": "5a88484932961069e83ec958dd4bcc2e1545be0e"
+    }
+  ],
+  "limits": [
+    "Focused local execution only; not native PostgreSQL or whole-tree semantic compiler qualification.",
+    "Only the nullish default-attribution predicate changed; calculations, units, defaults and validation are unchanged."
+  ]
+}

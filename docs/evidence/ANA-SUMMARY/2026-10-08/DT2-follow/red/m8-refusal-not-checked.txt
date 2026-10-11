@@ -1,0 +1,11 @@
+# m8-refusal-not-checked: --config vitest.config.ts client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx -t NO_PENDING_APPROVAL|STALE
+# exit 1
+ × client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > NO_PENDING_APPROVAL, confirmed by the poll: the line, and the dialog closes 215ms
+ × client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > STALE_APPROVAL, confirmed by the poll (the run waits on another step): the same 42ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 skipped (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > NO_PENDING_APPROVAL, confirmed by the poll: the line, and the dialog closes
+TestingLibraryElementError: Unable to find an element with the text: Already decided on another device.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > STALE_APPROVAL, confirmed by the poll (the run waits on another step): the same
+TestingLibraryElementError: Unable to find an element with the text: Already decided on another device.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.

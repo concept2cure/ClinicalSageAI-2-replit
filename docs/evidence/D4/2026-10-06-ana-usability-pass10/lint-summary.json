@@ -1,0 +1,22 @@
+[
+  {
+    "file": "client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+    "errors": 0,
+    "warnings": 36
+  },
+  {
+    "file": "server/services/lumen-context/__tests__/intelligence-prefix-deadline.test.ts",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "file": "server/services/lumen-context/intelligence-prefix.ts",
+    "errors": 0,
+    "warnings": 1
+  }
+]

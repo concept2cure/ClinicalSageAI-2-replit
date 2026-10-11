@@ -85,6 +85,11 @@ function refusal(what: string, status: number, code: string | undefined, message
   if (status === 401 && code?.startsWith('REAUTH_TOTP')) {
     return new Error(`Couldn't ${what} — the authenticator code was ${code === 'REAUTH_TOTP_REQUIRED' ? 'required and not given' : 'not accepted'}. Nothing was signed.`);
   }
+  // In production a signer with no authenticator is refused after the password
+  // verified (ADR-0014 P1-2b): the server's sentence says what to do.
+  if (status === 401 && code === 'REAUTH_AUTHENTICATOR_REQUIRED') {
+    return new Error(`Couldn't ${what} — ${message}`);
+  }
   if (status === 401 && code?.startsWith('REAUTH')) {
     return new Error(`Couldn't ${what} — the password was not accepted. Nothing was signed.`);
   }
@@ -321,9 +326,12 @@ export interface ReviewerCandidate {
 
 /**
  * The organization's members who can sign a review: GET /api/tenant-users/:orgId,
- * the member-readable list. Viewers are left out, because the server refuses to
- * assign a review to someone who can never sign it. THROWS when the list cannot
- * be read: an error is not an organization with no members.
+ * the member-readable list, keeping only the rows the server marks `canSign`
+ * (its signing policy applied to the membership role). The server assigns a
+ * review only to someone who can sign its disposition and refuses anyone else
+ * with 409 REVIEWER_CANNOT_SIGN, so nobody else is offered; a row with no mark
+ * is not offered either. THROWS when the list cannot be read: an error is not
+ * an organization with no members.
  */
 export async function listReviewerCandidates(organizationId: string | number): Promise<ReviewerCandidate[]> {
   let res: Response;
@@ -337,7 +345,7 @@ export async function listReviewerCandidates(organizationId: string | number): P
   if (!Array.isArray(rows)) throw new Error('the member list was not in the expected shape');
   return rows
     .map((r) => r as Record<string, unknown>)
-    .filter((r) => Number.isInteger(Number(r.id)) && String(r.role ?? '').toLowerCase() !== 'viewer')
+    .filter((r) => Number.isInteger(Number(r.id)) && r.canSign === true)
     .map((r) => ({ id: Number(r.id), name: String(r.name ?? '').trim(), email: String(r.email ?? ''), role: String(r.role ?? '') }));
 }
 

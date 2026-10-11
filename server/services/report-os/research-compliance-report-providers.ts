@@ -158,12 +158,6 @@ export async function computeDomainReport(reportTypeId: string, orgId: number): 
   }
 }
 
-/** The report type ids this provider module computes. */
-export const DOMAIN_REPORT_TYPE_IDS = [
-  'fcoi.disclosure_register', 'ha.commitment_register', 'iacuc.protocol_register', 'irb.submission_register',
-  'ibc.registration_register', 'nonclinical.study_send_register', 'grants.portfolio_register', 'rim.registration_grid',
-  'inspection.readiness_pack', 'controlled_substances.inventory_ledger', 'lifecycle.obligation_calendar',
-  'etmf.completeness_pack', 'research_compliance.training_status',
-  'effort.certification_register', 'research_security.coi_register',
-  'research_admin.scorecard',
-] as const;
+/** The report type ids this provider module computes. Declared once, beside the
+ *  engine map that routes a run to this module (report-engine.ts). */
+export { DOMAIN_REPORT_TYPE_IDS } from './report-engine';

@@ -1,0 +1,51 @@
+{
+ "newDoc": {
+  "url": "http://localhost:5078/concept2cure/conversation-thread"
+ },
+ "openDoc": {
+  "url": "http://localhost:5078/concept2cure/conversation-thread",
+  "composer": "Open SOP-820-100 Corrective and preventive action (CAPA) (v5.0, Under review). Walk me through its sections, current status, training status and review history."
+ },
+ "draftRowActions": [
+  "Approve",
+  ""
+ ],
+ "draftApproveDialog": "Electronic signature\n21 CFR Part 11 · §11.50 · §11.100 · §11.200\nYOU ARE SIGNING\nWI-014 Incoming inspection — dimensional check\nv1.2 becomes effective when you sign. The author cannot approve their own document.\nMB\nMichael Brown\nmichael.brown@concept2cure.pro\nSignature meaning · §11.50\nApproval\nYou approve this content for use\nReason for this action\nMinimum 8 characters.\nPassword · §11.200\nCancel\nSign and commit",
+ "recordTraining": {
+  "url": "http://localhost:5078/concept2cure/conversation-thread",
+  "composer": "Record read-and-understood training. Ask me which controlled document and which team members, capture the acknowledgment method (e-signature, attestation, or trainer-verified), then set the next refre"
+ },
+ "overdueKpi": "OVERDUE\n2\nPast target date",
+ "changeRows": [
+  {
+   "text": "CC-2026-014 | Sterile filter supplier change (0.22 µm) | Supplier | Critical | Under assessment | 2026-09-15 | 0 | Advance | Approve",
+   "flagged": false
+  },
+  {
+   "text": "CC-2026-012 | Bioreactor scale-up 2,000 → 5,000 L | Process | Major | In implementation | 2026-07-05 | 0 | Advance",
+   "flagged": true
+  },
+  {
+   "text": "CC-2026-009 | Update SOP-820-50 supplier controls | Document | Minor | Verification | 2026-06-20 | 0 | Advance",
+   "flagged": false
+  },
+  {
+   "text": "CC-2026-006 | Migrate LIMS to validated cloud instance | Computer system | Major | Approved | 2026-10-01 | 0 | Advance",
+   "flagged": false
+  },
+  {
+   "text": "CC-2026-002 | Tighten aggregation release limit (SE-HPLC) | Specification | Minor | Closed | 2026-04-10 | 0 | Advance",
+   "flagged": false
+  },
+  {
+   "text": "CC-2026-001 | New incoming-inspection gauge (WI-014) | Equipment | Minor | Proposed | 2026-08-30 | 0 | Advance",
+   "flagged": false
+  }
+ ],
+ "linkedPanel": "LINKED RECORDS\nLink a record\nNo linked records yet. Link the deviation, CAPA or validation protocol this change touches so the change control log stays traceable end to end.",
+ "advance": {
+  "url": "http://localhost:5078/concept2cure/conversation-thread",
+  "composer": "Advance CC-2026-001 New incoming-inspection gauge (WI-014) (currently Proposed). Tell me the next controlled step and ask me for the reason for the change. If the next step is approval, tell me to app"
+ },
+ "managerApprove": "Electronic signature | 21 CFR Part 11 · §11.50 · §11.100 · §11.200 | YOU ARE SIGNING | POL-002 Data integrity policy | v2.1 becomes effective when you sign. The author cannot approve their own document. | RP | Raj Patel | raj.patel@concept2cure.pro | Signature meaning · §11.50 | Approval | You approve this content for use | Reason for this action | Minimum 8 characters. | Password · §11.200 | Your role does not permit approving a controlled document (21 CFR Part 11 §11.10(g)). | Cancel | Sign and commit"
+}

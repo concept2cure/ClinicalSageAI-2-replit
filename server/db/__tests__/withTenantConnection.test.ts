@@ -18,6 +18,7 @@ vi.mock('../runtime', () => ({
 }));
 
 import { withTenantConnection } from '../withTenantConnection';
+import { CLEAR_SESSION_SCOPE_SQL, RESET_ENFORCEMENT_SQL } from '../sessionScope';
 import { getTenantScope, runWithSystemTenantScope } from '../tenantStore';
 
 beforeEach(() => {
@@ -46,16 +47,14 @@ describe('withTenantConnection', () => {
       queriesAtCallbackTime = [...fakeClient.query.mock.calls];
     });
 
-    const sets = queriesAtCallbackTime.map(c => c[0]);
-    expect(sets).toContain("SELECT set_config('app.current_tenant_id', $1, false)");
-    expect(sets).toContain("SELECT set_config('app.current_org_id', $1, false)");
-    expect(sets).toContain("SELECT set_config('app.current_user_role', $1, false)");
-
-    // Values were what we passed.
-    const values = queriesAtCallbackTime.map(c => c[1]);
-    expect(values).toContainEqual(['42']);
-    expect(values).toContainEqual(['uuid-x']);
-    expect(values).toContainEqual(['member']);
+    // One statement: the three tenant variables and the isolation-switch pins
+    // (server/db/sessionScope.ts), with the values we passed.
+    expect(queriesAtCallbackTime).toHaveLength(1);
+    const [sql, values] = queriesAtCallbackTime[0];
+    for (const v of ['app.current_tenant_id', 'app.current_user_role', 'app.current_org_id', 'app.rls_enforce', 'app.bypass_rls', 'app.is_admin']) {
+      expect(sql).toContain(`set_config('${v}'`);
+    }
+    expect(values).toEqual(['42', 'member', 'uuid-x']);
   });
 
   it('makes the tenant scope visible to getTenantScope inside the callback', async () => {
@@ -77,19 +76,15 @@ describe('withTenantConnection', () => {
     ).rejects.toThrow('boom');
 
     // The cleanup queries fire after the throw.
-    const cleared = fakeClient.query.mock.calls.filter(
-      c => c[0] === "SELECT set_config('app.current_tenant_id', '', false)"
-    );
-    expect(cleared.length).toBe(1);
+    const sql = fakeClient.query.mock.calls.map(c => c[0]);
+    expect(sql.slice(-2)).toEqual([CLEAR_SESSION_SCOPE_SQL, RESET_ENFORCEMENT_SQL]);
     expect(fakeClient.release).toHaveBeenCalledTimes(1);
     expect(fakeClient.release).toHaveBeenCalledWith(callbackError);
   });
 
-  it('evicts when tenant session setup fails partway through', async () => {
+  it('evicts when tenant session setup fails (one statement: a failed apply sets nothing)', async () => {
     const setupError = new Error('setup failed');
-    fakeClient.query
-      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
-      .mockRejectedValueOnce(setupError);
+    fakeClient.query.mockRejectedValueOnce(setupError);
 
     await expect(
       withTenantConnection({ tenantId: '1' }, async () => 'unreachable'),
@@ -101,7 +96,7 @@ describe('withTenantConnection', () => {
   it('evicts when tenant session cleanup fails', async () => {
     const cleanupError = new Error('cleanup failed');
     fakeClient.query.mockImplementation(async (sql: string) => {
-      if (sql === "SELECT set_config('app.current_tenant_id', '', false)") throw cleanupError;
+      if (sql === CLEAR_SESSION_SCOPE_SQL) throw cleanupError;
       return { rows: [], rowCount: 0 };
     });
 
@@ -114,9 +109,7 @@ describe('withTenantConnection', () => {
     await withTenantConnection({ tenantId: '0', role: 'app_super_admin' }, async () => undefined);
 
     const setRole = fakeClient.query.mock.calls.find(
-      c =>
-        c[0] === "SELECT set_config('app.current_user_role', $1, false)" &&
-        c[1]?.[0] === 'app_super_admin'
+      c => String(c[0]).includes("set_config('app.current_user_role', $2, false)") && c[1]?.[1] === 'app_super_admin'
     );
     expect(setRole, 'super-admin role must be propagated to the connection').toBeDefined();
   });

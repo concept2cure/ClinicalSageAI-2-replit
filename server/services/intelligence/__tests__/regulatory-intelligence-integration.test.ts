@@ -9,7 +9,8 @@
  *   - Cold-start: no model, no priors → rule-based score, source=cold_start.
  *   - Network-prior fallback: priors present, no model → blended toward prior.
  *   - Trained model active: score uses the model, blends with prior.
- *   - Persistence: every predict writes a risk_predictions row.
+ *   - Persistence: an assessed prediction writes a risk_predictions row;
+ *     an unsupported device-pathway request refuses before any DB work.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -25,7 +26,7 @@ vi.mock('../../../db/runtime', () => ({
   getDb: () => mockPool,
 }));
 
-const { scoreSubmissionDraft } = await import('../regulatory-intelligence');
+const { scoreSubmissionDraft, CompletenessNotAssessedError } = await import('../regulatory-intelligence');
 const { _invalidateModelCacheForTests } = await import('../risk-model');
 
 // Helper: build a sequence of mock query responses. The orchestrator runs:
@@ -176,18 +177,18 @@ describe('scoreSubmissionDraft — trained model + prior', () => {
 });
 
 describe('scoreSubmissionDraft — persistence', () => {
-  it('writes a risk_predictions row on every score call', async () => {
+  it('writes a risk_predictions row for an assessed NDA score call', async () => {
     const inserts: string[] = [];
     mockPool.query.mockImplementation((text: string) => {
       if (/INSERT INTO intelligence\.risk_predictions/.test(text)) {
         inserts.push(text);
       }
-      return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [], rowCount: 0 });
     });
 
     await scoreSubmissionDraft({
       organizationId: 7,
-      submissionType: 'PMA',
+      submissionType: 'NDA',
       targetAgency: 'FDA',
       presentSections: [],
     });
@@ -198,6 +199,24 @@ describe('scoreSubmissionDraft — persistence', () => {
     expect(inserts[0]).toContain('organization_id');
     expect(inserts[0]).toContain('predicted_prob');
     expect(inserts[0]).toContain('blended_score');
+  });
+
+  it('refuses the original PMA request before prediction, prior/model lookup or persistence', async () => {
+    const scoring = scoreSubmissionDraft({
+      organizationId: 7,
+      submissionType: 'PMA',
+      targetAgency: 'FDA',
+      presentSections: [],
+    });
+    await expect(scoring).rejects.toBeInstanceOf(CompletenessNotAssessedError);
+    await expect(scoring).rejects.toMatchObject({
+      code: 'COMPLETENESS_NOT_ASSESSED', status: 422,
+      completeness: {
+        submissionType: 'PMA',
+        assessment: { status: 'not_assessed', assessWith: { engine: 'assessEstarFilingReadiness' } },
+      },
+    });
+    expect(mockPool.query).not.toHaveBeenCalled();
   });
 });
 

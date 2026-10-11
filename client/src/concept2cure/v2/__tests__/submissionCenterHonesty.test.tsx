@@ -3,7 +3,7 @@
  * Submission Center — a read that never answered is not an answer of "none".
  *
  * ── The two findings ─────────────────────────────────────────────────────────
- * 1. The per-sequence gate (Builder / Validation / Shadow review / Cross-region
+ * 1. The per-sequence gate (Builder / Validation / Shadow review
  *    / Dispatch) rendered
  *
  *      PER_SEQ_WS.has(ws) && !sub && !subs.loading

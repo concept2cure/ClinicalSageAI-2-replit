@@ -1,0 +1,30 @@
+{
+  "base_commit": "185b6f089d58f4bb9f1cead26d9aef9a403f4576",
+  "files": [
+    {
+      "path": "client/src/concept2cure/components/ana/renderSafeMarkdown.ts",
+      "sha256": "ce1707e77f328dd544f7c801a1791c60b6006bcfb6278601ce234112a2039fd1"
+    },
+    {
+      "path": "client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown-cache.test.ts",
+      "sha256": "2da7ec9e4d6513b95a4ecdc4182c5a0c5ca768a9fb27df3f9b4ac1c9f996bc02"
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "sha256": "eeff1ca0d88e79d4ac2ad41d12a64b558ebdfa471e0dfe19cb36b28668b26b49"
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-context-latency.test.ts",
+      "sha256": "7132df015f1bd74fa2c2039b560fdee01a5ab4143009531c3d552e723da0a3b1"
+    },
+    {
+      "path": "server/services/ana-ri/chat-context-builder.ts",
+      "sha256": "684505547f7f110564e3bb55a62afba90da3ba80142b72ad581453067949678c"
+    },
+    {
+      "path": "server/services/ana-ri/__tests__/chat-context-latency.test.ts",
+      "sha256": "5487d99685b6a142811f205f03acaccddf3ceb947f657f8645aed52f93fc3d07"
+    }
+  ],
+  "validated_local_source_checkpoint": "034afaac71686b7c75125a8514affa5027cde950"
+}

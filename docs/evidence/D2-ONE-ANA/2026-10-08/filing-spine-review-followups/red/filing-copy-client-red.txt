@@ -1,0 +1,41 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a draft document: the copy will be a draft, which freeze refuses 244ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a document in review is filed as a draft too 54ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a frozen, unsigned document is filed as finalized, which freeze also refuses 63ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an approved document: filed as approved, with no refusal 47ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an unknown state claims neither: it states the rule 49ms
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > after placing, the server's copy status is stated, and a draft copy carries the refusal 74ms
+   → expected undefined to be 'Clinical summary approved for sequenc…' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed, and the copy is now approved: "Re-place approved version" rewrites the same leaf by id 102ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed with a draft copy: no re-place is offered, and the refusal is stated 78ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > every caller of the Place into filing dialog says what the document is > passes docStatus and sectionCodes wherever the dialog is rendered 24ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > after placing, the server's copy status is stated, and a draft copy carries the refusal
+AssertionError: expected undefined to be 'Clinical summary approved for sequenc…' // Object.is equality
+
+- Expected:
+"Clinical summary approved for sequence 0000"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:148:102
+    146|     // Taking the filing copy states the placement's reason: the serve…
+    147|     // requires one on that write (2026-10-08, filing-spine design rev…
+    148|     expect((calls.find((c) => c.method === 'POST')!.body as { changeRe…
+       |                                                                                                      ^
+    149|     expect(document.body.textContent).toMatch(/The filing copy is a dr…
+    150|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  19:13:16
+   Duration  2.38s (transform 580ms, setup 170ms, import 781ms, tests 741ms, environment 506ms)
+

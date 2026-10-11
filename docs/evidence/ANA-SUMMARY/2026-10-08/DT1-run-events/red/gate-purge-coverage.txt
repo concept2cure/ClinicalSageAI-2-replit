@@ -1,0 +1,10 @@
+# mutation: 'ana_run_events' left off PURGE_CHILD_TABLES (against concept2cure-ri_qa_fresh2)
+   retained immutable evidence (outside customer-content erasure): 1
+     document_data_dispositions: Immutable attributed disposition receipts retained with the audit trail under POLICY-DR-007 section 1; UPDATE, DELETE and TRUNCATE are refused by the 20261006 migration.
+❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+  - ana_run_events
+
+Either add it to PURGE_CHILD_TABLES (FK-safe order) or give it an ON DELETE
+CASCADE path from a table already there. A tenant that asks to be erased
+must not keep rows in a table nobody remembered to list.
+exit 1

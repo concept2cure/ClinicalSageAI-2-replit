@@ -1,0 +1,49 @@
+# Round 2 (the lead's four items): ESLint per changed file, HEAD vs working tree
+file                                                                           HEAD         now         
+server/services/part11/reverify-signer.ts                                      0e/0w        0e/0w       
+server/routes/auth.ts                                                          0e/21w       0e/21w      
+server/routes/authEnterprise.ts                                                0e/10w       0e/10w      
+server/routes/approval-workflow.ts                                             0e/0w        0e/0w       
+server/routes/biostatPlatform.ts                                               0e/62w       0e/60w      
+server/services/collaborative-sap-service.ts                                   0e/4w        0e/3w       
+client/src/concept2cure/_shared/components/EsignModal.tsx                      0e/1w (ignored-file notice) 0e/1w (ignored-file notice)
+client/src/concept2cure/v2/AccountPanel.tsx                                    0e/0w        0e/0w       
+client/src/services/portal/authService.tsx                                     0e/1w (ignored-file notice) 0e/1w (ignored-file notice)
+client/src/concept2cure/hooks/useProgramTabs.ts                                0e/1w (ignored-file notice) 0e/1w (ignored-file notice)
+client/src/concept2cure/services/programTabsService.ts                         0e/1w (ignored-file notice) 0e/1w (ignored-file notice)
+server/services/part11/__tests__/reverify-signer.test.ts                       0e/0w        0e/0w       
+server/routes/__tests__/auth-session-roles.test.ts                             0e/0w        0e/0w       
+client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx new          0e/1w (ignored-file notice)
+client/src/concept2cure/v2/__tests__/accountPanel.test.tsx                     0e/0w        0e/0w       
+server/routes/__tests__/authSurfaceSecurity.test.ts                            0e/0w        0e/0w       
+tests/db/sign-in-posture.dbtest.ts                                             0e/1w        0e/1w       
+server/routes/__tests__/approval-workflow.contract.test.ts                     0e/0w        0e/0w       
+tests/biostat-sap-sign-route-removed.test.ts                                   new          0e/0w       
+
+'(ignored-file notice)' is ESLint's 'File ignored because of a matching ignore pattern', the same at HEAD for those paths.
+AccountPanel.tsx and accountPanel.test.tsx each went 0 → 1 on the first pass (complexity 17 in AuthenticatorSection; a describe of 111 lines).
+Fixed by extracting RemoveForm and moving the two new cases into their own describe; both are back at 0.
+
+# Round 2: scoped tsc over all 37 changed files (list: 31-tsc-files.txt) + ambient .d.ts
+client/src/concept2cure/v2/shellProject.ts:80: error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts:82: error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts:82: error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+server/middleware/establishRequestTenantScope.ts:163: error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts:165: error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts:228: error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+tests/db/sign-in-posture.dbtest.ts:39: error TS7016: Could not find a declaration file for module '../validation/lib/totp.mjs'. 'tests/validation/lib/totp.mjs' implicitly has an 'any' type.
+tests/db/signer-authenticator-required.dbtest.ts:36: error TS7016: Could not find a declaration file for module '../validation/lib/totp.mjs'. 'tests/validation/lib/totp.mjs' implicitly has an 'any' ty
+tests/db/signing-lockout.dbtest.ts:40: error TS7016: Could not find a declaration file for module '../validation/lib/totp.mjs'. 'tests/validation/lib/totp.mjs' implicitly has an 'any' type.
+Only the diagnostics of the first round (global augmentations outside the scoped program; totp.mjs TS7016, also on the unchanged signing-lockout.dbtest.ts and sign-in-posture.dbtest.ts at HEAD). None in a changed source file.
+A TS2554 in authSurfaceSecurity.test.ts (a two-argument expect under its jest global types) appeared on the first pass and was fixed.
+
+## Round 2: ci:untracked-imports --all, with all five new files of this change in a temporary index (real index untouched)
+Without them: EsignModal.tsx:40 → ../signingPosture is flagged (the new module must be committed with EsignModal).
+With them: that finding is gone. The other 20 are not this change's: the 15 of round 1, plus 5 that point at
+server/services/ana/step-presentation (another session's uncommitted AnA work).
+new files: client/src/services/portal/__tests__/authService-routes-exist.test.ts, tests/db/signer-authenticator-required.dbtest.ts,
+  client/src/concept2cure/_shared/signingPosture.ts, client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx,
+  tests/biostat-sap-sign-route-removed.test.ts
+
+## Round 2: ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.

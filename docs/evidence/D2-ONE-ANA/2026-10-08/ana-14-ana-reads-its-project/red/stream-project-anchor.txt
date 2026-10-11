@@ -1,0 +1,246 @@
+# 2026-10-08T06:33:25Z npx vitest run --config vitest.config.ts server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+# sources: HEAD (7a6edef06): all five source files of this slice
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+{
+  "timestamp": "2026-10-08T06:33:30.820Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T06:33:30.821Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+{
+  "timestamp": "2026-10-08T06:33:30.821Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-project-anchor.test.ts
+Loaded 0 academic documents
+
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > memory, prefetch, enrichment, bootstrap, the tool-run log and the reflection get 42, resolved once, org-scoped 53ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > a program with no linked project reads no project: memory gets no project id, nothing NaN 9ms
+   → expected 'd6160c9f-33d2-4be9-b779-eb27375f6e49' to be undefined
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a failed lookup reaches enrichment as unresolved (error), so it is reported; no reader gets a project 10ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "project": {
+-       "reason": "error",
+-       "status": "unresolved",
+-     },
++   {
++     "message": "/safety",
++     "organizationId": 7,
++     "projectId": "d6160c9f-33d2-4be9-b779-eb27375f6e49",
++     "submissionType": undefined,
++     "userRole": "general",
+    },
+  ]
+
+
+Number of calls: 1
+
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a stalled lookup holds the turn no longer than the deadline, and reaches enrichment as unresolved (timeout) 5ms
+   → expected 2 to be less than NaN
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > names the sources in plain words on the stream 6ms
+   → expected [ Array(1) ] to include 'Could not read for this reply: projec…'
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"error"} 1ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"timeout"} 1ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["ectd"] {"ectd":"error"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","recommendations"] {"readiness":"timeout","recommendations":"timeout"} 1ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile","workflow"] {"project-profile":"error","workflow":"timeout"} 1ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"error"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"timeout"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"error"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"timeout"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:safety/safety"] undefined 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:fda/ectd"] {"app:fda/ectd":"error"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc"] {"cmc":"error"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc-build-state"] {"cmc-build-state":"timeout"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["iss"] {"iss":"error"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["simulation"] {"simulation":"timeout"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-agent-activity"] {"proactive-agent-activity":"timeout"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-client-journey"] {"proactive-client-journey":"error"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["tour-guide"] {"tour-guide":"timeout"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","proactive-readiness"] {"readiness":"error","proactive-readiness":"error"} 0ms
+   → unavailableContextWarning is not a function
+ × server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > every key the enrichment budget can record reads as plain words, never as the key 0ms
+   → unavailableContextWarning is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 25 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > memory, prefetch, enrichment, bootstrap, the tool-run log and the reflection get 42, resolved once, org-scoped
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:102:24
+    100|     await streamTurn(app, { message: 'Review the project', project_id:…
+    101|
+    102|     expect(io.resolve).toHaveBeenCalledTimes(1);
+       |                        ^
+    103|     expect(io.resolve.mock.calls[0][1]).toMatchObject({ ref: PROGRAM, …
+    104|     expect(io.memory).toHaveBeenCalledWith(expect.objectContaining({ p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/25]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a program UUID reaches the project readers as its linked project id > a program with no linked project reads no project: memory gets no project id, nothing NaN
+AssertionError: expected 'd6160c9f-33d2-4be9-b779-eb27375f6e49' to be undefined
+
+- Expected:
+undefined
+
++ Received:
+"d6160c9f-33d2-4be9-b779-eb27375f6e49"
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:117:50
+    115|     await streamTurn(app, { message: 'Review the project', project_id:…
+    116|
+    117|     expect(io.memory.mock.calls[0][0].projectId).toBeUndefined();
+       |                                                  ^
+    118|     expect(io.prefetch).toHaveBeenCalledWith(expect.objectContaining({…
+    119|     expect(io.enrich).toHaveBeenCalledWith(expect.objectContaining({ p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/25]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a failed lookup reaches enrichment as unresolved (error), so it is reported; no reader gets a project
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "project": {
+-       "reason": "error",
+-       "status": "unresolved",
+-     },
++   {
++     "message": "/safety",
++     "organizationId": 7,
++     "projectId": "d6160c9f-33d2-4be9-b779-eb27375f6e49",
++     "submissionType": undefined,
++     "userRole": "general",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:131:23
+    129|     await streamTurn(app, { message: '/safety', project_id: PROGRAM });
+    130|
+    131|     expect(io.enrich).toHaveBeenCalledWith(expect.objectContaining({ p…
+       |                       ^
+    132|     expect(io.prefetch).toHaveBeenCalledWith(expect.objectContaining({…
+    133|     expect(io.memory.mock.calls[0][0].projectId).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/25]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > a lookup that could not tell is not "no linked project" > a stalled lookup holds the turn no longer than the deadline, and reaches enrichment as unresolved (timeout)
+AssertionError: expected 2 to be less than NaN
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:147:34
+    145|
+    146|     expect(io.prefetch).toHaveBeenCalledTimes(1);
+    147|     expect(prefetchAt - started).toBeLessThan(TURN_PROJECT_DEADLINE_MS…
+       |                                  ^
+    148|     expect(io.prefetch).toHaveBeenCalledWith(expect.objectContaining({…
+    149|     expect(io.enrich).toHaveBeenCalledWith(expect.objectContaining({ p…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/25]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > names the sources in plain words on the stream
+AssertionError: expected [ Array(1) ] to include 'Could not read for this reply: projec…'
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:163:22
+    161|     const warnings = events.filter(e => e.type === 'warning').map(e =>…
+    162|
+    163|     expect(warnings).toContain('Could not read for this reply: project…
+       |                      ^
+    164|     expect(warnings.join(' ')).not.toContain('Some project context cou…
+    165|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/25]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"error"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile"] {"project-profile":"timeout"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["ectd"] {"ectd":"error"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","recommendations"] {"readiness":"timeout","recommendations":"timeout"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-profile","workflow"] {"project-profile":"error","workflow":"timeout"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"error"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["workflow"] {"workflow":"timeout"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"error"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["project-record"] {"project-record":"timeout"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:safety/safety"] undefined
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["app:fda/ectd"] {"app:fda/ectd":"error"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc"] {"cmc":"error"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["cmc-build-state"] {"cmc-build-state":"timeout"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["iss"] {"iss":"error"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["simulation"] {"simulation":"timeout"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-agent-activity"] {"proactive-agent-activity":"timeout"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["proactive-client-journey"] {"proactive-client-journey":"error"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["tour-guide"] {"tour-guide":"timeout"}
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > ["readiness","proactive-readiness"] {"readiness":"error","proactive-readiness":"error"}
+TypeError: unavailableContextWarning is not a function
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:193:21
+    191|     [['readiness', 'proactive-readiness'], { readiness: 'error', 'proa…
+    192|   ] as const)('%j %j', (sources, reasons, expected) => {
+    193|     const warning = unavailableContextWarning([...sources], reasons as…
+       |                     ^
+    194|     expect(warning).toBe(expected);
+    195|     expect(warning).not.toMatch(/!/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/25]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/stream-project-anchor.test.ts > the person is told which context a reply is missing, and why > every key the enrichment budget can record reads as plain words, never as the key
+TypeError: unavailableContextWarning is not a function
+ ❯ server/routes/ana-ri/__tests__/stream-project-anchor.test.ts:219:23
+    217|     ];
+    218|     for (const key of keys) {
+    219|       const warning = unavailableContextWarning([key], { [key]: 'error…
+       |                       ^
+    220|       const named = /^Could not read the (.+) for this reply\. The ans…
+    221|       expect(named !== undefined && words.has(named), `${key} -> ${war…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/25]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  25 failed (25)
+   Start at  06:33:25
+   Duration  9.32s (transform 5.87s, setup 93ms, import 8.73s, tests 98ms, environment 0ms)
+

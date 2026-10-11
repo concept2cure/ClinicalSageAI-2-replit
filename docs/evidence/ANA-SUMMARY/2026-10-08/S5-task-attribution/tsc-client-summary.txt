@@ -1,0 +1,13 @@
+now: 2 errors; HEAD sources: 9 errors
+diff now vs HEAD sources (empty = S5 adds none):
+3,9d2
+< client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(126,50): error TS2339: Property 'steps' does not exist on type '{ kind: "task"; key: string; verb: string; title: string; list: PlanStep[]; }'.
+< client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(126,61): error TS7006: Parameter 's' implicitly has an 'any' type.
+< client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(127,44): error TS2339: Property 'steps' does not exist on type '{ kind: "task"; key: string; verb: string; title: string; list: PlanStep[]; }'.
+< client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(74,51): error TS2339: Property 'fact' does not exist on type '{ kind: "task"; key: string; verb: string; title: string; list: PlanStep[]; }'.
+< client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(79,16): error TS2339: Property 'fact' does not exist on type '{ kind: "task"; key: string; verb: string; title: string; list: PlanStep[]; }'.
+< client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(84,50): error TS2339: Property 'fact' does not exist on type '{ kind: "task"; key: string; verb: string; title: string; list: PlanStep[]; }'.
+< client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx(88,103): error TS2339: Property 'fact' does not exist on type '{ kind: "task"; key: string; verb: string; title: string; list: PlanStep[]; }'.
+diff now vs planted (the plant must appear):
+2a3
+> client/src/concept2cure/v2/turnSummaryRows.ts(389,14): error TS2322: Type 'string' is not assignable to type 'number'.

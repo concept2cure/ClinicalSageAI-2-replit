@@ -1,0 +1,135 @@
+import assert from 'node:assert/strict';
+import { composeModule3FromCanonicalSources } from '/workspace/scratch/bd36ee581acd/concept2cure/server/services/module3Composer.ts';
+import { buildM23QualityOverallSummary } from '/workspace/scratch/bd36ee581acd/concept2cure/server/services/m2-summary-builders.ts';
+import { assessRecordedTrending, inspectRecordedSeriesCriterion, unassignedObservations } from '/workspace/scratch/bd36ee581acd/concept2cure/server/services/cmc/recorded-stability.ts';
+
+type Material = 'drug_substance' | 'drug_product';
+type Point = { timePoint: number; parameter: string; result: number; specification: string };
+const condition = '25°C/60%RH';
+const longTimes = Array.from({ length: 37 }, (_, index) => index);
+const shortTimes = [0, 3, 6, 9, 12, 18, 24];
+const named = (times: number[]): Point[] => times.map((timePoint, index) => ({
+  timePoint, parameter: 'Assay',
+  result: 100 - timePoint * 0.1 + [0.03, -0.02, 0.01][index % 3],
+  specification: '>= 95%',
+}));
+
+function compose(material: Material, times: number[], unassigned: boolean, options: { results?: Point[]; extraResults?: Point[] } = {}) {
+  const results = options.results ?? named(times);
+  if (unassigned) results.push({ timePoint: times.at(-1)!, parameter: '', result: 99, specification: '>= 95%' });
+  const source = {
+    id: 'recorded-study-41', sourceType: 'stability' as const, sourceHash: 'audit-fixture-hash',
+    sourcePayload: {
+      studyName: 'Recorded LT', stabilityScope: material,
+      storageCondition: condition, storageConditions: [condition], timePoints: times,
+      drugSubstanceTimePoints: material === 'drug_substance' ? times : null,
+      drugSubstanceStorageCondition: material === 'drug_substance' ? condition : null,
+      shelfLifeClaim: '24 months', drugProductShelfLifeClaim: material === 'drug_product' ? '24 months' : null,
+      batchesStudied: ['B41'], results,
+    },
+  };
+  const sources = options.extraResults ? [source, {
+    ...source,
+    id: 'recorded-study-42',
+    sourcePayload: { ...source.sourcePayload, studyName: 'Second recorded LT', batchesStudied: ['B42'], results: options.extraResults },
+  }] : [source];
+  const sourceBefore = JSON.stringify(sources);
+  const sections = composeModule3FromCanonicalSources(sources);
+  const key = material === 'drug_substance' ? '3.2.S.7' : '3.2.P.8';
+  const upstream = sections.find(item => item.sectionKey === key)!;
+  const sectionsBefore = JSON.stringify(sections);
+  const qos = buildM23QualityOverallSummary({ module3Sections: sections });
+  const qosKey = material === 'drug_substance' ? '2.3.S.7 Stability' : '2.3.P.8 Stability';
+  const summary = qos.narrative.split(qosKey + '\n')[1].split('\n\n')[0];
+  assert.equal(JSON.stringify(sources), sourceBefore, 'source records must remain intact');
+  assert.equal(JSON.stringify(sections), sectionsBefore, 'upstream composition must remain intact');
+  assert.equal(upstream.tables.find(table => table.title.startsWith('Stability Results'))!.rows.length, results.length + (options.extraResults?.length ?? 0));
+  assert(upstream.tables.find(table => table.title.startsWith('Stability Results'))!.rows.every(row => row[6] === 'within'));
+  return { upstream, summary };
+}
+
+let passed = 0;
+let failed = 0;
+function check(name: string, fn: () => void) {
+  try {
+    fn();
+    console.log(`PASS ${name}`);
+    passed += 1;
+  } catch (error) {
+    console.log(`FAIL ${name}: ${error instanceof Error ? error.message : String(error)}`);
+    failed += 1;
+  }
+}
+
+for (const material of ['drug_substance', 'drug_product'] as const) {
+  check(`${material}: valid monthly series stays positive with no invented hold`, () => {
+    const { upstream, summary } = compose(material, longTimes, false);
+    assert.match(upstream.narrativeDraft, /supporting stability of/);
+    assert.match(summary, /supporting stability of/);
+    assert.doesNotMatch(upstream.narrativeDraft, /NOT established|no assigned parameter/);
+    assert.doesNotMatch(summary, /NOT established|no assigned parameter/);
+  });
+  check(`${material}: short unassigned case already preserves upstream hold`, () => {
+    const { upstream, summary } = compose(material, shortTimes, true);
+    assert.match(upstream.narrativeDraft, /NOT established/);
+    assert.match(upstream.narrativeDraft, /recorded-study-41, row 8:.*no assigned parameter/);
+    assert.match(summary, /NOT established/);
+    assert.doesNotMatch(upstream.narrativeDraft, /supporting stability of/);
+  });
+  check(`${material}: QOS must preserve the recorded monthly case's existing hold`, () => {
+    const { upstream, summary } = compose(material, longTimes, true);
+    assert.match(upstream.narrativeDraft, /NOT established/);
+    assert.match(upstream.narrativeDraft, /recorded-study-41, row 38:.*no assigned parameter/);
+    assert.doesNotMatch(upstream.narrativeDraft, /supporting stability of/);
+    assert.match(summary, /All 38 recorded result\(s\).*within their recorded acceptance criteria/);
+    console.log(JSON.stringify({
+      material,
+      holdOffset: upstream.narrativeDraft.indexOf('NOT established'),
+      rowRefusalOffset: upstream.narrativeDraft.indexOf('Stability source recorded-study-41, row 38'),
+      summaryLength: summary.length,
+      summaryTail: summary.slice(-180),
+    }));
+    assert.match(summary, /NOT established/, 'the upstream explicit hold disappeared from QOS');
+  });
+  check(`${material}: short hold must preserve the complete source and row reason`, () => {
+    const { upstream, summary } = compose(material, shortTimes, true);
+    const point = { timePoint: 24, parameter: '', result: 99, specification: '>= 95%' };
+    const reason = `Stability source recorded-study-41, row 8: ${unassignedObservations([...named(shortTimes), point])[0].reason}`;
+    assert(upstream.narrativeDraft.includes(reason), 'upstream must carry its full existing refusal');
+    assert.match(summary, /NOT established/);
+    assert(summary.includes(reason), 'QOS lost the source/row reason although the short hold survives');
+  });
+  check(`${material}: preserve the existing named criterion-conflict reason`, () => {
+    const results = named(shortTimes).map((point, index) => ({ ...point, specification: index < 3 ? '>= 95%' : '>= 90%' }));
+    const reason = inspectRecordedSeriesCriterion(results).reason!;
+    const { upstream, summary } = compose(material, shortTimes, false, { results });
+    assert(reason.includes('different acceptance criteria'));
+    assert(upstream.narrativeDraft.includes(reason));
+    assert.match(upstream.narrativeDraft, /NOT established/);
+    assert(summary.includes(reason), 'QOS lost the deterministic criterion-conflict reason');
+  });
+  check(`${material}: preserve an existing named unestimable trend reason`, () => {
+    const water = named(shortTimes).slice(0, 2).map(point => ({ ...point, parameter: 'Water', result: 0.3, specification: '<= 2%' }));
+    const results = [...named(shortTimes), ...water];
+    const trend = assessRecordedTrending({ id: 41, storageConditions: [condition], stabilityData: results });
+    assert(trend.ok);
+    if (!trend.ok) throw new Error(trend.error);
+    const waterTrend = trend.data.series.find(series => series.parameter === 'Water')!.outcome;
+    assert.equal(waterTrend.ok, false);
+    if (waterTrend.ok) throw new Error('Expected the existing short-series engine refusal');
+    const reason = `Water (${condition}): trend not assessed: ${waterTrend.detail}.`;
+    const { upstream, summary } = compose(material, shortTimes, false, { results });
+    assert(upstream.narrativeDraft.includes(reason));
+    assert(summary.includes(reason), 'QOS lost the existing named short-series trend refusal');
+  });
+  check(`${material}: preserve a later study's source/row refusal`, () => {
+    const extraResults = [{ timePoint: 36, parameter: '', result: 99, specification: '>= 95%' }];
+    const reason = `Stability source recorded-study-42, row 1: ${unassignedObservations(extraResults)[0].reason}`;
+    const { upstream, summary } = compose(material, longTimes, false, { extraResults });
+    assert(upstream.narrativeDraft.includes(reason));
+    assert.match(upstream.narrativeDraft, /NOT established/);
+    assert(summary.includes(reason), 'QOS lost the later study\'s recorded source/row refusal');
+  });
+}
+console.log(`RESULT ${passed} passed / ${failed} failed; existing imports, no mocks, no provider or database calls`);
+process.exitCode = failed ? 1 : 0;

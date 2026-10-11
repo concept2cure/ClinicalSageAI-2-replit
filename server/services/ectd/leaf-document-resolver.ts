@@ -42,6 +42,15 @@
  * table set here to the write side's so a new source cannot ship covered by
  * one and not the other.
  *
+ * ── Approval and content (2026-10-08, QA j6) ─────────────────────────────────
+ * The same read also answers the two questions the assembler asks next, by its
+ * own rules: whether the document may be transmitted (notFinalizedStatus for
+ * the authored stores, vaultVersionNotTransmittable for a Vault version — FD5),
+ * and whether it holds any content to build a leaf from. Before, those answers
+ * existed only inside the assembly that runs after the e-signature, so the
+ * Builder showed "source verified" on a Vault version nobody had reviewed and
+ * the Dispatch tab's blockers did not name it.
+ *
  * Tenant-scoped + DB-bound. Never throws on a leaf: every failure to resolve is
  * a stated status, because the caller is a gate and a gate that throws is a
  * gate that reports nothing.
@@ -60,6 +69,8 @@ import { readLocalUploadBuffer } from '../anthropic-files';
 import { sectionPlainText } from '../c2c/section-content';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { documentTableKeyKind, isPlaceableDocumentTable } from './leaf-document-tables';
+import { notFinalizedStatus } from './leaf-source-resolver';
+import { vaultVersionNotTransmittable } from '../vault/vault-lifecycle.js';
 import {
   hasCompleteDocumentPointer,
   type LeafDocumentPinVerdict,
@@ -88,6 +99,27 @@ interface StoreLookup {
   storedSha256: string | null;
   /** Why the document is absent or its digest unavailable. */
   reason: string | null;
+  /** Why it may not be transmitted, in the assembler's words; null when it may.
+   *  Set only by the stores whose approval the assembler judges. */
+  notTransmittable?: string | null;
+  /** The document holds no content the assembler can build into a leaf. */
+  noContent?: boolean;
+}
+
+/**
+ * A Vault version's transmit verdict, read as the assembler reads it
+ * (vaultVersionNotTransmittable) against the content hash the record claims —
+ * the assembler stages a version's bytes only when they hash to that value, so
+ * the two readings agree. Fails CLOSED: a lifecycle store that cannot be read
+ * is a refusal that says so, never an approval, and never a missing document
+ * (the existence check above already answered).
+ */
+async function vaultApprovalVerdict(documentUuid: string, organizationId: number, contentHash: string | null): Promise<string | null> {
+  try {
+    return await vaultVersionNotTransmittable(queryableFromDrizzle(db), organizationId, documentUuid, contentHash ?? '');
+  } catch {
+    return 'of unknown approval (its lifecycle record could not be read)';
+  }
 }
 
 type IntegerLookup = (documentId: number, organizationId: number) => Promise<StoreLookup>;
@@ -109,7 +141,7 @@ function rowsOf(result: unknown): Array<Record<string, unknown>> {
 const INTEGER_LOOKUPS: Record<string, IntegerLookup> = {
   coauthor_documents: async (documentId, organizationId) => {
     const [doc] = await db
-      .select({ id: coauthorDocuments.id, content: coauthorDocuments.content })
+      .select({ id: coauthorDocuments.id, content: coauthorDocuments.content, status: coauthorDocuments.status })
       .from(coauthorDocuments)
       .where(and(eq(coauthorDocuments.id, documentId), eq(coauthorDocuments.organizationId, organizationId)))
       .limit(1);
@@ -119,6 +151,10 @@ const INTEGER_LOOKUPS: Record<string, IntegerLookup> = {
       found: true,
       storedSha256: hasBody ? sha256Hex(doc.content as string) : null,
       reason: hasBody ? null : 'the document has no authored content',
+      // The assembler's own two tests, in its order: an empty (trimmed) body is
+      // not materialized, and only then is the status judged.
+      noContent: !(typeof doc.content === 'string' ? doc.content.trim() : ''),
+      notTransmittable: notFinalizedStatus(doc.status, 'coauthor_documents'),
     };
   },
 
@@ -134,7 +170,7 @@ const INTEGER_LOOKUPS: Record<string, IntegerLookup> = {
 
   unified_documents: async (documentId, organizationId) => {
     const [doc] = await db
-      .select({ id: unifiedDocuments.id })
+      .select({ id: unifiedDocuments.id, status: unifiedDocuments.status })
       .from(unifiedDocuments)
       .where(and(eq(unifiedDocuments.id, documentId), eq(unifiedDocuments.organizationId, organizationId)))
       .limit(1);
@@ -155,6 +191,7 @@ const INTEGER_LOOKUPS: Record<string, IntegerLookup> = {
       found: true,
       storedSha256: hasBody ? sha256Hex(JSON.stringify(version!.content)) : null,
       reason: hasBody ? null : 'the document has no version content',
+      notTransmittable: notFinalizedStatus(doc.status, 'unified_documents'),
     };
   },
 
@@ -184,12 +221,12 @@ const INTEGER_LOOKUPS: Record<string, IntegerLookup> = {
     // c2c_documents.org_id is the tenant gate, exactly as the assembler and the
     // write-side verifier read it.
     const res = await db.execute(sql`
-      SELECT s.content
+      SELECT s.content, s.status
         FROM c2c_document_sections s
         JOIN c2c_documents d ON d.id = s.document_id
        WHERE s.id = ${documentId} AND d.org_id = ${organizationId}
        LIMIT 1`);
-    const row = rowsOf(res)[0] as { content: unknown } | undefined;
+    const row = rowsOf(res)[0] as { content: unknown; status?: string | null } | undefined;
     if (!row) return NOT_FOUND('c2c_document_sections');
     let content: unknown = row.content;
     if (typeof content === 'string') {
@@ -200,6 +237,8 @@ const INTEGER_LOOKUPS: Record<string, IntegerLookup> = {
       found: true,
       storedSha256: text ? sha256Hex(text) : null,
       reason: text ? null : 'the section has no authored content',
+      noContent: !text,
+      notTransmittable: notFinalizedStatus(row.status, 'c2c_document_sections', 'todo'),
     };
   },
 };
@@ -232,6 +271,7 @@ const UUID_LOOKUPS: Record<string, UuidLookup> = {
       found: true,
       storedSha256: row.content_hash ?? null,
       reason: row.content_hash ? null : 'the vault record carries no content hash',
+      notTransmittable: await vaultApprovalVerdict(documentUuid, organizationId, row.content_hash ?? null),
     };
   },
 };
@@ -343,9 +383,16 @@ function resolutionFromStoreLookup(base: LeafResolutionBase, lookup: StoreLookup
     return { ...base, status: 'missing', pin: compareDocumentPin(pinnedSha256, null), reason: lookup.reason };
   }
   const pin = compareDocumentPin(pinnedSha256, lookup.storedSha256);
+  // What the store said about approval and content rides on every found
+  // document's resolution, whatever its pin verdict.
+  const approval = {
+    ...(lookup.notTransmittable !== undefined ? { notTransmittable: lookup.notTransmittable } : {}),
+    ...(lookup.noContent ? { noContent: true } : {}),
+  };
   if (pin === 'mismatch' || pin === 'unverifiable') {
     return {
       ...base,
+      ...approval,
       storedSha256: lookup.storedSha256,
       status: 'content_changed',
       pin,
@@ -357,6 +404,7 @@ function resolutionFromStoreLookup(base: LeafResolutionBase, lookup: StoreLookup
   }
   return {
     ...base,
+    ...approval,
     storedSha256: lookup.storedSha256,
     status: 'resolved',
     pin,

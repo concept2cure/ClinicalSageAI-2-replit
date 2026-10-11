@@ -1,0 +1,1709 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a refusal writes one content-free row naming the tenant-placement detector, reason and stage
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 0ms org=42 user=- caller=test:refusal req=24bd3b28-581c-4d56-8e46-7d47157f3d96
+
+stderr | server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a refusal writes one content-free row naming the tenant-placement detector, reason and stage
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a served call records how the tenant was bound and under which floor
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=42 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a served call records how the tenant was bound and under which floor
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:26) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:26) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > a tenant restricted to self_hosted is served only on the self-hosted lane 21ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > with no permitted lane the request is refused as a tenant-policy decision and no SDK is called 6ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > the vendor allow-list is honoured on every rung: Kimi is never reached when the tenant lists only Claude and OpenAI 4ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — selection honours the tenant floor for every data class > the fallback ladder never crosses into a substrate the tenant has not allowed 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant floor cannot be lowered by the request > a request zeroDataRetention:false does not defeat the org zero-retention floor 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant floor cannot be lowered by the request > a request residency that contradicts the tenant residency is refused, not silently honoured 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > binds the tenant from the ambient request scope when organizationId is omitted 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > under enforcement, a call with no tenant binding at all is refused for a tenant payload 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the tenant is bound even when the caller forgets to say which > platform work in the explicit system scope is not refused (it carries no tenant) 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > under enforcement, a policy lookup failure refuses the tenant payload 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > outside enforcement, a lookup failure is recorded and the request still runs 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — an unknown policy fails closed where enforcement is on > an on-prem tenant with no self-hosted lane gets a placement refusal, not "No AI provider is configured" 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the last mile re-checks the floor before any SDK call > refuses a disallowed substrate even when selection is bypassed 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the last mile re-checks the floor before any SDK call > performance qualification resolves the tenant floor before it reaches a model 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — embeddings are held to the same floor > refuses to embed a self_hosted-only tenant on a shared embedding service 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > without the opt-in, a public payload stays on the tenant's allowed lane 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > with the opt-in, a public payload may reach a shared frontier API 4ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — public-source payloads reach a shared API only on the tenant's opt-in > the opt-in never opens the shared API to a tenant payload 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a refusal writes one content-free row naming the tenant-placement detector, reason and stage 4ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — what the ledger records > a served call records how the tenant was bound and under which floor 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the floor holds with the PHI/PII screen off > route() refuses a disallowed lane when piiDetection is off 1ms
+ ✓ server/services/ai-gateway/__tests__/tenant-placement-boundary.test.ts > tenant placement boundary (D6) — the floor holds with the PHI/PII screen off > the last mile refuses a disallowed lane when piiDetection is off, even if selection is bypassed 1ms
+(node:39) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+{
+  "timestamp": "2026-10-08T05:34:11.989Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:11.991Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+{
+  "timestamp": "2026-10-08T05:34:11.991Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-abort.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-08T05:34:12.049Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-08T05:34:12.049Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-08T05:34:12.049Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 3 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:12.049Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-opus-4-8 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-08T05:34:12.050Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 4 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:12.050Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-08T05:34:12.050Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 5 failures — recovery in 60s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:12.050Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-4-6 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-08T05:34:12.051Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Provider anthropic marked unhealthy after 6 failures — recovery in 120s",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:12.051Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-haiku-4-5 failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-08T05:34:12.051Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o failed: upstream 503",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors
+{
+  "timestamp": "2026-10-08T05:34:12.051Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback openai/gpt-4o-mini failed: upstream 503",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > passes the abort signal through to the provider call 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > keeps the text already streamed when the user stops mid-answer 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the request stops > never opens a provider call for a run that is already cancelled 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > never falls back to another model 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > never counts against the provider circuit breaker 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — the cancel is nobody's fault > is not retried by the backoff loop 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > an abort that lands mid-call (the SDK error) never counts against the circuit breaker 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > an abort that lands mid-call is not re-run on the next model 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > one Stop leaves Anthropic healthy for everyone — it used to count once per fallback rung 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway-abort.test.ts > gateway abort — a cancel that lands mid-call > a genuine provider failure is still counted — the guard is about cancels, not errors 4ms
+(node:47) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+{
+  "timestamp": "2026-10-08T05:34:13.087Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.088Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+{
+  "timestamp": "2026-10-08T05:34:13.088Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first
+{
+  "timestamp": "2026-10-08T05:34:13.151Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.151Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over
+{
+  "timestamp": "2026-10-08T05:34:13.159Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.160Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails
+{
+  "timestamp": "2026-10-08T05:34:13.163Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.163Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails
+{
+  "timestamp": "2026-10-08T05:34:13.164Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5 failed: simulated failure on claude-opus-4",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails
+[AI Gateway Audit] ✓ anthropic/claude-opus-5 task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted
+{
+  "timestamp": "2026-10-08T05:34:13.166Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.166Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 1ms org=- user=- caller=- req=daad0e6b-829f-4459-8e3f-7557d2fdb3a1
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served
+{
+  "timestamp": "2026-10-08T05:34:13.169Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.169Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served
+[AI Gateway Audit] ✓ anthropic/claude-opus-5 task=document_drafting tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why
+{
+  "timestamp": "2026-10-08T05:34:13.172Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.172Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 0ms org=42 user=- caller=- req=23eefef6-16cd-4674-be97-870e29aeb5b2
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to
+{
+  "timestamp": "2026-10-08T05:34:13.174Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.174Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 1ms org=- user=- caller=- req=7514f36c-6e1f-498d-8758-7875e4df6d29
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row
+{
+  "timestamp": "2026-10-08T05:34:13.176Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.176Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 0ms org=- user=- caller=- req=3f220cfa-8383-46c2-bf2c-04943aeec5b2
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > control: a known row whose provider is not configured still falls through to strategy, as before
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > control: a known row whose provider is not configured still falls through to strategy, as before
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > explicit: refused in production, naming it
+{
+  "timestamp": "2026-10-08T05:34:13.180Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.180Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.180Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > explicit: refused in production, naming it
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production
+{
+  "timestamp": "2026-10-08T05:34:13.182Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.182Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.182Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production
+{
+  "timestamp": "2026-10-08T05:34:13.191Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/usage-recorder.ts:104:16",
+    "queryPreview": "INSERT INTO api_usage_logs (organization_id, user_id, module, endpoint, model, request_count, tokens_used, cost_cents, metadata, created_at) VALUES ($1, $2, ...",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: a tenant allowed only its own models is refused in production, not served a placeholder
+{
+  "timestamp": "2026-10-08T05:34:13.192Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.193Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.193Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: a tenant allowed only its own models is refused in production, not served a placeholder
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > fallback: it is not on the production ladder
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before
+{
+  "timestamp": "2026-10-08T05:34:13.201Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.202Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before
+[AI Gateway Audit] ✓ local/local-default task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: a local entry that pins a weights digest is selectable in production
+{
+  "timestamp": "2026-10-08T05:34:13.203Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.203Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.203Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: a local entry that pins a weights digest is selectable in production
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first 13ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > control: a known row whose provider is not configured still falls through to strategy, as before 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > explicit: refused in production, naming it 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production 10ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: a tenant allowed only its own models is refused in production, not served a placeholder 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > fallback: it is not on the production ladder 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: a local entry that pins a weights digest is selectable in production 2ms
+(node:55) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts
+{
+  "timestamp": "2026-10-08T05:34:13.977Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:13.979Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts
+{
+  "timestamp": "2026-10-08T05:34:13.979Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=test:active req=bae7cd28-438e-4f53-9934-c7b7ecfa83ff
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+{
+  "timestamp": "2026-10-08T05:34:14.142Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/usage-recorder.ts:104:16",
+    "queryPreview": "INSERT INTO api_usage_logs (organization_id, user_id, module, endpoint, model, request_count, tokens_used, cost_cents, metadata, created_at) VALUES ($1, $2, ...",
+    "enforcement": "off"
+  }
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=8 user=- caller=test:survivor req=fe3f4788-cc61-4a6a-9030-2f8cf642e739
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:55) AuditWarning: AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:55) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > default abort reason is terminal before dispatch 127ms
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=test:active req=8999d246-ff76-4274-982f-d37cd406e1d3
+
+stdout | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=8 user=- caller=test:survivor req=144f63fe-873e-4425-82aa-f09f06c8e1ea
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:55) AuditWarning: AI provenance ledger unusable: no database pool is available, so records exist only in a 100-entry in-memory buffer. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:55) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/gateway-queued-abort.test.ts > real gateway route canceled while awaiting outbound capacity > custom abort reason is terminal before dispatch 105ms
+(node:63) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts
+{
+  "timestamp": "2026-10-08T05:34:15.058Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:15.059Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts
+{
+  "timestamp": "2026-10-08T05:34:15.059Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500
+{
+  "timestamp": "2026-10-08T05:34:15.098Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: 500 Simulated upstream 500",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500
+{
+  "timestamp": "2026-10-08T05:34:15.098Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: 500 {\"error\":{\"type\":\"api_error\",\"message\":\"Simulated upstream 500\"}}",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429
+{
+  "timestamp": "2026-10-08T05:34:15.115Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: 429 Simulated upstream 429",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429
+{
+  "timestamp": "2026-10-08T05:34:15.115Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: 429 {\"error\":{\"type\":\"api_error\",\"message\":\"Simulated upstream 429\"}}",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains the four-attempt non-streaming overload budget without multiplying it in the SDK
+{
+  "timestamp": "2026-10-08T05:34:31.571Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-sonnet-5 failed: 429 {\"error\":{\"type\":\"api_error\",\"message\":\"Simulated upstream 429\"}}",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 500 18ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > a streaming primary and fallback each make one HTTP attempt after 429 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains one gateway-owned retry for non-streaming transient failures 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > the gateway owns provider retries > retains the four-attempt non-streaming overload budget without multiplying it in the SDK 4ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > OpenAI-compatible gateway client factories > local leaves streaming retries to the gateway 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-sdk-retry-ownership.test.ts > OpenAI-compatible gateway client factories > azure leaves streaming retries to the gateway 44ms
+(node:71) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts
+{
+  "timestamp": "2026-10-08T05:34:15.944Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:15.945Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway.test.ts
+{
+  "timestamp": "2026-10-08T05:34:15.945Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > still returns a response when the caller's stream sink throws
+{
+  "timestamp": "2026-10-08T05:34:16.001Z",
+  "level": "warn",
+  "message": "[ai-gateway] [ai-gateway] deterministic onStream sink threw",
+  "context": {
+    "error": "sink closed"
+  }
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should log entries to buffer
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=300 cost=$0.00200 500ms org=org-1 user=user-1 caller=- req=test-req-1
+
+stderr | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should log entries to buffer
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=300 cost=$0.00100 300ms org=- user=- caller=- req=test-req-0
+
+stderr | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=300 cost=$0.00100 400ms org=- user=- caller=- req=test-req-1
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=300 cost=$0.00100 500ms org=- user=- caller=- req=test-req-2
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+[AI Gateway Audit] ✓ anthropic/claude-3-5-sonnet task=chat tokens=300 cost=$0.00100 600ms org=- user=- caller=- req=test-req-3
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats
+[AI Gateway Audit] ✗ anthropic/claude-3-5-sonnet task=chat tokens=300 cost=$0.00100 700ms org=- user=- caller=- req=test-req-4
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-0
+
+stderr | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-1
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-2
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-3
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-4
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-5
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-6
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-7
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-8
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-9
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-10
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-11
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-12
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-13
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-14
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-15
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-16
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-17
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-18
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-19
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-20
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-21
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-22
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-23
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-24
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-25
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-26
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-27
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-28
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-29
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-30
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-31
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-32
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-33
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-34
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-35
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-36
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-37
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-38
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-39
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-40
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-41
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-42
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-43
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-44
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-45
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-46
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-47
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-48
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-49
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-50
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-51
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-52
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-53
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-54
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-55
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-56
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-57
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-58
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-59
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-60
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-61
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-62
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-63
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-64
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-65
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-66
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-67
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-68
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-69
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-70
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-71
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-72
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-73
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-74
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-75
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-76
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-77
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-78
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-79
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-80
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-81
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-82
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-83
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-84
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-85
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-86
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-87
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-88
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-89
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-90
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-91
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-92
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-93
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-94
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-95
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-96
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-97
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-98
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-99
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-100
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-101
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-102
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-103
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-104
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-105
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-106
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-107
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-108
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-109
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-110
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-111
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-112
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-113
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-114
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-115
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-116
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-117
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-118
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-119
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-120
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-121
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-122
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-123
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-124
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-125
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-126
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-127
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-128
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-129
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-130
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-131
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-132
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-133
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-134
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-135
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-136
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-137
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-138
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-139
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-140
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-141
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-142
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-143
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-144
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-145
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-146
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-147
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-148
+
+stdout | server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=30 cost=$0.00010 100ms org=- user=- caller=- req=test-req-149
+
+(node:71) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:71) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:71) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > initialization > should create a gateway instance 3ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > initialization > should default to deterministic mode in test config 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > initialization > should list enabled providers 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > singleton > getGateway returns same instance 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > singleton > resetGateway clears singleton 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > should return deterministic response for chat 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > delivers the content through onStream when the caller is streaming 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > does not invoke onStream for a non-streaming caller 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > still returns a response when the caller's stream sink throws 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > should return different responses for different task types 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > should toggle deterministic mode at runtime 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > deterministic mode > structured output in deterministic mode returns JSON 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > helper methods > complete() wraps a single prompt 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > helper methods > chat() wraps system + user messages 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > helper methods > structuredOutput() returns parsed JSON 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > every registry entry declares the wire surface it accepts 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > no adaptive-thinking model also claims to accept sampling params 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > omits temperature for a model that rejects sampling (would 400) 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > records NO temperature for a reasoning-only model — it was never sent 1ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > records the real temperature for a model that does accept sampling 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > records NO temperature for a model the registry does not know 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > uses adaptive thinking (no budget_tokens) on an adaptive model 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > keeps the legacy temperature + budget_tokens surface on a budget model 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > anthropic sampling params > clamps the legacy budget_tokens below max_tokens (would 400 otherwise) 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > provider health > should return health status for enabled providers 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > AIGateway > request context > should accept organization and user context 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > token budget > should allow requests within token budget 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > token budget > should block requests exceeding token budget 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > blocked patterns > should block content matching blocked patterns 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > blocked patterns > should allow clean content 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > rate limiting > should allow requests within rate limit 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > rate limiting > should block requests exceeding rate limit 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > configuration > should return current config 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayPolicyEngine > configuration > should update config dynamically 0ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should log entries to buffer 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should compute aggregate stats 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway.test.ts > GatewayAuditLogger > should limit buffer size 7ms
+(node:79) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+{
+  "timestamp": "2026-10-08T05:34:16.813Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:16.814Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+{
+  "timestamp": "2026-10-08T05:34:16.814Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error
+{
+  "timestamp": "2026-10-08T05:34:16.854Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error
+{
+  "timestamp": "2026-10-08T05:34:16.854Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: upstream 500",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream
+{
+  "timestamp": "2026-10-08T05:34:16.865Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream
+{
+  "timestamp": "2026-10-08T05:34:16.865Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] Fallback anthropic/claude-sonnet-5 failed: anthropic/claude-sonnet-5 went silent for 300s before it produced any text or tool call, so the stream was stopped.",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > still retries a transient non-streaming fallback once and returns its recovery
+{
+  "timestamp": "2026-10-08T05:34:16.867Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] openai/gpt-4o failed: primary unavailable",
+  "context": {}
+}
+
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a transient error 11ms
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > does not replay a streaming fallback after a silent stream 2ms
+ ✓ server/services/ai-gateway/__tests__/gateway-fallback-stream-retry.test.ts > gateway fallback retry policy > still retries a transient non-streaming fallback once and returns its recovery 2ms
+(node:87) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > rejects an already aborted signal without spending a free permit 3ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > settles a queued abort while the current caller still holds its permit 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore cancellation before dispatch > checks cancellation between permit handoff and the callback microtask 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > removes canceled waiters and admits live callers in FIFO order at the same cap 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > does not release an active callback early when its signal is aborted 0ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore FIFO and permit accounting > releases a callback that throws and serves the next caller 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore abort listener lifetime > removes a queued listener on cancellation 1ms
+ ✓ server/services/ai-gateway/__tests__/concurrency-abort.test.ts > Semaphore abort listener lifetime > removes the queued listener when a live waiter receives its permit 1ms
+(node:95) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/tenant-capacity.test.ts
+{
+  "timestamp": "2026-10-08T05:34:17.825Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.826Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts
+{
+  "timestamp": "2026-10-08T05:34:17.827Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/tenant-capacity.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is refused even for a public payload, and nothing is dispatched
+{
+  "timestamp": "2026-10-08T05:34:17.865Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.867Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.867Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is refused even for a public payload, and nothing is dispatched
+{
+  "timestamp": "2026-10-08T05:34:17.868Z",
+  "level": "warn",
+  "message": "[ai-gateway] [ai-gateway] refused a call with no tenant binding in production; nothing was sent",
+  "context": {
+    "taskType": "chat",
+    "requestId": "7e18c8b1-bfdc-4536-a0d7-edbdac3be048"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is refused even for a public payload, and nothing is dispatched
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is not charged to the shared bucket: platform work after it still has the whole of it
+{
+  "timestamp": "2026-10-08T05:34:17.873Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.873Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.873Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is not charged to the shared bucket: platform work after it still has the whole of it
+{
+  "timestamp": "2026-10-08T05:34:17.874Z",
+  "level": "warn",
+  "message": "[ai-gateway] [ai-gateway] refused a call with no tenant binding in production; nothing was sent",
+  "context": {
+    "taskType": "chat",
+    "requestId": "c9648513-f5a3-4c73-9636-73149cfbf506"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is not charged to the shared bucket: platform work after it still has the whole of it
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > leaves one ledger row saying it was refused at admission for want of a tenant
+{
+  "timestamp": "2026-10-08T05:34:17.878Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.879Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.879Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > leaves one ledger row saying it was refused at admission for want of a tenant
+{
+  "timestamp": "2026-10-08T05:34:17.879Z",
+  "level": "warn",
+  "message": "[ai-gateway] [ai-gateway] refused a call with no tenant binding in production; nothing was sent",
+  "context": {
+    "callerModule": "test:unbound",
+    "taskType": "chat",
+    "requestId": "f34844aa-e3f0-487d-b529-de0b92529d5c"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > leaves one ledger row saying it was refused at admission for want of a tenant
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: platform work in the explicit system scope is served in production
+{
+  "timestamp": "2026-10-08T05:34:17.881Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.881Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.881Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: platform work in the explicit system scope is served in production
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: outside production an unbound call is served, as before
+{
+  "timestamp": "2026-10-08T05:34:17.883Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.883Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: outside production an unbound call is served, as before
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: outside production an unbound call is served, as before
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > one tenant's ambient-bound calls do not spend another tenant's rate budget
+{
+  "timestamp": "2026-10-08T05:34:17.885Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.885Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > one tenant's ambient-bound calls do not spend another tenant's rate budget
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > one tenant's ambient-bound calls do not spend another tenant's rate budget
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > one tenant's ambient-bound calls do not spend another tenant's rate budget
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=8 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > explicit and ambient binding to the same tenant draw from one bucket
+{
+  "timestamp": "2026-10-08T05:34:17.888Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.888Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > explicit and ambient binding to the same tenant draw from one bucket
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > explicit and ambient binding to the same tenant draw from one bucket
+{
+  "timestamp": "2026-10-08T05:34:17.896Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/usage-recorder.ts:104:16",
+    "queryPreview": "INSERT INTO api_usage_logs (organization_id, user_id, module, endpoint, model, request_count, tokens_used, cost_cents, metadata, created_at) VALUES ($1, $2, ...",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > explicit and ambient binding to the same tenant draw from one bucket
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > explicit and ambient binding to the same tenant draw from one bucket
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 0ms org=7 user=- caller=- req=c967e353-2106-456d-bb75-75aedda19d06
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the organization limit writes a row naming the limit
+{
+  "timestamp": "2026-10-08T05:34:17.898Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.898Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the organization limit writes a row naming the limit
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=- caller=test:rate req=fake
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the organization limit writes a row naming the limit
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the organization limit writes a row naming the limit
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 0ms org=7 user=- caller=test:rate req=16091843-1fe3-4960-872a-6cf6d8e6b8a1
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the per-user limit writes a row with its scope
+{
+  "timestamp": "2026-10-08T05:34:17.901Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:17.901Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the per-user limit writes a row with its scope
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=7 user=3 caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the per-user limit writes a row with its scope
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the per-user limit writes a row with its scope
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 0ms org=7 user=3 caller=- req=aeee2c40-20d5-4ad1-b8c7-e884ca7acb10
+
+(node:95) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:95) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:95) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:95) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:95) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:95) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:95) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:95) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:95) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is refused even for a public payload, and nothing is dispatched 9ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > is not charged to the shared bucket: platform work after it still has the whole of it 5ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > leaves one ledger row saying it was refused at admission for want of a tenant 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: platform work in the explicit system scope is served in production 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a call with no tenant is refused in production, before any bucket > control: outside production an unbound call is served, as before 2ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > one tenant's ambient-bound calls do not spend another tenant's rate budget 3ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a tenant is charged for its own calls, however it was bound > explicit and ambient binding to the same tenant draw from one bucket 10ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the organization limit writes a row naming the limit 3ms
+ ✓ server/services/ai-gateway/__tests__/tenant-capacity.test.ts > §5 — a rate-limit refusal is ledgered like any other refused call > the per-user limit writes a row with its scope 3ms
+(node:103) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/retry-policy-529.test.ts
+{
+  "timestamp": "2026-10-08T05:34:18.691Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:18.692Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/retry-policy-529.test.ts
+{
+  "timestamp": "2026-10-08T05:34:18.693Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/retry-policy-529.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > treats 529 (Anthropic Overloaded) and other transients as retryable 2ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > treats hard client errors as non-retryable 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > treats a missing status (network error) as retryable but not a hard client error 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > classifies overload statuses (429/503/529) 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > retry-policy — status classification > gives overload more non-streaming retries than a generic transient, and none while streaming 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > gateway-error-map — 529 / overloaded classification > maps a 529 provider failure to OVERLOADED (not a generic fault) 1ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > gateway-error-map — 529 / overloaded classification > maps an "overloaded" message to OVERLOADED 0ms
+ ✓ server/services/ai-gateway/__tests__/retry-policy-529.test.ts > gateway-error-map — 529 / overloaded classification > still maps 429 to RATE_LIMITED and generic failure to PROVIDER_UNAVAILABLE 0ms
+(node:111) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ai-gateway/__tests__/sensitive-placement-integration.test.ts
+{
+  "timestamp": "2026-10-08T05:34:19.503Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T05:34:19.504Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/sensitive-placement-integration.test.ts
+{
+  "timestamp": "2026-10-08T05:34:19.504Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/sensitive-placement-integration.test.ts
+[database] Database connection successful
+
+stdout | server/services/ai-gateway/__tests__/sensitive-placement-integration.test.ts > sensitive placement dispatch integration > never invokes a provider client when production placement is blocked
+{
+  "timestamp": "2026-10-08T05:34:19.550Z",
+  "level": "info",
+  "message": "[ai-gateway] [ai-gateway] sensitive placement decision",
+  "context": {
+    "reasonCode": "DENY_UNKNOWN_PROVIDER",
+    "provider": "openai",
+    "region": "global",
+    "dataClass": "pii",
+    "allowed": false
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/sensitive-placement-integration.test.ts > sensitive placement dispatch integration > never invokes a provider client when production placement is blocked
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:111) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-integration.test.ts > sensitive placement dispatch integration > never invokes a provider client when production placement is blocked 13ms
+
+ Test Files  11 passed (11)
+      Tests  121 passed (121)
+   Start at  13:34:09
+   Duration  10.35s (transform 1.05s, setup 180ms, import 7.74s, tests 592ms, environment 1ms)

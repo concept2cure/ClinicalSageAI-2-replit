@@ -1,0 +1,58 @@
+{
+  "success": true,
+  "controls": 9,
+  "records": [
+    {
+      "control": "valid exact native report",
+      "accepted": true,
+      "result": {
+        "physicalFiles": 150,
+        "cases": 1582,
+        "passed": 1582,
+        "failed": 0,
+        "pending": 0,
+        "sourceObjectsVerified": 143
+      }
+    },
+    {
+      "control": "missing file",
+      "accepted": false,
+      "reason": "missing or duplicate native file"
+    },
+    {
+      "control": "missing case",
+      "accepted": false,
+      "reason": "native case population differs"
+    },
+    {
+      "control": "failing case",
+      "accepted": false,
+      "reason": "native case failed or did not run"
+    },
+    {
+      "control": "pending case",
+      "accepted": false,
+      "reason": "native case failed or did not run"
+    },
+    {
+      "control": "forged count",
+      "accepted": false,
+      "reason": "native counter differs: numPassedTests"
+    },
+    {
+      "control": "wrong CI source",
+      "accepted": false,
+      "reason": "wrong CI source"
+    },
+    {
+      "control": "failed compiler",
+      "accepted": false,
+      "reason": "required CI step did not pass: Run beta-slice TypeScript check"
+    },
+    {
+      "control": "changed source pin",
+      "accepted": false,
+      "reason": "changed qualified source pin"
+    }
+  ]
+}

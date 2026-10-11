@@ -55,6 +55,7 @@ describe('shared/regulatory/regulatory-basis.ts is the one provenance type', () 
         'esubmission.ema.europa.eu',
         'eur-lex.europa.eu',
         'health.ec.europa.eu',
+        'canada.ca',
         'pmda.go.jp',
         'mhlw.go.jp',
         'ich.org',
@@ -73,6 +74,7 @@ describe('basisProblems', () => {
     expect(basisProblems({ ...ok, url: 'https://fda.gov/media/71271/download' })).toEqual([]);
     expect(basisProblems({ ...ok, url: 'https://www.ecfr.gov/current/title-21/section-314.50' })).toEqual([]);
     expect(basisProblems({ ...ok, url: 'https://health.ec.europa.eu/document/download/x' })).toEqual([]);
+    expect(basisProblems({ ...ok, url: 'https://www.canada.ca/en/health-canada/services/drugs-health-products.html' })).toEqual([]);
   });
 
   it('accepts regulator-text read from a vendored regulator artifact with a checked date', () => {
@@ -101,6 +103,8 @@ describe('basisProblems', () => {
       'https://fda.gov.example.com/media/71271',
       'https://notfda.gov/media/71271',
       'https://www.tuvsud.com/en/ivdr',
+      'https://canada.ca.example.com/health-canada',
+      'https://notcanada.ca/health-canada',
     ]) {
       expect(basisProblems({ ...ok, url }), url).not.toEqual([]);
     }

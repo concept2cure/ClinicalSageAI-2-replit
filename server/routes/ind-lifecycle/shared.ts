@@ -125,6 +125,13 @@ export function validationFrom(input: any) {
 export function coerceEventDates(event: any): any {
   if (!event || typeof event !== 'object') return event;
   const out = { ...event };
+  // P-20 (2026-10-08): an onset date is a date or explicitly "unknown". The
+  // literal is carried as `onsetDateUnknown` (IndSafetyEvent), never coerced
+  // to an Invalid Date that would read as a blank.
+  if (typeof out.onsetDate === 'string' && out.onsetDate.trim().toLowerCase() === 'unknown') {
+    delete out.onsetDate;
+    out.onsetDateUnknown = true;
+  }
   for (const f of ['onsetDate', 'reportDate', 'regulatoryReportingDeadline', 'createdAt']) {
     if (typeof out[f] === 'string' && out[f]) out[f] = new Date(out[f]);
   }

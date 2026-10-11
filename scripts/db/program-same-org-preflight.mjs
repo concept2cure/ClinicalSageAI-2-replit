@@ -150,6 +150,20 @@ export const PROGRAM_SAME_ORG_CHECKS = Object.freeze([
            ORDER BY c.id`,
   },
   {
+    // Data Room catalog S3 (20261008d): the study a capture names.
+    relation: 'public.cre_evidence_sources',
+    keyColumn: 'study_ref',
+    keyedBy: 'cre_evidence_sources_study_same_org_fk',
+    references: 'public.cdisc_prm_studies',
+    sql: `SELECT s.id, s.organization_id AS org, s.study_ref,
+                 st.tenant_id AS study_org, (st.id IS NULL) AS study_missing
+            FROM public.cre_evidence_sources s
+            LEFT JOIN public.cdisc_prm_studies st ON st.id = s.study_ref
+           WHERE s.study_ref IS NOT NULL
+             AND (st.id IS NULL OR st.tenant_id <> s.organization_id)
+           ORDER BY s.id`,
+  },
+  {
     // PF-10 S11 (20261001, amended): the project AnA's working memory names.
     // project_id is nullable, so a legacy row can be cleared rather than moved.
     relation: 'public.conversation_working_memory',

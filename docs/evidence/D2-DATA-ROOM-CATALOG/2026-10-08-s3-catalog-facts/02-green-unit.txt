@@ -1,0 +1,14 @@
+# unit + PGlite: catalog facts and dataset profile, upload and chat routes, adopt and /sources, the upload cap, the project page, the same-org key contracts, the walk
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+   → capture/data-room-lists-source FAILS and is not baselined — the project’s Data Room (GET /api/c2c/projects/:id/sources) lists it by id and checksum
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+   → walk-forward/data-room-shows-use is baselined, but it did not fail its assertion — it threw TypeError: actual value must be number or bigint, received "undefined". A baseline entry excuses a recorded gap, never a walk that could not run.
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+   → This journey ran against a database missing 2 relation(s)/column(s) its own subject asked for, and still reached its assertions:
+ × server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage
+   → expected [ 'scan', 'ownership-read', …(6) ] to deeply equal [ 'scan', 'ownership-read', …(5) ]
+ Test Files  2 failed | 127 passed (129)
+      Tests  4 failed | 1466 passed (1470)
+ Test Files  2 passed (2)
+      Tests  26 passed (26)
+# tsc --noEmit: exit 0. Lint ratchet --since origin/concept2cure-v2: no file changed its warning count. ci:migration-set-order and ci:migration-drop-safety: OK.

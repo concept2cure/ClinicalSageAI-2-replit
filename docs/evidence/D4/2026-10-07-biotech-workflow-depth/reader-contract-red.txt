@@ -1,0 +1,54 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × tests/regulatory/submission-inventory-reader-contract.test.ts > saved submission inventory has a schema-compatible read capability > accepts the schema-bearing runtime database without a cast 1732ms
+   → expected [ { code: 2322, …(1) } ] to deeply equal []
+ ✓ tests/regulatory/submission-inventory-reader-contract.test.ts > saved submission inventory has a schema-compatible read capability > preserves the full store transaction contract rather than erasing its schema incompatibility 1074ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/submission-inventory-reader-contract.test.ts > saved submission inventory has a schema-compatible read capability > accepts the schema-bearing runtime database without a cast
+AssertionError: expected [ { code: 2322, …(1) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "code": 2322,
++     "message": "Type 'NodePgDatabase<{ canonicalDocuments: PgTableWithColumns<{ name: \"canonical_documents\"; schema: undefined; columns: { canonicalId: PgColumn<{ name: \"canonical_id\"; tableName: \"canonical_documents\"; dataType: \"string\"; columnType: \"PgText\"; ... 10 more ...; generated: undefined; }, {}, {}>; ... 18 more ...; createdBy:...' is not assignable to type 'CanonicalStoreHandle'.
++   Types of property 'transaction' are incompatible.
++     Type '<T>(transaction: (tx: PgTransaction<NodePgQueryResultHKT, { canonicalDocuments: PgTableWithColumns<{ name: \"canonical_documents\"; schema: undefined; columns: { canonicalId: PgColumn<{ name: \"canonical_id\"; tableName: \"canonical_documents\"; ... 12 more ...; generated: undefined; }, {}, {}>; ... 18 more ...; createdBy...' is not assignable to type '<T>(transaction: (tx: PgTransaction<NodePgQueryResultHKT, Record<string, never>, ExtractTablesWithRelations<Record<string, never>>>) => Promise<...>, config?: PgTransactionConfig | undefined) => Promise<...>'.
++       Types of parameters 'transaction' and 'transaction' are incompatible.
++         Types of parameters 'tx' and 'tx' are incompatible.
++           Type 'PgTransaction<NodePgQueryResultHKT, { canonicalDocuments: PgTableWithColumns<{ name: \"canonical_documents\"; schema: undefined; columns: { canonicalId: PgColumn<{ name: \"canonical_id\"; tableName: \"canonical_documents\"; ... 12 more ...; generated: undefined; }, {}, {}>; ... 18 more ...; createdBy: PgColumn<...>; }; di...' is not assignable to type 'PgTransaction<NodePgQueryResultHKT, Record<string, never>, ExtractTablesWithRelations<Record<string, never>>>'.
++             Types of property 'schema' are incompatible.
++               Type '{ fullSchema: Record<string, unknown>; schema: ExtractTablesWithRelations<{ canonicalDocuments: PgTableWithColumns<{ name: \"canonical_documents\"; schema: undefined; columns: { canonicalId: PgColumn<{ name: \"canonical_id\"; tableName: \"canonical_documents\"; ... 12 more ...; generated: undefined; }, {}, {}>; ... 18 mor...' is not assignable to type '{ fullSchema: Record<string, unknown>; schema: ExtractTablesWithRelations<Record<string, never>>; tableNamesMap: Record<string, string>; } | undefined'.
++                 Type '{ fullSchema: Record<string, unknown>; schema: ExtractTablesWithRelations<{ canonicalDocuments: PgTableWithColumns<{ name: \"canonical_documents\"; schema: undefined; columns: { canonicalId: PgColumn<{ name: \"canonical_id\"; tableName: \"canonical_documents\"; ... 12 more ...; generated: undefined; }, {}, {}>; ... 18 mor...' is not assignable to type '{ fullSchema: Record<string, unknown>; schema: ExtractTablesWithRelations<Record<string, never>>; tableNamesMap: Record<string, string>; }'.
++                   Types of property 'schema' are incompatible.
++                     Type 'ExtractTablesWithRelations<{ canonicalDocuments: PgTableWithColumns<{ name: \"canonical_documents\"; schema: undefined; columns: { canonicalId: PgColumn<{ name: \"canonical_id\"; tableName: \"canonical_documents\"; dataType: \"string\"; columnType: \"PgText\"; ... 10 more ...; generated: undefined; }, {}, {}>; ... 18 more ......' is not assignable to type 'ExtractTablesWithRelations<Record<string, never>>'.
++                       Property 'canonicalDocuments' is incompatible with index signature.
++                         Type '{ tsName: \"canonicalDocuments\"; dbName: \"canonical_documents\"; columns: { canonicalId: PgColumn<{ name: \"canonical_id\"; tableName: \"canonical_documents\"; dataType: \"string\"; columnType: \"PgText\"; ... 10 more ...; generated: undefined; }, {}, {}>; ... 18 more ...; createdBy: PgColumn<...>; }; relations: never; primar...' is not assignable to type '{ tsName: string; dbName: never; columns: never; relations: Record<string, Relation<string>>; primaryKey: AnyColumn[]; }'.
++                           Types of property 'dbName' are incompatible.
++                             Type 'string' is not assignable to type 'never'.",
++   },
++ ]
+
+ ❯ tests/regulatory/submission-inventory-reader-contract.test.ts:56:20
+     54|       code: diagnostic.code, message: ts.flattenDiagnosticMessageText(…
+     55|     }));
+     56|     expect(errors).toEqual([]);
+       |                    ^
+     57|   });
+     58|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  23:07:01
+   Duration  3.60s (transform 210ms, setup 81ms, import 396ms, tests 2.81s, environment 0ms)
+

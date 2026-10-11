@@ -1,0 +1,170 @@
+{
+  "retrievedAt": "2026-10-07T23:01:44.253Z",
+  "run": {
+    "id": 37697288645,
+    "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+    "head_branch": "concept2cure-v2",
+    "run_attempt": 1,
+    "status": "in_progress",
+    "conclusion": null,
+    "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37697288645"
+  },
+  "jobs": [
+    {
+      "id": 113052021942,
+      "name": "Lint",
+      "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37697288645/job/113052021942",
+      "steps": [
+        {
+          "name": "Guardrails \u2014 real-database tests never inherit the pg mock",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 114,
+          "started_at": "2026-10-07T22:45:09Z",
+          "completed_at": "2026-10-07T22:45:11Z"
+        },
+        {
+          "name": "Run TypeScript check (no regression vs baseline)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 126,
+          "started_at": "2026-10-07T22:46:52Z",
+          "completed_at": "2026-10-07T22:48:39Z"
+        },
+        {
+          "name": "Run beta-slice TypeScript check",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 127,
+          "started_at": "2026-10-07T22:48:39Z",
+          "completed_at": "2026-10-07T22:48:41Z"
+        }
+      ]
+    },
+    {
+      "id": 113056059016,
+      "name": "Integration Tests",
+      "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+      "status": "in_progress",
+      "conclusion": null,
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37697288645/job/113056059016",
+      "steps": [
+        {
+          "name": "Smoke \u2014 apply RLS rollout migrations (0019/0020/0021)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-07T22:50:19Z",
+          "completed_at": "2026-10-07T22:50:19Z"
+        },
+        {
+          "name": "Provision a deploy-shaped database for the real-database tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-07T22:50:19Z",
+          "completed_at": "2026-10-07T22:50:31Z"
+        },
+        {
+          "name": "Run real-database tests (unmocked pg, RLS_ENFORCE=on)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-07T22:50:31Z",
+          "completed_at": "2026-10-07T22:56:34Z"
+        },
+        {
+          "name": "Upload real-database test results",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-07T22:56:34Z",
+          "completed_at": "2026-10-07T22:56:35Z"
+        },
+        {
+          "name": "Run integration tests",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 12,
+          "started_at": "2026-10-07T22:56:35Z",
+          "completed_at": null
+        }
+      ]
+    },
+    {
+      "id": 113056059075,
+      "name": "Production Boot Smoke (RLS on, non-superuser role)",
+      "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37697288645/job/113056059075",
+      "steps": [
+        {
+          "name": "The runtime role must be non-superuser and NOBYPASSRLS",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-07T22:50:47Z",
+          "completed_at": "2026-10-07T22:50:47Z"
+        },
+        {
+          "name": "Boot in production mode and require /readyz=200",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-07T22:51:08Z",
+          "completed_at": "2026-10-07T22:51:16Z"
+        }
+      ]
+    },
+    {
+      "id": 113056059114,
+      "name": "Production Image Boot (built image, empty database, sign-in)",
+      "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37697288645/job/113056059114",
+      "steps": [
+        {
+          "name": "Start the production image and require /healthz and /readyz = 200",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-07T22:54:39Z",
+          "completed_at": "2026-10-07T22:54:46Z"
+        },
+        {
+          "name": "Sign a person in to the running image, second factor included",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-07T22:54:46Z",
+          "completed_at": "2026-10-07T22:54:47Z"
+        }
+      ]
+    }
+  ],
+  "artifact": {
+    "id": 11516976694,
+    "node_id": "MDg6QXJ0aWZhY3QxMTUxNjk3NjY5NA==",
+    "name": "real-database-test-results",
+    "size_in_bytes": 82889,
+    "url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11516976694",
+    "archive_download_url": "https://api.github.com/repos/concept2cure/ClinicalSageAI-2-replit/actions/artifacts/11516976694/zip",
+    "expired": false,
+    "digest": "sha256:2e3c6c7b67f70a7459eeba8d2c343f84d27207fc06c8100f45afdc88ca8adfec",
+    "created_at": "2026-10-07T22:56:35Z",
+    "updated_at": "2026-10-07T22:56:35Z",
+    "expires_at": "2027-01-05T22:36:47Z",
+    "workflow_run": {
+      "id": 37697288645,
+      "repository_id": 1096040843,
+      "head_repository_id": 1096040843,
+      "head_branch": "concept2cure-v2",
+      "head_sha": "6a54db14cc6a41727c5f46103afbab2ac9609047"
+    }
+  }
+}

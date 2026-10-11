@@ -51,13 +51,13 @@ import type { PoolClient } from 'pg';
 import { createScopedLogger } from '../../utils/logger.js';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import {
-  filingTypesForView,
   foldersForView,
   VAULT_FOLDER_PRESETS,
   VAULT_VIEWS,
   VAULT_DOC_KINDS,
   type VaultViewId,
   vaultIngestTypeLabel,
+  vaultSpineLabel,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, sectionCompletionPct } from '../../services/c2c/section-content.js';
 import {
@@ -71,7 +71,8 @@ import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
 import { readVaultLifecycles, vaultVersionNotTransmittable } from '../../services/vault/vault-lifecycle.js';
-import { fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
+import { countDataRoomStages, fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
+import { vaultDataEligibleSql, vaultBinaryAvailableSql, vaultDispositionChoiceSql } from '../../services/document-data-disposition/eligibility.js';
 import { searchVaultDocuments } from '../../services/vault/vault-search.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { governedActorId, requireEditorAccess } from '../../middleware/orgMembership.js';
@@ -81,6 +82,7 @@ import { getStorageProvider, getStorageProviderFor } from '../../services/storag
    branch on the resolution and keep an honest degraded path. */
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
 import { programInOrganization } from '../../services/c2c/program-access';
+import { resolveUserId } from '../../types/auth-request';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -105,6 +107,8 @@ interface VaultDoc {
   src?: 'authored' | 'upload';
   /** Upload-only extras (all projected from real columns). */
   docId?: string;
+  originalFileAvailable?: boolean;
+  disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
   sizeLabel?: string;
   hash?: string;
   /** vault.documents.mime_type, verified against the magic bytes at ingest.
@@ -175,8 +179,9 @@ interface DataRoomBlock {
   /** Sources the classifier refused to place: a person has to decide. */
   needsReview: number;
   sources: DataRoomRow[];
-  /** The lane reads the newest DATA_ROOM_WINDOW current sources. When there
-   *  are more, every count above covers the window only and is a floor. */
+  /** The lane LISTS the newest DATA_ROOM_WINDOW current sources. The counts
+   *  above cover every current source of the project (countDataRoomStages,
+   *  2026-10-08), whatever the window shows. */
   window: { shown: number; truncated: boolean };
 }
 
@@ -418,17 +423,6 @@ function normalizeStatus(raw: string | null | undefined, hasContent: boolean): s
   }
 }
 
-/** Spine label = the view's primary filing framework + its governing refs
- *  (same basis the shipped client `vaultStructureToSpine` converter uses). */
-function vaultViewLabel(view: VaultViewId): string {
-  const filings = filingTypesForView(view);
-  const primary = filings[0];
-  if (!primary) return view;
-  const refs = (primary as { regulatoryRefs?: string[] }).regulatoryRefs;
-  const suffix = refs && refs.length ? ` · ${refs.join(' · ')}` : '';
-  return `${primary.label}${suffix}`;
-}
-
 /** Bytes → '3.4 MB' (real size only; null → em dash, never invented). */
 function prettySize(bytes: unknown): string {
   const n = typeof bytes === 'string' ? Number(bytes) : (bytes as number);
@@ -442,6 +436,8 @@ function prettySize(bytes: unknown): string {
 const KIND_LABEL = new Map(VAULT_DOC_KINDS.map(k => [k.value as string, k.label]));
 
 export interface UploadRow {
+  original_file_available?: boolean;
+  disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
   id: string;
   document_code: string | null;
   document_title: string | null;
@@ -467,33 +463,27 @@ export interface UploadRow {
 }
 
 /**
- * What the leaf calls this upload: its taxonomy kind when the classifier
- * recorded one, else the declared document type, else just 'File'.
+ * What a reader is told an uploaded document IS: the one label every surface
+ * shows (tree leaf, list, uploads lane, header).
  *
- * 'OTHER' is deliberately not shown — it is the ingest schema's "I was not
- * told", and rendering it as a type would dress an absent answer as a given
- * one. Its own function because it is three fallbacks deep and reading it
- * inline is what carried uploadLeaf over the complexity limit.
- */
-/**
- * What a reader is told an uploaded document IS.
+ * The recorded document type comes first, because Edit details is what changes
+ * it and a re-typed document must read as its new type. The classifier's
+ * evidence kind is only the guess made at upload; it stays on the filing block
+ * for the "Looks like" line. It is the label when no type is recorded.
  *
- * Preference order is most-specific-first: the classifier's evidence kind is a
- * decision about this document, the ingest type is what the uploader declared,
- * and 'File' is the honest floor when neither exists.
+ * 'OTHER' counts as no type. It is the ingest schema's "I was not told", and
+ * rendering it as a type would dress an absent answer as a given one. An
+ * unrecognised type token still comes back as itself: ugly but true, where
+ * 'Other' would be a classification nobody made. 'File' is the honest floor.
  *
- * The middle branch used to return `row.document_type` RAW, so a reviewer saw
- * the wire token — `MODULE_3`, `CORRESPONDENCE` — in the document list. Correct
- * data, nobody's vocabulary. It goes through the shared label map now, which
- * lives beside the enum precisely so the two cannot drift; an unrecognised
- * value still comes back as itself, because the token is ugly but true and
- * 'Other' would be a classification nobody made.
+ * Its own function because it is three fallbacks deep and reading it inline is
+ * what carried uploadLeaf over the complexity limit.
  */
 function uploadTypeLabel(row: UploadRow): string {
-  if (row.evidence_kind) return KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind;
   if (row.document_type && row.document_type !== 'OTHER') {
     return vaultIngestTypeLabel(row.document_type);
   }
+  if (row.evidence_kind) return KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind;
   return 'File';
 }
 
@@ -508,6 +498,12 @@ function versionFacts(row: UploadRow): Pick<VaultDoc, 'versionCount' | 'document
 
 /** An uploaded vault.documents row → a VaultDoc leaf (all real columns).
  *  Exported for the tree-merge regression test. */
+function uploadPreview(row: UploadRow, title: string, size: string): string {
+  return `${row.file_name ?? title} · ${size}` +
+    (row.original_file_available === false ? ' · Original file unavailable; extracted data retained' : '') +
+    (row.content_hash ? ` · SHA-256 ${row.content_hash.slice(0, 12)}…` : '');
+}
+
 export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
   const placementStatus = row.placement_status || 'unfiled';
   const title = row.document_title || row.file_name || 'Document';
@@ -525,10 +521,11 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
     owner: row.owner_name ?? '—',
     ver: row.version ? `v${row.version}` : '—',
     updated: relativeTime(row.updated_at),
-    preview: `${row.file_name ?? title} · ${size}` +
-      (row.content_hash ? ` · SHA-256 ${row.content_hash.slice(0, 12)}…` : ''),
+    preview: uploadPreview(row, title, size),
     src: 'upload',
     docId: row.id,
+    originalFileAvailable: row.original_file_available ?? true,
+    disposition: row.disposition ?? null,
     sizeLabel: size,
     hash: row.content_hash ?? undefined,
     mimeType: row.mime_type ?? null,
@@ -1279,6 +1276,7 @@ export default function createProjectVaultRoutes(): Router {
       /** The program+tenant predicate, shared by the page and its aggregates so
        *  a count can never be taken over a different set than the rows. */
       const uploadsWhere = `d.program_id = $1 AND d.deleted_at IS NULL
+              AND ${vaultDataEligibleSql('d')}
               AND EXISTS (
                 SELECT 1 FROM regulatory_programs rp
                  WHERE rp.id = d.program_id
@@ -1302,6 +1300,8 @@ export default function createProjectVaultRoutes(): Router {
                   d.folder_id, d.evidence_kind, d.ctd_section,
                   d.placement_status, d.placement_confidence, d.placement_rationale,
                   d.updated_at,
+                  ${vaultBinaryAvailableSql('d')} AS original_file_available,
+                  ${vaultDispositionChoiceSql('d')} AS disposition,
                   COALESCE(u.name, u.email) AS owner_name,
                   vc.version_count,
                   lc.stage AS lifecycle_stage
@@ -1379,7 +1379,8 @@ export default function createProjectVaultRoutes(): Router {
             limit: DATA_ROOM_WINDOW + 1,
           });
           const truncated = read.length > DATA_ROOM_WINDOW;
-          const sources = truncated ? read.slice(0, DATA_ROOM_WINDOW) : read;
+          const sources = (truncated ? read.slice(0, DATA_ROOM_WINDOW) : read)
+            .filter(s => s.dataEligible !== false && s.originalFileAvailable !== false);
           // `filed` asks whether THIS source's bytes already exist in the
           // program's vault. Ask the database that, about exactly these
           // checksums, instead of deriving it from the page of documents
@@ -1435,11 +1436,10 @@ export default function createProjectVaultRoutes(): Router {
               filedAs,
             };
           });
+          // Exact, over the whole project: the rows are a window, the counts are not.
+          const counts = await countDataRoomStages(pool, id, orgId);
           dataRoom = {
-            captured: rows.length,
-            classified: rows.filter(r => r.stage === 'classified' || r.stage === 'filed').length,
-            filed: rows.filter(r => r.stage === 'filed').length,
-            needsReview: rows.filter(r => r.stage === 'needs_review').length,
+            ...counts,
             sources: rows,
             window: { shown: rows.length, truncated },
           };
@@ -1472,7 +1472,7 @@ export default function createProjectVaultRoutes(): Router {
       });
       const data: VaultDisplayShape = {
         program: project.name || 'Vault',
-        spine: vaultViewLabel(view),
+        spine: vaultSpineLabel(view, project.program_type),
         standard: view,
         documentCount:
           documentCounts.authored + (documentCounts.cmcArtifacts ?? 0) + (documentCounts.uploads ?? 0),
@@ -1615,6 +1615,8 @@ export default function createProjectVaultRoutes(): Router {
             placementStatus: r.placementStatus,
             version: r.version,
             current: r.current,
+            originalFileAvailable: r.originalFileAvailable,
+            disposition: r.disposition,
             snippet: r.snippet,
           })),
         },
@@ -1679,7 +1681,13 @@ export default function createProjectVaultRoutes(): Router {
         cmcEvidence: cmcEvidence.get(v.id) ?? [],
         transmitRefusal: refusals[i],
       }));
-      return res.json({ success: true, data: { versions } });
+      // Who may sign a review or an approval here (QA 2026-10-08, walk 2, j3):
+      // the reader's own authority from the check the sign route applies, and
+      // the members who hold it, so the page names them instead of offering a
+      // signature the server refuses after the password.
+      const { readSigningPosture } = await import('../../services/vault/vault-signing-posture.js');
+      const signing = await readSigningPosture(pool, orgId, resolveUserId(req));
+      return res.json({ success: true, data: { versions, signing } });
     } catch (err) {
       if (isMissingStore(err)) {
         return res.status(503).json({ success: false, error: 'STORE_UNAVAILABLE',
@@ -1796,13 +1804,14 @@ export default function createProjectVaultRoutes(): Router {
       if (!(await programInOrganization(pool, id, orgId))) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
       const docRes = await pool.query(
-        `SELECT id, file_name, document_title, mime_type, file_size, s3_key,
-                storage_version_id, storage_provider, content_hash
-           FROM vault.documents
-          WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
+        `SELECT d.id, d.file_name, d.document_title, d.mime_type, d.file_size, d.s3_key,
+                d.storage_version_id, d.storage_provider, d.content_hash
+           FROM vault.documents d
+          WHERE d.id = $1 AND d.program_id = $2 AND d.deleted_at IS NULL
+            AND ${vaultBinaryAvailableSql('d')}
             AND EXISTS (
               SELECT 1 FROM regulatory_programs rp
-               WHERE rp.id = vault.documents.program_id
+               WHERE rp.id = d.program_id
                  AND rp.organization_id = $3
                  AND rp.deleted_at IS NULL
             )
@@ -1976,6 +1985,8 @@ export default function createProjectVaultRoutes(): Router {
         userId: (req as any).user?.id ?? null,
         programId: String(req.params.id),
         sourceIds: (req.body ?? {}).sourceIds,
+        // Sources the person adds as the next version of a named document (QA-2026-10-08).
+        newVersionOf: (req.body ?? {}).newVersionOf,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
       });
@@ -2096,6 +2107,64 @@ export default function createProjectVaultRoutes(): Router {
       return res.status(500).json({ success: false, error: 'The details could not be saved. Nothing was changed.' });
     }
   });
+
+  /* ── The catalog record: AnA's suggestion, a person's decision (S4, D5) ──
+     What AnA recorded about the current version (kind, purpose, summary, key
+     data), who proposed it (model, turn) and whether a person confirmed or
+     corrected it. The writer (document-catalog-governance.service.ts) checks
+     the role, the reason, the vocabulary and program ownership, and commits
+     each decision with one chained audit row; these routes only carry it. */
+  router.get('/:id/documents/:documentId/catalog', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const { readCatalogRecord } = await import('../../services/vault/document-catalog-governance.service.js');
+      const record = await readCatalogRecord({
+        programId: String(req.params.id ?? ''), documentId: String(req.params.documentId ?? ''), organizationId: orgId,
+      });
+      if (!record) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      return res.json({ success: true, data: record });
+    } catch (err) {
+      logger.error('vault catalog record read failed', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'CATALOG_UNAVAILABLE',
+        message: "This document's catalog record could not be read. Nothing is shown rather than a record that may be wrong." });
+    }
+  });
+
+  const reviewCatalog = (action: 'confirm' | 'correct') => async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const text = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+    try {
+      const { reviewCatalogRecord } = await import('../../services/vault/document-catalog-governance.service.js');
+      const outcome = await reviewCatalogRecord({
+        programId: String(req.params.id ?? ''),
+        documentId: String(req.params.documentId ?? ''),
+        organizationId: orgId,
+        // From the session only; the service refuses a request with none.
+        userId: governedActorId(req),
+        action,
+        expectedContentHash: text(body.contentHash),
+        expectedRevision: text(body.revision),
+        documentKind: text(body.documentKind),
+        purpose: text(body.purpose),
+        summary: text(body.summary),
+        reason: body.reason,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, state: outcome.state, changes: outcome.changes });
+    } catch (err) {
+      logger.error(`vault catalog ${action} failed`, { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'CATALOG_NOT_SAVED', message: 'The catalog record could not be saved. Nothing was changed.' });
+    }
+  };
+  router.post('/:id/documents/:documentId/catalog/confirm', requireEditorAccess, reviewCatalog('confirm'));
+  router.post('/:id/documents/:documentId/catalog/correct', requireEditorAccess, reviewCatalog('correct'));
 
   /* ── Document relationships (plan critique 15, D2) ─────────────────────
      One version names the documents that support it, that it references or

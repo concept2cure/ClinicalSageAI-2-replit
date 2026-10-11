@@ -11,7 +11,7 @@
  *   5. Integrity audit: "Has source data changed since it was referenced?"
  *   6. Coverage report: "What % of artifact content has source attribution?"
  *
- * Complies with: 21 CFR Part 11 §11.10(e), ICH E6(R3) §5.5.3, EU MDR Annex II §4.1
+ * Complies with: 21 CFR Part 11 §11.10(e), ICH E6(R3) Annex 1 §4.3 (computerised systems), EU MDR Annex II §4.1
  *
  * @module server/services/data-lineage-service
  */

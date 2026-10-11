@@ -115,6 +115,29 @@ describe('checkAuthoredLabeling — found / not_found / not_checkable, never a v
     expect(row(rows, /809\.10\(b\)\(10\)/)?.status).toBe('found');
   });
 
+  it.each([
+    ['slot', 'not_found'],
+    ['lottery', 'not_found'],
+    ['2lot', 'not_found'],
+    ['lot2', 'not_found'],
+    ['(LOT)', 'found'],
+    ['slot lottery LOT: A01', 'found'],
+  ])('lot matching preserves letter/digit boundaries and later valid occurrences: %s', (text, status) => {
+    const { rows } = check()({ isIvd: true }, [{ key: 'D2', text, authored: true }]);
+    expect(rows.find(r => r.id === 'ivd_lot')?.status).toBe(status);
+  });
+
+  it.each([
+    ['LimitationsExtra', 'not_found'],
+    ['Limitations2', 'not_found'],
+    ['Text about limitations', 'not_found'],
+    ['Limitations of the procedure', 'found'],
+    ['## 10. LIMITATIONS: interference', 'found'],
+  ])('headings preserve start-of-line matching, boundaries and normalization: %s', (text, status) => {
+    const { rows } = check()({ isIvd: true }, [{ key: 'D2', text, authored: true }]);
+    expect(row(rows, /809\.10\(b\)\(10\)/)?.status).toBe(status);
+  });
+
   it('no section, or only an unauthored one, is not_checkable rather than not_found', () => {
     for (const sections of [[], [{ key: 'D2', text: '', authored: false }], [{ key: 'D2', text: `${INSERT_WITHOUT_LIMITATIONS}\nLimitations`, authored: false }]]) {
       const { rows } = check()({ isIvd: true }, sections);

@@ -1,0 +1,11 @@
+{
+  "target": "docs/evidence/QA-2026-10-08/roles/repro-scripts/send-for-review.mjs",
+  "baseline": "b015e409c268ca69965686710a18093b73e404b5",
+  "runtime": "v22.23.3",
+  "consoleCalls": 7,
+  "nonliteralFirstArgumentLines": [],
+  "qualification": "PASS",
+  "outputMeaningCases": 28,
+  "labelsAndPayloadExpressionsPreserved": true,
+  "percentTokensInTagsRemainLiteral": true
+}

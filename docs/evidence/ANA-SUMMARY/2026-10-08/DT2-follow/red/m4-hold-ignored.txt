@@ -1,0 +1,8 @@
+# m4-hold-ignored: --config vitest.config.ts client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx -t Manual hold
+# exit 1
+ × client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 4. a Manual hold renders from `hold`, and its answers send controls 121ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/anaFollowView.test.tsx > a followed turn, as a host draws it > 4. a Manual hold renders from `hold`, and its answers send controls
+TestingLibraryElementError: Unable to find an element with the text: Waiting for you before the next step. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.

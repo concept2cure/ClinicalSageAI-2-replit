@@ -1,0 +1,321 @@
+{
+  "compilerVersion": "5.6.3",
+  "rootCount": 6751,
+  "sourceCount": 11810,
+  "nativeSemanticCalls": 11814,
+  "distinctCheckedSources": 11810,
+  "finalNativePending": 0,
+  "finalCachedDiagnosticFiles": 0,
+  "canonicalCommand": "TYPECHECK_HEAP_MB=6656 node scripts/ci/typecheck-no-regression.mjs --incremental",
+  "canonicalTscExit": 0,
+  "canonicalErrorCount": 0,
+  "baselineErrorCount": 0,
+  "configOrBaselineChanges": false,
+  "batches": [
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 0,
+      "pendingBefore": 11810,
+      "pendingAfter": 11809,
+      "checkedCount": 1,
+      "cachedDiagnosticFileCount": 0,
+      "rssMb": 5304,
+      "heapMb": 4867,
+      "batch": 1,
+      "firstCheckedFile": "node_modules/typescript/lib/lib.es5.d.ts",
+      "lastCheckedFile": "node_modules/typescript/lib/lib.es5.d.ts",
+      "diagnosticFiles": []
+    },
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 0,
+      "pendingBefore": 11809,
+      "pendingAfter": 11309,
+      "checkedCount": 500,
+      "cachedDiagnosticFileCount": 0,
+      "rssMb": 5766,
+      "heapMb": 4636,
+      "batch": 2,
+      "firstCheckedFile": "node_modules/typescript/lib/lib.es2015.d.ts",
+      "lastCheckedFile": "node_modules/vitest/dist/chunks/browser.d.BcoexmFG.d.ts",
+      "diagnosticFiles": []
+    },
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 403,
+      "pendingBefore": 11309,
+      "pendingAfter": 9421,
+      "checkedCount": 1888,
+      "cachedDiagnosticFileCount": 1,
+      "rssMb": 6335,
+      "heapMb": 5884,
+      "batch": 3,
+      "firstCheckedFile": "node_modules/@vitest/spy/optional-types.d.ts",
+      "lastCheckedFile": "shared/schema.ts",
+      "diagnosticFiles": [
+        {
+          "file": "client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx",
+          "diagnosticCodes": [
+            2769,
+            2769
+          ]
+        }
+      ]
+    },
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 1,
+      "pendingBefore": 9422,
+      "pendingAfter": 7622,
+      "checkedCount": 1800,
+      "cachedDiagnosticFileCount": 0,
+      "rssMb": 6214,
+      "heapMb": 5752,
+      "batch": 4,
+      "firstCheckedFile": "client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx",
+      "lastCheckedFile": "server/services/ind-forms/template-locations.ts",
+      "diagnosticFiles": []
+    },
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 0,
+      "pendingBefore": 7622,
+      "pendingAfter": 7317,
+      "checkedCount": 305,
+      "cachedDiagnosticFileCount": 0,
+      "rssMb": 6307,
+      "heapMb": 5841,
+      "batch": 5,
+      "firstCheckedFile": "server/services/regulatory-currency/currency-registry.ts",
+      "lastCheckedFile": "shared/cmc-schema.ts",
+      "diagnosticFiles": []
+    },
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 0,
+      "pendingBefore": 7317,
+      "pendingAfter": 6567,
+      "checkedCount": 750,
+      "cachedDiagnosticFileCount": 0,
+      "rssMb": 6217,
+      "heapMb": 5766,
+      "batch": 6,
+      "firstCheckedFile": "server/services/part11/resolve-signer-role.ts",
+      "lastCheckedFile": "node_modules/googleapis/build/src/apis/classroom/index.d.ts",
+      "diagnosticFiles": []
+    },
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 0,
+      "pendingBefore": 6567,
+      "pendingAfter": 4867,
+      "checkedCount": 1700,
+      "cachedDiagnosticFileCount": 0,
+      "rssMb": 6194,
+      "heapMb": 5713,
+      "batch": 7,
+      "firstCheckedFile": "node_modules/googleapis/build/src/apis/cloudasset/v1.d.ts",
+      "lastCheckedFile": "node_modules/stripe/types/Checkout/SessionsResource.d.ts",
+      "diagnosticFiles": []
+    },
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 0,
+      "pendingBefore": 4867,
+      "pendingAfter": 3835,
+      "checkedCount": 1032,
+      "cachedDiagnosticFileCount": 0,
+      "rssMb": 6248,
+      "heapMb": 5725,
+      "gcEvents": [
+        {
+          "checkedCount": 800,
+          "rssBeforeMb": 6263,
+          "rssAfterMb": 6182,
+          "heapBeforeMb": 5806,
+          "heapAfterMb": 5477
+        },
+        {
+          "checkedCount": 850,
+          "rssBeforeMb": 6206,
+          "rssAfterMb": 6187,
+          "heapBeforeMb": 5649,
+          "heapAfterMb": 5551
+        },
+        {
+          "checkedCount": 900,
+          "rssBeforeMb": 6226,
+          "rssAfterMb": 6187,
+          "heapBeforeMb": 5714,
+          "heapAfterMb": 5588
+        },
+        {
+          "checkedCount": 950,
+          "rssBeforeMb": 6215,
+          "rssAfterMb": 6188,
+          "heapBeforeMb": 5717,
+          "heapAfterMb": 5611
+        },
+        {
+          "checkedCount": 1000,
+          "rssBeforeMb": 6217,
+          "rssAfterMb": 6189,
+          "heapBeforeMb": 5749,
+          "heapAfterMb": 5643
+        },
+        {
+          "checkedCount": 1032,
+          "rssBeforeMb": 6249,
+          "rssAfterMb": 6235,
+          "heapBeforeMb": 5764,
+          "heapAfterMb": 5691
+        }
+      ],
+      "batch": 8,
+      "firstCheckedFile": "node_modules/stripe/types/Climate/OrdersResource.d.ts",
+      "lastCheckedFile": "server/routes/mdx-clinical-studies.ts",
+      "diagnosticFiles": []
+    },
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 0,
+      "pendingBefore": 3835,
+      "pendingAfter": 3253,
+      "checkedCount": 582,
+      "cachedDiagnosticFileCount": 0,
+      "rssMb": 5976,
+      "heapMb": 5561,
+      "gcEvents": [],
+      "batch": 9,
+      "firstCheckedFile": "server/routes/mdx-industry-context.ts",
+      "lastCheckedFile": "server/bootstrap/register-inline-routes.ts",
+      "diagnosticFiles": []
+    },
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 0,
+      "pendingBefore": 3253,
+      "pendingAfter": 1903,
+      "checkedCount": 1350,
+      "cachedDiagnosticFileCount": 0,
+      "rssMb": 6256,
+      "heapMb": 5803,
+      "gcEvents": [],
+      "batch": 10,
+      "firstCheckedFile": "server/startup/routes.ts",
+      "lastCheckedFile": "server/services/__tests__/report-generator-service.no-fabricated-content.test.ts",
+      "diagnosticFiles": []
+    },
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 0,
+      "pendingBefore": 1903,
+      "pendingAfter": 1036,
+      "checkedCount": 867,
+      "cachedDiagnosticFileCount": 3,
+      "rssMb": 5909,
+      "heapMb": 5506,
+      "gcEvents": [],
+      "batch": 11,
+      "firstCheckedFile": "server/services/__tests__/revectorize-corpus.test.ts",
+      "lastCheckedFile": "server/services/global-ri/__tests__/regulatory-guidance-map.test.ts",
+      "diagnosticFiles": [
+        {
+          "file": "server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts",
+          "diagnosticCodes": [
+            2345,
+            2345
+          ]
+        },
+        {
+          "file": "server/services/document-data-disposition/__tests__/eligibility.pglite.integration.test.ts",
+          "diagnosticCodes": [
+            18046,
+            18046,
+            18046
+          ]
+        },
+        {
+          "file": "server/services/document-data-disposition/__tests__/service.pglite.integration.test.ts",
+          "diagnosticCodes": [
+            2698,
+            2571,
+            18046,
+            18046,
+            18046,
+            2571
+          ]
+        }
+      ]
+    },
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 0,
+      "pendingBefore": 1036,
+      "pendingAfter": 286,
+      "checkedCount": 750,
+      "cachedDiagnosticFileCount": 3,
+      "rssMb": 6219,
+      "heapMb": 5775,
+      "gcEvents": [],
+      "batch": 12,
+      "firstCheckedFile": "server/services/global-ri/__tests__/regulatory-pathway-advisor.test.ts",
+      "lastCheckedFile": "shared/ana/__tests__/orphan-drug-designation.test.ts",
+      "diagnosticFiles": []
+    },
+    {
+      "version": "5.6.3",
+      "mode": "batch",
+      "rootCount": 6751,
+      "sourceCount": 11810,
+      "skippedDuringNativeInvalidation": 3,
+      "pendingBefore": 289,
+      "pendingAfter": 0,
+      "checkedCount": 289,
+      "cachedDiagnosticFileCount": 0,
+      "rssMb": 5404,
+      "heapMb": 4949,
+      "gcEvents": [],
+      "batch": 13,
+      "firstCheckedFile": "server/services/document-data-disposition/__tests__/consumers.pglite.integration.test.ts",
+      "lastCheckedFile": "node_modules/@types/jest/index.d.ts",
+      "diagnosticFiles": []
+    }
+  ]
+}

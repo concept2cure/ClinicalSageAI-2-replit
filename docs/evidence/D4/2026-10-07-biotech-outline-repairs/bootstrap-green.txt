@@ -1,0 +1,34 @@
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps US IND from legacy type 44ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps US IND from registryId 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps EU MAA from legacy type 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps 510K from legacy type 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps BLA from registryId 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps EU CTA from registryId 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps Canada NDS from registryId with the dedicated HC blueprint 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > bootstraps Japan marketing approval with the dedicated PMDA blueprint 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > returns null for unknown type 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > returns null when no type specified 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > generates instructions with product name 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > bootstrapFromRegistry > each section row has required fields 8ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > getSectionCountForType > returns count for US_IND 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > getSectionCountForType > returns count for legacy type 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > Project Bootstrap from Registry > getSectionCountForType > returns 0 for unknown type 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > regional and standalone authoring groups > seeds CTIS Form/MSC and Parts I/II as authoring groups rather than CTD modules 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > regional and standalone authoring groups > seeds the Japan notification outline with a Notification group 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > regional and standalone authoring groups > seeds the dedicated amendment components instead of the initial IND deep dossier 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > regional and standalone authoring groups > ICH_DSUR uses Document for standalone module-zero rows 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > regional and standalone authoring groups > ICH_CSR uses Document for standalone module-zero rows 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > regional and standalone authoring groups > EU_CTA preserves outline provenance and limitations on every stored section row 3ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > regional and standalone authoring groups > JP_CTN preserves outline provenance and limitations on every stored section row 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > regional and standalone authoring groups > US_IND_AMENDMENT preserves outline provenance and limitations on every stored section row 0ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > regional and standalone authoring groups > CA_CTA preserves outline provenance and limitations on every stored section row 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > regional and standalone authoring groups > CA_CTA_A preserves outline provenance and limitations on every stored section row 1ms
+ ✓ tests/regulatory/projectBootstrapFromRegistry.test.ts > regional and standalone authoring groups > preserves genuine CTD M1–M5 labels, including the initial US IND deep adapter 1ms
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  22:20:09
+   Duration  1.31s (transform 775ms, setup 121ms, import 790ms, tests 71ms, environment 0ms)

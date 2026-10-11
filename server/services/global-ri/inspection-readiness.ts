@@ -151,7 +151,7 @@ const READINESS_CITATIONS: Record<InspectionMarket, Record<DomainId, string>> = 
     batch_records: 'EU GMP Vol 4 Part I Ch. 4 (documentation)',
     process_validation: 'EU GMP Annex 15 (Qualification and Validation)',
     qms_capa: 'EU GMP Vol 4 Part I Ch. 1 (Pharmaceutical Quality System); ICH Q10',
-    bimo_gcp: 'EMA-coordinated GCP inspections; ICH E6(R2) GCP; Dir 2005/28/EC',
+    bimo_gcp: 'EMA-coordinated GCP inspections; ICH E6(R3) GCP; Dir 2005/28/EC',
     supplier_qualification: 'EU GMP Vol 4 Part I Ch. 5 & Ch. 7 (outsourced activities)',
   },
   PMDA: {
@@ -212,7 +212,7 @@ const INSPECTION_TYPES: Record<InspectionMarket, InspectionType[]> = {
       name: 'GCP inspection (EMA-coordinated)',
       scope:
         'Good Clinical Practice inspection of investigator sites and sponsors, coordinated by EMA and conducted by member-state inspectors.',
-      citation: 'ICH E6(R2) GCP; Dir 2005/28/EC',
+      citation: 'ICH E6(R3) GCP; Dir 2005/28/EC',
     },
   ],
   PMDA: [

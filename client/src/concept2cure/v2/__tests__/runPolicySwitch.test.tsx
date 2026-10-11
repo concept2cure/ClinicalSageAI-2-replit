@@ -3,17 +3,18 @@
  * Manual / Auto is a real control, separate from Ask / Agent (row 74, S4).
  *
  * Ask / Agent is the Live Drive preference (a75e38452: who operates the
- * screens) and stays exactly that — anaRailActions.test.tsx pins it, and it is
- * not touched here. "Between steps" is the second, separate question: does AnA
- * stop and wait for the person before each further step (Manual), or keep
- * going until she judges the task done, within Auto's ceilings (Auto)?
+ * screens) and stays exactly that — the composer's "AnA drives" switch
+ * (LiveDriveSwitch, liveDriveDefaults.test.tsx). "Between steps" is the second,
+ * separate question: does AnA stop and wait for the person before each further
+ * step (Manual), or keep going until she judges the task done, within Auto's
+ * ceilings (Auto)?
  *
  * Pinned:
- *   - the rail's menu has a "Between steps" radiogroup that sets the
- *     preference, with arrow keys, and says a change applies to the NEXT
- *     message while one is running;
- *   - the pull label still starts with Ask or Agent, and ends with the policy;
- *   - the Ask and Agent items still switch Live Drive and nothing else;
+ *   - the conversation's composer foot has a "Between steps" radiogroup that
+ *     sets the preference, with arrow keys, and says a change applies to the
+ *     NEXT message while one is running (it was pinned on the right rail's
+ *     menu; the rail is gone, ONE_ANA_ONE_CANVAS.md slice 9);
+ *   - "AnA drives" switches Live Drive and nothing else;
  *   - the words are the product's (ANA_RUN_POLICY_COPY), with the numbers
  *     from the shared ceilings;
  *   - Home and the conversation screen offer the same switch; nothing renders
@@ -60,7 +61,8 @@ vi.mock('../../components/ana/useAnaChat', () => ({
   }),
 }));
 
-import { AnaRail } from '../Shell';
+import { ConversationThread } from '../surfaces/ConversationThread';
+import { LiveDriveControlsContext } from '../LiveDriveSwitch';
 import { RunPolicyContext, RunPolicySwitch, type RunPolicyValue } from '../RunPolicySwitch';
 import { ANA_MODES, ANA_RUN_POLICY_COPY } from '../registryModel';
 import { AUTO_ACTIVE_MS, AUTO_MAX_ROUNDS, AUTO_WALL_MS, MAX_PAUSE_MS } from '@shared/ana/run-control-limits';
@@ -75,66 +77,58 @@ function provider(runPolicy: AnaRunPolicy = 'auto', over: Partial<RunPolicyValue
   return { setRunPolicy, wrap };
 }
 
-function renderRail(runPolicy: AnaRunPolicy = 'auto', drive = { on: true, locked: null }) {
+/** The conversation screen, idle, inside the shell's run-policy (and,
+ *  optionally, Live Drive) providers — the way V2App mounts it. */
+async function renderConversation(runPolicy: AnaRunPolicy = 'auto', drive = { on: true, locked: null }) {
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}) })));
   const { setRunPolicy, wrap } = provider(runPolicy);
   const setOn = vi.fn();
-  render(
+  delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
+  const utils = render(
     wrap(
-      <AnaRail
-        open
-        setOpen={() => {}}
-        surface={{ id: 'cmc', label: 'CMC' }}
-        segment="biotech"
-        mode="standard"
-        setMode={() => {}}
-        messages={[]}
-        onSend={vi.fn()}
-        onAct={vi.fn()}
-        onNav={vi.fn()}
-        liveDrive={{ ...drive, setOn }}
-      />,
+      <LiveDriveControlsContext.Provider
+        value={{ ...drive, setOn, onStartDemo: vi.fn(), onStartTour: vi.fn() }}
+      >
+        <ConversationThread surface={{ id: 'conversation-thread', label: 'Conversation' } as never} segment="biotech" onNav={vi.fn()} />
+      </LiveDriveControlsContext.Provider>,
     ),
   );
-  fireEvent.click(screen.getByTitle('Control & engine'));
-  return { setRunPolicy, setOn };
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 10));
+  });
+  vi.unstubAllGlobals();
+  const foot = utils.container.querySelector('.ct-comp-foot [role="radiogroup"]') as HTMLElement;
+  return { setRunPolicy, setOn, foot };
 }
 
-describe("the rail's menu: a separate 'Between steps' section", () => {
-  it('is a named radiogroup with Manual and Auto, the current one checked', () => {
-    renderRail('auto');
-    const group = screen.getByRole('radiogroup', { name: 'Between steps' });
-    const manual = within(group).getByRole('radio', { name: /^Manual/ });
-    const auto = within(group).getByRole('radio', { name: /^Auto/ });
+describe("the conversation's composer foot: a separate 'Between steps' switch", () => {
+  it('is a named radiogroup with Manual and Auto, the current one checked', async () => {
+    const { foot } = await renderConversation('auto');
+    expect(foot.getAttribute('aria-label')).toBe('Between steps');
+    const manual = within(foot).getByRole('radio', { name: /^Manual/ });
+    const auto = within(foot).getByRole('radio', { name: /^Auto/ });
     expect(auto.getAttribute('aria-checked')).toBe('true');
     expect(manual.getAttribute('aria-checked')).toBe('false');
   });
 
-  it('choosing Manual sets the preference', () => {
-    const { setRunPolicy, setOn } = renderRail('auto');
-    fireEvent.click(screen.getByRole('radio', { name: /^Manual/ }));
+  it('choosing Manual sets the preference', async () => {
+    const { setRunPolicy, setOn, foot } = await renderConversation('auto');
+    fireEvent.click(within(foot).getByRole('radio', { name: /^Manual/ }));
     expect(setRunPolicy).toHaveBeenCalledWith('manual');
     expect(setOn).not.toHaveBeenCalled();
   });
 
-  it('arrow keys move the choice, as a radiogroup does', () => {
-    const { setRunPolicy } = renderRail('auto');
-    fireEvent.keyDown(screen.getByRole('radio', { name: /^Auto/ }), { key: 'ArrowLeft' });
+  it('arrow keys move the choice, as a radiogroup does', async () => {
+    const { setRunPolicy, foot } = await renderConversation('auto');
+    fireEvent.keyDown(within(foot).getByRole('radio', { name: /^Auto/ }), { key: 'ArrowLeft' });
     expect(setRunPolicy).toHaveBeenLastCalledWith('manual');
-    fireEvent.keyDown(screen.getByRole('radio', { name: /^Auto/ }), { key: 'ArrowDown' });
+    fireEvent.keyDown(within(foot).getByRole('radio', { name: /^Auto/ }), { key: 'ArrowDown' });
     expect(setRunPolicy).toHaveBeenLastCalledWith('manual');
   });
 
-  it('the pull label still starts with Ask or Agent, and ends with the policy', () => {
-    renderRail('manual');
-    expect(screen.getByTitle('Control & engine').textContent).toMatch(/^Agent.*Manual$/);
-    cleanup();
-    renderRail('auto', { on: false, locked: null } as never);
-    expect(screen.getByTitle('Control & engine').textContent).toMatch(/^Ask.*Auto$/);
-  });
-
-  it('Ask and Agent still switch Live Drive, and do not touch the policy', () => {
-    const { setRunPolicy, setOn } = renderRail('auto');
-    fireEvent.click(screen.getByRole('button', { name: /^Ask/ }));
+  it('"AnA drives" still switches Live Drive, and does not touch the policy', async () => {
+    const { setRunPolicy, setOn } = await renderConversation('auto');
+    fireEvent.click(screen.getByRole('switch', { name: /AnA drives/ }));
     expect(setOn).toHaveBeenCalledWith(false);
     expect(setRunPolicy).not.toHaveBeenCalled();
   });

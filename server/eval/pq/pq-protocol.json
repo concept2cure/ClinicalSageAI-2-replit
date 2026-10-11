@@ -30,18 +30,20 @@
     },
     "rag": {
       "required": true,
-      "executable": false,
-      "notExecutableReason": "Needs a populated corpus: ENABLE_CORPUS_INGESTION is not 'true', so the sweep is a no-op and retrieval scores 0 items (see ga-readiness-report 'Precedent corpus ingestion sweep'; unblock with `tsx scripts/ingest-corpus.ts`, verify with `node scripts/verify-rag-corpus.mjs`). This is the only remaining blocker and it is operational, not code: nothing further has to be built in this repository to make this component executable.",
+      "executable": true,
       "resolvedBlockers": [
-        "2026-09-28: 'ragQuery takes no model parameter, so a RAG run cannot be attributed to the model under qualification' — resolved. RagRetrievalParams.model -> RetrievalOptions.model -> the aiRouter.route call in queryWithGeneration now pins the generator, and run-eval.ts takes --model. Unset is unchanged behaviour, and the gateway still refuses an unapproved model on a high-risk task, so this is attribution and not an approval override (server/services/__tests__/aiProviderRouter-served-model.test.ts).",
-        "2026-09-28: 'its faithfulness judge is itself an unpinned model' — resolved. run-eval.ts takes --judge-model and refuses a run where --model and --judge-model name the same model, since a model cannot grade itself (server/eval/rag/__tests__/run-eval-attribution.test.ts)."
+        "2026-09-28: requested generator model forwarding was added through RagRetrievalParams.model -> RetrievalOptions.model -> aiRouter.route and run-eval --model. This resolves request forwarding only; provider-resolved generator identity is not preserved on the production RAG response and requested flags alone do not qualify the served version.",
+        "2026-09-28: --judge-model and the refusal to use the same requested model for generation and judging were added. This resolves explicit judge selection and self-grading configuration only; provider-resolved judge identity still needs capture and verification.",
+        "2026-10-06: the regression runner binds real organization integer/UUID and programme scope, verifies reviewed source keys/version/hash/chunks and retains incomplete items. The controlled PQ phase now reuses canonical retrieval/generation and the strict faithfulness prompt, captures actual resolved generator/judge identities and provider/request/response evidence, and fails closed on omitted/unattributable items. Ordinary production RAG regression still withholds model-PQ usability because its response does not expose actual generator identity."
       ],
-      "attributionGate": "server/eval/rag/run-eval.ts pqAttributionGaps: a run is citable as qualification of a named model only when --model and --judge-model are both set and differ. A run missing either prints 'NOT usable as PQ evidence' with the reason. It deliberately does not change the exit code — passing --min-hit-rate/--min-faithfulness is a separate question from being attributable, and conflating them would let a green regression run read as a PQ pass.",
+      "attributionGate": "server/eval/pq/rag-phase.ts: live organization UUID-to-integer and programme ownership are verified before any source/retrieval/provider call; both exact generator and independent judge calls carry the verified integer organizationId and existing placement policy. Actual resolvedModel/provider, completed uncached responses, source/gold hashes and all planned IDs must be retained. Empty-context negative controls reuse the fixed production refusal without a serving claim or metric sample contribution. Generated negative controls remain incomplete pending qualified review of refusal/unsupported claims; a refusal substring is not an acceptance criterion. Requested model flags alone never establish the served model.",
       "criteria": {
         "minHitRate": 0.6,
-        "minFaithfulness": 0.7
+        "minFaithfulness": 0.7,
+        "minScoredItems": 30
       },
-      "criteriaSource": "server/eval/rag/README.md: '--min-hit-rate 0.6 --min-faithfulness 0.7   # gate CI'."
+      "criteriaSource": "Reviewer-draft acceptance criteria: retain minHitRate 0.6 and minFaithfulness 0.7; add minScoredItems 30 positive items per metric from the existing RAG README 30\u201350 gold-item target. Negative controls never fill either metric floor. Controlled PQ now executes canonical scoped retrieval/generation and a distinct pinned judge with actual provider-resolved identities. Operational approval, official-source review, corpus verification and live execution remain required.",
+      "harness": "server/eval/pq/run-pq.ts -> rag-phase.ts; canonical server/eval/rag scope/source resolver and retrieval builder; server/services/rag-generation-request.ts source/prompt shared with production; strict server/eval/rag/rag-metrics.ts judgeFaithfulness. A controlled PQ bypasses model selection/fallback via existing evaluateModel for exact registry candidate and independent judge."
     }
   }
 }

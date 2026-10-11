@@ -19,9 +19,37 @@ import { Fragment, useEffect, useId, useRef, useState } from 'react';
 
 import { GOVERNED_SIGNATURE_ATTESTATION } from '@shared/constants/signature-attestation';
 
+import { MIRROR_TRUNCATED_SEQ } from '@shared/ana/turn-timeline';
+
 import { AnswerCheckRows } from './AnswerCheckRows';
+import { pollRun } from './anaTurnTimeline';
 import styles from './styles.module.css';
 import { tierOf, useGovernedAction, type DeclaredMeaning, type PendingSignoff } from './useGovernedAction';
+
+/**
+ * Said, in place of the dialog, when the run shows this approval was already
+ * answered — by the same person on another device, or by the run moving on
+ * (AnA detach §5.6). Only on the poll's word: a refusal the poll does not
+ * confirm keeps today's error.
+ */
+export const ALREADY_DECIDED = 'Already decided on another device.';
+
+/** The refusals that mean "nothing is waiting on this any more" — if the run agrees. */
+const DECIDED_CODES: ReadonlySet<string> = new Set(['NO_PENDING_APPROVAL', 'STALE_APPROVAL']);
+
+/**
+ * Whether the run says this approval is no longer pending: it ended, it is not
+ * waiting on an approval, or the one it waits on is another. False when the
+ * run cannot be read — never decided on no evidence.
+ */
+async function decidedElsewhere(signoff: PendingSignoff): Promise<boolean> {
+  if (!signoff.runId || !signoff.toolUseId) return false;
+  // The run's state only: read from past the cap, so no rows come with it.
+  const r = await pollRun(signoff.runId, MIRROR_TRUNCATED_SEQ);
+  if (!r.ok) return false;
+  const pending = r.poll.status === 'awaiting_approval' ? r.poll.approval : null;
+  return !pending || pending.toolUseId !== signoff.toolUseId;
+}
 
 export interface GovernedActionSignoffProps {
   signoff: PendingSignoff;
@@ -95,7 +123,8 @@ function summariseParams(params: Record<string, unknown>): Array<[string, string
 }
 
 export function GovernedActionSignoff({ signoff, onResolved, onCancel }: GovernedActionSignoffProps) {
-  const { submit, decline, submitting, error } = useGovernedAction();
+  const { submit, decline, submitting, error, clearError, lastErrorCode } = useGovernedAction();
+  const [checking, setChecking] = useState(false);
 
   // Declining a live prompt tells the run that is waiting on it, so AnA carries
   // on now rather than at the pause ceiling. A prompt from a finished turn has
@@ -131,7 +160,8 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
   const reasonOk = reason.trim().length >= MIN_REASON_LEN;
   const credsOk = !sig || password.length > 0;
   const meaningOk = !sig || meaning != null;
-  const canSubmit = confirmOnly ? !submitting : reasonOk && credsOk && meaningOk && !submitting;
+  const busy = submitting || checking;
+  const canSubmit = confirmOnly ? !busy : reasonOk && credsOk && meaningOk && !busy;
 
   // Move focus into the dialog on open so keyboard + screen-reader users start
   // inside the governed prompt (focus trap below keeps them there).
@@ -147,8 +177,30 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
   // is the one the person types or explicitly adopts (D5, 2026-09-29).
   const proposedReason = confirmOnly ? null : proposedReasonOf(signoff.params);
 
+  /* A held turn's approval may already have been answered on another device
+     (§5.6). The run is read before the signing step, and again when the server
+     refuses with NO_PENDING_APPROVAL or STALE_APPROVAL; only when it confirms
+     the approval is no longer pending does the dialog give way to that line. */
+  const resolvedElsewhere = async (): Promise<boolean> => {
+    if (!signoff.runId || !signoff.toolUseId) return false;
+    setChecking(true);
+    try {
+      if (!(await decidedElsewhere(signoff))) return false;
+      clearError();
+      onResolved({ success: false, message: ALREADY_DECIDED });
+      return true;
+    } finally {
+      setChecking(false);
+    }
+  };
+  const afterRefusal = async () => {
+    const code = lastErrorCode();
+    if (code && DECIDED_CODES.has(code)) await resolvedElsewhere();
+  };
+
   const handleSubmit = async () => {
     if (!canSubmit) return;
+    if (await resolvedElsewhere()) return;
     if (confirmOnly) {
       const confirmed = await submit({
         command: signoff.command,
@@ -158,6 +210,7 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
         toolUseId: signoff.toolUseId,
       });
       if (confirmed) onResolved(confirmed);
+      else await afterRefusal();
       return;
     }
     const outcome = await submit({
@@ -174,6 +227,7 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
       toolUseId: signoff.toolUseId,
     });
     if (outcome) onResolved(outcome);
+    else await afterRefusal();
   };
 
   // Focus trap: keep Tab/Shift+Tab inside the dialog; Escape cancels.
@@ -333,7 +387,7 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
       )}
 
       <div className={styles.signoffActions}>
-        <button type="button" className={styles.suggestPill} onClick={() => void handleCancel()} disabled={submitting}>
+        <button type="button" className={styles.suggestPill} onClick={() => void handleCancel()} disabled={busy}>
           Cancel
         </button>
         <button
@@ -342,7 +396,7 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
           onClick={handleSubmit}
           disabled={!canSubmit}
         >
-          {submitting ? (confirmOnly ? 'Running…' : 'Signing…') : sig ? 'Sign and run' : 'Confirm and run'}
+          {checking ? 'Checking…' : submitting ? (confirmOnly ? 'Running…' : 'Signing…') : sig ? 'Sign and run' : 'Confirm and run'}
         </button>
       </div>
     </div>

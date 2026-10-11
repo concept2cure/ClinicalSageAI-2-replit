@@ -1,0 +1,62 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after reset > clears pause, hold, policy and steering state before the old stream settles 25ms
+   → expected 'paused' to be null
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after reset > does not address the abandoned run through current-conversation controls 6ms
+   → expected true to be false // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after switch > clears pause, hold, policy and steering state before the old stream settles 4ms
+   → expected 'paused' to be null
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after switch > does not address the abandoned run through current-conversation controls 3ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after reset > clears pause, hold, policy and steering state before the old stream settles
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after switch > clears pause, hold, policy and steering state before the old stream settles
+AssertionError: expected 'paused' to be null
+
+- Expected:
+null
+
++ Received:
+"paused"
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts:42:40
+     40|       });
+     41|       expect(result.current.isStreaming).toBe(false);
+     42|       expect(result.current.runStatus).toBeNull();
+       |                                        ^
+     43|       expect(result.current.runHold).toBeNull();
+     44|       expect(result.current.turnRunPolicy).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after reset > does not address the abandoned run through current-conversation controls
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts > abandoned turn controls after switch > does not address the abandoned run through current-conversation controls
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts:58:46
+     56|       const before = fetchMock.mock.calls.filter(([url]) => url.includ…
+     57|       await act(async () => {
+     58|         expect(await result.current.pause()).toBe(false);
+       |                                              ^
+     59|         expect(await result.current.resume()).toBe(false);
+     60|         expect(await result.current.interject('New conversation instru…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  02:58:20
+   Duration  1.11s (transform 258ms, setup 130ms, import 328ms, tests 40ms, environment 473ms)
+

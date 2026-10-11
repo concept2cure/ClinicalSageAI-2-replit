@@ -1,0 +1,8 @@
+{
+  "source_checkpoint": "a8f59c24c74f1870d7590bb06424f42f0dbcbcae",
+  "remote_base": "4536fe4c2a4ad16a9722c9bfe61bc1a403426c06",
+  "hook_process_exit": 1,
+  "completion_banner_observed": false,
+  "elapsed_seconds": 198.104,
+  "qualification": "FAIL_OR_INCOMPLETE"
+}

@@ -178,4 +178,33 @@ describe('a reopened thread', () => {
     expect(garbled.stoppedReason).toBeUndefined();
     expect(garbled.rounds).toBeUndefined();
   });
+
+  /* QA 2026-10-08 (j5): a turn stopped before AnA wrote a word is saved as an
+     empty answer that says it was stopped. Dropped as empty, a reload showed
+     the question with nothing after it. Any other empty row is still dropped. */
+  it('keeps an empty answer the server saved as stopped, and drops other empty rows', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        messages: [
+          { role: 'user', content: 'Summarize the open risks for this program' },
+          { role: 'assistant', content: '', metadata: { stoppedReason: 'cancelled' } },
+          { role: 'user', content: 'Try again' },
+          { role: 'assistant', content: '', metadata: { rounds: 1 } },
+          { role: 'assistant', content: '' },
+        ],
+      }),
+    });
+    const { result } = renderHook(() => useAnaChat({}));
+    await act(async () => {
+      await result.current.loadThread('th_stop');
+    });
+    const shown = result.current.messages as any[];
+    expect(shown.map(m => [m.role, m.text, m.stoppedReason])).toEqual([
+      ['user', 'Summarize the open risks for this program', undefined],
+      ['assistant', '', 'cancelled'],
+      ['user', 'Try again', undefined],
+    ]);
+  });
 });

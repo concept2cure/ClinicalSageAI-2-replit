@@ -540,6 +540,21 @@ describe('POST /api/ectd/export/:submissionId — the canonical export', () => {
     expect(res.body.errorCount).toBe(1);
   });
 
+  // QA 2026-10-08 (j6): a package names its application and its applicant from
+  // the record, or it is not built. The refusal is the answer, said in words, as
+  // a conflict with the record — never a 500, never a "not found".
+  it('a submission whose record names no application number or applicant is refused 409 by name, and returns no zip', async () => {
+    const { PackageIdentityMissingError } = await import('../../server/services/ectd/package-identity');
+    const sentence =
+      'A package names its application and its applicant from the record, never a placeholder, and its project records no agency application number (record the number the agency assigned on the project; the program code is not one). Nothing was built.';
+    hoisted.assembleSubmissionEctd.mockRejectedValueOnce(new PackageIdentityMissingError(['applicationNumber'], sentence));
+    const res = await request(makeApp()).post('/api/ectd/export/42').send({ ...REVIEWED });
+    expect(res.status).toBe(409);
+    expect(res.headers['content-type']).toMatch(/application\/json/);
+    expect(res.body.code).toBe('PACKAGE_IDENTITY_MISSING');
+    expect(res.body.message).toBe(sentence);
+  });
+
   it('refuses an incomplete package when requireComplete is set', async () => {
     const { EctdCompletenessError } = await import('../../server/services/ectd/completeness');
     hoisted.assembleSubmissionEctd.mockRejectedValueOnce(

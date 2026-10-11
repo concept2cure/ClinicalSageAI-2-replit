@@ -1,0 +1,154 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > reports a failed summary read without discarding healthy enrichment
+{
+  "timestamp": "2026-10-09T01:55:00.773Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "query failed"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > shares the workflow read for /preflight without changing prompt composition
+{
+  "timestamp": "2026-10-09T01:55:00.791Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "[vitest] No \"db\" export is defined on the \"../../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > shares the workflow read for /status without changing prompt composition
+[recommendation-engine] Document completeness generator failed: Error: [vitest] No "db" export is defined on the "../../../db" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+    at VitestMocker.createError (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17)
+    at Object.get (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16)
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/services/intelligence/recommendation-engine.ts:103:29
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/services/intelligence/recommendation-engine.ts:311:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/workspace/scratch/bd36ee581acd/concept2cure/server/services/intelligence/recommendation-engine.ts:311:17)
+    at generateNextActions (/workspace/scratch/bd36ee581acd/concept2cure/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana-ri/context-enrichment.ts:554:31) {
+  codeFrame: 'vi.mock(import("../../../db"), async (importOriginal) => {\n' +
+    '  const actual = await importOriginal()\n' +
+    '  return {\n' +
+    '    ...actual,\n' +
+    '    // your mocked methods\n' +
+    '  }\n' +
+    '})'
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > shares the workflow read for /status without changing prompt composition
+{
+  "timestamp": "2026-10-09T01:55:00.793Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "[vitest] No \"db\" export is defined on the \"../../../db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+[recommendation-engine] Generator failed: Error: [vitest] No "db" export is defined on the "../../../db" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+    at VitestMocker.createError (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17)
+    at Object.get (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16)
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/services/intelligence/recommendation-engine.ts:182:26
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/services/intelligence/recommendation-engine.ts:311:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/workspace/scratch/bd36ee581acd/concept2cure/server/services/intelligence/recommendation-engine.ts:311:17)
+    at generateNextActions (/workspace/scratch/bd36ee581acd/concept2cure/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana-ri/context-enrichment.ts:554:31) {
+  codeFrame: 'vi.mock(import("../../../db"), async (importOriginal) => {\n' +
+    '  const actual = await importOriginal()\n' +
+    '  return {\n' +
+    '    ...actual,\n' +
+    '    // your mocked methods\n' +
+    '  }\n' +
+    '})'
+}
+[recommendation-engine] Generator failed: Error: [vitest] No "db" export is defined on the "../../../db" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+    at VitestMocker.createError (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17)
+    at Object.get (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16)
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/services/intelligence/recommendation-engine.ts:239:26
+    at /workspace/scratch/bd36ee581acd/concept2cure/server/services/intelligence/recommendation-engine.ts:311:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/workspace/scratch/bd36ee581acd/concept2cure/server/services/intelligence/recommendation-engine.ts:311:17)
+    at generateNextActions (/workspace/scratch/bd36ee581acd/concept2cure/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana-ri/context-enrichment.ts:554:31) {
+  codeFrame: 'vi.mock(import("../../../db"), async (importOriginal) => {\n' +
+    '  const actual = await importOriginal()\n' +
+    '  return {\n' +
+    '    ...actual,\n' +
+    '    // your mocked methods\n' +
+    '  }\n' +
+    '})'
+}
+
+stderr | server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > shares the workflow read for /status without changing prompt composition
+[enrichment] Live recommendations failed, falling back to memory: [vitest] No "db" export is defined on the "../../../db" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when summary stalls 9ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when workflow stalls 11ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > retains healthy results when query stalls 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > starts project, workflow and requested claims reads before the project summary resolves 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > preserves slash rewriting when the requested read times out 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > keeps the static claim-grounding guard when natural-language evidence reads time out 23ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > keeps an availability notice even under the optional composer budget 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > optional enrichment sources share a bounded wait > keeps the invoked app and rewrites its mention when app context times out 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > reports a failed summary read without discarding healthy enrichment 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > reports a failed workflow read without discarding healthy enrichment 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > retains a slow healthy source inside the budget and preserves common-context ordering 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > preserves the existing greeting rule when common project context is available 11ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > does not confuse healthy empty results with unavailable context 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > does not change the returned snapshot when a query resolves after its deadline 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > enrichment deadline preserves normal and late-result behavior > keeps projectless guidance without starting scoped reads 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > shares the workflow read for /workflow without changing prompt composition 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > shares the workflow read for /preflight without changing prompt composition 2ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > shares the workflow read for /status without changing prompt composition 8ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > starts a single workflow read while independent project context is pending 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > contains one reject workflow read and preserves its availability reason 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > contains one throw workflow read and preserves its availability reason 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > contains one timeout workflow read and preserves its availability reason 1ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > keeps healthy empty workflow results distinct from failures 0ms
+ ✓ server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts > one workflow snapshot per enrichment invocation > reads again on every invocation and keeps tenant and project results separate 1ms
+(node:40) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > enrichment reuses the real workflow snapshot > issues the two tenant-scoped workflow SELECTs once for a /workflow turn
+{
+  "timestamp": "2026-10-09T01:55:02.748Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "[vitest] No \"db\" export is defined on the \"../../../db.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > scopes every artifact read to the caller organization 3ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > issues no artifact read at all without an organization 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > still returns the workflow definition when the org is absent 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > returns null for a submission type with no workflow, scoped or not 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus marks a step complete only on evidence > with no project records, marks no step complete and no step it cannot track as done 1ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus marks a step complete only on evidence > computes progress over tracked steps only 0ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > enrichment reuses the real workflow snapshot > issues the two tenant-scoped workflow SELECTs once for a /workflow turn 5ms
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > enrichment reuses the real workflow snapshot > still issues no workflow artifact SELECT without a tenant 2ms
+
+ Test Files  2 passed (2)
+      Tests  32 passed (32)
+   Start at  21:54:56
+   Duration  6.72s (transform 3.90s, setup 83ms, import 6.20s, tests 101ms, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-08-ana-workflow-read-sharing/green.json

@@ -1,0 +1,165 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > unset ⇒ on in production, off elsewhere 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > explicit values win in either environment 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > an explicit off in production is said once, as an error; off elsewhere and on are quiet 2ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > a value that is neither on nor off refuses to boot in production, and is off elsewhere 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > has seven apps and every app surface is in the id set 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > Reporting & analytics is a launch app — founder decision, 2026-09-26 2ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > protocol development is in the Authoring app — founder decision, 2026-09-21 1ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the authoring engine explainer is outside the scope — swapped out for protocol development 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > keeps the two Part 11 surfaces the catalog may never gate 1ms
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > program-journey is out of the projects app — fixture-demo: empty for every program a client creates 5ms
+   → expected [ 'projects', 'project-home', …(3) ] to not include 'program-journey'
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > filings-catalog is out of the projects app — explainer: its Start drops the choice; the New project wizard keeps it 1ms
+   → expected [ 'projects', 'project-home', …(3) ] to not include 'filings-catalog'
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > regulatory-workspace is out of the authoring app — a fixed paragraph where the editor should be 1ms
+   → expected [ 'document-authoring', …(4) ] to not include 'regulatory-workspace'
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > template-library is out of the authoring app — a saved template formats no document 1ms
+   → expected [ 'document-authoring', …(4) ] to not include 'template-library'
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-coauthor is out of the submission-center app — a second editor whose checks report a fixed failure 1ms
+   → expected [ 'submission-center', …(5) ] to not include 'ectd-coauthor'
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > dossier-map is out of the submission-center app — reads a store no program writes: always empty 0ms
+   → expected [ 'submission-center', …(5) ] to not include 'dossier-map'
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-publishing is out of the submission-center app — a reference page that publishes nothing 1ms
+   → expected [ 'submission-center', …(5) ] to not include 'ectd-publishing'
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > qmp is out of the qms app — a plan cannot be given its gates, and nothing reads them 2ms
+   → expected [ 'quality', 'qmp' ] to not include 'qmp'
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-command — enterprise-only, and says runs are recorded that are not 3ms
+   → expected true to be false // Object.is equality
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-memory — shows a store nothing writes, not the memory AnA loads 1ms
+   → expected true to be false // Object.is equality
+ × server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries training — no path, lesson or certification exists 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > every app keeps a screen a client can work in 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > leaves a launch surface verdict untouched, whatever it said 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > locks a bought module outside the scope — the boundary never widens 0ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > emits a verdict for every registered surface outside the scope that has no catalog row 4ms
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > never emits a launch-scope verdict for a launch surface 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > program-journey is out of the projects app — fixture-demo: empty for every program a client creates
+AssertionError: expected [ 'projects', 'project-home', …(3) ] to not include 'program-journey'
+ ❯ server/services/entitlements/__tests__/launch-scope.test.ts:117:28
+    115|   ])('%s is out of the %s app — %s', (surface, app) => {
+    116|     const a = LAUNCH_APPS.find((x) => x.id === app)!;
+    117|     expect(a.surfaces).not.toContain(surface);
+       |                            ^
+    118|     expect(a.modules).not.toContain(surface);
+    119|     expect(isLaunchSurface(surface)).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > filings-catalog is out of the projects app — explainer: its Start drops the choice; the New project wizard keeps it
+AssertionError: expected [ 'projects', 'project-home', …(3) ] to not include 'filings-catalog'
+ ❯ server/services/entitlements/__tests__/launch-scope.test.ts:117:28
+    115|   ])('%s is out of the %s app — %s', (surface, app) => {
+    116|     const a = LAUNCH_APPS.find((x) => x.id === app)!;
+    117|     expect(a.surfaces).not.toContain(surface);
+       |                            ^
+    118|     expect(a.modules).not.toContain(surface);
+    119|     expect(isLaunchSurface(surface)).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > regulatory-workspace is out of the authoring app — a fixed paragraph where the editor should be
+AssertionError: expected [ 'document-authoring', …(4) ] to not include 'regulatory-workspace'
+ ❯ server/services/entitlements/__tests__/launch-scope.test.ts:117:28
+    115|   ])('%s is out of the %s app — %s', (surface, app) => {
+    116|     const a = LAUNCH_APPS.find((x) => x.id === app)!;
+    117|     expect(a.surfaces).not.toContain(surface);
+       |                            ^
+    118|     expect(a.modules).not.toContain(surface);
+    119|     expect(isLaunchSurface(surface)).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > template-library is out of the authoring app — a saved template formats no document
+AssertionError: expected [ 'document-authoring', …(4) ] to not include 'template-library'
+ ❯ server/services/entitlements/__tests__/launch-scope.test.ts:117:28
+    115|   ])('%s is out of the %s app — %s', (surface, app) => {
+    116|     const a = LAUNCH_APPS.find((x) => x.id === app)!;
+    117|     expect(a.surfaces).not.toContain(surface);
+       |                            ^
+    118|     expect(a.modules).not.toContain(surface);
+    119|     expect(isLaunchSurface(surface)).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-coauthor is out of the submission-center app — a second editor whose checks report a fixed failure
+AssertionError: expected [ 'submission-center', …(5) ] to not include 'ectd-coauthor'
+ ❯ server/services/entitlements/__tests__/launch-scope.test.ts:117:28
+    115|   ])('%s is out of the %s app — %s', (surface, app) => {
+    116|     const a = LAUNCH_APPS.find((x) => x.id === app)!;
+    117|     expect(a.surfaces).not.toContain(surface);
+       |                            ^
+    118|     expect(a.modules).not.toContain(surface);
+    119|     expect(isLaunchSurface(surface)).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > dossier-map is out of the submission-center app — reads a store no program writes: always empty
+AssertionError: expected [ 'submission-center', …(5) ] to not include 'dossier-map'
+ ❯ server/services/entitlements/__tests__/launch-scope.test.ts:117:28
+    115|   ])('%s is out of the %s app — %s', (surface, app) => {
+    116|     const a = LAUNCH_APPS.find((x) => x.id === app)!;
+    117|     expect(a.surfaces).not.toContain(surface);
+       |                            ^
+    118|     expect(a.modules).not.toContain(surface);
+    119|     expect(isLaunchSurface(surface)).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-publishing is out of the submission-center app — a reference page that publishes nothing
+AssertionError: expected [ 'submission-center', …(5) ] to not include 'ectd-publishing'
+ ❯ server/services/entitlements/__tests__/launch-scope.test.ts:117:28
+    115|   ])('%s is out of the %s app — %s', (surface, app) => {
+    116|     const a = LAUNCH_APPS.find((x) => x.id === app)!;
+    117|     expect(a.surfaces).not.toContain(surface);
+       |                            ^
+    118|     expect(a.modules).not.toContain(surface);
+    119|     expect(isLaunchSurface(surface)).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > qmp is out of the qms app — a plan cannot be given its gates, and nothing reads them
+AssertionError: expected [ 'quality', 'qmp' ] to not include 'qmp'
+ ❯ server/services/entitlements/__tests__/launch-scope.test.ts:117:28
+    115|   ])('%s is out of the %s app — %s', (surface, app) => {
+    116|     const a = LAUNCH_APPS.find((x) => x.id === app)!;
+    117|     expect(a.surfaces).not.toContain(surface);
+       |                            ^
+    118|     expect(a.modules).not.toContain(surface);
+    119|     expect(isLaunchSurface(surface)).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-command — enterprise-only, and says runs are recorded that are not
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-memory — shows a store nothing writes, not the memory AnA loads
+ FAIL  server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries training — no path, lesson or certification exists
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/entitlements/__tests__/launch-scope.test.ts:130:38
+    128|     ['training', 'no path, lesson or certification exists'],
+    129|   ])('the shell no longer carries %s — %s', (surface) => {
+    130|     expect(isLaunchSurface(surface)).toBe(false);
+       |                                      ^
+    131|   });
+    132|   it('every app keeps a screen a client can work in', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 14 passed (25)
+   Start at  00:04:03
+   Duration  594ms (transform 200ms, setup 82ms, import 160ms, tests 34ms, environment 0ms)
+

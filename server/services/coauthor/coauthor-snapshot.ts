@@ -75,6 +75,15 @@
  *   - Sections are ordered order_index, created_at, id — the editor's order —
  *     by the assembler (services/ana/authoring-canonical-bridge.ts) and by the
  *     router's seal queries alike.
+ *
+ * 2026-10-08 (QA walk 2, j4 blocker). "A second placement re-takes the SAME
+ * copy" rewrote a copy a submission leaf had already filed: an edited document
+ * placed again replaced leaf #81's text, its pin no longer matched, and the
+ * dialog said nothing was written. A copy that a live leaf points at is now the
+ * filed record — its text and title are never rewritten, and its status only
+ * moves forward with the text unchanged (services/coauthor/filing-copy-pins.ts);
+ * otherwise the re-take is refused 409 FILING_COPY_PINNED, naming the leaves,
+ * and nothing is written. Every outcome now says whether it wrote (`written`).
  */
 import { createHash } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
@@ -92,25 +101,20 @@ import {
   versionReplacedCoauthorContent,
   type CoauthorAuditActor,
 } from './coauthor-audit.js';
+import { filingCopyPins, pinnedCopyAccepts, pinnedCopyRefusal, retakeChanges } from './filing-copy-pins.js';
+import { snapshotStatusFor } from '../../../shared/regulatory/filing-copy-status.js';
 
 type CoauthorRow = typeof coauthorDocuments.$inferSelect;
 
-/**
- * The copy's status, from the source's governed state. Claims nothing the
- * source has not earned:
- *   APPROVED  -> 'approved'   an APPROVER e-signature was applied
- *   FROZEN    -> 'finalized'  content snapshotted, hash-sealed and locked
- *   anything else -> 'draft'  which correctly fails completeness
- */
-export function snapshotStatusFor(sourceStatus: string | null | undefined): 'approved' | 'finalized' | 'draft' {
-  const state = String(sourceStatus ?? '').toUpperCase();
-  return state === 'APPROVED' ? 'approved' : state === 'FROZEN' ? 'finalized' : 'draft';
-}
+/* The copy's status, from the source's governed state: one rule, shared with
+   the placement dialog that states it before placing (FILING_SPINE.md F17). */
+export { snapshotStatusFor } from '../../../shared/regulatory/filing-copy-status.js';
 
 type SnapshotRefusal = { ok: false; httpStatus: 404 | 409 | 422; body: Record<string, unknown> };
 
 export type SnapshotOutcome =
-  | { ok: true; created: boolean; document: CoauthorRow; aliasRecorded: boolean }
+  /** `written`: whether this placement wrote the copy (created, updated or re-created). */
+  | { ok: true; created: boolean; written: boolean; document: CoauthorRow; aliasRecorded: boolean }
   | SnapshotRefusal;
 
 const refuse = (httpStatus: 404 | 409 | 422, error: string, message: string): SnapshotRefusal => ({
@@ -386,7 +390,13 @@ async function retakeAliasedCopy(
       existing.status === derived.status &&
       existing.content === derived.content &&
       existing.title === derived.title;
-    if (unchanged) return { ok: true, created: false, document: existing, aliasRecorded: true };
+    if (unchanged) return { ok: true, created: false, written: false, document: existing, aliasRecorded: true };
+    /* 2026-10-08 (QA walk 2, j4): a copy a live leaf files is never rewritten. */
+    const changes = retakeChanges(existing, derived);
+    if (!pinnedCopyAccepts(changes)) {
+      const pins = await filingCopyPins(q, { copyId: id, organizationId });
+      if (pins.length > 0) return { ok: false, httpStatus: 409, body: pinnedCopyRefusal(id, pins, changes) };
+    }
     /* 2026-10-01 (D5, P11-B-1): the text this replaces — on a draft copy, an
        author's saved co-author edits — is kept as the copy's next version, as
        every writer of this column now does; the event kept only its digest. */
@@ -410,7 +420,7 @@ async function retakeAliasedCopy(
       .where(and(eq(coauthorDocuments.id, id), eq(coauthorDocuments.organizationId, organizationId)))
       .returning();
     await retaken(id, existing, supersededVersion);
-    return { ok: true, created: false, document, aliasRecorded: true };
+    return { ok: true, created: false, written: true, document, aliasRecorded: true };
   }
   /* The copy was deleted and its identity is still recorded (DELETE does
      not remove the alias). It is re-created under that id, so the alias
@@ -429,7 +439,7 @@ async function retakeAliasedCopy(
     .values({ id, organizationId, ...derived, moduleNumber, templateId, createdBy, metadata: provenance })
     .returning();
   await retaken(id, null);
-  return { ok: true, created: true, document, aliasRecorded: true };
+  return { ok: true, created: true, written: true, document, aliasRecorded: true };
 }
 
 /**
@@ -446,8 +456,10 @@ export async function takeAuthoringSnapshot(args: {
   createdBy: string | null;
   /** Who is placing it; recorded when an existing copy is re-taken. */
   actor: CoauthorAuditActor;
+  /** The person's stated reason, validated by the route (governed-reason.ts). */
+  reason: string;
 }): Promise<SnapshotOutcome> {
-  const { organizationId, moduleNumber, templateId, createdBy, actor } = args;
+  const { organizationId, moduleNumber, templateId, createdBy, actor, reason } = args;
   const sourceId = String(args.sourceAuthoringDocId);
 
   const src = await pool.query<{ status: string | null }>(
@@ -481,9 +493,10 @@ export async function takeAuthoringSnapshot(args: {
         documentId: id,
         eventType: 'coauthor_document.retaken',
         actor,
-        reason: before
-          ? 'filing copy re-taken from its source authoring document'
-          : 'deleted filing copy re-created from its source authoring document',
+        /* The person's stated reason (2026-10-08, filing-spine design review,
+           Part 11 lens). These were sentences the code composed; what the
+           system did is in the fields below (recreated, before, after). */
+        reason,
         metadata: {
           sourceAuthoringDocId: sourceId,
           recreated: before === null,
@@ -529,6 +542,7 @@ export async function takeAuthoringSnapshot(args: {
     return {
       ok: true,
       created: true,
+      written: true,
       document,
       aliasRecorded: !(!alias.recorded && alias.reason === 'relation_absent'),
     };

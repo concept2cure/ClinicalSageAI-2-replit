@@ -55,6 +55,7 @@ import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichS
 import { useAnaChat } from '../../components/ana/useAnaChat';
 import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
 import { AnaActivity, activityPropsFor } from '../AnaActivity';
+import { useHostSummary } from '../TurnSummary';
 import { RunPolicyDockNote } from '../RunPolicySwitch';
 import { AnaMarkdown } from '../AnaMarkdown';
 import { AnaOutputCards } from '../AnaOutputs';
@@ -346,6 +347,8 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
      every other host (workDock.ts), toggled by the chip in the pane header,
      and the background queue read only while shown. */
   const dock = useProgressDock();
+  /* A turn's Summary: the panel at that turn, or the sheet below 760px (S4). */
+  const summary = useHostSummary(anaChat.messages, dock, anaChat.isStreaming);
   const anaWorkQueue = useAgentActivity(dock.open, anaChat.isStreaming);
   const turns = anaChat.messages;
 
@@ -804,7 +807,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
             messages={anaChat.messages}
             streaming={anaChat.isStreaming}
             open={dock.open}
-            onToggle={dock.toggle}
+            onToggle={summary.toggleDock}
             controls={dock.panelId}
           />
         </div>
@@ -815,6 +818,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
             <div className="ana-work-host" style={{ padding: '0 0 14px' }}>
               <AnaWorkPanel
                 id={dock.panelId}
+                turn={summary.panelTurn}
                 messages={anaChat.messages}
                 streaming={anaChat.isStreaming}
                 runStatus={anaChat.runStatus}
@@ -828,6 +832,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
               />
             </div>
           )}
+          {summary.sheet}
           <div className="ec-thread">
             {turns.length === 0 && (
               <div className="ec-empty">
@@ -847,7 +852,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                       renders. This pane showed plain text and, while she
                       worked, the single word "Thinking…". The waiting state is
                       the record's live phase now, never an invented sentence. */}
-                  <AnaActivity {...activityPropsFor(m)} />
+                  <AnaActivity {...activityPropsFor(m)} onSummary={() => summary.openFor(m.id)} />
                   {m.text && <AnaMarkdown text={m.text} className="ana-md" />}
                   <AnaOutputCards message={m} />
                   {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (

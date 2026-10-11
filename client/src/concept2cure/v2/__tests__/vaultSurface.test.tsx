@@ -22,6 +22,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Vault } from '../surfaces/Vault';
+import { VAULT_UPLOAD_ACCEPT } from '../useVaultUpload';
 import {
   PID,
   DOC_ID,
@@ -46,6 +47,15 @@ beforeEach(() => {
 });
 
 describe('Vault — uploads are visible in the tree they were uploaded into', () => {
+  it('offers the exact receiver candidate formats, including raw structured text and signature-supported images', async () => {
+    mockApi(() => ok(vaultPayload()));
+    render(<Vault {...props()} />);
+    await screen.findAllByText('Source files · filing cabinet');
+    const picker = document.querySelector<HTMLInputElement>('input[type="file"][accept]');
+    expect(picker?.accept).toBe(VAULT_UPLOAD_ACCEPT);
+    expect(picker?.accept.split(',')).toEqual(expect.arrayContaining(['.csv', '.xlsx', '.json', '.xml', '.png', '.jpg', '.gif', '.doc', '.xls', '.rtf']));
+  });
+
   it('renders the filing cabinet with the upload inside its suggested folder', async () => {
     mockApi(() => ok(vaultPayload()));
     render(<Vault {...props()} />);
@@ -489,7 +499,8 @@ describe('Vault — a truncated filing cabinet says so', () => {
  */
 describe('Vault — placing a document into a submission', () => {
   const SUBMISSIONS = [
-    { id: 4, title: 'BX-301 NDA', applicationType: 'nda', primaryRegion: 'us', status: 'open' },
+    // Anchored to this project: the picker offers only the program's own submissions.
+    { id: 4, title: 'BX-301 NDA', applicationType: 'nda', primaryRegion: 'us', status: 'open', programId: PID },
   ];
   const SEQUENCES = [
     { id: 9, sequenceNumber: '0000', type: 'original', status: 'draft', region: 'us' },
@@ -501,7 +512,7 @@ describe('Vault — placing a document into a submission', () => {
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
       if (method !== 'GET') writes.push({ method, url, body });
       if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload());
-      if (url === '/api/submissions' && method === 'GET') return ok(SUBMISSIONS);
+      if ((url === '/api/submissions' || url.startsWith('/api/submissions?')) && method === 'GET') return ok(SUBMISSIONS);
       if (url === '/api/submissions/4/sequences' && method === 'GET') return ok(SEQUENCES);
       if (method === 'PUT' && /\/sequences\/\d+\/leaves$/.test(url)) {
         return ok({ id: 77, sectionCode: '3.2.P.8.3', title: 'stability-summary-24m', lifecycleOp: 'new' });

@@ -1,0 +1,15 @@
+{
+  "files": [
+    "docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/c2c-ts-prewarm.cjs",
+    "docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/seed-batches.cjs"
+  ],
+  "commands": [
+    "node --check docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/c2c-ts-prewarm.cjs",
+    "node --check docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/seed-batches.cjs",
+    "npx eslint --max-warnings 0 docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/c2c-ts-prewarm.cjs docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/seed-batches.cjs"
+  ],
+  "combinedExitCode": 0,
+  "lintOutput": "npm warn Unknown env config \"http-proxy\". This will stop working in the next major version of npm.\n",
+  "changes": "Literal-format stdout calls use console.info; the toy skipped-array binding is const. Compiler procedure, configuration, baseline, and gates are unchanged.",
+  "heavyCompilerOrToyTestsRerunForTheseChanges": false
+}

@@ -8,7 +8,8 @@
  * submission threads ethics approval into the clinical conduct record and forward
  * to Module 5 via provenance_links.
  *
- * Grounded in the revised Common Rule (45 CFR 46), FDA 21 CFR 56, and ICH E6(R2).
+ * Grounded in the revised Common Rule (45 CFR 46), FDA 21 CFR 56, and
+ * ICH E6(R3) Annex 1 §1 (IRB/IEC).
  * Conventions match the platform; status/type columns are CHECK-constrained.
  * Mutations are governed + audited.
  *

@@ -1,0 +1,11 @@
+{
+  "source_checkpoint": "0f5348d88b7755b3af384c871a841641e21b65f2",
+  "release_base": "7f3b84ca5e67f1bb920fc662ebf3289578a4ecb6",
+  "normal_precommit_passed": true,
+  "elapsed_seconds": 1.554,
+  "source_files": [
+    "server/services/ana/AnaToolExecutor.ts",
+    "server/services/ana/evidence-literature-tool-defs.ts",
+    "server/services/ana/__tests__/ind-module-tool.test.ts"
+  ]
+}

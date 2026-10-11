@@ -1,0 +1,141 @@
+{
+  "checkedAt": "2026-10-06T17:07:53.739Z",
+  "runId": 37498480047,
+  "headSha": "775bde8adbe03a9d150f6cbb2a65a41c9912d66d",
+  "status": "in_progress",
+  "conclusion": null,
+  "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37498480047",
+  "jobs": [
+    {
+      "id": 112389039861,
+      "name": "Security Scan",
+      "status": "completed",
+      "conclusion": "failure",
+      "failedSteps": [
+        {
+          "name": "Run lockfile audit and dependency-risk ledger gate",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 7
+        },
+        {
+          "name": "Trivy filesystem scan (deps + secrets)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 12
+        }
+      ],
+      "typeCheckSteps": []
+    },
+    {
+      "id": 112389040146,
+      "name": "Lint",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeCheckSteps": [
+        {
+          "name": "Run TypeScript check (no regression vs baseline)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 126
+        },
+        {
+          "name": "Run beta-slice TypeScript check",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 127
+        }
+      ]
+    },
+    {
+      "id": 112389040240,
+      "name": "Secret scan (full history)",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeCheckSteps": []
+    },
+    {
+      "id": 112389040250,
+      "name": "Security Contract Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeCheckSteps": []
+    },
+    {
+      "id": 112389041777,
+      "name": "Nightly Governance Strict",
+      "status": "completed",
+      "conclusion": "skipped",
+      "failedSteps": [],
+      "typeCheckSteps": []
+    },
+    {
+      "id": 112395312885,
+      "name": "Coverage (ratchet)",
+      "status": "in_progress",
+      "conclusion": null,
+      "failedSteps": [],
+      "typeCheckSteps": []
+    },
+    {
+      "id": 112395313045,
+      "name": "Production Image Boot (built image, empty database, sign-in)",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeCheckSteps": []
+    },
+    {
+      "id": 112395313065,
+      "name": "AnA Readiness Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeCheckSteps": []
+    },
+    {
+      "id": 112395313099,
+      "name": "Production Boot Smoke (RLS on, non-superuser role)",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeCheckSteps": []
+    },
+    {
+      "id": 112395313100,
+      "name": "Integration Tests",
+      "status": "in_progress",
+      "conclusion": null,
+      "failedSteps": [],
+      "typeCheckSteps": []
+    },
+    {
+      "id": 112395313162,
+      "name": "Blank DB Provisioning + Deploy Migration",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeCheckSteps": []
+    },
+    {
+      "id": 112395313201,
+      "name": "Test",
+      "status": "in_progress",
+      "conclusion": null,
+      "failedSteps": [],
+      "typeCheckSteps": []
+    },
+    {
+      "id": 112395313212,
+      "name": "AIOS Audit Assets",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typeCheckSteps": []
+    }
+  ],
+  "otherFailureDiagnosis": "Only the Security Scan job is completed red on this exact head. Lint/full and beta TypeScript succeeded. Test, Integration and Coverage remain running, so no failure diagnosis is asserted for them."
+}

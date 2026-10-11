@@ -1,0 +1,170 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond stage offers no locked tool, and says when it has none 142ms
+   → Respond offers tools that open "not in this release": expected [ 'haq-manager', 'global-ri' ] to deeply equal []
+ × client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Lifecycle stage offers no locked tool, and says when it has none 73ms
+   → Lifecycle offers tools that open "not in this release": expected [ 'registrations', …(2) ] to deeply equal []
+ × client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Plan stage offers no locked tool, and says when it has none 91ms
+   → Plan offers tools that open "not in this release": expected [ 'global-ri', …(2) ] to deeply equal []
+ × client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry 66ms
+   → expected <button class="btn ghost" …(1)>…(1)</button> to be null
+ × client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's documents, not the locked dossier map 61ms
+   → expected "vi.fn()" to be called with arguments: [ 'document-authoring' ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "document-authoring",
++   "dossier-map",
+  ]
+
+
+Number of calls: 1
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Respond stage offers no locked tool, and says when it has none
+AssertionError: Respond offers tools that open "not in this release": expected [ 'haq-manager', 'global-ri' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "haq-manager",
++   "global-ri",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx:76:111
+     74|     await waitFor(() => expect(stage(label).getAttribute('data-status'…
+     75|     const ids = toolIds(onNav);
+     76|     expect(ids.filter((id) => !isLaunchSurface(id)), `${label} offers …
+       |                                                                                                               ^
+     77|     // A stage left with nothing says so rather than showing an empty …
+     78|     if (ids.length === 0) expect(screen.getByText('Not in this release…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Lifecycle stage offers no locked tool, and says when it has none
+AssertionError: Lifecycle offers tools that open "not in this release": expected [ 'registrations', …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "registrations",
++   "market-access",
++   "safety-narrative",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx:76:111
+     74|     await waitFor(() => expect(stage(label).getAttribute('data-status'…
+     75|     const ids = toolIds(onNav);
+     76|     expect(ids.filter((id) => !isLaunchSurface(id)), `${label} offers …
+       |                                                                                                               ^
+     77|     // A stage left with nothing says so rather than showing an empty …
+     78|     if (ids.length === 0) expect(screen.getByText('Not in this release…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > the Plan stage offers no locked tool, and says when it has none
+AssertionError: Plan offers tools that open "not in this release": expected [ 'global-ri', …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "global-ri",
++   "precedent-intelligence",
++   "agency-meetings",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx:76:111
+     74|     await waitFor(() => expect(stage(label).getAttribute('data-status'…
+     75|     const ids = toolIds(onNav);
+     76|     expect(ids.filter((id) => !isLaunchSurface(id)), `${label} offers …
+       |                                                                                                               ^
+     77|     // A stage left with nothing says so rather than showing an empty …
+     78|     if (ids.length === 0) expect(screen.getByText('Not in this release…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > never offers the source tracer, which this release does not carry
+AssertionError: expected <button class="btn ghost" …(1)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="btn ghost"
+  style="font-size: 12px; padding: 4px 12px;"
+>
+  Trace a claim to its source 
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-chevron-right"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="m9 18 6-6-6-6"
+    />
+  </svg>
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx:87:63
+     85|     render(<ProjectHome surface={{ id: 'project-home', label: 'Project…
+     86|     await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage…
+     87|     expect(screen.queryByText(/Trace a claim to its source/)).toBeNull…
+       |                                                               ^
+     88|   });
+     89|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx > Project home and the launch scope > a CTD module chip opens the program's documents, not the locked dossier map
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'document-authoring' ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "document-authoring",
++   "dossier-map",
+  ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeLaunchScope.test.tsx:99:19
+     97|     });
+     98|     fireEvent.click(chip);
+     99|     expect(onNav).toHaveBeenCalledWith('document-authoring');
+       |                   ^
+    100|     expect(onNav).not.toHaveBeenCalledWith('dossier-map');
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  00:40:58
+   Duration  1.90s (transform 573ms, setup 143ms, import 707ms, tests 437ms, environment 456ms)
+

@@ -1,0 +1,7 @@
+RED: expected and executed files match 4/4; 48 cases enumerated.
+GREEN: expected and executed files match 4/4; 53 cases enumerated.
+
+server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts
+server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts
+server/services/intelligence/__tests__/regulatory-intelligence-integration.test.ts
+tests/regulatory/regulatory-basis.test.ts

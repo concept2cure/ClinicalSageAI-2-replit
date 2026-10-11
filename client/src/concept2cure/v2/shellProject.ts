@@ -20,13 +20,23 @@
  * per-tab working context, not a durable preference. A different tab may hold
  * a different program open, and a browser restart starting clean is correct.
  *
+ * ── The URL names the open program too (QA 2026-10-08, j1) ───────────────────
+ * The mirror is per tab, so a copied link, a bookmark or a new tab opened
+ * Project home on "No project selected": nothing in the URL said which program
+ * it was. The shell now keeps `?program=<regulatory_programs UUID>` on its URL
+ * while a program is open (`useShellProjectInUrl`, called once by V2App), and
+ * `restoreShellProject` reads it first: a link is an explicit statement of
+ * which program, so it wins over this tab's mirror. Only a program UUID is
+ * ever read from or written to the URL — a legacy numeric id stays in the
+ * mirror, and anything else in the param is ignored.
+ *
  * HONESTY: restore rehydrates the id only — it does not assert the program
  * still exists. Every project-scoped surface already validates by fetching
  * (a deleted program renders as the fetch's honest error/empty state, exactly
  * as it would have mid-session).
  */
 
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 export interface ShellProject {
   id: string | number;
@@ -43,6 +53,11 @@ export interface ShellProject {
 }
 
 const KEY = 'c2c.shell-project';
+
+const PROGRAM_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The search param that names the open program on the shell's URL. */
+export const PROGRAM_URL_PARAM = 'program';
 
 /* Subscribers to the channel, so a React reader (the shell's top bar) can
    re-render when a surface publishes — the window global itself is not
@@ -107,24 +122,85 @@ export function restoreShellProject(): ShellProject | null {
     const live = readGlobal();
     if (live && live.id != null && String(live.id).trim() !== '') return live;
 
-    const raw = sessionStorage.getItem(KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    if (
-      parsed &&
-      typeof parsed === 'object' &&
-      !Array.isArray(parsed) &&
-      (parsed as ShellProject).id != null &&
-      String((parsed as ShellProject).id).trim() !== ''
-    ) {
-      writeGlobal(parsed as ShellProject);
-      return parsed as ShellProject;
+    const mirror = readMirror();
+    /* The URL first: a link names its program explicitly, and is the only
+       channel a new tab, a bookmark or a pasted link has. What the mirror knows
+       about that same program (title, code) is kept; a mirror naming another
+       program contributes nothing to it. */
+    const linked = programIdFromUrl();
+    if (linked) {
+      const same = mirror != null && String(mirror.id).trim().toLowerCase() === linked;
+      const project: ShellProject = same ? mirror : { id: linked };
+      publishShellProject(project);
+      return project;
     }
-    return null;
+    if (!mirror) return null;
+    writeGlobal(mirror);
+    return mirror;
   } catch {
     /* malformed mirror or no storage — start with no selection, never throw */
     return null;
   }
+}
+
+/** This tab's mirror, or null when absent, malformed or id-less. */
+function readMirror(): ShellProject | null {
+  try {
+    const raw = sessionStorage.getItem(KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    return parsed &&
+      typeof parsed === 'object' &&
+      !Array.isArray(parsed) &&
+      (parsed as ShellProject).id != null &&
+      String((parsed as ShellProject).id).trim() !== ''
+      ? (parsed as ShellProject)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The program a URL names (`?program=`), lower-cased, or null. A program UUID only. */
+export function programIdFromUrl(search: string = window.location.search): string | null {
+  try {
+    const v = (new URLSearchParams(search).get(PROGRAM_URL_PARAM) ?? '').trim();
+    return PROGRAM_UUID.test(v) ? v.toLowerCase() : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Make the current URL name the open program: set `?program=` to its UUID, or
+ * drop the param when no program (or a non-program id) is open. Path, other
+ * params and hash are kept, and the history entry is replaced, not added — the
+ * URL is being corrected, not navigated. A no-op when it is already right.
+ */
+export function syncShellProjectToUrl(): void {
+  try {
+    const want = shellProgramId();
+    const url = new URL(window.location.href);
+    const have = url.searchParams.get(PROGRAM_URL_PARAM);
+    if (want ? have === want : have === null) return;
+    if (want) url.searchParams.set(PROGRAM_URL_PARAM, want);
+    else url.searchParams.delete(PROGRAM_URL_PARAM);
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+  } catch {
+    /* no window/history (SSR, test teardown) — nothing to correct */
+  }
+}
+
+/**
+ * The shell's half of the URL channel. Re-applied whenever the path changes
+ * (a navigation writes a bare surface URL) and whenever a surface opens a
+ * different program (which may happen without any navigation).
+ */
+export function useShellProjectInUrl(pathname: string): void {
+  const program = shellProgramId(useShellProject());
+  useEffect(() => {
+    syncShellProjectToUrl();
+  }, [pathname, program]);
 }
 
 /**
@@ -188,8 +264,6 @@ export function readShellProject(): ShellProject | null {
     return null;
   }
 }
-
-const PROGRAM_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * The open project's `regulatory_programs` id, or null when no project is open

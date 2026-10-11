@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "createdAt": "2026-10-06T13:05:34.286265745-04:00",
+  "scanner": "Trivy v0.70.0",
+  "command": "trivy fs --scanners vuln,secret --severity CRITICAL,HIGH --exit-code 1 --list-all-pkgs=false --format json --timeout 3m .",
+  "scope": "Current local working tree; simultaneous Anna workstream edits included. No skip-dirs/skip-files additions. Existing .trivyignore applied unchanged. Fresh /tmp cache after a same-cache mapped-DB runtime fault.",
+  "targets": [
+    {
+      "target": "package-lock.json",
+      "type": "npm",
+      "highCriticalVulnerabilities": 0,
+      "secrets": 0
+    },
+    {
+      "target": "requirements.txt",
+      "type": "pip",
+      "highCriticalVulnerabilities": 0,
+      "secrets": 0
+    },
+    {
+      "target": "server/services/python/requirements.txt",
+      "type": "pip",
+      "highCriticalVulnerabilities": 0,
+      "secrets": 0
+    },
+    {
+      "target": "tests/validation/package-lock.json",
+      "type": "npm",
+      "highCriticalVulnerabilities": 0,
+      "secrets": 0
+    },
+    {
+      "target": "docs/evidence/D6/2026-09-25-p1/IAM-18-6/red/before-fix.txt",
+      "type": null,
+      "highCriticalVulnerabilities": 0,
+      "secrets": 0
+    }
+  ],
+  "highCriticalVulnerabilities": 0,
+  "secrets": 0
+}

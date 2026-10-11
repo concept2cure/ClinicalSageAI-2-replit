@@ -1,0 +1,14 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > resolves only the exact organization/programme/version despite neighboring valid sources 7ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses another tenant programme even when its source key and hash match 3ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses a soft-deleted document with otherwise correct binding and embedded chunks 2ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses a live source whose evaluation programme is soft-deleted 2ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  13:10:52
+   Duration  2.34s (transform 118ms, setup 99ms, import 102ms, tests 1.88s, environment 0ms)
+

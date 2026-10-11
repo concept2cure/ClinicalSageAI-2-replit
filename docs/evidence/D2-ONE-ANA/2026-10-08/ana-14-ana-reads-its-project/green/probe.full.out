@@ -1,0 +1,188 @@
+{"level":30,"time":"2026-10-08T06:34:55.310Z","pid":2383,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T06:34:55.311Z","pid":2383,"hostname":"vm","context":{"mode":"off"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T06:34:55.311Z","pid":2383,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":40,"time":"2026-10-08T06:34:55.692Z","pid":2383,"hostname":"vm","context":{"op":"pool.query","caller":"unknown","queryPreview":"select \"id\", \"project_id\", \"organization_id\", \"regulatory_strategy\", \"target_indication\", \"target_population\", \"primary_endpoints\", \"comparator_devices_or_dr...","enforcement":"off"},"msg":"[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)"}
+[direct getProjectIntelligence(Number("d6160c9f-33d2-4be9-b779-eb27375f6e49"))] THREW in 23ms: code=22P02 cause=invalid input syntax for type integer: "NaN"
+[direct getProjectIntelligence(Number(1))] ok in 16ms -> profile 1
+[enrich turn1 uuid cold] 37ms unavailable=[] failed=[] sources=[]
+[enrich turn1 uuid warm] 29ms unavailable=[] failed=[] sources=[]
+[enrich turn2 uuid cold] 7ms unavailable=[] failed=["ectd"] sources=["doc-ctd_section"]
+[enrich turn2 uuid warm] 4ms unavailable=[] failed=["ectd"] sources=["doc-ctd_section"]
+{"level":40,"time":"2026-10-08T06:34:55.804Z","pid":2383,"hostname":"vm","context":{"op":"pool.query","caller":"server/services/ana-ri/context-enrichment.ts:258:31","queryPreview":"SELECT content, title, confidence_score, importance_level, category FROM project_memory_entries WHERE project_id = $1 AND organization_id = $2 AND category I...","enforcement":"off"},"msg":"[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)"}
+[enrich turn2 int=1 cold] 14ms unavailable=[] failed=[] sources=["project-profile","ectd","doc-ctd_section"]
+[enrich turn2 int=1 warm] 4ms unavailable=[] failed=[] sources=["project-profile","ectd","doc-ctd_section"]
+[enrich greeting int=1 cold] 3ms unavailable=[] failed=[] sources=["project-profile"]
+[enrich greeting int=1 warm] 3ms unavailable=[] failed=[] sources=["project-profile"]
+{"level":40,"time":"2026-10-08T06:34:55.849Z","pid":2383,"hostname":"vm","context":{"error":"Failed query: \n      SELECT id, name, target_date, status\n      FROM program_milestones\n      WHERE program_id IN (\n        SELECT id FROM regulatory_programs\n        WHERE project_id = $1\n          AND organization_id = $2\n      )\n    \nparams: 1,1"},"msg":"[enrichment] Live readiness failed, falling back to memory"}
+[recommendation-engine] Generator failed: DrizzleQueryError: Failed query: 
+      SELECT id, name, target_date, status, progress
+      FROM program_milestones
+      WHERE program_id IN (
+        SELECT id FROM regulatory_programs
+        WHERE project_id = $1
+          AND organization_id = $2
+      )
+      AND status NOT IN ('completed', 'cancelled')
+      AND target_date IS NOT NULL
+      AND target_date < NOW() + INTERVAL '14 days'
+      ORDER BY target_date ASC
+      LIMIT 5
+    
+params: 1,1
+    at NodePgPreparedQuery.queryWithCache (/home/user/ClinicalSageAI-2-replit/node_modules/src/pg-core/session.ts:73:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async <anonymous> (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:20)
+    ... 4 lines matching cause stack trace ...
+    at async enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:554:25)
+    at async settle (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1139:14)
+    at async Promise.all (index 1) {
+  query: '\n' +
+    '      SELECT id, name, target_date, status, progress\n' +
+    '      FROM program_milestones\n' +
+    '      WHERE program_id IN (\n' +
+    '        SELECT id FROM regulatory_programs\n' +
+    '        WHERE project_id = $1\n' +
+    '          AND organization_id = $2\n' +
+    '      )\n' +
+    "      AND status NOT IN ('completed', 'cancelled')\n" +
+    '      AND target_date IS NOT NULL\n' +
+    "      AND target_date < NOW() + INTERVAL '14 days'\n" +
+    '      ORDER BY target_date ASC\n' +
+    '      LIMIT 5\n' +
+    '    ',
+  params: [ 1, 1 ],
+  cause: error: column "project_id" does not exist
+      at /home/user/ClinicalSageAI-2-replit/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async <anonymous> (/home/user/ClinicalSageAI-2-replit/node_modules/src/node-postgres/session.ts:149:14)
+      at async NodePgPreparedQuery.queryWithCache (/home/user/ClinicalSageAI-2-replit/node_modules/src/pg-core/session.ts:71:12)
+      at async <anonymous> (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:20)
+      at async Promise.allSettled (index 2)
+      at async generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:299:19)
+      at async Promise.all (index 0)
+      at async generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:67:31)
+      at async enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:554:25) {
+    length: 111,
+    severity: 'ERROR',
+    code: '42703',
+    detail: undefined,
+    hint: undefined,
+    position: '170',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_relation.c',
+    line: '3722',
+    routine: 'errorMissingColumn'
+  }
+}
+[enrichment] Live recommendations failed, falling back to memory: Failed query: 
+      SELECT id, name, target_date, status
+      FROM program_milestones
+      WHERE program_id IN (
+        SELECT id FROM regulatory_programs
+        WHERE project_id = $1
+          AND organization_id = $2
+      )
+    
+params: 1,1
+[enrich /assess int=1 cold] 51ms unavailable=[] failed=["assess"] sources=["project-profile"]
+[recommendation-engine] Generator failed: DrizzleQueryError: Failed query: 
+      SELECT id, name, target_date, status, progress
+      FROM program_milestones
+      WHERE program_id IN (
+        SELECT id FROM regulatory_programs
+        WHERE project_id = $1
+          AND organization_id = $2
+      )
+      AND status NOT IN ('completed', 'cancelled')
+      AND target_date IS NOT NULL
+      AND target_date < NOW() + INTERVAL '14 days'
+      ORDER BY target_date ASC
+      LIMIT 5
+    
+params: 1,1
+    at NodePgPreparedQuery.queryWithCache (/home/user/ClinicalSageAI-2-replit/node_modules/src/pg-core/session.ts:73:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async <anonymous> (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:20)
+    ... 4 lines matching cause stack trace ...
+    at async enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:554:25)
+    at async settle (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1139:14)
+    at async Promise.all (index 1) {
+  query: '\n' +
+    '      SELECT id, name, target_date, status, progress\n' +
+    '      FROM program_milestones\n' +
+    '      WHERE program_id IN (\n' +
+    '        SELECT id FROM regulatory_programs\n' +
+    '        WHERE project_id = $1\n' +
+    '          AND organization_id = $2\n' +
+    '      )\n' +
+    "      AND status NOT IN ('completed', 'cancelled')\n" +
+    '      AND target_date IS NOT NULL\n' +
+    "      AND target_date < NOW() + INTERVAL '14 days'\n" +
+    '      ORDER BY target_date ASC\n' +
+    '      LIMIT 5\n' +
+    '    ',
+  params: [ 1, 1 ],
+  cause: error: column "project_id" does not exist
+      at /home/user/ClinicalSageAI-2-replit/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async <anonymous> (/home/user/ClinicalSageAI-2-replit/node_modules/src/node-postgres/session.ts:149:14)
+      at async NodePgPreparedQuery.queryWithCache (/home/user/ClinicalSageAI-2-replit/node_modules/src/pg-core/session.ts:71:12)
+      at async <anonymous> (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:20)
+      at async Promise.allSettled (index 2)
+      at async generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:299:19)
+      at async Promise.all (index 0)
+      at async generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:67:31)
+      at async enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:554:25) {
+    length: 111,
+    severity: 'ERROR',
+    code: '42703',
+    detail: undefined,
+    hint: undefined,
+    position: '170',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_relation.c',
+    line: '3722',
+    routine: 'errorMissingColumn'
+  }
+}
+[enrichment] Live recommendations failed, falling back to memory: Failed query: 
+      SELECT id, name, target_date, status
+      FROM program_milestones
+      WHERE program_id IN (
+        SELECT id FROM regulatory_programs
+        WHERE project_id = $1
+          AND organization_id = $2
+      )
+    
+params: 1,1
+{"level":40,"time":"2026-10-08T06:34:55.896Z","pid":2383,"hostname":"vm","context":{"error":"Failed query: \n      SELECT id, name, target_date, status\n      FROM program_milestones\n      WHERE program_id IN (\n        SELECT id FROM regulatory_programs\n        WHERE project_id = $1\n          AND organization_id = $2\n      )\n    \nparams: 1,1"},"msg":"[enrichment] Live readiness failed, falling back to memory"}
+[enrich /assess int=1 warm] 23ms unavailable=[] failed=["assess"] sources=["project-profile"]
+✅ Enhanced Embedding Service initialized
+⚠️ OpenAI API key not configured
+⚠️ Anthropic API key not configured
+✅ Advanced RAG Pipeline initialized
+{"level":20,"time":"2026-10-08T06:34:55.900Z","pid":2383,"hostname":"vm","context":{},"msg":"[ai-gateway] [AI Gateway] Initialized — providers: , strategy: task_based, deterministic: false"}
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 1323ms org=- user=- caller=embedding-provider req=3e44fb17-8360-43ba-bb1c-a7695cb5a640
+[MemoryContextAssembler] Memory layer failed: Project semantic retrieval Connection error.
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 1408ms org=- user=- caller=embedding-provider req=582d919f-dd6c-4f56-adbb-8ce036949933
+[MemoryContextAssembler] Memory layer failed: Client semantic retrieval Connection error.
+[memory projectId="d6160c9f-33d2-4be9-b779-eb27375f6e49"] 1418ms outcomes={"workingMemory":"empty","clientMemory":"error","projectMemory":"error"} mode=none semanticMs=1417 read=0
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 1282ms org=- user=- caller=embedding-provider req=3abb4a69-05c2-477a-a34f-c6a3897f2309
+[AI Gateway Audit] ✗ openai/text-embedding-3-small task=embedding tokens=0 1284ms org=- user=- caller=embedding-provider req=8762e4c8-b21a-4595-a5b9-0ec0ea545be1
+[MemoryContextAssembler] Memory layer failed: Client semantic retrieval Connection error.
+[MemoryContextAssembler] Memory layer failed: Project semantic retrieval Connection error.
+[memory projectId=1] 1290ms outcomes={"workingMemory":"empty","clientMemory":"error","projectMemory":"error"} mode=none semanticMs=1290 read=0

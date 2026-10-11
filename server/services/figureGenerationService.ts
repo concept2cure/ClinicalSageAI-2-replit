@@ -178,7 +178,7 @@ const FIGURE_TYPE_CONFIG: Record<
   org_chart: {
     preferredFormat: 'mermaid',
     promptTemplate: 'Generate an organizational chart',
-    regulatoryGuidance: 'Include reporting lines, key roles per ICH E6(R2).',
+    regulatoryGuidance: 'Include reporting lines, key roles per ICH E6(R3) Principle 10 (roles, tasks and responsibilities clear and documented).',
   },
   gantt_chart: {
     preferredFormat: 'mermaid',

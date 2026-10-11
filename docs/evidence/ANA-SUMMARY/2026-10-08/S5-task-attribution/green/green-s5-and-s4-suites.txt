@@ -1,0 +1,45 @@
+# The S5 tests and the two S4 suites S5 changed, on the final sources; RLS_ENFORCE=off
+ ✓ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > the single in-progress task's id; null with two in progress; null for update_plan, always 64ms
+ ✓ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 1. a step carries the one task in progress at dispatch > before any plan, a step serves no task 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-task-attribution.test.ts > 3. task ids across five update_plan calls > hold for each task while it is in the plan; a title removed and added again is a new task 10ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 1. (client half) the same rows live and from the record > rows built from the live frames equal the rows built from the /summary payload 168ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Recorded", with the hash and Download, only for a verdict that passed on this read 68ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Record could not be verified" for a verdict that failed, never "Recorded" 37ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Not recorded" with no record 35ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Recording…" while the confirm waits run, so "Not recorded" never flashes 28ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > declined 11ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > no answer 7ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > authorised, then failed 7ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > a step a sealed timeline announced and never finished says so 21ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > the record's end: cancelled steps keep their sentence, and the turn closes on "Stopped." 8ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > a lost connection reads "Stopped: this page lost its connection." with Continue 260ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > a turn the round limit stopped closes on its stop line, with Continue 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > the record's own end, when it says the page left, reads the same 0ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > notes and the live view > a note reads "AnA's words" once the answer is checked, and is never counted 38ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > notes and the live view > while she works, a running step reads running and "Working…" closes the list 16ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > her plan > a plan update that went through is its task rows, not a step row 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > her plan > a plan update that failed stays a row, with its sentence 0ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > her plan > a live turn before its first event is working, not a turn that ran nothing 17ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > a turn's Summary button opens it, beside the folded line and beside the live phase 111ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > a host that shows no Summary has no button 17ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > on a phone it is a modal dialog titled "Summary" that Escape closes 71ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a task completed while both of its steps failed carries "none of its 2 steps succeeded" 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with no steps carries "No steps recorded for this task", not the failure fact 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with one step that failed and one that succeeded carries neither 0ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > Added and Started rows carry no fact 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > the fact is visible on the row, without opening it 116ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > lists the plan as it stood at that moment, and the steps attributed to the task 269ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > each task row lists only the steps attributed to that task 0ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > the timeline frames equal the record's sealed timeline, notes resolved 75ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 1. the same data live and sealed > a step's events say only what a row says: a handle, never the tool's name or its id 33ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a round with prose and tool calls yields exactly one note, before its steps; a round with none yields none 12ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > no note is staging text: a round with no prose is staged as "(Ran: …)" for the model, never noted 13ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a summarized thinking block is reasoning, never a note 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > a progress-update note ProgressNotes accepts is a note; its placeholder for interrupted work is not 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 2. notes > decision 3 (A): a thinking turn's tool rounds ask for notes as her words, the closing round does not 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > declined 28ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > no answer 31ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 7. held and failed rows carry heldBack and the stepMessage sentence > authorised, then failed 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-turn-timeline.test.ts > 8. stopped after cancel > a turn cancelled mid-round seals its cancelled step events 8ms
+ Test Files  4 passed (4)
+      Tests  42 passed (42)

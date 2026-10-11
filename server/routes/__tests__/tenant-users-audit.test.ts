@@ -23,6 +23,8 @@ const h = vi.hoisted(() => ({
   auditFails: false,
   targetRole: 'member' as string | null,
   invalidated: [] as Array<[number, number]>,
+  /** The organisation's administrator rows, as the last-administrator lock reads them. */
+  administrators: [] as number[],
 }));
 
 async function fakeQuery(sql: string, params: unknown[] = []) {
@@ -31,6 +33,10 @@ async function fakeQuery(sql: string, params: unknown[] = []) {
   // authorizeOrgAccess: the caller administers the target organisation.
   if (/^SELECT role FROM organization_users WHERE user_id = \$1 AND organization_id = \$2/i.test(text)) {
     return { rows: [{ role: 'admin' }], rowCount: 1 };
+  }
+  // The organisation's administrators, locked for the change (last-administrator guard).
+  if (/^SELECT user_id FROM organization_users WHERE organization_id = \$1 AND role IN \('admin', 'owner'\)/i.test(text)) {
+    return { rows: h.administrators.map(user_id => ({ user_id })), rowCount: h.administrators.length };
   }
   // The member's current role, locked for the change.
   if (/^SELECT role FROM organization_users WHERE organization_id = \$1 AND user_id = \$2/i.test(text)) {
@@ -96,6 +102,7 @@ beforeEach(async () => {
   h.auditFails = false;
   h.targetRole = 'member';
   h.invalidated = [];
+  h.administrators = [CALLER];
   const mod = await import('../tenant-users');
   app = express();
   app.use(express.json());
@@ -236,5 +243,93 @@ describe('DELETE /:organizationId/:userId — a removal is recorded with its rea
     expect(written(/^ROLLBACK/)).toHaveLength(1);
     expect(written(/^COMMIT/)).toHaveLength(0);
     expect(h.invalidated).toHaveLength(0);
+  });
+});
+
+/**
+ * QA 2026-10-08 (j9, finding 1): the member drawer now offers role change and
+ * removal. An organisation must never be left with no administrator — not by a
+ * platform operator acting on the last one, and not by two administrators
+ * demoting each other at the same moment (each request sees itself as an
+ * administrator; only a lock on the organisation's administrator rows, taken in
+ * the change's transaction, makes the second one see the first one's change).
+ */
+describe('the last administrator cannot be demoted or removed', () => {
+  const ONLY_ADMIN = () => {
+    h.targetRole = 'admin';
+    h.administrators = [MEMBER];
+  };
+
+  it('PATCH: 409 LAST_ADMINISTRATOR, a sentence that says nothing changed, nothing written or recorded', async () => {
+    ONLY_ADMIN();
+    const res = await patch({ role: 'member', reason: 'Access review' });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('LAST_ADMINISTRATOR');
+    expect(res.body.message).toMatch(/only administrator/i);
+    expect(res.body.message).toMatch(/Nothing was changed/);
+    expect(written(/^UPDATE organization_users/i)).toHaveLength(0);
+    expect(h.auditCalls).toHaveLength(0);
+    expect(h.invalidated).toHaveLength(0);
+  });
+
+  it('DELETE: 409 LAST_ADMINISTRATOR and nothing removed or recorded', async () => {
+    ONLY_ADMIN();
+    const res = await remove({ reason: 'Left the company' });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('LAST_ADMINISTRATOR');
+    expect(written(/^DELETE FROM organization_users/i)).toHaveLength(0);
+    expect(h.auditCalls).toHaveLength(0);
+    expect(h.invalidated).toHaveLength(0);
+  });
+
+  it('locks the administrator rows FOR UPDATE on the change transaction, before the change', async () => {
+    h.targetRole = 'admin';
+    h.administrators = [CALLER, MEMBER];
+    const res = await patch({ role: 'member', reason: 'Access review' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const order = h.log
+      .filter(s => /^(BEGIN|COMMIT|UPDATE organization_users|SELECT user_id FROM organization_users)/i.test(s))
+      .map(s => (/^SELECT user_id/i.test(s) ? (/FOR UPDATE$/i.test(s) ? 'LOCK_ADMINS' : 'READ_ADMINS') : s.split(' ')[0]));
+    expect(order).toEqual(['BEGIN', 'LOCK_ADMINS', 'UPDATE', 'COMMIT']);
+  });
+
+  it('with another administrator left, an administrator can be demoted and removed', async () => {
+    h.targetRole = 'admin';
+    h.administrators = [CALLER, MEMBER];
+    expect((await patch({ role: 'viewer', reason: 'Access review' })).status).toBe(200);
+    expect((await remove({ reason: 'Left the company' })).status).toBe(200);
+  });
+
+  it('promoting a member to administrator is never refused by the guard', async () => {
+    h.administrators = [];
+    const res = await patch({ role: 'admin', reason: 'Second administrator' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+  });
+});
+
+/** P-18 (2026-10-08): the signing roles are assigned like any role — with a reason, and recorded. */
+describe('assigning approver and reviewer', () => {
+  it.each(['approver', 'reviewer'])('%s: assigned with a reason, recorded with the role before and after', async (role) => {
+    const res = await patch({ role, reason: 'Named signer for the IND' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(h.auditCalls).toHaveLength(1);
+    expect(h.auditCalls[0].entry).toMatchObject({
+      action: 'member_role_changed',
+      details: { previousRole: 'member', newRole: role, reason: 'Named signer for the IND' },
+    });
+  });
+
+  it.each(['approver', 'reviewer'])('%s: refused without a reason (400 REASON_REQUIRED), nothing written', async (role) => {
+    const res = await patch({ role });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('REASON_REQUIRED');
+    expect(written(/^UPDATE organization_users/i)).toHaveLength(0);
+    expect(h.auditCalls).toHaveLength(0);
+  });
+
+  it('a role outside the assignable list is still refused', async () => {
+    const res = await patch({ role: 'owner', reason: 'r' });
+    expect(res.status).toBe(400);
+    expect(written(/^UPDATE organization_users/i)).toHaveLength(0);
   });
 });

@@ -1,0 +1,24 @@
+# M7-fact-on-every-task-row: client/src/concept2cure/v2/turnSummaryRows.ts
+--- /tmp/s5-mut.bak	2026-10-08 15:35:48.627497149 +0000
++++ client/src/concept2cure/v2/turnSummaryRows.ts	2026-10-08 15:35:48.630854624 +0000
+@@ -238,7 +238,7 @@
+ 
+ function taskRow(e: TaskEvent, ctx: RowContext): TaskRow {
+   const served = ctx.byTask.get(e.task) ?? [];
+-  const fact = e.change === 'completed' ? completedTaskFact(served.filter((s) => s.first.seq < e.seq)) : undefined;
++  const fact = true ? completedTaskFact(served.filter((s) => s.first.seq < e.seq)) : undefined;
+   return {
+     kind: 'task',
+     key: `t-${e.seq}`,
+
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a task completed while both of its steps failed carries "none of its 2 steps succeeded" 2ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with no steps carries "No steps recorded for this task", not the failure fact 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with one step that failed and one that succeeded carries neither 0ms
+ × client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > Added and Started rows carry no fact 8ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > the fact is visible on the row, without opening it 84ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > lists the plan as it stood at that moment, and the steps attributed to the task 197ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > each task row lists only the steps attributed to that task 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ …(6) ] to deeply equal [ undefined, undefined, …(4) ]
+      Tests  1 failed | 6 passed (7)
+restored: md5 OK

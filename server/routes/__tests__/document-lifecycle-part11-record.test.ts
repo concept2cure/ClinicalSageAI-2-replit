@@ -17,9 +17,18 @@
 import express from 'express';
 import request from 'supertest';
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../db/pglite-harness';
 import { createDocumentLifecycleRouter } from '../document-lifecycle';
+
+// P-27 (2026-10-08): signing authority is the platform's one policy
+// (checkSigningAuthority), which reads the signer's membership role through
+// resolveSignerOrgRole on the process database. This router runs on the
+// harness, where every seeded user is an admin of ORG (beforeAll); the stand-in
+// answers that, and nothing for any other organization.
+vi.mock('../../services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async (_userId: number, organizationId: number) => (organizationId === 1 ? 'admin' : null),
+}));
 import type { SignerCredentials, SignerReverification } from '../../services/part11/reverify-signer';
 
 const ORG = 1;

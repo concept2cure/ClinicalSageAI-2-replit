@@ -1,0 +1,31 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > states the reason, offers no "Try again", and "Choose another filing" returns to step 1 without sending again 564ms
+   → expected 'The project was not createdHealth Can…' to contain 'This filing is not offered here'
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > any other failure keeps "Try again" 342ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > states the reason, offers no "Try again", and "Choose another filing" returns to step 1 without sending again
+AssertionError: expected 'The project was not createdHealth Can…' to contain 'This filing is not offered here'
+
+Expected: "This filing is not offered here"
+Received: "The project was not createdHealth Canada has no governed NDA outline here, so a project would have nothing to author and no channel to send it.Try again"
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx:61:33
+     59|     fireEvent.click(await advanceToCreate());
+     60|     const outcome = await screen.findByTestId('new-project-outcome');
+     61|     expect(outcome.textContent).toContain('This filing is not offered …
+       |                                 ^
+     62|     expect(outcome.textContent).toContain(REASON);
+     63|     expect(screen.queryByRole('button', { name: /try again/i })).toBeN…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  17:14:26
+   Duration  3.25s (transform 796ms, setup 277ms, import 913ms, tests 911ms, environment 907ms)
+

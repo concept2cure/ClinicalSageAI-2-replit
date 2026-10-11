@@ -6,7 +6,8 @@
  * burst of requests could pile up unbounded concurrent calls — driving cost,
  * latency, and provider rate-limit cascades. This semaphore bounds the number
  * of concurrent outbound calls; excess callers queue (FIFO) until a slot frees
- * up, so every request still completes, just not all at once.
+ * up. An abort removes waiting work and prevents its dispatch; work already
+ * running retains its permit until it settles.
  *
  * Tunable via AI_GATEWAY_MAX_CONCURRENCY (default 20). <= 0 / unset → default.
  */
@@ -19,12 +20,26 @@ export class Semaphore {
     this.permits = Math.max(1, maxConcurrent);
   }
 
-  private acquire(): Promise<void> {
+  private acquire(signal?: AbortSignal): Promise<void> {
+    signal?.throwIfAborted();
     if (this.permits > 0) {
       this.permits--;
       return Promise.resolve();
     }
-    return new Promise<void>(resolve => this.queue.push(resolve));
+    return new Promise<void>((resolve, reject) => {
+      const grant = () => {
+        signal?.removeEventListener('abort', onAbort);
+        resolve();
+      };
+      const onAbort = () => {
+        const index = this.queue.indexOf(grant);
+        if (index !== -1) this.queue.splice(index, 1);
+        signal?.removeEventListener('abort', onAbort);
+        reject(signal?.reason);
+      };
+      this.queue.push(grant);
+      signal?.addEventListener('abort', onAbort, { once: true });
+    });
   }
 
   private release(): void {
@@ -37,10 +52,12 @@ export class Semaphore {
     }
   }
 
-  /** Run `fn` while holding a permit; the permit is always released, even on throw. */
-  async run<T>(fn: () => Promise<T>): Promise<T> {
-    await this.acquire();
+  /** Cancel waiting work; dispatched work keeps its permit until it settles. */
+  async run<T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
+    await this.acquire(signal);
     try {
+      // A stop may land after a permit handoff but before this continuation.
+      signal?.throwIfAborted();
       return await fn();
     } finally {
       this.release();

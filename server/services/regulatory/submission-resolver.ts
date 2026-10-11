@@ -32,6 +32,7 @@ import {
 import { listGateways, type GatewayName, type Region as GatewayRegion } from '../submission-gateways';
 import { REGION_IDENTITY } from '../../../shared/regulatory/region-identity';
 import { submissionChannelFor, type SubmissionChannel } from './registry/submittabilityCoverage';
+import { channelSupportFor, module1StatementForAgency } from './market-support';
 
 /** The three regions the build+submit stack has region-correct support for. */
 export const CORE_REGIONS: Region[] = ['US', 'EU', 'JP'];
@@ -69,9 +70,9 @@ export interface SubmissionPlanRegion {
    * this resolver's scope.
    */
   channel: SubmissionChannel | null;
-  /** A region-correct dossier can be assembled (region Module 1 backbone exists). */
+  /** A region-correct dossier can be assembled: Module 1 built to the agency's own headings (market-support.ts). */
   buildSupported: boolean;
-  /** A configured gateway exists to transmit to this region. */
+  /** A configured gateway exists to transmit to this region, and its adapter does not refuse. */
   submitSupported: boolean;
   notes: string[];
 }
@@ -105,7 +106,7 @@ const METHODOLOGY = [
   'For each target region the regional equivalent is the registry entry matching the same applicationFamily and the product class (e.g. a biologic marketing application maps to US BLA, EU MAA, JP JNDA).',
   'Module 1 path + validation profile come from the regional packager / validation profiles; the gateway from the submission-gateways registry.',
   'The channel comes from submissionChannelFor (submittabilityCoverage): a centralised-procedure EMA eCTD filing (MAA, variation, renewal, PSUR/RMP, ASMF) is unconnected (EMA eSubmission Gateway / Web Client — CESP is not accepted for it, and there is no connector); orphan designation, scientific advice, PIP and PRIME requests are unconnected (EMA IRIS); any other EMA filing is unconnected with its channel not modelled; a CTIS filing is portal-only; otherwise the registered gateway.',
-  'buildSupported = a region Module 1 backbone exists (FDA/EMA/PMDA); submitSupported = the channel is a registered gateway.',
+  'buildSupported = Module 1 is built to the agency\'s own headings (market-support.ts; today FDA only — EMA and PMDA are filed flat); submitSupported = the channel is a registered gateway whose adapter does not refuse.',
 ];
 
 function availableGatewaySet(): Set<string> {
@@ -169,12 +170,31 @@ function channelFor(entry: RegulatoryApplicationType, gateways: Set<string>): Re
     return { channel, gateway: null, submitSupported: false, note: `No registered gateway for ${entry.agency}.` };
   }
   const gateway = { region: channel.region, name: channel.name };
+  /* A registered gateway whose adapter refuses every transmit (PMDA) is not a
+     way to submit: market-support.ts judges the channel against the adapters'
+     own refusals (FILING_SPINE.md F19). */
+  const judged = channelSupportFor(entry);
+  if (judged.state === 'refused') {
+    return { channel, gateway, submitSupported: false, note: `Not sent: ${judged.detail}` };
+  }
   const submitSupported = gateways.has(`${gateway.region}:${gateway.name}`);
   return {
     channel,
     gateway,
     submitSupported,
     note: submitSupported ? null : `No registered gateway for ${entry.agency}.`,
+  };
+}
+
+/** Region-correct build: Module 1 built to the agency's own headings
+ *  (market-support.ts, FILING_SPINE.md F19). A backbone file name is not that:
+ *  EMA's and PMDA's Module 1 leaves are filed flat. */
+function buildSupportFor(agency: string): { buildSupported: boolean; note: string | null } {
+  const m1 = module1StatementForAgency(agency);
+  if (m1?.shape === 'structured') return { buildSupported: true, note: null };
+  return {
+    buildSupported: false,
+    note: m1 ? `Build not region-correct for ${agency}: ${m1.detail}.` : `No region Module 1 backbone for ${agency}.`,
   };
 }
 
@@ -234,9 +254,9 @@ export function resolveSubmissionPlan(input: ResolveInput): SubmissionPlan {
       };
     }
     const ch = channelFor(entry, gateways);
-    const buildSupported = AGENCY_MODULE1[entry.agency] != null;
+    const { buildSupported, note: buildNote } = buildSupportFor(entry.agency);
     const submitSupported = ch.submitSupported;
-    if (!buildSupported) notes.push(`No region Module 1 backbone for ${entry.agency}; build uses the common CTD layout.`);
+    if (buildNote) notes.push(buildNote);
     if (ch.note) notes.push(ch.note);
     return {
       region,
@@ -317,7 +337,7 @@ export function submissionCoverageMatrix(
           total += 1;
           return { region, agency: null, filingId: null, filingCode: null, buildSupported: false, submitSupported: false };
         }
-        const buildSupported = AGENCY_MODULE1[entry.agency] != null;
+        const { buildSupported } = buildSupportFor(entry.agency);
         const submitSupported = channelFor(entry, gateways).submitSupported;
         total += 1;
         if (buildSupported && submitSupported) coveredCount += 1;

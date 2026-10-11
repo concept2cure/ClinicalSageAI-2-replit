@@ -22,6 +22,8 @@
  * @module server/services/ana/tool-outcome
  */
 
+import { refusalOf } from './tool-trace.js';
+
 /** What a step returned instead of a usable result. */
 export type ShortfallKind = 'empty' | 'unavailable' | 'needs_input';
 
@@ -107,8 +109,9 @@ function resultObject(resultContent: string): Record<string, unknown> | null {
 export function shortfallOf(resultContent: string): Shortfall | null {
   const r = resultObject(resultContent);
   if (!r) return proseShortfall(resultContent);
-  // A refusal is the loop's failure path, not a shortfall.
-  if (typeof r.error === 'string' && r.error.trim()) return null;
+  // A refusal is the loop's failure path, not a shortfall (refusalOf: `error`,
+  // `refused`, or `ok: false` without the work it judges).
+  if (refusalOf(resultContent)) return null;
   const detail = detailOf(r);
   const declared = statusShortfall(r.status) ?? (r.unavailable === true ? 'unavailable' : null);
   if (declared) return { kind: declared, ...(detail && { detail }) };

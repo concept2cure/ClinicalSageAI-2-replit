@@ -1,0 +1,49 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > placing the same document into the same section again returns the existing leaf and writes nothing 112ms
+   → expected 2 to be 1 // Object.is equality
+ × server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > the same document under a different lifecycle operation is refused by name, and nothing is written 31ms
+   → expected { id: 4, sequenceId: 1, …(19) } to be an instance of SubmissionError
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a DIFFERENT document may still be placed into an occupied section: the section may hold several New leaves 32ms
+ ✓ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > a document whose earlier leaf was removed is placed again as a new leaf (the check reads only live leaves) 68ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > placing the same document into the same section again returns the existing leaf and writes nothing
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts:111:22
+    109|     const again = await placeVault('3.2.S.4.1', DOC_1);
+    110|
+    111|     expect(again.id).toBe(first.id);
+       |                      ^
+    112|     expect(again.unchanged).toBe(true);
+    113|     expect(again.auditTrail).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts > one live placement per document per section > the same document under a different lifecycle operation is refused by name, and nothing is written
+AssertionError: expected { id: 4, sequenceId: 1, …(19) } to be an instance of SubmissionError
+ ❯ server/services/submission-service/__tests__/leaf-section-occupancy.pglite.test.ts:123:17
+    121|     const err = await placeVault('3.2.S.4.2', DOC_1, 'delete').catch((…
+    122|
+    123|     expect(err).toBeInstanceOf(SubmissionError);
+       |                 ^
+    124|     expect(err.code).toBe('ALREADY_PLACED');
+    125|     expect(err.message).toContain(String(first.id));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  01:21:48
+   Duration  8.92s (transform 2.27s, setup 106ms, import 3.35s, tests 5.07s, environment 0ms)
+

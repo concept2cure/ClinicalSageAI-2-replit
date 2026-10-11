@@ -62,6 +62,9 @@ const BOGUS_TABLE = 'coauthor_doccuments';
 
 beforeEach(() => {
   selectChain.mockReset();
+  // Reads after the queued ones (the same-document check, which runs under the
+  // sequence lock) find no live leaf: an unqueued select answers no rows.
+  selectChain.mockResolvedValue([]);
   executeChain.mockReset();
   poolQuery.mockReset();
   insertValues.mockReset();

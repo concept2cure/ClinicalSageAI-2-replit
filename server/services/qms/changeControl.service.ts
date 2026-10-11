@@ -141,16 +141,43 @@ export async function createChange(orgId: number, p: {
   return rows[0];
 }
 
-export async function listChanges(orgId: number, opts: { status?: string; changeType?: string } = {}): Promise<ChangeControlRow[]> {
+/**
+ * The stages in which a change's implementation is not finished: it is late
+ * when its target implementation date has passed in any of them. Verification
+ * means implementation is done (transitionChange stamps implemented_at on the
+ * way in); closed, rejected and cancelled are over.
+ *
+ * QA walk 2026-10-08 (J8): the register's "Overdue · Past target date" tile
+ * counted approved and in-implementation rows only, so a proposed change and a
+ * change still under assessment, both past their target, were "on schedule";
+ * and the row flags were computed in the browser against a hard-coded
+ * '2026-07-24'. One predicate now serves the tile and the rows, judged against
+ * the database's CURRENT_DATE.
+ */
+export const IMPLEMENTATION_UNFINISHED_STATES = ['proposed', 'under_assessment', 'approved', 'in_implementation'] as const;
+const IMPLEMENTATION_OVERDUE_SQL =
+  `(status IN (${IMPLEMENTATION_UNFINISHED_STATES.map((s) => `'${s}'`).join(',')})` +
+  ` AND target_implementation_date IS NOT NULL AND target_implementation_date < CURRENT_DATE)`;
+
+/** A register row with the server-computed overdue flag. */
+export type ChangeControlListRow = ChangeControlRow & { implementation_overdue: boolean };
+
+export async function listChanges(orgId: number, opts: { status?: string; changeType?: string } = {}): Promise<ChangeControlListRow[]> {
   const args: unknown[] = [orgId];
   let where = 'organization_id = $1 AND deleted_at IS NULL';
   if (opts.status) { args.push(opts.status); where += ` AND status = $${args.length}`; }
   if (opts.changeType) { args.push(opts.changeType); where += ` AND change_type = $${args.length}`; }
-  const { rows } = await pool.query<ChangeControlRow>(
-    `SELECT * FROM qms_change_controls WHERE ${where} ORDER BY created_at DESC`,
+  const { rows } = await pool.query<ChangeControlListRow>(
+    `SELECT *, ${IMPLEMENTATION_OVERDUE_SQL} AS implementation_overdue
+       FROM qms_change_controls WHERE ${where} ORDER BY created_at DESC`,
     args,
   );
   return rows;
+}
+
+/** The lifecycle moves CHANGE_TRANSITIONS allows from a state (approval among them: it is the signed route). */
+export function nextStatesOf(status: string): ChangeState[] {
+  return CHANGE_TRANSITIONS[status as ChangeState] ?? [];
 }
 
 export async function getChange(orgId: number, id: number): Promise<ChangeControlRow | null> {
@@ -203,7 +230,7 @@ export async function updateChange(orgId: number, id: number, p: {
  */
 export async function transitionChange(orgId: number, id: number, to: ChangeState, actor: {
   userId?: number | null; effectivenessReview?: string | null;
-}): Promise<ChangeControlRow | null> {
+}): Promise<(ChangeControlRow & { from_status: ChangeState }) | null> {
   const change = await getChange(orgId, id);
   if (!change) return null;
   const from = change.status as ChangeState;
@@ -249,7 +276,8 @@ export async function transitionChange(orgId: number, id: number, to: ChangeStat
       RETURNING *`,
     args,
   );
-  return rows[0] ?? null;
+  // The state it left, for the audit row of the move (the row returned is the new one).
+  return rows[0] ? { ...rows[0], from_status: from } : null;
 }
 
 /** Soft-delete a change (and, via ON DELETE CASCADE on hard-delete only, its
@@ -271,6 +299,26 @@ export async function listLinks(orgId: number, changeId: number): Promise<Change
     [orgId, changeId],
   );
   return rows;
+}
+
+/**
+ * The links of every listed change in ONE org-scoped query, keyed by change id
+ * (a change with none is absent). The register read returned no links at all,
+ * so every change showed 0 and "No linked records yet" (QA walk 2026-10-08).
+ */
+export async function listLinksForChanges(orgId: number, changeIds: number[]): Promise<Map<number, ChangeLinkRow[]>> {
+  const out = new Map<number, ChangeLinkRow[]>();
+  if (changeIds.length === 0) return out;
+  const { rows } = await pool.query<ChangeLinkRow>(
+    `SELECT * FROM qms_change_links WHERE organization_id = $1 AND change_id = ANY($2::int[])
+      ORDER BY change_id, created_at ASC, id ASC`,
+    [orgId, changeIds],
+  );
+  for (const r of rows) {
+    const key = Number(r.change_id);
+    out.set(key, [...(out.get(key) ?? []), r]);
+  }
+  return out;
 }
 
 export async function addLink(orgId: number, changeId: number, p: {
@@ -307,7 +355,7 @@ export interface ChangeControlSummary {
   inImplementation: number;
   awaitingVerification: number; // verification
   closed: number;
-  overdueImplementation: number; // approved/in_implementation past target date
+  overdueImplementation: number; // past target date, implementation unfinished (IMPLEMENTATION_UNFINISHED_STATES)
   byStatus: Record<string, number>;
 }
 
@@ -315,11 +363,7 @@ export async function changeControlSummary(orgId: number): Promise<ChangeControl
   const { rows } = await pool.query<{ status: string; n: string; overdue: string }>(
     `SELECT status,
             COUNT(*) AS n,
-            COUNT(*) FILTER (
-              WHERE status IN ('approved','in_implementation')
-                AND target_implementation_date IS NOT NULL
-                AND target_implementation_date < CURRENT_DATE
-            ) AS overdue
+            COUNT(*) FILTER (WHERE ${IMPLEMENTATION_OVERDUE_SQL}) AS overdue
        FROM qms_change_controls
       WHERE organization_id = $1 AND deleted_at IS NULL
       GROUP BY status`,

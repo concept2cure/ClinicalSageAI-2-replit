@@ -1,0 +1,103 @@
+✔ upgrade binding matches the two live CI commands exactly (1.646684ms)
+✔ upgrade record retains the live replay result and omits unrelated steps (2.285717ms)
+✔ upgrade binding refuses a missing live step: Deploy migration succeeds on the provisioned database (1.18667ms)
+✖ upgrade binding refuses ambiguous records (success first): Deploy migration succeeds on the provisioned database (1.097765ms)
+✖ upgrade binding refuses ambiguous records (failure first): Deploy migration succeeds on the provisioned database (0.658263ms)
+✖ upgrade binding refuses an incomplete record carrying success: Deploy migration succeeds on the provisioned database (0.571071ms)
+✔ upgrade binding refuses a missing live step: Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.469188ms)
+✖ upgrade binding refuses ambiguous records (success first): Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.465742ms)
+✖ upgrade binding refuses ambiguous records (failure first): Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.526624ms)
+✖ upgrade binding refuses an incomplete record carrying success: Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.805154ms)
+✔ upgrade binding emits failure honestly (0.922591ms)
+✔ upgrade binding emits timed_out honestly (0.678193ms)
+✔ upgrade binding emits skipped honestly (0.494265ms)
+✔ upgrade binding emits cancelled honestly (0.33859ms)
+✔ upgrade binding emits null honestly (0.27185ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 9
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 138.504465
+
+✖ failing tests:
+
+test at tests/release-evidence/assemble-input.test.mjs:157:5
+✖ upgrade binding refuses ambiguous records (success first): Deploy migration succeeds on the provisioned database (1.097765ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:163:7)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/release-evidence/assemble-input.test.mjs:157:5
+✖ upgrade binding refuses ambiguous records (failure first): Deploy migration succeeds on the provisioned database (0.658263ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:163:7)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/release-evidence/assemble-input.test.mjs:166:3
+✖ upgrade binding refuses an incomplete record carrying success: Deploy migration succeeds on the provisioned database (0.571071ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:169:5)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/release-evidence/assemble-input.test.mjs:157:5
+✖ upgrade binding refuses ambiguous records (success first): Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.465742ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:163:7)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/release-evidence/assemble-input.test.mjs:157:5
+✖ upgrade binding refuses ambiguous records (failure first): Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.526624ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:163:7)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tests/release-evidence/assemble-input.test.mjs:166:3
+✖ upgrade binding refuses an incomplete record carrying success: Deploy migration is idempotent, and a replay rebuilds nothing (every release re-runs it) (0.805154ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/tests/release-evidence/assemble-input.test.mjs:169:5)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }

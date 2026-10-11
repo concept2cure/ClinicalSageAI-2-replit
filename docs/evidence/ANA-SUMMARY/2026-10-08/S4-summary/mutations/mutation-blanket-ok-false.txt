@@ -1,0 +1,13 @@
+### M8 every ok:false is a refusal, a check's own verdict too (no VERDICT_FIELDS exemption)
+# mutation in server/services/ana/tool-trace.ts:  const notOk = r.ok === false && !VERDICT_FIELDS.some(f => f in r);  ->  const notOk = r.ok === false && VERDICT_FIELDS.length > 0;
+ ✓ server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts > { ok: false, reason } through the stream route > is a failed step, with that sentence on its record, in the model's note and in the telemetry
+ × server/routes/ana-ri/__tests__/stream-ok-false-refusal.test.ts > { ok: false, reason } through the stream route > control: a check whose ok is its verdict stays a step that succeeded
+ ✓ server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > reads `reason` as the sentence (document-placement-tools: confirm a filing)
+ ✓ server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > reads `message` when there is no reason (refuseSignatureInChat)
+ ✓ server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > prefers the reason over an instruction to the model (extraction failed)
+ ✓ server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > a refusal that gave no sentence still is one, in a plain sentence of the server
+ ✓ server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > `error` still wins, as before
+ × server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > a check whose ok is its verdict is not a refusal: it did the check
+ ✓ server/services/ana/__tests__/tool-refusal-ok-false.test.ts > refusalOf: ok:false is a refusal, in its own words > is null for what never refused
+      Tests  2 failed | 7 passed (9)
+# restored: md5 OK

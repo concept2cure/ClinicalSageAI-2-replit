@@ -1,0 +1,54 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'THREAD_FORBIDDEN' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > releases a stalled headers read and ignores its late result
+[useAnaChat] loadThread failed: History read aborted
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'GATEWAY_UNAVAILABLE' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'WEEKLY_LIMIT_EXCEEDED' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > releases a stalled body read and ignores its late result
+[useAnaChat] loadThread failed: History read aborted
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 401 }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 429 }
+[useAnaChat] stream failed: Refused
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > releases a stalled headers read and ignores its late result 25ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > releases a stalled body read and ignores its late result 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts > saved conversation deadlines > clears the deadline after a successful read 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'THREAD_FORBIDDEN' } 19ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'GATEWAY_UNAVAILABLE' } 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'WEEKLY_LIMIT_EXCEEDED' } 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 401 } 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 429 } 3ms
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > clears the previous transcript on switch and blocks a failed selection until retry succeeds
+[useAnaChat] loadThread non-ok: 503
+[useAnaChat] loadThread failed: loadThread 503
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > allows an explicit new conversation after a failed history read
+[useAnaChat] loadThread failed: Offline
+
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps the latest selected thread when an older response arrives last 24ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > keeps loading and refuses send while the newer history is still pending 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > refuses a same-tick send and ignores a superseded response still reading its body 4ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > ignores an obsolete load failure without surfacing an error on the newer selection 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > reset cancels pending history so it cannot replace a newly asked conversation 3ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > thread history request ownership > unmount cancels a history read and ignores its late result 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > clears the previous transcript on switch and blocks a failed selection until retry succeeds 5ms
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts > failed history recovery > allows an explicit new conversation after a failed history read 3ms
+
+ Test Files  3 passed (3)
+      Tests  16 passed (16)
+   Start at  22:11:02
+   Duration  1.18s (transform 715ms, setup 375ms, import 1.02s, tests 117ms, environment 1.49s)
+

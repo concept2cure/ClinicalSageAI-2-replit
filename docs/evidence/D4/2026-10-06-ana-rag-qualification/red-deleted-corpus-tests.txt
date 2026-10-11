@@ -1,0 +1,67 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > resolves only the exact organization/programme/version despite neighboring valid sources 11ms
+ ✓ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses another tenant programme even when its source key and hash match 6ms
+ × server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses a soft-deleted document with otherwise correct binding and embedded chunks 12ms
+   → promise resolved "{ …(3) }" instead of rejecting
+ × server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses a live source whose evaluation programme is soft-deleted 6ms
+   → promise resolved "{ …(3) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses a soft-deleted document with otherwise correct binding and embedded chunks
+AssertionError: promise resolved "{ …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++   "documentId": "cccccccc-cccc-4ccc-8ccc-cccccccccccf",
++   "embedded": true,
+  }
+
+ ❯ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts:65:152
+     63|   });
+     64|   it('refuses a soft-deleted document with otherwise correct binding a…
+     65|     await expect(readEvaluationDocument(pool() as never, { organizatio…
+       |                                                                                                                                                        ^
+     66|   });
+     67|   it('refuses a live source whose evaluation programme is soft-deleted…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts > reviewed source SQL on the actual schema shape > refuses a live source whose evaluation programme is soft-deleted
+AssertionError: promise resolved "{ …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++   "documentId": "cccccccc-cccc-4ccc-8ccc-ccccccccccd0",
++   "embedded": true,
+  }
+
+ ❯ server/eval/rag/__tests__/qualification-corpus-db-contract.test.ts:68:121
+     66|   });
+     67|   it('refuses a live source whose evaluation programme is soft-deleted…
+     68|     await expect(readEvaluationDocument(pool() as never, { organizatio…
+       |                                                                                                                         ^
+     69|   });
+     70| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  13:10:47
+   Duration  2.41s (transform 115ms, setup 87ms, import 89ms, tests 1.94s, environment 0ms)
+

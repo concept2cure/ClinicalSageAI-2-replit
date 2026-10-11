@@ -1,0 +1,6 @@
+# items 3-5: affected suites (placement, Submission Center, workbench, canvas, filing path, vault, authoring, validation explain; server authoring, coauthor and middleware; tests/ui), final tree
+ Test Files  192 passed (192)
+      Tests  1814 passed (1814)
+   Duration  415.97s (transform 14.58s, setup 8.12s, import 118.74s, tests 217.11s, environment 38.83s)
+# npm run typecheck
+tsc exit 0

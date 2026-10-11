@@ -22,10 +22,9 @@ import {
   getAllFamiliesSorted,
 } from '../../../../shared/regulatory/application-families.js';
 import {
-  getSectionBlueprintForEntry,
   getTaskBlueprintForEntry,
 } from '../../../../shared/regulatory/project-bootstrap.js';
-import { getSectionBlueprint } from '../sectionBlueprintCatalog.js';
+import { getResolvedSectionBlueprint } from '../sectionBlueprintCatalog.js';
 import { getTaskBlueprint } from '../taskBlueprintCatalog.js';
 import {
   getTaxonomyTree,
@@ -164,7 +163,7 @@ export function resolve(idOrLegacy: string): ResolveResult | null {
 
   return {
     entry,
-    sectionBlueprint: getSectionBlueprintForEntry(entry),
+    sectionBlueprint: getResolvedSectionBlueprint(entry),
     taskBlueprint: getTaskBlueprintForEntry(entry),
     regionProfile: getRegionProfile(entry.region),
   };
@@ -181,8 +180,7 @@ export async function getBootstrapPreview(registryId: string): Promise<Bootstrap
   // Prefer the dedicated, region-specific section blueprint (Canada, Japan, EU,
   // China, Brazil, India, Australia, US NDA/BLA) so the preview matches what
   // project creation actually seeds; fall back to the generic CTD blueprint.
-  const dedicatedSection = await getSectionBlueprint(entry.id);
-  const sectionBlueprint = dedicatedSection ?? getSectionBlueprintForEntry(entry);
+  const sectionBlueprint = getResolvedSectionBlueprint(entry);
   const taskBlueprint = await getTaskBlueprint(entry.id);
   const regionProfile = getRegionProfile(entry.region);
 

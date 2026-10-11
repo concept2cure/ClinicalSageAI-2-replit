@@ -1,0 +1,4 @@
+ ✓ server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts > the digest computes readiness for a program the wizard created > an IND created with submissionTypeId us_ind is evaluated against US_IND 1549ms
+ ✓ server/routes/c2c/__tests__/projects-create-digest-readiness.pglite.test.ts > the digest computes readiness for a program the wizard created > a 510(k) created with submissionTypeId us_510k is evaluated against US_510K 60ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)

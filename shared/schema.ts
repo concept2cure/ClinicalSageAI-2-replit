@@ -18162,7 +18162,7 @@ export type PlatformRoleGrant = InferSelectModel<typeof platformRoleGrants>;
  *   "Where was this data used?" (downstream)
  *   "What justified this content?" (evidence basis)
  *
- * Complies with 21 CFR Part 11 §11.10(e) and ICH E6(R3) §5.5.3
+ * Complies with 21 CFR Part 11 §11.10(e) and ICH E6(R3) Annex 1 §4.3 (computerised systems)
  */
 export const dataLineageRecords = pgTable('data_lineage_records', {
   id: serial('id').primaryKey(),

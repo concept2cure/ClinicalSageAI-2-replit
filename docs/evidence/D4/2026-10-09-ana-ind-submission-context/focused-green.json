@@ -1,0 +1,35 @@
+{
+  "sourceCommit": "d2f0b73714bbc3a2966108966ffafd98cb1d4a97",
+  "command": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-ind-submission-context/focused-green-report.json"
+  ],
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "sourceFiles": {
+    "server/services/ana/AnaToolExecutor.ts": {
+      "sha256": "88282bd6cf6002c17ed6e618b47187809395f5e105d2964409d139ed21a32b7b",
+      "gitBlob": "5b41513e3f89a265ddbc237fcf30437924efa67e",
+      "bytes": 1132865
+    },
+    "server/services/ana/draft-submission-context.ts": {
+      "sha256": "7ceec12ce7f48be5528037b8dc4d58cb2f43c29fa1681db699918f1e0e5aa742",
+      "gitBlob": "02e023398861f820267fc2fdcc1f080ea1248465",
+      "bytes": 3344
+    },
+    "server/services/ana/__tests__/batch-draft-submission-context.pglite.test.ts": {
+      "sha256": "865019cb2dce0810ba83c498e960586424993b253171c5a8cc935b67fbb4fd1a",
+      "gitBlob": "09a6b8dc023e0d71c3a5688e3fdc8cee6974f2a6",
+      "bytes": 11689
+    }
+  },
+  "exitCode": 0,
+  "elapsedSeconds": 10.974
+}

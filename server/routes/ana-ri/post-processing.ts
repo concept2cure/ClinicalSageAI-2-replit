@@ -18,7 +18,7 @@ import type { Response } from 'express';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import type { UserRole } from '../../services/ana-ri/persona.js';
 import { buildAssistantMetadata, withTurnEnding, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
-import type { AnaRunPolicy, HumanControlEvent, PolicyHold, TurnStoppedReason } from '../../services/ana/run-status.js';
+import { stoppedTurnReason, type AnaRunPolicy, type HumanControlEvent, type PolicyHold, type TurnStoppedReason } from '../../services/ana/run-status.js';
 import {
   checkEvidenceDiscipline,
   validateResponseStructure,
@@ -301,6 +301,24 @@ export async function persistCollectedDrafts(args: {
   }
 }
 
+
+/**
+ * Save the answer of a turn the person stopped, when the stop ended it before
+ * post-processing could: a Stop that aborts the model call reaches the
+ * stream's error path. It is saved with what had streamed, possibly nothing,
+ * and says it was stopped. Without it the conversation kept the question and
+ * nothing after it, and a reload showed exactly that (QA 2026-10-08, j5).
+ */
+export async function persistStoppedAnswer(
+  threadId: string,
+  streamed: string,
+  // A person's Stop, or the page that lost its connection (S4): the answer says which.
+  stoppedReason: TurnStoppedReason = 'cancelled',
+): Promise<number | null> {
+  const metadata = withTurnEnding(undefined, { stoppedReason }) as Record<string, unknown> | undefined;
+  return saveMessage(threadId, 'assistant', streamed, undefined, undefined, metadata);
+}
+
 /**
  * Run the deferred post-processing flow and close the stream. Never rejects:
  * on any internal failure it falls back to a `post_done` carrying the raw
@@ -418,7 +436,9 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
           await import('../../services/ana-ri/command-executor.js');
         const cmdResult = await processCommandsInResponse(contentForCommandProcessing, cmdCtx);
         executedCommands = [...executedCommands, ...cmdResult.executedCommands];
-        cleanedFullContent = cmdResult.cleanedText ? cmdResult.cleanedText : contentForCommandProcessing;
+        // Empty is valid for a command-only reply: let blocksOnlyAnswer below
+        // explain the real outcome instead of restoring the command JSON.
+        cleanedFullContent = cmdResult.cleanedText;
         if (cmdResult.executedCommands.length > 0) {
           console.info(`[AnA RI Stream] Dispatched ${cmdResult.executedCommands.length} command(s)`);
         }
@@ -449,7 +469,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       verification && verification.check.basis === 'sources' ? groundingResultOf(verification.check) : null;
     const assistantMetadata = withTurnEnding(
       buildAssistantMetadata(toolTrace, streamGrounding, reasoning, humanControls, plan),
-      { stoppedReason, rounds, runPolicy, pendingSteps, policyHolds },
+      { stoppedReason: stoppedTurnReason(stopped, stoppedReason), rounds, runPolicy, pendingSteps, policyHolds },
     ) as Record<string, unknown> | undefined;
 
     // Run persistence concurrent with the synchronous evidence / structure
@@ -459,8 +479,10 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // message carries a hidden metadata record (tool-trace + grounding verdict)
     // so the turn's investigation and self-check survive across turns.
     let assistantMessageId: number | null = null;
+    // A stopped turn is saved even with no text: the empty answer says it was
+    // stopped, so the conversation does not show the question alone.
     const persistPromise: Promise<void> =
-      orgId && threadId && fullContent
+      orgId && threadId && (fullContent || stopped)
         ? saveMessage(
             threadId, 'assistant', finalAssistantContent, undefined, undefined,
             verification ? { ...(assistantMetadata ?? {}), verification } : assistantMetadata,

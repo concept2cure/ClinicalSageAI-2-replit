@@ -1,0 +1,10 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--check"
+  ],
+  "exitCode": 0,
+  "productionSha256": "b68596282503281f4f37aee9be0a48c97c68f19eaeb7abb3e33b0bc0a006fa83",
+  "testSha256": "8476b3e1c83dc7f1305d6ef4817699cbb62f8fae1d7a90cc540c817b273bef57"
+}

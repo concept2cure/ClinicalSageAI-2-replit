@@ -30,7 +30,7 @@ export const ANA_RULE_CATALOG: AnaRuleCatalogEntry[] = [
     domain: 'governance',
     title: 'Scientific integrity safeguard',
     description: 'Blocks content indicating fabrication/falsification intent for submission writing.',
-    regulatoryReferences: ['21 CFR Part 11', 'GCP E6(R2)', 'FDA data integrity guidance'],
+    regulatoryReferences: ['21 CFR Part 11', 'ICH E6(R3) Principle 9', 'FDA data integrity guidance'],
   },
   {
     ruleId: 'sec-identity-required',

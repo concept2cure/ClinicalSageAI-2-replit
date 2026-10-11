@@ -22,6 +22,10 @@
  *                       controls (chat_messages.metadata.policyHolds; row 74)
  *   - dataLineage     — evidence source → content links
  *                       (data_lineage_records targeting the artifact / its thread)
+ *   - provenanceCompleteness — the share of the document's current text whose
+ *                       origin the span lineage records (document_span_lineage,
+ *                       via summarizeDocumentAttribution); the evidence &
+ *                       provenance trace's confidence (P-26)
  *
  * Every satellite query is tenant-scoped and tolerant of a missing/unmigrated
  * table (contributes an empty array), mirroring the AnALedger collector — the
@@ -34,8 +38,10 @@
 import { getPool } from '../../db/runtime.js';
 import { listTurnRecords } from './turn-record-verify.js';
 import { humanControlsOf, policyHoldsOf, type DossierPolicyHold } from './lineage-dossier-holds.js';
+import { loadProvenanceCompleteness, type DossierProvenanceCompleteness } from './lineage-dossier-completeness.js';
 
 export type { DossierPolicyHold } from './lineage-dossier-holds.js';
+export { measureProvenanceCompleteness, type DossierProvenanceCompleteness } from './lineage-dossier-completeness.js';
 import {
   collectArtifactLedger,
   type ArtifactLedger,
@@ -212,6 +218,12 @@ export interface DocumentLineageDossier {
    */
   policyHoldsUnreadable?: number;
   dataLineage: DossierDataLineage[];
+  /**
+   * The document's measured provenance completeness. Null when the span
+   * lineage or the document's text could not be read — not measured, never a
+   * zero. Absent from dossiers assembled before this field.
+   */
+  provenanceCompleteness?: DossierProvenanceCompleteness | null;
   /**
    * The retained turn records of the document's conversation, oldest first.
    * Null when the store could not be read — never an empty list standing in
@@ -647,7 +659,7 @@ export async function buildDocumentLineageDossier(
   const artifactPk = ledger.artifact.artifactPk;
   const threadId = await loadThreadId(artifactId, organizationId);
 
-  const [versionHistory, decisionResult, provenanceEvents, turnRecords, dataLineage, retainedTurnRecords] =
+  const [versionHistory, decisionResult, provenanceEvents, turnRecords, dataLineage, retainedTurnRecords, provenanceCompleteness] =
     await Promise.all([
       loadVersionHistory(artifactPk, organizationId, ledger.artifact.version),
       loadDecisions(artifactPk, artifactId, organizationId),
@@ -655,6 +667,7 @@ export async function buildDocumentLineageDossier(
       loadTurnRecords(threadId),
       loadDataLineage(artifactId, threadId, organizationId),
       loadRetainedTurnRecords(threadId, organizationId),
+      loadProvenanceCompleteness(artifactPk, organizationId),
     ]);
 
   return {
@@ -672,5 +685,6 @@ export async function buildDocumentLineageDossier(
     policyHoldsUnreadable: turnRecords.policyHoldsUnreadable,
     dataLineage,
     retainedTurnRecords,
+    provenanceCompleteness,
   };
 }

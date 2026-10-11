@@ -9,7 +9,7 @@
  * Dependencies are injected, so every one of those states is constructible here
  * without a database.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { reverifySigner, verifySignerPassword, type ReverifySignerDeps } from '../reverify-signer';
 
 const USER = 7;
@@ -255,5 +255,101 @@ describe("the account's standing (F-28): a suspended or deprovisioned account ca
   it('a request without a password is still a request without a password', async () => {
     const r = await reverifySigner(USER, {}, deps({ isAccountActive: async () => false }));
     expect(r).toMatchObject({ ok: false, status: 400, code: 'PASSWORD_REQUIRED' });
+  });
+});
+
+/**
+ * ADR-0014 §4 (P1-2b), enforced from P-25 (2026-10-08): in production, anyone
+ * applying a governed electronic signature uses an authenticator app. This is
+ * the one place every signing ceremony re-verifies its signer, so it is the one
+ * place the rule lives. "Production" is NODE_ENV=production, read at each
+ * signature, as the platform's other production-only rules read it.
+ */
+describe('in production a signer needs an enrolled authenticator (ADR-0014 P1-2b)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('refuses a signer with none, in those words, after the password and before anything else', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const code = vi.fn(async () => true);
+    const counted = vi.fn(async () => {});
+    const r = await reverifySigner(
+      USER,
+      { password: 'right' },
+      deps({ isMfaEnabled: async () => false, verifyMfaToken: code, recordFailedAttempt: counted }),
+    );
+    expect(r).toEqual({
+      ok: false,
+      status: 403,
+      code: 'AUTHENTICATOR_REQUIRED',
+      error: 'Enrol an authenticator in Account to sign. Nothing was signed.',
+    });
+    expect(code, 'no code is checked for a signer who has no authenticator').not.toHaveBeenCalled();
+    expect(counted, 'a missing enrolment is not a guess, and is not counted').not.toHaveBeenCalled();
+  });
+
+  it('a code sent anyway does not stand in for an enrolment', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const r = await reverifySigner(USER, { password: 'right', mfaToken: '123456' }, deps({ isMfaEnabled: async () => false }));
+    expect(r).toMatchObject({ ok: false, code: 'AUTHENTICATOR_REQUIRED' });
+  });
+
+  it('a wrong password is refused as a wrong password: the enrolment is not disclosed before the password is proven', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const counted = vi.fn(async () => {});
+    const r = await reverifySigner(
+      USER,
+      { password: 'wrong' },
+      deps({ isMfaEnabled: async () => false, comparePassword: async () => false, recordFailedAttempt: counted }),
+    );
+    expect(r).toMatchObject({ ok: false, status: 401, code: 'PASSWORD_VERIFICATION_FAILED' });
+    expect(counted).toHaveBeenCalledTimes(1);
+  });
+
+  it('a signer with an authenticator goes on to the code check', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const enrolled = deps({ isMfaEnabled: async () => true });
+    expect(await reverifySigner(USER, { password: 'right' }, enrolled)).toMatchObject({ ok: false, status: 400, code: 'MFA_TOKEN_REQUIRED' });
+    expect(await reverifySigner(USER, { password: 'right', mfaToken: '123456' }, enrolled)).toEqual({
+      ok: true,
+      authenticationMethod: 'password+mfa',
+      secondFactorVerified: true,
+    });
+  });
+
+  it('an enrolment that cannot be read is still refused as unknown, not as missing', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const r = await reverifySigner(
+      USER,
+      { password: 'right' },
+      deps({ isMfaEnabled: async () => { throw new Error('users unreadable'); } }),
+    );
+    expect(r).toMatchObject({ ok: false, status: 401, code: 'MFA_STATE_UNKNOWN' });
+  });
+
+  it('only a declared development or test environment relaxes it: the password alone signs there', async () => {
+    for (const env of ['development', 'test', ' Test ']) {
+      vi.stubEnv('NODE_ENV', env);
+      const r = await reverifySigner(USER, { password: 'right' }, deps({ isMfaEnabled: async () => false }));
+      expect(r, `NODE_ENV=${JSON.stringify(env)}`).toEqual({ ok: true, authenticationMethod: 'password', secondFactorVerified: false });
+    }
+  });
+
+  it('fails closed: staging, a blank or unrecognised NODE_ENV, and an unset one all enforce it (as the bundle guard does)', async () => {
+    for (const env of ['staging', '', '   ', 'prod', 'Production']) {
+      vi.stubEnv('NODE_ENV', env);
+      const r = await reverifySigner(USER, { password: 'right' }, deps({ isMfaEnabled: async () => false }));
+      expect(r, `NODE_ENV=${JSON.stringify(env)}`).toMatchObject({ ok: false, status: 403, code: 'AUTHENTICATOR_REQUIRED' });
+    }
+    const saved = process.env.NODE_ENV;
+    delete process.env.NODE_ENV;
+    try {
+      const r = await reverifySigner(USER, { password: 'right' }, deps({ isMfaEnabled: async () => false }));
+      expect(r, 'NODE_ENV unset').toMatchObject({ ok: false, status: 403, code: 'AUTHENTICATOR_REQUIRED' });
+    } finally {
+      if (saved === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = saved;
+    }
   });
 });

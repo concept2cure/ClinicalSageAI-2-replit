@@ -144,11 +144,17 @@ describe('one shell', () => {
     // AnA rail's column has to answer somewhere, and these answer in their own
     // dock rather than writing into a rail the screen does not draw.
     //
-    //   V2App.tsx              the shell's rail — the one conversation every
-    //                          surface that KEEPS the rail shares.
-    //   ConversationThread.tsx the dedicated thread surface. Also the
-    //                          destination for `window.C2C_CONVO` seeds from
-    //                          Home, ProjectHome and the shell's own ⌘K.
+    //   V2App.tsx              the shell's one conversation. The right rail
+    //                          that drew it beside every screen is deleted
+    //                          (ONE_ANA_ONE_CANVAS.md, slice 9); the
+    //                          conversation screen renders it. Shell.tsx never
+    //                          called the hook, so the rail's deletion leaves
+    //                          this list as it was.
+    //   ConversationThread.tsx a fallback instance, used only when no shell
+    //                          chat is passed in (tests). In the app the screen
+    //                          renders V2App's chat (`shellChat`), and it is
+    //                          the destination for `window.C2C_CONVO` seeds
+    //                          from Home, ProjectHome and the shell's own ⌘K.
     //   Rbm.tsx                the RBM co-monitor dock, study-scoped.
     //   editor/DocumentWorkbench.tsx
     //                          the editor's right-rail pane, section-scoped via

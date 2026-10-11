@@ -1,0 +1,13 @@
+ × server/services/ana-ri/__tests__/prefetch-program-project.test.ts > prefetch — program UUID → anchored project > reads the relational overlay, briefing and project context for the anchored project 8ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, ObjectContaining{…} ]
+ × server/services/ana-ri/__tests__/prefetch-program-project.test.ts > prefetch — program UUID → anchored project > an unanchored program is no project: no NaN reaches any read, and nothing is reported missing 5ms
+   → expected "vi.fn()" to be called with arguments: [ { organizationId: 1, …(2) } ]
+ ✓ server/services/ana-ri/__tests__/prefetch-program-project.test.ts > prefetch — program UUID → anchored project > an integer project id is still itself 1ms
+ ✓ server/services/ana-ri/__tests__/prefetch-program-project.test.ts > prefetch — program UUID → anchored project > no project named: the resolver is not asked and the overlay is user-level 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana-ri/__tests__/prefetch-program-project.test.ts > prefetch — program UUID → anchored project > reads the relational overlay, briefing and project context for the anchored project
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, ObjectContaining{…} ]
+ FAIL  server/services/ana-ri/__tests__/prefetch-program-project.test.ts > prefetch — program UUID → anchored project > an unanchored program is no project: no NaN reaches any read, and nothing is reported missing
+AssertionError: expected "vi.fn()" to be called with arguments: [ { organizationId: 1, …(2) } ]
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)

@@ -1,0 +1,22 @@
+{
+  "phase": "related-green",
+  "command": [
+    "/root/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/ana/__tests__/run-control.test.ts",
+    "server/services/ana/__tests__/run-control-tenant-scope.test.ts",
+    "server/services/ana/__tests__/run-control-poll-backpressure.test.ts",
+    "--config",
+    "vitest.config.ts"
+  ],
+  "cwd": "/workspace/scratch/bd36ee581acd/concept2cure",
+  "head": "0b8a8c3dfd6166286e085de59e13b1217cb17dee",
+  "sourceFiles": {
+    "server/services/ana/run-control.ts": "c0893907be9c17b8b3e66aa0e61194a07ff38f14",
+    "server/services/ana/__tests__/run-control-tenant-scope.test.ts": "d6fb2fbdeefdf7f894ceda6fe7e1fb8b64ac984e"
+  },
+  "exitCode": 0,
+  "elapsedSeconds": 1.428,
+  "conditions": "Actual exported service; deferred fake pools; real tenant ALS; no live PostgreSQL/provider calls."
+}

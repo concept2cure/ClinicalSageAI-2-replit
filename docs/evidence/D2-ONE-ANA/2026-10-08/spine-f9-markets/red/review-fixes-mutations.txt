@@ -1,0 +1,58 @@
+## Mutation: header counts every board row as "in review" (queue.length)
+file: client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx
+- 'const n = queue.filter(r.inReview).length;'
++ 'const n = queue.length;'
+Tests  2 failed | 9 passed (11)
+  FAIL the project header — each market’s verdict and the documents in review > a board of approved documents is not "in review"
+  FAIL the project header — each market’s verdict and the documents in review > states both verdicts and the count in review, from the reads the tabs make (one board read)
+
+## Mutation: "Add a market" button shown again (lands on the list)
+file: client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx
+- '<span className="pj-sec-acts">\n'
++ '<span className="pj-sec-acts">\n          {center && <button type="button" className="btn primary pj-mkt-btn" onClick={() => openSubmissionCenter(onNav, { ws: \'portfolio\' })}>{I.plus} Add a market</button>}\n'
+Tests  2 failed | 9 passed (11)
+  FAIL Submit — opening the Submission Center, and the list’s own states > a project with no submission says so in words and says where New submission is
+  FAIL Submit — opening the Submission Center, and the list’s own states > offers no "Add a market" button while the Submission Center cannot open New submission from a link
+
+## Mutation: a 204 sequence list read as "no sequence"
+file: client/src/concept2cure/v2/surfaces/programSequence.ts
+- 'if (seqs.error || seqs.data == null)'
++ 'if (seqs.error)'
+Tests  1 failed | 10 passed (11)
+  FAIL Submit — one row per market, each with its own server verdict > a sequence list with no body is "No verdict" with a retry, never "No sequence yet"
+
+## Mutation: a 403 on the list treated as a failed read
+file: client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx
+- 'return Boolean(markets.list.error) && markets.list.status === 403;'
++ 'return false;'
+Tests  1 failed | 10 passed (11)
+  FAIL Submit — opening the Submission Center, and the list’s own states > a 403 on the list is the person’s role, stated once, with no retry and no alert in the header
+
+## Mutation: Retry does not move focus before it unmounts
+file: client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx
+- '    verdictRef.current?.focus();\n    onRetry(s.id);'
++ '    onRetry(s.id);'
+Tests  1 failed | 10 passed (11)
+  FAIL Submit — one row per market, each with its own server verdict > a 500 on one verdict shows "No verdict" with a retry on that row only, never "Cleared", and keeps the other row
+
+## Mutation: lifecycle stage not rendered
+file: client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx
+- '        {s.lifecycleStage && <span className="pj-file-m" data-testid="pj-market-stage">{s.lifecycleStage} stage</span>}\n'
++ ''
+Tests  1 failed | 10 passed (11)
+  FAIL Submit — one row per market, each with its own server verdict > an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row
+
+## Mutation: announced verdict does not name its market
+file: client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx
+- '<span className="pj-sr">{name}: </span>'
++ ''
+Tests  1 failed | 10 passed (11)
+  FAIL Submit — one row per market, each with its own server verdict > an IND to FDA blocked by 2 blockers, and an MAA to EMA with no sequence, each say so on their own row
+
+## Mutation: header line has no role, so its label is dropped
+file: client/src/concept2cure/v2/surfaces/ProjectMarkets.tsx
+- 'role="group" '
++ ''
+Tests  1 failed | 10 passed (11)
+  FAIL the project header — each market’s verdict and the documents in review > states both verdicts and the count in review, from the reads the tabs make (one board read)
+

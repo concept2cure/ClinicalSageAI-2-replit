@@ -1,0 +1,369 @@
+2026-10-06T13:03:40-04:00	INFO	[vuln] Vulnerability scanning is enabled
+2026-10-06T13:03:40-04:00	INFO	[secret] Secret scanning is enabled
+2026-10-06T13:03:40-04:00	INFO	[secret] If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2026-10-06T13:03:40-04:00	INFO	[secret] Please see https://trivy.dev/docs/v0.70/guide/scanner/secret#recommendation for faster secret detection
+2026-10-06T13:03:53-04:00	WARN	[secret] The size of the scanned file is too large. It is recommended to use `--skip-files` for this file to avoid high memory consumption.	file_path="server/scripts/data/clinical_trials_cancer_20250409_214935.json" size (MB)=14
+2026-10-06T13:03:56-04:00	INFO	[python] Licenses acquired from one or more METADATA files may be subject to additional terms. Use `--debug` flag to see all affected packages.
+2026-10-06T13:03:56-04:00	INFO	[npm] To collect the license information of packages, "npm install" needs to be performed beforehand	dir="tests/validation/node_modules"
+2026-10-06T13:03:56-04:00	INFO	Suppressing dependencies for development and testing. To display them, try the '--include-dev-deps' flag.
+2026-10-06T13:03:56-04:00	INFO	Number of language-specific files	num=4
+2026-10-06T13:03:56-04:00	INFO	[npm] Detecting vulnerabilities...
+unexpected fault address 0x7f8291c51000
+fatal error: fault
+[signal SIGBUS: bus error code=0x2 addr=0x7f8291c51000 pc=0x93c06a]
+
+goroutine 1 gp=0xc000002380 m=2 mp=0xc0000ba808 [running]:
+runtime.throw({0x57e6c1e?, 0x0?})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/panic.go:1094 +0x48 fp=0xc000f120d0 sp=0xc000f120a0 pc=0x480de8
+runtime.sigpanic()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/signal_unix.go:922 +0x10a fp=0xc000f12130 sp=0xc000f120d0 pc=0x482dca
+go.etcd.io/bbolt/internal/common.(*Page).FastCheck(0x7f8291c51000, 0x551b1)
+	/home/runner/go/pkg/mod/go.etcd.io/bbolt@v1.4.3/internal/common/page.go:83 +0x2a fp=0xc000f121f8 sp=0xc000f12130 pc=0x93c06a
+go.etcd.io/bbolt.(*Tx).page(0x0?, 0x0?)
+	/home/runner/go/pkg/mod/go.etcd.io/bbolt@v1.4.3/tx.go:638 +0x79 fp=0xc000f12230 sp=0xc000f121f8 pc=0x9591d9
+go.etcd.io/bbolt.(*Bucket).pageNode(0x9cdd100?, 0x0?)
+	/home/runner/go/pkg/mod/go.etcd.io/bbolt@v1.4.3/bucket.go:948 +0x85 fp=0xc000f12278 sp=0xc000f12230 pc=0x949da5
+go.etcd.io/bbolt.(*Cursor).search(0xc000f12698, {0xc000f1253f, 0x5, 0x20}, 0x2?)
+	/home/runner/go/pkg/mod/go.etcd.io/bbolt@v1.4.3/cursor.go:284 +0x45 fp=0xc000f12318 sp=0xc000f12278 pc=0x94aca5
+go.etcd.io/bbolt.(*Cursor).seek(0xc000f12698, {0xc000f1253f?, 0x46663c?, 0x0?})
+	/home/runner/go/pkg/mod/go.etcd.io/bbolt@v1.4.3/cursor.go:162 +0x2e fp=0xc000f12350 sp=0xc000f12318 pc=0x94a68e
+go.etcd.io/bbolt.(*Cursor).Seek(0xc000f12698, {0xc000f1253f?, 0x57e0e00?, 0x2?})
+	/home/runner/go/pkg/mod/go.etcd.io/bbolt@v1.4.3/cursor.go:123 +0x33 fp=0xc000f123a8 sp=0xc000f12350 pc=0x94a493
+github.com/aquasecurity/trivy-db/pkg/db.Config.forEach.func1(0xc000eed340)
+	/home/runner/go/pkg/mod/github.com/aquasecurity/trivy-db@v0.0.0-20251222105351-a833f47f8f0d/pkg/db/db.go:229 +0x115 fp=0xc000f12798 sp=0xc000f123a8 pc=0x39fd0f5
+go.etcd.io/bbolt.(*DB).View(0x0?, 0xc000f12aa0)
+	/home/runner/go/pkg/mod/go.etcd.io/bbolt@v1.4.3/db.go:939 +0x6c fp=0xc000f12800 sp=0xc000f12798 pc=0x94fcec
+github.com/aquasecurity/trivy-db/pkg/db.Config.forEach({}, {0xc002a42200, 0x2, 0x2})
+	/home/runner/go/pkg/mod/github.com/aquasecurity/trivy-db@v0.0.0-20251222105351-a833f47f8f0d/pkg/db/db.go:222 +0x1cf fp=0xc000f12af0 sp=0xc000f12800 pc=0x39fcecf
+github.com/aquasecurity/trivy-db/pkg/db.Config.ForEachAdvisory(...)
+	/home/runner/go/pkg/mod/github.com/aquasecurity/trivy-db@v0.0.0-20251222105351-a833f47f8f0d/pkg/db/advisory.go:21
+github.com/aquasecurity/trivy-db/pkg/db.Config.GetAdvisories({}, {0xc0019e2c34, 0x5}, {0xc002c10aed, 0x11})
+	/home/runner/go/pkg/mod/github.com/aquasecurity/trivy-db@v0.0.0-20251222105351-a833f47f8f0d/pkg/db/advisory.go:26 +0x252 fp=0xc000f13030 sp=0xc000f12af0 pc=0x39f97f2
+github.com/aquasecurity/trivy/pkg/detector/library.(*Driver).DetectVulnerabilities(0xc000f13770, {0xc001a9cb88, 0x17}, {0xc002c10aed, 0x11}, {0xc001b976c8, 0x5})
+	/home/runner/work/trivy/trivy/pkg/detector/library/driver.go:119 +0xf4 fp=0xc000f13478 sp=0xc000f13030 pc=0x407a874
+github.com/aquasecurity/trivy/pkg/detector/library.detect({0x6a63898, 0xc0019e0db0}, {{0x57e1655, 0x3}, {0x6a0bde0, 0x9d0cf60}, {}}, {0xc002c9a000?, 0x5000000000000?, 0x7f823c9e6b40?})
+	/home/runner/work/trivy/trivy/pkg/detector/library/detect.go:36 +0x245 fp=0xc000f13760 sp=0xc000f13478 pc=0x4079ca5
+github.com/aquasecurity/trivy/pkg/detector/library.Detect({0x6a63898, 0xc0019e0db0}, {0x57e1655?, 0x300c0008ec240?}, {0xc002c9a000, 0x4f4, 0x84c})
+	/home/runner/work/trivy/trivy/pkg/detector/library/detect.go:20 +0xea fp=0xc000f13840 sp=0xc000f13760 pc=0x407992a
+github.com/aquasecurity/trivy/pkg/scan/langpkg.(*scanner).scanVulnerabilities(0xc000f13968?, {0x6a63898, 0xc0019e0db0}, {{0x57e1655, 0x3}, {0xc00285d050, 0x11}, {0xc002c9a000, 0x4f4, 0x84c}}, ...)
+	/home/runner/work/trivy/trivy/pkg/scan/langpkg/scan.go:90 +0x20f fp=0xc000f138f0 sp=0xc000f13840 pc=0x407bfcf
+github.com/aquasecurity/trivy/pkg/scan/langpkg.(*scanner).Scan(_, {_, _}, {{0x7fff9d218cfd, 0x1}, {{0x0, 0x0}, {0x0, 0x0}, 0x0, ...}, ...}, ...)
+	/home/runner/work/trivy/trivy/pkg/scan/langpkg/scan.go:63 +0x45a fp=0xc000f13b60 sp=0xc000f138f0 pc=0x407ba7a
+github.com/aquasecurity/trivy/pkg/scan/local.Service.scanVulnerabilities({{_, _}, {_, _}, {_, _}, {{_, _}}}, {0x6a63940, 0xc00040c1c0}, ...)
+	/home/runner/work/trivy/trivy/pkg/scan/local/service.go:189 +0x585 fp=0xc000f14070 sp=0xc000f13b60 pc=0x4402ee5
+github.com/aquasecurity/trivy/pkg/scan/local.Service.ScanTarget({{_, _}, {_, _}, {_, _}, {{_, _}}}, {0x6a63940, 0xc00040c1c0}, ...)
+	/home/runner/work/trivy/trivy/pkg/scan/local/service.go:129 +0x2c7 fp=0xc000f143f0 sp=0xc000f14070 pc=0x4401fe7
+github.com/aquasecurity/trivy/pkg/scan/local.Service.Scan({{_, _}, {_, _}, {_, _}, {{_, _}}}, {0x6a63940, 0xc00040c1c0}, ...)
+	/home/runner/work/trivy/trivy/pkg/scan/local/service.go:106 +0x119e fp=0xc000f14a80 sp=0xc000f143f0 pc=0x4401b3e
+github.com/aquasecurity/trivy/pkg/scan/local.(*Service).Scan(_, {_, _}, {_, _}, {_, _}, {0xc002924010, 0x1, 0x1}, ...)
+	<autogenerated>:1 +0x1b5 fp=0xc000f14cf8 sp=0xc000f14a80 pc=0x4407cf5
+github.com/aquasecurity/trivy/pkg/scan.Service.ScanArtifact({{_, _}, {_, _}}, {_, _}, {{0xc0012b3ca0, 0x2, 0x2}, {0xc000f96a00, ...}, ...})
+	/home/runner/work/trivy/trivy/pkg/scan/service.go:63 +0x29f fp=0xc000f15cc8 sp=0xc000f14cf8 pc=0x409573f
+github.com/aquasecurity/trivy/pkg/commands/artifact.(*runner).scan(_, {_, _}, {{{0x580960a, 0xa}, 0x0, 0x0, 0x0, 0x0, 0x0, ...}, ...}, ...)
+	/home/runner/work/trivy/trivy/pkg/commands/artifact/run.go:704 +0x36b fp=0xc000f17790 sp=0xc000f15cc8 pc=0x440f4ab
+github.com/aquasecurity/trivy/pkg/commands/artifact.(*runner).scanArtifact(_, {_, _}, {{{0x580960a, 0xa}, 0x0, 0x0, 0x0, 0x0, 0x0, ...}, ...}, ...)
+	/home/runner/work/trivy/trivy/pkg/commands/artifact/run.go:302 +0x9b fp=0xc000f18820 sp=0xc000f17790 pc=0x4409a3b
+github.com/aquasecurity/trivy/pkg/commands/artifact.(*runner).scanFS(_, {_, _}, {{{0x580960a, 0xa}, 0x0, 0x0, 0x0, 0x0, 0x0, ...}, ...})
+	/home/runner/work/trivy/trivy/pkg/commands/artifact/run.go:247 +0xb4 fp=0xc000f198a0 sp=0xc000f18820 pc=0x44092d4
+github.com/aquasecurity/trivy/pkg/commands/artifact.(*runner).ScanFilesystem(_, {_, _}, {{{0x580960a, 0xa}, 0x0, 0x0, 0x0, 0x0, 0x0, ...}, ...})
+	/home/runner/work/trivy/trivy/pkg/commands/artifact/run.go:227 +0x1ea fp=0xc000f1a930 sp=0xc000f198a0 pc=0x4408f2a
+github.com/aquasecurity/trivy/pkg/commands/artifact.Runner.ScanFilesystem-fm({_, _}, {{{0x580960a, 0xa}, 0x0, 0x0, 0x0, 0x0, 0x0, 0x29e8d60800, ...}, ...})
+	<autogenerated>:1 +0xb6 fp=0xc000f1b9a8 sp=0xc000f1a930 pc=0x4413216
+github.com/aquasecurity/trivy/pkg/commands/artifact.run({_, _}, {{{0x580960a, 0xa}, 0x0, 0x0, 0x0, 0x0, 0x0, 0x29e8d60800, ...}, ...}, ...)
+	/home/runner/work/trivy/trivy/pkg/commands/artifact/run.go:450 +0x71c fp=0xc000f1d338 sp=0xc000f1b9a8 pc=0x440b63c
+github.com/aquasecurity/trivy/pkg/commands/artifact.Run({_, _}, {{{0x580960a, 0xa}, 0x0, 0x0, 0x0, 0x0, 0x0, 0x29e8d60800, ...}, ...}, ...)
+	/home/runner/work/trivy/trivy/pkg/commands/artifact/run.go:409 +0x1f1 fp=0xc000f1e8d8 sp=0xc000f1d338 pc=0x440a8f1
+github.com/aquasecurity/trivy/pkg/commands.NewFilesystemCommand.func2(0xc0009a3808, {0xc00125bd00, 0x1, 0x10})
+	/home/runner/work/trivy/trivy/pkg/commands/app.go:379 +0x185 fp=0xc000f1fac0 sp=0xc000f1e8d8 pc=0x4563265
+github.com/spf13/cobra.(*Command).execute(0xc0009a3808, {0xc00125bc00, 0x10, 0x10})
+	/home/runner/go/pkg/mod/github.com/spf13/cobra@v1.10.2/command.go:1015 +0xb02 fp=0xc000f1fc68 sp=0xc000f1fac0 pc=0x6835e2
+github.com/spf13/cobra.(*Command).ExecuteC(0xc0009a3208)
+	/home/runner/go/pkg/mod/github.com/spf13/cobra@v1.10.2/command.go:1148 +0x465 fp=0xc000f1fd58 sp=0xc000f1fc68 pc=0x683f25
+github.com/spf13/cobra.(*Command).Execute(...)
+	/home/runner/go/pkg/mod/github.com/spf13/cobra@v1.10.2/command.go:1071
+github.com/spf13/cobra.(*Command).ExecuteContext(...)
+	/home/runner/go/pkg/mod/github.com/spf13/cobra@v1.10.2/command.go:1064
+github.com/aquasecurity/trivy/pkg/commands.Run({0x6a63c50, 0xc000ba8fc0})
+	/home/runner/work/trivy/trivy/pkg/commands/run.go:23 +0x67 fp=0xc000f1fdc0 sp=0xc000f1fd58 pc=0x456e727
+main.run()
+	/home/runner/work/trivy/trivy/cmd/trivy/main.go:50 +0x17c fp=0xc000f1fe70 sp=0xc000f1fdc0 pc=0x4768b7c
+main.main()
+	/home/runner/work/trivy/trivy/cmd/trivy/main.go:19 +0x1f fp=0xc000f1ff50 sp=0xc000f1fe70 pc=0x47687bf
+runtime.main()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:285 +0x29d fp=0xc000f1ffe0 sp=0xc000f1ff50 pc=0x44a7bd
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc000f1ffe8 sp=0xc000f1ffe0 pc=0x489001
+
+goroutine 2 gp=0xc0000028c0 m=nil [force gc (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0000b4fa8 sp=0xc0000b4f88 pc=0x480f0e
+runtime.goparkunlock(...)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:466
+runtime.forcegchelper()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:373 +0xb3 fp=0xc0000b4fe0 sp=0xc0000b4fa8 pc=0x44aaf3
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000b4fe8 sp=0xc0000b4fe0 pc=0x489001
+created by runtime.init.7 in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:361 +0x1a
+
+goroutine 3 gp=0xc000002e00 m=nil [GC sweep wait]:
+runtime.gopark(0x9cd8e01?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0000b5780 sp=0xc0000b5760 pc=0x480f0e
+runtime.goparkunlock(...)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:466
+runtime.bgsweep(0xc000088080)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgcsweep.go:323 +0xdf fp=0xc0000b57c8 sp=0xc0000b5780 pc=0x43227f
+runtime.gcenable.gowrap1()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:212 +0x25 fp=0xc0000b57e0 sp=0xc0000b57c8 pc=0x426285
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000b57e8 sp=0xc0000b57e0 pc=0x489001
+created by runtime.gcenable in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:212 +0x66
+
+goroutine 4 gp=0xc000002fc0 m=nil [GC scavenge wait]:
+runtime.gopark(0xb31626?, 0xab5396?, 0x0?, 0x0?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0000b5f78 sp=0xc0000b5f58 pc=0x480f0e
+runtime.goparkunlock(...)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:466
+runtime.(*scavengerState).park(0x9cddb20)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgcscavenge.go:425 +0x49 fp=0xc0000b5fa8 sp=0xc0000b5f78 pc=0x42fd09
+runtime.bgscavenge(0xc000088080)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgcscavenge.go:658 +0x59 fp=0xc0000b5fc8 sp=0xc0000b5fa8 pc=0x4302b9
+runtime.gcenable.gowrap2()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:213 +0x25 fp=0xc0000b5fe0 sp=0xc0000b5fc8 pc=0x426225
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000b5fe8 sp=0xc0000b5fe0 pc=0x489001
+created by runtime.gcenable in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:213 +0xa5
+
+goroutine 5 gp=0xc000003500 m=nil [GOMAXPROCS updater (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0000b6788 sp=0xc0000b6768 pc=0x480f0e
+runtime.goparkunlock(...)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:466
+runtime.updateMaxProcsGoroutine()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:6720 +0xe7 fp=0xc0000b67e0 sp=0xc0000b6788 pc=0x458b27
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000b67e8 sp=0xc0000b67e0 pc=0x489001
+created by runtime.defaultGOMAXPROCSUpdateEnable in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:6708 +0x37
+
+goroutine 6 gp=0xc0000036c0 m=nil [finalizer wait]:
+runtime.gopark(0x459af5?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0000b4620 sp=0xc0000b4600 pc=0x480f0e
+runtime.runFinalizers()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mfinal.go:210 +0x107 fp=0xc0000b47e0 sp=0xc0000b4620 pc=0x425187
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000b47e8 sp=0xc0000b47e0 pc=0x489001
+created by runtime.createfing in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mfinal.go:172 +0x3d
+
+goroutine 7 gp=0xc0004401c0 m=nil [GC worker (idle)]:
+runtime.gopark(0x42d235b163f2?, 0x3?, 0xbe?, 0x72?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0004a3738 sp=0xc0004a3718 pc=0x480f0e
+runtime.gcBgMarkWorker(0xc0000865b0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1463 +0xeb fp=0xc0004a37c8 sp=0xc0004a3738 pc=0x42896b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x25 fp=0xc0004a37e0 sp=0xc0004a37c8 pc=0x428845
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0004a37e8 sp=0xc0004a37e0 pc=0x489001
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x105
+
+goroutine 8 gp=0xc000440380 m=nil [GC worker (idle)]:
+runtime.gopark(0x42d235e914f5?, 0x1?, 0x38?, 0x8a?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0000b2f38 sp=0xc0000b2f18 pc=0x480f0e
+runtime.gcBgMarkWorker(0xc0000865b0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1463 +0xeb fp=0xc0000b2fc8 sp=0xc0000b2f38 pc=0x42896b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x25 fp=0xc0000b2fe0 sp=0xc0000b2fc8 pc=0x428845
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000b2fe8 sp=0xc0000b2fe0 pc=0x489001
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x105
+
+goroutine 9 gp=0xc000440540 m=nil [GC worker (idle)]:
+runtime.gopark(0x42d235ea34fe?, 0x3?, 0x1?, 0x89?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0000e7f38 sp=0xc0000e7f18 pc=0x480f0e
+runtime.gcBgMarkWorker(0xc0000865b0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1463 +0xeb fp=0xc0000e7fc8 sp=0xc0000e7f38 pc=0x42896b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x25 fp=0xc0000e7fe0 sp=0xc0000e7fc8 pc=0x428845
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000e7fe8 sp=0xc0000e7fe0 pc=0x489001
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x105
+
+goroutine 10 gp=0xc000440700 m=nil [GC worker (idle)]:
+runtime.gopark(0x42d235b0fcd7?, 0x3?, 0xa4?, 0xd6?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc002ecbf38 sp=0xc002ecbf18 pc=0x480f0e
+runtime.gcBgMarkWorker(0xc0000865b0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1463 +0xeb fp=0xc002ecbfc8 sp=0xc002ecbf38 pc=0x42896b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x25 fp=0xc002ecbfe0 sp=0xc002ecbfc8 pc=0x428845
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc002ecbfe8 sp=0xc002ecbfe0 pc=0x489001
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x105
+
+goroutine 11 gp=0xc0004408c0 m=nil [GC worker (idle)]:
+runtime.gopark(0x42d235e92043?, 0x1?, 0xde?, 0x2c?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0000b7f38 sp=0xc0000b7f18 pc=0x480f0e
+runtime.gcBgMarkWorker(0xc0000865b0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1463 +0xeb fp=0xc0000b7fc8 sp=0xc0000b7f38 pc=0x42896b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x25 fp=0xc0000b7fe0 sp=0xc0000b7fc8 pc=0x428845
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000b7fe8 sp=0xc0000b7fe0 pc=0x489001
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x105
+
+goroutine 12 gp=0xc000440a80 m=nil [GC worker (idle)]:
+runtime.gopark(0x42d235ea90b5?, 0x1?, 0xa6?, 0xac?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc00049ff38 sp=0xc00049ff18 pc=0x480f0e
+runtime.gcBgMarkWorker(0xc0000865b0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1463 +0xeb fp=0xc00049ffc8 sp=0xc00049ff38 pc=0x42896b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x25 fp=0xc00049ffe0 sp=0xc00049ffc8 pc=0x428845
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc00049ffe8 sp=0xc00049ffe0 pc=0x489001
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x105
+
+goroutine 13 gp=0xc000440c40 m=nil [GC worker (idle)]:
+runtime.gopark(0x42d235b0ff52?, 0x3?, 0xf?, 0x19?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0000b0f38 sp=0xc0000b0f18 pc=0x480f0e
+runtime.gcBgMarkWorker(0xc0000865b0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1463 +0xeb fp=0xc0000b0fc8 sp=0xc0000b0f38 pc=0x42896b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x25 fp=0xc0000b0fe0 sp=0xc0000b0fc8 pc=0x428845
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000b0fe8 sp=0xc0000b0fe0 pc=0x489001
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x105
+
+goroutine 14 gp=0xc000440e00 m=nil [GC worker (idle)]:
+runtime.gopark(0x42d235b0fd13?, 0x3?, 0xfd?, 0xca?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0000b1f38 sp=0xc0000b1f18 pc=0x480f0e
+runtime.gcBgMarkWorker(0xc0000865b0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1463 +0xeb fp=0xc0000b1fc8 sp=0xc0000b1f38 pc=0x42896b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x25 fp=0xc0000b1fe0 sp=0xc0000b1fc8 pc=0x428845
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000b1fe8 sp=0xc0000b1fe0 pc=0x489001
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mgc.go:1373 +0x105
+
+goroutine 15 gp=0xc000502e00 m=nil [cleanup wait]:
+runtime.gopark(0x42ce7df84206?, 0x42ce7deecad6?, 0x30?, 0x77?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0004a2f68 sp=0xc0004a2f48 pc=0x480f0e
+runtime.goparkunlock(...)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:466
+runtime.(*cleanupQueue).dequeue(0x9cde0c0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mcleanup.go:439 +0xc5 fp=0xc0004a2fa0 sp=0xc0004a2f68 pc=0x4223a5
+runtime.runCleanups()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mcleanup.go:635 +0x45 fp=0xc0004a2fe0 sp=0xc0004a2fa0 pc=0x422a65
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0004a2fe8 sp=0xc0004a2fe0 pc=0x489001
+created by runtime.(*cleanupQueue).createGs in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/mcleanup.go:589 +0xa5
+
+goroutine 17 gp=0xc000603a40 m=nil [select, locked to thread]:
+runtime.gopark(0xc0004a0fa8?, 0x2?, 0x58?, 0x0?, 0xc0004a0f94?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0004a0e18 sp=0xc0004a0df8 pc=0x480f0e
+runtime.selectgo(0xc0004a0fa8, 0xc0004a0f90, 0x0?, 0x0, 0x3e629b?, 0x1)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/select.go:351 +0x8b7 fp=0xc0004a0f58 sp=0xc0004a0e18 pc=0x45d777
+runtime.ensureSigM.func1()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/signal_unix.go:1085 +0x194 fp=0xc0004a0fe0 sp=0xc0004a0f58 pc=0x47b534
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0004a0fe8 sp=0xc0004a0fe0 pc=0x489001
+created by runtime.ensureSigM in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/signal_unix.go:1068 +0xc5
+
+goroutine 16 gp=0xc000102380 m=8 mp=0xc000100808 [syscall]:
+runtime.notetsleepg(0x9d11200, 0xffffffffffffffff)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/lock_futex.go:123 +0x29 fp=0xc00049dfa0 sp=0xc00049df78 pc=0x41ae09
+os/signal.signal_recv()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/sigqueue.go:152 +0x29 fp=0xc00049dfc0 sp=0xc00049dfa0 pc=0x4830c9
+os/signal.loop()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/os/signal/signal_unix.go:23 +0x13 fp=0xc00049dfe0 sp=0xc00049dfc0 pc=0x1618953
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc00049dfe8 sp=0xc00049dfe0 pc=0x489001
+created by os/signal.Notify.func1.1 in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/os/signal/signal.go:152 +0x1f
+
+goroutine 18 gp=0xc000002000 m=nil [select]:
+runtime.gopark(0xc0004a17b0?, 0x2?, 0x0?, 0x0?, 0xc0004a179c?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0004a1628 sp=0xc0004a1608 pc=0x480f0e
+runtime.selectgo(0xc0004a17b0, 0xc0004a1798, 0x0?, 0x0, 0x0?, 0x1)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/select.go:351 +0x8b7 fp=0xc0004a1768 sp=0xc0004a1628 pc=0x45d777
+os/signal.NotifyContext.func1()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/os/signal/signal.go:289 +0x66 fp=0xc0004a17e0 sp=0xc0004a1768 pc=0x1618486
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0004a17e8 sp=0xc0004a17e0 pc=0x489001
+created by os/signal.NotifyContext in goroutine 1
+	/opt/hostedtoolcache/go/1.25.9/x64/src/os/signal/signal.go:288 +0x158
+
+goroutine 19 gp=0xc000003dc0 m=nil [chan receive]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0004a1ea8 sp=0xc0004a1e88 pc=0x480f0e
+runtime.chanrecv(0xc000086230, 0x0, 0x1)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/chan.go:667 +0x473 fp=0xc0004a1f20 sp=0xc0004a1ea8 pc=0x415373
+runtime.chanrecv1(0x0?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/chan.go:509 +0x12 fp=0xc0004a1f48 sp=0xc0004a1f20 pc=0x414ed2
+github.com/aquasecurity/trivy/pkg/commands.NotifyContext.func1()
+	/home/runner/work/trivy/trivy/pkg/commands/signal.go:24 +0x38 fp=0xc0004a1fe0 sp=0xc0004a1f48 pc=0x456ea18
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0004a1fe8 sp=0xc0004a1fe0 pc=0x489001
+created by github.com/aquasecurity/trivy/pkg/commands.NotifyContext in goroutine 1
+	/home/runner/work/trivy/trivy/pkg/commands/signal.go:23 +0xe5
+
+goroutine 37 gp=0xc000103500 m=nil [IO wait]:
+runtime.gopark(0xc006e564a0?, 0xc0017fa025?, 0x0?, 0x35?, 0xb?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/proc.go:460 +0xce fp=0xc0000e56f8 sp=0xc0000e56d8 pc=0x480f0e
+runtime.netpollblock(0x4a5f38?, 0x4132c6?, 0x0?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/netpoll.go:575 +0xf7 fp=0xc0000e5730 sp=0xc0000e56f8 pc=0x4430b7
+internal/poll.runtime_pollWait(0x7f82bcf48600, 0x72)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/netpoll.go:351 +0x85 fp=0xc0000e5750 sp=0xc0000e5730 pc=0x4800e5
+internal/poll.(*pollDesc).wait(0xc00126e680?, 0xc001159500?, 0x0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/internal/poll/fd_poll_runtime.go:84 +0x27 fp=0xc0000e5778 sp=0xc0000e5750 pc=0x4d1287
+internal/poll.(*pollDesc).waitRead(...)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0xc00126e680, {0xc001159500, 0xa80, 0xa80})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/internal/poll/fd_unix.go:165 +0x279 fp=0xc0000e5810 sp=0xc0000e5778 pc=0x4d2579
+net.(*netFD).Read(0xc00126e680, {0xc001159500?, 0xc001159556?, 0x5?})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/net/fd_posix.go:68 +0x25 fp=0xc0000e5858 sp=0xc0000e5810 pc=0x5e12e5
+net.(*conn).Read(0xc000e0e040, {0xc001159500?, 0x7f82bce90c80?, 0x7f8303b355c0?})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/net/net.go:196 +0x45 fp=0xc0000e58a0 sp=0xc0000e5858 pc=0x5f1045
+crypto/tls.(*atLeastReader).Read(0xc000dd8018, {0xc001159500?, 0xa25?, 0x8?})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/crypto/tls/conn.go:819 +0x3b fp=0xc0000e58e8 sp=0xc0000e58a0 pc=0x7c877b
+bytes.(*Buffer).ReadFrom(0xc001152d28, {0x6a07d40, 0xc000dd8018})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/bytes/buffer.go:217 +0x98 fp=0xc0000e5940 sp=0xc0000e58e8 pc=0x4f0758
+crypto/tls.(*Conn).readFromUntil(0xc001152a88, {0x6a09aa0, 0xc000e0e040}, 0xc0000e59a8?)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/crypto/tls/conn.go:841 +0xde fp=0xc0000e5978 sp=0xc0000e5940 pc=0x7c895e
+crypto/tls.(*Conn).readRecordOrCCS(0xc001152a88, 0x0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/crypto/tls/conn.go:630 +0x3db fp=0xc0000e5bf0 sp=0xc0000e5978 pc=0x7c59db
+crypto/tls.(*Conn).readRecord(...)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/crypto/tls/conn.go:592
+crypto/tls.(*Conn).Read(0xc001152a88, {0xc006e71000, 0x1000, 0x7f823c8a8be0?})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/crypto/tls/conn.go:1397 +0x145 fp=0xc0000e5c58 sp=0xc0000e5bf0 pc=0x7cc2e5
+bufio.(*Reader).Read(0xc0047bde00, {0xc006e6c2e0, 0x9, 0x28?})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/bufio/bufio.go:245 +0x197 fp=0xc0000e5c90 sp=0xc0000e5c58 pc=0x607537
+io.ReadAtLeast({0x6a07280, 0xc0047bde00}, {0xc006e6c2e0, 0x9, 0x9}, 0x9)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/io/io.go:335 +0x8e fp=0xc0000e5cd8 sp=0xc0000e5c90 pc=0x4c510e
+io.ReadFull(...)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/io/io.go:354
+net/http.http2readFrameHeader({0xc006e6c2e0, 0x9, 0x87dc50?}, {0x6a07280?, 0xc0047bde00?})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/net/http/h2_bundle.go:1811 +0x65 fp=0xc0000e5d28 sp=0xc0000e5cd8 pc=0x856ce5
+net/http.(*http2Framer).ReadFrame(0xc006e6c2a0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/net/http/h2_bundle.go:2078 +0x7d fp=0xc0000e5e10 sp=0xc0000e5d28 pc=0x8573bd
+net/http.(*http2clientConnReadLoop).run(0xc0000e5fa8)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/net/http/h2_bundle.go:9539 +0xda fp=0xc0000e5f60 sp=0xc0000e5e10 pc=0x87a55a
+net/http.(*http2ClientConn).readLoop(0xc00117f6c0)
+	/opt/hostedtoolcache/go/1.25.9/x64/src/net/http/h2_bundle.go:9408 +0x79 fp=0xc0000e5fc8 sp=0xc0000e5f60 pc=0x8798d9
+net/http.(*http2Transport).newClientConn.gowrap1()
+	/opt/hostedtoolcache/go/1.25.9/x64/src/net/http/h2_bundle.go:8192 +0x25 fp=0xc0000e5fe0 sp=0xc0000e5fc8 pc=0x873605
+runtime.goexit({})
+	/opt/hostedtoolcache/go/1.25.9/x64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000e5fe8 sp=0xc0000e5fe0 pc=0x489001
+created by net/http.(*http2Transport).newClientConn in goroutine 36
+	/opt/hostedtoolcache/go/1.25.9/x64/src/net/http/h2_bundle.go:8192 +0xde5

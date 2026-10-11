@@ -126,7 +126,7 @@ describe('report type registry seed (D2)', () => {
   it('applies to the provisioned database and registers every in-code type, column for column', async () => {
     await applySeed();
     const rows = await seededRows();
-    expect(rows.map((r) => r.type_id)).toEqual([...SEEDED_IDS].sort());
+    expect(rows.map((r) => r.type_id).sort()).toEqual([...SEEDED_IDS].sort());
     const byId = new Map(rows.map((r) => [r.type_id, r]));
     for (const t of REPORT_TYPE_REGISTRY_SEED) {
       // The JSON text is what drizzle's json column sends for these values.
@@ -405,7 +405,9 @@ describe('finalize is the run\'s signed act (P1-44b)', () => {
       .set(auth(accessToken(managerId, ORG_B, 'manager')))
       .send(SIGNED);
     expect(res.status, JSON.stringify(res.body)).toBe(403);
-    expect(res.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    // The ceremony's own refusal: finalize keeps one authority check, the
+    // ceremony's floor (follow-up decision "Report finalize").
+    expect(res.body.error).toEqual({ code: 'ESIGNATURE_NO_AUTHORITY', message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.' });
     expect(await runState(own)).toEqual({ status: 'completed', seal_hash: null });
     expect(await signatureRows(own)).toEqual([]);
   });

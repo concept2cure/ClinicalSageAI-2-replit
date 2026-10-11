@@ -1,0 +1,39 @@
+✖ existing recorded-lineage statements bind their walk relation in each inspected literal (635.952184ms)
+✔ the live scanner already recognizes declared-column CTEs while retaining their real storage reads (0.633439ms)
+✔ a standalone same-named table remains subject to storage qualification (0.305424ms)
+✔ a reference to an uncreated table after a string holding /* is reported (132.294396ms)
+✔ runtime DDL after a string holding /* backs its table (0.144554ms)
+✔ runtime DDL after an https:// string on the same line backs its table (0.11805ms)
+✔ DDL only inside real comments backs nothing (0.11331ms)
+✔ DDL inside an SQL comment within an embedded string backs nothing (0.099656ms)
+✔ a leading recursive CTE with declared and quoted columns is query-local storage (0.093186ms)
+✔ a leading column-list CTE still reports the missing storage it reads (0.082912ms)
+✔ a later recursive CTE with declared columns is query-local storage (0.090365ms)
+✔ a later column-list CTE still reports the missing storage it reads (0.186555ms)
+✔ a CTE declaration does not qualify the same table name in another statement (0.220437ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 12
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 796.71496
+
+✖ failing tests:
+
+test at scripts/ci/__tests__/recorded-lineage-query-bindings.test.mjs:7:1
+✖ existing recorded-lineage statements bind their walk relation in each inspected literal (635.952184ms)
+  AssertionError [ERR_ASSERTION]: unbound walk references: ["server/services/document-data-disposition/derived-impact.ts","server/services/document-data-disposition/recorded-lineage.ts"]
+      at TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/recorded-lineage-query-bindings.test.mjs:9:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

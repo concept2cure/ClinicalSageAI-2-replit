@@ -1,0 +1,13 @@
+server.log: "require is not defined" entries (correlation ids, route, status, time):
+  d3251ac3-c28a-4691-9bf1-06d6b00bd05a ('POST', '/api/regulatory/documents', 500, '2026-10-08T00:54:51.030Z')
+  e2479b50-7f9a-44f2-843b-ed243361a029 ('POST', '/api/regulatory/documents/diag-missing-id/advance', 500, '2026-10-08T01:06:36.843Z')
+  797da50a-31f7-4b8c-a36a-3050c3294b26 ('POST', '/api/regulatory/documents/diag-missing-id/sign', 500, '2026-10-08T01:06:36.869Z')
+  993f608d-12e2-468e-af61-9096c9f7297a ('POST', '/api/regulatory/documents', 500, '2026-10-08T01:15:39.780Z')
+  c0c1de77-105d-4cf2-9082-3e0503f98e03 ('POST', '/api/regulatory/documents', 500, '2026-10-08T01:15:40.278Z')
+  bc25ce90-8467-4dc8-ad43-45d95942b058 ('POST', '/api/regulatory/documents/diag-missing-id/advance', 500, '2026-10-08T01:21:42.475Z')
+  bc436725-ffce-4929-b595-9fc80f2a1898 ('POST', '/api/regulatory/documents/diag-missing-id/advance', 500, '2026-10-08T01:24:26.364Z')
+  d981a0e5-baa1-4b50-90d3-d7435c887a79 ('POST', '/api/regulatory/documents', 500, '2026-10-08T01:27:18.180Z')
+  faff2255-f3f4-4ca9-a814-e680b05d4ccc ('POST', '/api/regulatory/documents', 500, '2026-10-08T01:28:00.440Z')
+total: 9
+POST /api/regulatory/documents (Send for review path): 5
+POST /api/regulatory/documents/:id/advance|sign (same getDb): 4

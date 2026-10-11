@@ -1,0 +1,41 @@
+/**
+ * Runs the repo's tests with the PROPOSED outside-file changes substituted at
+ * load time (no file in the working tree is modified). Set PROPOSED=0 to run
+ * the files as they are in the tree.
+ */
+import fs from 'node:fs';
+import base from '/home/user/ClinicalSageAI-2-replit/vitest.config';
+import { defineConfig, mergeConfig } from '/home/user/ClinicalSageAI-2-replit/node_modules/vitest/dist/config.js';
+
+const REPO = '/home/user/ClinicalSageAI-2-replit/';
+const PROPOSED = '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/2d-fix/proposed/';
+const SUBST: Record<string, string> = process.env.PROPOSED === '0' ? {} : {
+  [REPO + 'client/src/concept2cure/v2/editor/ReviewTasksPanel.tsx']: PROPOSED + 'ReviewTasksPanel.tsx',
+  [REPO + 'client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx']: PROPOSED + 'reviewTaskVerdict.test.tsx',
+  [REPO + 'client/src/concept2cure/v2/editor/TaskSignOffDialog.tsx']: PROPOSED + 'TaskSignOffDialog.tsx',
+  // A new file the proposal adds: resolved at its would-be path, loaded from scratch.
+  [REPO + 'client/src/concept2cure/v2/editor/reviewTaskState.ts']: PROPOSED + 'reviewTaskState.ts',
+};
+const NEW_FILE = REPO + 'client/src/concept2cure/v2/editor/reviewTaskState.ts';
+if (process.env.PROPOSED_TEST_ONLY === '1') {
+  delete SUBST[REPO + 'client/src/concept2cure/v2/editor/ReviewTasksPanel.tsx'];
+  delete SUBST[REPO + 'client/src/concept2cure/v2/editor/TaskSignOffDialog.tsx'];
+}
+
+export default mergeConfig(base, defineConfig({
+  root: '/home/user/ClinicalSageAI-2-replit',
+  plugins: [{
+    name: 'proposed-outside-files',
+    enforce: 'pre',
+    resolveId(source: string, importer?: string) {
+      if (SUBST[NEW_FILE] && source === './reviewTaskState' && importer?.startsWith(REPO + 'client/src/concept2cure/v2/editor/')) return NEW_FILE;
+      return null;
+    },
+    load(id: string) {
+      const file = id.split('?')[0];
+      const sub = SUBST[file];
+      if (sub) return fs.readFileSync(sub, 'utf8');
+      return null;
+    },
+  }],
+}));

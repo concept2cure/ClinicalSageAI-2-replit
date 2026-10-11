@@ -1,0 +1,25 @@
+# M6-task-steps-not-in-detail: client/src/concept2cure/v2/turnSummaryRows.ts
+--- /tmp/s5-mut.bak	2026-10-08 15:35:45.945251296 +0000
++++ client/src/concept2cure/v2/turnSummaryRows.ts	2026-10-08 15:35:45.947928245 +0000
+@@ -245,7 +245,7 @@
+     verb: TASK_VERBS[e.change],
+     title: e.title,
+     list: planAt(ctx.events, e.seq),
+-    steps: served.map((s) => stepRow(s, ctx.opts.live)),
++    steps: [],
+     ...(fact ? { fact } : {}),
+   };
+ }
+
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a task completed while both of its steps failed carries "none of its 2 steps succeeded" 2ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with no steps carries "No steps recorded for this task", not the failure fact 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > a completed task with one step that failed and one that succeeded carries neither 0ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > Added and Started rows carry no fact 1ms
+ ✓ client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > 2. what a completed task says about its steps > the fact is visible on the row, without opening it 75ms
+ × client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > lists the plan as it stood at that moment, and the steps attributed to the task 198ms
+ × client/src/concept2cure/v2/__tests__/turnSummaryTasks.test.tsx > opening a task > each task row lists only the steps attributed to that task 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected  to have a length of 2 but got +0
+AssertionError: expected [] to deeply equal [ 'Searching the Vault', …(1) ]
+      Tests  2 failed | 5 passed (7)
+restored: md5 OK

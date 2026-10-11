@@ -1,0 +1,62 @@
+### npm run ci:fabricated-identity
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+exit: 0
+
+### npm run ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+exit: 0
+
+### npm run ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] A route handler takes its ids from the URL, and a serial id is enumerable across
+  the estate. Constrain the organization in the statement, as the sibling handlers in
+  server/routes/c2c/tasks.ts do:
+      .where(and(eq(table.someId, id), eq(table.organizationId, getOrganizationId(req))))
+  A lookup used only to derive an org id must itself be org-scoped, or it is a way to
+  read another tenant's row and adopt its tenancy.
+exit: 1
+
+### npm run ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+exit: 0
+
+### npm run ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 73 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+exit: 0
+
+### npm run ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 112 baselined across 50 file(s).
+  5 baselined file(s) now below their count — run --write-baseline to shrink it.
+exit: 0
+
+### npm run ci:fixture-fallback
+[ci:fixture-fallback] `live ?? FIXTURE` and `live?.length ? live : FIXTURE` in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+exit: 0
+
+### npm run ci:no-mock-in-prod-routes
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+exit: 0
+
+### npm run ci:ectd-stubs
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+exit: 0
+
+### npm run ci:risk-codes
+OK: Generated risk code types are up to date.
+exit: 0
+
+### npm run ci:client-ip-single-source
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+exit: 0
+
+[ci:drizzle-tenant-scope] OK — 110 site(s), all baselined; 17 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 17 fix(es).
+(rerun after the coauthor statement named its organisation filter; exit 0)

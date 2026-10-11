@@ -1,0 +1,6 @@
+# Item 2 GREEN (clients) — ProtocolDevWrites shows the server's sentence for REAUTH_AUTHENTICATOR_REQUIRED; describeFilingRefusal names it
+$ npx vitest run client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the two signed acts carry the signature, and say plainly when it was refused > a signer with no authenticator where one is required is told so, not that the password was wrong (ADR-0014 P1-2b) 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts > describeFilingRefusal — the second factor > tells a signer with no authenticator to enrol one, where one is required (ADR-0014 P1-2b) 0ms
+ Test Files  2 passed (2)
+      Tests  23 passed (23)

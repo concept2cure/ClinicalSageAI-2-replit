@@ -403,7 +403,17 @@ function normalize(text: string): string {
     .trim();
 }
 
-const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** Literal phrase matching with the existing ASCII letter/digit boundaries. */
+function hasPhrase(text: string, phrase: string): boolean {
+  let start = text.indexOf(phrase);
+  while (start !== -1) {
+    const end = start + phrase.length;
+    if ((start === 0 || !/[a-z0-9]/.test(text[start - 1])) &&
+        (end === text.length || !/[a-z0-9]/.test(text[end]))) return true;
+    start = text.indexOf(phrase, start + 1);
+  }
+  return false;
+}
 
 /** A heading line: leading markdown, numbering and punctuation stripped. */
 function headingLines(text: string): string[] {
@@ -417,12 +427,12 @@ function findIn(element: LabelElement, section: LabelingSectionInput): string | 
     if (body.includes(normalize(s))) return s;
   }
   for (const p of m.phrases ?? []) {
-    if (new RegExp(`(^|[^a-z0-9])${escapeRe(normalize(p))}($|[^a-z0-9])`).test(body)) return p;
+    if (hasPhrase(body, normalize(p))) return p;
   }
   const lines = m.headings ? headingLines(section.text) : [];
   for (const h of m.headings ?? []) {
-    const re = new RegExp(`^${escapeRe(normalize(h))}($|[^a-z0-9])`);
-    if (lines.some((l) => re.test(l))) return h;
+    const heading = normalize(h);
+    if (lines.some(l => l.startsWith(heading) && (l.length === heading.length || !/[a-z0-9]/.test(l[heading.length])))) return h;
   }
   return undefined;
 }

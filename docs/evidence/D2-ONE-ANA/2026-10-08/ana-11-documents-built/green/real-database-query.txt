@@ -1,0 +1,5 @@
+                  id                  |                     title                     | status | provenance_source |        conversation_id         | section_count 
+--------------------------------------+-----------------------------------------------+--------+-------------------+--------------------------------+---------------
+ a6257943-a4f8-4dc0-a957-5dd4ca69e2a6 | Module 2.5 Clinical Overview (stand-in draft) | draft  | ana               | ana-ri_1791422302138_3qisj9qga |             4
+(1 row)
+

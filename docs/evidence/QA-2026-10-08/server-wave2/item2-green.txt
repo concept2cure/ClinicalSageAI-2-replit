@@ -1,0 +1,24 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:40:06.793Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > a re-type records the reason on the entry and names the old and new type 60ms
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > a title and a type changed together are both named, in the order the form lists them 12ms
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > the reason stays in the recorded details too, where the existing record reads it 9ms
+ ✓ server/services/vault/__tests__/vault-metadata-edit.history.pglite.test.ts > Edit details reads back in the document history with its reason and what changed > the chain still verifies with the reason on the row 15ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  01:40:04
+   Duration  6.03s (transform 960ms, setup 115ms, import 1.85s, tests 3.74s, environment 0ms)
+

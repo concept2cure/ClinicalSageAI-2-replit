@@ -1,0 +1,11 @@
+{
+  "format": "All diagnostics, rule identifiers and error/warning counts are preserved. Only duplicate source echoes are omitted from root lint JSON; their SHA-256 hashes remain in omittedSourceSha256. No lint rule, suppression or baseline is changed.",
+  "final_errors": 0,
+  "baseline_and_final_production_warnings": {
+    "run-hold.ts": 0,
+    "turn-run-policy.ts": 0,
+    "stream.ts": 23
+  },
+  "new_test_warnings": 0,
+  "intermediate_warning": "One additional complexity warning was resolved by extracting the repeated synchronous consumer boundary check, without moving it across an await."
+}

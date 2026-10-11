@@ -1,0 +1,115 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/routes/__tests__/authoringDeficiencyScan.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringDeficiencyScan.test.ts
+{
+  "timestamp": "2026-10-07T02:20:02.043Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDeficiencyScan.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > never reports a negative percentage, however bad the section 39ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > publishes the denominator, so the percentage is not taken on trust 8ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > applies the CTD element check migrated off the deleted endpoint 5ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not count a CTD check it has no expectations for 8ms
+ × server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for CTIS Form/MSC 15ms
+   → expected [ …(6) ] to deeply equal []
+ × server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for CTIS Part I 6ms
+   → expected [ …(6) ] to deeply equal []
+ × server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for CTIS Part II 5ms
+   → expected [ …(6) ] to deeply equal []
+ × server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for Notification 5ms
+   → expected [ …(6) ] to deeply equal []
+ × server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for Amendment 6ms
+   → expected [ …(6) ] to deeply equal []
+ × server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for Document 4ms
+   → expected [ …(6) ] to deeply equal []
+ × server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for Unknown module 6ms
+   → expected [ …(6) ] to deeply equal []
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > still applies the existing keyword profile to supported CTD modules 4ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > frames its output as a signal, never as a compliance determination 3ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /ai/validate-compliance > is gone — it answered PASS for every section it never examined 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for CTIS Form/MSC
+ FAIL  server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for CTIS Part I
+ FAIL  server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for CTIS Part II
+ FAIL  server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for Notification
+ FAIL  server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for Amendment
+ FAIL  server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for Document
+ FAIL  server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not substitute chemistry expectations for Unknown module
+AssertionError: expected [ …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "location": "content",
++     "message": "Missing expected regulatory term: \"specification\"",
++     "recommendation": "Include discussion of specification as required by FDA guidelines",
++     "severity": "medium",
++     "type": "missing_keyword",
++   },
++   {
++     "location": "content",
++     "message": "Missing expected regulatory term: \"validation\"",
++     "recommendation": "Include discussion of validation as required by FDA guidelines",
++     "severity": "medium",
++     "type": "missing_keyword",
++   },
++   {
++     "location": "content",
++     "message": "Missing expected regulatory term: \"stability\"",
++     "recommendation": "Include discussion of stability as required by FDA guidelines",
++     "severity": "medium",
++     "type": "missing_keyword",
++   },
++   {
++     "location": "content",
++     "message": "Missing expected regulatory term: \"quality\"",
++     "recommendation": "Include discussion of quality as required by FDA guidelines",
++     "severity": "medium",
++     "type": "missing_keyword",
++   },
++   {
++     "location": "content",
++     "message": "Missing expected regulatory term: \"manufacture\"",
++     "recommendation": "Include discussion of manufacture as required by FDA guidelines",
++     "severity": "medium",
++     "type": "missing_keyword",
++   },
++   {
++     "location": "content",
++     "message": "Missing expected regulatory term: \"control\"",
++     "recommendation": "Include discussion of control as required by FDA guidelines",
++     "severity": "medium",
++     "type": "missing_keyword",
++   },
++ ]
+
+ ❯ server/routes/__tests__/authoringDeficiencyScan.test.ts:131:82
+    129|     const result = response.body.scan_results;
+    130|
+    131|     expect(result.deficiencies.filter((d: any) => d.type === 'missing_…
+       |                                                                                  ^
+    132|     // Four generic checks run. Only placeholder_text passes for empty…
+    133|     // an unsupported keyword profile is neither performed nor counted…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 7 passed (14)
+   Start at  22:19:57
+   Duration  7.69s (transform 4.45s, setup 1.06s, import 6.17s, tests 122ms, environment 0ms)

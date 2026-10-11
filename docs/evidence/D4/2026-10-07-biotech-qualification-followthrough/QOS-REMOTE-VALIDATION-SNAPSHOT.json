@@ -1,0 +1,347 @@
+{
+  "code_publication": {
+    "commit": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+    "tree": "09bdd1233c21b130b533c24c705d00a3855400c8",
+    "main_run": 37676477898,
+    "jobs": [
+      {
+        "id": 112981179457,
+        "name": "Security Scan",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112981179457",
+        "started_at": "2026-10-07T19:42:13Z",
+        "completed_at": "2026-10-07T19:44:41Z"
+      },
+      {
+        "id": 112981179778,
+        "name": "Secret scan (full history)",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "completed",
+        "conclusion": "failure",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112981179778",
+        "started_at": "2026-10-07T19:42:12Z",
+        "completed_at": "2026-10-07T19:44:21Z"
+      },
+      {
+        "id": 112981179868,
+        "name": "Lint",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112981179868",
+        "started_at": "2026-10-07T19:42:13Z",
+        "completed_at": "2026-10-07T20:01:09Z"
+      },
+      {
+        "id": 112981179984,
+        "name": "Security Contract Tests",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112981179984",
+        "started_at": "2026-10-07T19:42:13Z",
+        "completed_at": "2026-10-07T19:43:47Z"
+      },
+      {
+        "id": 112981180948,
+        "name": "Nightly Governance Strict",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112981180948",
+        "started_at": "2026-10-07T19:42:11Z",
+        "completed_at": "2026-10-07T19:42:10Z"
+      },
+      {
+        "id": 112989315125,
+        "name": "Blank DB Provisioning + Deploy Migration",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112989315125",
+        "started_at": "2026-10-07T20:01:11Z",
+        "completed_at": "2026-10-07T20:03:11Z"
+      },
+      {
+        "id": 112989315198,
+        "name": "AnA Readiness Tests",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112989315198",
+        "started_at": "2026-10-07T20:01:11Z",
+        "completed_at": "2026-10-07T20:02:09Z"
+      },
+      {
+        "id": 112989315236,
+        "name": "Test",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112989315236",
+        "started_at": "2026-10-07T20:01:11Z",
+        "completed_at": null
+      },
+      {
+        "id": 112989315242,
+        "name": "Production Image Boot (built image, empty database, sign-in)",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112989315242",
+        "started_at": "2026-10-07T20:01:11Z",
+        "completed_at": "2026-10-07T20:06:14Z"
+      },
+      {
+        "id": 112989315287,
+        "name": "Coverage (ratchet)",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112989315287",
+        "started_at": "2026-10-07T20:01:11Z",
+        "completed_at": null
+      },
+      {
+        "id": 112989315345,
+        "name": "Production Boot Smoke (RLS on, non-superuser role)",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112989315345",
+        "started_at": "2026-10-07T20:01:11Z",
+        "completed_at": "2026-10-07T20:03:34Z"
+      },
+      {
+        "id": 112989315421,
+        "name": "AIOS Audit Assets",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112989315421",
+        "started_at": "2026-10-07T20:01:11Z",
+        "completed_at": "2026-10-07T20:01:33Z"
+      },
+      {
+        "id": 112989315466,
+        "name": "Integration Tests",
+        "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37676477898/job/112989315466",
+        "started_at": "2026-10-07T20:01:11Z",
+        "completed_at": null
+      }
+    ]
+  },
+  "metadata_publication": {
+    "commit": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+    "tree": "eb095d2e9ccc9dba4bdc54179fef77746a73653f",
+    "main_run": 37677746198,
+    "jobs": [
+      {
+        "id": 112985502569,
+        "name": "Security Scan",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112985502569",
+        "started_at": "2026-10-07T19:52:17Z",
+        "completed_at": "2026-10-07T19:54:38Z"
+      },
+      {
+        "id": 112985502830,
+        "name": "Security Contract Tests",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112985502830",
+        "started_at": "2026-10-07T19:52:17Z",
+        "completed_at": "2026-10-07T19:54:12Z"
+      },
+      {
+        "id": 112985503051,
+        "name": "Lint",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112985503051",
+        "started_at": "2026-10-07T19:52:17Z",
+        "completed_at": "2026-10-07T20:11:53Z"
+      },
+      {
+        "id": 112985504378,
+        "name": "Nightly Governance Strict",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112985504378",
+        "started_at": "2026-10-07T19:52:15Z",
+        "completed_at": "2026-10-07T19:52:15Z"
+      },
+      {
+        "id": 112985504696,
+        "name": "Secret scan (full history)",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112985504696",
+        "started_at": "2026-10-07T19:52:18Z",
+        "completed_at": "2026-10-07T19:55:55Z"
+      },
+      {
+        "id": 112993877573,
+        "name": "Blank DB Provisioning + Deploy Migration",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112993877573",
+        "started_at": "2026-10-07T20:11:57Z",
+        "completed_at": "2026-10-07T20:13:40Z"
+      },
+      {
+        "id": 112993877642,
+        "name": "AIOS Audit Assets",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112993877642",
+        "started_at": "2026-10-07T20:11:55Z",
+        "completed_at": "2026-10-07T20:12:15Z"
+      },
+      {
+        "id": 112993877665,
+        "name": "Integration Tests",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112993877665",
+        "started_at": "2026-10-07T20:11:57Z",
+        "completed_at": null
+      },
+      {
+        "id": 112993877701,
+        "name": "Test",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112993877701",
+        "started_at": "2026-10-07T20:11:55Z",
+        "completed_at": null
+      },
+      {
+        "id": 112993877704,
+        "name": "Coverage (ratchet)",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112993877704",
+        "started_at": "2026-10-07T20:11:55Z",
+        "completed_at": null
+      },
+      {
+        "id": 112993877771,
+        "name": "AnA Readiness Tests",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112993877771",
+        "started_at": "2026-10-07T20:12:01Z",
+        "completed_at": "2026-10-07T20:12:58Z"
+      },
+      {
+        "id": 112993877785,
+        "name": "Production Boot Smoke (RLS on, non-superuser role)",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112993877785",
+        "started_at": "2026-10-07T20:12:12Z",
+        "completed_at": "2026-10-07T20:13:54Z"
+      },
+      {
+        "id": 112993877826,
+        "name": "Production Image Boot (built image, empty database, sign-in)",
+        "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37677746198/job/112993877826",
+        "started_at": "2026-10-07T20:12:01Z",
+        "completed_at": "2026-10-07T20:17:45Z"
+      }
+    ]
+  },
+  "measured_full_compiler_executions": [
+    {
+      "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+      "run": 37676477193,
+      "job": 112981176880,
+      "errors": 0,
+      "compiler_exit": 0,
+      "baseline": 0
+    },
+    {
+      "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+      "run": 37676477898,
+      "job": 112981179868,
+      "errors": 0,
+      "compiler_exit": 0,
+      "baseline": 0
+    },
+    {
+      "source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+      "run": 37677745714,
+      "job": 112985499361,
+      "errors": 0,
+      "compiler_exit": 0,
+      "baseline": 0
+    }
+  ],
+  "integrated_regression": {
+    "physical_files": 83,
+    "cases": 1511,
+    "passed": 1511,
+    "failed": 0,
+    "skipped_or_pending": 0,
+    "source_blobs": 11
+  },
+  "separate_export_check": {
+    "controls": 8,
+    "passed": 8,
+    "failed": 0,
+    "pdfs": 8,
+    "pages": 16,
+    "visual_pages": 4,
+    "reviewed_unchanged_source_blobs": 7
+  },
+  "remote_node_ci_controls": {
+    "source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+    "passed": 214,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "history_scanner": {
+    "original_source": "fdd507a91c6b7c7976c78eae4fa9755f87326782",
+    "original_job": 112981179778,
+    "original_conclusion": "failure",
+    "original_findings": 1,
+    "disposition_source": "2c7b8bec41727a091a815f0f9fa99f0864b66133",
+    "verified_job": 112985504696,
+    "verified_conclusion": "success",
+    "commits_scanned": 9676,
+    "unrecorded_findings": 0,
+    "disposition": "One verified source-checksum fingerprint; original manifest and scanner rules unchanged."
+  },
+  "qualification": {
+    "D4": "open",
+    "release": "open",
+    "broad_test_integration_coverage": "in progress on both recorded sources",
+    "native_db_test": "separate step pending after broad integration run",
+    "earlier_native_db_failure_cause": "unknown; not inferred from the broad mocked artifact",
+    "scientific_signed_intended_use_provider_transport": "not qualified by these scoped controls"
+  }
+}

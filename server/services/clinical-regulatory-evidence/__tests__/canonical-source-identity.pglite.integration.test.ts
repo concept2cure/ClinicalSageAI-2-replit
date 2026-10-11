@@ -15,6 +15,7 @@
  *     document is not left reported as 'pending'.
  */
 
+import { RECORDED_LINEAGE_STORES_DDL } from '../../document-data-disposition/__tests__/lineage-stores-fixture';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
@@ -80,6 +81,7 @@ const PROGRAM_B = '22222222-2222-4222-8222-222222222222';
 // these hooks went red purely because another pglite suite joined the directory.
 beforeAll(async () => {
   pglite = new PGlite();
+  await pglite.exec(RECORDED_LINEAGE_STORES_DDL);
   const here = path.dirname(fileURLToPath(import.meta.url));
   const spine = path.resolve(
     here,
@@ -96,6 +98,7 @@ beforeAll(async () => {
   // reads them through readSourceUploads, as every deployed database has them.
   const versioning = path.resolve(here, '../../../../migrations/20260829_cre_source_versioning.sql');
   await pglite.exec(fs.readFileSync(versioning, 'utf8'));
+  await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../migrations/20261006_document_data_dispositions.sql'), 'utf8'));
 }, 90_000);
 afterAll(async () => {
   await pglite.close();

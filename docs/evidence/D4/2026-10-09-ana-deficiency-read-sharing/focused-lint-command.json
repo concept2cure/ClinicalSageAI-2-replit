@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/root/.npm/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "server/services/ana-ri/context-enrichment.ts",
+    "server/services/ana-ri/__tests__/context-enrichment-deficiency-sharing.test.ts",
+    "--format",
+    "json"
+  ],
+  "exitCode": 0,
+  "output": "focused-lint-initial.json",
+  "productionSha256": "0c047c1bfcf80c1165befd660d919b0ee99a423b5870ce8f87e783b380290563",
+  "testSha256": "b5e832d4977f1ced2a1f4e7d803641eadb8215c7dba06b3c6c57dbee1bd167f5",
+  "sourceEchoOmitted": true
+}

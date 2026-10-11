@@ -41,10 +41,19 @@ beforeEach(() => vi.restoreAllMocks());
 afterEach(cleanup);
 
 describe('attachmentReadLabel', () => {
-  it('formats word counts and notes OCR', () => {
-    expect(attachmentReadLabel('utf8', 1240)).toBe('read · 1,240 words');
-    expect(attachmentReadLabel('image-ocr', 87)).toBe('read via OCR · 87 words');
-    expect(attachmentReadLabel('pdf-ocr', 1)).toBe('read via OCR · 1 word');
+  /* QA 2026-10-08 (j5): the chip said "read · 20 words" while AnA's turn was
+     given the file by name only. The count is what the upload EXTRACTED; the
+     chip says that, and claims nothing about what AnA was given (the turn's
+     "Used in this session" says that, per turn). */
+  it('formats word counts as extracted text, and notes OCR', () => {
+    expect(attachmentReadLabel('utf8', 1240)).toBe('text extracted · 1,240 words');
+    expect(attachmentReadLabel('image-ocr', 87)).toBe('text extracted via OCR · 87 words');
+    expect(attachmentReadLabel('pdf-ocr', 1)).toBe('text extracted via OCR · 1 word');
+  });
+  it('never says the file was read', () => {
+    for (const [m, w] of [['utf8', 20], ['pdf-text', 3], ['image-ocr', 87]] as const) {
+      expect(attachmentReadLabel(m, w)).not.toMatch(/\bread\b/);
+    }
   });
   it('returns null when nothing was read', () => {
     expect(attachmentReadLabel('utf8', 0)).toBeNull();
@@ -58,7 +67,7 @@ describe('readyAttachmentLabel', () => {
     expect(readyAttachmentLabel('utf8', undefined)).toBe('no text extracted');
   });
   it('is the read label when text was extracted', () => {
-    expect(readyAttachmentLabel('pdf-ocr', 87)).toBe('read via OCR · 87 words');
+    expect(readyAttachmentLabel('pdf-ocr', 87)).toBe('text extracted via OCR · 87 words');
   });
 });
 
@@ -121,7 +130,7 @@ describe('useChatUpload', () => {
     expect(a.fileId).toBe('file_1');
     expect(a.extractionMethod).toBe('utf8');
     expect(a.extractionWords).toBe(1240);
-    expect(result.current.statusMessage).toBe('enrollment.txt read · 1,240 words');
+    expect(result.current.statusMessage).toBe('enrollment.txt: text extracted · 1,240 words');
 
     // projectId was sent in the multipart body.
     const form = (globalThis.fetch as any).mock.calls[0][1].body as FormData;

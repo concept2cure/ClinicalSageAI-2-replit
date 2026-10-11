@@ -1,0 +1,46 @@
+[
+  {
+    "filePath": "server/services/ana/run-control.ts",
+    "messages": [
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async function 'consumeInterjections' has a complexity of 16. Maximum allowed is 15.",
+        "line": 724,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 724,
+        "endColumn": 43
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (677). Maximum allowed is 500.",
+        "line": 917,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 1225,
+        "endColumn": 1
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 2,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": [],
+    "omittedSourceSha256": "ffd7d89e4b662df6064af45b2a01812e862ae5ad4dfe9468cb8d22e3a268c49e"
+  },
+  {
+    "filePath": "server/services/ana/__tests__/run-control-tenant-scope.test.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  }
+]

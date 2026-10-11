@@ -1,0 +1,8 @@
+{
+  "format": "All production diagnostics and counts remain. Only the duplicate source echo is omitted from root lint JSON, with its SHA256 retained.",
+  "production_errors": 0,
+  "baseline_and_final_production_warnings": 2,
+  "new_test_errors": 0,
+  "new_test_warnings": 0,
+  "rules_suppressions_baselines_or_gates_changed": false
+}

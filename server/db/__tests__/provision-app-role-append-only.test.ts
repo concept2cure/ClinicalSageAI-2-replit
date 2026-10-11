@@ -113,6 +113,9 @@ describe('APPEND_ONLY_TABLES', () => {
       'public.regulatory_audit_logs',
       'public.c2c_ana_actions',
       'public.authoring_signatures',
+      // DP-84 (2026-10-05): the Module 3 signed snapshots and provenance trail.
+      'public.cmc_module3_section_versions',
+      'public.cmc_provenance_events',
     ]);
     const carveOuts = APPEND_ONLY_TABLES.filter((t: Store) => t.updatableColumns);
     expect(carveOuts).toEqual([{ schema: 'public', name: 'electronic_signatures', updatableColumns: SUPERSESSION }]);

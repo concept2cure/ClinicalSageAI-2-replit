@@ -488,6 +488,29 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
   if (content === undefined && status === undefined) {
     return send400(res, 'content or status required');
   }
+  /* Spine F1 (2026-10-08): approval and lock are signed acts, not field edits.
+     This route accepted status 'approved' (and 'locked') with only a reason, so
+     a section could read approved — and count toward readiness and the
+     dispatch gate — with no electronic signature behind it (21 CFR Part 11
+     §11.50/§11.70). A section is approved by the approver's signature on the
+     bound authoring document (POST /api/authoring/docs/:docId/e-sign or /sign,
+     which move the bound sections whose text is the text signed, in the
+     signature's own transaction). Nothing sets a section 'locked'; the document
+     lock (POST /api/c2c/documents/:id/lock) sets c2c_documents.status only.
+     Refused before anything is read or written. No client sends either value
+     here today (useSectionSave sends content only). An approved section whose
+     text changes is withdrawn to 'drafted' below, and a locked section is not
+     edited at all. */
+  if (status === 'approved' || status === 'locked') {
+    return res.status(409).json({
+      code: 'APPROVAL_REQUIRES_SIGNATURE',
+      error: 'APPROVAL_REQUIRES_SIGNATURE',
+      message:
+        status === 'approved'
+          ? 'A section is approved only by an electronic signature with the meaning Approval on the authoring document bound to this filing, and only when its text is the text signed. Nothing was changed.'
+          : 'A section cannot be locked here. Lock the document (POST /api/c2c/documents/:id/lock). Nothing was changed.',
+    });
+  }
   if (!reason || typeof reason !== 'string' || reason.trim() === '') {
     return send400(res, 'reason required for Part-11 attribution');
   }
@@ -575,11 +598,26 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
         typeof anaActionId === 'string' ? anaActionId.trim() : '',
       ]);
 
-      // Check if section already exists.
+      // Check if section already exists. Its status is read on this
+      // transaction (FOR UPDATE) for spine F1: a locked section is not edited,
+      // and an approved one whose text changes no longer reads approved.
       const existing = await client.query(
-        `SELECT id FROM c2c_document_sections WHERE document_id = $1 AND section_key = $2`,
+        `SELECT id FROM c2c_document_sections WHERE document_id = $1 AND section_key = $2 FOR UPDATE`,
         [id, key],
       );
+      const existingId = (existing.rows[0] as { id?: unknown } | undefined)?.id;
+      const previousStatus: string | null = existingId === undefined
+        ? null
+        : ((await client.query(`SELECT status FROM c2c_document_sections WHERE id = $1`, [existingId]))
+            .rows[0] as { status?: string } | undefined)?.status ?? null;
+      if (previousStatus === 'locked') {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          code: 'SECTION_LOCKED',
+          error: 'SECTION_LOCKED',
+          message: 'This section is locked, so it is not edited in place. Nothing was changed.',
+        });
+      }
 
       let row: any;
       if (existing.rows.length === 0) {
@@ -629,6 +667,14 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
         if (status !== undefined) {
           params.push(status);
           setClauses.push(`status = $${params.length}`);
+        } else if (content !== undefined && previousStatus === 'approved') {
+          // Spine F1: 'approved' means the approver's signature covers this
+          // text. New text is not signed text, so the section is withdrawn to
+          // 'drafted' in this same UPDATE (an identical body keeps it). The
+          // governed-action row below records the withdrawal.
+          setClauses.push(
+            `status = CASE WHEN content IS DISTINCT FROM $3::jsonb THEN 'drafted' ELSE status END`,
+          );
         }
         // Rewritten on every content change, including to NULL. New text has a
         // new origin, so carrying the previous one forward would attribute
@@ -660,7 +706,11 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
         command: 'transition',
         target: `section:${id}:${key}`,
         reason: reason.trim(),
-        payload: { status },
+        // Spine F1: an approval this change withdrew is named in the record.
+        payload:
+          previousStatus === 'approved' && row?.status !== 'approved'
+            ? { status, from: 'approved', to: row?.status ?? null, approvalWithdrawn: true }
+            : { status },
         domain: 'documents',
         surface: 'api',
       });

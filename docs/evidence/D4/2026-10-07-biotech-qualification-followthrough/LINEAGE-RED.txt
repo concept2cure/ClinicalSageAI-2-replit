@@ -1,0 +1,232 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+{
+  "timestamp": "2026-10-07T16:15:35.292Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+{
+  "timestamp": "2026-10-07T16:15:39.655Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T16:15:39.656Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts
+{
+  "timestamp": "2026-10-07T16:15:39.657Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+xstderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > rolls back capture and audit when the capture seam fails
+{
+  "timestamp": "2026-10-07T16:15:52.647Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "8efb20dd-83c3-4965-b9ec-2798a46d6eae",
+    "err": "capture test seam failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+··stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > rolls back capture and audit when the audit seam fails
+{
+  "timestamp": "2026-10-07T16:15:52.696Z",
+  "level": "error",
+  "message": "[c2c-projects] adopting the file into the project failed",
+  "context": {
+    "programId": "75f1aa89-30ae-4914-b814-d7eba19387df",
+    "err": "audit seal test seam failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+··stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture bytes altered after the recorded upload digest
+{
+  "timestamp": "2026-10-07T16:15:52.775Z",
+  "level": "error",
+  "message": "[ana-uploaded-files] upload integrity check FAILED — stored bytes do not match the recorded digest",
+  "context": {
+    "fileId": "dd0e0bef-6942-4920-864f-ab535efeb05c",
+    "orgId": 1006,
+    "storagePath": "uploads/org-1006/dd0e0bef-6942-4920-864f-ab535efeb05c",
+    "recordedSha256": "71f499bb9714f91faaa2e6d74ebd67a6d7fa438d52365cd9c7ca45c1c843b0fd",
+    "actualSha256": "daae6d0f6649a3b05d956576f480532de9f095273c0f9558f11444c93f8fc463",
+    "recordedSize": 26,
+    "actualSize": 21
+  }
+}
+
+····stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/org-99999/foreign
+{
+  "timestamp": "2026-10-07T16:15:52.943Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "d0bfb662-f3ed-45e5-bfa8-ced1327c9e09",
+    "orgId": 1011
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/unscoped/ownerless
+{
+  "timestamp": "2026-10-07T16:15:52.966Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "968cc925-f100-4a20-810f-dc4aebbeb4b3",
+    "orgId": 1012
+  }
+}
+
+··stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/org-ORG/../org-99999/foreign
+{
+  "timestamp": "2026-10-07T16:15:52.987Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "46353eb5-8c52-4ef5-8d25-0c05d1bb8fad",
+    "orgId": 1013
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > does not capture a tenant-inconsistent storage path: uploads/org-ORG/
+{
+  "timestamp": "2026-10-07T16:15:53.006Z",
+  "level": "warn",
+  "message": "[ana-uploaded-files] tenant-scoped upload access denied",
+  "context": {
+    "fileId": "e5e6bc22-3c7b-47eb-a220-439ceecd552a",
+    "orgId": 1014
+  }
+}
+
+····xxx··xxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-adoption-sql.test.ts > conversation adoption: actual SQL and transaction boundary > carries a conversation-only workbook’s exact existing derivation into its adopted capture
+AssertionError: expected { origin: 'adopt', …(4) } to match object { …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "derivedFromFileId": "3654dc27-41a9-43cd-ae28-7cc2fdfa1e53",
+-   "derivedFromSha256": "1e5687ad96754987fa42a07d467348a2c099cd08afb116f5bc448999a1ed1311",
+-   "parentSourceIds": [
+-     1,
+-   ],
++   "adoptedByUserId": 42,
++   "adoptedFrom": "conversation",
++   "fileUploadId": "3d75a293-7d60-44bf-9f22-71289663cfd0",
++   "origin": "adopt",
++   "storagePath": "uploads/org-1001/3d75a293-7d60-44bf-9f22-71289663cfd0",
+  }
+
+ ❯ server/routes/c2c/__tests__/projects-adoption-sql.test.ts:109:32
+    107|     const response = await adopt(); expect(response.status).toBe(201);
+    108|     const rows = await captures(); expect(rows).toHaveLength(1);
+    109|     expect(rows[0].provenance).toMatchObject({ derivedFromFileId: f.up…
+       |                                ^
+    110|       derivedFromSha256: details.sourceSha256, parentSourceIds: [f.cap…
+    111|     expect(rows[0].metadata).toMatchObject({ scientificQualification: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts > known legacy workbook ancestry eligibility > withholds an exact descendant of legacy removed data with cross-project=false
+ FAIL  server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts > known legacy workbook ancestry eligibility > withholds an exact descendant of legacy removed data with cross-project=true
+AssertionError: expected { data: true, binary: true } to deeply equal { data: false, binary: false }
+
+- Expected
++ Received
+
+  {
+-   "binary": false,
+-   "data": false,
++   "binary": true,
++   "data": true,
+  }
+
+ ❯ server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts:48:42
+     46|     await f.apply('remove_data');
+     47|     const child = await descendant(f, { id: f.capture, fileId: f.uploa…
+     48|     expect(await availability(f, child)).toEqual({ data: false, binary…
+       |                                          ^
+     49|   });
+     50|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts > known legacy workbook ancestry eligibility > withholds a two-hop exact descendant while preserving its historical rows
+AssertionError: expected { data: true, binary: true } to deeply equal { data: false, binary: false }
+
+- Expected
++ Received
+
+  {
+-   "binary": false,
+-   "data": false,
++   "binary": true,
++   "data": true,
+  }
+
+ ❯ server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts:55:47
+     53|     const child = await descendant(f, { id: f.capture, fileId: f.uploa…
+     54|     const grandchild = await descendant(f, child);
+     55|     expect(await availability(f, grandchild)).toEqual({ data: false, b…
+       |                                               ^
+     56|     expect((await f.pg.query('SELECT id FROM cre_evidence_sources WHER…
+     57|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts > known legacy workbook ancestry eligibility > does not silently qualify unresolved or malformed named ancestry: {"derivedFromFileId":"file_missing","derivedFromSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","parentSourceIds":[]}
+ FAIL  server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts > known legacy workbook ancestry eligibility > does not silently qualify unresolved or malformed named ancestry: {"derivedFromFileId":null,"derivedFromSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","parentSourceIds":[999999]}
+ FAIL  server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts > known legacy workbook ancestry eligibility > does not silently qualify unresolved or malformed named ancestry: {"derivedFromSha256":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","parentSourceIds":"malformed"}
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts:81:49
+     79|     const child = await descendant(f, { id: f.capture, fileId: f.uploa…
+     80|       { provenance: { origin: 'spreadsheet_edit', ...provenance } });
+     81|     expect((await availability(f, child)).data).toBe(false);
+       |                                                 ^
+     82|   });
+     83| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 16 passed (23)
+   Start at  12:15:20
+   Duration  53.86s (transform 8.34s, setup 320ms, import 20.12s, tests 28.35s, environment 0ms)

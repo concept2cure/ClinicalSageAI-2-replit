@@ -1,0 +1,156 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > a member is told the member role, as sign-in tells them 25ms
+   → expected [ 'user' ] to include 'member'
+ × server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > a manager is told the manager role, not only "user" 7ms
+   → expected [ 'user' ] to include 'manager'
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > an admin keeps the admin role (unchanged) 4ms
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > a viewer is still refused: no authoring role is granted 4ms
+ × server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/me: roles match what sign-in issues > a member is told the member role 5ms
+   → expected [ 'user' ] to include 'member'
+ ✓ server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/me: roles match what sign-in issues > a viewer gets no authoring role 3ms
+stderr | server/routes/__tests__/document-lifecycle-runtime-db.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/document-lifecycle-runtime-db.test.ts
+{
+  "timestamp": "2026-10-08T01:17:51.889Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/document-lifecycle-runtime-db.test.ts
+{
+  "timestamp": "2026-10-08T01:17:52.592Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:17:52.593Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-runtime-db.test.ts
+{
+  "timestamp": "2026-10-08T01:17:52.593Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a member (regulatory-author) creates the record through the runtime db, not a 500
+{
+  "timestamp": "2026-10-08T01:17:55.024Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Cannot find module '/home/user/ClinicalSageAI-2-replit/server/db/runtime' imported from /home/user/ClinicalSageAI-2-replit/server/db.ts",
+    "correlationId": null,
+    "code": "ERR_MODULE_NOT_FOUND"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a manager (regulatory-author) reaches the runtime db the same way
+{
+  "timestamp": "2026-10-08T01:17:55.042Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Cannot find module '/home/user/ClinicalSageAI-2-replit/server/db/runtime' imported from /home/user/ClinicalSageAI-2-replit/server/db.ts",
+    "correlationId": null,
+    "code": "ERR_MODULE_NOT_FOUND"
+  }
+}
+
+ × server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a member (regulatory-author) creates the record through the runtime db, not a 500 76ms
+   → expected { error: 'INTERNAL_ERROR', …(1) } to not match object { error: 'INTERNAL_ERROR' }
+ × server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a manager (regulatory-author) reaches the runtime db the same way 8ms
+   → expected 500 to be 201 // Object.is equality
+ ✓ server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a viewer is still refused by the role gate before any store call 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > a member is told the member role, as sign-in tells them
+AssertionError: expected [ 'user' ] to include 'member'
+ ❯ server/routes/__tests__/auth-session-roles.test.ts:112:33
+    110|     const res = await request(app).get('/api/v1/auth/session').set(bea…
+    111|     expect(res.status).toBe(200);
+    112|     expect(res.body.user.roles).toContain('member');
+       |                                 ^
+    113|     expect(res.body.user.permissions).toContain('governed:write');
+    114|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/session: roles match what sign-in issues > a manager is told the manager role, not only "user"
+AssertionError: expected [ 'user' ] to include 'manager'
+ ❯ server/routes/__tests__/auth-session-roles.test.ts:120:33
+    118|     const res = await request(app).get('/api/v1/auth/session').set(bea…
+    119|     expect(res.status).toBe(200);
+    120|     expect(res.body.user.roles).toContain('manager');
+       |                                 ^
+    121|   });
+    122|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/routes/__tests__/auth-session-roles.test.ts > GET /api/v1/auth/me: roles match what sign-in issues > a member is told the member role
+AssertionError: expected [ 'user' ] to include 'member'
+ ❯ server/routes/__tests__/auth-session-roles.test.ts:144:28
+    142|     const res = await request(app).get('/api/v1/auth/me').set(bearer()…
+    143|     expect(res.status).toBe(200);
+    144|     expect(res.body.roles).toContain('member');
+       |                            ^
+    145|   });
+    146|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a member (regulatory-author) creates the record through the runtime db, not a 500
+AssertionError: expected { error: 'INTERNAL_ERROR', …(1) } to not match object { error: 'INTERNAL_ERROR' }
+
+Compared values have no visual difference.
+
+ ❯ server/routes/__tests__/document-lifecycle-runtime-db.test.ts:55:24
+     53|   it('a member (regulatory-author) creates the record through the runt…
+     54|     const r = await request(app(['member', 'regulatory-author'])).post…
+     55|     expect(r.body).not.toMatchObject({ error: 'INTERNAL_ERROR' });
+       |                        ^
+     56|     expect(r.status).toBe(201);
+     57|     expect(r.body).toMatchObject({ ok: true, canonicalId: 'doc-runtime…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/routes/__tests__/document-lifecycle-runtime-db.test.ts > POST /api/regulatory/documents with the runtime db (no injected handle) > a manager (regulatory-author) reaches the runtime db the same way
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/document-lifecycle-runtime-db.test.ts:66:22
+     64|   it('a manager (regulatory-author) reaches the runtime db the same wa…
+     65|     const r = await request(app(['manager', 'regulatory-author'])).pos…
+     66|     expect(r.status).toBe(201);
+       |                      ^
+     67|     expect(store.createCanonicalDocument).toHaveBeenCalledWith(runtime…
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 4 passed (9)
+   Start at  01:17:45
+   Duration  9.24s (transform 5.32s, setup 123ms, import 8.45s, tests 149ms, environment 0ms)
+
+exit=1

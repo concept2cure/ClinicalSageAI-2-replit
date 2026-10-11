@@ -1,0 +1,103 @@
+{
+  "head": "afe63076cd6078bf7f38be122a9c0a4e5e5788b8",
+  "runs": [
+    {
+      "id": 37494646893,
+      "name": "C2C Agent — Validate & Audit",
+      "head": "afe63076cd6078bf7f38be122a9c0a4e5e5788b8",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37494646676,
+      "name": "Semgrep",
+      "head": "afe63076cd6078bf7f38be122a9c0a4e5e5788b8",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 37494646948,
+      "name": "CodeQL",
+      "head": "afe63076cd6078bf7f38be122a9c0a4e5e5788b8",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 37494647238,
+      "name": "CI",
+      "head": "afe63076cd6078bf7f38be122a9c0a4e5e5788b8",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 37494646742,
+      "name": "Repo Health Baseline Refresh",
+      "head": "afe63076cd6078bf7f38be122a9c0a4e5e5788b8",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37494646824,
+      "name": "Tier 5 Browser Smoke",
+      "head": "afe63076cd6078bf7f38be122a9c0a4e5e5788b8",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 112375946165,
+      "name": "Lint",
+      "status": "in_progress",
+      "conclusion": null,
+      "failedSteps": [],
+      "typecheckSteps": [
+        {
+          "name": "Run TypeScript check (no regression vs baseline)",
+          "status": "pending",
+          "conclusion": null
+        },
+        {
+          "name": "Run beta-slice TypeScript check",
+          "status": "pending",
+          "conclusion": null
+        }
+      ]
+    },
+    {
+      "id": 112375946596,
+      "name": "Security Scan",
+      "status": "completed",
+      "conclusion": "failure",
+      "failedSteps": [
+        "Run lockfile audit and dependency-risk ledger gate",
+        "Trivy filesystem scan (deps + secrets)"
+      ],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112375946598,
+      "name": "Security Contract Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112375946700,
+      "name": "Secret scan (full history)",
+      "status": "completed",
+      "conclusion": "success",
+      "failedSteps": [],
+      "typecheckSteps": []
+    },
+    {
+      "id": 112375948143,
+      "name": "Nightly Governance Strict",
+      "status": "completed",
+      "conclusion": "skipped",
+      "failedSteps": [],
+      "typecheckSteps": []
+    }
+  ]
+}

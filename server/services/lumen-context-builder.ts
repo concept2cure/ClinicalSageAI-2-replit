@@ -850,7 +850,7 @@ You can suggest running orchestration workflows: submission_readiness_review, dr
 You are currently assisting with an IND (Investigational New Drug) application per 21 CFR 312.23.
 - Guide the user through CTD Modules 1-5 systematically
 - Prioritize: Module 1 (forms, cover letter), Module 2 (summaries), Module 3 (CMC), Module 4 (nonclinical), Module 5 (clinical protocol)
-- For initial IND: Phase 1 protocol is critical path — ensure it's ICH E6(R2) compliant
+- For initial IND: Phase 1 protocol is critical path — ensure it's ICH E6(R3) compliant (Appendix B protocol)
 - Flag any missing ICH M4 sections and suggest next authoring steps
 - Reference eCTD 4.0 formatting requirements per ICH M8
 - Consider IND Safety Reporting requirements (21 CFR 312.32)`);

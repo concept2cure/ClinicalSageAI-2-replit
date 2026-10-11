@@ -1,0 +1,20 @@
+2026-10-10T06:08:33.3657593Z [command]/usr/bin/git log -1 --format=%H
+2026-10-10T06:08:33.3680847Z 88fa1606c5b50daf1cb50686d743fe26e041b441
+2026-10-10T06:09:22.9502123Z ##[group]Run npm run test:ana
+2026-10-10T06:09:22.9502457Z [36;1mnpm run test:ana[0m
+2026-10-10T06:09:22.9567578Z shell: /usr/bin/bash -e {0}
+2026-10-10T06:09:22.9567834Z env:
+2026-10-10T06:09:22.9568023Z   CI: true
+2026-10-10T06:09:22.9568224Z   SKIP_DB_STARTUP_TEST: true
+2026-10-10T06:09:22.9568825Z   DATABASE_URL: ***localhost:5432/concept2cure-ri_test
+2026-10-10T06:09:22.9569141Z ##[endgroup]
+2026-10-10T06:09:23.0628472Z 
+2026-10-10T06:09:23.0629087Z > concept2cure-riai@1.0.0 test:ana
+2026-10-10T06:09:23.0632337Z > bash -lc 'DATABASE_URL=${DATABASE_URL:-***localhost:5432/testdb} SKIP_DB_STARTUP_TEST=${SKIP_DB_STARTUP_TEST:-true} vitest run tests/routes/ana-ri-health.test.ts tests/routes/ana-gap-analysis.test.ts tests/resolution/ana-orchestrator.test.ts server/services/__tests__/ana-ri.test.ts'
+2026-10-10T06:09:23.0634207Z 
+2026-10-10T06:09:23.5417620Z 
+2026-10-10T06:09:23.5420317Z [1m[30m[46m RUN [49m[39m[22m [36mv4.1.7 [39m[90m/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit[39m
+2026-10-10T06:09:40.3549426Z [2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+2026-10-10T06:09:40.3550276Z [2m      Tests [22m [1m[32m303 passed[39m[22m[90m (303)[39m
+2026-10-10T06:09:40.3550924Z [2m   Start at [22m 06:09:23
+2026-10-10T06:09:40.3552168Z [2m   Duration [22m 16.57s[2m (transform 7.39s, setup 128ms, import 9.45s, tests 6.33s, environment 1ms)[22m

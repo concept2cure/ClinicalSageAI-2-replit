@@ -1,0 +1,30 @@
+    265|       expect.objectContaining({ runId: recording, status: 'finished', …
+    266|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/runs-read.pglite.test.ts > the recording window (DT2, flagged by DT1 as (b)) > applies the same person rule: a colleague sees none of it
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/routes/ana-ri/__tests__/runs-read.pglite.test.ts:283:84
+    281|     await insertRun({ status: 'cancelled' });
+    282|     expect((await get('colleague', '/api/ana-ri/runs?thread_id=th_shar…
+    283|     expect((await get('admin', '/api/ana-ri/runs?thread_id=th_shared')…
+       |                                                                                    ^
+    284|   });
+    285| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 10 skipped (13)
+   Start at  21:03:56
+   Duration  5.66s (transform 1.25s, setup 94ms, import 2.86s, tests 2.46s, environment 0ms)
+

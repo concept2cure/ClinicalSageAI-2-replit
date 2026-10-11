@@ -1,0 +1,80 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+RP
+Concept2Cure.RI
+›
+Gateway transmittals
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+2
+Agency gateways
+Explain gateway posture
+Record identifiers
+Assemble bundle
+Transmit
+GATEWAY	REGION	ENVIRONMENT	CREDENTIALS
+FDA ESG	FDA	production	NOT CONFIGURED
+CESP	EMA	production	NOT CONFIGURED
+EUDAMED	EMA	production	NOT CONFIGURED
+PMDA Gateway	PMDA	production	NOT CONFIGURED
+Health Canada CESG	CA	production	NOT CONFIGURED
+MHRA Gateway	UK	production	NOT CONFIGURED
+NMPA Gateway	CN	production	NOT CONFIGURED
+TGA eBusiness Services	AU	production	NOT CONFIGURED
+Swissmedic eGateway	CH	production	NOT CONFIGURED
+ANVISA Gateway	BR	production	NOT CONFIGURED
+CDSCO SUGAM	IN	production	NOT CONFIGURED
+MFDS dBio	KR	production	NOT CONFIGURED
+HSA PRISM	SG	production	NOT CONFIGURED
+Transmittal log
+8
+#	ROUTE	GATEWAY REF	STATUS	SUBMITTED	TRANSMITTED BY	ACTIONS
+#3	FDA / FDA ESG · amendment	—	IN_TRANSIT	10/7/2026, 8:22:54 PM	Sarah Chen	
+Status
+ACK
+Rollback
+#2	FDA / FDA ESG · amendment	—	REJECTED
+AS2 MDN was not received within the 4-hour window; the ESG session timed out during upload. Retry initiated.
+	10/6/2026, 9:22:54 PM	Sarah Chen	
+Status
+ACK
+Rollback
+#8	CA / Health Canada CESG · annual_report	HC-CESG-2026-011923	ACK1_RECEIVED	10/2/2026, 11:22:54 PM	Sarah Chen	
+Status
+ACK
+Rollback
+#6	FDA / FDA ESG · response	MDN-20260707-000091277	ACK2_RECEIVED	9/28/2026, 11:22:54 PM	Sarah Chen	
+Status
+ACK
+Rollback
+#7	PMDA / PMDA Gateway · original	PMDA-RCPT-2026-004417	VALIDATION_FAILED
+PMDA pre-check reported 2 errors: JP Module 1 application form XML fails schema validation and one Module 3 leaf checksum mismatch. Correct and resubmit the sequence.
+	9/22/2026, 11:22:54 PM	Sarah Chen	
+Status
+ACK
+Rollback
+#5	EMA / CESP · original	CESP-BSK-2026-118842	RECEIVED	9/16/2026, 11:22:54 PM	Sarah Chen	
+Status
+ACK
+Rollback
+#1	FDA / FDA ESG · original	MDN-20260601-000084413	REVIEW_STARTED	8/23/2026, 11:22:54 PM	Sarah Chen	
+Status
+ACK
+Rollback
+#4	EMA / EUDAMED · original	EUDAMED-REG-2026-0004821	COMPLETED	8/8/2026, 11:22:54 PM	Sarah Chen	
+Status
+ACK
+Rollback
+Structural gate refused the transmit
+Reload findings
+0 findings
+No assembled bundle; call POST /api/submission-ops/packages/:packageId/assemble first. The refusal did not include an itemized findings list. Assemble the package again, then transmit.
+Not transmitted — the structural gate rejected the bundle: No assembled bundle; call POST /api/submission-ops/packages/:packageId/assemble first..

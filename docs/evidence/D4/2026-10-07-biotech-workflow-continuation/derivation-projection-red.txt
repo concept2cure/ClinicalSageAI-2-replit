@@ -1,0 +1,86 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+xxx-----------------
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts > derived capture impact SQL > refuses malformed query rows rather than certifying a dependency projection: null
+AssertionError: expected TypeError: Cannot read properties of null… to match object { status: 503, …(1) }
+
+- Expected
++ Received
+
+- {
+-   "code": "IMPACT_UNAVAILABLE",
+-   "status": 503,
++ TypeError {
++   "message": "Cannot read properties of null (reading 'length')",
+  }
+
+ ❯ server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts:58:88
+     56|     const f = await harness.seed();
+     57|     const invalidQuery = { query: async () => ({ rows: malformed as an…
+     58|     await expect(readDerivedCaptureImpact(invalidQuery, f.org, links(f…
+       |                                                                                        ^
+     59|       .rejects.toMatchObject({ status: 503, code: 'IMPACT_UNAVAILABLE'…
+     60|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts > derived capture impact SQL > refuses malformed query rows rather than certifying a dependency projection: {}
+AssertionError: expected TypeError: rows.filter is not a function to match object { status: 503, …(1) }
+
+- Expected
++ Received
+
+- {
+-   "code": "IMPACT_UNAVAILABLE",
+-   "status": 503,
++ TypeError {
++   "message": "rows.filter is not a function",
+  }
+
+ ❯ server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts:58:88
+     56|     const f = await harness.seed();
+     57|     const invalidQuery = { query: async () => ({ rows: malformed as an…
+     58|     await expect(readDerivedCaptureImpact(invalidQuery, f.org, links(f…
+       |                                                                                        ^
+     59|       .rejects.toMatchObject({ status: 503, code: 'IMPACT_UNAVAILABLE'…
+     60|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts > derived capture impact SQL > refuses malformed query rows rather than certifying a dependency projection: {}
+AssertionError: promise resolved "{ rows: [ {} ], count: 1, …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "count": 1,
++   "fingerprint": "e10808d43975dc400731053386849f864f297e6c4f7519c380f3dbaf7067a840",
++   "rows": [
++     {},
++   ],
++   "unverifiedCount": 1,
+  }
+
+ ❯ server/services/document-data-disposition/__tests__/derived-impact.pglite.integration.test.ts:58:88
+     56|     const f = await harness.seed();
+     57|     const invalidQuery = { query: async () => ({ rows: malformed as an…
+     58|     await expect(readDerivedCaptureImpact(invalidQuery, f.org, links(f…
+       |                                                                                        ^
+     59|       .rejects.toMatchObject({ status: 503, code: 'IMPACT_UNAVAILABLE'…
+     60|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 17 skipped (20)
+   Start at  10:21:47
+   Duration  4.14s (transform 284ms, setup 132ms, import 229ms, tests 3.29s, environment 0ms)

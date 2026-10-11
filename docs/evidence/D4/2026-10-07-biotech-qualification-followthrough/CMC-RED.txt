@@ -1,0 +1,632 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'too few numeric results' and retains the exact valid Assay estimate 23ms
+   → expected 36 to be null
+   → expected 'Assay' to be null
+   → expected { studyId: 41, …(11) } to match object { claimWithheldReasons: [ …(1) ] }
+(12 matching properties omitted from actual)
+ × server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'no recorded criterion' and retains the exact valid Assay estimate 9ms
+   → expected 36 to be null
+   → expected 'Assay' to be null
+   → expected { studyId: 41, …(11) } to match object { claimWithheldReasons: [ …(1) ] }
+(12 matching properties omitted from actual)
+ × server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'no varying times' and retains the exact valid Assay estimate 21ms
+   → expected 36 to be null
+   → expected 'Assay' to be null
+   → expected { studyId: 41, …(11) } to match object { claimWithheldReasons: [ …(1) ] }
+(12 matching properties omitted from actual)
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > keeps the most constraining actual estimate when all recorded attributes qualify 4ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > keeps separately recorded valid conditions without merging their estimates 5ms
+ × server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "''" 31ms
+   → expected 'Stability studies for the drug substa…' to match /stability conclusion and proposed sto…/
+   → expected 'Stability studies for the drug substa…' to match /recorded-study-41.*row 8.*no assigne…/i
+   → expected 'Stability studies for the drug substa…' to match /trend not assessed:.*no assigned par…/i
+   → expected 'Stability studies for the drug substa…' not to match /supporting stability of/
+ × server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "'   '" 5ms
+   → expected 'Stability studies for the drug substa…' to match /stability conclusion and proposed sto…/
+   → expected 'Stability studies for the drug substa…' to match /recorded-study-41.*row 8.*no assigne…/i
+   → expected 'Stability studies for the drug substa…' to match /trend not assessed:.*no assigned par…/i
+   → expected 'Stability studies for the drug substa…' not to match /supporting stability of/
+ × server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "undefined" 3ms
+   → expected 'Stability studies for the drug substa…' to match /stability conclusion and proposed sto…/
+   → expected 'Stability studies for the drug substa…' to match /recorded-study-41.*row 8.*no assigne…/i
+   → expected 'Stability studies for the drug substa…' to match /trend not assessed:.*no assigned par…/i
+   → expected 'Stability studies for the drug substa…' not to match /supporting stability of/
+ × server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "''" 6ms
+   → expected 'Stability studies for the drug produc…' to match /stability conclusion and proposed sto…/
+   → expected 'Stability studies for the drug produc…' to match /recorded-study-41.*row 8.*no assigne…/i
+   → expected 'Stability studies for the drug produc…' to match /trend not assessed:.*no assigned par…/i
+   → expected 'Stability studies for the drug produc…' not to match /supporting stability of/
+ × server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "'   '" 4ms
+   → expected 'Stability studies for the drug produc…' to match /stability conclusion and proposed sto…/
+   → expected 'Stability studies for the drug produc…' to match /recorded-study-41.*row 8.*no assigne…/i
+   → expected 'Stability studies for the drug produc…' to match /trend not assessed:.*no assigned par…/i
+   → expected 'Stability studies for the drug produc…' not to match /supporting stability of/
+ × server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "undefined" 9ms
+   → expected 'Stability studies for the drug produc…' to match /stability conclusion and proposed sto…/
+   → expected 'Stability studies for the drug produc…' to match /recorded-study-41.*row 8.*no assigne…/i
+   → expected 'Stability studies for the drug produc…' to match /trend not assessed:.*no assigned par…/i
+   → expected 'Stability studies for the drug produc…' not to match /supporting stability of/
+ × server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > names the source and row when drug_substance has only an unassigned measurement 2ms
+   → expected 'Stability studies for the drug substa…' to match /recorded-study-41.*row 1.*no assigne…/i
+   → expected 'Stability studies for the drug substa…' to match /trend not assessed:.*no assigned par…/i
+   → expected 'Stability studies for the drug substa…' not to match /supporting stability of|no recorded …/i
+ × server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > names the source and row when drug_product has only an unassigned measurement 2ms
+   → expected 'Stability studies for the drug produc…' to match /recorded-study-41.*row 1.*no assigne…/i
+   → expected 'Stability studies for the drug produc…' to match /trend not assessed:.*no assigned par…/i
+   → expected 'Stability studies for the drug produc…' not to match /supporting stability of|no recorded …/i
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > absence is distinct from an unassigned measurement > adds no measured-point refusal for absent result null 5ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > absence is distinct from an unassigned measurement > adds no measured-point refusal for absent result undefined 2ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > absence is distinct from an unassigned measurement > adds no measured-point refusal for absent result "" 29ms
+ ✓ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > absence is distinct from an unassigned measurement > adds no measured-point refusal for absent result " " 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'too few numeric results' and retains the exact valid Assay estimate
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'no recorded criterion' and retains the exact valid Assay estimate
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'no varying times' and retains the exact valid Assay estimate
+AssertionError: expected 36 to be null
+
+- Expected:
+null
+
++ Received:
+36
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:49:50
+     47|     expect.soft(outcome.data.estimates[0]).toEqual(validOnly.data.esti…
+     48|     expect.soft(outcome.data.estimates[1]).toMatchObject({ parameter: …
+     49|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+       |                                                  ^
+     50|     expect.soft(outcome.data.limitingParameter).toBeNull();
+     51|     expect.soft(outcome.data).toMatchObject({ claimWithheldReasons: [e…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'too few numeric results' and retains the exact valid Assay estimate
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'no recorded criterion' and retains the exact valid Assay estimate
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'no varying times' and retains the exact valid Assay estimate
+AssertionError: expected 'Assay' to be null
+
+- Expected:
+null
+
++ Received:
+"Assay"
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:50:49
+     48|     expect.soft(outcome.data.estimates[1]).toMatchObject({ parameter: …
+     49|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+     50|     expect.soft(outcome.data.limitingParameter).toBeNull();
+       |                                                 ^
+     51|     expect.soft(outcome.data).toMatchObject({ claimWithheldReasons: [e…
+     52|     expect.soft(recorded).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'too few numeric results' and retains the exact valid Assay estimate
+AssertionError: expected { studyId: 41, …(11) } to match object { claimWithheldReasons: [ …(1) ] }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "claimWithheldReasons": [
+-     StringMatching /Study 41.*Water.*25°C\/60%RH/,
++   "basis": "ICH Q1E — ordinary least squares, one-sided 95% mean confidence limit vs the specification limit",
++   "batchNumber": undefined,
++   "estimates": [
++     {
++       "cappedByExtrapolationLimit": true,
++       "condition": "25°C/60%RH",
++       "confidence": {
++         "alpha": 0.05,
++         "bound": "lower",
++         "tQuantile": 2.015,
++       },
++       "direction": "decreasing",
++       "estimable": true,
++       "exceedsEvaluatedRange": false,
++       "extrapolationLimit": 36,
++       "nominalCrossing": 50.09,
++       "notes": [
++         "ICH Q1E single-batch/attribute estimate using the 95% one-sided mean confidence limit. No multi-batch poolability (ANCOVA) performed.",
++         "The 95% confidence limit crosses the specification at 49.12, beyond what ICH Q1E permits to be extrapolated from 24 months of data — up to twice, and not more than twelve months beyond, the observed period. The supportable period is 36; extending it requires longer-term data, not a longer regression.",
++       ],
++       "observedPeriod": 24,
++       "parameter": "Assay",
++       "pointsRecorded": 7,
++       "pointsUsable": 7,
++       "pointsUsed": 7,
++       "regression": {
++         "df": 5,
++         "intercept": 100.0013,
++         "n": 7,
++         "r2": 0.9993,
++         "residualSd": 0.025,
++         "slope": -0.0999,
++       },
++       "shelfLife": 36,
++       "specLimit": 95,
++       "statisticalCrossing": 49.12,
++     },
++     {
++       "condition": "25°C/60%RH",
++       "estimable": false,
++       "parameter": "Water",
++       "pointsRecorded": 2,
++       "pointsUsable": 2,
++       "reason": "ICH Q1E regression needs at least 3 numeric timepoints; 2 of 2 recorded results are numeric.",
++     },
+    ],
++   "limitingParameter": "Assay",
++   "maxTimeEvaluated": 120,
++   "productName": undefined,
++   "scopeLimit": "Single attribute, single factor, one batch. Batch poolability (ICH Q1E ANCOVA) is assessed separately and is not implied by this estimate.",
++   "storageConditions": [
++     "25°C/60%RH",
++   ],
++   "studyId": 41,
++   "studyTitle": "Recorded LT",
++   "supportedShelfLife": 36,
++   "unassignedObservations": [],
+  }
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:51:31
+     49|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+     50|     expect.soft(outcome.data.limitingParameter).toBeNull();
+     51|     expect.soft(outcome.data).toMatchObject({ claimWithheldReasons: [e…
+       |                               ^
+     52|     expect.soft(recorded).toEqual(before);
+     53|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'no recorded criterion' and retains the exact valid Assay estimate
+AssertionError: expected { studyId: 41, …(11) } to match object { claimWithheldReasons: [ …(1) ] }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "claimWithheldReasons": [
+-     StringMatching /Study 41.*Water.*25°C\/60%RH/,
++   "basis": "ICH Q1E — ordinary least squares, one-sided 95% mean confidence limit vs the specification limit",
++   "batchNumber": undefined,
++   "estimates": [
++     {
++       "cappedByExtrapolationLimit": true,
++       "condition": "25°C/60%RH",
++       "confidence": {
++         "alpha": 0.05,
++         "bound": "lower",
++         "tQuantile": 2.015,
++       },
++       "direction": "decreasing",
++       "estimable": true,
++       "exceedsEvaluatedRange": false,
++       "extrapolationLimit": 36,
++       "nominalCrossing": 50.09,
++       "notes": [
++         "ICH Q1E single-batch/attribute estimate using the 95% one-sided mean confidence limit. No multi-batch poolability (ANCOVA) performed.",
++         "The 95% confidence limit crosses the specification at 49.12, beyond what ICH Q1E permits to be extrapolated from 24 months of data — up to twice, and not more than twelve months beyond, the observed period. The supportable period is 36; extending it requires longer-term data, not a longer regression.",
++       ],
++       "observedPeriod": 24,
++       "parameter": "Assay",
++       "pointsRecorded": 7,
++       "pointsUsable": 7,
++       "pointsUsed": 7,
++       "regression": {
++         "df": 5,
++         "intercept": 100.0013,
++         "n": 7,
++         "r2": 0.9993,
++         "residualSd": 0.025,
++         "slope": -0.0999,
++       },
++       "shelfLife": 36,
++       "specLimit": 95,
++       "statisticalCrossing": 49.12,
++     },
++     {
++       "condition": "25°C/60%RH",
++       "estimable": false,
++       "parameter": "Water",
++       "pointsRecorded": 7,
++       "pointsUsable": 7,
++       "reason": "No numeric specification limit was recorded against these results, so there is no limit for the confidence bound to intersect. Record the acceptance criterion (e.g. \"<= 2.0%\" or \">= 95.0%\") on the pull-point results.",
++     },
+    ],
++   "limitingParameter": "Assay",
++   "maxTimeEvaluated": 120,
++   "productName": undefined,
++   "scopeLimit": "Single attribute, single factor, one batch. Batch poolability (ICH Q1E ANCOVA) is assessed separately and is not implied by this estimate.",
++   "storageConditions": [
++     "25°C/60%RH",
++   ],
++   "studyId": 41,
++   "studyTitle": "Recorded LT",
++   "supportedShelfLife": 36,
++   "unassignedObservations": [],
+  }
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:51:31
+     49|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+     50|     expect.soft(outcome.data.limitingParameter).toBeNull();
+     51|     expect.soft(outcome.data).toMatchObject({ claimWithheldReasons: [e…
+       |                               ^
+     52|     expect.soft(recorded).toEqual(before);
+     53|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > single-study aggregate requires every recorded attribute to be estimable > withholds the programme claim for 'no varying times' and retains the exact valid Assay estimate
+AssertionError: expected { studyId: 41, …(11) } to match object { claimWithheldReasons: [ …(1) ] }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "claimWithheldReasons": [
+-     StringMatching /Study 41.*Water.*25°C\/60%RH/,
++   "basis": "ICH Q1E — ordinary least squares, one-sided 95% mean confidence limit vs the specification limit",
++   "batchNumber": undefined,
++   "estimates": [
++     {
++       "cappedByExtrapolationLimit": true,
++       "condition": "25°C/60%RH",
++       "confidence": {
++         "alpha": 0.05,
++         "bound": "lower",
++         "tQuantile": 2.015,
++       },
++       "direction": "decreasing",
++       "estimable": true,
++       "exceedsEvaluatedRange": false,
++       "extrapolationLimit": 36,
++       "nominalCrossing": 50.09,
++       "notes": [
++         "ICH Q1E single-batch/attribute estimate using the 95% one-sided mean confidence limit. No multi-batch poolability (ANCOVA) performed.",
++         "The 95% confidence limit crosses the specification at 49.12, beyond what ICH Q1E permits to be extrapolated from 24 months of data — up to twice, and not more than twelve months beyond, the observed period. The supportable period is 36; extending it requires longer-term data, not a longer regression.",
++       ],
++       "observedPeriod": 24,
++       "parameter": "Assay",
++       "pointsRecorded": 7,
++       "pointsUsable": 7,
++       "pointsUsed": 7,
++       "regression": {
++         "df": 5,
++         "intercept": 100.0013,
++         "n": 7,
++         "r2": 0.9993,
++         "residualSd": 0.025,
++         "slope": -0.0999,
++       },
++       "shelfLife": 36,
++       "specLimit": 95,
++       "statisticalCrossing": 49.12,
++     },
++     {
++       "condition": "25°C/60%RH",
++       "estimable": false,
++       "parameter": "Water",
++       "pointsRecorded": 7,
++       "pointsUsable": 7,
++       "reason": "time points must vary (need at least two distinct times)",
++     },
+    ],
++   "limitingParameter": "Assay",
++   "maxTimeEvaluated": 120,
++   "productName": undefined,
++   "scopeLimit": "Single attribute, single factor, one batch. Batch poolability (ICH Q1E ANCOVA) is assessed separately and is not implied by this estimate.",
++   "storageConditions": [
++     "25°C/60%RH",
++   ],
++   "studyId": 41,
++   "studyTitle": "Recorded LT",
++   "supportedShelfLife": 36,
++   "unassignedObservations": [],
+  }
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:51:31
+     49|     expect.soft(outcome.data.supportedShelfLife).toBeNull();
+     50|     expect.soft(outcome.data.limitingParameter).toBeNull();
+     51|     expect.soft(outcome.data).toMatchObject({ claimWithheldReasons: [e…
+       |                               ^
+     52|     expect.soft(recorded).toEqual(before);
+     53|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "''"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "'   '"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "undefined"
+AssertionError: expected 'Stability studies for the drug substa…' to match /stability conclusion and proposed sto…/
+
+- Expected:
+/stability conclusion and proposed storage period are NOT established/
+
++ Received:
+"Stability studies for the drug substance were conducted under [condition not specified] . The 8 recorded result(s) are tabulated in the stability results table. All 8 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug substance under the proposed storage conditions. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): Assay (25°C/60%RH): no out-of-trend points across 7 time points; slope -0.0999 per month (95% CI -0.103 to -0.0967) is significantly non-zero; trend toward the limit projected at 50.09 months (lower limit 95)."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:93:41
+     91|     expect.soft(table?.rows.find(row => row[2] === '—')).toEqual(['Rec…
+     92|     expect.soft(section.narrativeDraft).toMatch(/All 8 recorded result…
+     93|     expect.soft(section.narrativeDraft).toMatch(/stability conclusion …
+       |                                         ^
+     94|     expect.soft(section.narrativeDraft).toMatch(/recorded-study-41.*ro…
+     95|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "''"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "'   '"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "undefined"
+AssertionError: expected 'Stability studies for the drug substa…' to match /recorded-study-41.*row 8.*no assigne…/i
+
+- Expected:
+/recorded-study-41.*row 8.*no assigned parameter/i
+
++ Received:
+"Stability studies for the drug substance were conducted under [condition not specified] . The 8 recorded result(s) are tabulated in the stability results table. All 8 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug substance under the proposed storage conditions. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): Assay (25°C/60%RH): no out-of-trend points across 7 time points; slope -0.0999 per month (95% CI -0.103 to -0.0967) is significantly non-zero; trend toward the limit projected at 50.09 months (lower limit 95)."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:94:41
+     92|     expect.soft(section.narrativeDraft).toMatch(/All 8 recorded result…
+     93|     expect.soft(section.narrativeDraft).toMatch(/stability conclusion …
+     94|     expect.soft(section.narrativeDraft).toMatch(/recorded-study-41.*ro…
+       |                                         ^
+     95|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+     96|     expect.soft(section.narrativeDraft).toContain(validTrend);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "''"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "'   '"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "undefined"
+AssertionError: expected 'Stability studies for the drug substa…' to match /trend not assessed:.*no assigned par…/i
+
+- Expected:
+/trend not assessed:.*no assigned parameter/i
+
++ Received:
+"Stability studies for the drug substance were conducted under [condition not specified] . The 8 recorded result(s) are tabulated in the stability results table. All 8 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug substance under the proposed storage conditions. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): Assay (25°C/60%RH): no out-of-trend points across 7 time points; slope -0.0999 per month (95% CI -0.103 to -0.0967) is significantly non-zero; trend toward the limit projected at 50.09 months (lower limit 95)."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:95:41
+     93|     expect.soft(section.narrativeDraft).toMatch(/stability conclusion …
+     94|     expect.soft(section.narrativeDraft).toMatch(/recorded-study-41.*ro…
+     95|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+       |                                         ^
+     96|     expect.soft(section.narrativeDraft).toContain(validTrend);
+     97|     expect.soft(section.narrativeDraft).not.toMatch(/supporting stabil…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "''"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "'   '"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_substance' support for a passing point with parameter "undefined"
+AssertionError: expected 'Stability studies for the drug substa…' not to match /supporting stability of/
+
+- Expected:
+/supporting stability of/
+
++ Received:
+"Stability studies for the drug substance were conducted under [condition not specified] . The 8 recorded result(s) are tabulated in the stability results table. All 8 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug substance under the proposed storage conditions. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): Assay (25°C/60%RH): no out-of-trend points across 7 time points; slope -0.0999 per month (95% CI -0.103 to -0.0967) is significantly non-zero; trend toward the limit projected at 50.09 months (lower limit 95)."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:97:45
+     95|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+     96|     expect.soft(section.narrativeDraft).toContain(validTrend);
+     97|     expect.soft(section.narrativeDraft).not.toMatch(/supporting stabil…
+       |                                             ^
+     98|     expect.soft(recorded).toEqual(before);
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "''"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "'   '"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "undefined"
+AssertionError: expected 'Stability studies for the drug produc…' to match /stability conclusion and proposed sto…/
+
+- Expected:
+/stability conclusion and proposed storage period are NOT established/
+
++ Received:
+"Stability studies for the drug product were conducted under [condition not specified]. The proposed shelf life is subject to review of the 8 recorded result(s) tabulated in the stability results table. All 8 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug product under the proposed storage conditions. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): Assay (25°C/60%RH): no out-of-trend points across 7 time points; slope -0.0999 per month (95% CI -0.103 to -0.0967) is significantly non-zero; trend toward the limit projected at 50.09 months (lower limit 95)."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:93:41
+     91|     expect.soft(table?.rows.find(row => row[2] === '—')).toEqual(['Rec…
+     92|     expect.soft(section.narrativeDraft).toMatch(/All 8 recorded result…
+     93|     expect.soft(section.narrativeDraft).toMatch(/stability conclusion …
+       |                                         ^
+     94|     expect.soft(section.narrativeDraft).toMatch(/recorded-study-41.*ro…
+     95|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "''"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "'   '"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "undefined"
+AssertionError: expected 'Stability studies for the drug produc…' to match /recorded-study-41.*row 8.*no assigne…/i
+
+- Expected:
+/recorded-study-41.*row 8.*no assigned parameter/i
+
++ Received:
+"Stability studies for the drug product were conducted under [condition not specified]. The proposed shelf life is subject to review of the 8 recorded result(s) tabulated in the stability results table. All 8 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug product under the proposed storage conditions. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): Assay (25°C/60%RH): no out-of-trend points across 7 time points; slope -0.0999 per month (95% CI -0.103 to -0.0967) is significantly non-zero; trend toward the limit projected at 50.09 months (lower limit 95)."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:94:41
+     92|     expect.soft(section.narrativeDraft).toMatch(/All 8 recorded result…
+     93|     expect.soft(section.narrativeDraft).toMatch(/stability conclusion …
+     94|     expect.soft(section.narrativeDraft).toMatch(/recorded-study-41.*ro…
+       |                                         ^
+     95|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+     96|     expect.soft(section.narrativeDraft).toContain(validTrend);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "''"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "'   '"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "undefined"
+AssertionError: expected 'Stability studies for the drug produc…' to match /trend not assessed:.*no assigned par…/i
+
+- Expected:
+/trend not assessed:.*no assigned parameter/i
+
++ Received:
+"Stability studies for the drug product were conducted under [condition not specified]. The proposed shelf life is subject to review of the 8 recorded result(s) tabulated in the stability results table. All 8 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug product under the proposed storage conditions. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): Assay (25°C/60%RH): no out-of-trend points across 7 time points; slope -0.0999 per month (95% CI -0.103 to -0.0967) is significantly non-zero; trend toward the limit projected at 50.09 months (lower limit 95)."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:95:41
+     93|     expect.soft(section.narrativeDraft).toMatch(/stability conclusion …
+     94|     expect.soft(section.narrativeDraft).toMatch(/recorded-study-41.*ro…
+     95|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+       |                                         ^
+     96|     expect.soft(section.narrativeDraft).toContain(validTrend);
+     97|     expect.soft(section.narrativeDraft).not.toMatch(/supporting stabil…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "''"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "'   '"
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > holds 'drug_product' support for a passing point with parameter "undefined"
+AssertionError: expected 'Stability studies for the drug produc…' not to match /supporting stability of/
+
+- Expected:
+/supporting stability of/
+
++ Received:
+"Stability studies for the drug product were conducted under [condition not specified]. The proposed shelf life is subject to review of the 8 recorded result(s) tabulated in the stability results table. All 8 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug product under the proposed storage conditions. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): Assay (25°C/60%RH): no out-of-trend points across 7 time points; slope -0.0999 per month (95% CI -0.103 to -0.0967) is significantly non-zero; trend toward the limit projected at 50.09 months (lower limit 95)."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:97:45
+     95|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+     96|     expect.soft(section.narrativeDraft).toContain(validTrend);
+     97|     expect.soft(section.narrativeDraft).not.toMatch(/supporting stabil…
+       |                                             ^
+     98|     expect.soft(recorded).toEqual(before);
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > names the source and row when drug_substance has only an unassigned measurement
+AssertionError: expected 'Stability studies for the drug substa…' to match /recorded-study-41.*row 1.*no assigne…/i
+
+- Expected:
+/recorded-study-41.*row 1.*no assigned parameter/i
+
++ Received:
+"Stability studies for the drug substance were conducted under [condition not specified] . The 1 recorded result(s) are tabulated in the stability results table. All 1 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug substance under the proposed storage conditions. Trend not assessed: no recorded pull-point results."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:104:41
+    102|     const section = stabilitySection([{ timePoint: 0, result: 99, spec…
+    103|     expect.soft(section.tables.find(item => /Stability Results/.test(i…
+    104|     expect.soft(section.narrativeDraft).toMatch(/recorded-study-41.*ro…
+       |                                         ^
+    105|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+    106|     expect.soft(section.narrativeDraft).not.toMatch(/supporting stabil…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > names the source and row when drug_substance has only an unassigned measurement
+AssertionError: expected 'Stability studies for the drug substa…' to match /trend not assessed:.*no assigned par…/i
+
+- Expected:
+/trend not assessed:.*no assigned parameter/i
+
++ Received:
+"Stability studies for the drug substance were conducted under [condition not specified] . The 1 recorded result(s) are tabulated in the stability results table. All 1 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug substance under the proposed storage conditions. Trend not assessed: no recorded pull-point results."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:105:41
+    103|     expect.soft(section.tables.find(item => /Stability Results/.test(i…
+    104|     expect.soft(section.narrativeDraft).toMatch(/recorded-study-41.*ro…
+    105|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+       |                                         ^
+    106|     expect.soft(section.narrativeDraft).not.toMatch(/supporting stabil…
+    107|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > names the source and row when drug_substance has only an unassigned measurement
+AssertionError: expected 'Stability studies for the drug substa…' not to match /supporting stability of|no recorded …/i
+
+- Expected:
+/supporting stability of|no recorded pull-point results/i
+
++ Received:
+"Stability studies for the drug substance were conducted under [condition not specified] . The 1 recorded result(s) are tabulated in the stability results table. All 1 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug substance under the proposed storage conditions. Trend not assessed: no recorded pull-point results."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:106:45
+    104|     expect.soft(section.narrativeDraft).toMatch(/recorded-study-41.*ro…
+    105|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+    106|     expect.soft(section.narrativeDraft).not.toMatch(/supporting stabil…
+       |                                             ^
+    107|   });
+    108| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > names the source and row when drug_product has only an unassigned measurement
+AssertionError: expected 'Stability studies for the drug produc…' to match /recorded-study-41.*row 1.*no assigne…/i
+
+- Expected:
+/recorded-study-41.*row 1.*no assigned parameter/i
+
++ Received:
+"Stability studies for the drug product were conducted under [condition not specified]. The proposed shelf life is subject to review of the 1 recorded result(s) tabulated in the stability results table. All 1 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug product under the proposed storage conditions. Trend not assessed: no recorded pull-point results."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:104:41
+    102|     const section = stabilitySection([{ timePoint: 0, result: 99, spec…
+    103|     expect.soft(section.tables.find(item => /Stability Results/.test(i…
+    104|     expect.soft(section.narrativeDraft).toMatch(/recorded-study-41.*ro…
+       |                                         ^
+    105|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+    106|     expect.soft(section.narrativeDraft).not.toMatch(/supporting stabil…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > names the source and row when drug_product has only an unassigned measurement
+AssertionError: expected 'Stability studies for the drug produc…' to match /trend not assessed:.*no assigned par…/i
+
+- Expected:
+/trend not assessed:.*no assigned parameter/i
+
++ Received:
+"Stability studies for the drug product were conducted under [condition not specified]. The proposed shelf life is subject to review of the 1 recorded result(s) tabulated in the stability results table. All 1 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug product under the proposed storage conditions. Trend not assessed: no recorded pull-point results."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:105:41
+    103|     expect.soft(section.tables.find(item => /Stability Results/.test(i…
+    104|     expect.soft(section.narrativeDraft).toMatch(/recorded-study-41.*ro…
+    105|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+       |                                         ^
+    106|     expect.soft(section.narrativeDraft).not.toMatch(/supporting stabil…
+    107|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/39]⎯
+
+ FAIL  server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts > Module 3 propagates an unassigned measured point without losing valid outputs > names the source and row when drug_product has only an unassigned measurement
+AssertionError: expected 'Stability studies for the drug produc…' not to match /supporting stability of|no recorded …/i
+
+- Expected:
+/supporting stability of|no recorded pull-point results/i
+
++ Received:
+"Stability studies for the drug product were conducted under [condition not specified]. The proposed shelf life is subject to review of the 1 recorded result(s) tabulated in the stability results table. All 1 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points, supporting stability of the drug product under the proposed storage conditions. Trend not assessed: no recorded pull-point results."
+
+ ❯ server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts:106:45
+    104|     expect.soft(section.narrativeDraft).toMatch(/recorded-study-41.*ro…
+    105|     expect.soft(section.narrativeDraft).toMatch(/trend not assessed:.*…
+    106|     expect.soft(section.narrativeDraft).not.toMatch(/supporting stabil…
+       |                                             ^
+    107|   });
+    108| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/39]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed | 6 passed (17)
+   Start at  12:12:25
+   Duration  2.60s (transform 1.57s, setup 201ms, import 1.55s, tests 172ms, environment 0ms)

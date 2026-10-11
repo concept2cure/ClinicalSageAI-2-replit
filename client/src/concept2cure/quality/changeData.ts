@@ -57,6 +57,10 @@ export interface ChangeControl {
   createdAt: string | null;
   updatedAt: string | null;
   links?: ChangeLink[];
+  /** The server's verdict (GET /api/mdx/qms/changes `implementation_overdue`):
+   *  past its target implementation date with implementation unfinished,
+   *  judged against the database's date. Absent when the row carries none. */
+  implementationOverdue?: boolean;
 }
 
 export interface ChangeSummary {
@@ -223,7 +227,7 @@ export const FIXTURE_CHANGES: ChangeControl[] = [
     description: 'Scale the drug-substance process from 2,000 L to 5,000 L at the commercial site.',
     changeType: 'process', classification: 'major', riskLevel: 'high', status: 'in_implementation',
     reason: 'Commercial demand exceeds current batch output.',
-    targetImplementationDate: '2026-07-05', createdAt: '2026-05-30', updatedAt: '2026-07-01',
+    targetImplementationDate: '2026-07-05', createdAt: '2026-05-30', updatedAt: '2026-07-01', implementationOverdue: true,
     links: [
       { id: 21, changeId: 2, linkType: 'validation', linkedRef: 'VP-22', linkedLabel: 'Process performance qualification', relationship: 'requires', note: null },
       { id: 22, changeId: 2, linkType: 'capa', linkedRef: 'CAPA-88', linkedLabel: 'Yield trend below target', relationship: 'addresses', note: null },
@@ -299,11 +303,17 @@ export function deriveStageCounts(changes: ChangeControl[]): Record<ChangeState,
   return counts;
 }
 
-/** True when an in-flight change is past its target implementation date. */
-export function isImplementationOverdue(c: ChangeControl, today = '2026-07-24'): boolean {
-  if (!c.targetImplementationDate) return false;
-  if (c.status !== 'approved' && c.status !== 'in_implementation') return false;
-  return String(c.targetImplementationDate).slice(0, 10) < today;
+/**
+ * True when the server says the change is past its target implementation date
+ * with implementation unfinished. The browser does not judge it: until
+ * 2026-10-08 this compared against a hard-coded '2026-07-24' and only for
+ * approved or in-implementation rows, so on the day of the QA walk a proposed
+ * change and an approved one, both past target, carried no flag (J8). The
+ * server's predicate is the one the Overdue tile counts with
+ * (server/services/qms/changeControl.service.ts IMPLEMENTATION_OVERDUE_SQL).
+ */
+export function isImplementationOverdue(c: ChangeControl): boolean {
+  return c.implementationOverdue === true;
 }
 
 export { formatDate };

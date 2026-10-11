@@ -1,0 +1,29 @@
+✖ existing recorded-lineage statements bind their walk relation in each inspected literal (1087.181485ms)
+✔ the live scanner already recognizes declared-column CTEs while retaining their real storage reads (0.279744ms)
+✔ a standalone same-named table remains subject to storage qualification (0.169623ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 2
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1668.156015
+
+✖ failing tests:
+
+test at scripts/ci/__tests__/recorded-lineage-query-bindings.test.mjs:7:1
+✖ existing recorded-lineage statements bind their walk relation in each inspected literal (1087.181485ms)
+  AssertionError [ERR_ASSERTION]: unbound walk references: ["server/services/document-data-disposition/derived-impact.ts","server/services/document-data-disposition/recorded-lineage.ts"]
+      at TestContext.<anonymous> (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/recorded-lineage-query-bindings.test.mjs:9:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

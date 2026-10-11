@@ -41,7 +41,6 @@ describe('RESEARCH_TOOLS', () => {
       'check_deep_investigation',
       'explain_validation_findings',
       'plan_submission',
-      'cross_region_gap_analysis',
       'dispatch_qc_check',
       'reconcile_dossier_numbers',
       'lookup_fda_guidance',

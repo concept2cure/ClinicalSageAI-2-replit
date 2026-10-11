@@ -1,0 +1,43 @@
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/routes/authoring.router.ts
+   128:53  warning  Arrow function has a complexity of 23. Maximum allowed is 15                             complexity
+   693:3   warning  Async arrow function has too many parameters (10). Maximum allowed is 5                  max-params
+   878:3   warning  Arrow function has too many parameters (7). Maximum allowed is 5                         max-params
+   950:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   995:1   warning  File has too many lines (4790). Maximum allowed is 500                                   max-lines
+  1802:74  warning  Async arrow function has too many lines (248). Maximum allowed is 100                    max-lines-per-function
+  1802:74  warning  Async arrow function has a complexity of 61. Maximum allowed is 15                       complexity
+  3281:82  warning  Async arrow function has too many lines (250). Maximum allowed is 100                    max-lines-per-function
+  3281:82  warning  Async arrow function has a complexity of 46. Maximum allowed is 15                       complexity
+  3638:89  warning  Async arrow function has too many lines (145). Maximum allowed is 100                    max-lines-per-function
+  3638:89  warning  Async arrow function has a complexity of 25. Maximum allowed is 15                       complexity
+  3863:92  warning  Async arrow function has too many lines (166). Maximum allowed is 100                    max-lines-per-function
+  4323:72  warning  Async arrow function has too many lines (132). Maximum allowed is 100                    max-lines-per-function
+  4323:72  warning  Async arrow function has a complexity of 27. Maximum allowed is 15                       complexity
+  4521:72  warning  Async arrow function has too many lines (111). Maximum allowed is 100                    max-lines-per-function
+  4521:72  warning  Async arrow function has a complexity of 18. Maximum allowed is 15                       complexity
+  5333:80  warning  Async arrow function has too many lines (114). Maximum allowed is 100                    max-lines-per-function
+  5333:80  warning  Async arrow function has a complexity of 27. Maximum allowed is 15                       complexity
+  5444:9   warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+  6065:72  warning  Async arrow function has a complexity of 17. Maximum allowed is 15                       complexity
+  6292:70  warning  Async arrow function has too many lines (102). Maximum allowed is 100                    max-lines-per-function
+  6292:70  warning  Async arrow function has a complexity of 20. Maximum allowed is 15                       complexity
+  7062:97  warning  Async arrow function has a complexity of 20. Maximum allowed is 15                       complexity
+  7179:82  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                       complexity
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana/AnaDocumentDraftingService.ts
+   23:3   warning  'GatewayResponse' is defined but never used            @typescript-eslint/no-unused-vars
+   27:3   warning  'ExtendedThinkingConfig' is defined but never used     @typescript-eslint/no-unused-vars
+   28:3   warning  'AnaTool' is defined but never used                    @typescript-eslint/no-unused-vars
+   29:3   warning  'AnaToolResult' is defined but never used              @typescript-eslint/no-unused-vars
+   30:3   warning  'TaskType' is defined but never used                   @typescript-eslint/no-unused-vars
+  701:11  warning  'startTime' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  771:1   warning  File has too many lines (767). Maximum allowed is 500  max-lines
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/regulatory/canonicalDocumentStore.ts
+  237:8  warning  Async function 'persistState' has too many parameters (6). Maximum allowed is 5  max-params
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/regulatory/registry/globalDocumentRegistryService.ts
+  21:3  warning  'APPLICATION_FAMILY_METADATA' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 33 problems (0 errors, 33 warnings)

@@ -61,5 +61,30 @@
       "count": 1,
       "reason": "PROOF ACROSS A BOUNDARY, by contract. executeGovernedTransmit writes the ledger pair and the signature row, and requires the caller to hand in `reauthVerifiedAt` (module header, lines ~30-35): the HTTP route (mdx-submission-gateway.ts) runs verifyReauth inline. The AnA caller (mdx-command-handlers.ts) is documented as verifying before dispatch; that path was not re-traced in this change."
     }
+  },
+  "authority": {
+    "$note": "Per-file COUNT of signer re-verifications (verifyReauth / reverifySigner) whose handler does not ask the signing-authority policy (checkSigningAuthority — since P-27, 2026-10-08, nothing else counts). Written 2026-10-08 after the QA j6 sweep (docs/evidence/QA-2026-10-08/submission-center-3/). Shrink only. Every entry is a re-authentication that signs nothing, or a helper whose callers ask authority first; the reason says which.",
+    "files": {
+      "server/routes/authoring.router.ts": {
+        "count": 1,
+        "reason": "reverifyAuthoringSigner is a helper. Each of its three callers (POST /docs/:docId/freeze, /docs/:docId/e-sign, /docs/:docId/sign) calls checkSigningAuthority before it; the gate cannot see across the function boundary."
+      },
+      "server/routes/c2c/actions.ts": {
+        "count": 1,
+        "reason": "verifyReauth itself: the re-authentication primitive, a wrapper of reverifySigner. Authority is its callers' to ask; makeHandler asks checkSigningAuthority before calling it for every signature command, and every other caller is scanned in its own file."
+      },
+      "server/routes/c2c/documents.ts": {
+        "count": 1,
+        "reason": "POST /:id/lock re-authenticates a lock, which is not a signature here or on the canonical route: SIGNATURE_COMMANDS in c2c/actions.ts is sign and revoke-signature, and writeMutation('lock') writes no electronic_signatures row."
+      },
+      "server/routes/gateway-accounts.ts": {
+        "count": 1,
+        "reason": "PUT /:region/:gateway/:environment changes whose gateway account submissions go out under. Admin/owner only (requireRole), re-authenticated, audited; it writes no signature and records no signed act."
+      },
+      "server/routes/mdx-submission-gateway.ts": {
+        "count": 1,
+        "reason": "POST /gateways/transmittals/:id/rollback (transmittal_rollback) is an audit-trail act: high-risk and re-authenticated, but not a signature on the canonical route either (not in SIGNATURE_COMMANDS) and it writes no signature row. Transmit and technical-rejection, the two signs on this router, ask checkSigningAuthority."
+      }
+    }
   }
 }

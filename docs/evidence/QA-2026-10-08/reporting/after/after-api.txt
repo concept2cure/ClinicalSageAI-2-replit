@@ -1,0 +1,23 @@
+## GET /api/insights-canvas/overview?programId=d979e567-4622-46f1-8cb7-8bf434227f25 (HLV-333, biologic)
+leadProgram: {'projectId': 11, 'code': 'H', 'label': 'HLV-333 — Investigational New Drug Application (QA-J1)', 'readiness': None, 'confidence': None, 'status': 'missing'}
+openProgram: {'programId': 'd979e567-4622-46f1-8cb7-8bf434227f25', 'state': 'lead'}
+segments: ['biotech']
+510(k) offered: False
+runnable: ['readiness.executive_digest', 'fcoi.disclosure_register', 'ha.commitment_register', 'iacuc.protocol_register', 'irb.submission_register', 'ibc.registration_register', 'nonclinical.study_send_register', 'grants.portfolio_register', 'rim.registration_grid', 'inspection.readiness_pack', 'controlled_substances.inventory_ledger', 'lifecycle.obligation_calendar', 'etmf.completeness_pack', 'research_compliance.training_status', 'effort.certification_register', 'research_security.coi_register', 'research_admin.scorecard']
+not runnable (sample): ['provenance.evidence_trace_report', 'compliance.audit_assurance_pack', 'usa_fda.pma_submission_readiness', 'usa_fda.deficiency_response_intelligence', 'ema.maa_readiness_assessment', 'ema.rmp_psur_signal_alignment', 'china_nmpa.ctd_module_gap_analysis', 'china_nmpa.registration_dossier_readiness']
+
+## POST /api/report-os/runs {"scopeType":"project","programId":"d979e567-4622-46f1-8cb7-8bf434227f25","reportTypeId":"ema.rmp_psur_signal_alignment"}
+status 422
+{'code': 'REPORT_TYPE_NOT_COMPUTED', 'error': 'No engine computes the EMA RMP / PSUR Signal Alignment Report over this scope in this release, so it is not run. The readiness digest is not shown under its name.'}
+## POST /api/report-os/runs {"scopeType":"project","programId":"d979e567-4622-46f1-8cb7-8bf434227f25","reportTypeId":"usa_fda.estar_510k_equivalence_matrix"}
+status 422
+{'code': 'REPORT_TYPE_NOT_COMPUTED', 'error': 'No engine computes the FDA eSTAR / 510(k) Equivalence Matrix over this scope in this release, so it is not run. The readiness digest is not shown under its name.'}
+## POST /api/report-os/runs {"scopeType":"project","programId":"bbbbbbbb-2222-3333-4444-000000000099","reportTypeId":"readiness.executive_digest"}
+status 409
+{'code': 'PROGRAM_NOT_ANCHORED', 'error': 'This program has no project record, so no report runs over it yet. Nothing was run.'}
+## POST /api/report-os/runs {"scopeType":"project","programId":"d979e567-4622-46f1-8cb7-8bf434227f25","reportTypeId":"readiness.executive_digest"}
+status 201
+{'id': 14, 'scopeType': 'project', 'scopeId': '11', 'reportTypeId': 'readiness.executive_digest', 'status': 'partial', 'confidence': None, 'blockers': ['No governed artifacts discovered for this scope', 'No governed artifacts available for compliance evidence', 'Submission readiness not computed: the project records no registry context (registryId or submissionType).']}
+## POST /api/report-os/runs {"scopeType":"project","programId":"d979e567-4622-46f1-8cb7-8bf434227f25","reportTypeId":"nonclinical.study_send_register"}
+status 201
+{'id': 15, 'scopeType': 'project', 'scopeId': '11', 'reportTypeId': 'nonclinical.study_send_register', 'status': 'completed', 'confidence': None, 'blockers': []}

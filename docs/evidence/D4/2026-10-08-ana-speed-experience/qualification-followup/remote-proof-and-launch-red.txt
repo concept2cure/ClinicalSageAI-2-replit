@@ -1,0 +1,45 @@
+2026-10-08T04:37:25.3423424Z  ✓ tests/schema-contract/tier5-complete-schema.contract.test.ts > Tier 5 authenticated smoke uses the complete deployed schema > applies deploy migrations before starting the browser smoke 2ms
+2026-10-08T04:37:25.3472918Z
+2026-10-08T04:37:25.3473700Z ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+2026-10-08T04:37:25.3474300Z
+2026-10-08T04:37:25.3479269Z  FAIL  tests/schema-contract/chat-thread-access.contract.test.ts > a minted thread is bound only to a program of its own organization (PF-10 S2) > the program list shows the thread under its own program, never under another organization's
+2026-10-08T04:37:25.3485821Z AssertionError: expected [] to include 'ana-ri_1791433879015_0ggk750h5'
+2026-10-08T04:37:25.3487643Z  ❯ tests/schema-contract/chat-thread-access.contract.test.ts:261:36
+2026-10-08T04:37:25.3544402Z     259|     const ours = await getOrCreateThread(null, ALICE, 'ana-ri', ORG_A,…
+2026-10-08T04:37:25.3545785Z     260|     const foreignAttempt = await getOrCreateThread(null, ALICE, 'ana-r…
+2026-10-08T04:37:25.3547626Z     261|     expect(await list(ORG_A, P_A)).toContain(ours);
+2026-10-08T04:37:25.3549056Z        |                                    ^
+2026-10-08T04:37:25.3551120Z     262|     expect(await list(ORG_B, P_B)).not.toContain(foreignAttempt);
+2026-10-08T04:37:25.3553534Z     263|     expect(await list(ORG_A, P_B)).not.toContain(foreignAttempt);
+2026-10-08T04:37:25.3554561Z
+2026-10-08T04:37:25.3554999Z ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+2026-10-08T04:37:25.3555356Z
+2026-10-08T04:37:25.3555388Z
+2026-10-08T04:37:25.3565546Z  Test Files  1 failed | 117 passed (118)
+2026-10-08T04:37:25.3575562Z       Tests  1 failed | 1312 passed (1313)
+2026-10-08T04:37:25.3576528Z    Start at  04:26:58
+2026-10-08T04:37:25.3578722Z    Duration  626.41s (transform 6.50s, setup 1.59s, import 31.77s, tests 578.27s, environment 14ms)
+2026-10-08T04:37:25.3581230Z
+2026-10-08T04:37:25.4305758Z ##[error]Process completed with exit code 1.
+2026-10-08T04:37:25.4364374Z ##[group]Run node scripts/ci/check-i18n-integrity.mjs
+2026-10-08T04:37:25.4364789Z node scripts/ci/check-i18n-integrity.mjs
+2026-10-08T04:37:25.4425368Z shell: /usr/bin/bash -e {0}
+2026-10-08T04:37:25.4425636Z ##[endgroup]
+
+2026-10-08T04:37:26.5763219Z
+2026-10-08T04:37:26.5763835Z > concept2cure-riai@1.0.0 ci:launch-scope:selftest
+2026-10-08T04:37:26.5764679Z > node scripts/ci/check-launch-scope.selftest.mjs
+2026-10-08T04:37:26.6628433Z
+2026-10-08T04:37:26.6629542Z ✅ selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS on the seeded violation
+2026-10-08T04:37:26.7092219Z selftest FAILED: the gate did not refuse a launch module missing from the 20260810 keep-list
+2026-10-08T04:37:26.7093216Z {
+2026-10-08T04:37:26.7093572Z   "ok": true,
+2026-10-08T04:37:26.7093789Z   "apps": 7,
+2026-10-08T04:37:26.7094024Z   "launchSurfaces": 30,
+2026-10-08T04:37:26.7094431Z   "launchModules": 13,
+2026-10-08T04:37:26.7094999Z   "filesChecked": 25,
+2026-10-08T04:37:26.7095451Z   "findings": []
+2026-10-08T04:37:26.7095793Z }
+2026-10-08T04:37:26.7198311Z ##[error]Process completed with exit code 1.
+2026-10-08T04:37:26.7229541Z ##[group]Run npm run ci:launch-scope-api:selftest
+2026-10-08T04:37:26.7229939Z npm run ci:launch-scope-api:selftest

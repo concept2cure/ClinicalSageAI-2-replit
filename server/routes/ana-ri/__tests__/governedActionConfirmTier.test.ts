@@ -48,6 +48,9 @@ vi.mock('../../../services/ana/run-control.js', async importOriginal => ({
   ),
 }));
 vi.mock('../../../services/part11/reverify-signer.js', () => ({ reverifySigner: reverify }));
+// §11.10(g): every signer here holds a signing role on its membership row; the
+// refusals are pinned in governedActionArtifactSignature.test.ts.
+vi.mock('../../../services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'approver' }));
 vi.mock('../../../services/auditService.js', () => ({
   default: {
     logAction: vi.fn(async (entry: { action: string; details: Record<string, unknown> }) => {

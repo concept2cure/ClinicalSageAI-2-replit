@@ -108,6 +108,9 @@ vi.mock('../../../services/intelligence/rim-interceptors.js', () => ({
 import artifactRouter from '../artifacts';
 import { db } from '../../../db';
 import { commitSignedArtifactAct } from '../../../services/artifact-signed-act';
+import { artifactStatusUpdate } from '../../../services/artifact-approval-act';
+import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
+import { eq } from 'drizzle-orm';
 
 const BASELINE = 'migrations/0000_sweet_joseph.sql';
 const DDL = [
@@ -178,13 +181,13 @@ async function seed(status: 'review' | 'approved', opts: { versionRow?: boolean 
   await run(
     `INSERT INTO concept2cure_artifacts
        (artifact_id, organization_id, project_id, type, category, title, content, content_hash, version, status, approved_version_id)
-     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', 'sha-v2', 2, $4, $5)`,
+     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', 2, $4, $5)`,
     [ARTIFACT, ORG, PROJECT, status, status === 'approved' ? 2 : null],
   );
   if (opts.versionRow !== false) {
     await run(
       `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash)
-       SELECT id, organization_id, 2, 'body', 'sha-v2' FROM concept2cure_artifacts WHERE artifact_id = $1`,
+       SELECT id, organization_id, 2, 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5' FROM concept2cure_artifacts WHERE artifact_id = $1`,
       [ARTIFACT],
     );
   }
@@ -362,7 +365,7 @@ describe('locking an approved artifact is an electronic signature', () => {
     ]);
     expect(await ledger()).toEqual([{ command: 'lock', target: `artifact:${ARTIFACT}` }]);
     const [snap] = (await run(`SELECT approved_version_id, content_hash FROM concept2cure_submission_snapshots`)).rows;
-    expect(snap, 'the snapshot binds the hash the signature binds').toEqual({ approved_version_id: 2, content_hash: 'sha-v2' });
+    expect(snap, 'the snapshot binds the hash the signature binds').toEqual({ approved_version_id: 2, content_hash: '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5' });
   });
 });
 
@@ -375,17 +378,11 @@ describe('the signed act commits only from the state the signer was shown', () =
   ) =>
     db.transaction(tx =>
       commitSignedArtifactAct(tx, {
-        artifact: {
-          ...read,
-          artifactId: read.artifact_id,
-          approvedVersionId: read.approved_version_id,
-          contentHash: read.content_hash,
-          createdById: read.created_by_id,
-        } as never,
-        version: { ...version, contentHash: version.content_hash } as never,
+        artifact: read as never,
+        version: version as never,
         status,
         previousStatus,
-        updateData: status === 'approved' ? { status, approvedVersionId: read.version } : { status, publishedVersionId: read.version },
+        updateData: artifactStatusUpdate({ version: read.version }, previousStatus, status, USER),
         organizationId: ORG,
         userId: USER,
         userRole: 'admin',
@@ -396,8 +393,8 @@ describe('the signed act commits only from the state the signer was shown', () =
       }),
     );
   const readArtifact = async () =>
-    (await run(`SELECT * FROM concept2cure_artifacts WHERE artifact_id = $1`, [ARTIFACT])).rows[0];
-  const readVersion = async () => (await run(`SELECT * FROM concept2cure_artifact_versions`)).rows[0];
+    (await db.select().from(concept2cureArtifacts).where(eq(concept2cureArtifacts.artifactId, ARTIFACT)).limit(1))[0];
+  const readVersion = async () => (await db.select().from(concept2cureArtifactVersions).limit(1))[0];
 
   it.each([
     ['approved in between (a second approval racing the first)', 'review', 'approved', `UPDATE concept2cure_artifacts SET status = 'approved', approved_version_id = 2 WHERE artifact_id = '${ARTIFACT}'`],

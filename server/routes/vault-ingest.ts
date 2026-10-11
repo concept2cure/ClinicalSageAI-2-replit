@@ -49,11 +49,10 @@ import { z } from 'zod';
 import { VAULT_CLASSIFICATIONS, VAULT_INGEST_DOCUMENT_TYPES } from '../../shared/constants/domain/vault-taxonomy';
 import { runWithTenantScope } from '../db/tenantStore';
 import { ingestVaultDocument } from '../services/vault/vault-ingest.service';
+import { VAULT_UPLOAD_EXTENSIONS, VAULT_UPLOAD_MAX_BYTES } from '../../shared/constants/document-intake-formats';
 
-const ALLOWED_EXTENSIONS = new Set([
-  '.pdf', '.docx', '.doc', '.txt', '.rtf', '.xlsx', '.xls', '.csv', '.md',
-]);
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+const ALLOWED_EXTENSIONS = new Set(VAULT_UPLOAD_EXTENSIONS);
+const MAX_FILE_SIZE = VAULT_UPLOAD_MAX_BYTES; // unchanged 50 MB
 
 /** The allowlist refusal, typed so `receiveUpload` can recognise it. */
 class FileTypeNotAllowedError extends Error {

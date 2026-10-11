@@ -1,0 +1,614 @@
+{
+  "timeline": [
+    {
+      "seq": 1,
+      "at": "2026-10-08T14:59:28.136Z",
+      "kind": "note",
+      "round": 1,
+      "text": "I will take this in four parts."
+    },
+    {
+      "seq": 2,
+      "at": "2026-10-08T14:59:28.139Z",
+      "kind": "step",
+      "round": 1,
+      "step": "s1",
+      "task": null,
+      "phase": "announced",
+      "label": "Updating the plan",
+      "source": "plan",
+      "preview": null
+    },
+    {
+      "seq": 3,
+      "at": "2026-10-08T14:59:28.144Z",
+      "kind": "step",
+      "round": 1,
+      "step": "s1",
+      "task": null,
+      "phase": "finished",
+      "label": "Updated the plan",
+      "source": "plan",
+      "preview": null,
+      "status": "success",
+      "heldBack": false,
+      "usedModel": false,
+      "ms": 4,
+      "facts": [
+        {
+          "name": "Took",
+          "value": "4 ms"
+        }
+      ]
+    },
+    {
+      "seq": 4,
+      "at": "2026-10-08T14:59:28.145Z",
+      "kind": "task",
+      "round": 1,
+      "task": "t1",
+      "change": "added",
+      "title": "Find the stability reports"
+    },
+    {
+      "seq": 5,
+      "at": "2026-10-08T14:59:28.145Z",
+      "kind": "task",
+      "round": 1,
+      "task": "t2",
+      "change": "added",
+      "title": "List the project documents"
+    },
+    {
+      "seq": 6,
+      "at": "2026-10-08T14:59:28.145Z",
+      "kind": "task",
+      "round": 1,
+      "task": "t3",
+      "change": "added",
+      "title": "Read the two archived reports"
+    },
+    {
+      "seq": 7,
+      "at": "2026-10-08T14:59:28.145Z",
+      "kind": "task",
+      "round": 1,
+      "task": "t4",
+      "change": "added",
+      "title": "Summarise the shelf-life claims"
+    },
+    {
+      "seq": 8,
+      "at": "2026-10-08T14:59:28.145Z",
+      "kind": "task",
+      "round": 1,
+      "task": "t1",
+      "change": "started",
+      "title": "Find the stability reports"
+    },
+    {
+      "seq": 9,
+      "at": "2026-10-08T14:59:28.526Z",
+      "kind": "note",
+      "round": 2,
+      "text": "Searching the Vault for the stability reports."
+    },
+    {
+      "seq": 10,
+      "at": "2026-10-08T14:59:28.527Z",
+      "kind": "step",
+      "round": 2,
+      "step": "s2",
+      "task": "t1",
+      "phase": "announced",
+      "label": "Searching the Vault",
+      "source": "vault",
+      "preview": "stability"
+    },
+    {
+      "seq": 11,
+      "at": "2026-10-08T14:59:28.527Z",
+      "kind": "step",
+      "round": 2,
+      "step": "s3",
+      "task": null,
+      "phase": "announced",
+      "label": "Updating the plan",
+      "source": "plan",
+      "preview": null
+    },
+    {
+      "seq": 12,
+      "at": "2026-10-08T14:59:29.965Z",
+      "kind": "step",
+      "round": 2,
+      "step": "s2",
+      "task": "t1",
+      "phase": "finished",
+      "label": "Searched the Vault",
+      "source": "vault",
+      "preview": "stability",
+      "status": "success",
+      "heldBack": false,
+      "usedModel": false,
+      "ms": 1428,
+      "facts": [
+        {
+          "name": "Searched for",
+          "value": "stability"
+        },
+        {
+          "name": "Found",
+          "value": "8 documents"
+        },
+        {
+          "name": "Took",
+          "value": "1.4s"
+        }
+      ]
+    },
+    {
+      "seq": 13,
+      "at": "2026-10-08T14:59:29.965Z",
+      "kind": "step",
+      "round": 2,
+      "step": "s3",
+      "task": null,
+      "phase": "finished",
+      "label": "Updated the plan",
+      "source": "plan",
+      "preview": null,
+      "status": "success",
+      "heldBack": false,
+      "usedModel": false,
+      "ms": 2,
+      "facts": [
+        {
+          "name": "Took",
+          "value": "2 ms"
+        }
+      ]
+    },
+    {
+      "seq": 14,
+      "at": "2026-10-08T14:59:29.966Z",
+      "kind": "task",
+      "round": 2,
+      "task": "t1",
+      "change": "completed",
+      "title": "Find the stability reports"
+    },
+    {
+      "seq": 15,
+      "at": "2026-10-08T14:59:29.966Z",
+      "kind": "task",
+      "round": 2,
+      "task": "t2",
+      "change": "started",
+      "title": "List the project documents"
+    },
+    {
+      "seq": 16,
+      "at": "2026-10-08T14:59:30.197Z",
+      "kind": "step",
+      "round": 3,
+      "step": "s4",
+      "task": "t2",
+      "phase": "announced",
+      "label": "Listing the Vault documents",
+      "source": "vault",
+      "preview": null
+    },
+    {
+      "seq": 17,
+      "at": "2026-10-08T14:59:30.197Z",
+      "kind": "step",
+      "round": 3,
+      "step": "s5",
+      "task": null,
+      "phase": "announced",
+      "label": "Updating the plan",
+      "source": "plan",
+      "preview": null
+    },
+    {
+      "seq": 18,
+      "at": "2026-10-08T14:59:30.244Z",
+      "kind": "step",
+      "round": 3,
+      "step": "s4",
+      "task": "t2",
+      "phase": "finished",
+      "label": "Listed the Vault documents",
+      "source": "vault",
+      "preview": null,
+      "status": "success",
+      "heldBack": false,
+      "usedModel": false,
+      "ms": 46,
+      "facts": [
+        {
+          "name": "Found",
+          "value": "34 documents"
+        },
+        {
+          "name": "Took",
+          "value": "46 ms"
+        }
+      ]
+    },
+    {
+      "seq": 19,
+      "at": "2026-10-08T14:59:30.245Z",
+      "kind": "step",
+      "round": 3,
+      "step": "s5",
+      "task": null,
+      "phase": "finished",
+      "label": "Updated the plan",
+      "source": "plan",
+      "preview": null,
+      "status": "success",
+      "heldBack": false,
+      "usedModel": false,
+      "ms": 0,
+      "facts": [
+        {
+          "name": "Took",
+          "value": "0 ms"
+        }
+      ]
+    },
+    {
+      "seq": 20,
+      "at": "2026-10-08T14:59:30.246Z",
+      "kind": "task",
+      "round": 3,
+      "task": "t2",
+      "change": "completed",
+      "title": "List the project documents"
+    },
+    {
+      "seq": 21,
+      "at": "2026-10-08T14:59:30.246Z",
+      "kind": "task",
+      "round": 3,
+      "task": "t3",
+      "change": "started",
+      "title": "Read the two archived reports"
+    },
+    {
+      "seq": 22,
+      "at": "2026-10-08T14:59:30.611Z",
+      "kind": "note",
+      "round": 4,
+      "text": "Reading the two archived reports."
+    },
+    {
+      "seq": 23,
+      "at": "2026-10-08T14:59:30.612Z",
+      "kind": "step",
+      "round": 4,
+      "step": "s6",
+      "task": "t3",
+      "phase": "announced",
+      "label": "Reading a Vault document",
+      "source": "vault",
+      "preview": null
+    },
+    {
+      "seq": 24,
+      "at": "2026-10-08T14:59:30.612Z",
+      "kind": "step",
+      "round": 4,
+      "step": "s7",
+      "task": "t3",
+      "phase": "announced",
+      "label": "Reading a Vault document",
+      "source": "vault",
+      "preview": null
+    },
+    {
+      "seq": 25,
+      "at": "2026-10-08T14:59:30.612Z",
+      "kind": "step",
+      "round": 4,
+      "step": "s8",
+      "task": null,
+      "phase": "announced",
+      "label": "Updating the plan",
+      "source": "plan",
+      "preview": null
+    },
+    {
+      "seq": 26,
+      "at": "2026-10-08T14:59:30.626Z",
+      "kind": "step",
+      "round": 4,
+      "step": "s6",
+      "task": "t3",
+      "phase": "finished",
+      "label": "Reading a Vault document",
+      "source": "vault",
+      "preview": null,
+      "status": "error",
+      "heldBack": false,
+      "message": "AnA couldn't finish reading a Vault document and continued without it.",
+      "usedModel": false,
+      "ms": 13,
+      "facts": [
+        {
+          "name": "Took",
+          "value": "13 ms"
+        }
+      ]
+    },
+    {
+      "seq": 27,
+      "at": "2026-10-08T14:59:30.626Z",
+      "kind": "step",
+      "round": 4,
+      "step": "s7",
+      "task": "t3",
+      "phase": "finished",
+      "label": "Reading a Vault document",
+      "source": "vault",
+      "preview": null,
+      "status": "error",
+      "heldBack": false,
+      "message": "AnA couldn't finish reading a Vault document and continued without it.",
+      "usedModel": false,
+      "ms": 8,
+      "facts": [
+        {
+          "name": "Took",
+          "value": "8 ms"
+        }
+      ]
+    },
+    {
+      "seq": 28,
+      "at": "2026-10-08T14:59:30.627Z",
+      "kind": "step",
+      "round": 4,
+      "step": "s8",
+      "task": null,
+      "phase": "finished",
+      "label": "Updated the plan",
+      "source": "plan",
+      "preview": null,
+      "status": "success",
+      "heldBack": false,
+      "usedModel": false,
+      "ms": 1,
+      "facts": [
+        {
+          "name": "Took",
+          "value": "1 ms"
+        }
+      ]
+    },
+    {
+      "seq": 29,
+      "at": "2026-10-08T14:59:30.627Z",
+      "kind": "task",
+      "round": 4,
+      "task": "t3",
+      "change": "completed",
+      "title": "Read the two archived reports"
+    },
+    {
+      "seq": 30,
+      "at": "2026-10-08T14:59:30.627Z",
+      "kind": "task",
+      "round": 4,
+      "task": "t4",
+      "change": "started",
+      "title": "Summarise the shelf-life claims"
+    },
+    {
+      "seq": 31,
+      "at": "2026-10-08T14:59:30.969Z",
+      "kind": "note",
+      "round": 5,
+      "text": "Marking the last part done."
+    },
+    {
+      "seq": 32,
+      "at": "2026-10-08T14:59:30.969Z",
+      "kind": "step",
+      "round": 5,
+      "step": "s9",
+      "task": null,
+      "phase": "announced",
+      "label": "Updating the plan",
+      "source": "plan",
+      "preview": null
+    },
+    {
+      "seq": 33,
+      "at": "2026-10-08T14:59:30.970Z",
+      "kind": "step",
+      "round": 5,
+      "step": "s9",
+      "task": null,
+      "phase": "finished",
+      "label": "Updated the plan",
+      "source": "plan",
+      "preview": null,
+      "status": "success",
+      "heldBack": false,
+      "usedModel": false,
+      "ms": 1,
+      "facts": [
+        {
+          "name": "Took",
+          "value": "1 ms"
+        }
+      ]
+    },
+    {
+      "seq": 34,
+      "at": "2026-10-08T14:59:30.971Z",
+      "kind": "task",
+      "round": 5,
+      "task": "t4",
+      "change": "completed",
+      "title": "Summarise the shelf-life claims"
+    },
+    {
+      "seq": 35,
+      "at": "2026-10-08T14:59:31.491Z",
+      "kind": "end",
+      "round": 5,
+      "outcome": "answered",
+      "stoppedReason": null
+    }
+  ],
+  "liveSamples": [
+    "I will take this in four parts. AnA's words · not checked | Added task Find the stability reports | Added task List the project documents | Added task Read the two archived reports | Added task Summarise the shelf-life claims | Started Find the stability reports | Searching the Vault for the stability reports. AnA's words · not checked | Searched the Vault 1.4s Vault · stability | Completed Find the stability reports | Started List the project documents | Working… 4s",
+    "I will take this in four parts. AnA's words · not checked | Added task Find the stability reports | Added task List the project documents | Added task Read the two archived reports | Added task Summarise the shelf-life claims | Started Find the stability reports | Searching the Vault for the stability reports. AnA's words · not checked | Searched the Vault 1.4s Vault · stability | Completed Find the stability reports | Started List the project documents | Listed the Vault documents 46 ms Vault | Completed List the project documents | Started Read the two archived reports | Working… 4s",
+    "I will take this in four parts. AnA's words · not checked | Added task Find the stability reports | Added task List the project documents | Added task Read the two archived reports | Added task Summarise the shelf-life claims | Started Find the stability reports | Searching the Vault for the stability reports. AnA's words · not checked | Searched the Vault 1.4s Vault · stability | Completed Find the stability reports | Started List the project documents | Listed the Vault documents 46 ms Vault | Completed List the project documents | Started Read the two archived reports | Reading the two archived reports. AnA's words · not checked | Reading a Vault document Vault AnA couldn't finish reading a Vault document and continued without it. | Reading a Vault document Vault AnA couldn't finish reading a Vault document and continued without it. | Completed Read the two archived reports Marked complete by AnA · none of its 2 steps succeeded | Started Summarise the shelf-life claims | Working… 4s",
+    "I will take this in four parts. AnA's words · not checked | Added task Find the stability reports | Added task List the project documents | Added task Read the two archived reports | Added task Summarise the shelf-life claims | Started Find the stability reports | Searching the Vault for the stability reports. AnA's words · not checked | Searched the Vault 1.4s Vault · stability | Completed Find the stability reports | Started List the project documents | Listed the Vault documents 46 ms Vault | Completed List the project documents | Started Read the two archived reports | Reading the two archived reports. AnA's words · not checked | Reading a Vault document Vault AnA couldn't finish reading a Vault document and continued without it. | Reading a Vault document Vault AnA couldn't finish reading a Vault document and continued without it. | Completed Read the two archived reports Marked complete by AnA · none of its 2 steps succeeded | Started Summarise the shelf-life claims | Marking the last part done. AnA's words · not checked | Completed Summarise the shelf-life claims No steps recorded for this task | Working… 5s",
+    "I will take this in four parts. AnA's words · not checked | Added task Find the stability reports | Added task List the project documents | Added task Read the two archived reports | Added task Summarise the shelf-life claims | Started Find the stability reports | Searching the Vault for the stability reports. AnA's words · not checked | Searched the Vault 1.4s Vault · stability | Completed Find the stability reports | Started List the project documents | Listed the Vault documents 46 ms Vault | Completed List the project documents | Started Read the two archived reports | Reading the two archived reports. AnA's words · not checked | Reading a Vault document Vault AnA couldn't finish reading a Vault document and continued without it. | Reading a Vault document Vault AnA couldn't finish reading a Vault document and continued without it. | Completed Read the two archived reports Marked complete by AnA · none of its 2 steps succeeded | Started Summarise the shelf-life claims | Marking the last part done. AnA's words · not checked | Completed Summarise the shelf-life claims No steps recorded for this task | Answered.",
+    "I will take this in four parts. AnA's words | Added task Find the stability reports | Added task List the project documents | Added task Read the two archived reports | Added task Summarise the shelf-life claims | Started Find the stability reports | Searching the Vault for the stability reports. AnA's words | Searched the Vault 1.4s Vault · stability | Completed Find the stability reports | Started List the project documents | Listed the Vault documents 46 ms Vault | Completed List the project documents | Started Read the two archived reports | Reading the two archived reports. AnA's words | Reading a Vault document Vault AnA couldn't finish reading a Vault document and continued without it. | Reading a Vault document Vault AnA couldn't finish reading a Vault document and continued without it. | Completed Read the two archived reports Marked complete by AnA · none of its 2 steps succeeded | Started Summarise the shelf-life claims | Marking the last part done. AnA's words | Completed Summarise the shelf-life claims No steps recorded for this task | Answered."
+  ],
+  "settled": {
+    "head": "4 steps · 1 source · 2 did not complete · 3s\nNarrated by anthropic · claude-sonnet-5",
+    "rows": [
+      "I will take this in four parts. AnA's words",
+      "Added task Find the stability reports",
+      "Added task List the project documents",
+      "Added task Read the two archived reports",
+      "Added task Summarise the shelf-life claims",
+      "Started Find the stability reports",
+      "Searching the Vault for the stability reports. AnA's words",
+      "Searched the Vault 1.4s Vault · stability",
+      "Completed Find the stability reports",
+      "Started List the project documents",
+      "Listed the Vault documents 46 ms Vault",
+      "Completed List the project documents",
+      "Started Read the two archived reports",
+      "Reading the two archived reports. AnA's words",
+      "Reading a Vault document Vault AnA couldn't finish reading a Vault document and continued without it.",
+      "Reading a Vault document Vault AnA couldn't finish reading a Vault document and continued without it.",
+      "Completed Read the two archived reports Marked complete by AnA · none of its 2 steps succeeded",
+      "Started Summarise the shelf-life claims",
+      "Marking the last part done. AnA's words",
+      "Completed Summarise the shelf-life claims No steps recorded for this task",
+      "Answered."
+    ],
+    "details": [
+      null,
+      "Find the stability reports / Steps for this task / Searched the Vault / Vault · stability",
+      "Find the stability reports / List the project documents / Steps for this task / Listed the Vault documents / Vault",
+      "Find the stability reports / List the project documents / Read the two archived reports / Steps for this task / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it. / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it.",
+      "Find the stability reports / List the project documents / Read the two archived reports / Summarise the shelf-life claims",
+      "Find the stability reports · in progress / List the project documents / Read the two archived reports / Summarise the shelf-life claims / Steps for this task / Searched the Vault / Vault · stability",
+      null,
+      null,
+      "Find the stability reports · completed / List the project documents / Read the two archived reports / Summarise the shelf-life claims / Steps for this task / Searched the Vault / Vault · stability",
+      "Find the stability reports · completed / List the project documents · in progress / Read the two archived reports / Summarise the shelf-life claims / Steps for this task / Listed the Vault documents / Vault",
+      null,
+      "Find the stability reports · completed / List the project documents · completed / Read the two archived reports / Summarise the shelf-life claims / Steps for this task / Listed the Vault documents / Vault",
+      "Find the stability reports · completed / List the project documents · completed / Read the two archived reports · in progress / Summarise the shelf-life claims / Steps for this task / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it. / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it.",
+      null,
+      null,
+      null,
+      "Find the stability reports · completed / List the project documents · completed / Read the two archived reports · completed / Summarise the shelf-life claims / Steps for this task / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it. / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it.",
+      "Find the stability reports · completed / List the project documents · completed / Read the two archived reports · completed / Summarise the shelf-life claims · in progress",
+      null,
+      "Find the stability reports · completed / List the project documents · completed / Read the two archived reports · completed / Summarise the shelf-life claims · completed",
+      null
+    ],
+    "foot": [
+      "Recorded 79a7b323e6bf"
+    ]
+  },
+  "threadUrl": "http://localhost:5087/concept2cure/conversation-thread/ana-ri_1791471566097_4i7ihb3qp?program=50c41bb6-5796-4dc6-a848-72e4d1246ebd",
+  "afterReload": {
+    "head": "4 steps · 1 source · 2 did not complete · 3s\nNarrated by anthropic · claude-sonnet-5",
+    "rows": [
+      "I will take this in four parts. AnA's words",
+      "Added task Find the stability reports",
+      "Added task List the project documents",
+      "Added task Read the two archived reports",
+      "Added task Summarise the shelf-life claims",
+      "Started Find the stability reports",
+      "Searching the Vault for the stability reports. AnA's words",
+      "Searched the Vault 1.4s Vault · stability",
+      "Completed Find the stability reports",
+      "Started List the project documents",
+      "Listed the Vault documents 46 ms Vault",
+      "Completed List the project documents",
+      "Started Read the two archived reports",
+      "Reading the two archived reports. AnA's words",
+      "Reading a Vault document Vault AnA couldn't finish reading a Vault document and continued without it.",
+      "Reading a Vault document Vault AnA couldn't finish reading a Vault document and continued without it.",
+      "Completed Read the two archived reports Marked complete by AnA · none of its 2 steps succeeded",
+      "Started Summarise the shelf-life claims",
+      "Marking the last part done. AnA's words",
+      "Completed Summarise the shelf-life claims No steps recorded for this task",
+      "Answered."
+    ],
+    "details": [
+      null,
+      "Find the stability reports / Steps for this task / Searched the Vault / Vault · stability",
+      "Find the stability reports / List the project documents / Steps for this task / Listed the Vault documents / Vault",
+      "Find the stability reports / List the project documents / Read the two archived reports / Steps for this task / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it. / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it.",
+      "Find the stability reports / List the project documents / Read the two archived reports / Summarise the shelf-life claims",
+      "Find the stability reports · in progress / List the project documents / Read the two archived reports / Summarise the shelf-life claims / Steps for this task / Searched the Vault / Vault · stability",
+      null,
+      null,
+      "Find the stability reports · completed / List the project documents / Read the two archived reports / Summarise the shelf-life claims / Steps for this task / Searched the Vault / Vault · stability",
+      "Find the stability reports · completed / List the project documents · in progress / Read the two archived reports / Summarise the shelf-life claims / Steps for this task / Listed the Vault documents / Vault",
+      null,
+      "Find the stability reports · completed / List the project documents · completed / Read the two archived reports / Summarise the shelf-life claims / Steps for this task / Listed the Vault documents / Vault",
+      "Find the stability reports · completed / List the project documents · completed / Read the two archived reports · in progress / Summarise the shelf-life claims / Steps for this task / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it. / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it.",
+      null,
+      null,
+      null,
+      "Find the stability reports · completed / List the project documents · completed / Read the two archived reports · completed / Summarise the shelf-life claims / Steps for this task / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it. / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it.",
+      "Find the stability reports · completed / List the project documents · completed / Read the two archived reports · completed / Summarise the shelf-life claims · in progress",
+      null,
+      "Find the stability reports · completed / List the project documents · completed / Read the two archived reports · completed / Summarise the shelf-life claims · completed",
+      null
+    ],
+    "foot": [
+      "Recorded 79a7b323e6bf"
+    ]
+  },
+  "checks": {
+    "firstFourAreAdded": true,
+    "taskRowOrder": [
+      "Added task Find the stability reports",
+      "Added task List the project documents",
+      "Added task Read the two archived reports",
+      "Added task Summarise the shelf-life claims",
+      "Started Find the stability reports",
+      "Completed Find the stability reports",
+      "Started List the project documents",
+      "Completed List the project documents",
+      "Started Read the two archived reports",
+      "Completed Read the two archived reports Marked complete by AnA · none of its 2 steps succeeded",
+      "Started Summarise the shelf-life claims",
+      "Completed Summarise the shelf-life claims No steps recorded for this task"
+    ],
+    "findDetail": "Find the stability reports · completed / List the project documents / Read the two archived reports / Summarise the shelf-life claims / Steps for this task / Searched the Vault / Vault · stability",
+    "archivedRow": "Completed Read the two archived reports Marked complete by AnA · none of its 2 steps succeeded",
+    "archivedDetail": "Find the stability reports · completed / List the project documents · completed / Read the two archived reports · completed / Summarise the shelf-life claims / Steps for this task / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it. / Reading a Vault document / Vault / AnA couldn't finish reading a Vault document and continued without it.",
+    "summariseRow": "Completed Summarise the shelf-life claims No steps recorded for this task",
+    "sameAfterReload": true,
+    "stepTasks": [
+      "Updated the plan → null",
+      "Searched the Vault → t1",
+      "Updated the plan → null",
+      "Listed the Vault documents → t2",
+      "Updated the plan → null",
+      "Reading a Vault document → t3",
+      "Reading a Vault document → t3",
+      "Updated the plan → null",
+      "Updated the plan → null"
+    ]
+  }
+}

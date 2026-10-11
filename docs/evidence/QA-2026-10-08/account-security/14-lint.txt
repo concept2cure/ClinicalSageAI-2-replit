@@ -1,0 +1,31 @@
+# ESLint per changed file: HEAD (git show HEAD:<file> | npx eslint --stdin --stdin-filename <file> -f json) vs working tree (npx eslint <file> -f json)
+file                                                                     HEAD       now       
+server/routes/auth.ts                                                    0e/21w     0e/21w    
+server/routes/authEnterprise.ts                                          0e/10w     0e/10w    
+server/middleware/sign-in-limits.ts                                      0e/0w      0e/0w     
+server/services/part11/reverify-signer.ts                                0e/0w      0e/0w     
+server/services/part11/governed-signature-ceremony.ts                    0e/0w      0e/0w     
+server/routes/c2c/actions.ts                                             0e/5w      0e/5w     
+server/routes/governed-signed-act.ts                                     0e/0w      0e/0w     
+client/src/services/portal/authService.tsx                               0e/1w      0e/1w     
+client/src/concept2cure/v2/Shell.tsx                                     0e/5w      0e/5w     
+server/routes/__tests__/auth-session-roles.test.ts                       0e/0w      0e/0w     
+server/routes/__tests__/auth-sign-in-limits.test.ts                      0e/0w      0e/0w     
+server/routes/__tests__/authEnterprise-second-factor-lockout.test.ts     0e/0w      0e/0w     
+server/routes/__tests__/esignature-sign.test.ts                          0e/0w      0e/0w     
+server/routes/__tests__/protocol-signatures.routes.test.ts               0e/0w      0e/0w     
+server/routes/c2c/__tests__/reauth-second-factor.test.ts                 0e/0w      0e/0w     
+server/services/part11/__tests__/reverify-signer.test.ts                 0e/0w      0e/0w     
+client/src/concept2cure/v2/__tests__/accountPanel.test.tsx               0e/0w      0e/0w     
+client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx           0e/0w      0e/0w     
+client/src/services/portal/__tests__/authService-routes-exist.test.ts    new        0e/1w     
+tests/db/signer-authenticator-required.dbtest.ts                         new        0e/0w     
+client/src/concept2cure/v2/surfaces/ProtocolDevWrites.ts                 0e/0w      0e/0w     
+client/src/concept2cure/mdx/hooks/useEstarFiling.ts                      0e/1w      0e/1w     
+client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts           0e/0w      0e/0w     
+client/src/concept2cure/mdx/__tests__/estarFilingRefusal.test.ts         0e/1w      0e/1w     
+tests/mdx-submission-gateway-transmit-bundle-guard.test.ts               0e/3w      0e/3w     
+
+authService-routes-exist.test.ts: its one 'warning' is ESLint's 'File ignored because of a matching ignore pattern' notice;
+the existing sibling authService-401-refusal.test.ts reports the same notice. With --no-ignore it has 0 errors and 0 warnings.
+No changed file has more warnings than at HEAD.

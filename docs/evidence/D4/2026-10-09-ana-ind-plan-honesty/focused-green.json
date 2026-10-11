@@ -1,0 +1,40 @@
+{
+  "sourceCommit": "0f5348d88b7755b3af384c871a841641e21b65f2",
+  "command": [
+    "npx",
+    "vitest",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "server/services/ana/__tests__/ind-module-tool.test.ts",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-ind-plan-honesty/focused-green-report.json"
+  ],
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "exitCode": 0,
+  "elapsedSeconds": 6.827,
+  "sourceFiles": {
+    "server/services/ana/AnaToolExecutor.ts": {
+      "blob": "e60ec28d63ac60bc7f7e6dd8beced2d72005a74c",
+      "sha256": "15f5dfe5788ada04979b58bc430f9ab9977a4e2ace5d45876b01af96d08a3527",
+      "bytes": 1133295
+    },
+    "server/services/ana/evidence-literature-tool-defs.ts": {
+      "blob": "f09ba25a88e525de0a337866f2eaf2d56beac1f1",
+      "sha256": "4ce6d0f52accef13018bec48c9fd780d609b942b9b642e2e099f60427f75e2a5",
+      "bytes": 98308
+    },
+    "server/services/ana/__tests__/ind-module-tool.test.ts": {
+      "blob": "2d9a9c7e0a0153ea77e0062a5b5c6ecab8cafb59",
+      "sha256": "58ec53b4b9d9a24ac251b5db1a1d4f48f4d8c50160ba1cf42b35258e1ed115aa",
+      "bytes": 11335
+    },
+    "shared/ana/ind-module-authoring.ts": {
+      "blob": "0678af7a999079bcd43a026de92f918e4004a346",
+      "sha256": "28f351ed81b401678fdce98be26d86cff15a19093a94bc32e16e7d1419690f87",
+      "bytes": 12779
+    }
+  }
+}

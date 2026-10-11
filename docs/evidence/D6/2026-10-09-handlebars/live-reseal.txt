@@ -1,0 +1,13 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 ci:dependency-risk:reseal
+> node scripts/ci/reseal-dependency-risk-ledger.mjs
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Dependency risk reseal: OK — 3 reviewed High/Critical occurrence(s), finding set unchanged.
+  lockfileSha256: 7c0d06115423cbdc307cb6cbf6b2818fdab4af95e817ea11eef0e4a4dbf6d488 -> 529a8e5889cf500959484df70c561d27746437aa3a4c7d043cd70a5c551e3961
+  lockfileVersion 3; rootPackageVersion 1.0.0; npm 11.9.0; generatedAt 2026-10-09T20:09:07.786Z
+Commit the rewritten ledger together with the lockfile change, then verify with: npm run ci:dependency-risk

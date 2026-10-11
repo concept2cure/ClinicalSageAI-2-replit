@@ -227,6 +227,16 @@ describe('DP-33 — DELETE /docs/:docId is the governed delete, not an admin-tok
     expect(h.auditLogAction).not.toHaveBeenCalled();
   });
 
+  it('an approver may delete what a manager may (P-18); a reviewer may not', async () => {
+    h.orgRole = 'approver';
+    const ok = await del();
+    expect(ok.status, JSON.stringify(ok.body)).toBe(200);
+    expect(h.chainedAudit).toHaveBeenCalledTimes(1);
+    h.orgRole = 'reviewer';
+    const refused = await del();
+    expect(refused.status).toBe(403);
+  });
+
   it("a document outside the caller's organisation answers 404 and deletes nothing", async () => {
     h.orgRole = 'admin';
     docRow = null;

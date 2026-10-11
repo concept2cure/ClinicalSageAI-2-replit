@@ -1,0 +1,19 @@
+ × tests/db/cmc-source-evidence.dbtest.ts > removing a link, and the record it leaves > the table refuses every other change, for every role, and another organisation reads none of it 25ms
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses a DELETE by the runtime role 17ms
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > has no settable bypass: session settings made before the DELETE change nothing 3ms
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > deletes that organization's versions, and only those, once pending deletion with no active 
+ × tests/db/vault-version-annotations.dbtest.ts > who may annotate (critique 15) > another organisation neither reads nor changes this organisation's annotations 47ms
+ × tests/db/domain-history-append-only.dbtest.ts > the probe runs as the runtime role, under RLS > is app_service-shaped: not the owner, not a superuser, no BYPASSRLS, RLS enforced 879ms
+ × tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > the table refuses every other change, for every role, and another organisation reads none of it 40ms
+ × tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > an archive cannot be changed, deleted or truncated 17ms
+ × tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > another organisation cannot read it 7ms
+ × tests/db/cmc-module3-history-append-only.dbtest.ts > the probe runs as the runtime role, under RLS > is app_service-shaped: not the owner, not a superuser, no BYPASSRLS, RLS enforced 875ms
+ × tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT (INSERT only where the store's ceiling allows it), and no UPDATE, D
+ × tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger r
+ × tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold 24ms
+ × tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a capture cannot be deleted, and the record cannot be truncated 19ms
+ × tests/db/vault-chunk-backfill.dbtest.ts > the chunk backfill runs in the tenant it indexes > a scope with the integer id but no UUID sees nothing — and would report nothing to do 14ms
+ × tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > reads this organization's version under a share lock, and not another's 835ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  54 failed | 65 passed (119)
+      Tests  16 failed | 801 passed | 471 skipped (1288)

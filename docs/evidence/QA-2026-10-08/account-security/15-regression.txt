@@ -1,0 +1,31 @@
+# Wider regression: every auth, MFA, e-signature, part11 and signing test file (RLS_ENFORCE=off)
+# File list: 15-regression-files.txt (615 files: names matching auth|mfa|totp|esign|signature|signing|signoff|part11|reauth|reverify|ceremony|session|lockout|password|second-factor|account|shell,
+#   plus every test importing reverifySigner, verifyReauth, signGovernedAct, signerReverificationDeps, esignature, mfaService, sign-in-limits, authService, routes/auth or authEnterprise; *.dbtest.ts and tests/e2e excluded)
+
+## Run 1, started 09:44 on the working tree of that moment
+ Test Files  4 failed | 611 passed (615)
+      Tests  52 failed | 7865 passed | 1 skipped (7918)
+Failing files:
+      3  × client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx
+      4  × server/routes/__tests__/protocol-signatures.routes.test.ts
+      2  × server/services/protocol-development/__tests__/protocol-signature.pglite.integration.test.ts
+     43  × tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+
+Cause of each:
+- tests/mdx-submission-gateway-transmit-bundle-guard.test.ts (43): THIS change. The file runs the transmit route under NODE_ENV=production
+  with an operator who has no authenticator, so re-authentication refused (401 REAUTH_AUTHENTICATOR_REQUIRED) before the bundle
+  guard it tests. Fixture corrected: the operator has an authenticator and sends its code.
+- server/routes/__tests__/protocol-signatures.routes.test.ts (4) and protocol-signature.pglite.integration.test.ts (2): another session's
+  uncommitted signing-authority step in governed-signature-ceremony.ts and these tests, in flight during the run (tests expecting
+  403 ESIGNATURE_NO_AUTHORITY got 201). Not this change; pass on the current tree.
+- client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx (3): the reporting fixer's uncommitted work on
+  Insights.tsx and this test. Not this change; passes on the current tree.
+
+## Run 2: the four failing files (+ the protocol manifestation test the other session also edits), on the current tree
+$ npx vitest run <the five files>
+ Test Files  5 passed (5)
+      Tests  125 passed (125)
+
+## Run 3: files changed after run 1 began, and every test importing them
+ Test Files  5 passed (5)
+      Tests  53 passed (53)

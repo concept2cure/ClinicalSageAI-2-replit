@@ -10,7 +10,8 @@ import { linkToModule3 } from '../../services/cmc/link-to-module3';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/part11/signature-persistence';
 import { signMeaningRefusal, type GovernedSignMeaning } from '../../services/part11/signature-meanings';
-import { refusedWithoutSigningAuthority, verifiedReauthFactors } from './cmc-signer';
+import { verifiedReauthFactors } from './cmc-signer';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 import { clientIpOf } from '../../utils/client-ip';
 import { resolveActorUserId } from './governance';
 import { batchReleaseRefusal, batchWriteRefusal } from '../../services/cmc/signed-record';
@@ -481,7 +482,8 @@ router.post('/:id/release', async (req, res) => {
   const { meaning } = declared;
 
   // Signing authority (§11.10(g)), then the re-auth gate, before any write.
-  if (await refusedWithoutSigningAuthority(res, { userId, orgId })) return;
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority) return res.status(authority.status).json({ success: false, error: authority.code, message: authority.message });
   const reauthResult = await verifyReauth(userId, data.reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');

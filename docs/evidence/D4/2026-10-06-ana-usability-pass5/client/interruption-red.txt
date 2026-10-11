@@ -1,0 +1,143 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request
+[useAnaChat] stream failed: Generation failed
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > marks partial text incomplete when the stream closes without post_done
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+ × client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request 78ms
+   → expected { id: 'a-1791251941369', …(10) } to match object { …(4) }
+(8 matching properties omitted from actual)
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > keeps the existing repeated-step explanation and offers no Continue
+[useAnaChat] stream failed: Finishing failed
+
+ × client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > marks partial text incomplete when the stream closes without post_done 27ms
+   → expected false to be true // Object.is equality
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request
+[useAnaChat] stream failed: Generation failed
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > marks partial text incomplete when the stream closes without post_done
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > keeps the existing repeated-step explanation and offers no Continue
+[useAnaChat] stream failed: Finishing failed
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 401
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > keeps the existing repeated-step explanation and offers no Continue 148ms
+ × client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request 26ms
+   → expected { id: 'a-1791251941589', …(10) } to match object { …(4) }
+(8 matching properties omitted from actual)
+ × client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > marks partial text incomplete when the stream closes without post_done 17ms
+   → expected false to be true // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > keeps the existing repeated-step explanation and offers no Continue 46ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 403
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 429
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue 52ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue 48ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 401
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 403
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue 56ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > leaves a completed text response without an interruption note or Continue 39ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue 33ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 429
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue 33ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue 28ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > leaves a completed text response without an interruption note or Continue 32ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request
+AssertionError: expected { id: 'a-1791251941369', …(10) } to match object { …(4) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,8 +1,7 @@
+  {
+    "interrupted": true,
+-   "interruptedWithPartialResponse": true,
+    "text": "The comparison suggests that the next",
+    "turnRecord": {
+      "id": "record-failed",
+      "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "status": "recorded",
+
+ ❯ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx:76:34
+     74|     render(<Host kind={kind} />);
+     75|     await act(async () => { await chat.send('Compare the endpoints'); …
+     76|     expect(chat.messages.at(-1)).toMatchObject({
+       |                                  ^
+     77|       text: PARTIAL, interrupted: true, interruptedWithPartialResponse…
+     78|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > marks partial text incomplete when the stream closes without post_done
+ FAIL  client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > marks partial text incomplete when the stream closes without post_done
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx:96:29
+     94|     render(<Host kind={kind} />);
+     95|     await act(async () => { await chat.send('Compare the endpoints'); …
+     96|     expect(showsNote(NOTE)).toBe(true);
+       |                             ^
+     97|     expect(continueButton()).not.toBeNull();
+     98|     expect(chat.messages.at(-1)?.text).toBe(PARTIAL);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request
+AssertionError: expected { id: 'a-1791251941589', …(10) } to match object { …(4) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,8 +1,7 @@
+  {
+    "interrupted": true,
+-   "interruptedWithPartialResponse": true,
+    "text": "The comparison suggests that the next",
+    "turnRecord": {
+      "id": "record-failed",
+      "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "status": "recorded",
+
+ ❯ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx:76:34
+     74|     render(<Host kind={kind} />);
+     75|     await act(async () => { await chat.send('Compare the endpoints'); …
+     76|     expect(chat.messages.at(-1)).toMatchObject({
+       |                                  ^
+     77|       text: PARTIAL, interrupted: true, interruptedWithPartialResponse…
+     78|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 10 passed (14)
+   Start at  21:58:57
+   Duration  4.11s (transform 1.65s, setup 116ms, import 2.73s, tests 669ms, environment 443ms)
+

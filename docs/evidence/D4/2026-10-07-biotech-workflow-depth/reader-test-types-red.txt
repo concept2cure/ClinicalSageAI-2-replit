@@ -1,0 +1,1 @@
+tests/regulatory/submission-inventory-reader-contract.test.ts(45,5): error TS4104: The type 'readonly Diagnostic[]' is 'readonly' and cannot be assigned to the mutable type 'Diagnostic[]'.

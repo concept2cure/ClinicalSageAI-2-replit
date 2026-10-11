@@ -11,6 +11,7 @@ import type { CSSProperties } from 'react';
 import { useCallback, useState } from 'react';
 import { ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../utils/authToken';
+import { CHAT_UPLOAD_ACCEPT, CHAT_UPLOAD_MAX_BYTES } from '@shared/constants/document-intake-formats';
 
 export interface ChatAttachment {
   id: string;
@@ -18,24 +19,33 @@ export interface ChatAttachment {
   status: 'uploading' | 'ready' | 'error';
   fileId?: string;
   error?: string;
-  /** How the server read the file (utf8 / pdf-text / pdf-ocr / image-ocr / docx). */
+  /** How the server read the file (utf8 / pdf-text / pdf-ocr / image-ocr / docx / xlsx). */
   extractionMethod?: string | null;
   /** Word count extracted into project memory. */
   extractionWords?: number;
 }
 
-/** "read · N words" sub-label for a ready attachment, or null when not read. */
+/**
+ * "text extracted · N words" sub-label for a ready attachment, or null when
+ * no text was extracted.
+ *
+ * It said "read · N words", and AnA's turn was then given the file by name
+ * only (QA 2026-10-08, j5): the count is what the UPLOAD extracted into the
+ * project's records, which is all a composer knows when it draws the chip.
+ * What a turn was actually given is said per turn, under "Used in this
+ * session" (the stream's `context_used`), so the chip claims nothing about it.
+ */
 export function attachmentReadLabel(
   method: string | null | undefined,
   words: number | undefined,
 ): string | null {
   if (!words || words <= 0) return null;
   const w = `${words.toLocaleString()} ${words === 1 ? 'word' : 'words'}`;
-  return method === 'image-ocr' || method === 'pdf-ocr' ? `read via OCR · ${w}` : `read · ${w}`;
+  return method === 'image-ocr' || method === 'pdf-ocr' ? `text extracted via OCR · ${w}` : `text extracted · ${w}`;
 }
 
 /**
- * The chip text for a READY attachment — what was read, or that nothing was.
+ * The chip text for a READY attachment — what text was extracted, or that none was.
  *
  * The upload answers `ready` whether or not extraction produced text (a scan,
  * an image OCR could not read), and reports that as zero words. Two composers
@@ -57,7 +67,7 @@ export interface UseChatUpload {
   uploading: boolean;
   /**
    * Latest upload-lifecycle message for an aria-live region (screen readers):
-   * "Uploading X…", "X read, N words", "X failed to upload". Empty when idle.
+   * "Uploading X…", "X: text extracted · N words", "X failed to upload". Empty when idle.
    * Render it in a visually-hidden aria-live="polite" node next to the composer.
    */
   statusMessage: string;
@@ -93,11 +103,8 @@ export function composeTurn(text: string, attachments: ChatAttachment[]): { body
   };
 }
 
-/** File types the chat upload accepts (matches server-side extraction support). */
-export const CHAT_UPLOAD_ACCEPT = '.pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.docx,.doc';
-
-/** Max upload size (bytes). Comfortable for documents and multi-page scans. */
-export const CHAT_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
+/** Candidate formats and size only; server byte/scanner checks remain authoritative. */
+export { CHAT_UPLOAD_ACCEPT, CHAT_UPLOAD_MAX_BYTES } from '@shared/constants/document-intake-formats';
 
 /** Accepted extensions, derived from CHAT_UPLOAD_ACCEPT (the single source). */
 const ACCEPTED_EXTENSIONS = CHAT_UPLOAD_ACCEPT.split(',').map((e) => e.trim().toLowerCase());
@@ -200,7 +207,7 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
           ),
         );
         const read = attachmentReadLabel(method, words);
-        setStatusMessage(read ? `${file.name} ${read}` : `${file.name} uploaded`);
+        setStatusMessage(read ? `${file.name}: ${read}` : `${file.name} uploaded`);
       } catch (err) {
         // Only an ApiRequestError carries copy that has been through the
         // envelope reader. Anything else reaching here is the fetch itself

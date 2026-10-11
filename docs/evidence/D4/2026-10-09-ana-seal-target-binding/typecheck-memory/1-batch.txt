@@ -1,0 +1,3 @@
+{"version":"5.6.3","mode":"batch","rootCount":7101,"sourceCount":12160,"skippedDuringNativeInvalidation":0,"pendingBefore":3,"pendingAfter":0,"checkedCount":3,"cachedDiagnosticFileCount":0,"rssMb":5441,"heapMb":5189,"gcEvents":[],"checked":[{"file":"server/services/ana/verifiedSealService.ts","diagnosticCodes":[]},{"file":"server/services/ana/__tests__/verified-seal-lineage.pglite.integration.test.ts","diagnosticCodes":[]},{"file":"server/services/ana/__tests__/verified-seal-service.test.ts","diagnosticCodes":[]}]}
+(node:14) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)

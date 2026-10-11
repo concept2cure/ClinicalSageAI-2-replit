@@ -1,0 +1,8 @@
+{
+  "branch": "concept2cure-v2",
+  "base": "0b8a8c3dfd6166286e085de59e13b1217cb17dee",
+  "production_path": "server/services/ana/run-control.ts",
+  "production_blob": "2567b41d4b096daf53b30b9e7c6fb1860bee7376",
+  "workstream": "W3 / D4",
+  "scope": "Backend sweep admission only; no UI contribution."
+}

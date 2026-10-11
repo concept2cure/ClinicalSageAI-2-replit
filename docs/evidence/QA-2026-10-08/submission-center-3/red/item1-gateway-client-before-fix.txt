@@ -1,0 +1,6 @@
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — signing authority > a person whose role does not sign is not offered Transmit or Technical rejection, and is told why 56ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — signing authority > a signer is offered both 61ms
+ ✓ client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — signing authority > an authority the server could not read hides nothing: unknown is not "you cannot" 44ms
+ × client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx > GatewayTransmittals — signing authority > a 403 ESIGNATURE_NO_AUTHORITY from the transmit is said in the server’s words, with no status code 5055ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 46 passed (48)

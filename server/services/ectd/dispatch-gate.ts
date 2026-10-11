@@ -76,6 +76,37 @@ export function evaluateDispatchGate(input: DispatchGateInput): DispatchGateResu
 }
 
 /**
+ * The release-approval gate (P-22, product decision 2026-10-08: "approval gates
+ * the release, not the technical validation"). `notYetApproved` counts the
+ * leaves whose source document is not yet approved for release — readiness
+ * reports each as a warning (DOCUMENT_NOT_APPROVED, `blocksRelease`) so a
+ * sequence can be Validated while final approvals are collected — and every
+ * release step (freeze, dispatch, transmit) is refused while any remains.
+ *
+ * Its own blocker, never added to the error count: a warning is not an error,
+ * and the verdict says which of the two stops the release. A count that is not
+ * a finite number blocks, as in evaluateDispatchGate. Pure.
+ */
+export function evaluateReleaseApprovalGate(notYetApproved: number): DispatchGateResult {
+  if (!Number.isFinite(notYetApproved)) {
+    return {
+      cleared: false,
+      blockers: [
+        'Release is blocked because the count of leaves whose document is not yet approved could not be determined. An undetermined count is not a count of zero.',
+      ],
+    };
+  }
+  if (notYetApproved <= 0) return { cleared: true, blockers: [] };
+  return {
+    cleared: false,
+    blockers: [
+      `${notYetApproved} ${notYetApproved === 1 ? 'leaf points at a document' : 'leaves point at documents'} not yet approved. ` +
+        'Only approved documents are released, so freeze, dispatch and transmit refuse this sequence until each is approved.',
+    ],
+  };
+}
+
+/**
  * Compose multiple gate verdicts into one (e.g. the structural+shadow gate with
  * the external-validation gate). Cleared only when EVERY gate is cleared; blockers
  * are the union, order-preserved for stable messaging. Pure.

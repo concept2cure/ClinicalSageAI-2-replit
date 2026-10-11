@@ -1,0 +1,127 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts
+{
+  "timestamp": "2026-10-08T01:55:31.433Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:55:31.434Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts
+{
+  "timestamp": "2026-10-08T01:55:31.435Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > uses a real governed pool larger than the relevance budget 2ms
+ × server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > offers the required cited record for: which version of ICH Q5C applies to our stability plan 8ms
+   → expected [ 'list_platform_commands', …(49) ] to include 'find_cmc_guidance'
+ × server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > offers the required cited record for: how do we document the potency assay in Module 3 3ms
+   → expected [ 'list_platform_commands', …(49) ] to include 'get_cmc_requirements'
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > offers the required cited record for: what quality requirements apply to our biologic stability data 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > offers the required cited record for: why does our gene therapy need a potency assay 2ms
+ × server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > keeps the persona-required CMC references available on an otherwise context-free follow-up 1ms
+   → expected [ 'list_platform_commands', …(20) ] to include 'find_cmc_guidance'
+ × server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > keeps required record reads under the existing core reliability rule 1ms
+   → expected [ 'list_platform_commands', …(20) ] to include 'find_cmc_guidance'
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > cannot resurrect a record tool withheld by tenant governance, even when pinned or carried 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains program peer: where are we with our gene therapy program and what should we do next 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains program peer: what is the critical path for our biosimilar 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains intake peer: read the PDF I just attached 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains intake peer: this scanned report is hard to read, extract the text from the pages 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains intake peer: inspect the files I attached before you start drafting 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains intake peer: read the Excel batch results I uploaded 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: what documents and sections do we have in this project 8ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: read the current clinical overview before revising it 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: find every section mentioning the changed dose 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: help me write a statistical analysis plan 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: help me prepare an EU clinical trial application 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: help me prepare a Canada CTA amendment 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains authoring peer: help me draft the investigator brochure 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains statistics peer: what sample size do we need for a phase 2 trial 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains statistics peer: define the estimand for our trial 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains statistics peer: how should we handle missing patient outcomes 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains statistics peer: plan how to control multiplicity for our co primary endpoints 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains consistency peer: check that the efficacy percentages match the counts 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains consistency peer: check for discrepancies across the study documents 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains submission peer: what happens next after database lock 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains submission peer: what would cause the FDA to reject our electronic submission 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > retains nonclinical peer: compute the first in human starting dose from NOAEL and MABEL 3ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > preserves the existing launch refusal for estimate_recorded_shelf_life 7ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > preserves the existing launch refusal for assess_recorded_stability_trend 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > preserves the existing launch refusal for assess_recorded_batch_poolability 2ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > the selected Q5C reference reads an actual cited record, with a recorded currency limit 1ms
+ ✓ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > potency requirements remain cited record reads, not numerical calculations or readiness 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > offers the required cited record for: which version of ICH Q5C applies to our stability plan
+AssertionError: expected [ 'list_platform_commands', …(49) ] to include 'find_cmc_guidance'
+ ❯ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts:29:52
+     27|
+     28|   it.each(referenceCases)('offers the required cited record for: %s', …
+     29|     expect(offered(prompt).map(tool => tool.name)).toContain(name);
+       |                                                    ^
+     30|   });
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > offers the required cited record for: how do we document the potency assay in Module 3
+AssertionError: expected [ 'list_platform_commands', …(49) ] to include 'get_cmc_requirements'
+ ❯ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts:29:52
+     27|
+     28|   it.each(referenceCases)('offers the required cited record for: %s', …
+     29|     expect(offered(prompt).map(tool => tool.name)).toContain(name);
+       |                                                    ^
+     30|   });
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > keeps the persona-required CMC references available on an otherwise context-free follow-up
+AssertionError: expected [ 'list_platform_commands', …(20) ] to include 'find_cmc_guidance'
+ ❯ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts:34:56
+     32|   it('keeps the persona-required CMC references available on an otherw…
+     33|     const names = offered('and why?').map(tool => tool.name);
+     34|     for (const name of CMC_RECORD_TOOLS) expect(names).toContain(name);
+       |                                                        ^
+     35|   });
+     36|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts > AnA biotech workflows — actual launch pool and streaming selection budget > keeps required record reads under the existing core reliability rule
+AssertionError: expected [ 'list_platform_commands', …(20) ] to include 'find_cmc_guidance'
+ ❯ server/services/ana/__tests__/tool-selection-biotech-workflows.test.ts:39:56
+     37|   it('keeps required record reads under the existing core reliability …
+     38|     const names = offered('and why?', { deprioritize: new Set(CMC_RECO…
+     39|     for (const name of CMC_RECORD_TOOLS) expect(names).toContain(name);
+       |                                                        ^
+     40|   });
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 31 passed (35)
+   Start at  09:55:28
+   Duration  3.45s (transform 2.15s, setup 62ms, import 3.05s, tests 96ms, environment 0ms)
+

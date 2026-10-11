@@ -1,0 +1,11 @@
+ × server/services/ana-ri/__tests__/context-enrichment-program-uuid.test.ts > enrichContextForChat — project profile for a program UUID > reads the profile of the project the program is anchored to 57ms
+   → expected "vi.fn()" to be called with arguments: [ Anything, ObjectContaining{…} ]
+ × server/services/ana-ri/__tests__/context-enrichment-program-uuid.test.ts > enrichContextForChat — project profile for a program UUID > an unanchored program has no profile — nothing read with NaN, nothing reported missing 19ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-uuid.test.ts > enrichContextForChat — project profile for a program UUID > reads the profile of the project the program is anchored to
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, ObjectContaining{…} ]
+ FAIL  server/services/ana-ri/__tests__/context-enrichment-program-uuid.test.ts > enrichContextForChat — project profile for a program UUID > an unanchored program has no profile — nothing read with NaN, nothing reported missing
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+ Test Files  1 failed (1)
+      Tests  2 failed (2)

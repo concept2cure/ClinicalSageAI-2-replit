@@ -32,7 +32,8 @@ export interface TruthfulnessRules {
  */
 export interface RunTruthfulnessState {
   requestedStatus: ReportRunStatus;
-  confidence: number;
+  /** A measured confidence, or null when no engine measured one. */
+  confidence: number | null;
   blockers: string[];
   criticalBlockers: string[];
   /** Whether a gap evaluation ran, so the gaps section states a result rather
@@ -95,10 +96,15 @@ export function evaluateTruthfulness(
     );
   }
 
-  // Insufficient confidence forbids a final report.
-  if (
+  // Insufficient confidence forbids a final report — and so does none: a type
+  // that requires a confidence is not final on a figure nobody measured.
+  if (rules.requireConfidence && status === 'final' && state.confidence == null) {
+    status = 'partial';
+    reasons.push('Cannot mark final: this report type requires a confidence, and none was computed for this run.');
+  } else if (
     rules.requireConfidence &&
     status === 'final' &&
+    state.confidence != null &&
     state.confidence < DEFAULT_FINAL_CONFIDENCE_THRESHOLD
   ) {
     status = 'partial';

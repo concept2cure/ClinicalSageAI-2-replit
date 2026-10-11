@@ -1,0 +1,149 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:40:14.409Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:40:15.406Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:40:15.407Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+{
+  "timestamp": "2026-10-08T01:40:15.407Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > a Vault download joins the sequenced chain > is written as a sequenced row, not a legacy one 24ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > a Vault download joins the sequenced chain > leaves the tenant chain verifiable 18ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > lists this document's events only, newest first, with who did them 30ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > names each row's predecessor in the TENANT chain, not the document's previous row 16ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > carries the tenant chain verdict, not a verdict of its own 7ms
+stderr | server/routes/c2c/__tests__/vault-document-details-route.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/vault-document-details-route.test.ts
+{
+  "timestamp": "2026-10-08T01:40:19.056Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/vault-document-details-route.test.ts
+{
+  "timestamp": "2026-10-08T01:40:19.343Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:40:19.343Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-document-details-route.test.ts
+{
+  "timestamp": "2026-10-08T01:40:19.343Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/vault-document-details-route.test.ts > Edit details route > a failed write is a 500 that says nothing was changed, never a save
+{
+  "timestamp": "2026-10-08T01:40:19.436Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] project vault details error",
+  "context": {
+    "err": "connection reset"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/vault-document-details-route.test.ts > Edit details route > carries the request to the writer with the session identity, and returns what changed 34ms
+ ✓ server/routes/c2c/__tests__/vault-document-details-route.test.ts > Edit details route > refuses a viewer at the gate, before the writer runs 6ms
+ ✓ server/routes/c2c/__tests__/vault-document-details-route.test.ts > Edit details route > passes on only string fields: anything else is not a value to write 4ms
+ ✓ server/routes/c2c/__tests__/vault-document-details-route.test.ts > Edit details route > reports the writer's refusal as it was given 5ms
+ ✓ server/routes/c2c/__tests__/vault-document-details-route.test.ts > Edit details route > a failed write is a 500 that says nothing was changed, never a save 5ms
+stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts
+{
+  "timestamp": "2026-10-08T01:40:20.452Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/vault-document-history-route.test.ts
+{
+  "timestamp": "2026-10-08T01:40:20.692Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T01:40:20.693Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts
+{
+  "timestamp": "2026-10-08T01:40:20.693Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > a failed read is an error, never an empty history
+{
+  "timestamp": "2026-10-08T01:40:20.775Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault document history read failed",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "err": "boom"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > reads this document's rows from the ledger, in a tenant-stamped transaction 29ms
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > reads its own trail when it has no live family (a deleted version) 5ms
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > 404s a document that is not this program's or this org's, and reads nothing 4ms
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > a failed read is an error, never an empty history 4ms
+
+ Test Files  3 passed (3)
+      Tests  14 passed (14)
+   Start at  01:40:11
+   Duration  9.02s (transform 2.08s, setup 122ms, import 5.49s, tests 2.63s, environment 0ms)
+

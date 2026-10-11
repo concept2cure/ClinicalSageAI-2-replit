@@ -1,0 +1,9 @@
+{
+  "qualified_checkpoint": "7fa8a73108983405d2c562cf4ab34a2788e1ef4f",
+  "publication_base": "bebd4253676f43d1c983ac769c660e0c0aacdd10",
+  "git_blob_sha1": {
+    "server/services/ana-ri/context-enrichment.ts": "e1c8bf98f122772afeffe1b4448f6200d4e62947",
+    "server/services/ana-ri/__tests__/context-enrichment-deadline.test.ts": "8b9d61070741e2a4ceb733b8076f2d731a293e13",
+    "server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts": "da6a42c2819706213c7c941e7776f27adb1a1422"
+  }
+}

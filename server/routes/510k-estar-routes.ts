@@ -23,6 +23,7 @@ import {
 } from '../services/pathway-engines/estar/estar-artifact-retention';
 import { governedSignatureSchema } from '../api/cmc/governance';
 import { verifyReauth } from './c2c/actions';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 import {
   fillEstarSubmission,
   type EstarAttachmentReport,
@@ -2042,6 +2043,11 @@ router.patch('/submissions/:id', authMiddleware, requireEditorAccess, async (req
        at signing time, never reused from the session (§11.200). */
     let signature: EstarFilingSignature | undefined;
     if (status === 'filed') {
+      /* §11.10(g), before the password: filing is an electronic signature, so
+         the filer's role must carry signing authority under the platform's one
+         policy. QA 2026-10-08 (j6 sweep): only the password was asked. */
+      const authority = await checkSigningAuthority(userId, getOrganizationId(req));
+      if (authority) return res.status(authority.status).json({ error: authority.message, code: authority.code });
       const reauthResult = await verifyReauth(userId, reauth);
       if (!reauthResult.ok) {
         res.setHeader('WWW-Authenticate', 'ReAuth required');

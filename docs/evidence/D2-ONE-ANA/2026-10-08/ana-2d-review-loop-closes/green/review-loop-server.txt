@@ -1,0 +1,308 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T07:45:44.989Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 67d0cefc-a7f3-4837-bba8-557405434896 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T07:45:45.007Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 67d0cefc-a7f3-4837-bba8-557405434896 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-08T07:45:45.034Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 67d0cefc-a7f3-4837-bba8-557405434896 by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-08T07:45:45.120Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "approve",
+    "docId": "67d0cefc-a7f3-4837-bba8-557405434896",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-08T07:45:45.121Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "export",
+    "docId": "67d0cefc-a7f3-4837-bba8-557405434896",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-08T07:45:45.123Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "edit",
+    "docId": "67d0cefc-a7f3-4837-bba8-557405434896",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant
+{
+  "timestamp": "2026-10-08T07:45:45.147Z",
+  "level": "warn",
+  "message": "[authoring-object-authorization] Authoring object mutation denied",
+  "context": {
+    "tenantId": 1,
+    "principalId": "7",
+    "method": "POST",
+    "path": "/authoring/documents/67d0cefc-a7f3-4837-bba8-557405434896/request-review",
+    "action": "edit",
+    "docId": "67d0cefc-a7f3-4837-bba8-557405434896",
+    "sectionId": null,
+    "reason": "permission-denied"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign 23ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not 16ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a FROZEN document can still be filed to the vault — the sealed record is what filing is for 16ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial 19ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > a member with an editing role but no grant on the document is told it needs an Owner or Author grant 23ms
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through
+{
+  "timestamp": "2026-10-08T07:45:45.198Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc 67d0cefc-a7f3-4837-bba8-557405434896 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > on a FROZEN document even its owner is told why not 26ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > Send for review: the report is the decision the request meets > the creator, who holds Owner and Author, is offered it, and the request goes through 28ms
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an in-progress review task is completed, with its task.transition row naming the verdict
+{
+  "timestamp": "2026-10-08T07:45:51.239Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T07:45:51.239Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an in-progress review task is completed, with its task.transition row naming the verdict
+{
+  "timestamp": "2026-10-08T07:45:51.240Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an in-progress review task is completed, with its task.transition row naming the verdict
+{
+  "timestamp": "2026-10-08T07:45:51.375Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 9c51e889-c7a5-4a50-8cfd-871ec9498d04 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a pending review task is started, then completed: two legal moves, two ledger rows, the reviewer’s reason on each
+{
+  "timestamp": "2026-10-08T07:45:51.448Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 3677eb69-8786-431b-b6c4-dafff0fe0308 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > only this reviewer’s open review task on this document moves
+{
+  "timestamp": "2026-10-08T07:45:51.517Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 53760963-f309-44b4-9443-5d0c61e3b711 by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an in-progress review task is completed, with its task.transition row naming the verdict 467ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a pending review task is started, then completed: two legal moves, two ledger rows, the reviewer’s reason on each 57ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an approval-gated task is left open: completing it is the reviewer’s signature, which a verdict is not
+{
+  "timestamp": "2026-10-08T07:45:51.573Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 7c212052-2e07-47d8-bf23-06f2fad37882 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a verdict with no review task is recorded exactly as before
+{
+  "timestamp": "2026-10-08T07:45:51.608Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 302935b3-0d4c-49e4-97fc-c55c3fc65758 by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded
+{
+  "timestamp": "2026-10-08T07:45:51.650Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 7ab4dcf1-4f2e-4472-8a28-6dda5a53b78e by r***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded
+{
+  "timestamp": "2026-10-08T07:45:51.662Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-ATOMIC",
+    "err": "Failed query: INSERT INTO c2c_ana_actions\n       (id, org_id, domain, surface, command, target, risk, payload,\n        agentic_mode, state, proposed_at, proposed_by,\n        decided_at, decided_by, decision_reason,\n        executed_at, audit_row_id, idempotency_key)\n     VALUES ($1, $2, $3, $4, $5, $6, $7, $8,\n             $9, $10, $11, $12,\n             $13, $14, $15,\n             $16, $17, $18)\nparams: act_aefdf0f73b144f0685eb01e35af67f45,1,tasking,tasking-api,task.transition,task:TASK-ATOMIC,low,{\"from\":\"in-progress\",\"to\":\"completed\",\"cause\":\"review-verdict\",\"verdict\":\"changes_requested\",\"reviewId\":\"2eee7dec-6623-42f4-8ddf-0cd25c75d2b8\",\"docId\":\"7ab4dcf1-4f2e-4472-8a28-6dda5a53b78e\",\"summary\":\"Completed by the reviewer’s verdict on the document\"},suggest,executed,2026-10-08T07:45:51.654Z,21,2026-10-08T07:45:51.654Z,21,Section 2.5.4 cites the wrong SAP version.,2026-10-08T07:45:51.654Z,dcbbe48f-f9ec-4db2-ac6c-2c851d289ada,"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded
+Error submitting review: TaskAuditNotRecordedError: Task lineage was not recorded (WRITE_FAILED).
+    at auditTaskActionInTx (/home/user/ClinicalSageAI-2-replit/server/services/tasking/task-audit.ts:261:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at Object.closure.record (/home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:3304:33)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:3395:7
+    at inTransaction (/home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:748:17)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:3335:25 {
+  reason: 'WRITE_FAILED',
+  code: 'AUDIT_WRITE_FAILED'
+}
+{
+  "timestamp": "2026-10-08T07:45:51.684Z",
+  "level": "error",
+  "message": "[authoring-router] saving review failed",
+  "context": {
+    "err": "Task lineage was not recorded (WRITE_FAILED).",
+    "correlationId": null,
+    "code": "AUDIT_WRITE_FAILED"
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > only this reviewer’s open review task on this document moves 75ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > an approval-gated task is left open: completing it is the reviewer’s signature, which a verdict is not 41ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > a verdict with no review task is recorded exactly as before 31ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+{
+  "timestamp": "2026-10-08T07:45:51.708Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc ddebe345-3aa3-455a-909e-c690e0c93efd by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+{
+  "timestamp": "2026-10-08T07:45:51.727Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc ddebe345-3aa3-455a-909e-c690e0c93efd by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments
+{
+  "timestamp": "2026-10-08T07:45:51.740Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc ddebe345-3aa3-455a-909e-c690e0c93efd by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+{
+  "timestamp": "2026-10-08T07:45:51.771Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc a8f2d084-c9f8-4c97-99b4-824b6c31719e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+{
+  "timestamp": "2026-10-08T07:45:51.806Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc a8f2d084-c9f8-4c97-99b4-824b6c31719e by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > E — the verdict completes the reviewer’s review task on the same transaction > the verdict and the task cannot disagree: when the task’s ledger row cannot be written, neither is recorded 76ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the row is pending again, with no verdict time and no comments 56ms
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it
+{
+  "timestamp": "2026-10-08T07:45:51.819Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc a8f2d084-c9f8-4c97-99b4-824b6c31719e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-10-08T07:45:51.833Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc a31705aa-18d7-4803-9979-1d04001357cb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-10-08T07:45:51.862Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc a31705aa-18d7-4803-9979-1d04001357cb by r***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-10-08T07:45:51.900Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: review_requested on doc a31705aa-18d7-4803-9979-1d04001357cb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second
+{
+  "timestamp": "2026-10-08T07:45:51.940Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc a31705aa-18d7-4803-9979-1d04001357cb by r***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the earlier verdict stays in its document_reviewed audit row, untouched, and the new request names it 74ms
+ ✓ server/routes/__tests__/authoring-review-loop.pglite.integration.test.ts > D — asking a reviewer again reopens their recorded verdict > the whole loop: change request closes the first task, a new request opens the review again, approval closes the second 180ms
+
+ Test Files  2 passed (2)
+      Tests  16 passed (16)
+   Start at  07:45:35
+   Duration  16.72s (transform 4.45s, setup 106ms, import 1.49s, tests 14.65s, environment 0ms)
+

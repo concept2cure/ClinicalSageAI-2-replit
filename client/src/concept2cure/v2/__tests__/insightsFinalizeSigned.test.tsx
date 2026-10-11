@@ -28,6 +28,8 @@ vi.mock('@/services/portal/authService', async (importOriginal) => ({
 }));
 
 import { InsightsCanvas } from '../surfaces/Insights';
+// The catalog the overview answers with (the canvas holds no copy of its own).
+import { CANVAS_REPORT_TYPES } from './_insights-catalog-fixture';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
 const RUN_ID = 77;
@@ -44,7 +46,7 @@ const PROPS: OwnedSurfaceViewProps = {
 };
 const OVERVIEW = {
   data: {
-    organizationId: 1, tier: 'standard', segments: ['biotech'],
+    organizationId: 1, tier: 'standard', segments: ['biotech'], reportTypes: CANVAS_REPORT_TYPES,
     leadProgram: {
       projectId: 1, code: 'BX204', label: 'BX204', filing: 'NDA', indication: null,
       readiness: 73, scope: 'project', scopeId: '1', agency: null, pdufa: null, criticalBlockerCount: 0,
@@ -107,7 +109,7 @@ async function runReport() {
     return el;
   });
   fireEvent.change(composer, { target: { value: 'Run the executive readiness digest report' } });
-  fireEvent.click(screen.getByLabelText('Send'));
+  fireEvent.click(screen.getByRole('button', { name: 'Find' }));
   await screen.findByText(/Export PDF/);
 }
 
@@ -204,7 +206,9 @@ describe('Insights — Finalize is a signature, separate from Export', () => {
           success: false,
           error: {
             code: 'ESIGNATURE_NO_AUTHORITY',
-            message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)), and finalizing a report signs it. Nothing was finalized.',
+            // The signing ceremony's own sentence: finalize keeps one authority
+            // check, the ceremony's floor ("Report finalize" follow-up decision).
+            message: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.',
           },
         },
       });

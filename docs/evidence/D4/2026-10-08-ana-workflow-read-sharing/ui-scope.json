@@ -1,0 +1,8 @@
+{
+  "publication_base": "bebd4253676f43d1c983ac769c660e0c0aacdd10",
+  "qualified_checkpoint": "7fa8a73108983405d2c562cf4ab34a2788e1ef4f",
+  "base_client_hash": "f4a50c306387585250e354c68e08a099362e3823",
+  "qualified_client_hash": "f4a50c306387585250e354c68e08a099362e3823",
+  "client_directory_unchanged": true,
+  "out_of_scope_paths": []
+}

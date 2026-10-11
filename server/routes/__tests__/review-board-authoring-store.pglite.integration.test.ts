@@ -255,12 +255,18 @@ describe('a decision on the board is the authoring workflow’s own transition',
   it('re-requesting after changes puts it back on the reviewer’s queue; approving takes it off', async () => {
     await as(AUTHOR)(request(app).post(`/api/authoring/documents/${docA}/request-review`))
       .send({ reviewers: [{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }] });
-    // The upsert refreshes requested_at/requested_by but keeps the verdict —
-    // that is the authoring store's own rule; the board reports what it holds.
+    // A new request reopens the recorded verdict (wave 2D): the row is pending
+    // again, so the document is back on the reviewer's queue. Until 2026-10-08
+    // the upsert kept the verdict, and this test pinned that the document did
+    // NOT come back, under a title that said it did. The earlier verdict stays
+    // in its document_reviewed audit row.
     const after = queueOf(await board(AUTHOR, '?scope=requested')).find((q) => q.id === docA);
     expect(after).toBeTruthy();
     expect(after!.awaitingMyReview).toBe(false);
-    expect(queueOf(await board(REVIEWER, '?scope=mine')).find((q) => q.id === docA)).toBeUndefined();
+    const back = queueOf(await board(REVIEWER, '?scope=mine')).find((q) => q.id === docA);
+    expect(back, 'the re-requested document is not back on the reviewer’s queue').toBeTruthy();
+    expect(back!.awaitingMyReview).toBe(true);
+    expect(back!.myReviewStatus).toBe('pending');
 
     const ok = await as(REVIEWER)(request(app).post(`/api/authoring/documents/${docA}/review`))
       .send({ review_status: 'approved', review_comments: 'Software version stated.' });
@@ -295,5 +301,192 @@ describe('the approval chain (authoring_workflow_steps) is shown, owned, and nev
     const asAuthor = queueOf(await board(AUTHOR, '?scope=requested')).find((q) => q.id === docB)!;
     expect(asAuthor.atMySignOff).toBe(false);
     expect(asAuthor.requestedByMe).toBe(true);
+  }, T);
+});
+
+async function newReviewDocument(): Promise<string> {
+  const r = await as(AUTHOR)(request(app).post('/api/authoring/docs'))
+    .send({ title: 'Review handoff regression', module: 'M2', client_program_id: PROGRAM_A });
+  expect(r.status).toBe(201);
+  return r.body.document.id;
+}
+const reviewSteps = [{ role: 'QA', approver_email: REVIEWER.email }];
+
+describe('formal review submission is atomic and recoverable', () => {
+  it('rejects an empty workflow without transitioning the document', async () => {
+    const id = await newReviewDocument();
+    const r = await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`)).send({ workflow_steps: [] });
+    expect(r.status).toBe(400);
+    const doc = await jdb.pool.query(`SELECT status FROM authoring_documents WHERE id=$1`, [id]);
+    expect(String((doc.rows[0] as { status: string }).status).toLowerCase()).toBe('draft');
+  }, T);
+
+  it('refuses retries on a draft or foreign document and malformed workflow inputs', async () => {
+    const id = await newReviewDocument();
+    const endpoint = `/api/authoring/docs/${id}/submit`;
+    expect((await as(AUTHOR)(request(app).post(endpoint)).send({ retry_canonical: true })).status).toBe(409);
+    expect((await as(OUTSIDER)(request(app).post(endpoint)).send({ retry_canonical: true })).status).toBe(404);
+    for (const workflow_steps of [{ role: 'QA' }, [null], [{ role: '', approver_email: REVIEWER.email }]]) {
+      expect((await as(AUTHOR)(request(app).post(endpoint)).send({ workflow_steps })).status).toBe(400);
+    }
+  }, T);
+
+  it('an audit failure rolls back the workflow steps and document transition together', async () => {
+    const id = await newReviewDocument();
+    await jdb.pool.query(`CREATE FUNCTION reject_review_submit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.operation_type = 'SUBMIT' THEN RAISE EXCEPTION 'forced submit audit failure'; END IF; RETURN NEW; END $$`);
+    await jdb.pool.query(`CREATE TRIGGER reject_review_submit BEFORE INSERT ON authoring_audit_trail FOR EACH ROW EXECUTE FUNCTION reject_review_submit()`);
+    try {
+      const r = await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`)).send({ workflow_steps: reviewSteps });
+      expect(r.status).toBe(500);
+      const doc = await jdb.pool.query(`SELECT status,current_workflow_id FROM authoring_documents WHERE id=$1`, [id]);
+      expect(String((doc.rows[0] as { status: string }).status).toLowerCase()).toBe('draft');
+      expect((doc.rows[0] as { current_workflow_id: string | null }).current_workflow_id).toBeNull();
+      expect((await jdb.pool.query(`SELECT id FROM authoring_workflow_steps WHERE doc_id=$1`, [id])).rows).toEqual([]);
+    } finally {
+      await jdb.pool.query(`DROP TRIGGER reject_review_submit ON authoring_audit_trail`);
+      await jdb.pool.query(`DROP FUNCTION reject_review_submit()`);
+    }
+  }, T);
+
+  it('a projection retry reuses the existing review workflow without new steps or another submit event', async () => {
+    const id = await newReviewDocument();
+    const first = await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`)).send({ workflow_steps: reviewSteps });
+    expect(first.status).toBe(200);
+    expect(first.body.canonical).toMatchObject({ bridged: false, retryable: true });
+    expect((await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`))
+      .send({ workflow_steps: reviewSteps })).status).toBe(400);
+    const before = await jdb.pool.query(`SELECT id FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='SUBMIT'`, [id]);
+    const retry = await as(AUTHOR)(request(app).post(`/api/authoring/docs/${id}/submit`))
+      .send({ retry_canonical: true, reason: 'Retry the projection after restoring project mapping.' });
+    expect(retry.status).toBe(200);
+    expect(retry.body.workflowId).toBe(first.body.workflowId);
+    expect(retry.body.workflowReused).toBe(true);
+    expect((await jdb.pool.query(`SELECT id FROM authoring_workflow_steps WHERE doc_id=$1`, [id])).rows).toHaveLength(1);
+    expect((await jdb.pool.query(`SELECT id FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type='SUBMIT'`, [id])).rows).toEqual(before.rows);
+  }, T);
+});
+
+
+async function rejectPeerAudit(operation: string, work: () => Promise<void>) {
+  await jdb.pool.query(`CREATE FUNCTION reject_peer_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.operation_type = '${operation}' THEN RAISE EXCEPTION 'forced peer audit failure'; END IF; RETURN NEW; END $$`);
+  await jdb.pool.query('CREATE TRIGGER reject_peer_audit BEFORE INSERT ON authoring_audit_trail FOR EACH ROW EXECUTE FUNCTION reject_peer_audit()');
+  try { await work(); } finally {
+    await jdb.pool.query('DROP TRIGGER reject_peer_audit ON authoring_audit_trail');
+    await jdb.pool.query('DROP FUNCTION reject_peer_audit()');
+  }
+}
+const namedReviewers = [{ id: REVIEWER.id, name: REVIEWER.name, email: REVIEWER.email }];
+
+describe('peer review uses the tenant document and an atomic audit', () => {
+  it('refuses foreign and missing documents on read, request and verdict', async () => {
+    const id = await newReviewDocument();
+    for (const target of [id, '00000000-0000-4000-8000-000000000099']) {
+      const base = `/api/authoring/documents/${target}`;
+      expect((await as(OUTSIDER)(request(app).get(`${base}/reviews`))).status).toBe(404);
+      expect((await as(OUTSIDER)(request(app).post(`${base}/request-review`)).send({ reviewers: namedReviewers })).status).toBe(404);
+      expect((await as(OUTSIDER)(request(app).post(`${base}/review`)).send({ review_status: 'approved' })).status).toBe(404);
+    }
+    expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
+  }, T);
+
+  it('rejects malformed or duplicate reviewers before any request is saved', async () => {
+    const id = await newReviewDocument();
+    for (const reviewers of [[...namedReviewers, null], [...namedReviewers, { id: '', email: REVIEWER.email }], [...namedReviewers, ...namedReviewers]]) {
+      expect((await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers })).status).toBe(400);
+      expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
+    }
+  }, T);
+
+  it('rolls back a multi-reviewer request if its second insert fails', async () => {
+    const id = await newReviewDocument();
+    await jdb.pool.query(`CREATE FUNCTION reject_second_reviewer() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.reviewer_id = '${BYSTANDER.id}' THEN RAISE EXCEPTION 'forced reviewer insert failure'; END IF; RETURN NEW; END $$`);
+    await jdb.pool.query('CREATE TRIGGER reject_second_reviewer BEFORE INSERT ON authoring_reviews FOR EACH ROW EXECUTE FUNCTION reject_second_reviewer()');
+    try {
+      const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({
+        reviewers: [...namedReviewers, { id: BYSTANDER.id, name: BYSTANDER.name, email: BYSTANDER.email }],
+      });
+      expect(r.status).toBe(500);
+      expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
+    } finally {
+      await jdb.pool.query('DROP TRIGGER reject_second_reviewer ON authoring_reviews');
+      await jdb.pool.query('DROP FUNCTION reject_second_reviewer()');
+    }
+  }, T);
+
+  it('records the request audit with its batch and rolls back when that audit fails', async () => {
+    const id = await newReviewDocument();
+    await rejectPeerAudit('review_requested', async () => {
+      const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+      expect(r.status).toBe(500);
+      expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
+    });
+    expect((await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers })).status).toBe(200);
+    const audit = await jdb.pool.query('SELECT operation_type FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type=$2', [id, 'review_requested']);
+    expect(audit.rows).toHaveLength(1);
+  }, T);
+
+  it('an audit failure preserves the pending review instead of saving a verdict', async () => {
+    const id = await newReviewDocument();
+    await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+    await rejectPeerAudit('document_reviewed', async () => {
+      const r = await as(REVIEWER)(request(app).post(`/api/authoring/documents/${id}/review`)).send({ review_status: 'changes_requested', review_comments: 'Clarify the IND clinical rationale.' });
+      expect(r.status).toBe(500);
+      const rows = (await jdb.pool.query('SELECT review_status,reviewed_at FROM authoring_reviews WHERE doc_id=$1', [id])).rows;
+      expect(rows).toMatchObject([{ review_status: 'pending', reviewed_at: null }]);
+    });
+  }, T);
+});
+
+/* QA 2026-10-08 (browser walk j4-authoring, docs/evidence/QA-2026-10-08/authoring/).
+   "Assign review" let the author assign the review of her own document to
+   herself, and the reviewer it named could neither comment on nor sign the
+   document: a review request granted nothing, and the grant API had no caller.
+   The request is the act that names the reviewer, so it refuses the author and,
+   when the requester may manage the document's access (its owner, or an
+   administrator — requirePermissionManager's rule), grants the reviewer the
+   REVIEWER role on the document in the same transaction, on the chained ledger. */
+describe('a review request names someone other than the author and gives them the review grant', () => {
+  const reviewerGrants = async (id: string, principal: string) =>
+    (await jdb.pool.query(
+      `SELECT role, granted_by FROM doc_permissions WHERE doc_id = $1 AND principal_id = $2 AND role = 'REVIEWER' AND revoked_at IS NULL`,
+      [id, principal],
+    )).rows;
+
+  it('refuses the document’s author as its reviewer, and writes nothing', async () => {
+    const id = await newReviewDocument();
+    const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`))
+      .send({ reviewers: [{ id: AUTHOR.id, name: AUTHOR.name, email: AUTHOR.email }] });
+    expect(r.status, JSON.stringify(r.body)).toBe(409);
+    expect(r.body.error?.code).toBe('REVIEWER_IS_AUTHOR');
+    expect(String(r.body.error?.message)).toMatch(/author/i);
+    expect((await jdb.pool.query('SELECT id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toEqual([]);
+    expect(await reviewerGrants(id, AUTHOR.id)).toEqual([]);
+  }, T);
+
+  it('grants the requested reviewer REVIEWER on the document, once, with a chained record of the grant', async () => {
+    const id = await newReviewDocument();
+    const r = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.grants).toEqual([expect.objectContaining({ reviewerId: REVIEWER.id, granted: true })]);
+    expect(await reviewerGrants(id, REVIEWER.id)).toEqual([{ role: 'REVIEWER', granted_by: AUTHOR.id }]);
+    const chained = await jdb.pool.query(
+      `SELECT action FROM audit_logs WHERE action = 'authoring.permission.grant' AND new_values::text LIKE $1`,
+      [`%${id}%`],
+    );
+    expect(chained.rows).toHaveLength(1);
+    // Asking again re-requests the review; it does not stack a second grant.
+    const again = await as(AUTHOR)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+    expect(again.status).toBe(200);
+    expect(await reviewerGrants(id, REVIEWER.id)).toHaveLength(1);
+  }, T);
+
+  it('a requester who may not manage the document’s access records the request and is told no grant was made', async () => {
+    const id = await newReviewDocument();
+    const r = await as(BYSTANDER)(request(app).post(`/api/authoring/documents/${id}/request-review`)).send({ reviewers: namedReviewers });
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.grants).toEqual([expect.objectContaining({ reviewerId: REVIEWER.id, granted: false })]);
+    expect(String(r.body.grants[0].reason)).toMatch(/owner or an administrator/i);
+    expect(await reviewerGrants(id, REVIEWER.id)).toEqual([]);
+    expect((await jdb.pool.query('SELECT reviewer_id FROM authoring_reviews WHERE doc_id=$1', [id])).rows).toHaveLength(1);
   }, T);
 });

@@ -141,7 +141,7 @@ export const SAVE_DOCUMENT_TO_VAULT: AnaTool = {
 export const DRAFT_AUTHORING_DOCUMENT: AnaTool = {
   name: 'draft_authoring_document',
   description:
-    "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content } with the content stored as sanitized HTML, provenance recorded as drafted by AnA, a genesis revision and a Part 11 CREATE audit row per section. The person then sees it as a canvas in the conversation, can open it in the full editor, and can file it into the project vault. Use this — not save_document_to_vault — whenever the deliverable is a document with sections (a Module 2.5 excerpt, an IB section set, a 510(k) summary). Requires an open project; refuses otherwise. Tenant-scoped. Returns { status: 'generated', authoringDocId, programId, title, sectionCount, content }.",
+    "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content } with the content stored as sanitized HTML, provenance recorded as drafted by AnA, a genesis revision and a Part 11 CREATE audit row per section. The person then sees it as a canvas in the conversation, can open it in the full editor, and can file it into the project vault. Use this — not save_document_to_vault — whenever the deliverable is a document with sections (a Module 2.5 excerpt, an IB section set, a 510(k) summary). Requires an open project; refuses otherwise. Tenant-scoped. Returns { status: 'generated', saved: true, documentStatus: 'draft', authoringDocId, programId, title, sectionCount, content }; the durable authoringDocId proves it was saved, while approval and filing remain separate.",
   input_schema: {
     type: 'object',
     properties: {
@@ -157,6 +157,10 @@ export const DRAFT_AUTHORING_DOCUMENT: AnaTool = {
             code: { type: 'string', description: "Section code, e.g. '2.5.1'." },
             title: { type: 'string', description: 'Section title.' },
             content: { type: 'string', description: 'Section body as HTML.' },
+            sourceReferences: { type: 'array', minItems: 1, maxItems: 8, description: 'Carry the batch draft source receipts into the saved document. Each reference requires documentId, contentHash and span {start:0,end,totalChars}; the backend rechecks current project records and versions before any creation. These are declared source references, not claim-level scientific qualification or proof that the model used them.', items: { type: 'object', properties: {
+              documentId: { type: 'string', format: 'uuid' }, contentHash: { type: 'string', pattern: '^[0-9a-fA-F]{64}$' },
+              span: { type: 'object', properties: { start: { type: 'integer', const: 0 }, end: { type: 'integer', minimum: 1, maximum: 12000 }, totalChars: { type: 'integer', minimum: 1 } }, required: ['start', 'end', 'totalChars'] },
+            }, required: ['documentId', 'contentHash', 'span'] } },
           },
           required: ['code', 'title', 'content'],
         },
@@ -199,7 +203,7 @@ export const COMPARE_VAULT_VERSIONS: AnaTool = {
 export const SEED_TMF: AnaTool = {
   name: 'seed_tmf',
   description:
-    "Populate a Trial Master File with the expected-document skeleton from the TMF Reference Model catalog (ICH E6(R2) §8 essential documents). Idempotent — artifacts already present are skipped, so it can fill gaps in an in-progress TMF. Scope 'essential' seeds only essential documents; 'all' (default) seeds the full catalog. GOVERNED: reason required, audited, tenant-scoped. Use get_tmf_view afterwards to see the seeded index.",
+    "Populate a Trial Master File with the expected-document skeleton from the TMF Reference Model catalog (ICH E6(R3) Appendix C essential records). Idempotent — artifacts already present are skipped, so it can fill gaps in an in-progress TMF. Scope 'essential' seeds only essential documents; 'all' (default) seeds the full catalog. GOVERNED: reason required, audited, tenant-scoped. Use get_tmf_view afterwards to see the seeded index.",
   input_schema: {
     type: 'object',
     properties: {

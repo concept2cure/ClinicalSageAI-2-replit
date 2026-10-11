@@ -20,8 +20,13 @@
  */
 
 import { pool } from '../../db.js';
+import { vaultDataEligibleSql, vaultDispositionChoiceSql, vaultBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
+import { catalogableDocument } from './document-catalog-eligibility.js';
+import { supersededSql } from './vault-version-family.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { FeatureToggleService } from '../featureToggleService.js';
+import { catalogStateOf, writeCatalogSuggestion, type CatalogProposer } from './document-catalog-governance.service.js';
+import { filingVocabularyRefusal } from './vault-filing.service.js';
 import {
   computeCoverage,
   assertCatalogWriteAllowed,
@@ -110,6 +115,23 @@ export async function recordExtractionOutcome(
                            THEN vault.document_catalog.cataloged_by ELSE NULL END,
        cataloged_at = CASE WHEN vault.document_catalog.content_hash = EXCLUDED.content_hash
                            THEN vault.document_catalog.cataloged_at ELSE NULL END,
+       -- Who proposed and who confirmed are part of the description (S4).
+       catalog_state = CASE WHEN vault.document_catalog.content_hash = EXCLUDED.content_hash
+                       THEN vault.document_catalog.catalog_state ELSE NULL END,
+       proposed_by = CASE WHEN vault.document_catalog.content_hash = EXCLUDED.content_hash
+                     THEN vault.document_catalog.proposed_by ELSE NULL END,
+       proposed_model = CASE WHEN vault.document_catalog.content_hash = EXCLUDED.content_hash
+                        THEN vault.document_catalog.proposed_model ELSE NULL END,
+       proposed_thread_id = CASE WHEN vault.document_catalog.content_hash = EXCLUDED.content_hash
+                            THEN vault.document_catalog.proposed_thread_id ELSE NULL END,
+       proposed_turn_id = CASE WHEN vault.document_catalog.content_hash = EXCLUDED.content_hash
+                          THEN vault.document_catalog.proposed_turn_id ELSE NULL END,
+       confirmed_by = CASE WHEN vault.document_catalog.content_hash = EXCLUDED.content_hash
+                      THEN vault.document_catalog.confirmed_by ELSE NULL END,
+       confirmed_at = CASE WHEN vault.document_catalog.content_hash = EXCLUDED.content_hash
+                      THEN vault.document_catalog.confirmed_at ELSE NULL END,
+       correction_reason = CASE WHEN vault.document_catalog.content_hash = EXCLUDED.content_hash
+                           THEN vault.document_catalog.correction_reason ELSE NULL END,
        updated_at = NOW()`,
     [
       args.documentId,
@@ -127,6 +149,8 @@ export async function recordExtractionOutcome(
 
 /** The org-checked document row every tool call resolves through (see module header on tenancy). */
 export interface CatalogDocumentRow {
+  disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
+  originalFileAvailable?: boolean;
   id: string;
   programId: string;
   documentCode: string;
@@ -141,6 +165,7 @@ export interface CatalogDocumentRow {
   ctdSection: string | null;
   placementStatus: string;
   catalog: {
+    contentHash?: string;
     status: CatalogStatus;
     extractionMethod: string | null;
     extractionConfidence: number | null;
@@ -153,29 +178,39 @@ export interface CatalogDocumentRow {
     summary: string | null;
     keyData: unknown;
     catalogedAt: string | null;
+    /** suggested (AnA's, unconfirmed) | confirmed | corrected; null before a description. */
+    state?: string | null;
+    proposedModel?: string | null;
   } | null;
 }
 
 export async function loadDocumentForOrg(
   documentId: string,
   organizationId: number,
-  opts: { includeText?: boolean } = {},
+  opts: { includeText?: boolean; executor?: Queryable; programId?: string; currentOnly?: boolean } = {},
 ): Promise<CatalogDocumentRow | null> {
   const textCol = opts.includeText ? 'd.extracted_text' : 'NULL::text AS extracted_text';
-  const res = await pool.query(
+  const programClause = opts.programId ? ' AND d.program_id = $3::uuid' : '';
+  // Newly admitted sources require both recorded tenant consistency and a
+  // current version. Programme ownership alone cannot repair legacy conflicts.
+  const currentClause = opts.currentOnly ? ` AND d.organization_id = $2 AND NOT ${supersededSql('d')}` : '';
+  const res = await (opts.executor ?? pool).query(
     `SELECT d.id, d.program_id, d.document_code, d.document_title, d.document_type,
             d.file_name, d.mime_type, d.content_hash, ${textCol},
+            ${vaultDispositionChoiceSql('d')} AS disposition,
+            ${vaultBinaryAvailableSql('d')} AS original_file_available,
             d.folder_id, d.evidence_kind, d.ctd_section, d.placement_status,
-            c.catalog_status, c.extraction_method, c.extraction_confidence,
+            c.catalog_status, c.content_hash AS catalog_content_hash, c.extraction_method, c.extraction_confidence,
             c.extraction_error, c.char_count, c.word_count, c.page_count,
-            c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at
+            c.document_kind, c.purpose, c.summary, c.key_data, c.cataloged_at,
+            c.catalog_state, c.proposed_model
        FROM vault.documents d
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE d.id = $1 AND d.deleted_at IS NULL
+      WHERE d.id = $1 AND d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${programClause}${currentClause}
         AND EXISTS (SELECT 1 FROM regulatory_programs rp
                      WHERE rp.id = d.program_id AND rp.organization_id = $2)
       LIMIT 1`,
-    [documentId, organizationId],
+    opts.programId ? [documentId, organizationId, opts.programId] : [documentId, organizationId],
   );
   const r = res.rows[0];
   if (!r) return null;
@@ -188,6 +223,8 @@ export async function loadDocumentForOrg(
     fileName: r.file_name,
     mimeType: r.mime_type,
     contentHash: r.content_hash,
+    disposition: r.disposition ?? null,
+    originalFileAvailable: r.original_file_available ?? true,
     extractedText: r.extracted_text,
     folderId: r.folder_id,
     evidenceKind: r.evidence_kind,
@@ -196,6 +233,7 @@ export async function loadDocumentForOrg(
     catalog: r.catalog_status
       ? {
           status: r.catalog_status,
+          contentHash: r.catalog_content_hash,
           extractionMethod: r.extraction_method,
           extractionConfidence: r.extraction_confidence,
           extractionError: r.extraction_error,
@@ -207,6 +245,8 @@ export async function loadDocumentForOrg(
           summary: r.summary,
           keyData: r.key_data,
           catalogedAt: r.cataloged_at ? String(r.cataloged_at) : null,
+          state: catalogStateOf(r),
+          proposedModel: r.proposed_model ?? null,
         }
       : null,
   };
@@ -274,29 +314,16 @@ export async function completeCatalog(args: {
   summary: string;
   keyData?: Record<string, unknown> | null;
   userId?: number | null;
+  /** Who wrote the description: the agent, its model and turn (S4). */
+  proposer?: CatalogProposer | null;
 }): Promise<CompleteCatalogResult> {
+  // The kind is the Vault's evidence-kind vocabulary, as placement's is (S4).
+  const vocabulary = filingVocabularyRefusal({ evidenceKind: args.documentKind });
+  if (vocabulary) return { ok: false, refusal: vocabulary.message };
   // The text that was served is the text key_data is verified against.
-  const doc = await loadDocumentForOrg(args.documentId, args.organizationId, { includeText: true });
-  if (!doc) {
-    return { ok: false, refusal: 'Document not found in your organization\'s programs.' };
-  }
-  if (!doc.catalog) {
-    return {
-      ok: false,
-      refusal:
-        'This document has no catalog record (it predates the catalog, or cataloging was off at ' +
-        'ingest), so there is no recorded extraction to verify a read against. Re-ingest it, or ' +
-        'read it via the vault surface first.',
-    };
-  }
-  if (doc.catalog.status === 'extraction_failed') {
-    return {
-      ok: false,
-      refusal:
-        `Extraction failed for this document (${doc.catalog.extractionError ?? 'no reason recorded'}), ` +
-        'so there is no text to have read. Fix extraction (e.g. re-ingest, or OCR the source) before cataloging.',
-    };
-  }
+  const availability = catalogableDocument(await loadDocumentForOrg(args.documentId, args.organizationId, { includeText: true }));
+  if (!availability.ok) return availability;
+  const doc = availability.document;
 
   /* Coverage proves the model was served every character; it proved nothing
      about what the model then wrote. key_data was stored as the model typed
@@ -332,52 +359,33 @@ export async function completeCatalog(args: {
     embeddingStatus = 'embedded';
   } catch (err) {
     embeddingStatus = 'failed';
-    logger.warn('Catalog embedding failed — recorded as failed, catalog still written', {
+    logger.warn('Catalog embedding failed — attempting non-vector catalog write', {
       documentId: doc.id,
       err: err instanceof Error ? err.message : String(err),
     });
   }
 
-  const baseParams = [
-    args.documentKind,
-    args.purpose,
-    args.summary,
-    args.keyData ? JSON.stringify(args.keyData) : null,
+  /* A suggestion, never a fact: the record names the agent, model and turn
+     that wrote it and is committed with its chained audit row, and it never
+     replaces a record a person confirmed or corrected (S4, D5;
+     document-catalog-governance.service.ts). */
+  const written = await writeCatalogSuggestion({
+    documentId: doc.id,
+    contentHash: doc.contentHash,
+    organizationId: args.organizationId,
+    programId: doc.programId,
+    documentTitle: doc.documentTitle,
+    documentKind: args.documentKind,
+    purpose: args.purpose,
+    summary: args.summary,
+    keyData: args.keyData ?? null,
     embeddingStatus,
-    args.userId ?? null,
-    doc.id,
-    doc.contentHash,
-  ];
-  if (embeddingLiteral) {
-    try {
-      await pool.query(
-        `UPDATE vault.document_catalog SET
-           catalog_status = 'cataloged', document_kind = $1, purpose = $2, summary = $3,
-           key_data = $4::jsonb, embedding_status = $5, cataloged_by = $6,
-           cataloged_at = NOW(), updated_at = NOW(), embedding = $9::vector
-         WHERE document_id = $7 AND content_hash = $8`,
-        [...baseParams, embeddingLiteral],
-      );
-      return { ok: true, coverage, embeddingStatus };
-    } catch (err) {
-      // The embedding column may not exist on this database (no pgvector).
-      logger.warn('Catalog embedding column write failed — storing record without vector', {
-        documentId: doc.id,
-        err: err instanceof Error ? err.message : String(err),
-      });
-      embeddingStatus = 'failed';
-      baseParams[4] = embeddingStatus;
-    }
-  }
-  await pool.query(
-    `UPDATE vault.document_catalog SET
-       catalog_status = 'cataloged', document_kind = $1, purpose = $2, summary = $3,
-       key_data = $4::jsonb, embedding_status = $5, cataloged_by = $6,
-       cataloged_at = NOW(), updated_at = NOW()
-     WHERE document_id = $7 AND content_hash = $8`,
-    baseParams,
-  );
-  return { ok: true, coverage, embeddingStatus };
+    embeddingLiteral,
+    userId: args.userId ?? null,
+    proposer: args.proposer ?? null,
+  });
+  if (!written.ok) return { ok: false, refusal: written.refusal, coverage };
+  return { ok: true, coverage, embeddingStatus: written.embeddingStatus };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -385,6 +393,8 @@ export async function completeCatalog(args: {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ProjectDocumentListing {
+  disposition?: 'keep_data' | 'remove_data' | 'supersede' | null;
+  originalFileAvailable?: boolean;
   id: string;
   programId: string;
   programName: string | null;
@@ -401,6 +411,8 @@ export interface ProjectDocumentListing {
   catalogStatus: CatalogStatus | 'uncataloged';
   documentKind: string | null;
   purpose: string | null;
+  /** suggested (AnA's, not yet confirmed) | confirmed | corrected; null before a description. */
+  catalogState: string | null;
   extractionError: string | null;
   charCount: number | null;
   createdAt: string;
@@ -466,7 +478,10 @@ export async function listProjectDocuments(
     `SELECT d.id, d.program_id, rp.name AS program_name, d.document_code, d.document_title,
             d.document_type, d.file_name, d.folder_id, d.ctd_section, d.evidence_kind,
             d.placement_status, d.created_at,
+            ${vaultDispositionChoiceSql('d')} AS disposition,
+            ${vaultBinaryAvailableSql('d')} AS original_file_available,
             c.catalog_status, c.document_kind, c.purpose, c.extraction_error, c.char_count,
+            c.catalog_state,
             COUNT(*) OVER () AS scope_total,
             COUNT(*) FILTER (
               WHERE c.catalog_status IS NULL OR c.catalog_status = 'extracted'
@@ -477,8 +492,8 @@ export async function listProjectDocuments(
               OVER () AS scope_unfiled
        FROM vault.documents d
        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
-       LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE d.deleted_at IS NULL ${programFilter}
+       LEFT JOIN vault.document_catalog c ON c.document_id = d.id AND c.content_hash = d.content_hash
+      WHERE d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')} ${programFilter}
       ORDER BY d.created_at DESC
       LIMIT $2`,
     params,
@@ -491,6 +506,8 @@ export async function listProjectDocuments(
     documentTitle: r.document_title,
     documentType: r.document_type,
     fileName: r.file_name,
+    disposition: r.disposition ?? null,
+    originalFileAvailable: r.original_file_available ?? true,
     location: {
       folderId: r.folder_id,
       ctdSection: r.ctd_section,
@@ -500,6 +517,7 @@ export async function listProjectDocuments(
     catalogStatus: (r.catalog_status ?? 'uncataloged') as CatalogStatus | 'uncataloged',
     documentKind: r.document_kind,
     purpose: r.purpose,
+    catalogState: catalogStateOf(r),
     extractionError: r.extraction_error,
     charCount: r.char_count,
     createdAt: String(r.created_at),
@@ -529,6 +547,7 @@ export interface VaultDocDigest {
   catalogStatus: CatalogStatus | 'uncataloged';
   documentKind: string | null;
   purpose: string | null;
+  catalogState: string | null;
 }
 
 /** A chat-uploaded file from the evidence spine, with the file_id that reopens it. */
@@ -580,8 +599,9 @@ export async function listChatUploads(
     currentOnly: true,
     limit: want + 1,
   });
+  const active = sources.filter(s => s.dataEligible !== false);
   const hasMore = sources.length > want;
-  const uploads = (hasMore ? sources.slice(0, want) : sources).map(s => {
+  const uploads = (hasMore ? active.slice(0, want) : active).map(s => {
     const prov = (s.provenance ?? {}) as Record<string, unknown>;
     const meta = (s.metadata ?? {}) as Record<string, unknown>;
     return {
@@ -631,6 +651,7 @@ export async function getCatalogBootstrapDigest(
       catalogStatus: r.catalogStatus,
       documentKind: r.documentKind,
       purpose: r.purpose,
+      catalogState: r.catalogState,
     })),
     total: page.total,
     withheld: page.withheld,

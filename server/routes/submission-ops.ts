@@ -137,6 +137,7 @@ import { createScopedLogger } from '../utils/logger';
  * shaped as POSTs, and `/digests/:digestId/read` is a reader's own receipt.
  */
 import { requireEditorAccess } from '../middleware/orgMembership';
+import { authedUserId } from '../utils/authedActor';
 
 const router = Router();
 
@@ -1279,16 +1280,47 @@ router.get('/blockers', async (req: Request, res: Response) => {
   }
 });
 
+/** c2c_blockers.status, as shared/schema.ts declares it. */
+const BLOCKER_STATUSES: readonly string[] = ['open', 'resolved', 'dismissed'];
+
 router.patch('/blockers/:blockerId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
-    const { status, nextAction, resolvedById } = req.body;
-    const updates: any = { updatedAt: new Date() };
-    if (status) updates.status = status;
+    const { status, nextAction, resolvedById } = req.body ?? {};
+    // Who closed a blocker is the session's user (ledger L195). The body's
+    // resolvedById used to win, so an editor could record a resolution in a
+    // colleague's name. A body naming anyone else is refused, not ignored, so a
+    // caller never believes it recorded an attribution it did not. The id is
+    // the canonical one: every sign-in path puts a STRING subject on req.user.
+    const userId = authedUserId(req);
+    if (userId === null) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    if (resolvedById !== undefined && resolvedById !== null && Number(resolvedById) !== userId) {
+      return res.status(422).json({ error: 'resolvedById is the signed-in user; it cannot name anyone else' });
+    }
+    // The model's status set. Every gate reads `status = 'open'` as live, so a
+    // free-text status ('closed', 'Resolved') used to clear a blocker with no
+    // closer recorded.
+    if (status !== undefined && !BLOCKER_STATUSES.includes(status)) {
+      return res.status(422).json({ error: `status must be one of: ${BLOCKER_STATUSES.join(', ')}` });
+    }
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
     if (nextAction !== undefined) updates.nextAction = nextAction;
-    if (status === 'resolved') {
-      updates.resolvedAt = new Date();
-      updates.resolvedById = resolvedById || getUserId(req);
+    if (status !== undefined) {
+      updates.status = status;
+      if (status === 'open') {
+        // Reopened: nobody has closed it, so the last closer is not left behind.
+        updates.resolvedById = null;
+        updates.resolvedAt = null;
+      } else {
+        // Resolved or dismissed: the closer is recorded on the transition only.
+        // A repeat of the same status keeps the original closer and time,
+        // decided in the UPDATE itself, against the row as it stands.
+        const transition = sql`${c2cBlockers.status} IS DISTINCT FROM ${status}`;
+        updates.resolvedById = sql`CASE WHEN ${transition} THEN ${userId} ELSE ${c2cBlockers.resolvedById} END`;
+        updates.resolvedAt = sql`CASE WHEN ${transition} THEN now() ELSE ${c2cBlockers.resolvedAt} END`;
+      }
     }
 
     const [updated] = await db

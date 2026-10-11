@@ -1,0 +1,112 @@
+{
+  "commit": "75de31925ade212e33b6b6a7c02549b7686a394d",
+  "observed_at": "2026-10-06",
+  "ci_run": 37437723914,
+  "jobs": [
+    {
+      "name": "Security Contract Tests",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "name": "Security Scan",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Run lockfile audit and dependency-risk ledger gate",
+        "Trivy filesystem scan (deps + secrets)"
+      ]
+    },
+    {
+      "name": "Secret scan (full history)",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "name": "Lint",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "name": "Nightly Governance Strict",
+      "conclusion": "skipped"
+    },
+    {
+      "name": "Test",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Run tests"
+      ]
+    },
+    {
+      "name": "Coverage (ratchet)",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Coverage may not go down"
+      ]
+    },
+    {
+      "name": "Integration Tests",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Run integration tests"
+      ]
+    },
+    {
+      "name": "AnA Readiness Tests",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "name": "AIOS Audit Assets",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "name": "Production Image Boot (built image, empty database, sign-in)",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "name": "Production Boot Smoke (RLS on, non-superuser role)",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "name": "Blank DB Provisioning + Deploy Migration",
+      "conclusion": "success",
+      "failed_steps": []
+    },
+    {
+      "name": "Assemble Release Evidence",
+      "conclusion": "skipped"
+    },
+    {
+      "name": "Build",
+      "conclusion": "skipped"
+    },
+    {
+      "name": "Release evidence gate",
+      "conclusion": "skipped"
+    }
+  ],
+  "typescript": [
+    {
+      "name": "Run TypeScript check (no regression vs baseline)",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run beta-slice TypeScript check",
+      "conclusion": "success"
+    }
+  ],
+  "semgrep": {
+    "run": 37437723401,
+    "blocking_findings": 4,
+    "blocking_paths": [
+      "server/services/ectd/__tests__/stf-generator.test.ts",
+      "server/services/market-specs/device-labeling.ts",
+      "server/services/submission-gateways/__tests__/stf-packaging.test.ts"
+    ],
+    "full_inventory_findings": 687
+  }
+}

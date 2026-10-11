@@ -1,0 +1,20 @@
+ Test Files  80 passed (80)
+      Tests  1965 passed (1965)
+   Start at  16:12:56
+   Duration  83.62s (transform 9.36s, setup 926ms, import 30.88s, tests 42.23s, environment 7ms)
+
+Final replay after advisory-helper extraction: exit 0
+ ✓ tests/regulatory/agency-interaction.test.ts > commitment lifecycle + binding classification > advances open → in_progress → fulfilled, and overdue can recover 1ms
+ ✓ tests/regulatory/agency-interaction.test.ts > commitment lifecycle + binding classification > classifies binding vs agreed commitments correctly 0ms
+ ✓ tests/regulatory/agency-interaction.test.ts > meetings by segment > drug/biologic programs get pre-IND / EOP2 / pre-NDA 1ms
+ ✓ tests/regulatory/agency-interaction.test.ts > meetings by segment > device/IVD programs get Q-Sub / pre-sub instead 0ms
+(node:700) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/regulatory/ich-backbone-parity.test.ts > ICH_BACKBONE ⊆ ICH M4 heading record > every backbone section is an ICH M4 heading 2ms
+ ✓ tests/regulatory/ich-backbone-parity.test.ts > ICH_BACKBONE ⊆ ICH M4 heading record > a planted heading the record does not define is caught 0ms
+
+ Test Files  80 passed (80)
+      Tests  1965 passed (1965)
+   Start at  16:34:35
+   Duration  84.48s (transform 8.11s, setup 941ms, import 31.48s, tests 42.23s, environment 7ms)
+

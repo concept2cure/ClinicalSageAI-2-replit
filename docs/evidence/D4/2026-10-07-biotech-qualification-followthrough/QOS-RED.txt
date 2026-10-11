@@ -1,0 +1,18 @@
+PASS drug_substance: valid monthly series stays positive with no invented hold
+PASS drug_substance: short unassigned case already preserves upstream hold
+{"material":"drug_substance","holdOffset":516,"rowRefusalOffset":549,"summaryLength":501,"summaryTail":"ability results table. All 38 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points. The stability conclusion and proposed sto…"}
+FAIL drug_substance: QOS must preserve the recorded monthly case's existing hold: the upstream explicit hold disappeared from QOS
+FAIL drug_substance: short hold must preserve the complete source and row reason: QOS lost the source/row reason although the short hold survives
+FAIL drug_substance: preserve the existing named criterion-conflict reason: QOS lost the deterministic criterion-conflict reason
+FAIL drug_substance: preserve an existing named unestimable trend reason: QOS lost the existing named short-series trend refusal
+FAIL drug_substance: preserve a later study's source/row refusal: QOS lost the later study's recorded source/row refusal
+PASS drug_product: valid monthly series stays positive with no invented hold
+PASS drug_product: short unassigned case already preserves upstream hold
+{"material":"drug_product","holdOffset":532,"rowRefusalOffset":565,"summaryLength":500,"summaryTail":"bulated in the stability results table. All 38 recorded result(s) compared here are within their recorded acceptance criteria at the reported time points. The stability conclusion…"}
+FAIL drug_product: QOS must preserve the recorded monthly case's existing hold: the upstream explicit hold disappeared from QOS
+FAIL drug_product: short hold must preserve the complete source and row reason: QOS lost the source/row reason although the short hold survives
+FAIL drug_product: preserve the existing named criterion-conflict reason: QOS lost the deterministic criterion-conflict reason
+FAIL drug_product: preserve an existing named unestimable trend reason: QOS lost the existing named short-series trend refusal
+FAIL drug_product: preserve a later study's source/row refusal: QOS lost the later study's recorded source/row refusal
+RESULT 4 passed / 10 failed; existing imports, no mocks, no provider or database calls
+Actual process exit: 1; elapsed seconds: 0.390

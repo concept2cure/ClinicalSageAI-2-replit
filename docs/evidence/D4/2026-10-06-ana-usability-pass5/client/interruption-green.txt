@@ -1,0 +1,66 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > offers recovery only for an interrupted partial: timeout 319ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > does not label an unfinished tool as a network failure when the server reports an error
+[useAnaChat] stream failed: Generation failed
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request
+[useAnaChat] stream failed: Generation failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > offers recovery only for an interrupted partial: stop 99ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > partial response timeout versus the person stopping > does not label an unfinished tool as a network failure when the server reports an error 34ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > marks partial text incomplete when the stream closes without post_done
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > keeps the existing repeated-step explanation and offers no Continue
+[useAnaChat] stream failed: Finishing failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request 111ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > marks partial text incomplete when the stream closes without post_done 56ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request
+[useAnaChat] stream failed: Generation failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail partial response recovery > keeps the existing repeated-step explanation and offers no Continue 37ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > marks partial text incomplete when the stream closes without post_done
+[useAnaChat] stream failed: The stream ended before the turn finished
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > keeps the existing repeated-step explanation and offers no Continue
+[useAnaChat] stream failed: Finishing failed
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > shows an incomplete note even when the failed turn was recorded, and only continues on request 115ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > marks partial text incomplete when the stream closes without post_done 51ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 401
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 403
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 429
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation partial response recovery > keeps the existing repeated-step explanation and offers no Continue 48ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue 43ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue 41ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 401
+
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 403
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue 38ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > rail responses without partial model text > leaves a completed text response without an interruption note or Continue 36ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 401 refusal without a misleading Continue 32ms
+stderr | client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue
+[useAnaChat] stream failed: Stream request failed: 429
+
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 403 refusal without a misleading Continue 32ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > preserves the existing HTTP 429 refusal without a misleading Continue 30ms
+ ✓ client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx > conversation responses without partial model text > leaves a completed text response without an interruption note or Continue 32ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  22:02:22
+   Duration  4.60s (transform 1.62s, setup 116ms, import 2.78s, tests 1.16s, environment 422ms)
+

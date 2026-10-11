@@ -38,6 +38,7 @@ import {
 import { buildContextUsedEvent, memoryStatusOf } from '../turn-context-used';
 import { ALWAYS_ON_TOOLS, selectToolsForTurn } from '../tool-selection';
 import { describeToolPlan } from '../agentic-loop';
+import { presentStep } from '../step-presentation';
 import { buildMemoryContextForChat } from '../../memory-context-assembler';
 import { buildAssistantMetadata, refusalOf } from '../tool-trace';
 
@@ -111,20 +112,23 @@ describe('update_plan is always offered and has a calm label', () => {
     expect(offered.map((t: { name?: string }) => t.name)).toContain('update_plan');
   });
 
-  it('names drafting and project search by what they act on', () => {
+  it('names drafting and project search by what they act on; what they were asked is the preview', () => {
     const [d, q, bare] = describeToolPlan([
       { id: 'a', name: 'draft_authoring_document', input: { title: 'CSR synopsis' } },
       { id: 'b', name: 'project_knowledge_search', input: { query: 'estimand' } },
       { id: 'c', name: 'draft_authoring_document', input: {} },
     ]);
-    expect(d.label).toBe('Drafting "CSR synopsis"');
-    expect(q.label).toBe('Searching the project\'s documents for "estimand"');
-    expect(bare.label).toBe('Drafting the document');
+    expect(d.label).toBe('Creating an authoring document');
+    expect(q.label).toBe("Searching the project's documents");
+    expect(bare.label).toBe('Creating an authoring document');
+    expect(presentStep('draft_authoring_document', { title: 'CSR synopsis' }).preview).toBe('CSR synopsis');
+    expect(presentStep('project_knowledge_search', { query: 'estimand' }).preview).toBe('estimand');
   });
 
-  it('labels the step by its size, not as a raw tool name', () => {
+  it('labels the plan step as the plan, not as a raw tool name, and counts nothing the model chose', () => {
     const [p] = describeToolPlan([{ id: 't', name: 'update_plan', input: { steps: [{}, {}, {}] } }]);
-    expect(p.label).toBe('Updating the plan · 3 steps');
+    expect(p.label).toBe('Updating the plan');
+    expect(presentStep('update_plan', {}).source).toBe('plan');
   });
 });
 

@@ -155,3 +155,15 @@ describe('POST /api/ana/submission-chat — AI_PROVIDER_UNAVAILABLE', () => {
     expect(res.body).toEqual({ error: 'Artifact art-9 not found', code: 'ARTIFACT_NOT_FOUND' });
   });
 });
+
+describe('submission-chat private context errors', () => {
+  it.each([
+    ['THREAD_FORBIDDEN', 403, 'That conversation is not accessible.'],
+    ['AUTH_REQUIRED', 401, 'Authenticated caller required.'],
+    ['HISTORY_UNAVAILABLE', 503, 'Earlier conversation could not be loaded. Please retry.'],
+  ])('maps %s without exposing internal context', async (code, status, message) => {
+    h.handleSubmissionChat.mockRejectedValue(coded('private thread-id fixture database detail', code));
+    const res = await request(await app()).post('/api/ana/submission-chat').send({ threadId: 't-1', artifactId: 'art-1', question: 'Continue the rewrite.' });
+    expect(res.status).toBe(status); expect(res.body).toEqual({ error: message, code });
+  });
+});

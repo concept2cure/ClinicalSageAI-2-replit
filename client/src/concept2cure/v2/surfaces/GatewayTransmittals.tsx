@@ -52,6 +52,7 @@ import { useAuthUser } from '@/services/portal/authService';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
+import { gatewayLabel, transmittalStatusTone as statusTone } from '../gatewayLabels';
 
 interface GatewayInfo { region?: string; gateway?: string; name?: string; configured?: boolean; environment?: string; [k: string]: unknown; }
 interface Transmittal {
@@ -205,30 +206,7 @@ export function parseWithdrawals(raw: string | undefined): Array<{ ctdSection: s
     .filter((w) => w.ctdSection && w.fileName);
 }
 
-/* ── Gateway names ───────────────────────────────────────────────────────────
-   GET /api/mdx/gateways answers { region, gateway, transport, configured } — a
-   registry key, no display name — and the table rendered `g.name ?? g.gateway`,
-   so the operator read "pmda_gateway", "hc_cesg", "swissmedic_egateway". The
-   names below are the ones each implementation's own header gives
-   (server/services/submission-gateways/*.ts). A key not listed here is shown
-   as sent, never guessed at. */
-const GATEWAY_LABEL: Record<string, string> = {
-  esg: 'FDA ESG',
-  cesp: 'CESP',
-  eudamed: 'EUDAMED',
-  pmda_gateway: 'PMDA Gateway',
-  hc_cesg: 'Health Canada CESG',
-  mhra_gateway: 'MHRA Gateway',
-  nmpa_gateway: 'NMPA Gateway',
-  tga_ebs: 'TGA eBusiness Services',
-  swissmedic_egateway: 'Swissmedic eGateway',
-  anvisa_gateway: 'ANVISA Gateway',
-  cdsco_sugam: 'CDSCO SUGAM',
-  mfds_dbio: 'MFDS dBio',
-  hsa_prism: 'HSA PRISM',
-};
-const gatewayLabel = (key: string | null | undefined): string =>
-  key ? (GATEWAY_LABEL[key] ?? key) : '—';
+/* Gateway names: gatewayLabels.ts (one map, shared with the Submission Center). */
 
 /* The transmit form's options carry the route's keys as values and a name as
    the label — it offered the raw keys ("pmda_gateway") and lowercase region
@@ -254,13 +232,6 @@ async function readData<T = any>(method: 'GET' | 'POST' | 'PUT', path: string, b
     return { ok: false, status: 0, data: null, raw: null };
   }
 }
-function statusTone(s: string) {
-  const v = s.toLowerCase();
-  if (v.includes('ack') || v.includes('complete') || v.includes('success')) return 'ok';
-  if (v.includes('fail') || v.includes('error') || v.includes('reject')) return 'err';
-  return 'warn';
-}
-
 const TRANSMIT_FORM = (def: string | undefined, packages: PackageOption[] | null): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · §11 re-authentication',
   title: 'Transmit to agency gateway',
@@ -400,6 +371,12 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
      explaining. */
   const ask = onAsk;
   const [gateways, setGateways] = useState<GatewayInfo[]>([]);
+  /* Whether this person may sign a transmit or a technical rejection, as the
+     server's signing-authority check answers it (GET /gateways meta.signing).
+     false hides the two signed acts; null (not answered, or not readable) hides
+     nothing, because unknown is not "you cannot" and the server still decides.
+     QA 2026-10-08 (j6): a manager reached the transmit's password. */
+  const [canSign, setCanSign] = useState<boolean | null>(null);
   /* The org's submission packages for the picker; null = the list could not be
      loaded (the forms then fall back to the numeric id and say so). */
   const [packages, setPackages] = useState<PackageOption[] | null>(null);
@@ -446,6 +423,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     // what has or hasn't already been sent.
     if (!t.ok || !g.ok) { setState('error'); return; }
     setGateways(Array.isArray(g.data) ? g.data : []);
+    const signing = g.raw?.meta?.signing?.canSign;
+    setCanSign(typeof signing === 'boolean' ? signing : null);
     setRows(Array.isArray(t.data) ? t.data : []);
     setState('ready');
   }, []);
@@ -467,6 +446,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     // Every refusal closes the drawer: the rejected password must not sit in
     // the field for a resubmit, and the toast carries the reason.
     if (status === 401) { setDialog(null); fireToast('Not transmitted — re-authentication failed (§11). Nothing left the platform.', 'error'); return; }
+    // Signing authority (§11.10(g)), refused before the password: the server's sentence.
+    if (status === 403 && serverMessage(raw)) { setDialog(null); fireToast('Not transmitted — ' + serverMessage(raw), 'error'); return; }
     if (status === 409) {
       // The active-transmittal lock, or a sequence already on file as another bundle.
       setDialog(null);
@@ -482,7 +463,15 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       // The structural gate ran — a 422 from it is that evidence — so an empty list
       // is a refusal that carried no findings, not a clean bundle.
       setRefusal({ source: 'transmit', message, findings, findingsState: assessmentState({ scopeExists: true, findingCount: findings.length, assessmentRan: Array.isArray((raw as any)?.details?.findings) }) });
-      fireToast('Not transmitted — the structural gate rejected the bundle: ' + message + '.', 'error');
+      /* QA 2026-10-08 (j6): the server sentence already ends in a period, so the
+         toast ended "..", and a gateway this organization has no credentials for
+         went unmentioned although it is the next refusal waiting. Both from the
+         data on this screen: the refusal, and the gateway table's credential state. */
+      const rows = gateways.filter((g) => g.gateway === gateway && String(g.region ?? '').toLowerCase() === region.toLowerCase());
+      const noCredentials = rows.length > 0 && rows.every((g) => g.configured === false)
+        ? ` ${gatewayLabel(gateway)} credentials are also not configured for this organization, so nothing could be sent through it yet.`
+        : '';
+      fireToast('Not transmitted — the structural gate rejected the bundle: ' + message.replace(/[.\s]+$/, '') + '.' + noCredentials, 'error');
       return;
     }
     if (!ok) { setDialog(null); fireToast(`Transmit failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing was sent') + '.', 'error'); return; }
@@ -517,7 +506,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       ledgerLost || contentChanged ? 'error' : undefined,
     );
     void load();
-  }, [load, fireToast, signerName]);
+  }, [load, fireToast, signerName, gateways]);
 
   const checkStatus = useCallback(async (id: number) => {
     const { ok, status, data, raw } = await readData<Record<string, unknown>>('GET', `/api/mdx/gateways/transmittals/${id}/status`);
@@ -795,6 +784,9 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
      own toast, and the context says so too, so AnA cannot offer to undo a
      transmission. */
   const configuredGateways = gateways.filter((g) => g.configured);
+  /** A technical rejection is a signed act: offered only on a row that can take
+   *  one, and not to someone the server says may not sign. */
+  const offerRejection = (t: Transmittal): boolean => canSign !== false && canRecordRejection(t);
   const anaContext = useMemo(
     () => ({
       summary: state === 'loading'
@@ -837,9 +829,16 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
             {ask && <button className="reg-cta" onClick={() => ask('Explain our agency gateway posture: which gateways hold credentials and can transmit, what the unconfigured ones are missing, and which transmittals are still awaiting acknowledgement. Do not treat an unreachable dispatch layer as having no gateways.')}>{I.sparkles} Explain gateway posture</button>}
             <button className="btn" style={{ height: 32 }} onClick={() => setDialog('identifiers')}>{I.penLine} Record identifiers</button>
             <button className="btn" style={{ height: 32 }} onClick={() => setDialog('assemble')}>{I.layers} Assemble bundle</button>
-            <button className="btn primary" style={{ height: 32 }} onClick={() => setDialog('transmit')}>{I.upload} Transmit</button>
+            {canSign !== false && <button className="btn primary" style={{ height: 32 }} onClick={() => setDialog('transmit')}>{I.upload} Transmit</button>}
           </span>
         </div>
+        {canSign === false && (
+          <div className="pj-card-b" role="note" style={{ fontSize: 12 }}>
+            Transmitting is an electronic signature, and your role does not sign (21 CFR Part 11 §11.10(g)), so Transmit and
+            Technical rejection are not offered to you. A colleague whose role carries signing authority sends the package; you
+            can still record identifiers and assemble it.
+          </div>
+        )}
         <div className="pj-card-b" style={{ padding: 0 }}>
           {state === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading gateways…" /></div>
             : state === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t reach the dispatch layer" hint="The dispatch layer didn’t respond. Sign in to your tenant and retry." /></div>
@@ -884,7 +883,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                     <button className="nda-open" onClick={() => checkStatus(t.id)}>{I.zap} Status</button>
                     <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => downloadAck(t.id)} disabled={!t.ack_received_at} title={t.ack_received_at ? 'Download the acknowledgment or transmittal record — the file states which' : 'Nothing to download yet'}>{I.download} ACK</button>
                     <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setDialog({ rollback: t.id })}>{I.rotateCcw} Rollback</button>
-                    {canRecordRejection(t) && (
+                    {offerRejection(t) && (
                       <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setDialog({ rejection: t.id })}
                         title="Record that the agency did not load the sequence this transmittal filed">{I.alertTriangle} Technical rejection</button>
                     )}

@@ -1,0 +1,78 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ × client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > cancels the mount-gap action so arriving on its screen after Stop cannot execute it 9ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "query": "protocol",
+      },
+      Object {},
+    ]
+
+
+Number of calls: 1
+
+ × client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > cancels a loading-screen retry and starts the replacement demo without the 20-second TTL 2ms
+   → expected "vi.fn()" to be called with arguments: [ { actionType: 'navigate', …(4) } ]
+
+Number of calls: 0
+
+ ✓ client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > keeps the success of an action already applied before Stop 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > cancels the mount-gap action so arriving on its screen after Stop cannot execute it
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "query": "protocol",
+      },
+      Object {},
+    ]
+
+
+Number of calls: 1
+
+ ❯ client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts:56:25
+     54|     registerSurfaceActionHandlers('vault', { 'vault.search': handler }…
+     55|     await vi.advanceTimersByTimeAsync(0);
+     56|     expect(handler).not.toHaveBeenCalled();
+       |                         ^
+     57|     expect(h.onDropped).toHaveBeenCalledExactlyOnceWith(h.move, STOP_R…
+     58|     expect(h.onApplied).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts > stopping a demo during a deferred screen action > cancels a loading-screen retry and starts the replacement demo without the 20-second TTL
+AssertionError: expected "vi.fn()" to be called with arguments: [ { actionType: 'navigate', …(4) } ]
+
+Number of calls: 0
+
+ ❯ client/src/concept2cure/v2/__tests__/driveQueue-cancel-pending.test.ts:78:24
+     76|     h.queue.push({ kind: 'navigate', directive: h.projects });
+     77|     await vi.advanceTimersByTimeAsync(NAV_SETTLE_MS + 1);
+     78|     expect(h.navigate).toHaveBeenCalledWith(h.projects);
+       |                        ^
+     79|     expect(h.onDropped).toHaveBeenCalledExactlyOnceWith(h.move, STOP_R…
+     80|     ready = true;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  21:12:13
+   Duration  641ms (transform 240ms, setup 67ms, import 221ms, tests 14ms, environment 0ms)
+

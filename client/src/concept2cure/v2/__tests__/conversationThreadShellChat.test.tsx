@@ -171,7 +171,9 @@ describe('a question sent here while AnA is still answering', () => {
     // A send now would be refused by the hook's re-entrancy guard — the
     // question would be dropped without a word. It is held instead.
     expect(chat.send).not.toHaveBeenCalled();
-    const composer = screen.getByLabelText('Reply to AnA') as HTMLTextAreaElement;
+    /* While her run is in flight the composer steers it (ONE_ANA_ONE_CANVAS.md,
+       slice 4), so it is labelled for that; the question still waits in it. */
+    const composer = screen.getByLabelText('Steer this run') as HTMLTextAreaElement;
     expect(composer.value).toBe('What blocks the Module 3 freeze?');
     expect(screen.getByText(/your question has not been sent/)).toBeTruthy();
     expect(shownTurns()).toEqual(['Walk me through the vault for BX-301.']);
@@ -234,17 +236,17 @@ describe('starting over is a person’s decision', () => {
     expect(convo()).toEqual({ id: 'current', seed: null });
   });
 
-  it('is not offered while a conversation is loading — the load would land over the new one', async () => {
-    // A reset does not stop a load in flight: it resolves afterwards and puts
-    // that conversation back, thread id and all, so the next question would
-    // go into it under a "New conversation" heading.
+  it('can replace a pending history read with a new conversation and keeps the draft', async () => {
     setConvo(undefined);
     const chat = shellChat({ messages: [], isStreaming: false, runStatus: null, isLoadingThread: true });
     await mount(chat);
+    const composer = screen.getByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
+    fireEvent.change(composer, { target: { value: 'Keep this new question' } });
     const button = screen.getByRole('button', { name: /New conversation/ }) as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
+    expect(button.disabled).toBe(false);
     fireEvent.click(button);
-    expect(chat.reset).not.toHaveBeenCalled();
+    expect(chat.reset).toHaveBeenCalledOnce();
+    expect(composer.value).toBe('Keep this new question');
   });
 
   it('is not offered mid-turn — a reset would abort AnA where she stands', async () => {
@@ -255,5 +257,40 @@ describe('starting over is a person’s decision', () => {
     expect(button.disabled).toBe(true);
     fireEvent.click(button);
     expect(chat.reset).not.toHaveBeenCalled();
+  });
+});
+
+describe('history loading and recovery', () => {
+  it.each(['loading', 'failed'] as const)('keeps the reply draft while history is %s', async state => {
+    setConvo({ id: 'current' });
+    const chat = shellChat({
+      messages: [], isStreaming: false, runStatus: null, threadId: null,
+      isLoadingThread: state === 'loading',
+      threadLoadError: state === 'failed' ? { threadId: 'beta', message: 'Could not read Beta.' } : null,
+    });
+    await mount(chat);
+    const composer = screen.getByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
+    fireEvent.change(composer, { target: { value: 'Keep this question for Beta' } });
+    const send = screen.getByRole('button', { name: 'Send message to AnA' }) as HTMLButtonElement;
+    expect(send.disabled).toBe(true);
+    fireEvent.keyDown(composer, { key: 'Enter' });
+    expect(chat.send).not.toHaveBeenCalled();
+    expect(composer.value).toBe('Keep this question for Beta');
+  });
+
+  it('shows the failed history with retry for that same thread and an explicit new conversation control', async () => {
+    setConvo({ id: 'current' });
+    const chat = shellChat({
+      messages: [], isStreaming: false, runStatus: null, threadId: null,
+      threadLoadError: { threadId: 'beta', message: 'Could not read Beta.' },
+    });
+    await mount(chat);
+    expect(screen.queryByText("Couldn't load this conversation")).not.toBeNull();
+    expect(screen.queryByText('Talk to AnA')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry loading conversation' }));
+    expect(chat.loadThread).toHaveBeenCalledWith('beta');
+    fireEvent.click(screen.getByRole('button', { name: /New conversation/ }));
+    expect(chat.reset).toHaveBeenCalledOnce();
+    await act(async () => {});
   });
 });

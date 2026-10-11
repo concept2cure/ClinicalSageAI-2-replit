@@ -1,0 +1,105 @@
+{
+  "base": "0cc794720c3a0b38d10d95dcb7928347b91b11dd",
+  "kind": "Read-only source semantics; not native schema enumeration or replay qualification",
+  "nativeNamedOnly": [
+    "stab_exports.tokens (jsonb)"
+  ],
+  "nativeAdditionalNamesTruncated": 3,
+  "staticCandidates": [
+    {
+      "column": "stab_exports.tokens",
+      "recommendation": "EXPORT_COLUMNS_NOT_SECRET",
+      "reason": "P.8 authoring facts: study identity, climatic/storage conditions, test parameters, duration, label statement, design-basis statement and result count; rendered into submission markdown.",
+      "sources": [
+        {
+          "file": "db/migrations/030_stability_results.sql",
+          "line": 63
+        },
+        {
+          "file": "server/src/routes/stability.router.ts",
+          "line": 1528
+        },
+        {
+          "file": "server/src/routes/stability.router.ts",
+          "line": 1554
+        },
+        {
+          "file": "server/src/routes/stability.router.ts",
+          "line": 1591
+        }
+      ]
+    },
+    {
+      "column": "audit_events.hmac_seal",
+      "recommendation": "EXPORT_COLUMNS_NOT_SECRET",
+      "reason": "HMAC-SHA256 integrity seal output over audit record/previous hash/sequence; the external AUDIT_HMAC_KEY is separate key material. Existing audit_logs.hmac_seal receives the same distinction.",
+      "sources": [
+        {
+          "file": "db/migrations/20260617_audit_events_hmac_seal.sql",
+          "line": 65
+        },
+        {
+          "file": "server/services/audit/chain.ts",
+          "line": 804
+        },
+        {
+          "file": "server/services/audit/audit-hmac-seal.ts",
+          "line": 102
+        }
+      ],
+      "limitation": "The schema migration and verifier describe the event seal, while the event writer was deferred; do not claim this audit established populated native seals."
+    },
+    {
+      "column": "c2c_mailbox_connections.token_reference",
+      "recommendation": "EXPORT_WITHHELD_COLUMNS",
+      "reason": "Opaque caller-supplied mailbox authentication reference; only max-length validation, so not an established public label. D6 already withholds secret-store references.",
+      "sources": [
+        {
+          "file": "db/migrations/20260331_regulatory_correspondence_os.sql",
+          "line": 38
+        },
+        {
+          "file": "server/routes/regulatory-correspondence.validation.ts",
+          "line": 85
+        },
+        {
+          "file": "server/routes/regulatory-correspondence.ts",
+          "line": 1073
+        },
+        {
+          "file": "server/routes/regulatory-correspondence.ts",
+          "line": 1088
+        }
+      ],
+      "limitation": "No token-reference dereferencer or constraint to a public identifier found; withholding follows the existing reference/credential policy, not proof of native credential replay."
+    },
+    {
+      "column": "licenses.access_token",
+      "recommendation": "EXPORT_WITHHELD_COLUMNS",
+      "reason": "Retained legacy bearer credential: the removed real writer generated 32 random bytes, stored access_token, placed it in private client-access URLs, and validated access by id plus access_token plus active status. Preserve the customer record and mark this credential value withheld.",
+      "sources": [
+        {
+          "file": "db/migrations/20260730_licensing_ip_tables.sql",
+          "line": 45
+        },
+        {
+          "file": "server/routes/__tests__/schema-contract-remediation.pglite.integration.test.ts",
+          "line": 157
+        },
+        {
+          "file": "server/routes/__tests__/schema-contract-remediation.pglite.integration.test.ts",
+          "line": 160
+        }
+      ],
+      "historicalSource": {
+        "revision": "830ad35ea9c48daa4ddb79fea7a93ddb13c17796^",
+        "file": "server/routes/license-routes.js",
+        "writerLines": "380-395",
+        "validatorLines": "609-621"
+      },
+      "limitation": "Current license reader/writer removed; historical credential semantics confirmed, but present replayability and actual native values remain unqualified."
+    }
+  ],
+  "repositoryEdits": false,
+  "testExecution": false
+}

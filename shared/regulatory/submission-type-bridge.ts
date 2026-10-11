@@ -175,6 +175,18 @@ export function isKnownSubmissionType(input: string): boolean {
   return resolveToRegistryId(input) !== null;
 }
 
+/**
+ * Whether two submission-type strings name the same filing: both resolve to one
+ * registry entry ('NDA' and 'nda' do; 'NDA' and '510K' do not). A string that
+ * resolves to nothing matches nothing (fail closed), so an unrecognised type is
+ * never taken as a match. Compares types, never names. Used to anchor a
+ * submission only to a project of its own filing type (QA 2026-10-08, j6).
+ */
+export function isSameSubmissionType(a: string | null | undefined, b: string | null | undefined): boolean {
+  const left = resolveToRegistryId(String(a ?? ''));
+  return left !== null && left === resolveToRegistryId(String(b ?? ''));
+}
+
 // ─── Context Extraction ──────────────────────────────────────────────────────
 
 export interface SubmissionTypeContext {

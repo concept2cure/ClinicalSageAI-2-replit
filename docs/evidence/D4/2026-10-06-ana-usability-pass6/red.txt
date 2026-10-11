@@ -1,0 +1,163 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'THREAD_FORBIDDEN' }
+[useAnaChat] stream failed: Refused
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-deadline.test.ts > conversation history deadlines > releases a stalled headers read and allows an explicit retry 23ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-deadline.test.ts > conversation history deadlines > releases a stalled body read and allows an explicit retry 4ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-history-deadline.test.ts > conversation history deadlines > clears the deadline after success so it cannot affect a later selection 5ms
+   → expected 2 to be +0 // Object.is equality
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'GATEWAY_UNAVAILABLE' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'WEEKLY_LIMIT_EXCEEDED' }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 401 }
+[useAnaChat] stream failed: Refused
+
+stderr | client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 429 }
+[useAnaChat] stream failed: Refused
+
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'THREAD_FORBIDDEN' } 38ms
+   → expected 'AnA couldn\'t complete this request. …' to contain 'another user'
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'GATEWAY_UNAVAILABLE' } 5ms
+   → expected 'AnA couldn\'t complete this request. …' to contain 'No AI provider is configured'
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'WEEKLY_LIMIT_EXCEEDED' } 5ms
+   → expected 'AnA couldn\'t complete this request. …' to contain 'weekly limit'
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 401 } 3ms
+   → expected 'AnA couldn\'t complete this request. …' to contain 'Sign in again'
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 429 } 4ms
+   → expected 'AnA couldn\'t complete this request. …' to contain 'Too many AnA requests'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-deadline.test.ts > conversation history deadlines > releases a stalled headers read and allows an explicit retry
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-deadline.test.ts > conversation history deadlines > releases a stalled body read and allows an explicit retry
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-deadline.test.ts:24:28
+     22|     expect(signal.aborted).toBe(false);
+     23|     await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+     24|     expect(signal.aborted).toBe(true);
+       |                            ^
+     25|     expect(result.current.isLoadingThread).toBe(false);
+     26|     expect(result.current.threadLoadError?.message).toContain('timed o…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-deadline.test.ts > conversation history deadlines > clears the deadline after success so it cannot affect a later selection
+AssertionError: expected 2 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 2
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-history-deadline.test.ts:41:32
+     39|     const { result } = renderHook(() => useAnaChat({}));
+     40|     await act(async () => { await result.current.loadThread('alpha'); …
+     41|     expect(vi.getTimerCount()).toBe(0);
+       |                                ^
+     42|     await act(async () => { await vi.advanceTimersByTimeAsync(15_000);…
+     43|     expect(result.current.threadLoadError).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'THREAD_FORBIDDEN' }
+AssertionError: expected 'AnA couldn\'t complete this request. …' to contain 'another user'
+
+Expected: "another user"
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts:22:50
+     20|     const { result } = renderHook(() => useAnaChat({}));
+     21|     await act(async () => { await result.current.send('Read my convers…
+     22|     expect(result.current.messages.at(-1)?.text).toContain(expected);
+       |                                                  ^
+     23|     expect(result.current.messages.at(-1)?.interruptedWithPartialRespo…
+     24|     expect(result.current.isStreaming).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'GATEWAY_UNAVAILABLE' }
+AssertionError: expected 'AnA couldn\'t complete this request. …' to contain 'No AI provider is configured'
+
+Expected: "No AI provider is configured"
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts:22:50
+     20|     const { result } = renderHook(() => useAnaChat({}));
+     21|     await act(async () => { await result.current.send('Read my convers…
+     22|     expect(result.current.messages.at(-1)?.text).toContain(expected);
+       |                                                  ^
+     23|     expect(result.current.messages.at(-1)?.interruptedWithPartialRespo…
+     24|     expect(result.current.isStreaming).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { code: 'WEEKLY_LIMIT_EXCEEDED' }
+AssertionError: expected 'AnA couldn\'t complete this request. …' to contain 'weekly limit'
+
+Expected: "weekly limit"
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts:22:50
+     20|     const { result } = renderHook(() => useAnaChat({}));
+     21|     await act(async () => { await result.current.send('Read my convers…
+     22|     expect(result.current.messages.at(-1)?.text).toContain(expected);
+       |                                                  ^
+     23|     expect(result.current.messages.at(-1)?.interruptedWithPartialRespo…
+     24|     expect(result.current.isStreaming).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 401 }
+AssertionError: expected 'AnA couldn\'t complete this request. …' to contain 'Sign in again'
+
+Expected: "Sign in again"
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts:22:50
+     20|     const { result } = renderHook(() => useAnaChat({}));
+     21|     await act(async () => { await result.current.send('Read my convers…
+     22|     expect(result.current.messages.at(-1)?.text).toContain(expected);
+       |                                                  ^
+     23|     expect(result.current.messages.at(-1)?.interruptedWithPartialRespo…
+     24|     expect(result.current.isStreaming).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts > structured streaming refusals > retains recovery details for { status: 429 }
+AssertionError: expected 'AnA couldn\'t complete this request. …' to contain 'Too many AnA requests'
+
+Expected: "Too many AnA requests"
+Received: "AnA couldn't complete this request. Try again, or ask an administrator for help if it keeps happening. Prior turns are preserved."
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts:22:50
+     20|     const { result } = renderHook(() => useAnaChat({}));
+     21|     await act(async () => { await result.current.send('Read my convers…
+     22|     expect(result.current.messages.at(-1)?.text).toContain(expected);
+       |                                                  ^
+     23|     expect(result.current.messages.at(-1)?.interruptedWithPartialRespo…
+     24|     expect(result.current.isStreaming).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  8 failed (8)
+   Start at  22:09:28
+   Duration  1.05s (transform 448ms, setup 237ms, import 556ms, tests 93ms, environment 896ms)
+

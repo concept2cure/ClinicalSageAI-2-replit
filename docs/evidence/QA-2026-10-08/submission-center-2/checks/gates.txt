@@ -1,0 +1,42 @@
+# CI gates run on the working tree, 2026-10-08 (npm run -s <gate>)
+
+## ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 20 baselined site(s) remain, exactly as baselined.
+
+## ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+## ci:untracked-imports
+[ci:untracked-imports] OK — every relative import in 9 file(s) resolves to a tracked file.
+
+## ci:program-ownership-single-source
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+
+## ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+
+## ci:internals-in-copy
+check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+
+## ci:check-client-api-calls
+
+## ci:success-before-ok
+
+## ci:launch-scope-api
+
+## ci:action-overclaim
+check-action-overclaim: no new occurrences. 0 baselined.
+
+## ci:tenant-entry-points
+[ci:tenant-entry-points] FAIL — 1 baselined entry point(s) CHANGED since justification:
+    server/routes/mdx-admin.ts  (alternative-auth-router)
+
+ci:tenant-entry-points: red because server/routes/mdx-admin.ts changed since its baseline digest (last commit ddc8c0db5, before this work); the file is untouched in this working tree. Not this change.
+
+## ci:untracked-imports, read with care
+The gate checks the files a PUSH changes against upstream, so uncommitted work is outside its scope and
+"OK" above says nothing about this change. Run with --all over every tracked file, it names one import of
+this change: client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx:85 -> ./SubmissionProgramAnchor.
+That file is new and, by instruction, not staged. The commit must add it (and the new test files), or
+trunk will not build. The other eight entries in that --all listing belong to other sessions' work in
+progress (server/services/ana/step-presentation, lineage-dossier-completeness) or predate this change.

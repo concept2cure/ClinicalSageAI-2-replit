@@ -74,11 +74,17 @@ const allow = (role: string, actions: (GovAction | '*')[]): Grant[] =>
  * the target regulated taxonomy (so it is ready as those roles become
  * assignable). Admin extends/overrides per-org via `c2c_governance_grants`.
  */
+const MANAGER_ACTIONS: GovAction[] = ['view', 'author', 'review', 'approve', 'sign', 'assign'];
+const MEMBER_ACTIONS: GovAction[] = ['view', 'author', 'review'];
+
 export const DEFAULT_POLICY: Grant[] = [
   // — currently-assignable org roles (functional today) —
   ...allow('admin', ['*']),
-  ...allow('manager', ['view', 'author', 'review', 'approve', 'sign', 'assign']),
-  ...allow('member', ['view', 'author', 'review']),
+  ...allow('manager', MANAGER_ACTIONS),
+  ...allow('member', MEMBER_ACTIONS),
+  // P-18 (2026-10-08): assignable, each carrying the role it extends, and signing.
+  ...allow('approver', [...MANAGER_ACTIONS, 'sign']),
+  ...allow('reviewer', [...MEMBER_ACTIONS, 'sign']),
   ...allow('viewer', ['view']),
   // — target regulated taxonomy —
   ...allow('viewer', ['view']),

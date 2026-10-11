@@ -210,7 +210,7 @@ function containsWords(haystack: string, needle: string): boolean {
 }
 
 /**
- * ICH guideline codes named in a title, normalised: "ICH E6 (R2)" → "E6(R2)",
+ * ICH guideline codes named in a title, normalised: "ICH E6 (R3)" → "E6(R3)",
  * "q3d(r2)" → "Q3D(R2)", "M11" → "M11".
  */
 const ICH_CODE_RE = /(?<![A-Za-z0-9])([QSEM])(\d{1,2})([A-Z])?(?:\s?\(\s?(R\d{1,2})\s?\))?(?![A-Za-z0-9(])/gi;

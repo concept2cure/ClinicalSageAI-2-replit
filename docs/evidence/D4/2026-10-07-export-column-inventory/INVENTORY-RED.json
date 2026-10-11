@@ -1,0 +1,12 @@
+{
+  "success": false,
+  "actualNativeLoaderAndAssertionExecuted": true,
+  "mode": "isolated four-table PGlite catalog; not full native qualification",
+  "undecided": [
+    "licenses.access_token (text)",
+    "c2c_mailbox_connections.token_reference (text)",
+    "stab_exports.tokens (jsonb)",
+    "audit_events.hmac_seal (text)"
+  ],
+  "error": "expect(received).toEqual(expected) // deep equality\n\n- Expected  - 1\n+ Received  + 6\n\n- Array []\n+ Array [\n+   \"licenses.access_token (text)\",\n+   \"c2c_mailbox_connections.token_reference (text)\",\n+   \"stab_exports.tokens (jsonb)\",\n+   \"audit_events.hmac_seal (text)\",\n+ ]"
+}

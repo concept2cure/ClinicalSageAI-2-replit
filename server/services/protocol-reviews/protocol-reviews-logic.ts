@@ -4,8 +4,7 @@
  * Pure, DB-free, LLM-free: summarize the per-reviewer dispositions into a single
  * board-level consensus, and decide whether the protocol is ready for a decision
  * (every assignment completed + no open blocking comments). The consensus rule
- * mirrors how a review board resolves dispositions under ICH E6(R2) §5.0 and
- * 45 CFR 46.111 — any reject is dispositive, otherwise any "approve with changes"
+ * mirrors how a review board resolves dispositions under 45 CFR 46.111 (IRB approval criteria) — any reject is dispositive, otherwise any "approve with changes"
  * gates a clean approval; abstentions never decide. Deterministic — the gate the
  * service and route layers enforce.
  *
@@ -33,7 +32,7 @@ export interface ConsensusResult {
   basis: string;
 }
 
-const ICH_E6 = 'ICH E6(R2) §5.0 / 45 CFR 46.111 — review-board disposition resolution';
+const ICH_E6 = 'ICH E6(R3) Annex 1 §1 (IRB/IEC) / 45 CFR 46.111 — review-board disposition resolution';
 
 /**
  * Roll the per-reviewer dispositions up into a single board consensus. Rules:

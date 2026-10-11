@@ -1,0 +1,7 @@
+{
+  "branch": "concept2cure-v2",
+  "base_sha": "4920b8866d97f30981b4a63bcde91489bbcfd8c5",
+  "source_path": "server/services/ana/run-control.ts",
+  "source_blob": "ad749e60cd773d2407cbfb0a2cb1f1125a6a6c6f",
+  "previous_batch_ci": "Remote lint/typecheck/AnA readiness/browser smoke passed. Overall CI and Semgrep failed. Exact Semgrep finding is in client shellNav test outside previous batch; remaining CI failure attribution not established."
+}

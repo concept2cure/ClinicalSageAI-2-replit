@@ -1,0 +1,35 @@
+[ci:typecheck-no-regression] running tsc --noEmit --incremental (baseline: 0)
+[ci:typecheck-no-regression] FAIL — tsc did not complete.
+  exit status : 134
+  heap cap    : 4096 MB (override with TYPECHECK_HEAP_MB)
+  The error count below is NOT trustworthy — the compiler died before finishing.
+  Last 40 lines of output:
+    npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+    
+    <--- Last few GCs --->
+    
+    [26:0x12505000]    92142 ms: Mark-Compact 4080.3 (4110.4) -> 4074.6 (4128.9) MB, pooled: 0 MB, 1558.07 / 0.00 ms  (average mu = 0.139, current mu = 0.029) allocation failure; scavenge might not succeed
+    [26:0x12505000]    93768 ms: Mark-Compact (reduce) 4088.4 (4128.9) -> 4083.0 (4106.4) MB, pooled: 0 MB, 75.99 / 0.00 ms  (+ 1098.9 ms in 208 steps since start of marking, biggest step 39.4 ms, walltime since start of marking 1331 ms) (average mu = 0.207, 
+    FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+    ----- Native stack trace -----
+    
+     1: 0x75356c node::OOMErrorHandler(char const*, v8::OOMDetails const&) [node]
+     2: 0xc52cd0  [node]
+     3: 0xc52dbf  [node]
+     4: 0xef6695  [node]
+     5: 0xef66c2  [node]
+     6: 0xef69ba  [node]
+     7: 0xf076ba  [node]
+     8: 0xf0ba60  [node]
+     9: 0x199e0d1  [node]
+    Aborted
+    
+
+  If this host cannot supply the heap, the gate has NOT run — do not
+  report the diff as typechecked. Options, in order of soundness:
+    1. Run it on a host with the memory, or in CI.
+    2. Raise/lower the cap: TYPECHECK_HEAP_MB=<mb> npm run ci:typecheck:no-regression
+    3. Scoped, NOT equivalent: npx tsc --noEmit --skipLibCheck <changed files>
+       — catches within-file errors only; blind to callers. A narrow
+       tsconfig include is not a substitute either: it double-loads the
+       global .d.ts augmentations and invents errors in untouched files.

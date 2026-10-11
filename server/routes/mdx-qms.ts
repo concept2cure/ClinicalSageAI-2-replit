@@ -91,8 +91,7 @@ import { recordAuditRow } from '../services/audit/audit-write-outcome';
  */
 import { reverifySigner } from '../services/part11/reverify-signer';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
-import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
-import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 import {
   approveQmsDocumentSigned,
   retireQmsDocumentSigned,
@@ -102,7 +101,7 @@ import {
 import { SOP_TEMPLATES, getSopTemplate, type SopSection } from '../services/qms/sopTemplates';
 import {
   createChange, listChanges, getChange, updateChange, transitionChange, deleteChange,
-  listLinks, addLink, removeLink, changeControlSummary,
+  listLinks, listLinksForChanges, nextStatesOf, addLink, removeLink, changeControlSummary,
   CHANGE_TYPES, CHANGE_CLASSIFICATIONS, CHANGE_RISK_LEVELS, CHANGE_STATES,
   LINK_TYPES, LINK_RELATIONSHIPS,
   InvalidChangeTransitionError, ChangeApprovalRequiresSignatureError,
@@ -561,14 +560,22 @@ async function verifyApprovalSigner(
   body: Pick<z.infer<typeof approveBody>, 'password' | 'mfaToken'>,
   act = 'approving a controlled document',
 ): Promise<{ secondFactorVerified: boolean } | null> {
-  const signerRole = await resolveSignerOrgRole(userId, orgId);
-  if (!isSigningAuthorized(signerRole)) {
+  // The platform's one signing-authority policy (P-27, 2026-10-08). This
+  // route keeps its own refusal code and sentence; a role that cannot be read
+  // is the gate's 503 (it threw here before).
+  const authority = await checkSigningAuthority(userId, orgId);
+  if (authority?.status === 403) {
     clientError(
       res,
       403,
       `Your role does not permit ${act} (21 CFR Part 11 §11.10(g)).`,
       { code: 'QMS_NO_SIGNING_AUTHORITY' },
     );
+    return null;
+  }
+  if (authority) {
+    // clientError's envelope; it takes no 5xx status.
+    res.status(authority.status).json({ error: authority.message, details: { code: authority.code } });
     return null;
   }
   // The platform's one signing ceremony: password, enrolled second factor and
@@ -1273,8 +1280,12 @@ const changePatch = z.object({
   targetImplementationDate: z.string().date().optional().nullable(),
   qmsDocumentId:            z.number().int().positive().optional().nullable(),
 });
+/* A lifecycle move states its reason (21 CFR 11.10(e)), recorded on the audit
+   row (QA walk 2026-10-08, J8: the AnA tool for the same move required one; this
+   route took none, so the native Advance control had nothing to record). */
 const changeTransition = z.object({
   to:                  z.enum(CHANGE_STATES),
+  reason:              governedReason,
   effectivenessReview: z.string().max(8000).optional().nullable(),
 });
 const changeListQuery = z.object({
@@ -1306,7 +1317,18 @@ router.get('/qms/changes', async (req: Request, res: Response) => {
       status: parsed.data.status,
       changeType: parsed.data.change_type,
     });
-    return ok(res, rows, { count: rows.length });
+    /* Each change carries its cross-references (one org-scoped read for the
+       whole register) and the lifecycle moves its state allows — the surface
+       rendered "0 links" for every change and could only hand a move to AnA
+       (QA walk 2026-10-08, J8). `implementation_overdue` is the database's
+       verdict against CURRENT_DATE (changeControl.service). */
+    const links = await listLinksForChanges(orgId, rows.map((r) => r.id));
+    const register = rows.map((r) => ({
+      ...r,
+      links: links.get(Number(r.id)) ?? [],
+      next_states: nextStatesOf(r.status),
+    }));
+    return ok(res, register, { count: register.length });
   } catch (err) {
     if (isMissingStore(err)) return ok(res, [], { count: 0, pendingStore: true });
     return serverError(res, log, 'change-list', err);
@@ -1435,7 +1457,8 @@ router.post('/qms/changes/:id/transition', requireEditorAccess, async (req: Requ
       tenantId: orgId, userId: userId ?? undefined,
       action: 'mdx.qms.change.transition',
       resourceType: 'qms_change_control', resourceId: id,
-      details: { to: parsed.data.to },
+      reason: parsed.data.reason,
+      details: { from: row.from_status, to: parsed.data.to },
     });
     return ok(res, row, { auditTrail });
   } catch (err) {

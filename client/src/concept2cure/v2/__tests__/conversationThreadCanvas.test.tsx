@@ -245,11 +245,16 @@ describe('ConversationThread — the canvas keeps up with AnA (2026-10-01)', () 
     const { rerender } = render(<ConversationThread {...OWNED_PROPS} />);
     await screen.findByTestId('document-canvas');
     const reads = () => apiRequest.mock.calls.filter(c => c[1] === `/api/authoring/docs/${DOC}/sections`).length;
-    await vi.waitFor(() => expect(reads()).toBe(1));
+    await vi.waitFor(() => expect(reads()).toBeGreaterThanOrEqual(1));
+    /* Since slice 1 of ONE_ANA_ONE_CANVAS.md the document also opens beside
+       the conversation while the turn is written, and that editor reads the
+       sections too; so count from just before the turn settles. */
+    await new Promise((r) => setTimeout(r, 50));
+    const before = reads();
 
     chatStreaming.current = false; // the turn settles
     rerender(<ConversationThread {...OWNED_PROPS} />);
-    await vi.waitFor(() => expect(reads()).toBe(2));
+    await vi.waitFor(() => expect(reads()).toBeGreaterThan(before));
     chatStreaming.current = false;
   });
 });

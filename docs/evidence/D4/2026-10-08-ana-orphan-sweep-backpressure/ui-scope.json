@@ -1,0 +1,12 @@
+{
+  "publication_base": "71126f27b949a5551bddd0aa480ac743691d7abf",
+  "qualified_checkpoint": "35a8b0d4e91498e65295788d2dbc4675f135225f",
+  "base_client_hash": "42198082703653452fed9e57147524424d6f94c4",
+  "qualified_client_hash": "42198082703653452fed9e57147524424d6f94c4",
+  "client_directory_unchanged": true,
+  "out_of_scope_paths": [],
+  "allowed_source_paths": [
+    "server/services/ana/run-control.ts",
+    "server/services/ana/__tests__/run-control-poll-backpressure.test.ts"
+  ]
+}

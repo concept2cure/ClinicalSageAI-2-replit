@@ -275,7 +275,7 @@ export class ProtocolAnalyzerService {
            as an assessment. */
         regulatory_notes:
           'GENERIC GUIDANCE (not derived from this document): protocols should comply ' +
-          'with ICH E6(R2) Good Clinical Practice guidelines.',
+          'with ICH E6(R3) Good Clinical Practice guidelines.',
 
         /* `global_compliance: { FDA: true, EMA: true, ... }` was REMOVED on
            2026-09-10. It asserted that the uploaded document complies with FDA

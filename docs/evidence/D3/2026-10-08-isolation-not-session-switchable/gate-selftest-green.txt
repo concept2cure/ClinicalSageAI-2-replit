@@ -1,0 +1,1 @@
+[ci:session-scoped-rls-bypass:selftest] 24 passed — the gate fails on what it exists to catch.

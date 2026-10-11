@@ -57,6 +57,8 @@ export interface DriveQueueDeps {
     directive: SurfaceActionDirective,
     onDeferred: (outcome: SurfaceActionOutcome) => void,
   ) => SurfaceActionOutcome;
+  /** Remove this directive from the bus if it still waits for a mount/load. */
+  cancelPending: (directive: SurfaceActionDirective, reason: string) => void;
   /** False once the person has taken over — nothing further is applied. */
   canApply: () => boolean;
   /**
@@ -96,9 +98,10 @@ export interface DriveQueue {
   push: (move: DriveMove) => void;
   /**
    * Drop every move not yet started — take over, switch-off, and any point a
-   * turn's leftover moves would otherwise play into the next one. A move in
-   * flight finishes and reports its own outcome. `reason` is what each dropped
-   * move is settled with (onDropped): AnA reads it, so it says why.
+   * turn's leftover moves would otherwise play into the next one. Cancel an
+   * action still waiting for its screen/data too; it has not been performed.
+   * A navigation in flight finishes and reports its own outcome. `reason` is
+   * what each dropped move is settled with (onDropped): AnA reads it.
    */
   clear: (reason?: string) => void;
   /** Resolves once every queued move has finished. */
@@ -110,10 +113,13 @@ export interface DriveQueue {
 /** What a move dropped by clear() is settled with when no reason is given. */
 export const CLEARED_REASON = 'It was cancelled before it could be made.';
 
+type ActionOutcome = SurfaceActionOutcome | { status: 'dropped'; reason: string };
+
 export function createDriveQueue(deps: DriveQueueDeps): DriveQueue {
   let chain: Promise<void> = Promise.resolve();
   let generation = 0;
   let inFlight = 0;
+  let cancelStashed: ((reason: string) => void) | null = null;
   /** Why each cleared generation was cleared, for the moves it dropped. */
   const clearedBecause = new Map<number, string>();
 
@@ -133,18 +139,28 @@ export function createDriveQueue(deps: DriveQueueDeps): DriveQueue {
   };
 
   const runAct = async (move: Extract<DriveMove, { kind: 'act' }>) => {
-    const outcome = await new Promise<SurfaceActionOutcome>((resolve) => {
+    const outcome = await new Promise<ActionOutcome>((resolve) => {
       let settled = false;
-      const settle = (o: SurfaceActionOutcome) => {
+      const settle = (o: ActionOutcome) => {
         if (settled) return;
         settled = true;
+        if (cancelStashed === cancel) cancelStashed = null;
         resolve(o);
+      };
+      const cancel = (reason: string) => {
+        // Settle as a dropped move before the bus reports its cancellation:
+        // Stop is not a screen failure, and this move is acknowledged once.
+        settle({ status: 'dropped', reason });
+        deps.cancelPending(move.directive, reason);
       };
       const immediate = deps.perform(move.directive, settle);
       if (immediate.status !== 'stashed') {
         settle(immediate);
         return;
       }
+      // A synchronous mount may already have answered through onDeferred.
+      if (settled) return;
+      cancelStashed = cancel;
       void deps.sleep(ACTION_OUTCOME_TIMEOUT_MS).then(() =>
         settle({
           status: 'unavailable',
@@ -153,9 +169,14 @@ export function createDriveQueue(deps: DriveQueueDeps): DriveQueue {
       );
     });
     if (outcome.status === 'applied') {
+      // The handler ran, so cancellation is already disarmed by settle().
+      // React must commit its new selection before the next move reads it.
+      await outcome.committed;
       deps.onApplied(move, outcome.detail);
     } else if (outcome.status === 'failed' || outcome.status === 'unavailable') {
       deps.onFailed(move, outcome.reason);
+    } else if (outcome.status === 'dropped') {
+      deps.onDropped?.(move, outcome.reason);
     }
   };
 
@@ -192,14 +213,13 @@ export function createDriveQueue(deps: DriveQueueDeps): DriveQueue {
         });
     },
     clear(reason) {
-      clearedBecause.set(generation, reason ?? CLEARED_REASON);
+      const why = reason ?? CLEARED_REASON;
+      clearedBecause.set(generation, why);
       generation += 1;
+      cancelStashed?.(why);
     },
     whenIdle() {
-      return chain.then(
-        () => undefined,
-        () => undefined,
-      );
+      return chain.then(() => undefined, () => undefined);
     },
     size() {
       return inFlight;

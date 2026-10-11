@@ -1,0 +1,18 @@
+PASS drug_substance: valid monthly series stays positive with no invented hold
+PASS drug_substance: short unassigned case already preserves upstream hold
+{"material":"drug_substance","holdOffset":516,"rowRefusalOffset":549,"summaryLength":1278,"summaryTail":"f-trend points across 37 time points; slope -0.1 per month (95% CI -0.1006 to -0.0993) is significantly non-zero; trend toward the limit projected at 50.09 months (lower limit 95)."}
+PASS drug_substance: QOS must preserve the recorded monthly case's existing hold
+PASS drug_substance: short hold must preserve the complete source and row reason
+PASS drug_substance: preserve the existing named criterion-conflict reason
+PASS drug_substance: preserve an existing named unestimable trend reason
+PASS drug_substance: preserve a later study's source/row refusal
+PASS drug_product: valid monthly series stays positive with no invented hold
+PASS drug_product: short unassigned case already preserves upstream hold
+{"material":"drug_product","holdOffset":532,"rowRefusalOffset":565,"summaryLength":1294,"summaryTail":"f-trend points across 37 time points; slope -0.1 per month (95% CI -0.1006 to -0.0993) is significantly non-zero; trend toward the limit projected at 50.09 months (lower limit 95)."}
+PASS drug_product: QOS must preserve the recorded monthly case's existing hold
+PASS drug_product: short hold must preserve the complete source and row reason
+PASS drug_product: preserve the existing named criterion-conflict reason
+PASS drug_product: preserve an existing named unestimable trend reason
+PASS drug_product: preserve a later study's source/row refusal
+RESULT 14 passed / 0 failed; existing imports, no mocks, no provider or database calls
+Actual process exit: 0; elapsed seconds: 4.015

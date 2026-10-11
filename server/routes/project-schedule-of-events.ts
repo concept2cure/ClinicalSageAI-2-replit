@@ -13,11 +13,17 @@
  *
  * Every handler is org- and project-scoped for tenant isolation.
  *
+ * `:id` is the integer projects.id ('12' / 'proj_12') or a regulatory_programs
+ * UUID, which is resolved to its anchored projects row on the server (see
+ * requireOwnedProject). Nothing else is accepted.
+ *
  * @module server/routes/project-schedule-of-events
  */
 
 import { Router, type Request, type Response } from 'express';
-import { pool } from '../db';
+import { db, pool } from '../db';
+import { looksLikeProgramUuid } from '../lib/project-id';
+import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import { loadUnifiedWork } from '../services/unified-work/unified-work-view';
 import {
   getScheduleOfEvents,
@@ -136,7 +142,35 @@ async function requireOwnedProject(
   res: Response,
 ): Promise<{ orgId: number; projectId: number; projectType: string | null } | null> {
   const orgId = getOrganizationId(req);
-  const projectId = getProjectId(req);
+  let projectId = getProjectId(req);
+  /* A program UUID — the id every v2 surface holds for the open project — is
+     resolved HERE, through the one anchor reader (projects.regulatory_program_id,
+     org-scoped, lowest id), never by parsing it. QA 2026-10-08 (j1): Project
+     home's Plan and Review panels refused every program, even one the wizard
+     had anchored, because this route took only the integer and the client had
+     no honest way to get one.
+
+     Strict: a lookup that could not complete throws to the handler's 500, so a
+     dropped connection is never reported as "this program has no project
+     record". A program with no anchor is a real state — seeded programs and
+     those created while the organisation had no workspace carry none — and is
+     named as such (PROGRAM_UNANCHORED), so the surface can say it instead of
+     "not found". The ownership gate below still runs on the resolved row. */
+  if (projectId == null && looksLikeProgramUuid(req.params.id)) {
+    projectId = await resolveProgramProjectAnchor(db, {
+      programId: String(req.params.id).trim().toLowerCase(),
+      orgId,
+      context: 'schedule-of-events',
+      strict: true,
+    });
+    if (projectId == null) {
+      res.status(404).json({
+        error: 'This program has no project record to hold a schedule or tasks.',
+        code: 'PROGRAM_UNANCHORED',
+      });
+      return null;
+    }
+  }
   if (projectId == null) {
     res.status(400).json({ error: 'Invalid project id' });
     return null;

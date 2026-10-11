@@ -14,7 +14,7 @@
  * 
  * @module SystemSurvivability
  * @version 1.1.0
- * @compliance FDA 21 CFR Part 11, OWASP LLM Top 10, ICH E6(R2)
+ * @compliance FDA 21 CFR Part 11, OWASP LLM Top 10, ICH E6(R3)
  */
 
 // Circuit Breaker - External service failure protection

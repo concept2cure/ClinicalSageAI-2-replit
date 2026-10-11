@@ -1,0 +1,19 @@
+Two existing suites after fixture-only string-domain annotations.
+Baseline bd886f5d3a766ba35179f98ecb053f61420f69f6; production, inputs/assertions and 65-hop loop preserved.
+One fork; NODE_OPTIONS=--max-old-space-size=4096
+["npx", "vitest", "run", "--config", "vitest.config.ts", "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts", "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts", "--reporter=dot", "--reporter=json", "--outputFile.json=/workspace/scratch/c2099bdce0e4/remote-type-fix-result.json"]
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+···································
+
+ Test Files  2 passed (2)
+      Tests  35 passed (35)
+   Start at  13:34:43
+   Duration  10.38s (transform 309ms, setup 131ms, import 386ms, tests 9.23s, environment 1ms)
+
+JSON report written to /workspace/scratch/c2099bdce0e4/remote-type-fix-result.json
+
+PROCESS_EXIT_CODE=0

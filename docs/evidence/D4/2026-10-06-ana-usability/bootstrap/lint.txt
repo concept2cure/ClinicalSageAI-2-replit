@@ -1,0 +1,30 @@
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/ai-gateway/gateway.ts
+    39:3   warning  'GatewayUsage' is defined but never used                                                        @typescript-eslint/no-unused-vars
+    44:3   warning  'StreamCallback' is defined but never used                                                      @typescript-eslint/no-unused-vars
+    45:3   warning  'ContentBlock' is defined but never used                                                        @typescript-eslint/no-unused-vars
+   567:1   warning  Function 'partitionSystemMessages' has a complexity of 17. Maximum allowed is 15                complexity
+   782:1   warning  File has too many lines (3284). Maximum allowed is 500                                          max-lines
+   819:1   warning  Function 'normalizeCitation' has a complexity of 20. Maximum allowed is 15                      complexity
+  1008:1   warning  Function 'applyOpenAIToolParams' has a complexity of 32. Maximum allowed is 15                  complexity
+  1371:3   warning  Async method 'route' has too many lines (174). Maximum allowed is 100                           max-lines-per-function
+  1371:3   warning  Async method 'route' has a complexity of 43. Maximum allowed is 15                              complexity
+  1996:3   warning  Async method 'assertSensitiveDispatchAllowed' has too many lines (109). Maximum allowed is 100  max-lines-per-function
+  1996:3   warning  Async method 'assertSensitiveDispatchAllowed' has a complexity of 31. Maximum allowed is 15     complexity
+  2190:3   warning  Async method 'executeOpenAI' has a complexity of 31. Maximum allowed is 15                      complexity
+  2367:3   warning  Async method 'executeAnthropic' has too many lines (185). Maximum allowed is 100                max-lines-per-function
+  2367:3   warning  Async method 'executeAnthropic' has a complexity of 51. Maximum allowed is 15                   complexity
+  2609:3   warning  Async method 'executeAnthropicStream' has too many lines (247). Maximum allowed is 100          max-lines-per-function
+  2609:3   warning  Async method 'executeAnthropicStream' has a complexity of 82. Maximum allowed is 15             complexity
+  2811:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                          max-depth
+  2929:3   warning  Async method 'executeMoonshot' has a complexity of 29. Maximum allowed is 15                    complexity
+  3021:3   warning  Async method 'executeOpenAICompatibleStream' has too many lines (147). Maximum allowed is 100   max-lines-per-function
+  3021:3   warning  Async method 'executeOpenAICompatibleStream' has a complexity of 40. Maximum allowed is 15      complexity
+  3138:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                          max-depth
+  3139:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                          max-depth
+  3901:3   warning  Async method 'logAudit' has too many parameters (7). Maximum allowed is 5                       max-params
+  4112:3   warning  Async method 'logContentPolicyBlock' has too many parameters (6). Maximum allowed is 5          max-params
+  4329:3   warning  Method 'initProviderClients' has a complexity of 26. Maximum allowed is 15                      complexity
+
+✖ 25 problems (0 errors, 25 warnings)
+

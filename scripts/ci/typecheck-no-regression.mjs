@@ -39,12 +39,20 @@
  *
  * CI does not pass it and should not: CI starts from a clean checkout, has no
  * cache to reuse, and a full run is the ground truth this mode approximates.
+ *
+ * TYPECHECK_FILES_PER_PROCESS=1000 opts into sequential fresh TypeScript API
+ * workers. Every worker loads the full identical program; only diagnostic
+ * targets are partitioned. This requires the zero baseline, refuses baseline
+ * writes, verifies all disk inputs and reports complete all-file coverage.
+ * --incremental retains the same compiler options in this mode, but no cache is
+ * read or written. Without this environment variable, the CLI path is unchanged.
  */
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseFilesPerProcess, runMemoryBoundedTypecheck } from './typecheck-memory-bounded.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -60,6 +68,16 @@ function tscVersion() {
 const args = process.argv.slice(2);
 const writeBaseline = args.includes('--write-baseline');
 const incremental = args.includes('--incremental');
+const bounded = process.env.TYPECHECK_FILES_PER_PROCESS !== undefined;
+let filesPerProcess;
+if (bounded) {
+  try { filesPerProcess = parseFilesPerProcess(process.env.TYPECHECK_FILES_PER_PROCESS); }
+  catch (error) { console.error(`[ci:typecheck-no-regression] FAIL — ${error.message}`); process.exit(1); }
+  if (writeBaseline) {
+    console.error('[ci:typecheck-no-regression] bounded mode cannot write a baseline; use the default full tsc CLI');
+    process.exit(1);
+  }
+}
 // Under node_modules so it is never committed and a clean install discards it.
 const buildInfoFile = path.join(
   repoRoot,
@@ -73,7 +91,7 @@ if (incremental && writeBaseline) {
   console.error('[ci:typecheck-no-regression] --write-baseline cannot be combined with --incremental');
   process.exit(1);
 }
-if (incremental) fs.mkdirSync(path.dirname(buildInfoFile), { recursive: true });
+if (incremental && !bounded) fs.mkdirSync(path.dirname(buildInfoFile), { recursive: true });
 
 if (!fs.existsSync(baselinePath)) {
   console.error(`[ci:typecheck-no-regression] missing baseline file ${baselinePath}`);
@@ -86,9 +104,15 @@ if (typeof baselineCount !== 'number') {
   console.error(`[ci:typecheck-no-regression] baseline.errorCount missing or non-numeric`);
   process.exit(1);
 }
+if (bounded && baselineCount !== 0) {
+  console.error('[ci:typecheck-no-regression] bounded mode requires the unchanged zero baseline');
+  process.exit(1);
+}
 
 console.log(
-  `[ci:typecheck-no-regression] running tsc --noEmit${incremental ? ' --incremental' : ''} (baseline: ${baselineCount})`
+  bounded
+    ? `[ci:typecheck-no-regression] running full-program TypeScript API workers (${filesPerProcess} diagnostic targets/process; baseline: ${baselineCount}; uncached)`
+    : `[ci:typecheck-no-regression] running tsc --noEmit${incremental ? ' --incremental' : ''} (baseline: ${baselineCount})`
 );
 
 // Heap. tsc OOMs on this project at 6144 MB — reproduced on a 15 GB host, where
@@ -101,7 +125,27 @@ const heapMb = process.env.TYPECHECK_HEAP_MB || '24576';
 const tscArgs = ['tsc', '--noEmit', '-p', 'tsconfig.json'];
 if (incremental) tscArgs.push('--incremental', '--tsBuildInfoFile', buildInfoFile);
 
-const tsc = spawnSync(
+let tsc;
+if (bounded) {
+  try {
+    const result = runMemoryBoundedTypecheck({
+      repoRoot, filesPerProcess, heapMb, incremental, buildInfoFile,
+      onProgress: ({ completed, total, manifestHash }) => console.info(
+        `[ci:typecheck-no-regression] full-program coverage ${completed}/${total}; snapshot ${manifestHash}`
+      ),
+    });
+    const categories = ['warning', 'error', 'suggestion', 'message'];
+    const output = result.diagnostics.map(diagnostic => {
+      const location = diagnostic.file ? `${path.relative(repoRoot, diagnostic.file)}(${diagnostic.start ?? 0}): ` : '';
+      return `${location}${categories[diagnostic.category]} TS${diagnostic.code}: ${diagnostic.message}`;
+    }).join('\n');
+    tsc = { stdout: output, stderr: '', status: result.diagnostics.some(item => item.category === 1) ? 1 : 0 };
+    console.info(`[ci:typecheck-no-regression] all ${result.sourceFiles.length} source files checked exactly once; ${result.workerCount} workers completed; snapshot unchanged`);
+  } catch (error) {
+    console.error(`[ci:typecheck-no-regression] FAIL — full-program worker verification did not complete: ${error.message}`);
+    process.exit(1);
+  }
+} else tsc = spawnSync(
   'npx',
   tscArgs,
   {
@@ -235,7 +279,7 @@ if (tsc.status > 0 && errorCount === 0) {
   process.exit(1);
 }
 
-console.log(`[ci:typecheck-no-regression] errors found: ${errorCount} (tsc exit ${tsc.status})`);
+console.log(`[ci:typecheck-no-regression] errors found: ${errorCount} (${bounded ? 'worker aggregate' : 'tsc'} exit ${tsc.status})`);
 
 if (writeBaseline) {
   const next = { ...baseline, errorCount };

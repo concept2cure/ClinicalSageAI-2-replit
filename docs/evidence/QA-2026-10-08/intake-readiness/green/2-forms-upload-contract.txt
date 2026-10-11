@@ -1,0 +1,66 @@
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > auth + RBAC > 401/403 unauthenticated or wrong role 48ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > GET / → 200 lists the supported form ids 58ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /FDA_1571/build → 200 returns a field map + missingRequired 16ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /nope/build → 400 for an unsupported form 5ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 ready for a complete, consistent IND form set 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 not ready when sponsor name diverges 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 400 without forms[] 3ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → 200 application/pdf with X-Form-* headers 183ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_356H/pdf → X-Form-Required-Blank names the required boxes still empty 2350ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → the header is present and EMPTY when none is blank 193ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /nope/pdf → 400 for an unsupported form 13ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /1572/pdf-all → 200 returns base64 PDFs per investigator 1405ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 returns one disclosure PDF per disclosing investigator 38ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 with an empty documents array when none disclose 3ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > 401 when unauthenticated 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 200 PDF from stored sponsor 151ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1572/pdf-from-records → 200 with investigator records 980ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 404 for an unknown sponsor 10ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > does not load another org's sponsor (tenant scoping → 404) 6ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 401 when unauthenticated 3ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 400 without a projectId (a governed artifact must associate with a project) 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 404 for a project in another org (never create an artifact under another tenant) 6ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 201 persists a governed form artifact (structured field map) the platform now knows exists 18ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists ONE governed artifact per investigator for 1572 19ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists one artifact per DISCLOSING investigator for 3455 (non-disclosing excluded) 9ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 with an empty artifacts array for 3455 when no investigator discloses (certify none on 3454) 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 400 for a form that is not per-investigator (use /:formId/artifact instead) 3ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 404 for a project in another org (never create per-investigator artifacts under another tenant) 7ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → the program record, what each form will produce, and nothing placed yet 73ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET / without a program still lists the forms and their plans 6ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → 404 for a program that is not this organization's 20ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > POST /FDA_1571/build fills sponsor, drug, indication and IND number from the record — none of them typed 16ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a stated value wins over the record, and a blank one does not erase it 16ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > the sponsor address, IND type and phase the panel states land where the 1571 build reads them; unstated, they stay missing 25ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET / carries the registry's IND type and phase options the panel offers 5ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a build that NAMES an unresolvable program is refused, not answered from typed fields 9ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > PUT /program-facts records the sponsor address and IND type on the program, and the 1571 build reads them from the record 70ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > PUT /program-facts refuses an IND type outside the registry, an IND type on a program that is not an IND, an empty body, and another organisation's program — writing nothing 37ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > a stated value in the build request still wins over the recorded one 28ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with its project record gets a governed artifact registered against that record 20ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with no project record is refused 409 PROGRAM_NOT_ANCHORED, and nothing is written 15ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > places the signed form as a Module 1 leaf pointing at the retained bytes 172ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > re-attaching a corrected signature replaces the leaf instead of filing the form twice 2392ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > files the financial certification at its own catalogued section, not with the forms 112ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses a file that is not a PDF by its bytes, whatever it claims to be 10ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses the BLANK official template — attaching it would file an unsigned form as a signed one 25ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not invent a sequence to file into 15ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not file into a program that has no submission record at all 12ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > never files into another organization's program 16ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the open program, and refuses an unsupported form 23ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the regulatory-author role 8ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > refuses an upload that names no sequence, and files nothing 32ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > files into the ORIGINAL 0000 when the person names it, although a newer 0001 exists 175ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > a form placed in two sequences is listed in both, and replacing is per sequence 1914ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > refuses a sequence of another submission, and a frozen one, before any bytes are stored 106ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > one verdict from one engine > a 1572 with no investigator recorded is a missing-investigator verdict, the same one the PDF reports 1144ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > one verdict from one engine > with investigators recorded, the build is still one per investigator 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > an IND program is offered only the forms the registry says apply to an IND 9ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > an NDA program is offered 356h and not the IND application 8ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > a form that does not apply to the program is refused at filing, not placed 11ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > the product’s own unedited 1572: attached, not complete — the investigator, facility and IRB are missing 4057ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > the product’s own unedited 1571, phase stated: not complete — the IND type and phase boxes are blank on that file 247ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > a signed 1571 whose phase nobody stated: not complete — Build & check’s missing field 332ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > an attached form counts as complete only when the forms engine finds nothing required missing > a signed 1571 with every required field recorded or stated: complete, and the checklist says so 173ms
+ Test Files  1 passed (1)
+      Tests  64 passed (64)

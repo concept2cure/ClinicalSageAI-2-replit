@@ -6,8 +6,9 @@
  * Both pickers marked the current engine only with `data-on`, which no
  * assistive technology reads; the Home trigger said `aria-haspopup="true"` (a
  * menu) for a popup that was not one, and a choice left focus on a button that
- * had just been removed. Pinned on Home's pill (the rail renders the same
- * EngineChoices, pinned by its own case):
+ * had just been removed. Pinned on Home's pill (the conversation's composer
+ * renders the same EngineChoices, pinned by its own case; the right rail did
+ * until it was deleted, ONE_ANA_ONE_CANVAS.md slice 9):
  *   - the trigger names the popup it opens (dialog) and points at it;
  *   - the popup is a named dialog holding a radio group of the modes, the
  *     current one checked;
@@ -28,7 +29,7 @@ vi.mock('@/hooks/useGlobalRiCatalog', () => ({
 }));
 
 import { Home } from '../surfaces/Surfaces';
-import { AnaRail } from '../Shell';
+import { ConversationThread } from '../surfaces/ConversationThread';
 import { EngineChoices } from '../EngineChoices';
 import { ANA_MODES } from '../registryModel';
 
@@ -102,17 +103,25 @@ describe('EngineChoices (the one implementation both pickers render)', () => {
   });
 });
 
-describe("the rail's Control & engine popup", () => {
+describe("the conversation's engine pill", () => {
   it('names the popup it opens, and holds the same engine radio group', () => {
+    (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = { id: 'new' };
     render(
-      <AnaRail open setOpen={() => {}} surface={{ id: 'cmc', label: 'CMC' }} segment="biotech" mode={QUICK.id} setMode={() => {}} messages={[]} onSend={() => {}} onAct={() => {}} />,
+      <ConversationThread
+        surface={{ id: 'conversation-thread', label: 'Conversation' } as never}
+        segment="biotech"
+        onNav={vi.fn()}
+        engine={{ mode: QUICK.id, setMode: vi.fn() }}
+      />,
     );
-    const pull = document.querySelector('.ana-modepull') as HTMLButtonElement;
-    expect(pull.getAttribute('aria-haspopup')).toBe('dialog');
-    fireEvent.click(pull);
-    const dialog = screen.getByRole('dialog', { name: /control & engine/i });
-    expect(pull.getAttribute('aria-controls')).toBe(dialog.id);
+    const pill = screen.getByRole('button', { name: new RegExp(`Engine: ${QUICK.effortLabel}`) });
+    expect(pill.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(pill.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(pill);
+    expect(pill.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('dialog', { name: /engine/i })).toBeTruthy();
     const checked = Array.from(screen.getByRole('radiogroup', { name: /engine/i }).querySelectorAll('[aria-checked="true"]'));
     expect(checked.map((c) => c.textContent)).toEqual([expect.stringContaining(QUICK.effortLabel)]);
+    delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
   });
 });

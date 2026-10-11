@@ -1,0 +1,36 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/routes/ana-ri/stream.ts
+   220:7   warning  'dbPool' is assigned a value but never used                                    @typescript-eslint/no-unused-vars
+   361:8   warning  Function 'mountStreamRoute' has too many lines (1876). Maximum allowed is 100  max-lines-per-function
+   362:62  warning  Async arrow function has too many lines (1817). Maximum allowed is 100         max-lines-per-function
+   362:62  warning  Async arrow function has a complexity of 245. Maximum allowed is 15            complexity
+   796:1   warning  File has too many lines (2141). Maximum allowed is 500                         max-lines
+  1142:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  1275:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  1320:13  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  1322:15  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  1330:17  warning  Blocks are nested too deeply (7). Maximum allowed is 4                         max-depth
+  1332:17  warning  Blocks are nested too deeply (7). Maximum allowed is 4                         max-depth
+  2112:39  warning  Async arrow function has too many lines (410). Maximum allowed is 100          max-lines-per-function
+  2112:39  warning  Async arrow function has a complexity of 79. Maximum allowed is 15             complexity
+  2192:27  warning  Async arrow function has a complexity of 20. Maximum allowed is 15             complexity
+  2423:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2424:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  2425:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  2436:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2451:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2456:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  2478:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2489:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                         max-depth
+  2494:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                         max-depth
+  3312:77  warning  Async arrow function has a complexity of 20. Maximum allowed is 15             complexity
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/services/ana-ri/chat-context-builder.ts
+  131:8  warning  Async function 'prefetchRouteIntelligenceContext' has too many lines (172). Maximum allowed is 100  max-lines-per-function
+  131:8  warning  Async function 'prefetchRouteIntelligenceContext' has a complexity of 45. Maximum allowed is 15     complexity
+  358:8  warning  Async function 'buildChatContext' has too many lines (216). Maximum allowed is 100                  max-lines-per-function
+  358:8  warning  Async function 'buildChatContext' has a complexity of 74. Maximum allowed is 15                     complexity
+
+✖ 28 problems (0 errors, 28 warnings)
+

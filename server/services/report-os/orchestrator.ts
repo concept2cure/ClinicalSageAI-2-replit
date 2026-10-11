@@ -23,7 +23,15 @@ export interface ProviderResult {
 
 export interface RunComputationResult {
   providers: ProviderResult[];
-  confidence: number;
+  /**
+   * A confidence an engine measured, or null when none did. The readiness run
+   * measures none and reports none (QA 2026-10-08, j8): its figure was
+   * `95 − 20 × blockers` clamped to [25, 95] — a constant less a penalty,
+   * printed as "Overall confidence 75%" beside a readiness that was not
+   * computed. The lineage trace measures one: its provenance completeness
+   * (lineageTraceConfidence, P-26).
+   */
+  confidence: number | null;
   blockers: string[];
   /** Subset of blockers tagged critical (regional gaps with severity 'critical'). */
   criticalBlockers: string[];
@@ -95,21 +103,17 @@ export async function computeInitialRun(
     blockers.push('No governed artifacts discovered for this scope');
   }
 
-  const readinessStatus: ProviderResult['status'] =
-    approvedOrLockedCount > 0 ? 'ready' : artifactCount > 0 ? 'partial' : 'missing';
-  const readinessBlocker =
-    readinessStatus === 'ready'
-      ? undefined
-      : readinessStatus === 'partial'
-        ? 'No approved or locked artifacts in current scope'
-        : 'No artifacts available to compute readiness';
-  providers.push({
-    provider: 'submission_readiness',
-    observedAt: new Date().toISOString(),
-    status: readinessStatus,
-    blocker: readinessBlocker,
-  });
-  if (readinessBlocker) blockers.push(readinessBlocker);
+  /* Submission readiness has ONE engine: evaluateReadiness, below, over the
+     project's registry context. A second verdict stood here — 'ready' as soon
+     as one artifact was approved — and the digest printed "submission_readiness
+     ready" for a program whose readiness the board and the opener correctly
+     said was not computed (QA 2026-10-08, j8). The `submission_readiness` row
+     is now the evaluator's verdict, or says it was not computed and why. */
+  const readinessNotComputed = (reason: string) => {
+    const blocker = `Submission readiness not computed: ${reason}`;
+    providers.push({ provider: 'submission_readiness', observedAt: new Date().toISOString(), status: 'missing', blocker });
+    blockers.push(blocker);
+  };
 
   // Provider 3: compliance/audit derived from governed lifecycle evidence.
   const complianceStatus: ProviderResult['status'] =
@@ -145,13 +149,7 @@ export async function computeInitialRun(
       const registryId = rawRegistryId || (rawSubmissionType ? resolveRegistryId(rawSubmissionType) : null);
 
       if (!registryId) {
-        providers.push({
-          provider: 'regional_registry_readiness',
-          observedAt: new Date().toISOString(),
-          status: 'partial',
-          blocker: 'Project is missing registryId/submissionType in metadata',
-        });
-        blockers.push('Regional readiness unavailable: project metadata has no registry context');
+        readinessNotComputed('the project records no registry context (registryId or submissionType).');
       } else {
         const [sectionRows, artifactRows] = await Promise.all([
           db
@@ -266,7 +264,7 @@ export async function computeInitialRun(
         );
 
         providers.push({
-          provider: 'regional_registry_readiness',
+          provider: 'submission_readiness',
           observedAt: new Date().toISOString(),
           status:
             readiness.level === 'ready'
@@ -314,11 +312,9 @@ export async function computeInitialRun(
           regionalWarnings: readiness.regionalWarnings,
         };
 
-        const confidenceBase = Math.max(25, Math.min(95, 95 - blockers.length * 20));
-        const confidence = Math.round(confidenceBase * 0.55 + readiness.score * 0.45);
         return {
           providers,
-          confidence: Math.max(25, Math.min(95, confidence)),
+          confidence: null,
           blockers,
           criticalBlockers,
           summary: {
@@ -337,11 +333,19 @@ export async function computeInitialRun(
     }
   }
 
-  const confidence = Math.max(25, Math.min(95, 95 - blockers.length * 20));
+  // Readiness is evaluated per project with a registry context (above). Every
+  // other path reaches here without it, and says so rather than guessing.
+  if (!providers.some((p) => p.provider === 'submission_readiness')) {
+    readinessNotComputed(
+      scopeType === 'project'
+        ? 'the project was not found in this organization.'
+        : `it is evaluated per project, not for a ${scopeType} scope.`,
+    );
+  }
 
   return {
     providers,
-    confidence,
+    confidence: null,
     blockers,
     criticalBlockers,
     summary: {

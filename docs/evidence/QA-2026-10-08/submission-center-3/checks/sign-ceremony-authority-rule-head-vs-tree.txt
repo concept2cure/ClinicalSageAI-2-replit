@@ -1,0 +1,21 @@
+server/routes/mdx-submission-gateway.ts
+  HEAD 613e24e70: line 239 NO AUTHORITY; line 404 NO AUTHORITY; line 482 NO AUTHORITY
+  working tree:   line 270 ok; line 435 NO AUTHORITY; line 516 ok
+server/routes/financial-disclosures.ts
+  HEAD 613e24e70: line 319 NO AUTHORITY
+  working tree:   line 326 ok
+server/routes/510k-estar-routes.ts
+  HEAD 613e24e70: line 2045 NO AUTHORITY
+  working tree:   line 2051 ok
+server/routes/ana-features.ts
+  HEAD 613e24e70: line 2248 NO AUTHORITY
+  working tree:   line 2254 ok
+server/routes/ana-ri/governed-esignature.ts
+  HEAD 613e24e70: line 83 NO AUTHORITY
+  working tree:   line 98 ok
+server/routes/c2c/artifacts.ts
+  HEAD 613e24e70: line 2652 NO AUTHORITY
+  working tree:   line 2662 ok
+server/services/tasking/task-signoff.ts
+  HEAD 613e24e70: line 183 NO AUTHORITY
+  working tree:   line 192 ok

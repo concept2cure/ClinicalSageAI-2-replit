@@ -1,0 +1,235 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > draws the governed readiness, and ignores a stale progress_percent 159ms
+ × client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > states when the server measured the figure 69ms
+   → expected 'Dossier readiness62%62%Dossierreadine…' to contain 'Measured Oct 8, 2026, 9:14 PM.'
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > a program with no approved sections reads 0%, the same as its card 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > readiness that could not be measured is stated as "not measured", never left out or drawn as 0 82ms
+stderr | server/routes/c2c/__tests__/projects-readiness.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-readiness.test.ts
+{
+  "timestamp": "2026-10-08T21:26:37.745Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-readiness.test.ts
+{
+  "timestamp": "2026-10-08T21:26:37.926Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T21:26:37.927Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-readiness.test.ts
+{
+  "timestamp": "2026-10-08T21:26:37.927Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > still returns the list when the governed store is absent
+{
+  "timestamp": "2026-10-08T21:26:39.973Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "relation \"c2c_documents\" does not exist",
+    "code": "42P01"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > a failed readiness read is null — not assessed — never the stored 0
+{
+  "timestamp": "2026-10-08T21:26:39.997Z",
+  "level": "warn",
+  "message": "[c2c-projects] Governed readiness unavailable; project cards keep their stored value",
+  "context": {
+    "err": "relation \"c2c_documents\" does not exist",
+    "code": "42P01"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > reports the governed section completion, not the frozen progress_percent 18ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > asks only about the projects on this page, and scopes to the caller org 4ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > uses the same status set as the readiness trigger 3ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects — readiness is measured, not stored > still returns the list when the governed store is absent 4ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > reports the governed section share, not the frozen progress_percent 4ms
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > agrees with the list for the same program 5ms
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > a program with no governed sections has no figure, as on its card 6ms
+   → expected undefined to be null
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > says when the figure was measured 4ms
+   → expected NaN to be greater than or equal to 1791494798991
+ × server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > a failed readiness read is null — not assessed — never the stored 0 4ms
+   → expected undefined to be null
+ ✓ server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > scopes the aggregate to this program and the caller org 3ms
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-08T21:26:40.922Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-08T21:26:40.924Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+{
+  "timestamp": "2026-10-08T21:26:40.924Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/__tests__/market-support.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/__tests__/market-support.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (maa, EMA) → Flat Module 1, no channel 2ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, FDA) → Structured Module 1 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nds, Health_Canada) → No outline, no channel 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > (nda, ANVISA) → Not supported 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > a market is named by its agency, its region code or its submission region alike 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > FDA: transmit is wired but not proven, and the line says why 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA MAA: flat Module 1, and the applicant uploads it 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > EMA CTA goes through the CTIS portal only 0ms
+ × server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0 7ms
+   → expected 'New applications blocked: eCTD v4.0 r…' to be 'New applications blocked: eCTD v4.0 r…' // Object.is equality
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > Health Canada: no outline; its adapter posts to an endpoint written from no agency source, so no channel 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > NMPA, MFDS and TGA: no outline; no channel. NMPA and MFDS are gate-checked, TGA is not 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > MHRA "IND" is not offered: the UK has no IND, and the ind:mhra pack is mislabelled 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > an unmapped agency is not supported: no outline or channel, and no refusal is claimed 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no line names a rule pack, an adapter or a signature format 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > no pack is borrowed from another agency: an FDA NDA pack does not give Health Canada an outline 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > module1ShapeForAgency is the backbone classification, by agency 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (510k, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (pma, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (de_novo, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (ide, FDA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (mdr, EMA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > (cer, EMA): not buildable, and no eCTD Module 1 or transmit is claimed 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > a 510(k) has its outline: outline only, no package 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > device filings claim no eCTD build, and the outline agrees with the scaffolder > a DMF has the ICH Module 3 outline the scaffolder gives its project 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport fails closed on an empty rule-pack read > no active pack at all is a failed read, not "No outline" for every market 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > readMarketSupport reads the active packs once, from c2c_rule_packs > asks only for packs not superseded, and composes every requested market from that one read 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > EMA and PMDA are no longer reported buildable; FDA is 1ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > PMDA is not reported submit-supported while its adapter refuses every transmit 0ms
+ ✓ server/services/regulatory/__tests__/market-support.test.ts > the submission resolver reads the same judgement (submission-resolver.ts) > the coverage matrix agrees with the plan 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > a program with no governed sections has no figure, as on its card
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/routes/c2c/__tests__/projects-readiness.test.ts:175:36
+    173|     const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
+    174|     expect(res.body.readiness).toBeNull();
+    175|     expect(res.body.readinessAsOf).toBeNull();
+       |                                    ^
+    176|   });
+    177|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > says when the figure was measured
+AssertionError: expected NaN to be greater than or equal to 1791494798991
+ ❯ server/routes/c2c/__tests__/projects-readiness.test.ts:188:16
+    186|     const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
+    187|     const at = Date.parse(res.body.readinessAsOf);
+    188|     expect(at).toBeGreaterThanOrEqual(before - 1000);
+       |                ^
+    189|     expect(at).toBeLessThanOrEqual(Date.now());
+    190|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-readiness.test.ts > GET /api/c2c/projects/:id — the same readiness the list reports > a failed readiness read is null — not assessed — never the stored 0
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/routes/c2c/__tests__/projects-readiness.test.ts:199:36
+    197|     expect(res.status).toBe(200);
+    198|     expect(res.body.readiness).toBeNull();
+    199|     expect(res.body.readinessAsOf).toBeNull();
+       |                                    ^
+    200|   });
+    201|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/regulatory/__tests__/market-support.test.ts > marketSupport — the FILING_SPINE.md F19 table > PMDA J-NDA: flat, the adapter refuses, and a new application is blocked on eCTD v4.0
+AssertionError: expected 'New applications blocked: eCTD v4.0 r…' to be 'New applications blocked: eCTD v4.0 r…' // Object.is equality
+
+Expected: "New applications blocked: eCTD v4.0 required from 2026-04-01"
+Received: "New applications blocked: eCTD v4.0 required"
+
+ ❯ server/services/regulatory/__tests__/market-support.test.ts:97:20
+     95|     // from a date, so it names that date — the dated registry fact's,…
+     96|     // where the block is decided. It read "…eCTD v4.0 required" with …
+     97|     expect(s.line).toBe(`New applications blocked: eCTD v4.0 required …
+       |                    ^
+     98|     expect(s.buildable).toBe(false);
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx > project home — Dossier readiness > states when the server measured the figure
+AssertionError: expected 'Dossier readiness62%62%Dossierreadine…' to contain 'Measured Oct 8, 2026, 9:14 PM.'
+
+Expected: "Measured Oct 8, 2026, 9:14 PM."
+Received: "Dossier readiness62%62%Dossierreadiness"
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx:90:30
+     88|     render(<ProjectHome {...props()} />);
+     89|     const card = await readinessCard();
+     90|     expect(card.textContent).toContain(`Measured ${new Date(at).toLoca…
+       |                              ^
+     91|   });
+     92|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  5 failed | 38 passed (43)
+   Start at  21:26:33
+   Duration  7.49s (transform 3.39s, setup 247ms, import 5.86s, tests 453ms, environment 467ms)
+

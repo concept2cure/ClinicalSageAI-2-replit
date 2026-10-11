@@ -54,6 +54,7 @@ import {
   type SignerRefused,
 } from '../../services/part11/reverify-signer.js';
 import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
+import { checkSigningAuthority } from '../../services/part11/signing-authority-gate.js';
 import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
 import {
   assertSignerIsNotAuthor,
@@ -108,6 +109,8 @@ type Command =
   | 'transmittal_rollback';
 
 const HIGH_RISK_COMMANDS: Set<Command> = new Set(['sign', 'lock', 'revoke-signature', 'transmittal_rollback']);
+/** The commands that write an electronic_signatures row (writeMutation), so carry the §11.10(g) authority gate. */
+const SIGNATURE_COMMANDS: ReadonlySet<Command> = new Set<Command>(['sign', 'revoke-signature']);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -272,6 +275,8 @@ const REAUTH_ERROR: Record<SignerRefused['code'], string> = {
   MFA_TOKEN_REQUIRED: 'REAUTH_TOTP_REQUIRED',
   MFA_VERIFICATION_FAILED: 'REAUTH_TOTP_INVALID',
   MFA_STATE_UNKNOWN: 'REAUTH_MFA_STATE_UNKNOWN',
+  // In production, a signer with no authenticator (ADR-0014 P1-2b).
+  AUTHENTICATOR_REQUIRED: 'REAUTH_AUTHENTICATOR_REQUIRED',
   ACCOUNT_INACTIVE: 'REAUTH_ACCOUNT_INACTIVE',
   ACCOUNT_LOCKED: 'REAUTH_ACCOUNT_LOCKED',
   ACCOUNT_STATE_UNKNOWN: 'REAUTH_ACCOUNT_STATE_UNKNOWN',
@@ -653,6 +658,17 @@ function makeHandler(command: Command) {
     const meaningRefusal = commandMeaningRefusal(command, body);
     if (meaningRefusal) return res.status(400).json(meaningRefusal);
 
+    // §11.10(g): identity is not authority. A command that writes an
+    // electronic_signatures row is refused, before the credential, unless the
+    // signer's membership role carries signing authority — the platform's one
+    // policy (checkSigningAuthority). QA walk 2026-10-08 (J8) found a manager's
+    // 'approval' persisted here; P-27 (same day) deleted this file's own copy of
+    // the check (signingAuthorityRefusal), whose failed lookup answered 500.
+    if (SIGNATURE_COMMANDS.has(command)) {
+      const authority = await checkSigningAuthority(userId, orgId);
+      if (authority) return res.status(authority.status).json({ error: authority.code, detail: authority.message });
+    }
+
     // Re-auth gate for high-risk commands.
     if (HIGH_RISK_COMMANDS.has(command)) {
       const reauth = await verifyReauth(userId, body.reauth);
@@ -744,7 +760,7 @@ function makeHandler(command: Command) {
         // Refused ahead of the signer lookup; nothing was written.
         return res.status(400).json({ error: err.code, detail: err.message });
       }
-      console.error(`[c2c/actions/${command}]`, err?.message);
+      console.error('[c2c/actions/%s]', command, err?.message);
       return res.status(500).json({ error: 'INTERNAL_ERROR' });
     }
   };

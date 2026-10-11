@@ -1,0 +1,84 @@
+{
+  "email": "qa.onboard.selfserve3@example.com",
+  "lsKeysAfterSignup": [
+    "c2c.language"
+  ],
+  "urlAfterOpen": "/concept2cure",
+  "lsKeysAfterOpen": [
+    "activeOrgSlug",
+    "c2c.language",
+    "currentClientWorkspaceId",
+    "currentOrganization",
+    "currentOrganizationId",
+    "currentOrganizationName",
+    "trialsage_access_token",
+    "trialsage_refresh_token",
+    "trialsage_token_expiry",
+    "trialsage_user"
+  ],
+  "textAfterOpen": "Skip to content | CLIENT CATEGORIES | WORKSPACE | SCIENCE & INTELLIGENCE | EXPLORE | QUICK ACCESS | QO | Concept2Cure.RI | › | Home | Biotech & Pharma | QO | QA Onboard Selfserve 3 | Search, jump, or run a command | ⌘K | Task | ✻ | Good morning, Quinn | Biotech & Pharma | No programs yet | Start a new Biotech & Pharma project | AnA drives: on | Demos | Between steps | Manual | AnA takes one step, ",
+  "urlAfterReload": "/concept2cure",
+  "calls": [
+    {
+      "status": 201,
+      "method": "POST",
+      "url": "/api/auth/signup",
+      "body": "{\"success\":true,\"token\":\"[redacted]\""
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "/api/v1/auth/session",
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"30\",\"email\":\"qa.onboard.selfserve3@example.com\",\"firstName\":\"Quinn\",\"lastName\":\"Onboard\",\"displayName\":\"Quinn Onboard\",\"role"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "/api/v1/auth/session",
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"30\",\"email\":\"qa.onboard.selfserve3@example.com\",\"firstName\":\"Quinn\",\"lastName\":\"Onboard\",\"displayName\":\"Quinn Onboard\",\"role"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "/api/v1/auth/session",
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"30\",\"email\":\"qa.onboard.selfserve3@example.com\",\"firstName\":\"Quinn\",\"lastName\":\"Onboard\",\"displayName\":\"Quinn Onboard\",\"role"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "/api/v1/auth/session",
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"30\",\"email\":\"qa.onboard.selfserve3@example.com\",\"firstName\":\"Quinn\",\"lastName\":\"Onboard\",\"displayName\":\"Quinn Onboard\",\"role"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "/api/v1/auth/session",
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"30\",\"email\":\"qa.onboard.selfserve3@example.com\",\"firstName\":\"Quinn\",\"lastName\":\"Onboard\",\"displayName\":\"Quinn Onboard\",\"role"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "/api/v1/auth/session",
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"30\",\"email\":\"qa.onboard.selfserve3@example.com\",\"firstName\":\"Quinn\",\"lastName\":\"Onboard\",\"displayName\":\"Quinn Onboard\",\"role"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "/api/v1/auth/session",
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"30\",\"email\":\"qa.onboard.selfserve3@example.com\",\"firstName\":\"Quinn\",\"lastName\":\"Onboard\",\"displayName\":\"Quinn Onboard\",\"role"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "/api/v1/auth/session",
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"30\",\"email\":\"qa.onboard.selfserve3@example.com\",\"firstName\":\"Quinn\",\"lastName\":\"Onboard\",\"displayName\":\"Quinn Onboard\",\"role"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "/api/v1/auth/session",
+      "body": "{\"authenticated\":true,\"user\":{\"id\":\"30\",\"email\":\"qa.onboard.selfserve3@example.com\",\"firstName\":\"Quinn\",\"lastName\":\"Onboard\",\"displayName\":\"Quinn Onboard\",\"role"
+    }
+  ],
+  "httpErrors": []
+}

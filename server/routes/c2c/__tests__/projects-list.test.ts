@@ -51,6 +51,13 @@ describe('GET /api/c2c/projects', () => {
     expect(params).toEqual([7, 51, 0, false]);
   });
 
+  it('carries the target filing date as a date, so days to filing can be counted', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    await request(appWith(7)).get('/api/c2c/projects');
+    const [sql] = query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toMatch(/to_char\(p\.target_submission_date, 'YYYY-MM-DD'\)\s+AS due_date/);
+  });
+
   it('clamps ?limit to its maximum and never issues an unbounded read', async () => {
     query.mockResolvedValueOnce({ rows: [] });
     await request(appWith(7)).get('/api/c2c/projects?limit=100000&offset=5');

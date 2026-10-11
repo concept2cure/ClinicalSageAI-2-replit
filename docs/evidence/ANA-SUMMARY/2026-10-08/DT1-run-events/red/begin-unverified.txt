@@ -1,0 +1,39 @@
+# mutation: begin-unverified
+# test: server/services/ana/__tests__/run-control-begin.pglite.test.ts -t ""
+ × server/services/ana/__tests__/run-control-begin.pglite.test.ts > the thread the client named is verified before it is stamped > a colleague's conversation is refused before any row is written 35ms
+   → expected a refusal
+ × server/services/ana/__tests__/run-control-begin.pglite.test.ts > the thread the client named is verified before it is stamped > another organisation's conversation resolves to nothing: the run carries no thread 13ms
+   → expected 'elsewhere' to be null
+ × server/services/ana/__tests__/run-control-begin.pglite.test.ts > the thread the client named is verified before it is stamped > an unknown id resolves to nothing too (getOrCreateThread will mint one) 17ms
+   → expected 'no-such-thread' to be null
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > the thread the client named is verified before it is stamped > the caller's own conversation, and one with no owner, are stamped as verified 32ms
+ × server/services/ana/__tests__/run-control-begin.pglite.test.ts > one live run per conversation > a second run on a conversation with a live run is refused, naming that run, and writes nothing 31ms
+   → expected a refusal
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > one live run per conversation > once the run ends, the conversation takes the next 18ms
+ × server/services/ana/__tests__/run-control-begin.pglite.test.ts > one live run per conversation > a dead process's stale run does not hold the conversation: it is failed as orphaned 19ms
+   → expected { …(24) } to match object { status: 'failed', …(1) }
+ × server/services/ana/__tests__/run-control-begin.pglite.test.ts > at most three live runs per person > the fourth is refused RUN_LIMIT and writes nothing 41ms
+   → expected a refusal
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > at most three live runs per person > a run that ended, or a stale one, does not count 49ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > at most three live runs per person > is per person and per organisation; a run with no person has no cap 51ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > a new conversation is written onto its run once it exists > stamps the minted thread and the question 18ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > a new conversation is written onto its run once it exists > writes the question onto a run that already carries its verified thread 12ms
+ ✓ server/services/ana/__tests__/run-control-begin.pglite.test.ts > a new conversation is written onto its run once it exists > never moves a run onto a conversation another live run holds, nor across organisations 32ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/run-control-begin.pglite.test.ts > the thread the client named is verified before it is stamped > a colleague's conversation is refused before any row is written
+Error: expected a refusal
+     77|   throw new Error('expected a refusal');
+ FAIL  server/services/ana/__tests__/run-control-begin.pglite.test.ts > the thread the client named is verified before it is stamped > another organisation's conversation resolves to nothing: the run carries no thread
+AssertionError: expected 'elsewhere' to be null
+ FAIL  server/services/ana/__tests__/run-control-begin.pglite.test.ts > the thread the client named is verified before it is stamped > an unknown id resolves to nothing too (getOrCreateThread will mint one)
+AssertionError: expected 'no-such-thread' to be null
+ FAIL  server/services/ana/__tests__/run-control-begin.pglite.test.ts > one live run per conversation > a second run on a conversation with a live run is refused, naming that run, and writes nothing
+Error: expected a refusal
+     77|   throw new Error('expected a refusal');
+ FAIL  server/services/ana/__tests__/run-control-begin.pglite.test.ts > one live run per conversation > a dead process's stale run does not hold the conversation: it is failed as orphaned
+AssertionError: expected { …(24) } to match object { status: 'failed', …(1) }
+ FAIL  server/services/ana/__tests__/run-control-begin.pglite.test.ts > at most three live runs per person > the fourth is refused RUN_LIMIT and writes nothing
+Error: expected a refusal
+     77|   throw new Error('expected a refusal');
+ Test Files  1 failed (1)
+      Tests  6 failed | 7 passed (13)

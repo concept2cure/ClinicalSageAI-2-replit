@@ -4,7 +4,7 @@
  * The platform eTMF's canonical TMF logic lives server-side:
  *   - server/services/etmf/etmf-logic.ts        — zone catalog + auto-classifier
  *   - server/services/etmf/tmf-completeness.ts  — zones + essential artifacts
- *     (ICH E6(R2) §8) + inspection-readiness assessment
+ *     (ICH E6(R3) Appendix C, essential records) + inspection-readiness assessment
  *
  * Client code (the vault's service/CRO view, eTMF surfaces) cannot import
  * server services, so this module mirrors the ZONE level of that catalog for

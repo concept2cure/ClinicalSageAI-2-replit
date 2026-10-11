@@ -1,0 +1,59 @@
+{
+  "observed_at": "2026-10-10T06:50:41.723935Z",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "head_sha": "de61922a9351080fdcd76a231c5abd8182054831",
+  "scope": "Fresh remote Security Scan and stock compiler evidence; broader main CI is an explicitly time-bounded snapshot. This index does not hash itself.",
+  "files": [
+    {
+      "path": "REMOTE_SECURITY_AND_COMPILER.md",
+      "bytes": 7060,
+      "sha256": "37dfb20d610f73127ea3add9290454d9d9ed66f4e2709a2d0d60a2b57fef05c6"
+    },
+    {
+      "path": "remote-security-job.json",
+      "bytes": 8599,
+      "sha256": "f29877f46626247f7f2281b274fe910c2cff13aaf6bdec620414c25ae1b15c20"
+    },
+    {
+      "path": "remote-security-excerpts.txt",
+      "bytes": 15215,
+      "sha256": "7dc8a7b761040146be82b9c12c4cfd7e10aaa15c2765530f7e3a91c2559c0048"
+    },
+    {
+      "path": "remote-compiler-job.json",
+      "bytes": 3284,
+      "sha256": "3718ffcf0e562c50cad14eea8dd61c93b8662dd3ad6188e25b4c8024f5adcbc2"
+    },
+    {
+      "path": "remote-compiler-excerpts.txt",
+      "bytes": 1847,
+      "sha256": "6708650b3c0dc4b3291b32cff9369286d24c779d791c0eeca3aebe1c8b6b43d1"
+    },
+    {
+      "path": "remote-compiler-main-ci-snapshot.json",
+      "bytes": 32654,
+      "sha256": "1b28f75ca2ff976cb19f12318871bf734606f5563d783d81ca2630ba883026d5"
+    }
+  ],
+  "full_decoded_job_logs": [
+    {
+      "run_id": 38031251355,
+      "job_id": 114152480619,
+      "checked_out_sha": "de61922a9351080fdcd76a231c5abd8182054831",
+      "encoding": "UTF-8",
+      "sha256": "f5da0a52bba62a2e6af996ed64adc183d4c47c3f196521af8b9c1591ca4fffa5",
+      "bytes": 102801,
+      "line_count": 1133
+    },
+    {
+      "run_id": 38031251357,
+      "job_id": 114152480600,
+      "checked_out_sha": "de61922a9351080fdcd76a231c5abd8182054831",
+      "encoding": "UTF-8",
+      "sha256": "5e6abb120e64686335a6ba67ebede82f75a3e195c63e0592bc36822741060cda",
+      "bytes": 1327252,
+      "line_count": 10091
+    }
+  ],
+  "verification": "All retained excerpts match their recorded original 1-based lines in original order; each full decoded fresh log SHA-256, byte count, line count and exact checkout SHA were verified."
+}

@@ -197,6 +197,13 @@ export const GOVERNED_REVOCATION_SIGNATURE_TYPE = 'governed-revocation';
 export const REVOKED_VERIFICATION_STATUS = 'revoked';
 
 /**
+ * verification_status stamped on a signature whose act the server refused
+ * (voidSignatureForRefusedAct, P-23). Distinct from 'revoked': nobody withdrew
+ * it; the act it was given for did not happen.
+ */
+export const VOIDED_VERIFICATION_STATUS = 'voided';
+
+/**
  * Whether a signature row has been taken out of force.
  *
  * `persistGovernedSignatureRevocation` below marks a withdrawal by setting
@@ -217,11 +224,52 @@ export function isSignatureWithdrawn(row: {
   superseded_by?: unknown;
   is_valid?: unknown;
 }): boolean {
+  const status = String(row.verification_status ?? '');
   return (
-    String(row.verification_status ?? '') === REVOKED_VERIFICATION_STATUS ||
+    status === REVOKED_VERIFICATION_STATUS ||
+    status === VOIDED_VERIFICATION_STATUS ||
     row.superseded_by != null ||
     row.is_valid === false
   );
+}
+
+/**
+ * Take a signature out of force because the act it was given for was refused
+ * (P-23, docs/LAUNCH_DEFINITION_OF_DONE.md, 2026-10-08: a signature serves only
+ * the act it was given for). Returns the voided row's id, or null when no live
+ * signature row is bound to `actionId` on `target` (none was persisted, or it is
+ * already out of force).
+ *
+ * Only the Verification column group changes, as in a revocation: `is_valid`,
+ * `verification_status = 'voided'` (which says WHY is_valid is false, so the row
+ * is never misread as "the signing factors failed") and `verification_date`.
+ * The signer's identity, signature_hash, signature_manifest, bound_payload_digest
+ * and binding_basis are left byte-identical (§11.70). No successor row is
+ * written: nobody signed the void. Its cause, the refusal, is recorded on the
+ * audit row the caller writes. One statement, so it needs no transaction; the
+ * predicate makes it a compare-and-set, and a second void of the same row
+ * matches nothing.
+ */
+export async function voidSignatureForRefusedAct(
+  client: SignatureDbClient,
+  params: { orgId: number; target: string; actionId: string; occurredAt: Date },
+): Promise<number | null> {
+  const voided = await client.query(
+    `UPDATE electronic_signatures
+        SET is_valid = false,
+            verification_status = $1,
+            verification_date = $2,
+            updated_at = now()
+      WHERE organization_id = $3
+        AND signed_target = $4
+        AND (signature_manifest::jsonb ->> 'actionId') = $5
+        AND superseded_by IS NULL
+        AND is_valid IS DISTINCT FROM false
+      RETURNING id`,
+    [VOIDED_VERIFICATION_STATUS, params.occurredAt, params.orgId, params.target, params.actionId],
+  );
+  const id = Number(voided.rows[0]?.id);
+  return Number.isFinite(id) && id > 0 ? id : null;
 }
 
 export type BindingBasis = (typeof BINDING_BASIS)[keyof typeof BINDING_BASIS];

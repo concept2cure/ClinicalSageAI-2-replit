@@ -20,7 +20,7 @@ const h = vi.hoisted(() => {
     /** One entry per model call: tool calls to make, words then tool calls, or the answer text. */
     script: [] as Array<ToolUse[] | { say: string; tools: ToolUse[] } | string>,
     /** Each model request: who made it, and the tools it offered. */
-    gatewayCalls: [] as Array<{ callerModule?: string; tools: string[] }>,
+    gatewayCalls: [] as Array<{ callerModule?: string; tools: string[]; messages: Array<{ role: string; content: unknown }> }>,
     /** What each checkpoint drain returns, in order; empty after. */
     drains: [] as Array<Array<{ kind: 'steer' | 'screen_report' | 'move_landed'; text: string; moveId?: string }>>,
     /** Called with each wait the checkpoint makes (the run handle's wake). */
@@ -31,6 +31,16 @@ const h = vi.hoisted(() => {
     history: [] as Array<{ role: string; content: string; metadata?: unknown }>,
     /** What each held governed call asked the run row to record. */
     approvals: [] as any[],
+    guardedInputs: [] as string[],
+    encapsulateInput: false,
+    prefetch: { unavailableSources: [] as string[], contextAvailabilityBlock: '' },
+    enrichment: {
+      block: '',
+      sources: [] as string[],
+      enrichmentMeta: { unavailableSources: [] as string[] } as { unavailableSources: string[]; unavailableReasons?: Record<string, 'timeout' | 'error'> },
+    },
+    prefetchWait: null as Promise<void> | null,
+    onPrefetch: null as (() => void) | null,
   };
   const pool = {
     query: async () => ({ rows: [], rowCount: 0 }),
@@ -43,7 +53,7 @@ const h = vi.hoisted(() => {
     getEnabledProviders: () => ['anthropic'],
     getModels: () => [],
     route: async (req: any) => {
-      state.gatewayCalls.push({ callerModule: req.callerModule, tools: (req.tools ?? []).map((t: { name: string }) => t.name) });
+      state.gatewayCalls.push({ callerModule: req.callerModule, tools: (req.tools ?? []).map((t: { name: string }) => t.name), messages: req.messages.slice() });
       const step = state.script.shift();
       if (Array.isArray(step)) {
         return { content: '', toolUses: step, model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
@@ -63,15 +73,23 @@ const h = vi.hoisted(() => {
   /**
    * A governed toolset over the selection cap: the core, the record tool a
    * previous turn ran, and sixty tools no follow-up's words select.
+   *
+   * The record tool must be one the selector does NOT always offer, or the
+   * carry is invisible. It was get_cmc_requirements until a0b3de231 made that
+   * tool always-on, after which "a step the person declined is not carried"
+   * failed (the tool was offered anyway) and "the tool the previous turn ran is
+   * offered" passed without the carry. list_cmc_registers is a CMC record tool
+   * outside ALWAYS_ON_TOOLS; the premise test below pins that.
    */
   const toolset = [
     'list_platform_commands',
     'execute_platform_command',
     'search_literature',
-    'get_cmc_requirements',
+    'list_cmc_registers',
     ...Array.from({ length: 60 }, (_, i) => `filler_${i}`),
   ].map((name) => ({ name, description: name.startsWith('filler_') ? 'unrelated utility' : name, input_schema: { type: 'object', properties: {} } }));
-  return { state, pool, gateway, handlers, toolset };
+  const prefix = vi.fn(async () => '');
+  return { state, pool, gateway, handlers, toolset, prefix, thread: vi.fn(), memory: vi.fn() };
 });
 
 vi.mock('../../../db.js', () => ({ getPool: () => h.pool, pool: h.pool, db: {} }));
@@ -154,20 +172,24 @@ vi.mock('../../../services/ana-ri/orchestrator.js', () => ({
 }));
 vi.mock('../../../services/ana-ri/chat-context-builder.js', async importOriginal => ({
   ...(await importOriginal<typeof import('../../../services/ana-ri/chat-context-builder.js')>()),
-  prefetchRouteIntelligenceContext: async () => ({}),
+  prefetchRouteIntelligenceContext: async () => {
+    h.state.onPrefetch?.();
+    await h.state.prefetchWait;
+    return h.state.prefetch;
+  },
 }));
 vi.mock('../../../services/lumen-context-builder.js', () => ({
-  getIntelligencePrefix: async () => '',
+  getIntelligencePrefix: h.prefix,
   buildSectionSpecificPrompt: () => '',
 }));
 vi.mock('../../../services/memory-context-assembler.js', () => ({
-  buildMemoryContextForChat: async () => ({ memoryBlock: '', atoms: [], diagnostics: null }),
+  buildMemoryContextForChat: h.memory,
 }));
 vi.mock('../../../services/ana-ri/context-enrichment.js', () => ({
-  enrichContextForChat: async () => ({ block: '', sources: [] }),
+  enrichContextForChat: async () => h.state.enrichment,
 }));
 vi.mock('../../../services/chat-thread-helpers.js', () => ({
-  getOrCreateThread: async () => 'thread-1',
+  getOrCreateThread: h.thread,
   getThreadMessages: async () => h.state.history,
   saveChatMessage: async () => {},
   programIdForThread: () => null,
@@ -176,7 +198,10 @@ vi.mock('../../../services/chat-thread-helpers.js', () => ({
 vi.mock('../../../services/ana-session-bootstrap.js', () => ({ sessionBootstrapBlockFor: async () => '' }));
 vi.mock('../../../services/kernel-adaptive-policy.js', () => ({ getKernelPolicyHint: async () => null }));
 vi.mock('../../../services/ana/ana-input-guard.js', () => ({
-  guardUserInput: async (text: string) => ({ encapsulated: false, text }),
+  guardUserInput: async (text: string) => {
+    h.state.guardedInputs.push(text);
+    return { encapsulated: h.state.encapsulateInput, text: h.state.encapsulateInput ? `GUARDED\n${text}` : text };
+  },
   PromptInjectionError: class PromptInjectionError extends Error {},
 }));
 vi.mock('../../../services/auditService.js', () => ({ default: { logAction: async () => {} } }));
@@ -190,6 +215,7 @@ vi.mock('../../../services/anthropic-files.js', () => ({
 }));
 
 import { mountStreamRoute } from '../stream.js';
+import { ALWAYS_ON_TOOLS } from '../../../services/ana/tool-selection.js';
 
 const app = express();
 app.use(express.json());
@@ -219,6 +245,15 @@ beforeEach(() => {
   h.state.post = null;
   h.state.history = [];
   h.state.approvals = [];
+  h.state.guardedInputs = [];
+  h.state.encapsulateInput = false;
+  h.state.prefetch = { unavailableSources: [], contextAvailabilityBlock: '' };
+  h.state.enrichment = { block: '', sources: [], enrichmentMeta: { unavailableSources: [] } };
+  h.state.prefetchWait = null;
+  h.state.onPrefetch = null;
+  h.prefix.mockReset().mockResolvedValue('');
+  h.thread.mockReset().mockResolvedValue('thread-1');
+  h.memory.mockReset().mockImplementation(async ({ threadId }) => ({ memoryBlock: threadId === 'secret' ? 'PRIVATE SUMMARY' : '', atoms: [], diagnostics: null }));
 });
 
 /** The stream's frames, parsed. */
@@ -258,25 +293,129 @@ function thread(steps: Array<{ tool: string; status: string }>, question: string
   ];
 }
 
+describe('stream intelligence recall overlaps optional route prefetch', () => {
+  it.each([false, true])('handles early recall with rejection=%s', async rejected => {
+    if (rejected) h.prefix.mockRejectedValue(new Error('recall unavailable'));
+    else h.prefix.mockResolvedValue('Early client intelligence');
+    let release!: () => void;
+    let started!: () => void;
+    h.state.prefetchWait = new Promise<void>(resolve => { release = resolve; });
+    const prefetchStarted = new Promise<void>(resolve => { started = resolve; });
+    h.state.onPrefetch = started;
+    const pending = turn('Review the project', 'thorough', { project_id: 42 });
+    await prefetchStarted;
+    try { expect(h.prefix).toHaveBeenCalledWith(7, 42); }
+    finally { release(); await pending; }
+    expect(h.prefix).toHaveBeenCalledTimes(1);
+    expect(h.state.gatewayCalls).toHaveLength(1);
+    if (!rejected) expect(h.state.gatewayCalls[0].messages.some(m => typeof m.content === 'string' && m.content.includes('Early client intelligence'))).toBe(true);
+  });
+});
+
 describe('a follow-up keeps the tools its conversation used (TP-RL-3)', () => {
+  it('warns when requested enrichment is unavailable and retains its model availability notice', async () => {
+    h.state.enrichment = {
+      block: '\nEnrichment context unavailable: claims. Do not infer that missing context or unresolved findings do not exist.',
+      sources: [],
+      enrichmentMeta: { unavailableSources: ['claims'], unavailableReasons: { claims: 'timeout' } },
+    };
+    const frames = await turn('Review the claims');
+    // Names the source and why (ana-14), not "Some project context could not be loaded".
+    const warning = 'The claims and evidence records took too long to read for this reply. The answer does not draw on them.';
+    expect(frames).toContainEqual({ type: 'warning', message: warning });
+    expect(h.state.gatewayCalls[0].messages.some(m => m.role === 'system' && typeof m.content === 'string' && m.content.includes('Enrichment context unavailable'))).toBe(true);
+    const { body } = h.state.post.turnRecorder.seal('answered');
+    expect(body.warnings).toContain(warning);
+  });
+
+  it('reports unavailable optional context to the person and includes it in the model input', async () => {
+    h.state.prefetch = {
+      unavailableSources: ['external intelligence'],
+      contextAvailabilityBlock: '\nOptional external intelligence unavailable; do not infer missing records do not exist.',
+    };
+    const frames = await turn('Review the project');
+    expect(frames).toContainEqual({ type: 'warning', message: 'Optional context unavailable: external intelligence.' });
+    expect(h.state.gatewayCalls[0].messages.some(m => m.role === 'system' && typeof m.content === 'string' && m.content.includes('do not infer missing records do not exist'))).toBe(true);
+  });
+
+  it('Continue receives the visible partial draft even when stored history lacks it', async () => {
+    const message = 'Continue from where you stopped.';
+    h.state.history = [
+      { role: 'user', content: 'Compare the endpoints' },
+      { role: 'user', content: message },
+    ];
+    await turn(message, 'thorough', { continuation_context: { question: 'Compare the endpoints', partialResponse: 'The primary endpoint is' } });
+    const first = h.state.gatewayCalls[0].messages;
+    const handoff = first.find(m => typeof m.content === 'string' && m.content.includes('client-reported unfinished draft'));
+    expect(handoff?.role).toBe('user');
+    expect(handoff?.content).toContain('The primary endpoint is');
+    expect(handoff?.content).toContain('not evidence that a tool ran');
+    expect(first.at(-1)).toMatchObject({ role: 'user', content: message });
+    expect(h.state.guardedInputs).toHaveLength(1);
+    expect(h.state.guardedInputs[0]).toContain('The primary endpoint is');
+  });
+
+  it('encapsulates the handoff with the request and never sends an unguarded duplicate', async () => {
+    h.state.encapsulateInput = true;
+    await turn('Continue from where you stopped.', 'thorough', {
+      continuation_context: { question: 'Compare the endpoints', partialResponse: 'The primary endpoint is' },
+    });
+    const matching = h.state.gatewayCalls[0].messages.filter(m => typeof m.content === 'string' && m.content.includes('client-reported unfinished draft'));
+    expect(matching).toHaveLength(1);
+    expect(matching[0].role).toBe('user');
+    expect(matching[0].content).toMatch(/^GUARDED\n/);
+  });
+
+  it('does not attach a continuation draft to an unrelated request', async () => {
+    await turn('Start another topic', 'thorough', { continuation_context: { question: 'Old topic', partialResponse: 'Old draft' } });
+    expect(h.state.gatewayCalls[0].messages.some(m => typeof m.content === 'string' && m.content.includes('client-reported unfinished draft'))).toBe(false);
+  });
+
+  it('premise: the record tool is not always offered, so only the carry can offer it', () => {
+    expect(ALWAYS_ON_TOOLS.has('list_cmc_registers')).toBe(false);
+  });
+
   it('the tool the previous turn ran is offered on the first call and on every round after it', async () => {
-    thread([{ tool: 'get_cmc_requirements', status: 'success' }], 'and for the EU?');
+    thread([{ tool: 'list_cmc_registers', status: 'success' }], 'and for the EU?');
     h.state.script = [[{ id: 'tu_1', name: 'search_literature', input: { query: 'EU CMC' } }], 'Done.'];
     await turn('and for the EU?');
     expect(h.state.gatewayCalls.length).toBeGreaterThanOrEqual(2);
     const [first, ...rounds] = h.state.gatewayCalls;
-    expect(first.tools).toContain('get_cmc_requirements');
+    expect(first.tools).toContain('list_cmc_registers');
     for (const round of rounds) expect(round.tools).toEqual(first.tools);
   });
 
   it('a step the person declined is not carried, and a first turn is offered what it was', async () => {
-    thread([{ tool: 'get_cmc_requirements', status: 'error' }], 'and for the EU?');
+    thread([{ tool: 'list_cmc_registers', status: 'error' }], 'and for the EU?');
     await turn('and for the EU?');
-    expect(h.state.gatewayCalls[0].tools).not.toContain('get_cmc_requirements');
+    expect(h.state.gatewayCalls[0].tools).not.toContain('list_cmc_registers');
 
     h.state.gatewayCalls = [];
     h.state.history = [{ role: 'user', content: 'and for the EU?' }];
     await turn('and for the EU?');
     expect(h.state.gatewayCalls[0].tools).toEqual(['list_platform_commands', 'execute_platform_command', 'search_literature']);
+  });
+});
+
+
+describe('stream conversation memory access', () => {
+  it('reads memory only with the resolved thread ID', async () => {
+    await turn('Review this', 'thorough', { thread_id: 'secret' });
+    expect(h.memory).toHaveBeenCalledWith(expect.objectContaining({ threadId: 'thread-1' }));
+  });
+  it('does not read caller thread memory after persistence fails', async () => {
+    h.thread.mockRejectedValue(new Error('database unavailable'));
+    await turn('Review this', 'thorough', { thread_id: 'secret' });
+    expect(h.memory).not.toHaveBeenCalled();
+    expect(h.state.gatewayCalls).toHaveLength(0);
+    expect(JSON.stringify(h.state.gatewayCalls)).not.toContain('PRIVATE SUMMARY');
+  });
+  it('refuses foreign-thread access before memory or the model runs', async () => {
+    const { ThreadAccessError } = await import('../../../services/chat-thread-helpers.js');
+    h.thread.mockRejectedValue(new ThreadAccessError('THREAD_FORBIDDEN', 'secret'));
+    const frames = await turn('Review this', 'thorough', { thread_id: 'secret' });
+    expect(frames.some(frame => frame.type === 'error')).toBe(true);
+    expect(h.memory).not.toHaveBeenCalled();
+    expect(h.state.gatewayCalls).toHaveLength(0);
   });
 });

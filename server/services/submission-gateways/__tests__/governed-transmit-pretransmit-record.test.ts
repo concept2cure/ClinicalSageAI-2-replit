@@ -25,6 +25,9 @@ const { queries, connectMock, transmitMock } = vi.hoisted(() => ({
   transmitMock: vi.fn(),
 }));
 
+// The transmitter holds a signing role (approver); only such a role may
+// transmit to an agency (SEC-1008-1, governed-transmit-checks.ts).
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'approver' }));
 vi.mock('../../../db', () => ({ pool: { connect: connectMock, query: vi.fn() } }));
 // This suite tests the signature record, not separation of duties. Its pool is
 // a bare stub, so the package-author lookup assertTransmitterIndependent runs

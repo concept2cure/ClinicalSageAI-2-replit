@@ -36,9 +36,10 @@
  */
 
 import { normalizeCtdCode, compareSectionCode } from '../../../../shared/regulatory/section-code';
+import { basisLabel, type RegulatoryBasis } from '../../../../shared/regulatory/regulatory-basis';
 import { CTD_AUTHORING_GUIDANCE } from './authoring-guidance.js';
 import { LIFECYCLE_DOCUMENT_TYPES } from './lifecycle-document-types.js';
-import type { CtdSection } from './types.js';
+import type { CtdSection, DocumentOutline, Necessity, OutlineNode } from './types.js';
 
 export type SectionBriefKind = 'exact' | 'ancestor' | 'parent';
 
@@ -193,4 +194,160 @@ export function renderLifecycleBrief(id: string | null | undefined, maxChars: nu
 /** The lifecycle document types the library registers, by id. */
 export function listLifecycleIds(): string[] {
   return LIFECYCLE_DOCUMENT_TYPES.map((d) => d.id);
+}
+
+// ── Document outlines (R13) ──────────────────────────────────────────────────
+//
+// The one renderer for every DocumentOutline (the E3 CSR, the protocol, the
+// periodic safety reports, the JP CTN, the EU CTA Annex I). An outline is
+// added as data; nothing about it needs a renderer of its own. Every basis is
+// rendered by basisLabel, so recall and platform convention are never shown as
+// checked regulator text, and a heading-only node renders no content at all.
+
+/** What a heading-only node says in place of content. */
+export const OUTLINE_CONTENT_NOT_ENCODED = 'Content not encoded — do not supply from memory.';
+
+export interface OutlineBriefOptions {
+  /** Character cap. Optional blocks are dropped to fit; the basis is kept. */
+  maxChars?: number;
+  /** 'brief': identity, applicability, first purpose sentence and basis only. */
+  mode?: 'full' | 'brief';
+}
+
+const OUTLINE_LIST_CAPS = { contains: 12, sources: 8, presentation: 8, pitfalls: 6, children: 16 } as const;
+
+/** "§12.2", "section 12.2", " 12.2 " → "12.2"; null when it is not a dotted number. */
+function normalizeOutlineNumber(value: string): string | null {
+  const m = /^(?:section\s+|sec\.?\s*)?§?\s*(\d{1,3}(?:\.\d{1,3})*)\.?$/i.exec(value.trim());
+  return m ? m[1] : null;
+}
+
+function nodeParentNumber(number: string): string | null {
+  const i = number.lastIndexOf('.');
+  return i === -1 ? null : number.slice(0, i);
+}
+
+function nodeHeading(n: OutlineNode): string {
+  const title = n.titleLocal ? `${n.title} (${n.titleLocal})` : n.title;
+  return n.number ? `${n.number} ${title}` : title;
+}
+
+function findOutlineNode(outline: DocumentOutline, section: string): OutlineNode | null {
+  const number = normalizeOutlineNumber(section);
+  if (number) {
+    const byNumber = outline.nodes.find((n) => n.number === number);
+    if (byNumber) return byNumber;
+  }
+  const title = section.trim().toLowerCase();
+  const byTitle = outline.nodes.filter(
+    (n) => n.title.toLowerCase() === title || (n.titleLocal !== undefined && n.titleLocal.trim().toLowerCase() === title),
+  );
+  // Two headings with one title is ambiguous: no guessed brief.
+  return byTitle.length === 1 ? byTitle[0] : null;
+}
+
+function appliesLine(outline: DocumentOutline, n: OutlineNode): string {
+  const by: Record<Necessity, string> = {
+    always: `Expected in every ${outline.title}.`,
+    conditional: n.condition
+      ? `Expected when ${n.condition} holds; undetermined until that fact is known — never read as not required.`
+      : 'Expected under a condition this outline does not name; undetermined — never read as not required.',
+    'when-applicable': 'Expected when the document has its subject.',
+    'authority-dependent': 'Expected where the reviewing authority requires it.',
+  };
+  return by[n.applies];
+}
+
+function basisBlock(bases: readonly RegulatoryBasis[]): string {
+  return `### Basis\n${bases.map((b) => `- ${basisLabel(b)}`).join('\n')}`;
+}
+
+function bulletBlock(label: string, items: string[] | undefined, cap: number): string | null {
+  if (!items?.length) return null;
+  const shown = items.slice(0, cap).map((i) => `- ${i}`);
+  const more = items.length - shown.length;
+  return `### ${label}\n${shown.join('\n')}${more > 0 ? `\n- and ${more} more` : ''}`;
+}
+
+/** Required head, optional middle blocks while they fit, then the basis. */
+function assemble(head: string[], optional: Array<string | null>, tail: string, maxChars: number): string {
+  let text = head.join('\n');
+  for (const block of optional) {
+    if (!block) continue;
+    if (text.length + block.length + tail.length + 4 > maxChars) break;
+    text += `\n\n${block}`;
+  }
+  const out = `${text}\n\n${tail}`;
+  return out.length <= maxChars ? out : clip(out, maxChars);
+}
+
+/** The top-level headings in order, with the governing basis. */
+function renderOutlineTop(outline: DocumentOutline, brief: boolean, maxChars: number): string {
+  const top = outline.nodes.filter((n) => !n.number || nodeParentNumber(n.number) === null);
+  const listing = top
+    .slice(0, brief ? OUTLINE_LIST_CAPS.children : top.length)
+    .map((n) => `- ${nodeHeading(n)}${n.headingOnly ? ` — ${OUTLINE_CONTENT_NOT_ENCODED.toLowerCase()}` : ''}`);
+  return assemble([`## ${outline.title} — outline`], [listing.join('\n')], basisBlock(outline.governing), maxChars);
+}
+
+/** The headings directly under a numbered node; null when it has none. */
+function childrenBlock(outline: DocumentOutline, node: OutlineNode): string | null {
+  if (!node.number) return null;
+  const children = outline.nodes.filter((n) => n.number !== undefined && nodeParentNumber(n.number) === node.number);
+  if (children.length === 0) return null;
+  const shown = children.slice(0, OUTLINE_LIST_CAPS.children).map((c) => `- ${nodeHeading(c)}`);
+  const more = children.length - shown.length;
+  return `### Headings under it\n${shown.join('\n')}${more > 0 ? `\n- and ${more} more` : ''}`;
+}
+
+/** A node's content blocks, in order of value. Never called for a heading-only node. */
+function nodeContentBlocks(node: OutlineNode): Array<string | null> {
+  return [
+    node.purpose ? clip(node.purpose, 900) : null,
+    bulletBlock('It carries', node.contains, OUTLINE_LIST_CAPS.contains),
+    bulletBlock('Usually from (platform practice unless a basis below says otherwise)', node.sources, OUTLINE_LIST_CAPS.sources),
+    bulletBlock('Presented as', node.presentation, OUTLINE_LIST_CAPS.presentation),
+    bulletBlock('Common deficiencies', node.pitfalls, OUTLINE_LIST_CAPS.pitfalls),
+  ];
+}
+
+/**
+ * A document outline as a brief, for a model prompt or a tool result.
+ *
+ * - No section: the top-level headings in order (a heading-only one says its
+ *   content is not encoded) and the outline's governing basis.
+ * - A section (its number, "§12.2", or its exact title): that heading's
+ *   applicability, what it carries, where it comes from, how it is presented,
+ *   what goes wrong, the headings under it, and its basis — the governing basis
+ *   followed by the node's own. A heading-only node renders the statement that
+ *   its content is not encoded and none of its content fields.
+ * - A section the outline does not have: null. No brief is better than a
+ *   guessed one.
+ *
+ * Throws when the outline has no governing basis: an unsourced outline is a
+ * data defect, never rendered as if it were sourced.
+ */
+export function renderOutlineBrief(
+  outline: DocumentOutline,
+  section?: string | null,
+  opts: OutlineBriefOptions = {},
+): string | null {
+  if (!outline.governing?.length) {
+    throw new Error(`Outline "${outline.id}" has no governing basis; it cannot be rendered.`);
+  }
+  const maxChars = opts.maxChars ?? SECTION_BRIEF_MAX_CHARS;
+  const brief = opts.mode === 'brief';
+  if (section === undefined || section === null || section.trim() === '') return renderOutlineTop(outline, brief, maxChars);
+
+  const node = findOutlineNode(outline, section);
+  if (!node) return null;
+
+  const head = [`## ${outline.title} — ${nodeHeading(node)}`, appliesLine(outline, node)];
+  const tail = basisBlock([...outline.governing, ...(node.basis ?? [])]);
+  const children = childrenBlock(outline, node);
+
+  if (node.headingOnly) return assemble([...head, OUTLINE_CONTENT_NOT_ENCODED], [children], tail, maxChars);
+  if (brief) return assemble(head, [node.purpose ? firstSentence(node.purpose) : null], tail, maxChars);
+  const see = node.see?.length ? `### Read with\n${node.see.join(', ')}` : null;
+  return assemble(head, [...nodeContentBlocks(node), children, see], tail, maxChars);
 }

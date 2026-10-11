@@ -1,0 +1,1907 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > does not offer Complete while the assignee’s review is pending, says why, and offers the Review board 66ms
+   → expected <button type="button" …(2)>…(1)</button> to be null
+ × client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > offers Complete once the verdict is recorded, and names it 5014ms
+   → Unable to find an element by: [data-testid="rt-review-state"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-send-review"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-send"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+          />
+          <path
+            d="m21.854 2.147-10.94 10.939"
+          />
+        </svg>
+         Send for review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · medium priority
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-11"
+          >
+            TASK-11
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-send-review"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-send"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+          />
+          <path
+            d="m21.854 2.147-10.94 10.939"
+          />
+        </svg>
+         Send for review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · medium priority
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-11"
+          >
+            TASK-11
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > a completed review task whose review is still pending says no verdict is recorded 5013ms
+   → Unable to find an element by: [data-testid="rt-review-state"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        0 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-send-review"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-send"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+          />
+          <path
+            d="m21.854 2.147-10.94 10.939"
+          />
+        </svg>
+         Send for review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="completed"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-ok"
+          >
+            Completed
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · medium priority
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <span
+            class="rt-row-id"
+            title="TASK-11"
+          >
+            TASK-11
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        0 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-send-review"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-send"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+          />
+          <path
+            d="m21.854 2.147-10.94 10.939"
+          />
+        </svg>
+         Send for review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="completed"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-ok"
+          >
+            Completed
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · medium priority
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <span
+            class="rt-row-id"
+            title="TASK-11"
+          >
+            TASK-11
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after a refused read, a review task is not offered for completion, and a task that is not a review task is 24ms
+   → expected <button type="button" …(2)>…(1)</button> to be null
+ × client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after an answer with no rows, a review task is not offered for completion, and a task that is not a review task is 15ms
+   → expected <button type="button" …(2)>…(1)</button> to be null
+ × client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after rows of another document, a review task is not offered for completion, and a task that is not a review task is 12ms
+   → expected <button type="button" …(2)>…(1)</button> to be null
+ × client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > Refresh reads the review requests again with the tasks 5010ms
+   → Unable to find an element by: [data-testid="rt-review-state"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-send-review"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-send"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+          />
+          <path
+            d="m21.854 2.147-10.94 10.939"
+          />
+        </svg>
+         Send for review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · medium priority
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-11"
+          >
+            TASK-11
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-send-review"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-send"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+          />
+          <path
+            d="m21.854 2.147-10.94 10.939"
+          />
+        </svg>
+         Send for review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · medium priority
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-11"
+          >
+            TASK-11
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > does not offer Complete while the assignee’s review is pending, says why, and offers the Review board
+AssertionError: expected <button type="button" …(2)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="nda-open"
+  data-testid="rt-complete"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   Complete
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx:87:49
+     85|     const { onOpenBoard } = mount();
+     86|     await screen.findByTestId('rt-row');
+     87|     expect(screen.queryByTestId('rt-complete')).toBeNull();
+       |                                                 ^
+     88|     const note = await reviewState();
+     89|     expect(note.getAttribute('data-review')).toBe('pending');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > offers Complete once the verdict is recorded, and names it
+TestingLibraryElementError: Unable to find an element by: [data-testid="rt-review-state"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-send-review"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-send"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+          />
+          <path
+            d="m21.854 2.147-10.94 10.939"
+          />
+        </svg>
+         Send for review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · medium priority
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-11"
+          >
+            TASK-11
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-send-review"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-send"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+          />
+          <path
+            d="m21.854 2.147-10.94 10.939"
+          />
+        </svg>
+         Send for review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · medium priority
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-11"
+          >
+            TASK-11
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ reviewState client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx:81:40
+     79| }
+     80|
+     81| const reviewState = async () => screen.findByTestId('rt-review-state');
+       |                                        ^
+     82|
+     83| describe('Review tasks — a review task waits for the verdict on the Re…
+ ❯ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx:100:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — a review task waits for the verdict on the Review board > a completed review task whose review is still pending says no verdict is recorded
+TestingLibraryElementError: Unable to find an element by: [data-testid="rt-review-state"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        0 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-send-review"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-send"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+          />
+          <path
+            d="m21.854 2.147-10.94 10.939"
+          />
+        </svg>
+         Send for review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="completed"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-ok"
+          >
+            Completed
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · medium priority
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <span
+            class="rt-row-id"
+            title="TASK-11"
+          >
+            TASK-11
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        0 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-send-review"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-send"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+          />
+          <path
+            d="m21.854 2.147-10.94 10.939"
+          />
+        </svg>
+         Send for review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="completed"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-ok"
+          >
+            Completed
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · medium priority
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <span
+            class="rt-row-id"
+            title="TASK-11"
+          >
+            TASK-11
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ reviewState client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx:81:40
+     79| }
+     80|
+     81| const reviewState = async () => screen.findByTestId('rt-review-state');
+       |                                        ^
+     82|
+     83| describe('Review tasks — a review task waits for the verdict on the Re…
+ ❯ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx:108:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after a refused read, a review task is not offered for completion, and a task that is not a review task is
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after an answer with no rows, a review task is not offered for completion, and a task that is not a review task is
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > after rows of another document, a review task is not offered for completion, and a task that is not a review task is
+AssertionError: expected <button type="button" …(2)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="nda-open"
+  data-testid="rt-complete"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   Complete
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx:124:56
+    122|     mount();
+    123|     const first = (await screen.findAllByTestId('rt-row'))[0];
+    124|     expect(within(first).queryByTestId('rt-complete')).toBeNull();
+       |                                                        ^
+    125|     const note = await reviewState();
+    126|     expect(note.getAttribute('data-review')).toBe('unread');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx > Review tasks — review requests that could not be read > Refresh reads the review requests again with the tasks
+TestingLibraryElementError: Unable to find an element by: [data-testid="rt-review-state"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-send-review"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-send"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+          />
+          <path
+            d="m21.854 2.147-10.94 10.939"
+          />
+        </svg>
+         Send for review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · medium priority
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-11"
+          >
+            TASK-11
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed-comments-h ed-comments-h-row"
+    >
+      <span>
+        Tasks
+         · Module 2.5 Clinical Overview
+      </span>
+      <button
+        aria-label="Close tasks"
+        class="ed-comments-close"
+        title="Close tasks"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-x"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18 6 6 18"
+          />
+          <path
+            d="m6 6 12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div
+      class="rt-bar"
+    >
+      <span
+        class="rt-bar-n"
+      >
+        1 open · 1 total
+      </span>
+      <button
+        class="btn ghost"
+        data-testid="rt-send-review"
+        style="height: 28px; font-size: 12px;"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-send"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
+          />
+          <path
+            d="m21.854 2.147-10.94 10.939"
+          />
+        </svg>
+         Send for review
+      </button>
+      <button
+        class="nda-open"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div
+      aria-label="Tasks linked to this document"
+      class="rt-list"
+      role="list"
+      style=""
+    >
+      <div
+        class="rt-row"
+        data-status="in-progress"
+        data-testid="rt-row"
+        role="listitem"
+      >
+        <div
+          class="rt-row-h"
+        >
+          <span
+            class="rt-row-t"
+          >
+            Review: Module 2.5 Clinical Overview
+          </span>
+          <span
+            class="rd-chip tone-warn"
+          >
+            In progress
+          </span>
+        </div>
+        <div
+          class="rt-row-m"
+        >
+          assigned to OQ Signer · medium priority
+        </div>
+        <div
+          class="rt-row-a"
+        >
+          <button
+            class="nda-open"
+            data-testid="rt-complete"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-check"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6 9 17l-5-5"
+              />
+            </svg>
+             Complete
+          </button>
+          <span
+            class="rt-row-id"
+            title="TASK-11"
+          >
+            TASK-11
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ reviewState client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx:81:40
+     79| }
+     80|
+     81| const reviewState = async () => screen.findByTestId('rt-review-state');
+       |                                        ^
+     82|
+     83| describe('Review tasks — a review task waits for the verdict on the Re…
+ ❯ client/src/concept2cure/v2/__tests__/reviewTaskVerdict.test.tsx:135:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  05:48:47
+   Duration  16.59s (transform 417ms, setup 197ms, import 484ms, tests 15.16s, environment 517ms)
+

@@ -1,0 +1,9 @@
+
+/workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/__tests__/dependency-risk-gate.test.mjs
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/check-dependency-risk.mjs
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+✖ 2 problems (0 errors, 2 warnings)
+

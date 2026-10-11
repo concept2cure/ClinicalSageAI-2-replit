@@ -1,0 +1,575 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-08T14:45:10.347Z","pid":9907,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T14:45:10.348Z","pid":9907,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T14:45:10.349Z","pid":9907,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-08T14:45:10.877Z', poolSize: 1 }
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/domain-sign-ceremony.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 288ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a wrong password, and writes nothing 70ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 89ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 32ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 18ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a wrong password, and writes nothing 51ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 59ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 30ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a wrong password, and writes nothing 72ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 65ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 27ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 20ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a wrong password, and writes nothing 38ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 44ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 20ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a wrong password, and writes nothing 41ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 95ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 70ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 37ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a wrong password, and writes nothing 31ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 67ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 60ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 15ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a wrong password, and writes nothing 24ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 26ms
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+[CMC Batch] Release testing for batch a34edeef-4093-43f2-8301-400d7f6a6be2: released
+
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 13ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > a determination that is not an approval is not a signature > an IRB deferral is recorded under resolve, with no password and no signature row 17ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 14ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 17ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 24ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing 12ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 9ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 46ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 48ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 18ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 32ms
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+[database] Database connection successful { timestamp: '2026-10-08T14:45:16.843Z', poolSize: 2 }
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC batch release: a rejected batch is not signed as released > signs a rejection with meaning 'responsibility', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9204fc8d-12c3-4cf8-8238-7c5201b0982c: rejected
+
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 63ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing 35ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC batch release: a rejected batch is not signed as released > signs a rejection with meaning 'responsibility', on the ledger and the signature row 74ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written 26ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > an admin's PATCH to 'modifications_required' is refused, and nothing is written 25ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > a status no determination sets still moves, under a transition ledger row 48ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written 55ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > an admin's PATCH to 'conditional' is refused, and nothing is written 29ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > a status no determination sets still moves, under a transition ledger row 38ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written 37ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > an admin's PATCH to 'conditional' is refused, and nothing is written 25ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > a status no determination sets still moves, under a transition ledger row 19ms
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > stores 'review' as asked, and names the creator on the audit row
+[CMC Specs] Created specification e104963c-3a7d-49f7-9f3c-bf3e16ef4638 for dbdsc 791470707 created-review
+
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > refuses approvalStatus 'approved' and stores nothing 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > stores 'review' as asked, and names the creator on the audit row 27ms
+{"level":30,"time":"2026-10-08T14:45:18.860Z","pid":10098,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T14:45:18.861Z","pid":10098,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T14:45:18.861Z","pid":10098,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[database] Database connection successful { timestamp: '2026-10-08T14:45:18.981Z', poolSize: 1 }
+
+stdout | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[database] Database connection successful
+
+stderr | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label 1486ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > left an audit row naming the location it came from and the one it went to 50ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > the filing row records the evidence kind before and after (VR-05) 70ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > honours an explicit unfile — the Unfiled queue is a real answer 62ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a folder from another modality's taxonomy 19ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses to confirm a suggestion that does not exist 23ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a call that names no destination at all 18ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > confirms an existing suggestion in place, keeping the CTD section 34ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > will not let another organization move the document 20ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing 10103ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > refuses to confirm a suggestion — a person confirms filing in the Vault 37ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > the service itself refuses an agent's confirm, so no other agent caller can record one either 21ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides 44ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > leaves a person's filing through the Vault a confirmed decision with no agent marker 39ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a viewer, and writes nothing 14ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a scope that carries no role at all 15ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses AnA acting for a viewer — the path that had no check 25ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > lets a member file — the role SSO provisioning assigns 42ms
+{"level":30,"time":"2026-10-08T14:45:31.930Z","pid":10335,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T14:45:31.930Z","pid":10335,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T14:45:31.930Z","pid":10335,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-08T14:45:31.994Z', poolSize: 1 }
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an organisation member (not owner/admin/manager) is refused and the document stays 123ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an admin deletes an empty document of their organisation; the chained row names the actor and the reason 63ms
+{"level":30,"time":"2026-10-08T14:45:34.550Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 353759da-5348-4f40-a6f3-d909d4995006 by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:34.551Z","pid":10335,"hostname":"vm","context":{"userId":"68","tenantId":24,"resourceId":"f2eedc02-3467-4104-8397-39c1c77ca68f"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+{"level":30,"time":"2026-10-08T14:45:34.680Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc f109ad86-48bb-4d05-969c-cd83d231d701 by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a document with a section (so a revision) answers 409 and stays — the ledger is append-only 113ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a draft that carries a signature answers 409 and stays — the signature keeps its record 119ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > another organisation's admin gets 404 for this organisation's document, and it stays 54ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin freezing without the password is refused by the ceremony; the document stays a draft 43ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > a member without a signing role is refused before any credential is read 43ms
+{"level":30,"time":"2026-10-08T14:45:34.910Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 6ffa97b7-d0c0-4cb8-8400-9b1568bc2d2c by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed 84ms
+{"level":30,"time":"2026-10-08T14:45:35.174Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 20342ad5-3200-4e76-a4fa-145a2d48a4e2 by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:35.174Z","pid":10335,"hostname":"vm","context":{"userId":"68","tenantId":24,"resourceId":"4b2b0630-ac6a-4e94-a123-d64818d4332d"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+{"level":30,"time":"2026-10-08T14:45:35.301Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 20342ad5-3200-4e76-a4fa-145a2d48a4e2 by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:35.325Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: VIEW_FROZEN on doc 20342ad5-3200-4e76-a4fa-145a2d48a4e2 by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:35.326Z","pid":10335,"hostname":"vm","context":{"userId":"68","tenantId":24,"resourceId":"20342ad5-3200-4e76-a4fa-145a2d48a4e2"},"msg":"[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document"}
+{"level":30,"time":"2026-10-08T14:45:35.456Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 20342ad5-3200-4e76-a4fa-145a2d48a4e2 by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:35.500Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: VIEW_FROZEN on doc 20342ad5-3200-4e76-a4fa-145a2d48a4e2 by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:35.501Z","pid":10335,"hostname":"vm","context":{"userId":"68","tenantId":24,"resourceId":"20342ad5-3200-4e76-a4fa-145a2d48a4e2"},"msg":"[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document"}
+{"level":30,"time":"2026-10-08T14:45:35.548Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: VIEW_FROZEN on doc 20342ad5-3200-4e76-a4fa-145a2d48a4e2 by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:35.548Z","pid":10335,"hostname":"vm","context":{"userId":"68","tenantId":24,"resourceId":"20342ad5-3200-4e76-a4fa-145a2d48a4e2"},"msg":"[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > biotech pack: the second signer seals the synopsis as REVIEWER, then e-signs; a re-run adds nothing 475ms
+{"level":30,"time":"2026-10-08T14:45:35.617Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 2292fe75-2278-4d00-8d3f-af59987ec234 by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:35.618Z","pid":10335,"hostname":"vm","context":{"userId":"68","tenantId":24,"resourceId":"cddadc88-2523-415e-ac60-270d0822e10f"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+{"level":30,"time":"2026-10-08T14:45:35.681Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 36a69751-3cb3-4ccb-8f9b-229d57eaddbd by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:35.682Z","pid":10335,"hostname":"vm","context":{"userId":"68","tenantId":24,"resourceId":"acad3c71-c9e1-4f91-9c29-3482267851a8"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+{"level":30,"time":"2026-10-08T14:45:35.738Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 36a69751-3cb3-4ccb-8f9b-229d57eaddbd by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:35.755Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: VIEW_FROZEN on doc 36a69751-3cb3-4ccb-8f9b-229d57eaddbd by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:35.755Z","pid":10335,"hostname":"vm","context":{"userId":"68","tenantId":24,"resourceId":"36a69751-3cb3-4ccb-8f9b-229d57eaddbd"},"msg":"[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document"}
+{"level":30,"time":"2026-10-08T14:45:35.870Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 36a69751-3cb3-4ccb-8f9b-229d57eaddbd by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > biotech pack: without a signer credential the freeze is recorded as not executed and the pack goes on 65ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > mdx pack: the second signer seals the summary as REVIEWER, then approves; the approval is its own signature 253ms
+{"level":30,"time":"2026-10-08T14:45:35.915Z","pid":10335,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 48ec9146-b69d-46b6-98b7-35f7cc129dc8 by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:35.916Z","pid":10335,"hostname":"vm","context":{"userId":"68","tenantId":24,"resourceId":"4e8cc5b8-596b-4ad9-8ec5-636a6e6ffeb4"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > mdx pack: without a signer credential the freeze is recorded as not executed and the pack goes on 42ms
+{"level":30,"time":"2026-10-08T14:45:37.436Z","pid":10467,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T14:45:37.437Z","pid":10467,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T14:45:37.437Z","pid":10467,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-section-concurrency.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-section-concurrency.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-08T14:45:37.510Z', poolSize: 1 }
+
+stdout | tests/db/authoring-section-concurrency.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-08T14:45:37.537Z', poolSize: 2 }
+
+stdout | tests/db/authoring-section-concurrency.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-section-concurrency.dbtest.ts
+✅ Template tables initialized
+
+{"level":30,"time":"2026-10-08T14:45:38.974Z","pid":10467,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a50bd001-156a-4cad-aaa4-93e8e3b9c777 by d***@example.test"}
+{"level":30,"time":"2026-10-08T14:45:38.974Z","pid":10467,"hostname":"vm","context":{"userId":"90","tenantId":31,"resourceId":"f23cef1b-3df5-486a-afee-fb1c774c5839"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+{"level":30,"time":"2026-10-08T14:45:39.025Z","pid":10467,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc a50bd001-156a-4cad-aaa4-93e8e3b9c777 by d***@example.test"}
+{"level":30,"time":"2026-10-08T14:45:39.067Z","pid":10467,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc a50bd001-156a-4cad-aaa4-93e8e3b9c777 by d***@example.test"}
+{"level":30,"time":"2026-10-08T14:45:39.084Z","pid":10467,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc a50bd001-156a-4cad-aaa4-93e8e3b9c777 by d***@example.test"}
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > creates a document and a section to contend over 109ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > refuses a save whose token is stale, and overwrites nothing 46ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > accepts a save that carries the current token 30ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > leaves a caller that sends no token exactly as it was 17ms
+{"level":30,"time":"2026-10-08T14:45:40.558Z","pid":10517,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T14:45:40.559Z","pid":10517,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T14:45:40.559Z","pid":10517,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-08T14:45:40.619Z', poolSize: 1 }
+
+stdout | tests/db/vault-where-used.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-where-used.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-08T14:45:41.146Z","pid":10517,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:10517) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-08T14:45:41.237Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-08T14:45:41.290Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "272e0d1b-4c54-41a9-af15-932d798592b7",
+    "code": "DBTEST-VWHERE-STAB",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-08T14:45:41.307Z","pid":10517,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-08T14:45:41.318Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-08T14:45:41.341Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8ff0cef1-1e01-4dcf-a6f4-dbbe4f460319",
+    "code": "DBTEST-VWHERE-STAB",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-08T14:45:41.352Z","pid":10517,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-08T14:45:41.353Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 18,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-08T14:45:41.372Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8e4fd4d7-7777-43d0-a63e-fa761af85208",
+    "code": "DBTEST-VWHERE-CO",
+    "type": "OTHER",
+    "size": 18,
+    "hasText": true
+  }
+}
+
+{"level":30,"time":"2026-10-08T14:45:42.501Z","pid":10517,"hostname":"vm","context":{"userId":106,"tenantId":41,"resourceId":"44"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-08T14:45:42.554Z","pid":10517,"hostname":"vm","context":{"userId":106,"tenantId":41,"resourceId":"45"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-08T14:45:42.603Z","pid":10517,"hostname":"vm","context":{"userId":106,"tenantId":41,"resourceId":"46"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-08T14:45:42.652Z","pid":10517,"hostname":"vm","context":{"userId":106,"tenantId":41,"resourceId":"47"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+stdout | tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each version says why it would not be transmitted, in the refusal's own words
+[database] Database connection successful { timestamp: '2026-10-08T14:45:42.772Z', poolSize: 2 }
+
+ ✓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each version says why it would not be transmitted, in the refusal's own words 109ms
+ ✓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each placement carries its sequence's dispatch status 41ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it 28ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement 45ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing 44ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security 2ms
+{"level":30,"time":"2026-10-08T14:45:43.106Z","pid":10517,"hostname":"vm","context":{"userId":106,"tenantId":41,"resourceId":"e83d2e4c-fe11-4694-9e3e-371b7ad4fe2d"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED estar_official_pdf"}
+{"level":30,"time":"2026-10-08T14:45:43.165Z","pid":10517,"hostname":"vm","context":{"userId":106,"tenantId":41,"resourceId":"e83d2e4c-fe11-4694-9e3e-371b7ad4fe2d"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED estar_official_pdf"}
+{"level":30,"time":"2026-10-08T14:45:43.173Z","pid":10517,"hostname":"vm","context":{"userId":106,"tenantId":42,"resourceId":"23114148-1e64-43d2-bc23-2da4164b0595"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED estar_official_pdf"}
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store 26ms
+ ✓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed 4ms
+{"level":30,"time":"2026-10-08T14:45:44.843Z","pid":10613,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T14:45:44.845Z","pid":10613,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T14:45:44.845Z","pid":10613,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-stability-table.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-stability-table.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-08T14:45:44.905Z', poolSize: 1 }
+
+stdout | tests/db/authoring-stability-table.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-08T14:45:44.923Z', poolSize: 2 }
+
+stdout | tests/db/authoring-stability-table.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-stability-table.dbtest.ts
+✅ Template tables initialized
+
+{"level":30,"time":"2026-10-08T14:45:46.363Z","pid":10613,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 8675f9b8-60f7-4a59-be87-d591916e95ee by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:46.363Z","pid":10613,"hostname":"vm","context":{"userId":"120","tenantId":43,"resourceId":"9a471e94-6be6-404d-8d99-da08ffce90b8"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ ✓ tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > authors the table into a governed section 93ms
+{"level":30,"time":"2026-10-08T14:45:46.432Z","pid":10613,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 8675f9b8-60f7-4a59-be87-d591916e95ee by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:46.449Z","pid":10613,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: EXPORT on doc 8675f9b8-60f7-4a59-be87-d591916e95ee by d***@c2c.test"}
+{"level":30,"time":"2026-10-08T14:45:46.450Z","pid":10613,"hostname":"vm","context":{"userId":"120","tenantId":43,"resourceId":"8675f9b8-60f7-4a59-be87-d591916e95ee"},"msg":"[audit-service] [AUDIT] authoring.section.EXPORT authoring_document"}
+ ✓ tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > survives the hard reload — the grid is re-read from the store, not from memory 12ms
+ ✓ tests/db/authoring-stability-table.dbtest.ts > BP-W1-1 wave gate — a stability table reaches Word as a table > exports to Word as a REAL table — <w:tbl>, 10 rows, 70 cells 267ms
+{"level":30,"time":"2026-10-08T14:45:47.853Z","pid":10715,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T14:45:47.854Z","pid":10715,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T14:45:47.854Z","pid":10715,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/c2c-project-persistence.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-08T14:45:47.890Z', poolSize: 1 }
+
+stdout | tests/db/c2c-project-persistence.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/c2c-project-persistence.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates a 510(k) device program and returns 201 with the portfolio shape
+[database] Database connection successful { timestamp: '2026-10-08T14:45:48.616Z', poolSize: 2 }
+
+stderr | tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > refuses a program whose project record has no workspace to go in, and writes nothing (P-19)
+{
+  "timestamp": "2026-10-08T14:45:48.758Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "48968cdb-56f4-4622-acc3-a239cf84a377",
+    "orgId": 98,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "This organization has 2 client workspaces, none of them marked as the organization’s own, and the program names none of them. projects.client_workspace_id decides who can see a project, so it is not defaulted. A program cannot be created without its PM-spine anchor."
+  }
+}
+
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates a 510(k) device program and returns 201 with the portfolio shape 117ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > gives the program its project record in the same creation, and it resolves strict (P-19) 13ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > refuses a program whose project record has no workspace to go in, and writes nothing (P-19) 55ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > persists the device program as a device, never as a biologic 2ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > makes the created program retrievable through the list projection 13ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > writes a hash-chained audit row for the creation 1ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates an EU MDR technical file as a device, in the MDX workstream 31ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates an EU IVDR technical file as an IVD 67ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > refuses to record a device filing as a medicinal product 6ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > accepts the new device-family classes 82ms
+stderr | tests/db/c2c-project-persistence.dbtest.ts > the fail-closed 503 discloses no schema object > returns a human message and a correlation id, and names no relation
+{
+  "timestamp": "2026-10-08T14:45:49.031Z",
+  "level": "error",
+  "message": "[c2c-projects] Store not provisioned — request failed closed",
+  "context": {
+    "correlationId": "bf26514b-3792-442f-b60f-77c2b24c5162",
+    "step": "the licensed-program quota check",
+    "store": "organizations",
+    "storeCheck": "absent",
+    "code": "42P01",
+    "route": "/api/c2c/projects"
+  }
+}
+
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > POST /api/c2c/projects — persistence against real PostgreSQL > creates an IVD 510(k) as an IVD 56ms
+ ✓ tests/db/c2c-project-persistence.dbtest.ts > the fail-closed 503 discloses no schema object > returns a human message and a correlation id, and names no relation 29ms
+{"level":30,"time":"2026-10-08T14:45:50.655Z","pid":10761,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T14:45:50.657Z","pid":10761,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T14:45:50.657Z","pid":10761,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing
+[database] Database connection successful { timestamp: '2026-10-08T14:45:50.737Z', poolSize: 1 }
+
+stdout | tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing
+[database] Database connection successful
+
+stderr | tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > refuses without a reason, and changes nothing 1528ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > confirms each with one chained row carrying the reason, and names the person 70ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > a document moved or confirmed since the list was loaded is refused CONFLICT; the others commit 73ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > a viewer is refused, and nothing changes 9ms
+ ✓ tests/db/vault-placement-batch.dbtest.ts > Confirm N suggested (VR-11b) > the Vault counts the suggestions awaiting confirmation over the program 220ms
+{"level":30,"time":"2026-10-08T14:45:53.220Z","pid":10824,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T14:45:53.221Z","pid":10824,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T14:45:53.221Z","pid":10824,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-ingest.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-08T14:45:53.268Z', poolSize: 1 }
+
+stdout | tests/db/vault-ingest.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-ingest.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-08T14:45:53.582Z","pid":10824,"hostname":"vm","context":{"filename":"dhf-extract.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stderr | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent
+Warning: Indexing all PDF objects
+
+(node:10824) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":"2026-10-08T14:45:53.953Z","pid":10824,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-08T14:45:54.046Z","pid":10824,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent
+{
+  "timestamp": "2026-10-08T14:45:54.107Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e11533c1-4811-4929-bd8f-a2fd0e2accb8",
+    "code": "DBTEST-W06-DOC",
+    "type": "OTHER",
+    "size": 69,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > accepts the upload and records the SHA-256 of the bytes that were sent 592ms
+stderr | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind
+{
+  "timestamp": "2026-10-08T14:45:54.148Z",
+  "level": "warn",
+  "message": "[vault-ingest] Vault ingest denied: program not owned by caller organization",
+  "context": {
+    "programId": "72e9b604-616b-464e-9e86-5f41e6f98b64",
+    "orgId": 65
+  }
+}
+
+{"level":40,"time":"2026-10-08T14:45:54.167Z","pid":10824,"hostname":"vm","context":{"filename":"dhf-extract.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-08T14:45:54.169Z","pid":10824,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-08T14:45:54.170Z","pid":10824,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage
+{
+  "timestamp": "2026-10-08T14:45:54.197Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "d0b51896-bc63-4b4a-b1ee-4c25d73fa01f",
+    "orgId": 65
+  }
+}
+
+{"level":40,"time":"2026-10-08T14:45:54.215Z","pid":10824,"hostname":"vm","context":{"filename":"dhf-extract-copy.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-08T14:45:54.216Z","pid":10824,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-08T14:45:54.218Z","pid":10824,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > persisted a row carrying the canonical columns the route writes 4ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the document actually lands > the bytes are retrievable at the address the row records 3ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > wrote a hash-chained audit row naming the actor and the content hash 4ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — the Part 11 record of who put it there > a document and its audit row cannot exist without each other 5ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — another tenant cannot write into your program > refuses the upload and leaves nothing behind 19ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > different bytes at an occupied code and version: 409, and no new object in storage 44ms
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back
+{
+  "timestamp": "2026-10-08T14:45:54.241Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused: content already recorded in this program",
+  "context": {
+    "constraint": "idx_vault_documents_program_hash_unique"
+  }
+}
+
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back
+{
+  "timestamp": "2026-10-08T14:45:54.257Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "332a4db5-7889-478b-9583-e009c35b2942",
+    "orgId": 65
+  }
+}
+
+{"level":40,"time":"2026-10-08T14:45:54.283Z","pid":10824,"hostname":"vm","context":{"filename":"misfiled.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-08T14:45:54.286Z","pid":10824,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-08T14:45:54.287Z","pid":10824,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage
+{
+  "timestamp": "2026-10-08T14:45:54.297Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "f701b475-6cd9-4996-8fc9-ce440b8e7984",
+    "orgId": 65
+  }
+}
+
+{"level":40,"time":"2026-10-08T14:45:54.319Z","pid":10824,"hostname":"vm","context":{"filename":"second.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-08T14:45:54.320Z","pid":10824,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-08T14:45:54.321Z","pid":10824,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names
+{
+  "timestamp": "2026-10-08T14:45:54.337Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "e8032078-727f-49b3-8d3b-e51a2e0b65a2",
+    "code": "DBTEST-W06-DOC-NEW",
+    "type": "OTHER",
+    "size": 80,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the same bytes under a second code: 409, no new object, and the original still reads back 62ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > a folder outside the program taxonomy: 400, and no new object in storage 39ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > the reference check the discard relies on sees an admitted record, as the runtime role 7ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — a refused upload leaves no bytes behind > an admitted upload still stores exactly one object — the one its record names 43ms
+{"level":40,"time":"2026-10-08T14:45:54.359Z","pid":10824,"hostname":"vm","context":{"filename":"member.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-10-08T14:45:54.360Z","pid":10824,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-10-08T14:45:54.361Z","pid":10824,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > admits a member — the role SSO provisioning assigns
+{
+  "timestamp": "2026-10-08T14:45:54.377Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "177fd910-236b-4c67-8a4b-e4066105ee87",
+    "code": "DBTEST-W06-DOC-MEMBER",
+    "type": "OTHER",
+    "size": 78,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a viewer before anything is stored or recorded 2ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > refuses a scope that carries no role at all 0ms
+ ✓ tests/db/vault-ingest.dbtest.ts > POST /api/vault/ingest — only a role that may write adds to the Vault (D3) > admits a member — the role SSO provisioning assigns 24ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every table named by the migration ends up policied, enabled and FORCEd 10ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > every non-public child the chained list names that exists ends up policied, enabled and FORCEd 7ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > chat_messages: each tenant sees its own row and not the other's 23ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_details: each tenant sees its own row and not the other's 38ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > csr_sections: each tenant sees its own row and not the other's 16ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > rag_chunks: each tenant sees its own row and not the other's 20ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > complaints: each tenant sees its own row and not the other's 16ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > drafting_tasks: each tenant sees its own row and not the other's 18ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > pdev_program_activities: each tenant sees its own row and not the other's 16ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > resolution_bundle_items: each tenant sees its own row and not the other's 17ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > c2c_document_section_versions: each tenant sees its own row and not the other's 22ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > leaves the three chained tables deny-all, deliberately and visibly 2ms
+ ✓ tests/db/child-table-parent-scoped-rls.dbtest.ts > child tables are scoped to their parent row’s tenant > the policy is inert when enforcement is off, exactly like its siblings 3ms
+{"level":30,"time":"2026-10-08T14:45:56.830Z","pid":10940,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-08T14:45:56.832Z","pid":10940,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-08T14:45:56.832Z","pid":10940,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership comes from rows no other tenant can write (D3) > posture: the statements run as app_service, RLS enforcing, with the tenant GUC set 4ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership comes from rows no other tenant can write (D3) > positive control: each tenant sees exactly its own vault document 14ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership comes from rows no other tenant can write (D3) > a core.programs row naming B's program does not make A its owner 32ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault ownership comes from rows no other tenant can write (D3) > an ownership row behind an org-less core.programs row does not either 19ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault delegation is granted by the sponsor alone (D3) > A cannot grant itself delegate access to B, and gains nothing by trying 13ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault delegation is granted by the sponsor alone (D3) > nor does trying reach the org-policied schemas that trust the same table 13ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > vault delegation is granted by the sponsor alone (D3) > a grant B makes still works, a delegate cannot widen it, and revoking it ends it 15ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > an organization's tenant key cannot be moved, by its own tenant or any other (D3) > A cannot hand B's organization its uuid, and B's vault stays B's 9ms
+ ✓ tests/db/vault-program-ownership.dbtest.ts > an organization's tenant key cannot be moved, by its own tenant or any other (D3) > the other writers still write, and none of them, the platform included, can move a key 9ms
+
+ Test Files  11 passed (11)
+      Tests  151 passed (151)
+   Start at  14:45:06
+   Duration  50.78s (transform 15.54s, setup 417ms, import 2.73s, tests 44.66s, environment 1ms)
+

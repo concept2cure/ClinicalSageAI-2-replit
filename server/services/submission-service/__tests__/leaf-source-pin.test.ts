@@ -63,6 +63,9 @@ const SEQ = { id: 1, status: 'draft', submissionId: 21 };
 
 beforeEach(() => {
   selectChain.mockReset();
+  // Reads after the queued ones (the same-document check, which runs under the
+  // sequence lock) find no live leaf: an unqueued select answers no rows.
+  selectChain.mockResolvedValue([]);
   insertValues.mockReset();
   updateSet.mockReset();
   insertValues.mockResolvedValue([{ id: 99 }]);

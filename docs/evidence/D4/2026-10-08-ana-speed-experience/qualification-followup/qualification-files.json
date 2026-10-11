@@ -1,0 +1,30 @@
+{
+  "validated_local_source_checkpoint": "3d57c2416eb92680977b99cd66e74b8e8a9e927a",
+  "base_commit": "b015e409c268ca69965686710a18093b73e404b5",
+  "runtime": "Node 22.23.3",
+  "proof_tier": {
+    "command": "npm run test:proof-tier",
+    "exit_code": 0,
+    "files_passed": 118,
+    "tests_passed": 1313,
+    "duration_seconds": 587.05
+  },
+  "files": [
+    {
+      "path": "docs/evidence/QA-2026-10-08/roles/repro-scripts/send-for-review.mjs",
+      "sha256": "6692f3d101396d6813c566c33d20cb8a2283d773da13e5828922d52aabb8ea58"
+    },
+    {
+      "path": "scripts/ci/check-launch-scope.selftest.mjs",
+      "sha256": "5b734a41f65a262cf453756fd79f91216dd20b516874754a9b89c5285db2b59d"
+    },
+    {
+      "path": "tests/schema-contract/chat-thread-access.contract.test.ts",
+      "sha256": "68cacc766b5dc155fba8587bdf9e91d14b72c0457143ce2cd802f7d38838d3a5"
+    },
+    {
+      "path": "docs/evidence/D4/2026-10-08-ana-speed-experience/semgrep-qualification/format-log-check.mjs",
+      "sha256": "d94ecb0081c4304445ad21e9ee881dd381ca7c5f72af3e8d5516eacfa858ed90"
+    }
+  ]
+}

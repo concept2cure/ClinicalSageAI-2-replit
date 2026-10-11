@@ -21,9 +21,11 @@
  */
 import type { Request, Response } from 'express';
 import { isPlatformAdmin } from '../../middleware/requirePlatformAdmin.js';
+import { withExtendingRoles } from '../../../shared/constants/org-roles';
 
 /** Organisation roles that may read, export and record the audit trail. */
-export const AUDIT_READER_ROLES = ['owner', 'admin', 'manager'] as const;
+// P-18: an approver holds everything a manager may.
+export const AUDIT_READER_ROLES: readonly string[] = withExtendingRoles(['owner', 'admin', 'manager']);
 
 /** The dotted `domain.action` types the server's own writers put in audit_events. */
 export const AUDIT_EVENT_TYPES = [

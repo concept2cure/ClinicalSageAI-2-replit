@@ -1,0 +1,12 @@
+# (1) GREEN, client — EsignModal reads user.signing on open and, when required and not enrolled, shows 'Enrol an authenticator in Account to sign.' with no fields;
+# AccountPanel warns 'Removing it stops you signing.' when the server says signing needs it; AuthUser.signing typed
+$ npx vitest run client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx client/src/concept2cure/v2/__tests__/accountPanel.test.tsx
+ ✓ client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx > EsignModal reads the signing posture the server states > required and not enrolled: says to enrol, asks for no password, and signs nothing 344ms
+ ✓ client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx > EsignModal reads the signing posture the server states > required and enrolled: the signing form, as before 21ms
+ ✓ client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx > EsignModal reads the signing posture the server states > not required: the signing form, as before 18ms
+ ✓ client/src/concept2cure/_shared/components/__tests__/esignModalSigningPosture.test.tsx > EsignModal reads the signing posture the server states > the posture could not be read: the signing form, and the server decides at signing 15ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > enrolment shows the server's QR code and key, confirms a code, then shows the recovery codes once 145ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > where signing needs an authenticator, removal warns that it stops signing (P-25 follow-up) 55ms
+ ✓ client/src/concept2cure/v2/__tests__/accountPanel.test.tsx > authenticator app > where signing does not need one, removal carries no such warning 50ms
+ Test Files  2 passed (2)
+      Tests  19 passed (19)

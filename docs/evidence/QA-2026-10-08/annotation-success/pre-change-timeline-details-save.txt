@@ -1,0 +1,8 @@
+PRE-CHANGE timeline, Details save in the real Vault (temporary probe, deleted).
+PROBE LOG ["vault-GET","details-POST","vault-GET"]
+PROBE SAMPLES
+vaultGET=1 loading=false saved-note=false details-block=true
+vaultGET=1 loading=false saved-note=true details-block=true
+vaultGET=2 loading=true saved-note=false details-block=false
+vaultGET=2 loading=false saved-note=false details-block=true
+PROBE FINAL saved-note=false

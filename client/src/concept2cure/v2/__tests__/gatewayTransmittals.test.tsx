@@ -1013,3 +1013,65 @@ describe('GatewayTransmittals — an agency technical rejection (sweep F19)', ()
     expect(screen.queryByTestId('form-submit')).toBeNull();
   });
 });
+
+/* QA 2026-10-08 (j6): a transmit and a technical rejection are electronic
+   signatures. The server refuses a role without signing authority before the
+   password (403 ESIGNATURE_NO_AUTHORITY); GET /gateways says, from the same
+   check, whether this person may sign (meta.signing.canSign). The form is not
+   offered to someone the server will refuse, and the refusal is said in words. */
+describe('GatewayTransmittals — signing authority', () => {
+  const PACKAGE_LOG = [{ ...LOG[0], id: 9, package_id: 77, transmission_id: 'ESG-0009' }];
+  function withSigning(canSign: boolean | null) {
+    return async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') {
+        return { ok: true, status: 200, json: async () => ({ data: GATEWAYS, meta: { signing: { canSign } } }) } as Response;
+      }
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(PACKAGE_LOG);
+      return env(null);
+    };
+  }
+
+  it('a person whose role does not sign is not offered Transmit or Technical rejection, and is told why', async () => {
+    apiRequest.mockImplementation(withSigning(false));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-0009');
+    expect(screen.queryByRole('button', { name: /^Transmit$/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Technical rejection/ })).toBeNull();
+    expect(screen.getByText(/Transmitting is an electronic signature, and your role does not sign/)).toBeTruthy();
+    // Preparing a package is not a signature: those controls stay.
+    expect(screen.getByRole('button', { name: /Assemble bundle/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Record identifiers/ })).toBeTruthy();
+  });
+
+  it('a signer is offered both', async () => {
+    apiRequest.mockImplementation(withSigning(true));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-0009');
+    expect(screen.getByRole('button', { name: /^Transmit$/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Technical rejection/ })).toBeTruthy();
+    expect(screen.queryByText(/your role does not sign/)).toBeNull();
+  });
+
+  it('an authority the server could not read hides nothing: unknown is not "you cannot"', async () => {
+    apiRequest.mockImplementation(withSigning(null));
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('ESG-0009');
+    expect(screen.getByRole('button', { name: /^Transmit$/ })).toBeTruthy();
+  });
+
+  it('a 403 ESIGNATURE_NO_AUTHORITY from the transmit is said in the server’s words, with no status code', async () => {
+    const sentence = 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)). Nothing was signed.';
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'POST' && url.endsWith('/transmit')) {
+        throw new ApiRequestError(sentence, 403, { error: sentence, details: { code: 'ESIGNATURE_NO_AUTHORITY' } });
+      }
+      return withSigning(null)(method, url);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    expect(await screen.findByText(`Not transmitted — ${sentence}`)).toBeTruthy();
+    expect(screen.queryByText(/HTTP 403/)).toBeNull();
+  });
+});

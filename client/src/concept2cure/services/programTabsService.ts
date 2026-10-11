@@ -173,7 +173,7 @@ export interface PendingApproval {
   [key: string]: unknown;
 }
 
-/** Result of an approve / reject decision (POST /api/approval-workflows/:id/{approve,reject}). */
+/** Result of a reject decision (POST /api/approval-workflows/:id/reject). */
 export interface WorkflowDecisionResult {
   success: boolean;
   status: string;
@@ -280,18 +280,6 @@ class ProgramTabsService {
       '/api/approval-workflows/pending',
     );
     return Array.isArray(payload?.approvals) ? payload!.approvals! : [];
-  }
-
-  /**
-   * Approve a pending approval step. The reason captured at signing is stored
-   * verbatim as the approval comment. POST /api/approval-workflows/:id/approve.
-   */
-  async approveWorkflow(approvalId: number | string, comments: string): Promise<WorkflowDecisionResult> {
-    return this.request<WorkflowDecisionResult>(
-      'POST',
-      `/api/approval-workflows/${encodeURIComponent(String(approvalId))}/approve`,
-      { comments },
-    );
   }
 
   /**

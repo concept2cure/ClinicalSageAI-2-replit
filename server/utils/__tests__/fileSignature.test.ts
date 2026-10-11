@@ -182,6 +182,25 @@ describe('verifyFileSignature — edge cases', () => {
  * file's extension says.
  */
 describe('verifyDeclaredTypeForName — the extension binds the declared type and the bytes', () => {
+  it.each(['json', 'xml', 'tsv'])('refuses a .%s name carrying a different declared binary type', (extension) => {
+    const pdf = Buffer.from('%PDF-1.4\n');
+    expect(verifyFileSignature(pdf, 'application/pdf').ok).toBe(true);
+    expect(verifyDeclaredTypeForName(pdf, `data.${extension}`, 'application/pdf').ok).toBe(false);
+  });
+
+  it.each([
+    ['data.json', 'application/json', '{"subject":"001"}'],
+    ['data.xml', 'application/xml', '<Study id="S1" />'],
+    ['data.xml', 'text/xml', '<Study id="S1" />'],
+    ['data.tsv', 'text/tab-separated-values', 'subject\tvalue\n001\t0'],
+    ['data.json', 'text/plain', '{"subject":"001"}'],
+  ])('verifies the existing byte-shape check for %s / %s', (name, mime, source) => {
+    const bytes = Buffer.from(source);
+    expect(verifyFileSignature(bytes, mime).ok).toBe(true);
+    expect(verifyDeclaredTypeForName(bytes, name, mime).ok).toBe(true);
+    expect(verifyDeclaredTypeForName(Buffer.from([0, 1, 2]), name, mime).ok).toBe(false);
+  });
+
   const HTML = Buffer.from('<!doctype html><script>alert(document.domain)</script>');
   const PDF = makeBuf('%PDF-1.7\n', 32);
 
@@ -232,7 +251,6 @@ describe('verifyDeclaredTypeForName — the extension binds the declared type an
   });
 
   it('leaves a name it does not bind to the caller’s own allowlist', () => {
-    expect(verifyDeclaredTypeForName(Buffer.from('{"a":1}'), 'data.json', 'application/json').ok).toBe(true);
     expect(verifyDeclaredTypeForName(HTML, 'no-extension', 'text/html').ok).toBe(true);
   });
 });

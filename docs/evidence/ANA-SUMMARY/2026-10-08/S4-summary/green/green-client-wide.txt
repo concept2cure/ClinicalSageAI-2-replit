@@ -1,0 +1,110 @@
+# 100 client test files: every v2 and components/ana suite touching AnA, AnaActivity, AnaWorkPanel, useAnaChat, the Summary; after the last edit
+# Trimmed from the full run: passing test lines are counted per file below, not listed.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ Test Files  100 passed (100)
+      Tests  1026 passed (1026)
+   Start at  13:47:36
+   Duration  210.84s (transform 10.93s, setup 8.66s, import 42.41s, tests 85.57s, environment 55.54s)
+
+## Per file (passed / failed / skipped)
+  21 / 0 / 0  client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx
+  23 / 0 / 0  client/src/concept2cure/v2/__tests__/workbenchA11ySweep.test.tsx
+   4 / 0 / 0  client/src/concept2cure/v2/__tests__/documentWorkbenchDecisionPayload.test.tsx
+   5 / 0 / 0  client/src/concept2cure/v2/__tests__/authoringAnaPane.test.tsx
+  33 / 0 / 0  client/src/concept2cure/v2/__tests__/conversationRailTwins.test.tsx
+  58 / 0 / 0  client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx
+  10 / 0 / 0  client/src/concept2cure/v2/__tests__/biostatWorkbenchFreshness.test.tsx
+  14 / 0 / 0  client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx
+  18 / 0 / 0  client/src/concept2cure/v2/__tests__/workbenchAssignReview.test.tsx
+  28 / 0 / 0  client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx
+   6 / 0 / 0  client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx
+  10 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-record.test.ts
+   7 / 0 / 0  client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx
+  14 / 0 / 0  client/src/concept2cure/v2/__tests__/ectdCoauthorNoFixtures.test.tsx
+  19 / 0 / 0  client/src/concept2cure/v2/__tests__/anaInterruptedHosts.test.tsx
+   6 / 0 / 0  client/src/concept2cure/v2/__tests__/ectdCompileWithdrawal.test.tsx
+   8 / 0 / 0  client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx
+  16 / 0 / 0  client/src/concept2cure/v2/__tests__/conversationThreadShellChat.test.tsx
+   9 / 0 / 0  client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx
+  28 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-drive.test.ts
+   3 / 0 / 0  client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown-cache.test.ts
+   1 / 0 / 0  client/src/concept2cure/v2/__tests__/workbenchExportRecovery.test.tsx
+  12 / 0 / 0  client/src/concept2cure/v2/__tests__/anaRunControl.test.tsx
+   6 / 0 / 0  client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx
+  14 / 0 / 0  client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx
+  12 / 0 / 0  client/src/concept2cure/v2/__tests__/anaRunControlStrip.test.tsx
+   6 / 0 / 0  client/src/concept2cure/v2/__tests__/anaDrivesWave5.test.tsx
+  17 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-run-policy.test.ts
+   8 / 0 / 0  client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx
+   5 / 0 / 0  client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx
+  13 / 0 / 0  client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx
+  16 / 0 / 0  client/src/concept2cure/v2/__tests__/anaDraftStructure.test.ts
+  13 / 0 / 0  client/src/concept2cure/v2/__tests__/ectdCompileOrchestratorHonesty.test.tsx
+   5 / 0 / 0  client/src/concept2cure/v2/__tests__/conversationFilesAdopt.test.tsx
+  22 / 0 / 0  client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx
+  48 / 0 / 0  client/src/concept2cure/v2/__tests__/anaActivity.test.tsx
+   8 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-stopped-reason.test.ts
+   3 / 0 / 0  client/src/concept2cure/v2/__tests__/ectdCoauthorEmptyStateAction.test.tsx
+  15 / 0 / 0  client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx
+  33 / 0 / 0  client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx
+  21 / 0 / 0  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx
+   4 / 0 / 0  client/src/concept2cure/v2/__tests__/conversationThreadSignoff.test.tsx
+   1 / 0 / 0  client/src/concept2cure/v2/__tests__/ectdCoauthorReadOnly.test.tsx
+   6 / 0 / 0  client/src/concept2cure/v2/__tests__/anaDrivesWave6.test.tsx
+   5 / 0 / 0  client/src/concept2cure/v2/__tests__/anaDrivesWave3.test.tsx
+   7 / 0 / 0  client/src/concept2cure/v2/__tests__/conversationThreadUrl.test.tsx
+  10 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-tool-result-pairing.test.ts
+   5 / 0 / 0  client/src/concept2cure/v2/__tests__/anaCommandPortfolioHonesty.test.tsx
+   8 / 0 / 0  client/src/concept2cure/v2/__tests__/conversationArtifactPanel.test.tsx
+  20 / 0 / 0  client/src/concept2cure/v2/__tests__/anaRunPolicyStops.test.tsx
+   1 / 0 / 0  client/src/concept2cure/v2/__tests__/ectdCoauthorFinalizedRefusal.test.tsx
+   7 / 0 / 0  client/src/concept2cure/v2/__tests__/anaAnswerCaveats.test.tsx
+  15 / 0 / 0  client/src/concept2cure/components/ana/__tests__/crl-premortem-panel.test.tsx
+   8 / 0 / 0  client/src/concept2cure/v2/__tests__/anaActivityStepDetails.test.tsx
+   5 / 0 / 0  client/src/concept2cure/v2/__tests__/anaContinueHosts.test.tsx
+   6 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts
+   4 / 0 / 0  client/src/concept2cure/v2/__tests__/anaStoppedNoteA11y.test.tsx
+   4 / 0 / 0  client/src/concept2cure/v2/__tests__/anaMemoryPlainLanguage.test.tsx
+   2 / 0 / 0  client/src/concept2cure/v2/__tests__/anaCommandNoBaseline.test.tsx
+   7 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-round-status.test.ts
+   7 / 0 / 0  client/src/concept2cure/components/ana/__tests__/governed-action-signoff-fixed-meaning.test.tsx
+   4 / 0 / 0  client/src/concept2cure/v2/__tests__/conversationThreadStopped.test.tsx
+  11 / 0 / 0  client/src/concept2cure/components/ana/__tests__/briefing-book.test.tsx
+   6 / 0 / 0  client/src/concept2cure/v2/__tests__/anaOutputs.test.tsx
+   5 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-step-presentation.test.ts
+  22 / 0 / 0  client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx
+   4 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-completion.test.ts
+   5 / 0 / 0  client/src/concept2cure/v2/__tests__/anaMemoryNoFixtures.test.tsx
+   2 / 0 / 0  client/src/concept2cure/v2/__tests__/anaCommandRecConfidence.test.tsx
+   7 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-plan.test.ts
+   2 / 0 / 0  client/src/concept2cure/v2/__tests__/anaMessageWarnings.test.tsx
+   8 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-model-history.test.ts
+   6 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-stale-stream.test.ts
+   4 / 0 / 0  client/src/concept2cure/v2/__tests__/conversationThreadStarters.test.tsx
+   2 / 0 / 0  client/src/concept2cure/v2/__tests__/ectdCompileHistoryHonesty.test.tsx
+  28 / 0 / 0  client/src/concept2cure/components/ana/__tests__/renderSafeMarkdown.test.ts
+   8 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-thread-races.test.ts
+   3 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts
+  16 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-steering-receipts.test.ts
+   7 / 0 / 0  client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+  11 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-attachments.test.ts
+   7 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-stream-refusals.test.ts
+   3 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-network-waits.test.ts
+   9 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-recovery.test.ts
+   3 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-context.test.ts
+   6 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-abandoned-controls.test.ts
+   4 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-drive-stop-owner.test.ts
+   3 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-history.test.ts
+   3 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-project-mismatch.test.ts
+   3 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-history-timeout.test.ts
+   7 / 0 / 0  client/src/concept2cure/v2/__tests__/anaWaitingForPerson.test.tsx
+   4 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-effort.test.ts
+  12 / 0 / 0  client/src/concept2cure/components/ana/__tests__/consistency-parse.test.ts
+  15 / 0 / 0  client/src/concept2cure/components/ana/__tests__/anaProgress.test.ts
+   5 / 0 / 0  client/src/concept2cure/components/ana/__tests__/verification-parse.test.ts
+   5 / 0 / 0  client/src/concept2cure/components/ana/__tests__/anaAnswerCheck.test.ts
+  11 / 0 / 0  client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts
+   7 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-refusals.test.ts
+   6 / 0 / 0  client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts
+   2 / 0 / 0  client/src/concept2cure/components/ana/__tests__/useAnaChat-incomplete-trace.test.ts

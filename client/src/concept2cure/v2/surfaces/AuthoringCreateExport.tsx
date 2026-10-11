@@ -1,6 +1,6 @@
 /**
- * AuthoringCreateExport — document CREATION and PUBLISHING for the authoring
- * canvas, completing the create → edit → publish loop the platform exists for.
+ * AuthoringCreateExport — document CREATION and EXPORTING for the authoring
+ * canvas, completing the create → edit → export loop the platform exists for.
  *
  * Wired to the real authoring store (server/routes/authoring.router.ts,
  * mounted /api/authoring, tenant-scoped, JWT actor attribution):
@@ -10,16 +10,23 @@
  *                             persisted row (real id)
  *   • POST /sections        — create a section in a document (initial revision
  *                             recorded server-side); returns the persisted row
- *   • POST /docs/:id/export — publish: streams the assembled document as a
+ *   • POST /docs/:id/export — export: streams the assembled document as a
  *                             binary attachment. Word (.docx), PDF (real PDF —
  *                             the server's pdf branch now renders through the
  *                             platform HTML→PDF engine), and XML are offered.
+ *   • POST /docs/:id/working-copy — a working copy of any status, marked
+ *                             "DRAFT — uncontrolled copy" on every page.
+ *
+ * Both sit in ONE Download menu (editor/DownloadMenu.tsx; docs/design/
+ * ONE_ANA_ONE_CANVAS.md §4.5): the working copy is always offered; the
+ * controlled export only for a FROZEN or APPROVED document, and otherwise is
+ * shown disabled with its reason.
  *
  * HONESTY: creates are awaited and adopt the server's row (no client-side ids);
- * failures report with nothing persisted; the export download is the exact
+ * export outcomes distinguish refusal, recording, and delivery; the download is the exact
  * bytes the server streamed.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NEW_DOCUMENT_EVENT } from '../newDocumentAction';
 import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
@@ -28,6 +35,7 @@ import { apiRequest, serverMessage, redactInternals, type ApiRequestError } from
 import { unboundNotice } from '../governanceNotice';
 import { downloadBlob, safeFileName } from '../download';
 import { shellProgramId, useShellProject } from '../shellProject';
+import { DownloadMenu, CONTROLLED_EXPORT_REASON, isSealedStatus } from '../editor/DownloadMenu';
 
 interface AuthoringTemplate { id: string | number; name?: string | null; title?: string | null; }
 
@@ -36,8 +44,9 @@ export interface AuthoringCreateExportProps {
   docId: string | null;
   docTitle: string | null;
   /** The document's lifecycle status. Export of a filing artifact is refused
-   *  server-side (409) unless it is FROZEN or APPROVED; the buttons say so
-   *  instead of offering an act that can only fail. */
+   *  server-side (409) unless it is FROZEN or APPROVED; the menu says so
+   *  instead of offering an act that can only fail. A working copy is
+   *  offered at any status. */
   docStatus?: string | null;
   /** Module filter currently active in the tree (used as the create default). */
   module: string;
@@ -46,19 +55,29 @@ export interface AuthoringCreateExportProps {
   /** Called with the server's persisted row after a successful create. */
   onDocCreated: (doc: { id: string; title: string }) => void;
   onSectionCreated: (section: { id: string; code: string }) => void;
-  /** Fired after the server streamed an export. The export wrote an
+  /** Fired when the server confirms an export record, even if body delivery
+   *  fails. The export wrote an
    *  `authoring_export_history` row and re-baselined this document, so any
    *  surface showing "changed since the last export" is now stale. */
   onExported?: (format: string) => void;
+  /** Open and refresh this document’s existing export history for recovery. */
+  onCheckExports?: () => void;
 }
 
 const NONE = '(blank document)';
 
-export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported }: AuthoringCreateExportProps) {
-  const exportable = docStatus == null || docStatus === 'FROZEN' || docStatus === 'APPROVED';
+export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported, onCheckExports }: AuthoringCreateExportProps) {
+  /* Sealed, or not offered. An unknown status used to count as exportable,
+     which offered the controlled act on a document whose status nobody had
+     read; the server would refuse it, and the working copy is the act that
+     fits a document of unknown status. */
+  const exportable = isSealedStatus(docStatus);
   const [dialog, setDialog] = useState<'doc' | 'section' | null>(null);
   // Re-renders when a surface opens or switches project, so the control follows.
   const openProject = shellProgramId(useShellProject());
+  const { exportDoc, blockedReason, recovery } = useAuthoringExport({
+    docId, docTitle, exportable, openProject, fireToast, onExported, onCheckExports,
+  });
 
   /* The dialog is owned here, and the panels that most need it — the empty
      document tree and the empty canvas — are siblings with no way to reach it.
@@ -194,53 +213,6 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
     }
   };
 
-  const exportDoc = async (format: 'docx' | 'pdf' | 'xml') => {
-    if (!docId) return;
-    try {
-      const res = await apiRequest('POST', `/api/authoring/docs/${docId}/export`, { format });
-      if (!res.ok) {
-        const json = await res.json().catch(() => null);
-        /* Every other failure in this file says what was NOT done and what to
-           do next; these two stopped at the status code. Nothing partial is
-           written on a failed export — the assembler streams or it does not —
-           so saying so is accurate and is the thing the author needs to know
-           before retrying. */
-        /* apiRequest returns only a 401 here; every other refusal throws. */
-        fireToast(
-          res.status === 401
-            ? 'Export not run — your session isn’t authenticated. Sign in and retry; no file was produced and the document is unchanged.'
-            : 'Export failed — ' + (serverMessage(json) ?? 'the server refused it') + '. No file was produced; the document is unchanged.',
-          'error',
-        );
-        return;
-      }
-      const delivered = downloadBlob(safeFileName(docTitle ?? 'document') + '.' + format, await res.blob());
-      /* The server assembled the file and recorded the export — that much a
-         2xx proves (the history row is written before the stream). Whether the
-         BROWSER wrote it to disk is downloadBlob's answer, and it used to be
-         discarded: "Published DOCX" over a blocked save, and the Exports rail
-         re-baselined to a file the author never received. */
-      if (delivered) {
-        fireToast('Exported ' + format.toUpperCase() + ' — assembled from the governed sections and recorded in the export history.');
-      } else {
-        fireToast('The ' + format.toUpperCase() + ' was assembled and recorded in the export history, but your browser blocked the download — nothing was saved to your device. Retry the download.', 'error');
-      }
-      // The row is real either way; the rail's baseline follows the record.
-      onExported?.(format);
-    } catch (e) {
-      /* Every non-401 refusal lands here — including the 409 for a document
-         that is not FROZEN/APPROVED. That is a Part 11 state refusal, not a
-         transport problem, so the retry advice follows the status. */
-      const err = e as Partial<ApiRequestError> & { message?: string };
-      const why = redactInternals(err?.message, 'the server refused it');
-      const transport = typeof err?.status !== 'number';
-      fireToast(
-        'Export failed — ' + why + '. No file was produced; the document is unchanged.' +
-          (transport ? ' Check your connection and try again.' : ''),
-        'error',
-      );
-    }
-  };
 
   return (
     <>
@@ -259,23 +231,198 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
           <button className="btn ghost" style={{ height: 30 }} onClick={() => setDialog('section')}>
             {I.plus} New section
           </button>
-          {/* "Publish" was the wrong verb — nothing is transmitted; this is a
-              local download of the assembled artifact. And the server refuses
-              it (409) unless the document is frozen or approved, which the
-              buttons now say instead of offering an act that can only fail. */}
-          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('docx')} disabled={!exportable} title={exportable ? 'Export the assembled document as Word' : 'Freeze or approve this document before exporting a filing artifact'}>
-            {I.download} Word
-          </button>
-          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('pdf')} disabled={!exportable} title={exportable ? 'Export the assembled document as PDF (rendered server-side)' : 'Freeze or approve this document before exporting a filing artifact'}>
-            {I.download} PDF
-          </button>
-          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('xml')} disabled={!exportable} title={exportable ? 'Export the assembled document as XML' : 'Freeze or approve this document before exporting a filing artifact'}>
-            {I.download} XML
-          </button>
+          {/* One Download menu where three export buttons stood, all three
+              disabled for a draft — so a document AnA had just built could
+              not be pulled down at all. "Publish" was the wrong verb before
+              that: nothing is transmitted; both acts are local downloads. */}
+          <DownloadMenu
+            docId={docId}
+            docTitle={docTitle}
+            fireToast={fireToast}
+            controlled={{ run: (f) => void exportDoc(f), blockedReason }}
+            testId="ed-download"
+          />
         </>
       )}
+      <ExportRecoveryNotice {...recovery} />
       {dialog === 'doc' && <C2CForm config={DOC_FORM} onCancel={() => setDialog(null)} onSubmit={createDoc} />}
       {dialog === 'section' && docId && <C2CForm config={SECTION_FORM} onCancel={() => setDialog(null)} onSubmit={createSection} />}
     </>
   );
+}
+
+/** Keep the export confirmation state scoped to one open document/project. */
+function useAuthoringExport({ docId, docTitle, exportable, openProject, fireToast, onExported, onCheckExports }: {
+  docId: string | null;
+  docTitle: string | null;
+  exportable: boolean;
+  openProject: string | null;
+  fireToast: AuthoringCreateExportProps['fireToast'];
+  onExported: AuthoringCreateExportProps['onExported'];
+  onCheckExports: AuthoringCreateExportProps['onCheckExports'];
+}) {
+  const [exporting, setExporting] = useState(false);
+  const [exportIssue, setExportIssue] = useState<string | null>(null);
+  const [exportUnconfirmed, setExportUnconfirmed] = useState(false);
+  const exportGeneration = useRef(0);
+  const exportPending = useRef(false);
+  const exportNeedsCheck = useRef(false);
+  useEffect(() => {
+    setExporting(false);
+    setExportIssue(null);
+    setExportUnconfirmed(false);
+    exportPending.current = false;
+    exportNeedsCheck.current = false;
+    // A late reply for a prior selection must not download, toast, refresh, or
+    // release a new document's pending export. Also guards an A → B → A switch.
+    return () => { exportGeneration.current += 1; };
+  }, [docId, openProject]);
+
+  const fileBase = safeFileName(docTitle ?? 'document');
+  const exportDoc = async (format: 'docx' | 'pdf' | 'xml') => {
+    if (!docId || !exportable || exportPending.current || exportNeedsCheck.current) return;
+    const generation = exportGeneration.current;
+    const current = () => generation === exportGeneration.current;
+    exportPending.current = true;
+    setExporting(true);
+    setExportIssue(null);
+    let recorded = false;
+    const reportUnconfirmed = () => {
+      exportNeedsCheck.current = true;
+      setExportUnconfirmed(true);
+      const text = 'We cannot confirm whether this export was recorded. Check export history before retrying; no download is confirmed.';
+      setExportIssue(text);
+      fireToast(text, 'error');
+    };
+    const reportUndelivered = () => {
+      const text = 'The export was recorded, but the complete file was not received. Check export history and your downloads before retrying; retrying creates another export record.';
+      setExportIssue(text);
+      fireToast(text, 'error');
+    };
+    const reportRefusal = (status: number, message?: string) => {
+      fireToast(status === 401
+        ? 'Export not run — your session isn’t authenticated. Sign in and retry; no export was recorded.'
+        : 'Export refused — ' + redactInternals(message, 'the server refused it') + '. No export was recorded.', 'error');
+    };
+    const reportFailure = (status?: number, code?: string, message?: string) => {
+      const kind = exportFailureKind(status, recorded ? 'EXPORT_DELIVERY_FAILED' : code);
+      if (kind === 'recorded') { recorded = true; reportUndelivered(); }
+      else if (kind === 'refused') reportRefusal(status ?? 500, message);
+      else reportUnconfirmed();
+    };
+    try {
+      const result = await receiveAuthoringExport(docId, format);
+      if (!current()) return;
+      if (result.kind === 'failed') {
+        reportFailure(result.status, result.code, result.message);
+        return;
+      }
+      recorded = true;
+      if (!result.blob) { reportUndelivered(); return; }
+      const delivered = downloadBlob(fileBase + '.' + format, result.blob);
+      if (delivered) {
+        fireToast(...deliveredExportToast(format, result.plainTextFallback === true));
+      } else {
+        const text = 'The ' + format.toUpperCase() + ' was assembled and recorded in the export history, but your browser blocked the download request. Check your downloads before retrying; retrying creates another export record.';
+        setExportIssue(text);
+        fireToast(text, 'error');
+      }
+    } catch {
+      if (!current()) return;
+      if (recorded) reportUndelivered();
+      else reportUnconfirmed();
+    } finally {
+      if (current()) {
+        exportPending.current = false;
+        setExporting(false);
+        if (recorded) onExported?.(format);
+      }
+    }
+  };
+
+  const checkExports = () => {
+    if (!onCheckExports) return;
+    onCheckExports();
+    // The author chose reconciliation; a subsequent retry is explicit and
+    // creates a fresh record. Merely refreshing cannot confirm the old request.
+    exportNeedsCheck.current = false;
+    setExportUnconfirmed(false);
+  };
+
+  return {
+    exportDoc,
+    recovery: { message: exportIssue, onCheck: onCheckExports ? checkExports : undefined },
+    /* Why the controlled export cannot run now, shown beside it; null when it can. */
+    blockedReason: !exportable
+      ? CONTROLLED_EXPORT_REASON
+      : exporting
+        ? 'An export is in progress.'
+        : exportUnconfirmed ? 'Check the export history before exporting again.' : null,
+  };
+}
+
+function exportFailureKind(status?: number, code?: string): 'recorded' | 'refused' | 'unknown' {
+  if (code === 'EXPORT_DELIVERY_FAILED') return 'recorded';
+  if (code === 'EXPORT_OUTCOME_UNKNOWN') return 'unknown';
+  if (code === 'EXPORT_NOT_RECORDED') return 'refused';
+  if (typeof status === 'number' && [400, 401, 403, 404, 409, 422].includes(status)) return 'refused';
+  return 'unknown';
+}
+
+function ExportRecoveryNotice({ message, onCheck }: { message: string | null; onCheck?: () => void }) {
+  if (!message) return null;
+  return <div role="alert" className="sp-row-s">
+    <span>{message}</span>
+    {onCheck && <button className="btn ghost" onClick={onCheck}>Check export history</button>}
+  </div>;
+}
+
+type ExportReceipt =
+  | { kind: 'recorded'; blob: Blob | null; plainTextFallback?: boolean }
+  | { kind: 'failed'; status?: number; code?: string; message?: string };
+
+/**
+ * What a delivered export says. QA 2026-10-08 (j4): with no PDF engine the
+ * server renders the plain-text fallback; the file says so on page one, and so
+ * does this, in the error tone, because it must not be filed as the formatted
+ * copy. It used to read "Exported PDF — assembled from the governed sections".
+ */
+function deliveredExportToast(format: string, plainTextFallback: boolean): [string, 'error'?] {
+  if (plainTextFallback) {
+    return [
+      'Exported PDF as a plain-text rendering, not the formatted document: the document styling could not be applied on the server. ' +
+        'The text is complete and the export history records it as a plain-text rendering. Do not file this file as the formatted document.',
+      'error',
+    ];
+  }
+  return ['Exported ' + format.toUpperCase() + ' — assembled from the governed sections and recorded in the export history. Download requested in your browser.'];
+}
+
+/** The server's X-Export-Rendering: true when the PDF is the plain-text fallback. */
+function isPlainTextFallback(res: Response): boolean {
+  try {
+    return res.headers?.get?.('X-Export-Rendering') === 'plain-text-fallback';
+  } catch {
+    return false;
+  }
+}
+
+/** A 2xx confirms recording before body transfer completes. Keep that fact
+ * even when the stream fails; a transport refusal has no such confirmation. */
+async function receiveAuthoringExport(docId: string, format: string): Promise<ExportReceipt> {
+  try {
+    const res = await apiRequest('POST', `/api/authoring/docs/${encodeURIComponent(docId)}/export`, { format });
+    if (!res.ok) {
+      const json = await res.json().catch(() => null);
+      return { kind: 'failed', status: res.status, code: json?.code, message: serverMessage(json) ?? undefined };
+    }
+    const plainTextFallback = isPlainTextFallback(res);
+    try {
+      const blob = await res.blob();
+      return { kind: 'recorded', blob: blob.size > 0 ? blob : null, plainTextFallback };
+    } catch { return { kind: 'recorded', blob: null, plainTextFallback }; }
+  } catch (e) {
+    const err = e as Partial<ApiRequestError> & { message?: string };
+    return { kind: 'failed', status: err?.status, code: err?.code, message: err?.message };
+  }
 }

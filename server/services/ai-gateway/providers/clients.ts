@@ -8,6 +8,8 @@
  *     gateway reuses its proven executeAnthropic() path with the resolved
  *     client — no second code path to maintain.
  *   - Azure and local are OpenAI-compatible, so they reuse the OpenAI path.
+ *   - SDK retries are disabled: the gateway owns retry/backoff policy for all
+ *     substrates, including its single-attempt streaming calls.
  *   - The Anthropic cloud SDKs are optional peer deps: they are loaded via
  *     createRequire so the build does not hard-depend on them. If a provider is
  *     enabled by env but its SDK is not installed, the factory returns null and
@@ -52,6 +54,7 @@ export function createBedrockClient(): any | null {
     return new AnthropicBedrock({
       // The same region the placement registry derives residency from.
       awsRegion: bedrockClientRegion(),
+      maxRetries: 0,
     });
   } catch (e: any) {
     log.warn(`[AI Gateway] Bedrock client init failed: ${e.message}`);
@@ -71,6 +74,7 @@ export function createVertexClient(): any | null {
     return new AnthropicVertex({
       projectId: process.env.AI_VERTEX_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT,
       region: vertexClientRegion(),
+      maxRetries: 0,
     });
   } catch (e: any) {
     log.warn(`[AI Gateway] Vertex client init failed: ${e.message}`);
@@ -98,6 +102,7 @@ export function createAzureClient(): any | null {
       apiKey,
       endpoint,
       apiVersion: process.env.AZURE_OPENAI_API_VERSION || '2025-01-01-preview',
+      maxRetries: 0,
     });
   } catch (e: any) {
     log.warn(`[AI Gateway] Azure client init failed: ${e.message}`);
@@ -118,6 +123,7 @@ export function createLocalClient(): any | null {
     return new OpenAI({
       apiKey: process.env.LOCAL_AI_API_KEY || process.env.LITELLM_API_KEY || 'not-required',
       baseURL: baseURL.replace(/\/$/, ''),
+      maxRetries: 0,
     });
   } catch (e: any) {
     log.warn(`[AI Gateway] Local client init failed: ${e.message}`);

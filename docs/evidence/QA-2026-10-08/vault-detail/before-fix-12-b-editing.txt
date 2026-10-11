@@ -1,0 +1,294 @@
+Skip to content
+CLIENT CATEGORIES
+WORKSPACE
+SCIENCE & INTELLIGENCE
+EXPLORE
+QUICK ACCESS
+EW
+Concept2Cure.RI
+›
+Vault (DMS)
+Biotech & Pharma
+CT
+Concept2Cure Therapeutics
+Search, jump, or run a command
+⌘K
+Task
+3
+DOCUMENTS
+PROJECT VAULT
+Vault (DMS)
+IND · 21 CFR 312
+9 documents
+7 awaiting confirmation
+Open project
+Inspection readiness
+Clinical study report
+Protocol
+Clinical evaluation report
+Investigator's brochure
+Development safety update report
+Periodic safety update report
+Statistical analysis plan
+Statistical analysis report
+Module 2 · summaries
+Module 3 · quality
+Module 4 · nonclinical
+Module 5 · clinical
+Standard operating procedure
+Report
+Agency correspondence
+Other
+Upload
+Ask AnA to import
+Module 3 (CMC): This program has no PM-spine anchor (projects.regulatory_program_id), so the governed artifact registry cannot be addressed for it. CMC capture, compile and provenance still work; artifacts stay unplaced until the program is anchored.
+ AnA can search your connected repositories (Veeva Vault, SharePoint, OneDrive) in place. Importing from them into the Vault comes in a later release; upload files here meanwhile.
+Search connected sources
+Data room
+Captured 15
+›
+Classified 5
+›
+Filed to vault 3
+10 need review — the classifier would not propose a folder.
+Show 15 sources
+Vault coverage
+Required sections: 1 of 36 have a confirmed document
+Show sections
+Required list from the IND rule pack for fda, version ich-m4-v2.2.
+Uploaded files
+9 uploaded files in this programme
+Open filing cabinet
+TEST REPORTS
+Protocol-Stability
+625 B · 5m ago · Emily Watson
+→ Module 3 · Quality
+AUTO-FILED · CONFIRM
+TEST REPORTS
+Protocol-Stability
+629 B · 4m ago · Emily Watson
+→ Module 3 · Quality
+AUTO-FILED · CONFIRM
+TEST REPORTS
+Vorelinib DS Stability Protocol STB-0042
+1.1 kB · 1h ago · Emily Watson
+→ Module 3 · Quality
+FILED
+TEST REPORTS
+Vorelinib-Stability-Protocol-STB-0042
+941 B · 1h ago · Emily Watson
+→ Module 3 · Quality
+AUTO-FILED · CONFIRM
+FILE
+Vorelinib-Batch-Analysis-DS
+194 B · 2h ago · Emily Watson
+→ Module 3 · Quality
+FILED
+MODULE 3 · QUALITY
+Vorelinib-DS-Specification-J3
+645 B · 1h ago · Emily Watson
+→ Module 3 · Quality
+AUTO-FILED · CONFIRM
+MODULE 3 · QUALITY
+Vorelinib-DS-Specification-J3-r2
+617 B · 24m ago · Emily Watson
+→ Module 3 · Quality
+AUTO-FILED · CONFIRM
+CLINICAL DOCS
+Vorelinib-Investigator-Brochure-Ed3
+1.2 kB · 2h ago · Emily Watson
+→ Module 5 · Clinical
+AUTO-FILED · CONFIRM
+Show all 9 in this window
+Stored files
+Re-reads every stored version and checks it against the SHA-256 recorded when it was received. Each result is recorded.
+Check stored files
+DOCUMENT STRUCTURE
+Source files · filing cabinet
+0/9
+Unfiled · needs review
+0/0
+Module 1 · Administrative
+0/0
+Module 2 · Summaries
+0/0
+Module 3 · Quality
+0/7
+Module 4 · Nonclinical
+0/0
+Module 5 · Clinical
+0/1
+eCTD sequences
+0/0
+Agency correspondence
+0/1
+Shared · Templates
+0/0
+Vorelinib · KIT-mutant GIST (IND)
+›
+Source files · filing cabinet
+Search this vault
+Include earlier versions
+All projects
+5 suggested in Module 3 · Quality, awaiting confirmation.
+Confirm 5 suggested in Module 3 · Quality
+1 suggested in Module 5 · Clinical, awaiting confirmation.
+Confirm 1 suggested in Module 5 · Clinical
+1 suggested in Agency correspondence, awaiting confirmation.
+Confirm 1 suggested in Agency correspondence
+NAME
+TYPE
+OWNER
+MODIFIED
+STATUS
+3.2.P.8
+Protocol-Stability
+Test reports · Not sent for review
+Emily Watson
+5m ago
+AUTO-FILED · CONFIRM
+3.2.P.8
+Protocol-Stability
+Test reports · Not sent for review
+Emily Watson
+4m ago
+AUTO-FILED · CONFIRM
+3.2.P.8
+Vorelinib DS Stability Protocol STB-0042
+Test reports · v2.0, 2 versions · Not sent for review
+Emily Watson
+1h ago
+FILED
+3.2.P.8
+Vorelinib-Stability-Protocol-STB-0042
+Test reports · v2.0, 2 versions · Not sent for review
+Emily Watson
+1h ago
+AUTO-FILED · CONFIRM
+Vorelinib-Batch-Analysis-DS
+File · Not sent for review
+Emily Watson
+2h ago
+FILED
+Vorelinib-DS-Specification-J3
+Module 3 · quality · Not sent for review
+Emily Watson
+1h ago
+AUTO-FILED · CONFIRM
+Vorelinib-DS-Specification-J3-r2
+Module 3 · quality · Not sent for review
+Emily Watson
+24m ago
+AUTO-FILED · CONFIRM
+5.3
+Vorelinib-Investigator-Brochure-Ed3
+Clinical docs · Not sent for review
+Emily Watson
+2h ago
+AUTO-FILED · CONFIRM
+Vorelinib-Meeting-Minutes-Pre-IND
+Agency correspondence · Not sent for review
+Emily Watson
+2h ago
+AUTO-FILED · CONFIRM
+AUTO-FILED · CONFIRM
+v1.0
+NOT SENT FOR REVIEW
+Vorelinib-DS-Specification-J3
+Module 3 · quality - Emily Watson - updated 1h ago
+Vorelinib-DS-Specification-J3.pdf · 645 B · SHA-256 9d053f22b56c…
+Review file removal
+SUBMISSION
+Filing
+File into an eCTD sequence. The leaf points at the vault copy, so what is assembled is what is stored here.
+Place into submission…
+DOSSIER FILING
+Folder
+Module 3 · Quality
+Classifier (medium confidence): Uploaded as Module 3 · quality, so Module 3; the name did not identify a section.
+Confirm filing
+Move to…
+Module 1 · Administrative
+Module 2 · Summaries
+Module 3 · Quality
+Module 4 · Nonclinical
+Module 5 · Clinical
+eCTD sequences
+Agency correspondence
+Shared · Templates
+Move
+DETAILS
+Title
+Protocol-Stability
+Type
+Other
+Classification
+Internal
+Edit details
+DETAILS
+Title
+Type
+Clinical study report
+Protocol
+Clinical evaluation report
+Investigator's brochure
+Development safety update report
+Periodic safety update report
+Statistical analysis plan
+Statistical analysis report
+Module 2 · summaries
+Module 3 · quality
+Module 4 · nonclinical
+Module 5 · clinical
+Standard operating procedure
+Report
+Agency correspondence
+Other
+Classification
+Confidential
+Internal
+Controlled
+Public
+Reason for change
+Save details
+Cancel
+FILE
+Size
+645 B
+SHA-256
+9d053f22b56c27a4…
+VERSIONS
+v1.0 · current
+2026-10-08 00:12 UTC · Emily Watson · 645 B · SHA-256 9d053f22b56c · placed in Vorelinib · KIT-mutant GIST (IND), sequence 0000, 3.2.S.4.1 (new; sequence draft)
+Not sent for review
+Download
+Send for review
+Your role does not send, review or approve documents. An organization admin can change your role.
+Version 1.0 is placed in 1 sequence not yet transmitted: Vorelinib · KIT-mutant GIST (IND), sequence 0000 (draft). Once a new version is added, this version can no longer be transmitted from them. A draft sequence can take the new version after it is approved. A frozen or dispatched sequence cannot be changed, so it could not be transmitted.
+Upload new version
+Export signed history
+REVIEW ANNOTATIONS
+Open: v1.0 — 1 (1 change request)
+Open (1)
+Resolved (0)
+Retracted (0)
+CHANGE REQUEST
+Sarah Chen · 2026-10-08 00:17 UTC
+Whole document
+Section 2 acceptance criteria: the assay limit (NLT 98.0%) does not match the batch analyses table. Please reconcile before approval.
+Reply
+Resolve
+Add annotation
+RELATED DOCUMENTS
+No related documents are recorded for this version.
+Relate a document
+HISTORY
+Audit chain verified — 140 rows checked.
+v1.0 · Change request posted on the whole document
+2026-10-08 00:17 · Sarah Chen · 1fb6cf5ed749
+v1.0 · Vault Document Ingest
+2026-10-08 00:12 · Emily Watson · 7ddc63e9d631
+Ask AnA
+Download
+✻
+ANA

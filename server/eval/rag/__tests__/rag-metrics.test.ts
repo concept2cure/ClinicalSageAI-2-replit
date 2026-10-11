@@ -87,6 +87,12 @@ describe('rag eval metrics', () => {
   });
 
   describe('judgeFaithfulness', () => {
+    it('rejects an out-of-range judge score in a strict qualification assessment', async () => {
+      await expect(judgeFaithfulness(async () => '5', 'q', 'a', ['s'], { strict: true })).rejects.toThrow(/score/i);
+    });
+    it('does not extract a plausible score from arbitrary prose in a strict assessment', async () => {
+      await expect(judgeFaithfulness(async () => '2026 review: confidence 0.9', 'q', 'a', ['s'], { strict: true })).rejects.toThrow(/score/i);
+    });
     it('parses a bare numeric judge response and clamps to [0,1]', async () => {
       expect(await judgeFaithfulness(async () => '0.8', 'q', 'a', ['s'])).toBeCloseTo(0.8);
       expect(await judgeFaithfulness(async () => 'Score: 1.0', 'q', 'a', ['s'])).toBe(1);

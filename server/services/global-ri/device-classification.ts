@@ -44,6 +44,9 @@
  * @module server/services/global-ri/device-classification
  */
 
+import { basisLabel } from '../../../shared/regulatory/regulatory-basis';
+import { IVDR_CONFORMITY_ROUTES, type IvdrClass } from '../regulatory/ivdr-classification';
+
 export type DeviceRegion = 'FDA' | 'EU_MDR' | 'EU_IVDR';
 
 /** A single risk class within a region's framework. */
@@ -138,9 +141,9 @@ const MDR_CLASSES: DeviceClassInfo[] = [
     class: 'III',
     riskLevel: 'High risk',
     controls: 'GSPR + Notified Body conformity assessment (incl. technical-documentation assessment)',
-    typicalPathway: 'Notified Body conformity assessment (Annex IX or Annex X); clinical evaluation',
+    typicalPathway: 'Notified Body conformity assessment (Annex IX, or Annex X coupled with Annex XI); clinical evaluation',
     notifiedBodyRequired: true,
-    citation: 'MDR Annex VIII; Annex IX / Annex X',
+    citation: 'MDR Annex VIII; Annex IX / Annex X / Annex XI',
   },
 ];
 
@@ -148,31 +151,24 @@ const IVDR_BASIS =
   'EU IVDR classifies in-vitro diagnostics into four classes by individual and public-health risk applying the rules in Annex VIII. The class determines the conformity-assessment route and Notified Body involvement.';
 const IVDR_CIT = 'Regulation (EU) 2017/746 (IVDR) Annex VIII';
 
-const IVDR_CLASSES: DeviceClassInfo[] = [
+/* Routes, notified-body involvement and their citation are read from IVDR_CONFORMITY_ROUTES
+   (server/services/regulatory/ivdr-classification.ts), the one statement of IVDR Article 48. The hand-written
+   strings this replaced offered Class B "Annex IX or Annex XI" (no such route) and dropped Annex XI from Class D. */
+const IVDR_RISK: ReadonlyArray<{ class: IvdrClass; riskLevel: string; controls: string }> = [
   {
     class: 'A',
     riskLevel: 'Low individual risk and low public-health risk',
-    controls:
-      'GSPR; self-declared (Class A sterile requires a Notified Body for the sterility aspect only)',
-    typicalPathway: 'Self-declaration of conformity (Annex II / III); EU declaration of conformity, CE mark',
-    notifiedBodyRequired: false,
-    citation: 'IVDR Annex VIII rule 5; Annex II / III',
+    controls: 'GSPR; self-declared (Class A sterile requires a Notified Body for the sterility aspect only)',
   },
   {
     class: 'B',
     riskLevel: 'Moderate individual risk and/or low public-health risk',
     controls: 'GSPR + Notified Body conformity assessment',
-    typicalPathway: 'Notified Body conformity assessment (Annex IX or Annex XI)',
-    notifiedBodyRequired: true,
-    citation: 'IVDR Annex VIII; Annex IX / Annex XI',
   },
   {
     class: 'C',
     riskLevel: 'High individual risk and/or moderate public-health risk',
     controls: 'GSPR + Notified Body conformity assessment',
-    typicalPathway: 'Notified Body conformity assessment (Annex IX or Annex X + XI)',
-    notifiedBodyRequired: true,
-    citation: 'IVDR Annex VIII; Annex IX / Annex X / Annex XI',
   },
   {
     class: 'D',
@@ -180,11 +176,20 @@ const IVDR_CLASSES: DeviceClassInfo[] = [
       'High individual risk and high public-health risk (e.g. blood-screening / transmissible-agent detection)',
     controls:
       'GSPR + Notified Body conformity assessment, EU reference laboratory verification, expert-panel scrutiny',
-    typicalPathway: 'Notified Body conformity assessment (Annex IX or Annex X); EU reference laboratory involvement',
-    notifiedBodyRequired: true,
-    citation: 'IVDR Annex VIII; Annex IX / Annex X',
   },
 ];
+
+const IVDR_CLASSES: DeviceClassInfo[] = IVDR_RISK.map(({ class: cls, riskLevel, controls }) => {
+  const route = IVDR_CONFORMITY_ROUTES[cls];
+  return {
+    class: cls,
+    riskLevel,
+    controls,
+    typicalPathway: route.summary,
+    notifiedBodyRequired: route.notifiedBodyRequired,
+    citation: `IVDR Annex VIII; Article 48; ${route.annexes} (${basisLabel(route.basis)})`,
+  };
+});
 
 const FRAMEWORKS: Record<DeviceRegion, DeviceFramework> = {
   FDA: {

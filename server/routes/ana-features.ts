@@ -34,6 +34,7 @@ import {
 import { clientIpOf } from '../utils/client-ip';
 import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
+import { checkSigningAuthority } from '../services/part11/signing-authority-gate';
 
 const logger = createScopedLogger('ana-features');
 
@@ -2210,6 +2211,12 @@ router.post(
   }
 );
 
+/** A signer id that is no verified identity is refused 401 before anything else is asked. */
+function signerIdRefusal(signerId: number): { status: number; message: string; code: string } | null {
+  if (Number.isInteger(signerId) && signerId > 0) return null;
+  return { status: 401, message: 'A verified signer identity is required to sign.', code: 'AUTH_REQUIRED' };
+}
+
 router.post(
   '/submission-chat/apply-rewrite',
   authenticateToken,
@@ -2242,9 +2249,9 @@ router.post(
     let signature: { meaning: string; reverified: SignerReverified } | null = null;
     if (signed) {
       const signerId = Number(userId);
-      if (!Number.isInteger(signerId) || signerId <= 0) {
-        return res.status(401).json({ error: 'A verified signer identity is required to sign.', code: 'AUTH_REQUIRED' });
-      }
+      // §11.10(g) before the password: identity, then authority — a signed rewrite writes a signature row.
+      const refusal = signerIdRefusal(signerId) ?? (await checkSigningAuthority(signerId, Number(organizationId)));
+      if (refusal) return res.status(refusal.status).json({ error: refusal.message, code: refusal.code });
       const reverified = await reverifySigner(
         signerId,
         { password: signed.password, mfaToken: signed.mfaToken },
@@ -5031,6 +5038,15 @@ router.post(
       const code = error?.code;
       if (code === 'ARTIFACT_NOT_FOUND') {
         return res.status(404).json({ error: error.message, code });
+      }
+      if (code === 'HISTORY_UNAVAILABLE') {
+        return res.status(503).json({ error: 'Earlier conversation could not be loaded. Please retry.', code });
+      }
+      if (code === 'THREAD_FORBIDDEN') {
+        return res.status(403).json({ error: 'That conversation is not accessible.', code });
+      }
+      if (code === 'AUTH_REQUIRED') {
+        return res.status(401).json({ error: 'Authenticated caller required.', code });
       }
       if (code === 'ARTIFACT_ORG_MISMATCH') {
         return res.status(403).json({ error: error.message, code });

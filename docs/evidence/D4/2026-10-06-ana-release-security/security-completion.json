@@ -1,0 +1,50 @@
+{
+  "scope": "W3/D4 Anna release security",
+  "baseCommit": "73a151ec663b52c0d0964e7ce802123328518b78",
+  "changedFiles": [
+    {
+      "path": "package.json",
+      "sha256": "103ccedbcc0c9df1b008591badb40ef22d8e00928df1ccfe7c5f814cc5470e3a"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "e5950b44018f8093e400bd0b482c44ab2d995c850ee6a4b9e86c0fe637718d40"
+    },
+    {
+      "path": "scripts/ci/check-dependency-risk.mjs",
+      "sha256": "cf8c6fccbb93d29b557eaff3868ad78cee5f4a8e5d0d75877d0fbd06698f5ebb"
+    },
+    {
+      "path": "scripts/ci/__tests__/dependency-risk-gate.test.mjs",
+      "sha256": "b26eafa2e0e52862fe11ce661eae2a4bfdf83e1d8b541b30faaf73b4636be6c3"
+    },
+    {
+      "path": "docs/security/dependency-risk-ledger.json",
+      "sha256": "dbffd3e2a4e0b11091addb4978478484ef7c9da456ae252966b49521462575ad"
+    }
+  ],
+  "evidenceDirectory": "docs/evidence/D4/2026-10-06-ana-release-security",
+  "checks": {
+    "gateAndVulnerabilityBehaviorTests": {
+      "passed": 32,
+      "failed": 0
+    },
+    "existingHTTPTrustProxyPPTXTrivyContracts": {
+      "passed": 28,
+      "failed": 0
+    },
+    "liveNpmLedgerGate": "passed: 3 unique existing reviewed High advisory occurrences",
+    "pinnedTrivyFilesystem": "passed: 0 High/Critical findings, 0 secrets, exit 0",
+    "syntaxAndDiffChecks": "passed",
+    "forcedLint": "0 errors; same 3 existing console warnings; default configuration ignores these existing .mjs scripts"
+  },
+  "unchangedRiskDecisions": true,
+  "unchangedSuppressions": true,
+  "remainingReleaseObligations": [
+    "published-head CI",
+    "qualified human/model/scientific acceptance",
+    "production-image staging",
+    "name accountable human owners for existing advisory re-review before current expiry dates"
+  ],
+  "committedOrPublishedByAgent": false
+}

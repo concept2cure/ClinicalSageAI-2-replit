@@ -128,18 +128,18 @@ export async function resolveAccessibleThread(
   threadId: string,
   organizationId: number | null | undefined,
   userId?: number | string | null
-): Promise<{ id: string; user_id: number | null; organization_id: number | null } | null> {
+): Promise<{ id: string; user_id: number | null; organization_id: number | null; program_id?: string | null } | null> {
   await ensureChatTables();
   const orgId = organizationId === null || organizationId === undefined ? null : Number(organizationId);
   // No organization to scope by → nothing can be proven about the id, so it
   // resolves to nothing. Callers without a tenant get a fresh thread.
   if (orgId === null || !Number.isFinite(orgId)) return null;
   const existing = await pool.query(
-    'SELECT id, user_id, organization_id FROM chat_threads WHERE id = $1 AND organization_id = $2',
+    'SELECT id, user_id, organization_id, program_id FROM chat_threads WHERE id = $1 AND organization_id = $2',
     [threadId, orgId]
   );
   const row = existing.rows[0] as
-    | { id: string; user_id: number | null; organization_id: number | null }
+    | { id: string; user_id: number | null; organization_id: number | null; program_id?: string | null }
     | undefined;
   if (!row) return null;
   if (!threadOwnerMatches(row.user_id, userId)) {
@@ -162,6 +162,24 @@ export async function resolveAccessibleThread(
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
+ * A turn that names a project other than the one its conversation is bound to
+ * (ONE_ANA_ONE_CANVAS.md §4.8, slice 5). Callers match it by `code`.
+ */
+export class ThreadProjectMismatchError extends Error {
+  readonly code = 'THREAD_PROJECT_MISMATCH';
+  constructor(readonly threadProgramId: string) {
+    super('This conversation belongs to another project.');
+  }
+}
+
+/** Throws when a bound conversation is asked a turn that names another project. */
+function refuseAnotherProject(threadProgram: string | null | undefined, turnProgram: unknown): void {
+  const bound = typeof threadProgram === 'string' && threadProgram ? threadProgram.toLowerCase() : null;
+  const asked = programIdForThread(turnProgram);
+  if (bound && asked && bound !== asked) throw new ThreadProjectMismatchError(bound);
+}
+
+/**
  * The program a thread was started in, as the shell names it (a
  * regulatory_programs UUID), or null. The table's `project_id` column is an
  * integer that the shell's key never fits, so the program has its own column,
@@ -181,7 +199,18 @@ export async function getOrCreateThread(
   await ensureChatTables();
   if (threadId) {
     const accessible = await resolveAccessibleThread(threadId, organizationId, userId);
-    if (accessible) return accessible.id;
+    if (accessible) {
+      /* A conversation writes only into its own project
+         (docs/design/ONE_ANA_ONE_CANVAS.md §4.8, slice 5). Its project is
+         fixed when it is minted; the turn's project comes from the request.
+         An existing conversation bound to one project, continued with a turn
+         that names another, is refused here, before its question is saved or
+         any model or tool runs. Unbound conversations, and a turn naming no
+         project, are unchanged. Only a caller that names the turn's project
+         (the AnA stream) is checked. */
+      refuseAnotherProject(accessible.program_id, programId);
+      return accessible.id;
+    }
   }
   const newId = `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const ownerId =
@@ -253,15 +282,45 @@ function estimateTokens(text: string): number {
 
 /**
  * Retrieve all messages in a thread, ordered chronologically.
+ *
+ * With each message's `id` (ANA-SUMMARY S4): a reloaded conversation keeps it
+ * as the message's identity and attaches each turn's record to it by
+ * `assistant_message_id`, where it used to synthesise `t-<thread>-<index>`
+ * and had nothing to join on.
  */
 export async function getThreadMessages(
   threadId: string
-): Promise<Array<{ role: string; content: string; metadata?: unknown }>> {
+): Promise<Array<{ id: number; role: string; content: string; metadata?: unknown }>> {
   const result = await pool.query(
-    'SELECT role, content, metadata FROM chat_messages WHERE thread_id = $1 ORDER BY created_at ASC',
+    'SELECT id, role, content, metadata FROM chat_messages WHERE thread_id = $1 ORDER BY created_at ASC',
     [threadId]
   );
   return result.rows;
+}
+
+/** The two thread stores: `chat_threads` (AnA RI) and `ai_threads` (submission chat, evidence-ask). */
+export type ThreadStore = 'chat' | 'ai';
+
+/**
+ * Which store holds a thread in this organisation, or null when neither does.
+ * The rule for reading a transcript: the organisation's own thread, in either
+ * store (GET /api/chat/threads/:id/messages), and so the rule for reading a
+ * turn's Summary (decision 6 of ANA-SUMMARY, turn-records.ts). `q` is the
+ * request's own client where the caller has one.
+ */
+export async function resolveThreadStore(
+  threadId: string,
+  orgId: unknown,
+  q: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> } = pool,
+): Promise<ThreadStore | null> {
+  const { rows } = await q.query(
+    `SELECT 'chat'::text AS store FROM chat_threads WHERE id = $1 AND organization_id = $2
+     UNION ALL
+     SELECT 'ai'::text AS store FROM ai_threads WHERE id = $1 AND organization_id = $2
+     LIMIT 1`,
+    [threadId, orgId],
+  );
+  return (rows[0]?.store as ThreadStore | undefined) ?? null;
 }
 
 /**

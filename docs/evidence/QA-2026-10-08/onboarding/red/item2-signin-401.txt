@@ -1,0 +1,17 @@
+ × client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password returns the server's refusal, and no refresh is attempted 11ms
+   → expected 'AUTH_005' to be 'AUTH_001' // Object.is equality
+ × client/src/services/portal/__tests__/authService-401-refusal.test.ts > sign-in refusals are not session expiries > a wrong password with a stale session in storage still says so, and does not end or refresh it 5ms
+   → expected 'AUTH_005' to be 'AUTH_001' // Object.is equality
+ × client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong current password (401 AUTH_001) is the refusal, not an expiry, and the session stays 8ms
+   → expected { code: 'AUTH_005', …(1) } to match object { code: 'AUTH_001', …(1) }
+ × client/src/services/portal/__tests__/authService-401-refusal.test.ts > a signed-in request whose credential check fails > a wrong verification code (401 AUTH_004) is the refusal, not an expiry 3ms
+   → expected { code: 'AUTH_005', …(1) } to match object { code: 'AUTH_004', …(1) }
+ ✓ client/src/services/portal/__tests__/authService-401-refusal.test.ts > a real expiry still says expiry > a signed-in request refused for its session, whose refresh also fails, is SESSION_EXPIRED 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed (5)
+ × client/src/concept2cure/auth/__tests__/signInRefusal.test.tsx > a refused sign-in > AUTH_001 reads as an incorrect email or password, never as an expired session 296ms
+   → expected 'Invalid credentials' to be 'error.invalidCredentials' // Object.is equality
+ ✓ client/src/concept2cure/auth/__tests__/signInRefusal.test.tsx > a refused sign-in > any other refusal is shown in the server's words 92ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Invalid credentials' to be 'error.invalidCredentials' // Object.is equality
+      Tests  1 failed | 1 passed (2)

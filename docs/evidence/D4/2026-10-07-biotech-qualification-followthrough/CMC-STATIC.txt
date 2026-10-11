@@ -1,0 +1,44 @@
+{
+  "source": "40697292af6b813dcfcaba8881e12c250dab69ef",
+  "method": "ESLint API: original Git source linted with its canonical filename versus current files; this is not semantic TypeScript validation",
+  "comparisons": [
+    {
+      "filePath": "server/services/cmc/recorded-stability.ts",
+      "before": {
+        "errors": 0,
+        "warnings": 5
+      },
+      "after": {
+        "errors": 0,
+        "warnings": 5
+      }
+    },
+    {
+      "filePath": "server/services/module3Composer.ts",
+      "before": {
+        "errors": 0,
+        "warnings": 19
+      },
+      "after": {
+        "errors": 0,
+        "warnings": 19
+      }
+    },
+    {
+      "filePath": "server/services/ana/__tests__/deepening-tools.test.ts",
+      "before": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "after": {
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  ],
+  "newTest": {
+    "filePath": "/workspace/scratch/bd36ee581acd/concept2cure/server/services/cmc/__tests__/recorded-aggregate-propagation.test.ts",
+    "errorCount": 0,
+    "warningCount": 0
+  }
+}

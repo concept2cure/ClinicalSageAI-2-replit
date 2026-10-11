@@ -26,8 +26,8 @@
  *
  * ── Rewritten 2026-09-22 from primary-source research ────────────────────────
  * The previous version returned a reviewPath of 'administrative' meaning no
- * IRB review, which no regulation supports; the ICH E6(R2) 3.3.7/4.5.2
- * "logistical or administrative" carve-out is guidance and cannot override
+ * IRB review, which no regulation supports; the ICH E6(R2) 3.3.7/4.5.2 (superseded
+ * by E6(R3), 2025-01-06) "logistical or administrative" carve-out is guidance and cannot override
  * the regulations above. It forced convened review for any consent change
  * (a consent change can be minor), returned `requiresReconsent: true/false` as
  * if the engine could decide it, and cited 45 CFR 46.109(c) — documentation
@@ -146,7 +146,7 @@ function reconsent(input: AmendmentImpactInput): AmendmentImpactResult['reconsen
       ...base,
       status: 'irb_determination_required',
       message:
-        'The IRB determines whether currently enrolled, actively participating subjects to whom the change applies must be given this information and an opportunity to affirm their willingness to continue, and by what method (a revised consent document, or an alternative such as an addendum or information sheet). Document the communication of the new information (ICH E6(R2) 4.8.2).',
+        'The IRB determines whether currently enrolled, actively participating subjects to whom the change applies must be given this information and an opportunity to affirm their willingness to continue, and by what method (a revised consent document, or an alternative such as an addendum or information sheet). Document the communication of the new information (ICH E6(R3) Annex 1 §2.8).',
     };
   }
   if (input.affectsConsent === null || input.affectsRisk === null) {

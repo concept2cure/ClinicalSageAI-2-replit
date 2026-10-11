@@ -1,0 +1,323 @@
+[
+  {
+    "filePath": "/workspace/scratch/bd36ee581acd/concept2cure/server/services/ai-gateway/concurrency.ts",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "/workspace/scratch/bd36ee581acd/concept2cure/server/services/ai-gateway/gateway.ts",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "severity": 1,
+        "message": "'GatewayUsage' is defined but never used.",
+        "line": 39,
+        "column": 3,
+        "messageId": "unusedVar",
+        "endLine": 39,
+        "endColumn": 15,
+        "suggestions": [
+          {
+            "messageId": "removeUnusedVar",
+            "data": {
+              "varName": "GatewayUsage"
+            },
+            "fix": {
+              "range": [
+                891,
+                907
+              ],
+              "text": ""
+            },
+            "desc": "Remove unused variable \"GatewayUsage\"."
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "severity": 1,
+        "message": "'StreamCallback' is defined but never used.",
+        "line": 44,
+        "column": 3,
+        "messageId": "unusedVar",
+        "endLine": 44,
+        "endColumn": 17,
+        "suggestions": [
+          {
+            "messageId": "removeUnusedVar",
+            "data": {
+              "varName": "StreamCallback"
+            },
+            "fix": {
+              "range": [
+                986,
+                1004
+              ],
+              "text": ""
+            },
+            "desc": "Remove unused variable \"StreamCallback\"."
+          }
+        ]
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "severity": 1,
+        "message": "'ContentBlock' is defined but never used.",
+        "line": 45,
+        "column": 3,
+        "messageId": "unusedVar",
+        "endLine": 45,
+        "endColumn": 15,
+        "suggestions": [
+          {
+            "messageId": "removeUnusedVar",
+            "data": {
+              "varName": "ContentBlock"
+            },
+            "fix": {
+              "range": [
+                1004,
+                1020
+              ],
+              "text": ""
+            },
+            "desc": "Remove unused variable \"ContentBlock\"."
+          }
+        ]
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'partitionSystemMessages' has a complexity of 17. Maximum allowed is 15.",
+        "line": 567,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 567,
+        "endColumn": 33
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (3289). Maximum allowed is 500.",
+        "line": 782,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 5078,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'normalizeCitation' has a complexity of 20. Maximum allowed is 15.",
+        "line": 819,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 819,
+        "endColumn": 27
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'applyOpenAIToolParams' has a complexity of 32. Maximum allowed is 15.",
+        "line": 1008,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 1008,
+        "endColumn": 31
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async method 'route' has too many lines (174). Maximum allowed is 100.",
+        "line": 1371,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 1371,
+        "endColumn": 14
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'route' has a complexity of 43. Maximum allowed is 15.",
+        "line": 1371,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 1371,
+        "endColumn": 14
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async method 'assertSensitiveDispatchAllowed' has too many lines (109). Maximum allowed is 100.",
+        "line": 2001,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 2001,
+        "endColumn": 47
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'assertSensitiveDispatchAllowed' has a complexity of 31. Maximum allowed is 15.",
+        "line": 2001,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 2001,
+        "endColumn": 47
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'executeOpenAI' has a complexity of 31. Maximum allowed is 15.",
+        "line": 2195,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 2195,
+        "endColumn": 30
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async method 'executeAnthropic' has too many lines (185). Maximum allowed is 100.",
+        "line": 2372,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 2372,
+        "endColumn": 33
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'executeAnthropic' has a complexity of 51. Maximum allowed is 15.",
+        "line": 2372,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 2372,
+        "endColumn": 33
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async method 'executeAnthropicStream' has too many lines (247). Maximum allowed is 100.",
+        "line": 2614,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 2614,
+        "endColumn": 39
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'executeAnthropicStream' has a complexity of 82. Maximum allowed is 15.",
+        "line": 2614,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 2614,
+        "endColumn": 39
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 2816,
+        "column": 13,
+        "messageId": "tooDeeply",
+        "endLine": 2816,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'executeMoonshot' has a complexity of 29. Maximum allowed is 15.",
+        "line": 2934,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 2934,
+        "endColumn": 32
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async method 'executeOpenAICompatibleStream' has too many lines (147). Maximum allowed is 100.",
+        "line": 3026,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 3026,
+        "endColumn": 46
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async method 'executeOpenAICompatibleStream' has a complexity of 40. Maximum allowed is 15.",
+        "line": 3026,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 3026,
+        "endColumn": 46
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 3143,
+        "column": 13,
+        "messageId": "tooDeeply",
+        "endLine": 3143,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 3144,
+        "column": 13,
+        "messageId": "tooDeeply",
+        "endLine": 3144,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "max-params",
+        "severity": 1,
+        "message": "Async method 'logAudit' has too many parameters (7). Maximum allowed is 5.",
+        "line": 3906,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 3906,
+        "endColumn": 25
+      },
+      {
+        "ruleId": "max-params",
+        "severity": 1,
+        "message": "Async method 'logContentPolicyBlock' has too many parameters (6). Maximum allowed is 5.",
+        "line": 4117,
+        "column": 3,
+        "messageId": "exceed",
+        "endLine": 4117,
+        "endColumn": 38
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Method 'initProviderClients' has a complexity of 26. Maximum allowed is 15.",
+        "line": 4334,
+        "column": 3,
+        "messageId": "complex",
+        "endLine": 4334,
+        "endColumn": 30
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 25,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  }
+]

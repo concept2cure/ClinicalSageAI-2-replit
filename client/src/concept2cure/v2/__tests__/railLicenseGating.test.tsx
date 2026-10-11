@@ -208,7 +208,7 @@ describe('Rail licence gating', () => {
           tier: 'enterprise',
           surfaces: [
             { id: 'submission-center', label: 'Submission Center', entitled: true, source: 'master_admin', requiredTier: 'professional' },
-            { id: 'rbm', label: 'Risk-based monitoring', entitled: true, source: 'master_admin', requiredTier: 'enterprise' },
+            { id: 'quality', label: 'Quality', entitled: true, source: 'master_admin', requiredTier: 'enterprise' },
             { id: 'insights', label: 'Reporting & analytics', entitled: true, source: 'master_admin', requiredTier: 'professional' },
           ],
         }),
@@ -218,13 +218,16 @@ describe('Rail licence gating', () => {
 
     expect(lockedButtons()).toHaveLength(0);
     expect(document.body.textContent).not.toMatch(/not included in your plan/);
-    fireEvent.click(screen.getByRole('button', { name: 'Risk-based monitoring' }));
-    expect(onNav).toHaveBeenCalledWith('rbm');
+    /* Quality, not risk-based monitoring: the rail lists only the places of
+       this release (shellNav.test.tsx), and RBM is not one. */
+    fireEvent.click(screen.getByRole('button', { name: 'Quality' }));
+    expect(onNav).toHaveBeenCalledWith('quality');
   });
 
   /* CONTRACT 5 — AN UNKNOWN ID IS NOT LICENSABLE.
      The payload carries one verdict per catalog module. Destinations with no
-     catalog row — AnA Command here, and deliberately the Part 11 surfaces,
+     catalog row — Home here, which "New conversation" opens, and deliberately
+     the Part 11 surfaces,
      which under 21 CFR §11.10(e) may not be something an org can be sold or an
      admin can switch off — are absent from it. Absent must mean unconditionally
      available; "not in the payload" is not evidence of a licence gap. */
@@ -234,13 +237,15 @@ describe('Rail licence gating', () => {
 
     // Same payload as contract 2, so the lock machinery is demonstrably live.
     expect(lockedButtons()).toHaveLength(1);
-    // The accessible name carries the entry's "AnA" badge text too; what
-    // matters is that it does NOT carry the locked suffix.
-    const btn = screen.getByRole('button', { name: /^AnA Command/ });
+    /* It was AnA Command, which left the rail with the "Explore" section
+       (shellNav.test.tsx). "New conversation" opens Home, and its verdict is
+       looked up by that destination; Home has no catalog row. What matters is
+       that its name does NOT carry the locked suffix. */
+    const btn = screen.getByRole('button', { name: 'New conversation' });
     expect(btn.getAttribute('aria-label')).toBeNull();
     expect(btn.getAttribute('data-locked')).toBeNull();
     fireEvent.click(btn);
-    expect(onNav).toHaveBeenCalledWith('ana-command');
+    expect(onNav).toHaveBeenCalledWith('home');
   });
 
   /* CONTRACT 6 — THE REASON IN THE ACCESSIBLE NAME IS THE REAL ONE.

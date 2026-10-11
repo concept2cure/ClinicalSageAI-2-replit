@@ -112,4 +112,22 @@ describe('POST /api/tenants/:id/purge — what the audit row is told', () => {
     expect(res.status).toBe(500);
     expect(JSON.stringify(res.body)).not.toMatch(/audit store|permission denied|audit_logs/);
   });
+
+  it('answers protected document lineage as an actionable conflict rather than purge success', async () => {
+    const { OffboardingStateError } = await import('../../services/tenant/tenant-offboarding');
+    const message = 'Document disposition retention blocks this purge. Review retained records before attempting offboarding.';
+    purgeTenant.mockRejectedValueOnce(new OffboardingStateError('DOCUMENT_DISPOSITION_RETENTION_CONFLICT', message));
+    const res = await post();
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: { code: 'DOCUMENT_DISPOSITION_RETENTION_CONFLICT', message } });
+    expect(res.body).not.toHaveProperty('status');
+    expect(res.body).not.toHaveProperty('deletedRows');
+  });
+
+  it('keeps an unrelated database immutability error private', async () => {
+    purgeTenant.mockRejectedValueOnce(Object.assign(new Error('private_table: unrelated immutability trigger'), { code: '55000' }));
+    const res = await post();
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'Failed to purge organization' });
+  });
 });

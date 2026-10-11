@@ -1,0 +1,21 @@
+# (5) GREEN — both routes removed; CollaborativeSapService.signVersion and SignatureData removed; useApproveWorkflow and programTabsService.approveWorkflow removed
+$ npx vitest run <the two tests + every test naming useProgramTabs, programTabsService, biostatPlatform, collaborative-sap-service or approval-workflow>
+#   client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts
+#   client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx
+#   server/middleware/__tests__/launch-scope-api-gate.test.ts
+#   server/middleware/__tests__/token-class-every-verifier.test.ts
+#   server/routes/__tests__/approval-workflow.contract.test.ts
+#   tests/biostat-design-stats-routes.test.ts
+#   tests/biostat-multiplicity-design-route.test.ts
+#   tests/biostat-sap-sign-route-removed.test.ts
+#   tests/biostat/group-sequential-reference.test.ts
+#   tests/concept2cure/mdx-pathway-panes-smoke.test.tsx
+stderr | server/routes/__tests__/approval-workflow.contract.test.ts > start → status; no approval without a signature (P-25 follow-up) > POST /:id/reject → 400 when the performer is not an assigned approver
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > start → status; no approval without a signature (P-25 follow-up) > starts a workflow, moves the document to review, and reports status 36ms
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > start → status; no approval without a signature (P-25 follow-up) > POST /:id/approve is not a route: 404, and nothing is approved 21ms
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > start → status; no approval without a signature (P-25 follow-up) > GET /:workflowId/status → 404 for an unknown workflow 3ms
+ ✓ server/routes/__tests__/approval-workflow.contract.test.ts > start → status; no approval without a signature (P-25 follow-up) > POST /:id/reject → 400 when the performer is not an assigned approver 10ms
+ ✓ tests/biostat-sap-sign-route-removed.test.ts > a SAP version is not signed by a route that verifies no signer > POST /api/biostat/sap/:sapVersionId/sign is not a route: 404 24ms
+ ✓ tests/biostat-sap-sign-route-removed.test.ts > a SAP version is not signed by a route that verifies no signer > the SAP service has no signVersion to call 0ms
+ Test Files  10 passed (10)
+      Tests  129 passed (129)

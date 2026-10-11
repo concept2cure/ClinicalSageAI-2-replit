@@ -22,6 +22,7 @@ import {
   getThreadMessages,
   programIdForThread,
   resolveAccessibleThread,
+  resolveThreadStore,
   ThreadAccessError,
 } from '../../services/chat-thread-helpers.js';
 
@@ -36,6 +37,14 @@ export async function listThreads(req: Request, res: Response) {
     const programId = req.query.program_id as string | undefined;
     const limit = Math.min(parseInt((req.query.limit as string) || '10', 10), 50);
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    /* A conversation belongs to the person who started it: opening a
+       colleague's answers THREAD_FORBIDDEN (resolveAccessibleThread). Both
+       chat_threads lists were scoped to the organisation only, so each named a
+       colleague's conversation by its first message, a line the reader could
+       never open (docs/design/ONE_ANA_ONE_CANVAS.md, slice 3). They list the
+       caller's own. A thread with no recorded owner is not listed: it can still
+       be opened by its id, as before. No identified caller, no list. */
+    const me = (req as any).user?.id ?? (req as any).userId ?? null;
 
     let query: string;
     let params: unknown[];
@@ -51,16 +60,24 @@ export async function listThreads(req: Request, res: Response) {
       if (!program) {
         return res.status(400).json({ error: 'program_id must be a UUID', code: 'THREAD_PROGRAM_INVALID' });
       }
+      if (me === null) return res.json({ threads: [] });
+      /* Where in the list this read starts. The project page shows a
+         screenful and reads older ones on request; without a position the
+         ninth conversation and every one after it could not be opened from
+         the project (QA 2026-10-08, j5). A whole number only, else 0. The id
+         breaks ties, so a screenful never repeats or skips one. */
+      const rawOffset = String(req.query.offset ?? '');
+      const offset = /^\d{1,6}$/.test(rawOffset) ? Number(rawOffset) : 0;
       const result = await pool.query(
         `SELECT t.id, t.created_at, t.updated_at, t.program_id,
           (SELECT content FROM chat_messages
             WHERE thread_id = t.id AND role = 'user'
             ORDER BY created_at ASC LIMIT 1) AS title
         FROM chat_threads t
-        WHERE t.organization_id = $1 AND t.program_id = $2
-        ORDER BY COALESCE(t.updated_at, t.created_at) DESC
-        LIMIT $3`,
-        [orgId, program, limit]
+        WHERE t.organization_id = $1 AND t.program_id = $2 AND t.user_id = $4
+        ORDER BY COALESCE(t.updated_at, t.created_at) DESC, t.id DESC
+        LIMIT $3 OFFSET $5`,
+        [orgId, program, limit, me, offset]
       );
       return res.json({ threads: result.rows });
     }
@@ -85,7 +102,7 @@ export async function listThreads(req: Request, res: Response) {
     } else {
       // Org scope is required for the global recents list — without it
       // we'd leak threads across tenants.
-      if (!orgId) {
+      if (!orgId || me === null) {
         return res.json({ threads: [] });
       }
       // Derive title from the first user message so the recents list shows
@@ -96,11 +113,11 @@ export async function listThreads(req: Request, res: Response) {
             WHERE thread_id = t.id AND role = 'user'
             ORDER BY created_at ASC LIMIT 1) AS title
         FROM chat_threads t
-        WHERE t.organization_id = $1
+        WHERE t.organization_id = $1 AND t.user_id = $3
         ORDER BY t.updated_at DESC
         LIMIT $2
       `;
-      params = [orgId, limit];
+      params = [orgId, limit, me];
     }
 
     const result = await pool.query(query, params);
@@ -141,19 +158,8 @@ export async function listThreads(req: Request, res: Response) {
    the jsdom test mocked the fetch and could not have seen it.
 
    So the store is RESOLVED, once, org-scoped, and each handler then acts on the
-   store that actually owns the thread. */
-type ThreadStore = 'chat' | 'ai';
-
-async function resolveThreadStore(threadId: string, orgId: unknown): Promise<ThreadStore | null> {
-  const { rows } = await pool.query(
-    `SELECT 'chat'::text AS store FROM chat_threads WHERE id = $1 AND organization_id = $2
-     UNION ALL
-     SELECT 'ai'::text AS store FROM ai_threads WHERE id = $1 AND organization_id = $2
-     LIMIT 1`,
-    [threadId, orgId],
-  );
-  return (rows[0]?.store as ThreadStore | undefined) ?? null;
-}
+   store that actually owns the thread (chat-thread-helpers.ts resolveThreadStore,
+   which is also who-may-read-a-transcript for a turn's Summary). */
 
 /** The `ai_threads` transcript. `chat_messages` is read by getThreadMessages. */
 async function getAiThreadMessages(threadId: string): Promise<Array<{ role: string; content: string }>> {

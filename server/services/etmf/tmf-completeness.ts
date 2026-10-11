@@ -2,7 +2,7 @@
  * Trial Master File (TMF) completeness — inspection-readiness against the DIA
  * TMF Reference Model.
  *
- * An eTMF must hold the essential documents (ICH E6(R2) §8) organized to the DIA
+ * An eTMF must hold the essential records (ICH E6(R3) Appendix C) organized to the DIA
  * TMF Reference Model's zones. This service encodes the 11 zones and their
  * essential artifacts and assesses a trial's filed artifacts against them —
  * surfacing the missing essential documents per zone before an inspection.
@@ -12,7 +12,7 @@
  * Pure / deterministic — no DB, no IO.
  *
  * Reference: DIA Trial Master File Reference Model v3.x (zone/artifact taxonomy);
- * ICH E6(R2) §8 Essential Documents.
+ * ICH E6(R3) Appendix C (Essential Records for the Conduct of a Clinical Trial).
  *
  * @module server/services/etmf/tmf-completeness
  */
@@ -215,7 +215,7 @@ export interface TmfSeedArtifact {
 /**
  * The expected-document skeleton a NEW study TMF is seeded with: every
  * reference-model artifact as an 'expected' placeholder, with
- * completeness_required = essential (ICH E6(R2) §8 essential documents
+ * completeness_required = essential (ICH E6(R3) Appendix C essential records
  * drive the inspection-readiness denominator; optional artifacts are
  * tracked but never dilute it). Pure — the seeding transaction in
  * etmf-service.ts consumes this list.

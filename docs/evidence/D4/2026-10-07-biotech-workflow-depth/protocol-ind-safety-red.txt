@@ -1,0 +1,146 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-10-07T02:52:33.176Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-07T02:52:33.178Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/drafting-regional-context.test.ts
+{
+  "timestamp": "2026-10-07T02:52:33.178Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/drafting-regional-context.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_DSUR is a harmonised document, not a filing to ICH 3ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_SAP is a harmonised document, not a filing to ICH 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_PROTOCOL is a harmonised document, not a filing to ICH 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ISO_CIP preserves its own global reference body 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > IEC_62304 preserves its own global reference body 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > QMS_MDSAP preserves its own global reference body 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ambiguous CTA needs jurisdiction before drafting to a trial route 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ambiguous  cta  needs jurisdiction before drafting to a trial route 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > exact regional trial identity still delivers the applicable context 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > DSUR section drafting uses the corrected E2F record through section 20 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > EU_CTA drafts from its exact scoped outline 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA drafts from its exact scoped outline 3ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA_A drafts from its exact scoped outline 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > JP_CTN drafts from its exact scoped outline 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > US_IND_AMENDMENT drafts from its exact scoped outline 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_NONCLIN_SUMMARY drafts from its exact scoped outline 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA rejects marketing CTD guidance outside its selected scope 2ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CA_CTA_A rejects marketing CTD guidance outside its selected scope 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > ICH_NONCLIN_SUMMARY rejects marketing CTD guidance outside its selected scope 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > drafting scope must precede regional filing instructions > CTIS groups and conditional attachments are not described as CTD modules or optional waivers 0ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current M11 protocol requirements are consumed by section drafting > a parent objective section briefs its current child headings from the canonical outline 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current M11 protocol requirements are consumed by section drafting > an applicable assessment carries scope limits without implying universal assessment requirements 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current M11 protocol requirements are consumed by section drafting > an unmodelled protocol heading 8.7.1 is explicit and never replaced by another document framework 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current M11 protocol requirements are consumed by section drafting > an unmodelled protocol heading 15 is explicit and never replaced by another document framework 1ms
+ ✓ server/services/ana/__tests__/drafting-regional-context.test.ts > current M11 protocol requirements are consumed by section drafting > an unmodelled protocol heading 3.2.S is explicit and never replaced by another document framework 1ms
+ × server/services/ana/__tests__/drafting-regional-context.test.ts > current US IND safety reporting remains subtype and route scoped > section drafting includes the canonical current route limits before any form or placement assumptions 10ms
+   → expected 'none' to be 'record:lifecycle:ind_safety_report:sa…' // Object.is equality
+ × server/services/ana/__tests__/drafting-regional-context.test.ts > current US IND safety reporting remains subtype and route scoped > lifecycle timing distinguishes determination-based 15-day reporting, receipt-based 7-day reporting and prompt follow-up 42ms
+   → expected '7 calendar days (fatal or life-threat…' to contain 'sponsor determination'
+ × server/services/ana/__tests__/drafting-regional-context.test.ts > current US IND safety reporting remains subtype and route scoped > the bounded canonical lifecycle brief keeps current route and timing and an unknown section stays unindexed 22ms
+   → expected '## IND Safety Report (Expedited 7/15-…' to contain 'AEMS'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/drafting-regional-context.test.ts > current US IND safety reporting remains subtype and route scoped > section drafting includes the canonical current route limits before any form or placement assumptions
+AssertionError: expected 'none' to be 'record:lifecycle:ind_safety_report:sa…' // Object.is equality
+
+Expected: "record:lifecycle:ind_safety_report:safety.cover"
+Received: "none"
+
+ ❯ server/services/ana/__tests__/drafting-regional-context.test.ts:97:34
+     95|   it('section drafting includes the canonical current route limits bef…
+     96|     const r = resolveDraftingRequirements('US_IND_SR', 'safety.cover');
+     97|     expect(r.requirementsSource).toBe('record:lifecycle:ind_safety_rep…
+       |                                  ^
+     98|     expect(r.requirements).toContain('commercial/noncommercial status'…
+     99|     expect(r.requirements).toContain('AEMS');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/ana/__tests__/drafting-regional-context.test.ts > current US IND safety reporting remains subtype and route scoped > lifecycle timing distinguishes determination-based 15-day reporting, receipt-based 7-day reporting and prompt follow-up
+AssertionError: expected '7 calendar days (fatal or life-threat…' to contain 'sponsor determination'
+
+Expected: "sponsor determination"
+Received: "7 calendar days (fatal or life-threatening, unexpected, suspected adverse reaction — initial notification, which may be by telephone or fax/electronic) / 15 calendar days (other serious and unexpected suspected adverse reactions; findings from other studies or class; clinically important rate increase). Clock starts on day zero — the day the sponsor first receives information meeting the reporting criteria. Follow-up information is submitted within 15 calendar days of receipt."
+
+ ❯ server/services/ana/__tests__/drafting-regional-context.test.ts:109:23
+    107|   it('lifecycle timing distinguishes determination-based 15-day report…
+    108|     const dt = getLifecycleDocumentType('ind_safety_report')!;
+    109|     expect(dt.timing).toContain('sponsor determination');
+       |                       ^
+    110|     expect(dt.timing).toContain('initial receipt');
+    111|     expect(dt.timing).toContain('as soon as the information is availab…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/ana/__tests__/drafting-regional-context.test.ts > current US IND safety reporting remains subtype and route scoped > the bounded canonical lifecycle brief keeps current route and timing and an unknown section stays unindexed
+AssertionError: expected '## IND Safety Report (Expedited 7/15-…' to contain 'AEMS'
+
+- Expected
++ Received
+
+- AEMS
++ ## IND Safety Report (Expedited 7/15-Day)
++
++ An expedited safety report submitted to the reviewing division under an active IND to notify FDA (and all participating investigators) of a serious and unexpected suspected adverse reaction, a finding from clinical or nonclinical studies suggesting a significant human risk, or a clinically important increase in the rate of a serious suspected adverse reaction over that listed in the protocol or Investigator Brochure. The trigger for an individual case is a suspected adverse reaction (an adverse event for which there is a reasonable possibility the drug caused the event) that is both serious and unexpected. …
++
++ Timing: 7 calendar days (fatal or life-threatening, unexpected, suspected adverse reaction — initial notification, which may be by telephone or fax/electronic) / 15 calendar days (other serious and unexpected suspected adverse reactions; findings from other studies or class; clinically important rate increase). Clock starts on day zero — the day the sponsor first receives information meeting the reporting criteria. Follow-up information is submitted within 15 calendar days of receipt.
++
++ ### Regulatory basis
++ - 21 CFR 312.32 (IND safety reporting)
++ - 21 CFR 312.32(a) (definitions: adverse event, suspected adverse reaction, serious, unexpected, life-threatening)
++ - 21 CFR 312.32(c)(1) (what to report and when)
++ - 21 CFR 312.32(d) (follow-up)
++ - 21 CFR 312.55 (Investigator Brochure / informing investigators)
++ - 21 CFR 312.64(b) (investigator reporting of adverse events to sponsor)
++ - FDA Guidance for Industry: Safety Reporting Requirements for INDs and BA/BE Studies (December 2012)
++ - FDA Guidance: Safety Assessment for IND Safety Reporting (December 2015, draft)
++ - ICH E2A: Clinical Safety Data Management — Definitions and Standards for Expedited Reporting
++ - ICH E2B(R3): Electronic Transmission of Individual Case Safety Reports
++
++ ### Components
++ - safety.cover IND Safety Report Cover Letter / Transmittal (with Form FDA 1571) — 21 CFR 312.32(c); 21 CFR 312.23(a)(1) (Form FDA 1571); FDA Safety Reporting Guidance (Dec 2012)
++ - safety.icsr Individual Case Safety Report (MedWatch Form FDA 3500A or CIOMS I) — 21 CFR 312.32(c)(1); FDA Safety Reporting Guidance (Dec 2012); ICH E2A; ICH E2B(R3) for electronic submission
++ - safety.causality Causality Assessment (Reasonable Possibility Determination) — 21 CFR 312.32(a) (definitions of 'suspected adverse reaction' and 'reasonable possibility'); 21 CFR 312.32(c)(1)(i); ICH E2A
++ - safety.expectedness Expectedness Assessment Against the Investigator Brochure / Protocol — 21 CFR 312.32(a) (definition of 'unexpected'); 21 CFR 312.55; ICH E2A (Reference Safety Information)
++ - safety.aggregate Aggregate / Similar-Events and Increased-Rate Analysis (when applicable) — 21 CFR 312.32(c)(1)(i)(C) (aggregate analysis of specific events); 21 CFR 312.32(c)(1)(iv) (clinically important increased rate); …
++ - safety.followup Follow-Up Report (when applicable) — 21 CFR 312.32(d) (follow-up information); FDA Safety Reporting Guidance (Dec 2012)
+
+ ❯ server/services/ana/__tests__/drafting-regional-context.test.ts:122:33
+    120|     expect(answer.kind).toBe('answer');
+    121|     if (answer.kind !== 'answer') throw new Error('IND safety record m…
+    122|     expect(answer.requirements).toContain('AEMS');
+       |                                 ^
+    123|     expect(answer.requirements).toContain('sponsor determination');
+    124|     expect(answer.requirements).toContain('as soon as the information …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 25 passed (28)
+   Start at  22:52:30
+   Duration  10.83s (transform 8.04s, setup 101ms, import 10.24s, tests 107ms, environment 0ms)
+

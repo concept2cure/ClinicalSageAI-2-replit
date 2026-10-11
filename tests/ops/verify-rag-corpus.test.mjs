@@ -46,6 +46,8 @@ const SCRIPT = path.join(REPO, 'scripts', 'verify-rag-corpus.mjs');
 const ORG_A = '11111111-1111-4111-8111-111111111111';
 const ORG_B = '22222222-2222-4222-8222-222222222222';
 const ORG_NONE = '33333333-3333-4333-8333-333333333333';
+const PROGRAM_A = 'e0000000-0000-4000-8000-000000000001';
+const PROGRAM_B = 'e0000000-0000-4000-8000-000000000002';
 
 // ── argument parsing ──────────────────────────────────────────────────────────
 
@@ -154,11 +156,14 @@ async function corpusDb() {
   const db = new PGlite();
   await db.exec(`
     CREATE TABLE organizations (id serial PRIMARY KEY, uuid uuid NOT NULL UNIQUE);
+    CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id integer, deleted_at timestamptz);
     CREATE SCHEMA vault;
     CREATE TABLE vault.documents (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       organization_id integer,
-      document_title text
+      document_title text,
+      program_id uuid,
+      deleted_at timestamptz
     );
     CREATE TABLE vault.document_chunks (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -167,12 +172,13 @@ async function corpusDb() {
       embedding real[]
     );
     INSERT INTO organizations (id, uuid) VALUES (1, '${ORG_A}'), (2, '${ORG_B}');
+    INSERT INTO regulatory_programs VALUES ('${PROGRAM_A}',1,NULL), ('${PROGRAM_B}',2,NULL);
     -- org A: doc a1 has 2 embedded + 1 unembedded chunk; doc a2 has only an unembedded chunk
-    INSERT INTO vault.documents (id, organization_id, document_title) VALUES
-      ('a0000000-0000-4000-8000-000000000001', 1, 'ICH E9(R1)'),
-      ('a0000000-0000-4000-8000-000000000002', 1, 'ICH Q7'),
-      ('b0000000-0000-4000-8000-000000000001', 2, 'Org B doc'),
-      ('c0000000-0000-4000-8000-000000000001', NULL, 'orphan');
+    INSERT INTO vault.documents (id, organization_id, document_title, program_id) VALUES
+      ('a0000000-0000-4000-8000-000000000001', 1, 'ICH E9(R1)', '${PROGRAM_A}'),
+      ('a0000000-0000-4000-8000-000000000002', 1, 'ICH Q7', '${PROGRAM_A}'),
+      ('b0000000-0000-4000-8000-000000000001', 2, 'Org B doc', '${PROGRAM_B}'),
+      ('c0000000-0000-4000-8000-000000000001', NULL, 'orphan', NULL);
     INSERT INTO vault.document_chunks (document_id, chunk_text, embedding) VALUES
       ('a0000000-0000-4000-8000-000000000001', 'estimand', '{0.1,0.2}'),
       ('a0000000-0000-4000-8000-000000000001', 'intercurrent', '{0.3,0.4}'),
@@ -216,6 +222,29 @@ test('an organization with no documents → counted as zero, and the verdict is 
   }
 });
 
+test('soft-deleted documents cannot keep the evaluation corpus non-empty', async () => {
+  const db = await corpusDb();
+  try {
+    await db.query('UPDATE vault.documents SET deleted_at = now() WHERE organization_id = 1');
+    const r = await readEvalCorpus(db, ORG_A);
+    assert.equal(r.documents, 0);
+    assert.equal(r.chunks, 0);
+    assert.equal(r.embeddedChunks, 0);
+    assert.equal(evalCorpusVerdict(r, null).exitCode, 1);
+  } finally { await db.close(); }
+});
+
+test('a deleted programme cannot contribute embedded evidence from its live documents', async () => {
+  const db = await corpusDb();
+  try {
+    await db.query('UPDATE regulatory_programs SET deleted_at = now() WHERE organization_id = 1');
+    const r = await readEvalCorpus(db, ORG_A);
+    assert.equal(r.documents, 0);
+    assert.equal(r.embeddedChunks, 0);
+    assert.equal(evalCorpusVerdict(r, null).exitCode, 1);
+  } finally { await db.close(); }
+});
+
 test('an organization uuid nobody has → orgId null (not a zero count)', async () => {
   const db = await corpusDb();
   try {
@@ -232,7 +261,7 @@ test('the store absent → named as missing', async () => {
   try {
     await db.exec('CREATE TABLE organizations (id serial PRIMARY KEY, uuid uuid NOT NULL UNIQUE)');
     const r = await readEvalCorpus(db, ORG_A);
-    assert.deepEqual(r.missing, ['vault.documents', 'vault.document_chunks']);
+    assert.deepEqual(r.missing, ['vault.documents', 'vault.document_chunks', 'regulatory_programs']);
   } finally {
     await db.close();
   }
@@ -241,7 +270,7 @@ test('the store absent → named as missing', async () => {
 test('a query that fails is returned as an error, not as counts', async () => {
   const failing = {
     query: async (sql) => {
-      if (/to_regclass/.test(sql)) return { rows: [{ organizations: 'organizations', documents: 'vault.documents', chunks: 'vault.document_chunks' }] };
+      if (/to_regclass/.test(sql)) return { rows: [{ organizations: 'organizations', documents: 'vault.documents', chunks: 'vault.document_chunks', programs: 'regulatory_programs' }] };
       if (/^\s*(BEGIN|ROLLBACK|SELECT set_config)/i.test(sql)) return { rows: [] };
       throw new Error('permission denied for schema vault');
     },
@@ -292,7 +321,7 @@ test('csr_reports / csr_details are counted when present, and absent tables are 
 // then count chunks retrieval excludes.
 
 const PIPELINE = path.join(REPO, 'server', 'services', 'advancedRAGPipeline.ts');
-const [FROM_CHUNKS, JOIN_DOCS, EMBEDDED, IN_ORG] = EVAL_CORPUS_PREDICATES;
+const [FROM_CHUNKS, JOIN_DOCS, ...CORPUS_CONJUNCTS] = EVAL_CORPUS_PREDICATES;
 const norm = (s) => s.replace(/\$\d+/g, '$N').replace(/\s+/g, ' ').trim();
 /** The lexical arm's text match: a property of the query, not of the corpus, so the preflight does not count by it. */
 const QUERY_MATCH = norm("to_tsvector('english', c.chunk_text) @@ websearch_to_tsquery('english', $1)");
@@ -344,7 +373,7 @@ function vaultArmDrift(source) {
   if (!body) return ['searchVaultSimilar is gone from advancedRAGPipeline.ts'];
   const arms = [...body.matchAll(/`([^`]*)`/g)].map((m) => m[1]).filter((t) => t.includes('FROM vault.document_chunks c'));
   if (arms.length !== 2) return [`expected the dense and lexical vault arms (2 SQL templates), found ${arms.length}`];
-  const want = [norm(EMBEDDED), norm(IN_ORG)].sort();
+  const want = CORPUS_CONJUNCTS.map(norm).sort();
   const problems = [];
   arms.forEach((sql, i) => {
     const arm = i === 0 ? 'dense' : 'lexical';
@@ -366,9 +395,9 @@ test('the vault arm retrieves by exactly the predicates the preflight counts by'
 
 test('the pin fails when the vault arm gains a restriction the preflight does not count by', () => {
   const src = readFileSync(PIPELINE, 'utf8');
-  const mutated = src.replace('WHERE c.embedding IS NOT NULL${denseFilter}', 'WHERE c.embedding IS NOT NULL${denseFilter}\n            AND d.deleted_at IS NULL');
+  const mutated = src.replace('WHERE c.embedding IS NOT NULL${denseFilter}', "WHERE c.embedding IS NOT NULL${denseFilter}\n            AND d.processing_status = 'completed'");
   assert.notEqual(mutated, src, 'the mutation must apply');
-  assert.match(vaultArmDrift(mutated).join('\n'), /dense arm restricts by a predicate the preflight does not count by: d\.deleted_at IS NULL/);
+  assert.match(vaultArmDrift(mutated).join('\n'), /dense arm restricts by a predicate the preflight does not count by: d\.processing_status/);
 });
 
 test('the pin fails when a predicate leaves the vault arm, even though the same text survives in the rag_chunks arms', () => {
@@ -378,6 +407,18 @@ test('the pin fails when a predicate leaves the vault arm, even though the same 
   // A whole-file search — the pin this replaces — still finds it (rag_chunks arms).
   assert.ok(mutated.includes('c.embedding IS NOT NULL'));
   assert.match(vaultArmDrift(mutated).join('\n'), /lexical arm no longer restricts by: c\.embedding IS NOT NULL/);
+});
+
+test('both vault arms must preserve the live document and programme restrictions', () => {
+  const src = readFileSync(PIPELINE, 'utf8');
+  for (const predicate of [
+    'AND d.deleted_at IS NULL',
+    'AND EXISTS (SELECT 1 FROM regulatory_programs p WHERE p.id = d.program_id AND p.organization_id = d.organization_id AND p.deleted_at IS NULL)',
+  ]) {
+    const mutated = src.replace(predicate, '');
+    assert.notEqual(mutated, src);
+    assert.match(vaultArmDrift(mutated).join('\n'), /dense arm no longer restricts by/);
+  }
 });
 
 // ── the CLI ───────────────────────────────────────────────────────────────────
@@ -411,8 +452,10 @@ const REGISTER = path.join(HERE, 'helpers', 'pglite-as-pg-register.mjs');
 const SEED = `
   CREATE TABLE organizations (id serial PRIMARY KEY, uuid uuid NOT NULL UNIQUE);
   INSERT INTO organizations (id, uuid) VALUES (1, '${ORG_A}'), (2, '${ORG_B}');
+  CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id integer, deleted_at timestamptz);
+  INSERT INTO regulatory_programs VALUES ('${PROGRAM_A}',1,NULL), ('${PROGRAM_B}',2,NULL);
   CREATE SCHEMA vault;
-  CREATE TABLE vault.documents (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id integer, processing_status text);
+  CREATE TABLE vault.documents (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id integer, processing_status text, program_id uuid, deleted_at timestamptz);
   CREATE TABLE vault.document_chunks (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id uuid NOT NULL REFERENCES vault.documents(id), chunk_text text NOT NULL, embedding real[]);
   CREATE TABLE csr_reports (id serial PRIMARY KEY, organization_id integer NOT NULL);
@@ -421,11 +464,11 @@ const SEED = `
   -- both are counted by the default report, neither is the evaluation corpus.
   INSERT INTO csr_reports (organization_id) SELECT 2 FROM generate_series(1, 500);
   INSERT INTO csr_details (report_id) SELECT g FROM generate_series(1, 480) g;
-  INSERT INTO vault.documents (id, organization_id, processing_status) VALUES ('b0000000-0000-4000-8000-000000000001', 2, 'completed');
+  INSERT INTO vault.documents (id, organization_id, processing_status, program_id) VALUES ('b0000000-0000-4000-8000-000000000001', 2, 'completed', '${PROGRAM_B}');
   INSERT INTO vault.document_chunks (document_id, chunk_text, embedding) VALUES ('b0000000-0000-4000-8000-000000000001', 'x', '{0.1}');
 `;
 const EVAL_CONTENT = `
-  INSERT INTO vault.documents (id, organization_id, processing_status) VALUES ('a0000000-0000-4000-8000-000000000001', 1, 'completed');
+  INSERT INTO vault.documents (id, organization_id, processing_status, program_id) VALUES ('a0000000-0000-4000-8000-000000000001', 1, 'completed', '${PROGRAM_A}');
   INSERT INTO vault.document_chunks (document_id, chunk_text, embedding) VALUES ('a0000000-0000-4000-8000-000000000001', 'estimand', '{0.3}');
 `;
 

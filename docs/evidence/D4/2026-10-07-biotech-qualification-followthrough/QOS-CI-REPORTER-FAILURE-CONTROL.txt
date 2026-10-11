@@ -1,0 +1,66 @@
+EXPECTED FAILURE CONTROL — NOT REAL DATABASE QUALIFICATION
+Same existing unmocked Vitest project, one existing harness file, and the new reporters.
+Explicit task-owned unreachable database URL on 127.0.0.1:1; no native PostgreSQL or production connection.
+Proves the JSON reporter accepts the options, records a failed execution and preserves a nonzero exit.
+
+Command: ["npm", "run", "test:db", "--", "tests/db/pg-mock-scoping.dbtest.ts", "--reporter=verbose", "--reporter=json", "--outputFile.json=/workspace/scratch/c2099bdce0e4/db-reporter-unreachable-vitest.json"]
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 test:db
+> vitest run --config vitest.db.config.ts tests/db/pg-mock-scoping.dbtest.ts --reporter=verbose --reporter=json --outputFile.json=/workspace/scratch/c2099bdce0e4/db-reporter-unreachable-vitest.json
+
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ↓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: the pg driver is not mocked > exposes the genuine pg.Pool, not a vitest mock function
+ ↓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: the pg driver is not mocked > reaches a real PostgreSQL server — a value the mock could not invent
+ ↓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: the pg driver is not mocked > runs with RLS_ENFORCE=on — the mode production mandates
+ ↓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: the pg driver is not mocked > DDL issued by one connection is visible to another — state actually persists
+ ↓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: configuration fails closed > rejects the unit-test placeholder DATABASE_URL instead of timing out on it
+ ↓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: configuration fails closed > rejects an absent DATABASE_URL rather than skipping the suite
+ ↓ tests/db/pg-mock-scoping.dbtest.ts > real-database project: configuration fails closed > prefers TEST_DATABASE_URL when both are set
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/pg-mock-scoping.dbtest.ts [ tests/db/pg-mock-scoping.dbtest.ts ]
+Error: [db-suite] cannot reach the test database. This suite fails rather than skips, because a database test that silently does not run is the defect it exists to prevent. Underlying error: connect ECONNREFUSED 127.0.0.1:1
+ ❯ tests/setup.db.ts:119:11
+    117|   } catch (error) {
+    118|     await pool.end().catch(() => {/* already broken */});
+    119|     throw new Error(
+       |           ^
+    120|       `[db-suite] cannot reach the test database. This suite fails rat…
+    121|         `because a database test that silently does not run is the def…
+
+Caused by: Error: connect ECONNREFUSED 127.0.0.1:1
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/setup.db.ts:110:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -111, code: 'ECONNREFUSED', syscall: 'connect', address: '127.0.0.1', port: 1 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 skipped (7)
+   Start at  15:24:39
+   Duration  434ms (transform 57ms, setup 74ms, import 16ms, tests 12ms, environment 0ms)
+
+JSON report written to /workspace/scratch/c2099bdce0e4/db-reporter-unreachable-vitest.json
+
+ACTUAL FAILURE-REPORT MANIFEST
+{
+  "kind": "expected unreachable-database failure control",
+  "exit_code": 1,
+  "report_success": false,
+  "physical_files": 1,
+  "physical_file_statuses": {
+    "failed": 1
+  },
+  "actual_assertion_statuses": {
+    "skipped": 7
+  },
+  "json_report_created": true,
+  "real_postgresql_qualification": false
+}

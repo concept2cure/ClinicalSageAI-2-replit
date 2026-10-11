@@ -1,0 +1,13 @@
+# (1) RED, server — GET /session and /me state no signing posture
+$ npx vitest run server/routes/__tests__/auth-session-roles.test.ts
+ × server/routes/__tests__/auth-session-roles.test.ts > the session states the signing posture > GET /session, production, no authenticator: required and not enrolled 6ms
+ × server/routes/__tests__/auth-session-roles.test.ts > the session states the signing posture > GET /session, production, an authenticator: required and enrolled 3ms
+ × server/routes/__tests__/auth-session-roles.test.ts > the session states the signing posture > GET /session, a declared test environment: not required 4ms
+ × server/routes/__tests__/auth-session-roles.test.ts > the session states the signing posture > GET /me carries the same posture 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to deeply equal { authenticatorRequired: true, …(1) }
+AssertionError: expected undefined to deeply equal { authenticatorRequired: true, …(1) }
+AssertionError: expected undefined to deeply equal { authenticatorRequired: false, …(1) }
+AssertionError: expected undefined to deeply equal { authenticatorRequired: true, …(1) }
+ Test Files  1 failed (1)
+      Tests  4 failed | 11 passed (15)

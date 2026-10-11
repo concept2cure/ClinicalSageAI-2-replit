@@ -49,6 +49,8 @@
  * which is later than it should be but never silent.
  */
 
+import { JWT_SECRET_FALLBACK_KEY_ID } from '../../../shared/constants/audit-export-key';
+
 /**
  * Minimum length for the export signing key. 32 matches the JWT / MFA / audit
  * seal floor used across the config layer (auditSealPosture.ts::AUDIT_HMAC_KEY_MIN_LENGTH).
@@ -61,8 +63,9 @@ export const DEFAULT_AUDIT_EXPORT_SIGNING_KEY_ID = 'k1';
 /**
  * The key id a manifest carries when the export was sealed under the JWT secret
  * because no dedicated key was configured. Only reachable outside production.
+ * Declared in shared/ so the client's seal statement reads the same value.
  */
-export const JWT_SECRET_FALLBACK_KEY_ID = 'jwt-secret-fallback';
+export { JWT_SECRET_FALLBACK_KEY_ID };
 
 export interface ResolvedExportSigningKey {
   /** The HMAC key material. */

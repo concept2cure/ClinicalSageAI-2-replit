@@ -51,6 +51,11 @@ vi.mock('../../services/vault/document-chunking.service', () => ({
 }));
 vi.mock('../../export/renderers', () => ({
   renderHtmlToPdf: async (html: string) => Buffer.from(`%PDF-1.7\n% rendered by the test engine\n${html}`),
+  // The export renders through the tracked form (QA 2026-10-08, j4); same stub.
+  renderHtmlToPdfTracked: async (html: string) => ({
+    buffer: Buffer.from(`%PDF-1.7\n% rendered by the test engine\n${html}`),
+    usedFallback: false,
+  }),
 }));
 
 const REVIEWER = { id: 6, name: 'Rae Reviewer', email: 'rae@canvas.example' };

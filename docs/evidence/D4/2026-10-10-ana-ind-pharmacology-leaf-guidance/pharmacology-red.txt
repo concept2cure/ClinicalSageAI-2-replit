@@ -1,0 +1,586 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/324dc668b968/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts
+{
+  "timestamp": "2026-10-10T05:22:50.351Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-10T05:22:50.352Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts
+{
+  "timestamp": "2026-10-10T05:22:50.352Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts
+[database] Database connection successful
+
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.1 as its own recorded section with the final M4S heading 8ms
+   → expected 'ancestor' to be 'exact' // Object.is equality
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.2 as its own recorded section with the final M4S heading 1ms
+   → expected 'ancestor' to be 'exact' // Object.is equality
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.3 as its own recorded section with the final M4S heading 1ms
+   → expected 'ancestor' to be 'exact' // Object.is equality
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.4 as its own recorded section with the final M4S heading 1ms
+   → expected 'ancestor' to be 'exact' // Object.is equality
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.5 as its own recorded section with the final M4S heading 1ms
+   → expected 'ancestor' to be 'exact' // Object.is equality
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.6 as its own recorded section with the final M4S heading 1ms
+   → expected 'ancestor' to be 'exact' // Object.is equality
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.7 as its own recorded section with the final M4S heading 1ms
+   → expected 'ancestor' to be 'exact' // Object.is equality
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.1 guidance and evidence limits to the real drafting gateway 18ms
+   → expected 'SECTION TO DRAFT: 2.6.2.1\n\nSECTION …' to contain '## Drafting: Module 2.6.2.1 — Brief S…'
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.2 guidance and evidence limits to the real drafting gateway 5ms
+   → expected 'SECTION TO DRAFT: 2.6.2.2\n\nSECTION …' to contain '## Drafting: Module 2.6.2.2 — Primary…'
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.3 guidance and evidence limits to the real drafting gateway 3ms
+   → expected 'SECTION TO DRAFT: 2.6.2.3\n\nSECTION …' to contain '## Drafting: Module 2.6.2.3 — Seconda…'
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.4 guidance and evidence limits to the real drafting gateway 2ms
+   → expected 'SECTION TO DRAFT: 2.6.2.4\n\nSECTION …' to contain '## Drafting: Module 2.6.2.4 — Safety …'
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.5 guidance and evidence limits to the real drafting gateway 3ms
+   → expected 'SECTION TO DRAFT: 2.6.2.5\n\nSECTION …' to contain '## Drafting: Module 2.6.2.5 — Pharmac…'
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.6 guidance and evidence limits to the real drafting gateway 2ms
+   → expected 'SECTION TO DRAFT: 2.6.2.6\n\nSECTION …' to contain '## Drafting: Module 2.6.2.6 — Discuss…'
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.7 guidance and evidence limits to the real drafting gateway 2ms
+   → expected 'SECTION TO DRAFT: 2.6.2.7\n\nSECTION …' to contain '## Drafting: Module 2.6.2.7 — Tables …'
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > preserves the prefix guards when the existing renderer clips the authoring guidance 1ms
+   → 2.6.2.1: expected undefined to be defined
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > preserves every original record and moves exactly seven headings between the canonical halves 8ms
+   → expected [ '2', '2.1', '2.5.7', '2.6', …(118) ] to deeply equal [ '2', '2.1', '2.5.7', '2.6', …(111) ]
+ × server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > keeps unsupported deeper numbering inherited and wholly unindexed codes unresolved 1ms
+   → expected { kind: 'ctd-section', code: '2.6.2' } to deeply equal { Object (kind, code) }
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.1 as its own recorded section with the final M4S heading
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.2 as its own recorded section with the final M4S heading
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.3 as its own recorded section with the final M4S heading
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.4 as its own recorded section with the final M4S heading
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.5 as its own recorded section with the final M4S heading
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.6 as its own recorded section with the final M4S heading
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > resolves 2.6.2.7 as its own recorded section with the final M4S heading
+AssertionError: expected 'ancestor' to be 'exact' // Object.is equality
+
+Expected: "exact"
+Received: "ancestor"
+
+ ❯ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts:40:28
+     38|       expect(answer.kind).toBe('answer');
+     39|       if (answer.kind !== 'answer') throw new Error(`No recorded guida…
+     40|       expect(answer.match).toBe('exact');
+       |                            ^
+     41|       expect(answer.source).toEqual({ kind: 'ctd-section', code });
+     42|       expect(answer.title).toBe(title);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.1 guidance and evidence limits to the real drafting gateway
+AssertionError: expected 'SECTION TO DRAFT: 2.6.2.1\n\nSECTION …' to contain '## Drafting: Module 2.6.2.1 — Brief S…'
+
+- Expected
++ Received
+
+- ## Drafting: Module 2.6.2.1 — Brief Summary
++ SECTION TO DRAFT: 2.6.2.1
++
++ SECTION REQUIREMENTS (from the platform's canonical regulatory record — draft to these; do not add requirements from memory):
++ ## Drafting: Module 2.6.2 — Pharmacology Written Summary
++ You are in 2.6.2.1, within 2.6.2; these are 2.6.2's requirements.
++ Required for: IND, NDA, BLA.
++ Section 2.6.2 is the factual written summary of nonclinical pharmacology — primary pharmacodynamics (MOA/target activity), secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions. Unlike the interpretive 2.4, this is a comprehensive but non-argumentative account of what the pharmacology studies showed. FDA pharm/tox reviewers use it to understand the biological rationale and off-target/safety-pharmacology profile; acceptability depends on completeness, factual accuracy, and consistency with the tabulated summary (2.6.3) and Module 4.
++
++ ### How it is written
++ Follow the ICH M4S order: brief summary, primary pharmacodynamics, secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions, with an integrated discussion at the end. Present study designs, species/models, doses/concentrations, and results factually; the summary should be roughly narrative text supported by cross-references to 2.6.3 tables. Cover the safety pharmacology core battery (cardiovascular including hERG/QT, central nervous, and respiratory systems) per ICH S7A and S7B. State GLP status of pivotal safety pharmacology studies. Keep interpretation minimal here (integration and conclusions belong in 2.4) but include a short discussion relating findings. Every result must reconcile with 2.6.3 and Module 4 study reports.
++
++ ### It must contain
++ - Brief summary orienting the pharmacology program
++ - Primary pharmacodynamics: target/MOA activity in vitro and in vivo with potency data
++ - Secondary pharmacodynamics: off-target and receptor/enzyme profiling
++ - Safety pharmacology core battery: cardiovascular (hERG/QT per ICH S7B), CNS, respiratory (ICH S7A)
++ - Pharmacodynamic drug interactions, if studied
++ - Study designs, species/models, and dose/concentration ranges
++ - GLP compliance status of pivotal safety pharmacology studies
++ - Integrated discussion cross-referencing the tabulated summary (2.6.3)
++
++ ### Tables and data a reviewer expects
++ - Primary pharmacodynamics results summary
++ - Safety pharmacology results summary (CV/CNS/respiratory)
++ - Secondary pharmacodynamics/off-target profiling summary
++
++ ### Common deficiencies
++ - Incomplete safety pharmacology core battery (e.g., missing respiratory or CNS assessment) per ICH S7A
++ - hERG/QT (ICH S7B) data absent or inconsistent with the clinical QT strategy
++ - Results in 2.6.2 that do not match the 2.6.3 tables or Module 4 reports
++ - Turning the written summary into the interpretive Overview (duplicating 2.4)
++ - Omitting GLP status of pivotal safety pharmacology studies
++ - Secondary/off-target pharmacology not addressed, leaving off-target risk uncharacterized
++
++ ### Read with
++ 2.6.1, 2.6.3, 2.4
++
++ INSTRUCTIONS:
++ Phase 1 IND. Evidence cutoff 2026-10-10. Route, population, duration and supporting study results were not supplied; preserve these gaps.
++
++ PROJECT SOURCE STATUS: UNASSESSED. No processed project source records were loaded for this section. Instructions and prior prose are not verified study evidence. Use explicit gaps for unsupported facts; do not claim project evidence review.
+
+ ❯ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts:65:18
+     63|     };
+     64|     const user = sent.messages.find(m => m.role === 'user')!.content;
+     65|     expect(user).toContain(`## Drafting: Module ${code} — ${title}`);
+       |                  ^
+     66|     expect(user).toContain(instructions);
+     67|     for (const guard of ['development phase', 'modality', 'route', 'po…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.2 guidance and evidence limits to the real drafting gateway
+AssertionError: expected 'SECTION TO DRAFT: 2.6.2.2\n\nSECTION …' to contain '## Drafting: Module 2.6.2.2 — Primary…'
+
+- Expected
++ Received
+
+- ## Drafting: Module 2.6.2.2 — Primary Pharmacodynamics
++ SECTION TO DRAFT: 2.6.2.2
++
++ SECTION REQUIREMENTS (from the platform's canonical regulatory record — draft to these; do not add requirements from memory):
++ ## Drafting: Module 2.6.2 — Pharmacology Written Summary
++ You are in 2.6.2.2, within 2.6.2; these are 2.6.2's requirements.
++ Required for: IND, NDA, BLA.
++ Section 2.6.2 is the factual written summary of nonclinical pharmacology — primary pharmacodynamics (MOA/target activity), secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions. Unlike the interpretive 2.4, this is a comprehensive but non-argumentative account of what the pharmacology studies showed. FDA pharm/tox reviewers use it to understand the biological rationale and off-target/safety-pharmacology profile; acceptability depends on completeness, factual accuracy, and consistency with the tabulated summary (2.6.3) and Module 4.
++
++ ### How it is written
++ Follow the ICH M4S order: brief summary, primary pharmacodynamics, secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions, with an integrated discussion at the end. Present study designs, species/models, doses/concentrations, and results factually; the summary should be roughly narrative text supported by cross-references to 2.6.3 tables. Cover the safety pharmacology core battery (cardiovascular including hERG/QT, central nervous, and respiratory systems) per ICH S7A and S7B. State GLP status of pivotal safety pharmacology studies. Keep interpretation minimal here (integration and conclusions belong in 2.4) but include a short discussion relating findings. Every result must reconcile with 2.6.3 and Module 4 study reports.
++
++ ### It must contain
++ - Brief summary orienting the pharmacology program
++ - Primary pharmacodynamics: target/MOA activity in vitro and in vivo with potency data
++ - Secondary pharmacodynamics: off-target and receptor/enzyme profiling
++ - Safety pharmacology core battery: cardiovascular (hERG/QT per ICH S7B), CNS, respiratory (ICH S7A)
++ - Pharmacodynamic drug interactions, if studied
++ - Study designs, species/models, and dose/concentration ranges
++ - GLP compliance status of pivotal safety pharmacology studies
++ - Integrated discussion cross-referencing the tabulated summary (2.6.3)
++
++ ### Tables and data a reviewer expects
++ - Primary pharmacodynamics results summary
++ - Safety pharmacology results summary (CV/CNS/respiratory)
++ - Secondary pharmacodynamics/off-target profiling summary
++
++ ### Common deficiencies
++ - Incomplete safety pharmacology core battery (e.g., missing respiratory or CNS assessment) per ICH S7A
++ - hERG/QT (ICH S7B) data absent or inconsistent with the clinical QT strategy
++ - Results in 2.6.2 that do not match the 2.6.3 tables or Module 4 reports
++ - Turning the written summary into the interpretive Overview (duplicating 2.4)
++ - Omitting GLP status of pivotal safety pharmacology studies
++ - Secondary/off-target pharmacology not addressed, leaving off-target risk uncharacterized
++
++ ### Read with
++ 2.6.1, 2.6.3, 2.4
++
++ INSTRUCTIONS:
++ Phase 1 IND. Evidence cutoff 2026-10-10. Route, population, duration and supporting study results were not supplied; preserve these gaps.
++
++ PROJECT SOURCE STATUS: UNASSESSED. No processed project source records were loaded for this section. Instructions and prior prose are not verified study evidence. Use explicit gaps for unsupported facts; do not claim project evidence review.
+
+ ❯ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts:65:18
+     63|     };
+     64|     const user = sent.messages.find(m => m.role === 'user')!.content;
+     65|     expect(user).toContain(`## Drafting: Module ${code} — ${title}`);
+       |                  ^
+     66|     expect(user).toContain(instructions);
+     67|     for (const guard of ['development phase', 'modality', 'route', 'po…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.3 guidance and evidence limits to the real drafting gateway
+AssertionError: expected 'SECTION TO DRAFT: 2.6.2.3\n\nSECTION …' to contain '## Drafting: Module 2.6.2.3 — Seconda…'
+
+- Expected
++ Received
+
+- ## Drafting: Module 2.6.2.3 — Secondary Pharmacodynamics
++ SECTION TO DRAFT: 2.6.2.3
++
++ SECTION REQUIREMENTS (from the platform's canonical regulatory record — draft to these; do not add requirements from memory):
++ ## Drafting: Module 2.6.2 — Pharmacology Written Summary
++ You are in 2.6.2.3, within 2.6.2; these are 2.6.2's requirements.
++ Required for: IND, NDA, BLA.
++ Section 2.6.2 is the factual written summary of nonclinical pharmacology — primary pharmacodynamics (MOA/target activity), secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions. Unlike the interpretive 2.4, this is a comprehensive but non-argumentative account of what the pharmacology studies showed. FDA pharm/tox reviewers use it to understand the biological rationale and off-target/safety-pharmacology profile; acceptability depends on completeness, factual accuracy, and consistency with the tabulated summary (2.6.3) and Module 4.
++
++ ### How it is written
++ Follow the ICH M4S order: brief summary, primary pharmacodynamics, secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions, with an integrated discussion at the end. Present study designs, species/models, doses/concentrations, and results factually; the summary should be roughly narrative text supported by cross-references to 2.6.3 tables. Cover the safety pharmacology core battery (cardiovascular including hERG/QT, central nervous, and respiratory systems) per ICH S7A and S7B. State GLP status of pivotal safety pharmacology studies. Keep interpretation minimal here (integration and conclusions belong in 2.4) but include a short discussion relating findings. Every result must reconcile with 2.6.3 and Module 4 study reports.
++
++ ### It must contain
++ - Brief summary orienting the pharmacology program
++ - Primary pharmacodynamics: target/MOA activity in vitro and in vivo with potency data
++ - Secondary pharmacodynamics: off-target and receptor/enzyme profiling
++ - Safety pharmacology core battery: cardiovascular (hERG/QT per ICH S7B), CNS, respiratory (ICH S7A)
++ - Pharmacodynamic drug interactions, if studied
++ - Study designs, species/models, and dose/concentration ranges
++ - GLP compliance status of pivotal safety pharmacology studies
++ - Integrated discussion cross-referencing the tabulated summary (2.6.3)
++
++ ### Tables and data a reviewer expects
++ - Primary pharmacodynamics results summary
++ - Safety pharmacology results summary (CV/CNS/respiratory)
++ - Secondary pharmacodynamics/off-target profiling summary
++
++ ### Common deficiencies
++ - Incomplete safety pharmacology core battery (e.g., missing respiratory or CNS assessment) per ICH S7A
++ - hERG/QT (ICH S7B) data absent or inconsistent with the clinical QT strategy
++ - Results in 2.6.2 that do not match the 2.6.3 tables or Module 4 reports
++ - Turning the written summary into the interpretive Overview (duplicating 2.4)
++ - Omitting GLP status of pivotal safety pharmacology studies
++ - Secondary/off-target pharmacology not addressed, leaving off-target risk uncharacterized
++
++ ### Read with
++ 2.6.1, 2.6.3, 2.4
++
++ INSTRUCTIONS:
++ Phase 1 IND. Evidence cutoff 2026-10-10. Route, population, duration and supporting study results were not supplied; preserve these gaps.
++
++ PROJECT SOURCE STATUS: UNASSESSED. No processed project source records were loaded for this section. Instructions and prior prose are not verified study evidence. Use explicit gaps for unsupported facts; do not claim project evidence review.
+
+ ❯ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts:65:18
+     63|     };
+     64|     const user = sent.messages.find(m => m.role === 'user')!.content;
+     65|     expect(user).toContain(`## Drafting: Module ${code} — ${title}`);
+       |                  ^
+     66|     expect(user).toContain(instructions);
+     67|     for (const guard of ['development phase', 'modality', 'route', 'po…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.4 guidance and evidence limits to the real drafting gateway
+AssertionError: expected 'SECTION TO DRAFT: 2.6.2.4\n\nSECTION …' to contain '## Drafting: Module 2.6.2.4 — Safety …'
+
+- Expected
++ Received
+
+- ## Drafting: Module 2.6.2.4 — Safety Pharmacology
++ SECTION TO DRAFT: 2.6.2.4
++
++ SECTION REQUIREMENTS (from the platform's canonical regulatory record — draft to these; do not add requirements from memory):
++ ## Drafting: Module 2.6.2 — Pharmacology Written Summary
++ You are in 2.6.2.4, within 2.6.2; these are 2.6.2's requirements.
++ Required for: IND, NDA, BLA.
++ Section 2.6.2 is the factual written summary of nonclinical pharmacology — primary pharmacodynamics (MOA/target activity), secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions. Unlike the interpretive 2.4, this is a comprehensive but non-argumentative account of what the pharmacology studies showed. FDA pharm/tox reviewers use it to understand the biological rationale and off-target/safety-pharmacology profile; acceptability depends on completeness, factual accuracy, and consistency with the tabulated summary (2.6.3) and Module 4.
++
++ ### How it is written
++ Follow the ICH M4S order: brief summary, primary pharmacodynamics, secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions, with an integrated discussion at the end. Present study designs, species/models, doses/concentrations, and results factually; the summary should be roughly narrative text supported by cross-references to 2.6.3 tables. Cover the safety pharmacology core battery (cardiovascular including hERG/QT, central nervous, and respiratory systems) per ICH S7A and S7B. State GLP status of pivotal safety pharmacology studies. Keep interpretation minimal here (integration and conclusions belong in 2.4) but include a short discussion relating findings. Every result must reconcile with 2.6.3 and Module 4 study reports.
++
++ ### It must contain
++ - Brief summary orienting the pharmacology program
++ - Primary pharmacodynamics: target/MOA activity in vitro and in vivo with potency data
++ - Secondary pharmacodynamics: off-target and receptor/enzyme profiling
++ - Safety pharmacology core battery: cardiovascular (hERG/QT per ICH S7B), CNS, respiratory (ICH S7A)
++ - Pharmacodynamic drug interactions, if studied
++ - Study designs, species/models, and dose/concentration ranges
++ - GLP compliance status of pivotal safety pharmacology studies
++ - Integrated discussion cross-referencing the tabulated summary (2.6.3)
++
++ ### Tables and data a reviewer expects
++ - Primary pharmacodynamics results summary
++ - Safety pharmacology results summary (CV/CNS/respiratory)
++ - Secondary pharmacodynamics/off-target profiling summary
++
++ ### Common deficiencies
++ - Incomplete safety pharmacology core battery (e.g., missing respiratory or CNS assessment) per ICH S7A
++ - hERG/QT (ICH S7B) data absent or inconsistent with the clinical QT strategy
++ - Results in 2.6.2 that do not match the 2.6.3 tables or Module 4 reports
++ - Turning the written summary into the interpretive Overview (duplicating 2.4)
++ - Omitting GLP status of pivotal safety pharmacology studies
++ - Secondary/off-target pharmacology not addressed, leaving off-target risk uncharacterized
++
++ ### Read with
++ 2.6.1, 2.6.3, 2.4
++
++ INSTRUCTIONS:
++ Phase 1 IND. Evidence cutoff 2026-10-10. Route, population, duration and supporting study results were not supplied; preserve these gaps.
++
++ PROJECT SOURCE STATUS: UNASSESSED. No processed project source records were loaded for this section. Instructions and prior prose are not verified study evidence. Use explicit gaps for unsupported facts; do not claim project evidence review.
+
+ ❯ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts:65:18
+     63|     };
+     64|     const user = sent.messages.find(m => m.role === 'user')!.content;
+     65|     expect(user).toContain(`## Drafting: Module ${code} — ${title}`);
+       |                  ^
+     66|     expect(user).toContain(instructions);
+     67|     for (const guard of ['development phase', 'modality', 'route', 'po…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.5 guidance and evidence limits to the real drafting gateway
+AssertionError: expected 'SECTION TO DRAFT: 2.6.2.5\n\nSECTION …' to contain '## Drafting: Module 2.6.2.5 — Pharmac…'
+
+- Expected
++ Received
+
+- ## Drafting: Module 2.6.2.5 — Pharmacodynamic Drug Interactions
++ SECTION TO DRAFT: 2.6.2.5
++
++ SECTION REQUIREMENTS (from the platform's canonical regulatory record — draft to these; do not add requirements from memory):
++ ## Drafting: Module 2.6.2 — Pharmacology Written Summary
++ You are in 2.6.2.5, within 2.6.2; these are 2.6.2's requirements.
++ Required for: IND, NDA, BLA.
++ Section 2.6.2 is the factual written summary of nonclinical pharmacology — primary pharmacodynamics (MOA/target activity), secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions. Unlike the interpretive 2.4, this is a comprehensive but non-argumentative account of what the pharmacology studies showed. FDA pharm/tox reviewers use it to understand the biological rationale and off-target/safety-pharmacology profile; acceptability depends on completeness, factual accuracy, and consistency with the tabulated summary (2.6.3) and Module 4.
++
++ ### How it is written
++ Follow the ICH M4S order: brief summary, primary pharmacodynamics, secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions, with an integrated discussion at the end. Present study designs, species/models, doses/concentrations, and results factually; the summary should be roughly narrative text supported by cross-references to 2.6.3 tables. Cover the safety pharmacology core battery (cardiovascular including hERG/QT, central nervous, and respiratory systems) per ICH S7A and S7B. State GLP status of pivotal safety pharmacology studies. Keep interpretation minimal here (integration and conclusions belong in 2.4) but include a short discussion relating findings. Every result must reconcile with 2.6.3 and Module 4 study reports.
++
++ ### It must contain
++ - Brief summary orienting the pharmacology program
++ - Primary pharmacodynamics: target/MOA activity in vitro and in vivo with potency data
++ - Secondary pharmacodynamics: off-target and receptor/enzyme profiling
++ - Safety pharmacology core battery: cardiovascular (hERG/QT per ICH S7B), CNS, respiratory (ICH S7A)
++ - Pharmacodynamic drug interactions, if studied
++ - Study designs, species/models, and dose/concentration ranges
++ - GLP compliance status of pivotal safety pharmacology studies
++ - Integrated discussion cross-referencing the tabulated summary (2.6.3)
++
++ ### Tables and data a reviewer expects
++ - Primary pharmacodynamics results summary
++ - Safety pharmacology results summary (CV/CNS/respiratory)
++ - Secondary pharmacodynamics/off-target profiling summary
++
++ ### Common deficiencies
++ - Incomplete safety pharmacology core battery (e.g., missing respiratory or CNS assessment) per ICH S7A
++ - hERG/QT (ICH S7B) data absent or inconsistent with the clinical QT strategy
++ - Results in 2.6.2 that do not match the 2.6.3 tables or Module 4 reports
++ - Turning the written summary into the interpretive Overview (duplicating 2.4)
++ - Omitting GLP status of pivotal safety pharmacology studies
++ - Secondary/off-target pharmacology not addressed, leaving off-target risk uncharacterized
++
++ ### Read with
++ 2.6.1, 2.6.3, 2.4
++
++ INSTRUCTIONS:
++ Phase 1 IND. Evidence cutoff 2026-10-10. Route, population, duration and supporting study results were not supplied; preserve these gaps.
++
++ PROJECT SOURCE STATUS: UNASSESSED. No processed project source records were loaded for this section. Instructions and prior prose are not verified study evidence. Use explicit gaps for unsupported facts; do not claim project evidence review.
+
+ ❯ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts:65:18
+     63|     };
+     64|     const user = sent.messages.find(m => m.role === 'user')!.content;
+     65|     expect(user).toContain(`## Drafting: Module ${code} — ${title}`);
+       |                  ^
+     66|     expect(user).toContain(instructions);
+     67|     for (const guard of ['development phase', 'modality', 'route', 'po…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.6 guidance and evidence limits to the real drafting gateway
+AssertionError: expected 'SECTION TO DRAFT: 2.6.2.6\n\nSECTION …' to contain '## Drafting: Module 2.6.2.6 — Discuss…'
+
+- Expected
++ Received
+
+- ## Drafting: Module 2.6.2.6 — Discussion and Conclusions
++ SECTION TO DRAFT: 2.6.2.6
++
++ SECTION REQUIREMENTS (from the platform's canonical regulatory record — draft to these; do not add requirements from memory):
++ ## Drafting: Module 2.6.2 — Pharmacology Written Summary
++ You are in 2.6.2.6, within 2.6.2; these are 2.6.2's requirements.
++ Required for: IND, NDA, BLA.
++ Section 2.6.2 is the factual written summary of nonclinical pharmacology — primary pharmacodynamics (MOA/target activity), secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions. Unlike the interpretive 2.4, this is a comprehensive but non-argumentative account of what the pharmacology studies showed. FDA pharm/tox reviewers use it to understand the biological rationale and off-target/safety-pharmacology profile; acceptability depends on completeness, factual accuracy, and consistency with the tabulated summary (2.6.3) and Module 4.
++
++ ### How it is written
++ Follow the ICH M4S order: brief summary, primary pharmacodynamics, secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions, with an integrated discussion at the end. Present study designs, species/models, doses/concentrations, and results factually; the summary should be roughly narrative text supported by cross-references to 2.6.3 tables. Cover the safety pharmacology core battery (cardiovascular including hERG/QT, central nervous, and respiratory systems) per ICH S7A and S7B. State GLP status of pivotal safety pharmacology studies. Keep interpretation minimal here (integration and conclusions belong in 2.4) but include a short discussion relating findings. Every result must reconcile with 2.6.3 and Module 4 study reports.
++
++ ### It must contain
++ - Brief summary orienting the pharmacology program
++ - Primary pharmacodynamics: target/MOA activity in vitro and in vivo with potency data
++ - Secondary pharmacodynamics: off-target and receptor/enzyme profiling
++ - Safety pharmacology core battery: cardiovascular (hERG/QT per ICH S7B), CNS, respiratory (ICH S7A)
++ - Pharmacodynamic drug interactions, if studied
++ - Study designs, species/models, and dose/concentration ranges
++ - GLP compliance status of pivotal safety pharmacology studies
++ - Integrated discussion cross-referencing the tabulated summary (2.6.3)
++
++ ### Tables and data a reviewer expects
++ - Primary pharmacodynamics results summary
++ - Safety pharmacology results summary (CV/CNS/respiratory)
++ - Secondary pharmacodynamics/off-target profiling summary
++
++ ### Common deficiencies
++ - Incomplete safety pharmacology core battery (e.g., missing respiratory or CNS assessment) per ICH S7A
++ - hERG/QT (ICH S7B) data absent or inconsistent with the clinical QT strategy
++ - Results in 2.6.2 that do not match the 2.6.3 tables or Module 4 reports
++ - Turning the written summary into the interpretive Overview (duplicating 2.4)
++ - Omitting GLP status of pivotal safety pharmacology studies
++ - Secondary/off-target pharmacology not addressed, leaving off-target risk uncharacterized
++
++ ### Read with
++ 2.6.1, 2.6.3, 2.4
++
++ INSTRUCTIONS:
++ Phase 1 IND. Evidence cutoff 2026-10-10. Route, population, duration and supporting study results were not supplied; preserve these gaps.
++
++ PROJECT SOURCE STATUS: UNASSESSED. No processed project source records were loaded for this section. Instructions and prior prose are not verified study evidence. Use explicit gaps for unsupported facts; do not claim project evidence review.
+
+ ❯ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts:65:18
+     63|     };
+     64|     const user = sent.messages.find(m => m.role === 'user')!.content;
+     65|     expect(user).toContain(`## Drafting: Module ${code} — ${title}`);
+       |                  ^
+     66|     expect(user).toContain(instructions);
+     67|     for (const guard of ['development phase', 'modality', 'route', 'po…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > passes exact 2.6.2.7 guidance and evidence limits to the real drafting gateway
+AssertionError: expected 'SECTION TO DRAFT: 2.6.2.7\n\nSECTION …' to contain '## Drafting: Module 2.6.2.7 — Tables …'
+
+- Expected
++ Received
+
+- ## Drafting: Module 2.6.2.7 — Tables and Figures
++ SECTION TO DRAFT: 2.6.2.7
++
++ SECTION REQUIREMENTS (from the platform's canonical regulatory record — draft to these; do not add requirements from memory):
++ ## Drafting: Module 2.6.2 — Pharmacology Written Summary
++ You are in 2.6.2.7, within 2.6.2; these are 2.6.2's requirements.
++ Required for: IND, NDA, BLA.
++ Section 2.6.2 is the factual written summary of nonclinical pharmacology — primary pharmacodynamics (MOA/target activity), secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions. Unlike the interpretive 2.4, this is a comprehensive but non-argumentative account of what the pharmacology studies showed. FDA pharm/tox reviewers use it to understand the biological rationale and off-target/safety-pharmacology profile; acceptability depends on completeness, factual accuracy, and consistency with the tabulated summary (2.6.3) and Module 4.
++
++ ### How it is written
++ Follow the ICH M4S order: brief summary, primary pharmacodynamics, secondary pharmacodynamics, safety pharmacology, and pharmacodynamic drug interactions, with an integrated discussion at the end. Present study designs, species/models, doses/concentrations, and results factually; the summary should be roughly narrative text supported by cross-references to 2.6.3 tables. Cover the safety pharmacology core battery (cardiovascular including hERG/QT, central nervous, and respiratory systems) per ICH S7A and S7B. State GLP status of pivotal safety pharmacology studies. Keep interpretation minimal here (integration and conclusions belong in 2.4) but include a short discussion relating findings. Every result must reconcile with 2.6.3 and Module 4 study reports.
++
++ ### It must contain
++ - Brief summary orienting the pharmacology program
++ - Primary pharmacodynamics: target/MOA activity in vitro and in vivo with potency data
++ - Secondary pharmacodynamics: off-target and receptor/enzyme profiling
++ - Safety pharmacology core battery: cardiovascular (hERG/QT per ICH S7B), CNS, respiratory (ICH S7A)
++ - Pharmacodynamic drug interactions, if studied
++ - Study designs, species/models, and dose/concentration ranges
++ - GLP compliance status of pivotal safety pharmacology studies
++ - Integrated discussion cross-referencing the tabulated summary (2.6.3)
++
++ ### Tables and data a reviewer expects
++ - Primary pharmacodynamics results summary
++ - Safety pharmacology results summary (CV/CNS/respiratory)
++ - Secondary pharmacodynamics/off-target profiling summary
++
++ ### Common deficiencies
++ - Incomplete safety pharmacology core battery (e.g., missing respiratory or CNS assessment) per ICH S7A
++ - hERG/QT (ICH S7B) data absent or inconsistent with the clinical QT strategy
++ - Results in 2.6.2 that do not match the 2.6.3 tables or Module 4 reports
++ - Turning the written summary into the interpretive Overview (duplicating 2.4)
++ - Omitting GLP status of pivotal safety pharmacology studies
++ - Secondary/off-target pharmacology not addressed, leaving off-target risk uncharacterized
++
++ ### Read with
++ 2.6.1, 2.6.3, 2.4
++
++ INSTRUCTIONS:
++ Phase 1 IND. Evidence cutoff 2026-10-10. Route, population, duration and supporting study results were not supplied; preserve these gaps.
++
++ PROJECT SOURCE STATUS: UNASSESSED. No processed project source records were loaded for this section. Instructions and prior prose are not verified study evidence. Use explicit gaps for unsupported facts; do not claim project evidence review.
+
+ ❯ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts:65:18
+     63|     };
+     64|     const user = sent.messages.find(m => m.role === 'user')!.content;
+     65|     expect(user).toContain(`## Drafting: Module ${code} — ${title}`);
+       |                  ^
+     66|     expect(user).toContain(instructions);
+     67|     for (const guard of ['development phase', 'modality', 'route', 'po…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > preserves the prefix guards when the existing renderer clips the authoring guidance
+AssertionError: 2.6.2.1: expected undefined to be defined
+ ❯ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts:83:26
+     81|     for (const [code] of LEAVES) {
+     82|       const leaf = CTD_AUTHORING_GUIDANCE[code];
+     83|       expect(leaf, code).toBeDefined();
+       |                          ^
+     84|       const prefix = leaf.authoringGuidance.slice(0, 900);
+     85|       for (const guard of ['development phase', 'modality', 'route', '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > preserves every original record and moves exactly seven headings between the canonical halves
+AssertionError: expected [ '2', '2.1', '2.5.7', '2.6', …(118) ] to deeply equal [ '2', '2.1', '2.5.7', '2.6', …(111) ]
+
+- Expected
++ Received
+
+@@ -1,10 +1,17 @@
+  [
+    "2",
+    "2.1",
+    "2.5.7",
+    "2.6",
++   "2.6.2.1",
++   "2.6.2.2",
++   "2.6.2.3",
++   "2.6.2.4",
++   "2.6.2.5",
++   "2.6.2.6",
++   "2.6.2.7",
+    "2.6.4.1",
+    "2.6.4.2",
+    "2.6.4.3",
+    "2.6.4.4",
+    "2.6.4.5",
+
+ ❯ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts:103:50
+    101|     }
+    102|     const remaining = preserved.structural.filter(row => !promoted.inc…
+    103|     expect(ICH_M4_HEADINGS.map(row => row.code)).toEqual(remaining.map…
+       |                                                  ^
+    104|     for (const [index, row] of remaining.entries()) {
+    105|       expect(fingerprint(ICH_M4_HEADINGS[index]), row.code).toBe(row.s…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts > IND pharmacology exact leaf guidance through existing AnA drafting > keeps unsupported deeper numbering inherited and wholly unindexed codes unresolved
+AssertionError: expected { kind: 'ctd-section', code: '2.6.2' } to deeply equal { Object (kind, code) }
+
+- Expected
++ Received
+
+  {
+-   "code": "2.6.2.7",
++   "code": "2.6.2",
+    "kind": "ctd-section",
+  }
+
+ ❯ server/services/ana/__tests__/ind-pharmacology-leaf-drafting.test.ts:123:29
+    121|       if (answer.kind !== 'answer') throw new Error('Existing ancestor…
+    122|       expect(answer.match).toBe('ancestor');
+    123|       expect(answer.source).toEqual({ kind: 'ctd-section', code: ances…
+       |                             ^
+    124|       expect(isIchHeading(document)).toBe(false);
+    125|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  17 failed (17)
+   Start at  01:22:46
+   Duration  4.19s (transform 2.78s, setup 60ms, import 3.82s, tests 61ms, environment 0ms)
+

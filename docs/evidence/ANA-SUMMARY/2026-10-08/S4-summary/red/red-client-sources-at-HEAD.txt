@@ -1,0 +1,632 @@
+# red: these files at HEAD (613e24e70), new modules present:
+#   client/src/concept2cure/components/ana/useAnaChat.ts
+#   client/src/concept2cure/components/ana/useAnaChat.types.ts
+#   client/src/concept2cure/components/ana/anaProgress.ts
+#   client/src/concept2cure/v2/AnaActivity.tsx
+#   client/src/concept2cure/v2/AnaWorkPanel.tsx
+#   client/src/concept2cure/v2/anaWorkModel.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Recorded", with the hash and Download, only for a verdict that passed on this read
+An error occurred in the <TurnSummary> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 1. (client half) the same rows live and from the record > rows built from the live frames equal the rows built from the /summary payload 35ms
+   → stopLineText is not a function
+stderr | client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Record could not be verified" for a verdict that failed, never "Recorded"
+An error occurred in the <TurnSummary> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Recorded", with the hash and Download, only for a verdict that passed on this read 5024ms
+   → Unable to find an element with the text: Recorded. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Record could not be verified" for a verdict that failed, never "Recorded" 5007ms
+   → Unable to find an element with the text: /Record could not be verified/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Not recorded" with no record 3ms
+   → stopLineText is not a function
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Recording…" while the confirm waits run, so "Not recorded" never flashes 14ms
+   → stopLineText is not a function
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > declined 10ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `StepSummaryRow`.
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > no answer 8ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `StepSummaryRow`.
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > authorised, then failed 3ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `StepSummaryRow`.
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > a step a sealed timeline announced and never finished says so 4ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `StepSummaryRow`.
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > the record's end: cancelled steps keep their sentence, and the turn closes on "Stopped." 5ms
+   → stopLineText is not a function
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > a lost connection reads "Stopped: this page lost its connection." with Continue 3ms
+   → stopLineText is not a function
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > a turn the round limit stopped closes on its stop line, with Continue 1ms
+   → stopLineText is not a function
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > the record's own end, when it says the page left, reads the same 1ms
+   → stopLineText is not a function
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > notes and the live view > a note reads "AnA's words" once the answer is checked, and is never counted 2ms
+   → stopLineText is not a function
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > notes and the live view > while she works, a running step reads running and "Working…" closes the list 4ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `SummaryRowView`.
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > a turn's Summary button opens it, beside the folded line and beside the live phase 385ms
+   → Unable to find an accessible element with the role "button" and name "Summary"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "1 step completed":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_0_"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"ana-activity-toggle"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ana-activity"[39m
+      [33mdata-streaming[39m=[32m"false"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border: 0px;"[39m
+      [36m/>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"_r_0_"[39m
+        [33maria-expanded[39m=[32m"false"[39m
+        [33mclass[39m=[32m"ana-activity-toggle"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"ana-activity-toggle-t"[39m
+        [36m>[39m
+          [0m1 step completed[0m
+        [36m</span>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m9 18 6-6-6-6"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ana-activity-body"[39m
+        [33mhidden[39m=[32m""[39m
+        [33mid[39m=[32m"_r_0_"[39m
+      [36m>[39m
+        [36m<ol[39m
+          [33mclass[39m=[32m"ana-activity-list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"ana-activity-step is-success"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"ana-activity-glyph"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ana-activity-row is-static"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ana-activity-text"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ana-activity-verb"[39m
+                [36m>[39m
+                  [0mSearched the Vault[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > a host that shows no Summary has no button 55ms
+ × client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > on a phone it is a modal dialog titled "Summary" that Escape closes 10ms
+   → stopLineText is not a function
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts > 4. reload joins each record to its message by id > keeps each message's server id, and attaches the record that names it 5035ms
+   → expected undefined to be defined
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts > 4. reload joins each record to its message by id > never attaches a record by position: a record naming no message here is attached to none 31ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts > a live turn keeps its timeline frames > keeps each event once, in the order the server numbered them 29ms
+   → expected undefined to deeply equal [ { seq: 1, …(4) }, { seq: 2, …(9) } ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 1. (client half) the same rows live and from the record > rows built from the live frames equal the rows built from the /summary payload
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Not recorded" with no record
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Recording…" while the confirm waits run, so "Not recorded" never flashes
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > the record's end: cancelled steps keep their sentence, and the turn closes on "Stopped."
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > notes and the live view > a note reads "AnA's words" once the answer is checked, and is never counted
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > on a phone it is a modal dialog titled "Summary" that Escape closes
+TypeError: stopLineText is not a function
+ ❯ endText client/src/concept2cure/v2/turnSummaryRows.ts:195:16
+    193| export function endText(outcome: string, reason: string | null): strin…
+    194|   if (outcome === 'failed') return 'Did not finish: the turn ended wit…
+    195|   const line = stopLineText(reason);
+       |                ^
+    196|   if (line) return line;
+    197|   if (outcome === 'stopped' || reason === 'cancelled') return 'Stopped…
+ ❯ endRow client/src/concept2cure/v2/turnSummaryRows.ts:215:11
+ ❯ itemRow client/src/concept2cure/v2/turnSummaryRows.ts:229:32
+ ❯ summaryRows client/src/concept2cure/v2/turnSummaryRows.ts:244:17
+ ❯ rowsOf client/src/concept2cure/v2/TurnSummary.tsx:221:10
+ ❯ TurnSummary client/src/concept2cure/v2/TurnSummary.tsx:243:16
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/19]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Recorded", with the hash and Download, only for a verdict that passed on this read
+TestingLibraryElementError: Unable to find an element with the text: Recorded. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx:109:18
+    107|     serveSummary(payloadOf(EVENTS));
+    108|     render(<TurnSummary turn={turnWith({ turnRecord: { status: 'record…
+    109|     await screen.findByText('Recorded');
+       |                  ^
+    110|     fireEvent.click(screen.getByText('Recorded').closest('button')!);
+    111|     expect(screen.getByText(`SHA-256 ${SHA}`)).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/19]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 6. the footer says what the record is > "Record could not be verified" for a verdict that failed, never "Recorded"
+TestingLibraryElementError: Unable to find an element with the text: /Record could not be verified/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx:118:18
+    116|     serveSummary(payloadOf(EVENTS, false));
+    117|     const { container } = render(<TurnSummary turn={turnWith({ turnRec…
+    118|     await screen.findByText(/Record could not be verified/);
+       |                  ^
+    119|     expect(container.textContent).not.toMatch(/Recorded\b/);
+    120|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/19]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > declined
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > no answer
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > authorised, then failed
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 7. held and failed rows say the server's sentence, word for word > a step a sealed timeline announced and never finished says so
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `StepSummaryRow`.
+ ❯ createFiberFromTypeAndProps node_modules/react-dom/cjs/react-dom-client.development.js:5021:28
+ ❯ createFiberFromElement node_modules/react-dom/cjs/react-dom-client.development.js:5035:14
+ ❯ reconcileChildFibersImpl node_modules/react-dom/cjs/react-dom-client.development.js:6920:31
+ ❯ node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/react-dom/cjs/react-dom-client.development.js:9701:13
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10182:7
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/19]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > a lost connection reads "Stopped: this page lost its connection." with Continue
+TypeError: stopLineText is not a function
+ ❯ endText client/src/concept2cure/v2/turnSummaryRows.ts:195:16
+    193| export function endText(outcome: string, reason: string | null): strin…
+    194|   if (outcome === 'failed') return 'Did not finish: the turn ended wit…
+    195|   const line = stopLineText(reason);
+       |                ^
+    196|   if (line) return line;
+    197|   if (outcome === 'stopped' || reason === 'cancelled') return 'Stopped…
+ ❯ endRow client/src/concept2cure/v2/turnSummaryRows.ts:215:11
+ ❯ summaryRows client/src/concept2cure/v2/turnSummaryRows.ts:249:51
+ ❯ rowsOf client/src/concept2cure/v2/TurnSummary.tsx:221:10
+ ❯ TurnSummary client/src/concept2cure/v2/TurnSummary.tsx:243:16
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/19]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > a turn the round limit stopped closes on its stop line, with Continue
+TypeError: stopLineText is not a function
+ ❯ endText client/src/concept2cure/v2/turnSummaryRows.ts:195:16
+    193| export function endText(outcome: string, reason: string | null): strin…
+    194|   if (outcome === 'failed') return 'Did not finish: the turn ended wit…
+    195|   const line = stopLineText(reason);
+       |                ^
+    196|   if (line) return line;
+    197|   if (outcome === 'stopped' || reason === 'cancelled') return 'Stopped…
+ ❯ endRow client/src/concept2cure/v2/turnSummaryRows.ts:215:11
+ ❯ itemRow client/src/concept2cure/v2/turnSummaryRows.ts:229:32
+ ❯ summaryRows client/src/concept2cure/v2/turnSummaryRows.ts:244:17
+ ❯ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx:180:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/19]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > 8. (client half) how a stopped turn closes > the record's own end, when it says the page left, reads the same
+TypeError: stopLineText is not a function
+ ❯ endText client/src/concept2cure/v2/turnSummaryRows.ts:195:16
+    193| export function endText(outcome: string, reason: string | null): strin…
+    194|   if (outcome === 'failed') return 'Did not finish: the turn ended wit…
+    195|   const line = stopLineText(reason);
+       |                ^
+    196|   if (line) return line;
+    197|   if (outcome === 'stopped' || reason === 'cancelled') return 'Stopped…
+ ❯ endRow client/src/concept2cure/v2/turnSummaryRows.ts:215:11
+ ❯ itemRow client/src/concept2cure/v2/turnSummaryRows.ts:229:32
+ ❯ summaryRows client/src/concept2cure/v2/turnSummaryRows.ts:244:17
+ ❯ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx:185:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/19]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > notes and the live view > while she works, a running step reads running and "Working…" closes the list
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `SummaryRowView`.
+ ❯ createFiberFromTypeAndProps node_modules/react-dom/cjs/react-dom-client.development.js:5021:28
+ ❯ createFiberFromElement node_modules/react-dom/cjs/react-dom-client.development.js:5035:14
+ ❯ reconcileChildFibersImpl node_modules/react-dom/cjs/react-dom-client.development.js:6920:31
+ ❯ node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/react-dom/cjs/react-dom-client.development.js:9701:13
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10182:7
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/19]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/turnSummary.test.tsx > where the Summary opens > a turn's Summary button opens it, beside the folded line and beside the live phase
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Summary"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "1 step completed":
+  [36m<button[39m
+    [33maria-controls[39m=[32m"_r_0_"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"ana-activity-toggle"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"ana-activity"[39m
+      [33mdata-streaming[39m=[32m"false"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mstyle[39m=[32m"position: absolute; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border: 0px;"[39m
+      [36m/>[39m
+      [36m<button[39m
+        [33maria-controls[39m=[32m"_r_0_"[39m
+        [33maria-expanded[39m=[32m"false"[39m
+        [33mclass[39m=[32m"ana-activity-toggle"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"ana-activity-toggle-t"[39m
+        [36m>[39m
+          [0m1 step completed[0m
+        [36m</span>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.75"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"m9 18 6-6-6-6"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+      [36m</button>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ana-activity-body"[39m
+        [33mhidden[39m=[32m""[39m
+        [33mid[39m=[32m"_r_0_"[39m
+      [36m>[39m
+        [36m<ol[39m
+          [33mclass[39m=[32m"ana-activity-list"[39m
+        [36m>[39m
+          [36m<li[39m
+            [33mclass[39m=[32m"ana-activity-step is-success"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"ana-activity-glyph"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"ana-activity-row is-static"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ana-activity-text"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ana-activity-verb"[39m
+                [36m>[39m
+                  [0mSearched the Vault[0m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</li>[39m
+        [36m</ol>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/turnSummary.test.tsx:212:28
+    210|     const onSummary = vi.fn();
+    211|     const { rerender } = render(<AnaActivity toolCalls={[{ name: 'x', …
+    212|     fireEvent.click(screen.getByRole('button', { name: 'Summary' }));
+       |                            ^
+    213|     rerender(<AnaActivity streaming phase="Running 1 step…" onSummary=…
+    214|     fireEvent.click(screen.getByRole('button', { name: 'Summary' }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/19]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts > 4. reload joins each record to its message by id > keeps each message's server id, and attaches the record that names it
+AssertionError: expected undefined to be defined
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts:61:72
+     59|       await result.current.loadThread('th-1');
+     60|     });
+     61|     await waitFor(() => expect(result.current.messages[1]?.turnRecord)…
+       |                                                                        ^
+     62|     const [, first, , second] = result.current.messages;
+     63|     expect(first).toMatchObject({ serverId: 12, turnRecord: { status: …
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/19]⎯
+
+ FAIL  client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts > a live turn keeps its timeline frames > keeps each event once, in the order the server numbered them
+AssertionError: expected undefined to deeply equal [ { seq: 1, …(4) }, { seq: 2, …(9) } ]
+
+- Expected:
+[
+  {
+    "at": "2026-10-08T13:03:13.092Z",
+    "kind": "note",
+    "round": 1,
+    "seq": 1,
+    "text": "Looking in the Vault.",
+  },
+  {
+    "at": "2026-10-08T13:03:13.092Z",
+    "kind": "step",
+    "label": "Searching the Vault",
+    "phase": "announced",
+    "preview": "shelf life",
+    "round": 1,
+    "seq": 2,
+    "source": "vault",
+    "step": "s1",
+    "task": null,
+  },
+]
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/components/ana/__tests__/useAnaChat-record-join.test.ts:103:28
+    101|     });
+    102|     const turn = [...result.current.messages].reverse().find((m) => m.…
+    103|     expect(turn?.timeline).toEqual([note, step]);
+       |                            ^
+    104|   });
+    105| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/19]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 2 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: stopLineText is not a function
+ ❯ endText client/src/concept2cure/v2/turnSummaryRows.ts:195:16
+    193| export function endText(outcome: string, reason: string | null): strin…
+    194|   if (outcome === 'failed') return 'Did not finish: the turn ended wit…
+    195|   const line = stopLineText(reason);
+       |                ^
+    196|   if (line) return line;
+    197|   if (outcome === 'stopped' || reason === 'cancelled') return 'Stopped…
+ ❯ endRow client/src/concept2cure/v2/turnSummaryRows.ts:215:11
+ ❯ itemRow client/src/concept2cure/v2/turnSummaryRows.ts:229:32
+ ❯ summaryRows client/src/concept2cure/v2/turnSummaryRows.ts:244:17
+ ❯ rowsOf client/src/concept2cure/v2/TurnSummary.tsx:221:10
+ ❯ TurnSummary client/src/concept2cure/v2/TurnSummary.tsx:243:16
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+
+This error originated in "client/src/concept2cure/v2/__tests__/turnSummary.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is ""Recorded", with the hash and Download, only for a verdict that passed on this read". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: stopLineText is not a function
+ ❯ endText client/src/concept2cure/v2/turnSummaryRows.ts:195:16
+    193| export function endText(outcome: string, reason: string | null): strin…
+    194|   if (outcome === 'failed') return 'Did not finish: the turn ended wit…
+    195|   const line = stopLineText(reason);
+       |                ^
+    196|   if (line) return line;
+    197|   if (outcome === 'stopped' || reason === 'cancelled') return 'Stopped…
+ ❯ endRow client/src/concept2cure/v2/turnSummaryRows.ts:215:11
+ ❯ itemRow client/src/concept2cure/v2/turnSummaryRows.ts:229:32
+ ❯ summaryRows client/src/concept2cure/v2/turnSummaryRows.ts:244:17
+ ❯ rowsOf client/src/concept2cure/v2/TurnSummary.tsx:221:10
+ ❯ TurnSummary client/src/concept2cure/v2/TurnSummary.tsx:243:16
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+
+This error originated in "client/src/concept2cure/v2/__tests__/turnSummary.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is ""Record could not be verified" for a verdict that failed, never "Recorded"". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  2 failed (2)
+      Tests  19 failed | 2 passed (21)
+     Errors  2 errors
+   Start at  13:02:52
+   Duration  20.50s (transform 1.20s, setup 525ms, import 1.38s, tests 15.68s, environment 1.91s)
+

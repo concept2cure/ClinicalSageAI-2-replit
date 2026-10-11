@@ -35,6 +35,7 @@ import { z } from 'zod';
 import { createScopedLogger } from '../utils/logger';
 import { ok, clientError, orgRequired, notFoundInTenant, serverError } from '../lib/api-response';
 import { pool } from '../db';
+import { vaultDataEligibleSql } from '../services/document-data-disposition/eligibility.js';
 import { readAuditEvents } from './mdx-audit';
 
 const router = Router();
@@ -214,7 +215,7 @@ router.get('/vault', async (req: Request, res: Response) => {
            FROM vault.documents d
            JOIN regulatory_programs p
              ON p.id = d.program_id AND p.organization_id = $1
-          WHERE d.deleted_at IS NULL${uploadProgramFilter}
+          WHERE d.deleted_at IS NULL AND ${vaultDataEligibleSql('d')}${uploadProgramFilter}
           ORDER BY d.updated_at DESC
           LIMIT $${uploadArgs.length}`,
         uploadArgs,

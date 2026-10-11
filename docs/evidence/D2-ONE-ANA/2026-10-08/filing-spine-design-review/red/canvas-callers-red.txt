@@ -1,0 +1,48 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a draft document: the copy will be a draft, which freeze refuses 266ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a document in review is filed as a draft too 82ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > a frozen, unsigned document is filed as finalized, which freeze also refuses 57ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an approved document: filed as approved, with no refusal 40ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > an unknown state claims neither: it states the rule 55ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > after placing, the server's copy status is stated, and a draft copy carries the refusal 80ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed, and the copy is now approved: "Re-place approved version" rewrites the same leaf by id 110ms
+ ✓ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > Place into filing states what the filing copy is (F17) > already placed with a draft copy: no re-place is offered, and the refusal is stated 80ms
+ × client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > every caller of the Place into filing dialog says what the document is > passes docStatus and sectionCodes wherever the dialog is rendered 28ms
+   → editor/DocumentCanvas.tsx: docStatus: expected '\n              docId={doc.id}\n     …' to match /\bdocStatus=/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx > every caller of the Place into filing dialog says what the document is > passes docStatus and sectionCodes wherever the dialog is rendered
+AssertionError: editor/DocumentCanvas.tsx: docStatus: expected '\n              docId={doc.id}\n     …' to match /\bdocStatus=/
+
+- Expected:
+/\bdocStatus=/
+
++ Received:
+"
+              docId={doc.id}
+              docTitle={doc.title}
+              activeSectionCode={first?.code ?? null}
+              dirty={false}
+              onNav={onNav}
+              fireToast={fireToast}
+            "
+
+ ❯ client/src/concept2cure/v2/__tests__/placeIntoFilingApprovalState.test.tsx:209:47
+    207|     expect(uses.length).toBeGreaterThanOrEqual(2);
+    208|     for (const u of uses) {
+    209|       expect(u.props, `${u.file}: docStatus`).toMatch(/\bdocStatus=/);
+       |                                               ^
+    210|       expect(u.props, `${u.file}: sectionCodes`).toMatch(/\bsectionCod…
+    211|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  17:42:23
+   Duration  2.90s (transform 718ms, setup 212ms, import 934ms, tests 805ms, environment 712ms)
+

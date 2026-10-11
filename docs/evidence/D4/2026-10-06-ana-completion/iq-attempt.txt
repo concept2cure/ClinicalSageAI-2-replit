@@ -1,0 +1,18 @@
+IQ-001 Installation Qualification
+  IQ-01  pass
+  IQ-02  pass
+  IQ-03  pass
+  IQ-04  deviation
+  IQ-05  deviation
+  IQ-06  pass
+  IQ-07  deviation
+  IQ-08  deviation
+  IQ-09  fail
+  IQ-10  fail
+  IQ-11  deviation
+  IQ-12  fail
+  IQ-13  pass
+  IQ-14  pass
+  IQ-15  fail
+
+IQ-001: 6 pass, 4 fail, 5 deviation → docs/evidence/D4/2026-10-06-ana-completion/IQ

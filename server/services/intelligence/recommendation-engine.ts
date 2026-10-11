@@ -229,13 +229,24 @@ registerGenerator(async (ctx) => {
   const recs: Recommendation[] = [];
 
   try {
+    // The project's linked program holds its milestones:
+    // projects.regulatory_program_id (uuid) -> regulatory_programs.id.
+    // regulatory_programs has no project_id column; the earlier subquery on
+    // one raised 42703 on every estate, so this generator was rejected and
+    // dropped on every call (ana-15). No linked program: no milestone
+    // recommendations, an honest empty. readiness-scoring-engine.ts
+    // gatherMilestoneSignal reads the same link.
     const result = await db.execute(sql`
       SELECT id, name, target_date, status, progress
       FROM program_milestones
       WHERE program_id IN (
-        SELECT id FROM regulatory_programs
-        WHERE project_id = ${ctx.projectId}
-          AND organization_id = ${ctx.organizationId}
+        SELECT rp.id
+        FROM projects p
+        JOIN regulatory_programs rp ON rp.id = p.regulatory_program_id
+        WHERE p.id = ${ctx.projectId}
+          AND p.organization_id = ${ctx.organizationId}
+          AND rp.organization_id = ${ctx.organizationId}
+          AND rp.deleted_at IS NULL
       )
       AND status NOT IN ('completed', 'cancelled')
       AND target_date IS NOT NULL

@@ -1,0 +1,7 @@
+ × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > an attached form whose recorded check found required fields missing is not complete 32ms
+ × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — sponsor-completed official form leaves > an attached form with no check recorded (a server render, or attached before the check) is not complete 21ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected true to be false // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 34 passed (36)

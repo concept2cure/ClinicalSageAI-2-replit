@@ -1,0 +1,18 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > the jobs this contract names still exist, and each orders itself after lint 8ms
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > every job that needs lint runs after a red lint, unless it aggregates verdicts 2ms
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > the aggregates stay strict: Build and the release evidence still refuse on any failure 2ms
+ ✓ tests/ci/test-runner-evidence.contract.test.ts > bounded test execution and retained CI evidence > uses the supported Vitest 4 worker controls, not removed pool options 3ms
+ ✓ tests/ci/test-runner-evidence.contract.test.ts > bounded test execution and retained CI evidence > retains both runners in npm test and writes structured results without masking failures 2ms
+ ✓ tests/ci/test-runner-evidence.contract.test.ts > bounded test execution and retained CI evidence > test saves results even when the test step fails 2ms
+ ✓ tests/ci/test-runner-evidence.contract.test.ts > bounded test execution and retained CI evidence > integration-tests saves results even when the test step fails 1ms
+ ✓ tests/ci/test-runner-evidence.contract.test.ts > bounded test execution and retained CI evidence > retains coverage test verdicts while leaving the coverage ratchet strict 1ms
+
+ Test Files  2 passed (2)
+      Tests  8 passed (8)
+   Start at  16:34:44
+   Duration  1.89s (transform 333ms, setup 270ms, import 388ms, tests 29ms, environment 0ms)
+

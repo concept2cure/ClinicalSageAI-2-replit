@@ -1,0 +1,876 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > "Open in editor" sets the editor target to the document id, then opens the editor 434ms
+   → expected undefined to be '3f2c1a10-0000-4000-8000-000000000055' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the sign-off button opens the document to sign, not the editor’s list 210ms
+   → expected null to match object { …(3) }
+ × client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > a document in another program opens that program first, so the editor can see it 118ms
+   → expected { …(3) } to deeply equal { …(2) }
+ × client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the editor then opens on that document, not on its default first row 5195ms
+   → Unable to find an element with the text: /Opened “Clinical Overview §2\.5” — the linked document/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            2 documents · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.4
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical
+              </span>
+            </button>
+          </div>
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical Overview §2.5
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.4
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            2 documents · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.4
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical
+              </span>
+            </button>
+          </div>
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical Overview §2.5
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.4
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > "Open in editor" sets the editor target to the document id, then opens the editor
+AssertionError: expected undefined to be '3f2c1a10-0000-4000-8000-000000000055' // Object.is equality
+
+- Expected:
+"3f2c1a10-0000-4000-8000-000000000055"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx:115:39
+    113|     render(<Review {...p} />);
+    114|     fireEvent.click(await openInEditor());
+    115|     expect(peekEditorTarget()?.docId).toBe(DOC);
+       |                                       ^
+    116|     expect(p.onNav).toHaveBeenCalledWith('document-authoring');
+    117|     // The program was already open: it is left as it was, details and…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the sign-off button opens the document to sign, not the editor’s list
+AssertionError: expected null to match object { …(3) }
+
+- Expected:
+{
+  "docId": "3f2c1a10-0000-4000-8000-000000000055",
+  "programId": "11111111-1111-4111-8111-111111111111",
+  "programTitle": "NDA 200100",
+}
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx:126:32
+    124|     const sign = await signButton();
+    125|     fireEvent.click(sign);
+    126|     expect(peekEditorTarget()).toMatchObject({ docId: DOC, programId: …
+       |                                ^
+    127|     expect(p.onNav).toHaveBeenCalledWith('document-authoring');
+    128|     // It says what it does: it opens the document, where the signatur…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > a document in another program opens that program first, so the editor can see it
+AssertionError: expected { …(3) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+-   "id": "11111111-1111-4111-8111-111111111111",
+-   "title": "NDA 200100",
++   "code": "OTHER",
++   "id": "22222222-2222-4222-8222-222222222222",
++   "title": "IND 140001",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx:137:41
+    135|     render(<Review {...p} />);
+    136|     fireEvent.click(await openInEditor());
+    137|     expect((window as any).C2C_PROJECT).toEqual({ id: PROGRAM, title: …
+       |                                         ^
+    138|     expect(peekEditorTarget()?.docId).toBe(DOC);
+    139|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx > Review board — opening the document under review > the editor then opens on that document, not on its default first row
+TestingLibraryElementError: Unable to find an element with the text: /Opened “Clinical Overview §2\.5” — the linked document/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            2 documents · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.4
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical
+              </span>
+            </button>
+          </div>
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical Overview §2.5
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.4
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+      data-comments="true"
+      data-rail="ana"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            2 documents · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="scaf-note"
+          style="padding: 10px 12px; font-size: 12px;"
+        >
+          This project has no governed filing document, so there is no section outline to show. Projects created before scaffolding — and program types with no rule pack — fall here.
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                2.4
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical
+              </span>
+            </button>
+          </div>
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M2
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Clinical Overview §2.5
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M2
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              2.4
+            </span>
+          </div>
+          <div
+            class="ed-doc-actions"
+          >
+            <div
+              aria-label="Editor view"
+              class="ed-viewtoggle"
+              role="group"
+            >
+              <button
+                aria-pressed="true"
+                class="btn ghost"
+                data-active="true"
+                style="height: 30px;"
+                title="Edit one section"
+              >
+                <svg
+                  ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx:148:25
+    146|     const authoringProps = { surface: { id: 'document-authoring', labe…
+    147|     render(<DocumentAuthoring {...authoringProps} />);
+    148|     expect(await screen.findByText(/Opened “Clinical Overview §2\.5” —…
+       |                         ^
+    149|     await waitFor(() => expect(apiRequest.mock.calls.some(c => c[1] ==…
+    150|     expect(screen.queryByText(/Couldn’t open/)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  03:15:56
+   Duration  9.79s (transform 2.22s, setup 205ms, import 2.74s, tests 5.96s, environment 607ms)
+

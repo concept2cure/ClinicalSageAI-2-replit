@@ -1,0 +1,239 @@
+{
+  "redSource": "4d1252fde561c663ef6b018f65c918bd087ce91e",
+  "redRun": 37683490033,
+  "redArtifact": 11511776693,
+  "greenSource": "6a54db14cc6a41727c5f46103afbab2ac9609047",
+  "greenRun": 37697288645,
+  "greenArtifact": 11516976694,
+  "count": 38,
+  "records": [
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "posture the router runs as the non-superuser runtime role, RLS enforcing, under the SYSTEM scope",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "POST /licensing/trials stores the end-of-day UTC instant the client sends, and it round-trips exactly",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "POST /licensing/trials moving the end date reports the previous one and stores the new one",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "POST /licensing/trials a past end date is refused with 400 and writes nothing \u2014 new grant or existing one",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "GET /licensing/trials lists live and lapsed grants together; revocations and perpetual grants are not trials",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "GET /licensing/trials coveredByPlan follows the catalog's tier metadata and the org's real tier",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "GET /licensing/trials coveredByPlan says what the customer's own resolution says \u2014 for every lane row",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "POST /licensing/trials/convert makes an already-lapsed grant perpetual: expiry cleared, still enabled, access restored",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "POST /licensing/trials/end keeps enabled = true and moves the expiry to now; resolution reads it as no override (not revoked)",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "POST /licensing/trials/end on a module the plan includes, the customer KEEPS it \u2014 which a revocation would have taken",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "end and convert act only on a grant that carries an end date refuses to end or convert a REVOCATION, and leaves it revoked",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "end and convert act only on a grant that carries an end date refuses to end or convert where no grant exists, and creates none",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "end and convert act only on a grant that carries an end date refuses to end or convert a PERPETUAL grant (a converted trial), and leaves it perpetual",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "audit trail tenant.trial_set \u2014 for the open and for the moved end date",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "audit trail tenant.trial_converted \u2014 carrying the end date it removed",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "audit trail tenant.trial_ended \u2014 carrying the instant the grant now ends",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "audit trail the tenant reads its own record through the audit service, under its own scope",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "an unknown tenant or module is a 404 and writes nothing unknown tenant",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "an unknown tenant or module is a 404 and writes nothing unknown module",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "a write without a target or a reason is a 400 and writes nothing no reason, a blank one, or one under 3 characters: 400, nothing written, nothing audited",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "a write without a target or a reason is a 400 and writes nothing no tenant, no module, or a tenant id that is not a number: 400, nothing written",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/licensing-trials.dbtest.ts",
+      "case": "a write without a target or a reason is a 400 and writes nothing a fractional tenant id is refused and writes nothing",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/master-enterprise-requests.dbtest.ts",
+      "case": "GET /api/admin/master/enterprise-requests \u2014 the platform owner lists pending requests by default, and not reviewed ones",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/master-enterprise-requests.dbtest.ts",
+      "case": "GET /api/admin/master/enterprise-requests \u2014 the platform owner lists reviewed ones too with ?status=all",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/master-enterprise-requests.dbtest.ts",
+      "case": "GET /api/admin/master/enterprise-requests \u2014 the platform owner refuses an unknown status filter rather than guessing",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/master-enterprise-requests.dbtest.ts",
+      "case": "a read that fails is never shown as \"no requests\" answers 500 with no list when the store cannot be read",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/module-access-requests.dbtest.ts",
+      "case": "posture the platform owner on the Master Administration prefix runs under the system scope, still as the runtime role",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/module-access-requests.dbtest.ts",
+      "case": "platform owner across workspaces (system-scoped mount) H1: the owner's queue holds every workspace's open requests, not only the owner's own",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/module-access-requests.dbtest.ts",
+      "case": "platform owner across workspaces (system-scoped mount) the per-user route refuses the every-workspace read outright instead of narrowing it",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/module-access-requests.dbtest.ts",
+      "case": "platform owner across workspaces (system-scoped mount) H2: the owner approving org B's request writes org B's grant, records it and audits it under org B",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/module-access-requests.dbtest.ts",
+      "case": "platform owner across workspaces (system-scoped mount) the owner declining org B's request records the reason and grants nothing",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/module-access-requests.dbtest.ts",
+      "case": "queue filters, a long queue, input limits and the owner in their own workspace status=approved and status=declined return exactly the workspace's rows in that state",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/module-access-requests.dbtest.ts",
+      "case": "queue filters, a long queue, input limits and the owner in their own workspace the owner answering their own workspace's request is not audited as a cross-workspace decision",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/organizations-writes.dbtest.ts",
+      "case": "an organization's row is written by that organization or the platform (D3) platform staff edit another organization's settings, and the change is really there",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/organizations-writes.dbtest.ts",
+      "case": "an organization's row is written by that organization or the platform (D3) platform staff edit another organization's profile",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/organizations-writes.dbtest.ts",
+      "case": "an organization's row is written by that organization or the platform (D3) platform staff update another tenant's configuration through tenant-config",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/report-os-registry-seed.dbtest.ts",
+      "case": "report type registry seed (D2) applies to the provisioned database and registers every in-code type, column for column",
+      "before": "failed",
+      "after": "passed"
+    },
+    {
+      "path": "tests/db/tenant-export-withheld-columns.dbtest.ts",
+      "case": "the tenant export decides every secret-shaped column it reads every text-like secret-shaped column is withheld or recorded as not a secret",
+      "before": "failed",
+      "after": "passed"
+    }
+  ]
+}

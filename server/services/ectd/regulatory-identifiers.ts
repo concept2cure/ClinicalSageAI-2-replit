@@ -114,35 +114,15 @@ export function readRegulatoryIdentifiers(
   return { values, missing, complete: missing.length === 0 };
 }
 
-/**
- * The identifier that goes in the agency's application-number field, from the
- * program RECORD: the number the agency assigned whenever the program records
- * one, else the program's own code, else `fallbackKey` — a handle that says
- * plainly it is unassigned. A blank, whitespace or malformed value is not a
- * recorded identifier (rule 2 above: it becomes a filename component and
- * backbone text). Nothing is ever invented — an invented agency number is a
- * filing that references another sponsor's application.
- *
- * `applicationId` becomes `<application-number>` in the FDA us-regional
- * backbone (and the equivalent field in the EU/JP backbones). It used to be the
- * program code unconditionally, because nothing in the data model held an
- * agency number; `regulatory_programs.application_number` does now.
- *
- * 2026-09-29 (W5/D7): moved here from the compile route so the compile and the
- * export package the same identity. The export took the number only from its
- * request, which the compile surface never sends, so BX-512 (IND 000512)
- * compiled as 000512 and downloaded as UNASSIGNED-SEQ-6.
- */
-export function recordedApplicationId(
-  record: { applicationNumber?: string | null; programCode?: string | null },
-  fallbackKey: string,
-): string {
-  return (
-    usableIdentifier('applicationNumber', record.applicationNumber) ??
-    usableIdentifier('applicationNumber', record.programCode) ??
-    fallbackKey
-  );
-}
+/* recordedApplicationId — DELETED 2026-10-08 (QA j6). It answered the agency
+   application number as the recorded number, else the PROGRAM CODE, else an
+   UNASSIGNED handle, so the inspection copy of PLR-606 sequence 0000 carried
+   <application-number>PLR-606</application-number>. Its replacement, by path:
+   server/services/ectd/package-identity.ts (readRecordedPackageIdentity +
+   packageIdentityRefusal) — the recorded number only, or the package is
+   refused by name — used by assembleSubmissionEctd, the eCTD compile and
+   transmitSequence. Pinned by export-application-identity.pglite.test.ts,
+   ectd-compile-spine.test.ts and refused-step-voids-signature.pglite.test.ts. */
 
 /* ─── The regulatory contact ──────────────────────────────────────────────
  * The person the agency calls about the application. FDA's us-regional backbone
@@ -288,4 +268,4 @@ export function fdaIdentifierProblems(input: {
   return problems;
 }
 
-export default { readRegulatoryIdentifiers, usableIdentifier, recordedApplicationId, REGULATORY_IDENTIFIER_FIELDS };
+export default { readRegulatoryIdentifiers, usableIdentifier, REGULATORY_IDENTIFIER_FIELDS };

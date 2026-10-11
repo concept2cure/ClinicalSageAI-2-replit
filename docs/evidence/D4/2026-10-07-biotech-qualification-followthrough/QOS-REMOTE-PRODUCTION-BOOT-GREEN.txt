@@ -1,0 +1,20 @@
+Source commit: fdd507a91c6b7c7976c78eae4fa9755f87326782
+Source tree: 09bdd1233c21b130b533c24c705d00a3855400c8
+Workflow run: 37676477898
+RLS production-bundle boot job: 112989315345, completed success
+Built-production-image boot job: 112989315242, completed success
+The RLS boot asserts a non-superuser/NOBYPASSRLS runtime and /readyz=200.
+The image gate builds the provision/production images, provisions fresh TLS
+PostgreSQL, boots the actual image and signs in with the second factor.
+These are CI executions, separate from deployed intended-use/provider PQ.
+
+Image step verdicts:
+Build the provision and production images (as deploy-aws.yml does): success
+Start an empty PostgreSQL with TLS: success
+Provision the empty database with the provision image: success
+Start the production image and require /healthz and /readyz = 200: success
+Sign a person in to the running image, second factor included: success
+
+Actual image observations:
+2026-10-07T20:06:05.6128185Z   role app_service on c2c_image (superuser=false, bypassrls=false)
+2026-10-07T20:06:11.1820094Z /readyz=200 after 6s

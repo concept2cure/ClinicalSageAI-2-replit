@@ -1,0 +1,10 @@
+{
+  "commit": "1f2dcecc9c914e4777cd46d5d00bd4d7ddf961fc",
+  "parent": "bf80e2fa922a0261edadf403da732983cc55c9b7",
+  "source_paths": [
+    "server/services/ana-ri/command-executor.ts",
+    "server/services/ana-ri/__tests__/command-memory-recall.pglite.test.ts"
+  ],
+  "precommit_exit_code": 0,
+  "client_tree": "f4a50c306387585250e354c68e08a099362e3823"
+}

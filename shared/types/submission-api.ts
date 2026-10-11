@@ -108,24 +108,6 @@ export interface ValidationExplainResponse {
   blocking: boolean;
 }
 
-// ── Cross-region gap (AI) ────────────────────────────────────────────────────
-export interface CrossRegionRequest {
-  sourceRegion: 'fda' | 'eu' | 'jp';
-  targetRegions: Array<'fda' | 'eu' | 'jp'>;
-  applicationType: string;
-  sectionsPresent?: string[];
-}
-export interface CrossRegionResponse {
-  perRegion: Array<{
-    region: string;
-    module1Deltas: string[];
-    bridgingNeeded: boolean;
-    bridgingRationale: string | null;
-    translationScope: string;
-    formatConversion: string;
-  }>;
-}
-
 // ── Dispatch QC gate (AI; does NOT transmit) ─────────────────────────────────
 export interface DispatchQcRequest {
   region: 'fda' | 'eu' | 'jp';
@@ -236,7 +218,6 @@ export interface CapabilitiesResponse {
     sequences: boolean;
     validation: boolean;
     'shadow-review': boolean;
-    'cross-region': boolean;
     dispatch: boolean;
   };
   // Capability flags that are not workspaces.

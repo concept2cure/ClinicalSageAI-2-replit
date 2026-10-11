@@ -857,7 +857,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         question:
           'Describe the status and content of the Investigator\'s Brochure (IB). Per 21 CFR 312.23(a)(5), the IB is a required component of the initial IND submission.',
         guidance:
-          'Per 21 CFR 312.23(a)(5) and ICH E6(R2) Section 7, the Investigator\'s Brochure must contain all relevant nonclinical and clinical information known about the investigational product that is relevant to the study of the product in human subjects. The IB should be updated at least annually (21 CFR 312.55(a)) and whenever significant new information becomes available. The IB structure should follow ICH E6(R2) Section 7.4 and include: physical/chemical/pharmaceutical properties, nonclinical studies summary, clinical studies summary, marketing experience (if any), and a summary of data and guidance for the investigator.',
+          'Per 21 CFR 312.23(a)(5) and ICH E6(R3) Appendix A, the Investigator\'s Brochure must contain all relevant nonclinical and clinical information known about the investigational product that is relevant to the study of the product in human participants. The IB should be updated at least annually (21 CFR 312.55(a)) and whenever significant new information becomes available. The IB structure should follow ICH E6(R3) Appendix A (Investigator\'s Brochure) and include: physical/chemical/pharmaceutical properties, nonclinical studies summary, clinical studies summary, marketing experience (if any), and a summary of data and guidance for the investigator.',
         fields: [
           {
             id: 'ib_version',
@@ -874,7 +874,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
           },
           {
             id: 'ib_content_complete',
-            label: 'Does the IB contain all required sections per ICH E6(R2) Section 7.4?',
+            label: 'Does the IB contain all required sections per ICH E6(R3) Appendix A?',
             type: 'yes_no',
             required: true,
             helpText: 'Required sections: Title Page, Confidentiality Statement, Summary, Introduction, Physical/Chemical/Pharmaceutical Properties, Nonclinical Studies, Effects in Humans (if any), Summary of Data and Guidance for the Investigator.',

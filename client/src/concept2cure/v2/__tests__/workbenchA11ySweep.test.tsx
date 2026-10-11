@@ -225,7 +225,9 @@ describe('GA-6: closing the section rename returns focus to Rename', () => {
   });
 });
 
-/* 2026-09-28, coverage-gap sweep GE-P-3: the workbench offered Assign review,
+/* 2026-09-28, coverage-gap sweep GE-P-3: the workbench offered Assign review
+   (Send for review since 2026-10-08, which creates the same task with the
+   review request, so the same gate applies),
    File to vault, Freeze and E-sign to every member who could open the
    document. GET /docs/:id now carries the caller's `access`; a refused act is
    disabled (never hidden) and described by the server's reason, and an
@@ -240,12 +242,12 @@ describe('GE-P-3: governed acts the server will refuse are disabled with the rea
   const NO = (act: string) => ({ allowed: false, reason: `${act} needs a grant you do not hold.` });
 
   it('disables each refused act, states why, and hands the bar its refusals', async () => {
-    docAccess = { freeze: NO('Freezing'), esign: NO('Signing'), fileToVault: NO('Filing to the vault'), assignReview: NO('Assigning a review') };
+    docAccess = { freeze: NO('Freezing'), esign: NO('Signing'), fileToVault: NO('Filing to the vault'), assignReview: NO('Sending for review') };
     await mount();
-    const assign = screen.getByTestId('assign-review-open') as HTMLButtonElement;
+    const assign = screen.getByTestId('send-for-review-open') as HTMLButtonElement;
     const vault = screen.getByTestId('file-to-vault-open') as HTMLButtonElement;
-    await waitFor(() => expect(assign.disabled, 'Assign review offered to a caller the server will refuse').toBe(true));
-    expect(describedBy(assign)).toBe('Assigning a review needs a grant you do not hold.');
+    await waitFor(() => expect(assign.disabled, 'Send for review offered to a caller the server will refuse').toBe(true));
+    expect(describedBy(assign)).toBe('Sending for review needs a grant you do not hold.');
     expect(vault.disabled).toBe(true);
     expect(describedBy(vault)).toBe('Filing to the vault needs a grant you do not hold.');
     expect(JSON.parse(screen.getByTestId('bar-props').textContent ?? '{}')).toEqual({
@@ -254,25 +256,25 @@ describe('GE-P-3: governed acts the server will refuse are disabled with the rea
     });
 
     fireEvent.click(toggle('Tasks'));
-    const rt = (await screen.findByTestId('rt-assign')) as HTMLButtonElement;
+    const rt = (await screen.findByTestId('rt-send-review')) as HTMLButtonElement;
     expect(rt.disabled).toBe(true);
-    expect(describedBy(rt)).toBe('Assigning a review needs a grant you do not hold.');
+    expect(describedBy(rt)).toBe('Sending for review needs a grant you do not hold.');
   });
 
   it('leaves every act enabled when the access is unknown — not returned, or unreadable', async () => {
     docAccess = { freeze: null, esign: 'garbage', fileToVault: { allowed: 'no' } };
     await mount();
     await waitFor(() => expect(screen.getByTestId('bar-props').textContent).toBe(JSON.stringify({ freeze: null, esign: null })));
-    expect((screen.getByTestId('assign-review-open') as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByTestId('send-for-review-open') as HTMLButtonElement).disabled).toBe(false);
     expect((screen.getByTestId('file-to-vault-open') as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(toggle('Tasks'));
-    expect(((await screen.findByTestId('rt-assign')) as HTMLButtonElement).disabled).toBe(false);
+    expect(((await screen.findByTestId('rt-send-review')) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('enables an act the server allows', async () => {
     docAccess = { freeze: { allowed: true, reason: null }, esign: { allowed: true, reason: null }, fileToVault: { allowed: true, reason: null }, assignReview: { allowed: true, reason: null } };
     await mount();
     await waitFor(() => expect(screen.getByTestId('bar-props').textContent).toBe(JSON.stringify({ freeze: null, esign: null })));
-    expect((screen.getByTestId('assign-review-open') as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByTestId('send-for-review-open') as HTMLButtonElement).disabled).toBe(false);
   });
 });

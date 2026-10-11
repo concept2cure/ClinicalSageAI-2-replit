@@ -1,0 +1,185 @@
+2026-10-10T05:46:16.2916107Z [command]/usr/bin/git log -1 --format=%H
+2026-10-10T05:46:16.2937996Z 88fa1606c5b50daf1cb50686d743fe26e041b441
+2026-10-10T05:46:59.8833758Z ##[group]Run mkdir -p test-results
+2026-10-10T05:46:59.8834047Z [36;1mmkdir -p test-results[0m
+2026-10-10T05:46:59.8834417Z [36;1mset -o pipefail[0m
+2026-10-10T05:46:59.8834939Z [36;1mnpx vitest run --config vitest.config.ts tests/schema-contracts/install-fresh-ana-runs.pglite.test.ts 2>&1 | tee test-results/ana-bootstrap.log[0m
+2026-10-10T05:46:59.8900996Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-10T05:46:59.8901268Z env:
+2026-10-10T05:46:59.8901576Z   DATABASE_URL: postgresql://postgres@localhost:5432/c2c_tier5_smoke?sslmode=disable
+2026-10-10T05:46:59.8901926Z   BASE_URL: http://127.0.0.1:5000
+2026-10-10T05:46:59.8902147Z ##[endgroup]
+2026-10-10T05:47:00.3475835Z 
+2026-10-10T05:47:00.3477728Z [1m[30m[46m RUN [49m[39m[22m [36mv4.1.7 [39m[90m/home/runner/work/ClinicalSageAI-2-replit/ClinicalSageAI-2-replit[39m
+2026-10-10T05:47:00.3478345Z 
+2026-10-10T05:47:02.0704958Z  [32m✓[39m tests/schema-contracts/install-fresh-ana-runs.pglite.test.ts[2m > [22minstall-fresh: AnA run parent before the raw event overlay[2m > [22mexecutes the canonical parent exactly once before the root overlay[32m 5[2mms[22m[39m
+2026-10-10T05:47:02.0706923Z  [32m✓[39m tests/schema-contracts/install-fresh-ana-runs.pglite.test.ts[2m > [22minstall-fresh: AnA run parent before the raw event overlay[2m > [22mdoes not accept a failed parent migration as successful provisioning[32m 2[2mms[22m[39m
+2026-10-10T05:47:03.0107953Z  [32m✓[39m tests/schema-contracts/install-fresh-ana-runs.pglite.test.ts[2m > [22minstall-fresh: AnA run parent before the raw event overlay[2m > [22mreproduces the missing-parent failure and rolls back the child migration[33m 1337[2mms[22m[39m
+2026-10-10T05:47:03.0130705Z  [32m✓[39m tests/schema-contracts/install-fresh-ana-runs.pglite.test.ts[2m > [22minstall-fresh: AnA run parent before the raw event overlay[2m > [22mcreates both from the selected parent, replays without data loss, and preserves the FK and immutability[33m 940[2mms[22m[39m
+2026-10-10T05:47:03.0157381Z 
+2026-10-10T05:47:03.0161513Z [2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+2026-10-10T05:47:03.0162677Z [2m      Tests [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+2026-10-10T05:47:03.0163153Z [2m   Start at [22m 05:47:00
+2026-10-10T05:47:03.0163924Z [2m   Duration [22m 2.57s[2m (transform 54ms, setup 59ms, import 26ms, tests 2.29s, environment 0ms)[22m
+2026-10-10T05:47:03.0165121Z 
+2026-10-10T05:47:34.3020047Z ##[group]Run node scripts/db/install-fresh.mjs
+2026-10-10T05:47:34.3020364Z [36;1mnode scripts/db/install-fresh.mjs[0m
+2026-10-10T05:47:34.3076092Z shell: /usr/bin/bash -e {0}
+2026-10-10T05:47:34.3076319Z env:
+2026-10-10T05:47:34.3076624Z   DATABASE_URL: postgresql://postgres@localhost:5432/c2c_tier5_smoke?sslmode=disable
+2026-10-10T05:47:34.3076978Z   BASE_URL: http://127.0.0.1:5000
+2026-10-10T05:47:34.3077182Z ##[endgroup]
+2026-10-10T05:47:34.3618367Z ◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+2026-10-10T05:47:34.3628945Z 
+2026-10-10T05:47:34.3629421Z ▶ 1/8 Prerequisites — schemas + extensions
+2026-10-10T05:47:34.3843050Z   ✓ schemas (vault, precedent, audit, extensions) + extensions (pgcrypto, uuid-ossp, pg_trgm)
+2026-10-10T05:47:34.3965424Z   ✓ pgvector (extension "vector") present
+2026-10-10T05:47:34.3965662Z 
+2026-10-10T05:47:34.3965859Z ▶ 2/8 Tables — drizzle-kit push
+2026-10-10T05:47:34.3999628Z   • schema source: drizzle-kit push from ./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts (drizzle.config.ts)
+2026-10-10T05:47:42.7843505Z   • 6 declared table(s) live in a named schema, which push does not create; the overlay does. Asserted in 8/8, not here: vault.document_archives, vault.document_chunks, vault.documents, vault.evidence_citations, vault.legal_holds, vault.retention_policies
+2026-10-10T05:47:42.7845317Z   ✓ schema pushed from ./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts (482 of 488 declared tables verified present here: 482 in public, 6 in vault)
+2026-10-10T05:47:42.7876289Z 
+2026-10-10T05:47:42.7876773Z ▶ 3/8 Complete schema — raw migration overlay
+2026-10-10T05:47:42.8278842Z   ✓ pre-overlay creator: db/migrations/20260401_cmc_convergence_os.sql
+2026-10-10T05:47:42.8548269Z   ✓ pre-overlay creator: db/migrations/20260224_ai_trace_chain.sql
+2026-10-10T05:47:42.8622872Z   ✓ pre-overlay creator: db/migrations/20260730_cmc_projects_reconstruction.sql
+2026-10-10T05:47:42.8662316Z   ✓ pre-overlay creator: db/migrations/20260730_manufacturing_processes_reconstruction.sql
+2026-10-10T05:47:42.8741366Z   ✓ pre-overlay creator: db/migrations/20260730_fk_delete_policies_port.sql
+2026-10-10T05:47:42.8994882Z   ✓ pre-overlay creator: db/migrations/20260917_ana_runs.sql
+2026-10-10T05:47:45.0890997Z   pass 1: applied=301 already-present=2 deferred=12 hard=0
+2026-10-10T05:47:45.2026297Z   pass 2: applied=11 already-present=0 deferred=1 hard=0
+2026-10-10T05:47:45.2062693Z   pass 3: applied=0 already-present=0 deferred=1 hard=0
+2026-10-10T05:47:45.2065500Z   ◦ 1 file(s) skipped-classified (expected on a fresh install; each names its tracked resolution — NOT counted as incomplete):
+2026-10-10T05:47:45.2066820Z       0008_critical_fk_delete_policies.sql — superseded by db/migrations/20260730_fk_delete_policies_port.sql (guarded port applied pre-overlay); the original aborts on retired user_sessions
+2026-10-10T05:47:45.2067557Z         last error: relation "user_sessions" does not exist
+2026-10-10T05:47:45.2067987Z   ✓ overlay: 312 applied, 2 already-present from push
+2026-10-10T05:47:45.2111785Z 
+2026-10-10T05:47:45.2112329Z ▶ 4/8 Authoring subsystem (Part-11 unit)
+2026-10-10T05:47:45.3687655Z   ✓ authoring subsystem provisioned as a unit (9 files, 23 tables, tenant-isolated)
+2026-10-10T05:47:45.3725034Z 
+2026-10-10T05:47:45.3725505Z ▶ 5/8 Row-Level Security policies (raw migrations)
+2026-10-10T05:47:45.5679926Z   ✓ coerced residual text tenant columns to integer (fresh-DB safe)
+2026-10-10T05:47:45.6092481Z   ✓ applied 0005_csr_knowledge_database.sql
+2026-10-10T05:47:45.6999150Z   ✓ applied 0019_tenant_column_audit.sql
+2026-10-10T05:47:45.7097669Z   ✓ applied 0020_coerce_text_tenant_columns.sql
+2026-10-10T05:47:45.9512710Z   ✓ applied 0021_enable_rls_everywhere.sql
+2026-10-10T05:47:45.9799320Z   ✓ applied 20260608_ai_placement_policies.sql
+2026-10-10T05:47:46.0944472Z   ✓ applied 20260612_rls_research_admin.sql
+2026-10-10T05:47:46.0944760Z 
+2026-10-10T05:47:46.0945407Z ▶ 6/8 Governed content — Part 11 audit tree (*_gcc_*.sql)
+2026-10-10T05:47:50.4222086Z   ✓ governed content: 42/42 applied
+2026-10-10T05:47:50.8984910Z   ✓ re-applied 22/22 root file(s) guarded on a named schema (their dependency exists only after this tree)
+2026-10-10T05:47:51.0065301Z   ✓ tenant-isolation sweep re-run over the tables this tree created
+2026-10-10T05:47:51.0200485Z   ✓ non-public uuid-tenant tables policied
+2026-10-10T05:47:51.1620212Z   ✓ child tables scoped to their tenant-keyed parents
+2026-10-10T05:47:51.1668616Z 
+2026-10-10T05:47:51.1669211Z ▶ 7/8 Runtime role — non-superuser grants
+2026-10-10T05:47:51.1678790Z   • single-role posture: no runtime role distinct from the owner (postgres) is identifiable (RUNTIME_DB_ROLE / APP_SERVICE_DB_PASSWORD / APP_DATABASE_URL / DATABASE_URL). Nothing to grant.
+2026-10-10T05:47:51.1681767Z   • no runtime role distinct from the owner (postgres). Production boot will FAIL CLOSED under RLS_ENFORCE=on — not only for a superuser, but for ANY role that owns the tables. Postgres exempts a table owner from its own policies unless FORCE ROW LEVEL SECURITY is set, so on this database the policies on every RLS-enabled, non-FORCE table are inert and its rows are readable across tenants. Set APP_SERVICE_DB_PASSWORD here and APP_DATABASE_URL for the runtime before going live. (The narrower "superuser" wording this line used to carry was true but incomplete, and the boot gate it described could not see the owner case at all until server/db/rlsEnforcement.ts learned to.)
+2026-10-10T05:47:51.1683478Z 
+2026-10-10T05:47:51.1683588Z ▶ 8/8 Verify
+2026-10-10T05:47:51.1718613Z   tables (public): 808
+2026-10-10T05:47:51.1718911Z   RLS policies:    1004
+2026-10-10T05:47:51.1884984Z   named-schema tables: 6/6 present
+2026-10-10T05:47:51.1892545Z   core route tables: 5/5 present
+2026-10-10T05:47:51.1898060Z   authoring subsystem: 19/19 tables present
+2026-10-10T05:47:51.1990465Z   required objects: 8/8 capabilities complete
+2026-10-10T05:47:51.1991458Z     ✓ stability_studies — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+2026-10-10T05:47:51.1992693Z     ✓ project_intelligence_profiles — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+2026-10-10T05:47:51.1993735Z     ✓ immutable_report_records — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+2026-10-10T05:47:51.1994874Z     ✓ evidence_claims — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+2026-10-10T05:47:51.1995836Z     ✓ conversation_working_memory — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+2026-10-10T05:47:51.1996911Z     ✓ ana_capability_registry — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · global (no tenant scope, no policy expected)
+2026-10-10T05:47:51.1998035Z     ✓ report_type_registry — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · global (no tenant scope, no policy expected)
+2026-10-10T05:47:51.1998899Z     ✓ doc_permissions — from authoring subsystem (db/migrations/20260725_authoring_*) · RLS on tenant_id
+2026-10-10T05:47:51.3337237Z   tenant isolation: every integer tenant-keyed table is policied ✓
+2026-10-10T05:47:51.3338242Z 
+2026-10-10T05:47:51.3338609Z ✅ Application schema install complete.
+2026-10-10T05:47:51.3338999Z    Next:
+2026-10-10T05:47:51.3339520Z    • run `node scripts/db/deploy-migrate.mjs` to apply the out-of-band
+2026-10-10T05:47:51.3340172Z      C2C migration set (the db/migrations/ files NO other path applies —
+2026-10-10T05:47:51.3340765Z      e.g. the clinical-regulatory evidence spine, section tracking, and
+2026-10-10T05:47:51.3341844Z      the governance/resolution tables). This installer does NOT apply
+2026-10-10T05:47:51.3342296Z      that set; without it the routes reading those tables fall back to
+2026-10-10T05:47:51.3342715Z      sample data. (In the AWS pipeline deploy-migrate runs as its own
+2026-10-10T05:47:51.3343112Z      step after this one; a local install must run it by hand.)
+2026-10-10T05:47:51.3343595Z    • set RLS_ENFORCE=on and restart to enforce tenant isolation;
+2026-10-10T05:47:51.3344165Z    • point the runtime at the non-superuser role: set APP_DATABASE_URL to the
+2026-10-10T05:47:51.3345159Z      app_service connection string (set APP_SERVICE_DB_PASSWORD here first so
+2026-10-10T05:47:51.3345789Z      the role is provisioned). Migrations keep using DATABASE_URL (the owner).
+2026-10-10T05:47:51.3346286Z      Production boot fails closed under RLS_ENFORCE=on if it connects as a superuser.
+2026-10-10T05:47:51.3346786Z    • leave SEED_DEMO_USER unset in production (no known-password admin).
+2026-10-10T05:47:51.3451898Z ##[group]Run npm run test:e2e:smoke -- tests/e2e/authenticated-app-smoke.e2e.spec.ts
+2026-10-10T05:47:51.3452633Z [36;1mnpm run test:e2e:smoke -- tests/e2e/authenticated-app-smoke.e2e.spec.ts[0m
+2026-10-10T05:47:51.3531375Z shell: /usr/bin/bash -e {0}
+2026-10-10T05:47:51.3531693Z env:
+2026-10-10T05:47:51.3532147Z   DATABASE_URL: postgresql://postgres@localhost:5432/c2c_tier5_smoke?sslmode=disable
+2026-10-10T05:47:51.3532718Z   BASE_URL: http://127.0.0.1:5000
+2026-10-10T05:47:51.3533040Z ##[endgroup]
+2026-10-10T05:47:51.4368281Z 
+2026-10-10T05:47:51.4368957Z > concept2cure-riai@1.0.0 test:e2e:smoke
+2026-10-10T05:47:51.4370132Z > node scripts/db/deploy-migrate.mjs && node scripts/run-e2e-smoke.mjs tests/e2e/authenticated-app-smoke.e2e.spec.ts
+2026-10-10T05:47:51.4370592Z 
+2026-10-10T05:48:17.4769904Z   ✓  1 [chromium] › tests/e2e/authenticated-app-smoke.e2e.spec.ts:39:3 › Tier 5 — authenticated app smoke (live server) › an authenticated session renders protected surfaces (landing + projects) (3.7s)
+2026-10-10T05:48:18.3226569Z   ✓  2 [chromium] › tests/e2e/authenticated-app-smoke.e2e.spec.ts:63:3 › Tier 5 — authenticated app smoke (live server) › negative control: the SAME protected route bounces an unauthenticated visitor to /login (834ms)
+2026-10-10T05:48:18.3626572Z 
+2026-10-10T05:48:18.3629951Z   2 passed (6.5s)
+2026-10-10T05:48:18.5139638Z ##[group]Run npm run test:e2e:smoke -- tests/e2e/golden-customer-journey.e2e.ts
+2026-10-10T05:48:18.5140086Z [36;1mnpm run test:e2e:smoke -- tests/e2e/golden-customer-journey.e2e.ts[0m
+2026-10-10T05:48:18.5196198Z shell: /usr/bin/bash -e {0}
+2026-10-10T05:48:18.5196426Z env:
+2026-10-10T05:48:18.5196719Z   DATABASE_URL: postgresql://postgres@localhost:5432/c2c_tier5_smoke?sslmode=disable
+2026-10-10T05:48:18.5197062Z   BASE_URL: http://127.0.0.1:5000
+2026-10-10T05:48:18.5197265Z ##[endgroup]
+2026-10-10T05:48:18.6023060Z 
+2026-10-10T05:48:18.6023645Z > concept2cure-riai@1.0.0 test:e2e:smoke
+2026-10-10T05:48:18.6026195Z > node scripts/db/deploy-migrate.mjs && node scripts/run-e2e-smoke.mjs tests/e2e/golden-customer-journey.e2e.ts
+2026-10-10T05:48:18.6026548Z 
+2026-10-10T05:48:38.6698426Z [AUDIT] {"timestamp":"2026-10-10T05:48:38.669Z","requestId":"885b013284cd5ecf000287fd38d39b88","method":"GET","path":"/artifact_1791611318488_42087683fdb7/export","statusCode":403,"userId":"3","organizationId":"2","ip":"127.0.0.1","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.16 Safari/537.36","duration":9,"error":"Forbidden"}
+2026-10-10T05:48:38.6702925Z {"level":40,"time":"2026-10-10T05:48:38.669Z","pid":4352,"hostname":"runnervmmprz5","context":{"requestId":"69dd2f1b-7276-4c36-b591-8a7206f9116f","method":"GET","path":"/api/artifacts-center/artifact_1791611318488_42087683fdb7/export?format=docx","statusCode":403,"durationMs":9,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_warning"}
+2026-10-10T05:48:39.9370096Z {"level":20,"time":"2026-10-10T05:48:39.935Z","pid":4352,"hostname":"runnervmmprz5","context":{"auditId":"audit_1791611319934_505c98d48c82bcd5","action":"CREATE","entityType":"review_assignment","entityId":"artifact_1791611318488_42087683fdb7"},"msg":"[concept2cure-api] Audit entry persisted"}
+2026-10-10T05:48:39.9373024Z {"level":30,"time":"2026-10-10T05:48:39.936Z","pid":4352,"hostname":"runnervmmprz5","context":{"requestId":"b2bad3fb-55f8-406b-bbba-d33c01fdd45e","method":"POST","path":"/api/concept2cure/projects/proj_2/artifacts/artifact_1791611318488_42087683fdb7/reviewers","statusCode":200,"durationMs":116,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_ok"}
+2026-10-10T05:48:39.9701863Z [DEBUG 2026-10-10T05:48:39.969Z] POST /api/concept2cure/projects/proj_2/artifacts/artifact_1791611318488_42087683fdb7/reviews/submit {
+2026-10-10T05:48:39.9702355Z   headers: {
+2026-10-10T05:48:39.9702559Z     accept: '*/*',
+2026-10-10T05:48:39.9702745Z     'content-length': '91',
+2026-10-10T05:48:39.9702982Z     'content-type': 'application/json',
+2026-10-10T05:48:39.9703466Z     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.16 Safari/537.36'
+2026-10-10T05:48:39.9703875Z   },
+2026-10-10T05:48:39.9704069Z   query: { parameterCount: 0, keys: [] },
+2026-10-10T05:48:39.9704565Z   body: undefined,
+2026-10-10T05:48:39.9704743Z   bodyRedacted: true,
+2026-10-10T05:48:39.9704917Z   bodyMetadata: {
+2026-10-10T05:48:39.9705182Z     contentType: 'application/json',
+2026-10-10T05:48:39.9705474Z     contentLength: '91',
+2026-10-10T05:48:39.9705763Z     transferEncoding: undefined
+2026-10-10T05:48:39.9706344Z   },
+2026-10-10T05:48:39.9706750Z   concept2curePayload: true
+2026-10-10T05:48:39.9707029Z }
+2026-10-10T05:48:40.0164650Z {"level":20,"time":"2026-10-10T05:48:40.016Z","pid":4352,"hostname":"runnervmmprz5","context":{"auditId":"audit_1791611320015_0260b99a297c5133","action":"CREATE","entityType":"review_decision","entityId":"dec_1791611320011_9241b795"},"msg":"[concept2cure-api] Audit entry persisted"}
+2026-10-10T05:48:40.0180007Z {"level":30,"time":"2026-10-10T05:48:40.017Z","pid":4352,"hostname":"runnervmmprz5","context":{"requestId":"fcd33c78-798e-40dd-b4b1-f1994f96edee","method":"POST","path":"/api/concept2cure/projects/proj_2/artifacts/artifact_1791611318488_42087683fdb7/reviews/submit","statusCode":200,"durationMs":48,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_ok"}
+2026-10-10T05:48:41.8342954Z [DEBUG 2026-10-10T05:48:41.834Z] GET /api/artifacts-center/artifact_1791611318488_42087683fdb7/export?format=docx {
+2026-10-10T05:48:41.8343411Z   headers: {
+2026-10-10T05:48:41.8343588Z     accept: '*/*',
+2026-10-10T05:48:41.8343819Z     'content-type': 'application/json',
+2026-10-10T05:48:41.8344466Z     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.16 Safari/537.36'
+2026-10-10T05:48:41.8344900Z   },
+2026-10-10T05:48:41.8345111Z   query: { parameterCount: 1, keys: [ 'format' ] },
+2026-10-10T05:48:41.8345373Z   body: undefined,
+2026-10-10T05:48:41.8345557Z   bodyRedacted: true,
+2026-10-10T05:48:41.8345740Z   bodyMetadata: undefined,
+2026-10-10T05:48:41.8345939Z   concept2curePayload: false
+2026-10-10T05:48:41.8346131Z }
+2026-10-10T05:48:41.8728608Z {"level":30,"time":"2026-10-10T05:48:41.872Z","pid":4352,"hostname":"runnervmmprz5","context":{"userId":3,"tenantId":2,"resourceId":"artifact_1791611318488_42087683fdb7"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED artifacts_center_export"}
+2026-10-10T05:48:41.8798424Z {"level":30,"time":"2026-10-10T05:48:41.879Z","pid":4352,"hostname":"runnervmmprz5","context":{"requestId":"18015b22-9398-461f-ae9c-51a6b31b0773","method":"GET","path":"/api/artifacts-center/artifact_1791611318488_42087683fdb7/export?format=docx","statusCode":200,"durationMs":46,"kernelDecision":"allow","kernelScore":100,"flags":[]},"msg":"[http] request_ok"}
+2026-10-10T05:48:41.9909167Z   ✓  1 [chromium] › tests/e2e/golden-customer-journey.e2e.ts:87:1 › fixture-free golden journey persists evidence, review, provenance, and governed draft export (8.0s)
+2026-10-10T05:48:42.0345838Z 
+2026-10-10T05:48:42.0348911Z   1 passed (8.9s)
+2026-10-10T05:48:42.0502674Z 🔄 Graceful shutdown initiated (SIGTERM)...
+2026-10-10T05:48:42.0503321Z 🔄 Draining HTTP connections...
+2026-10-10T05:48:42.0506528Z ✅ HTTP server closed — all connections drained
+2026-10-10T05:48:42.0507164Z ✅ Redis rate limiter closed
+2026-10-10T05:48:42.0521530Z AI Actions infrastructure shut down
+2026-10-10T05:48:42.0527360Z {"level":30,"time":"2026-10-10T05:48:42.051Z","pid":4352,"hostname":"runnervmmprz5","context":{},"msg":"[redis-manager] Redis connections closed"}
+2026-10-10T05:48:42.0575169Z ✅ Database connections closed

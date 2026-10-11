@@ -1,0 +1,29 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+/workspace/scratch/bd36ee581acd/concept2cure/server/routes/authoring.router.ts
+   128:53  warning  Arrow function has a complexity of 23. Maximum allowed is 15                             complexity
+   693:3   warning  Async arrow function has too many parameters (10). Maximum allowed is 5                  max-params
+   878:3   warning  Arrow function has too many parameters (7). Maximum allowed is 5                         max-params
+   950:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   995:1   warning  File has too many lines (4790). Maximum allowed is 500                                   max-lines
+  1802:74  warning  Async arrow function has too many lines (248). Maximum allowed is 100                    max-lines-per-function
+  1802:74  warning  Async arrow function has a complexity of 61. Maximum allowed is 15                       complexity
+  3281:82  warning  Async arrow function has too many lines (250). Maximum allowed is 100                    max-lines-per-function
+  3281:82  warning  Async arrow function has a complexity of 46. Maximum allowed is 15                       complexity
+  3638:89  warning  Async arrow function has too many lines (145). Maximum allowed is 100                    max-lines-per-function
+  3638:89  warning  Async arrow function has a complexity of 25. Maximum allowed is 15                       complexity
+  3863:92  warning  Async arrow function has too many lines (166). Maximum allowed is 100                    max-lines-per-function
+  4323:72  warning  Async arrow function has too many lines (132). Maximum allowed is 100                    max-lines-per-function
+  4323:72  warning  Async arrow function has a complexity of 27. Maximum allowed is 15                       complexity
+  4521:72  warning  Async arrow function has too many lines (111). Maximum allowed is 100                    max-lines-per-function
+  4521:72  warning  Async arrow function has a complexity of 18. Maximum allowed is 15                       complexity
+  5333:80  warning  Async arrow function has too many lines (114). Maximum allowed is 100                    max-lines-per-function
+  5333:80  warning  Async arrow function has a complexity of 27. Maximum allowed is 15                       complexity
+  5444:9   warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+  6065:72  warning  Async arrow function has a complexity of 17. Maximum allowed is 15                       complexity
+  6292:70  warning  Async arrow function has too many lines (102). Maximum allowed is 100                    max-lines-per-function
+  6292:70  warning  Async arrow function has a complexity of 20. Maximum allowed is 15                       complexity
+  7062:97  warning  Async arrow function has a complexity of 20. Maximum allowed is 15                       complexity
+  7179:82  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                       complexity
+
+✖ 24 problems (0 errors, 24 warnings)

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/root/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "server/services/ana/__tests__/run-control-tenant-scope.test.ts",
+    "--no-cache",
+    "--format",
+    "json"
+  ],
+  "process_exit": 0,
+  "errors": 0,
+  "warnings": 0
+}

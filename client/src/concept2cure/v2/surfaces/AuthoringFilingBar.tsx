@@ -63,6 +63,11 @@ export interface AuthoringFilingBarProps {
      enabled and the server decides; the bar never infers a denial. */
   freezeRefusal?: string | null;
   esignRefusal?: string | null;
+  /** The caller may apply the review signature and no other (a Reviewer grant
+   *  on the document; GET /docs/:id `access.esignReview`). The dialog then
+   *  offers that one meaning. QA 2026-10-08 (j4): the reviewer a review was
+   *  assigned to could not sign it. */
+  reviewOnly?: boolean;
 }
 
 type Dialog = 'freeze' | 'freeze-unsettled' | 'esign' | null;
@@ -133,6 +138,15 @@ const AUTHORING_MEANING: Partial<Record<EsigMeaning, 'AUTHOR' | 'REVIEWER' | 'AP
   approval: 'APPROVER',
 };
 const AUTHORING_MEANINGS: ReadonlyArray<EsigMeaning> = ['authorship', 'review', 'approval'];
+/** What a Reviewer grant may sign (the 'review' act, authoringObjectAuthorization). */
+const REVIEW_ONLY_MEANINGS: ReadonlyArray<EsigMeaning> = ['review'];
+
+/** What the E-sign dialog offers: every meaning, or the review signature alone. */
+function esignOffer(reviewOnly: boolean | undefined): { meanings: ReadonlyArray<EsigMeaning>; targetMeta: string } {
+  return reviewOnly
+    ? { meanings: REVIEW_ONLY_MEANINGS, targetMeta: 'Your grant on this document permits the review signature. Approval is signed by an approver.' }
+    : { meanings: AUTHORING_MEANINGS, targetMeta: 'An Approval signature approves and freezes the document.' };
+}
 
 /** What the shared dialog hands over once the signer has re-authenticated. */
 interface SignInput {
@@ -248,7 +262,7 @@ function RefusalNote({ id, testId, text }: { id: string; testId: string; text: s
   );
 }
 
-export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal, esignRefusal }: AuthoringFilingBarProps) {
+export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast, signer, freezeRefusal, esignRefusal, reviewOnly }: AuthoringFilingBarProps) {
   const freezeNoteId = useId();
   const esignNoteId = useId();
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -347,9 +361,9 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
           open
           action="Sign document"
           target={docTitle}
-          targetMeta="An Approval signature approves and freezes the document."
+          targetMeta={esignOffer(reviewOnly).targetMeta}
           defaultMeaning="review"
-          meanings={AUTHORING_MEANINGS}
+          meanings={esignOffer(reviewOnly).meanings}
           signer={signer}
           onClose={() => setDialog(null)}
           onSign={doSign}

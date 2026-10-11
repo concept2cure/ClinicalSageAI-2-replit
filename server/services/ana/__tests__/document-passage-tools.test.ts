@@ -197,7 +197,7 @@ describe('what it says when it finds nothing', () => {
     expect(out.unavailable).toBeUndefined();
     expect(out.message).toContain('None of the 6 document(s)');
     expect(out.message).toContain('nothing was searched');
-    expect(out.message).toContain('ana.vault_chunking');
+    expect(out.message).toContain('backfill');
     expect(out.message).not.toContain('embedding provider');
   });
 

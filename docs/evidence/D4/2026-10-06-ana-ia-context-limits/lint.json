@@ -1,0 +1,354 @@
+[
+  {
+    "file": "server/routes/ana-ri/__tests__/stream-context-awareness.test.ts",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  },
+  {
+    "file": "server/routes/ana-ri/stream.ts",
+    "errors": 0,
+    "warnings": 23,
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "severity": 1,
+        "message": "'dbPool' is assigned a value but never used.",
+        "line": 220,
+        "column": 7,
+        "messageId": "unusedVar",
+        "endLine": 220,
+        "endColumn": 13
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'mountStreamRoute' has too many lines (1880). Maximum allowed is 100.",
+        "line": 361,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 361,
+        "endColumn": 33
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async arrow function has too many lines (1821). Maximum allowed is 100.",
+        "line": 362,
+        "column": 62,
+        "messageId": "exceed",
+        "endLine": 362,
+        "endColumn": 64
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 248. Maximum allowed is 15.",
+        "line": 362,
+        "column": 62,
+        "messageId": "complex",
+        "endLine": 362,
+        "endColumn": 64
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (2145). Maximum allowed is 500.",
+        "line": 796,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 3356,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 1268,
+        "column": 13,
+        "messageId": "tooDeeply",
+        "endLine": 1268,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 1313,
+        "column": 13,
+        "messageId": "tooDeeply",
+        "endLine": 1313,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+        "line": 1315,
+        "column": 15,
+        "messageId": "tooDeeply",
+        "endLine": 1315,
+        "endColumn": 18
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (7). Maximum allowed is 4.",
+        "line": 1323,
+        "column": 17,
+        "messageId": "tooDeeply",
+        "endLine": 1323,
+        "endColumn": 19
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (7). Maximum allowed is 4.",
+        "line": 1325,
+        "column": 17,
+        "messageId": "tooDeeply",
+        "endLine": 1325,
+        "endColumn": 19
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async arrow function has too many lines (410). Maximum allowed is 100.",
+        "line": 2105,
+        "column": 39,
+        "messageId": "exceed",
+        "endLine": 2105,
+        "endColumn": 41
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 79. Maximum allowed is 15.",
+        "line": 2105,
+        "column": 39,
+        "messageId": "complex",
+        "endLine": 2105,
+        "endColumn": 41
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 20. Maximum allowed is 15.",
+        "line": 2185,
+        "column": 27,
+        "messageId": "complex",
+        "endLine": 2185,
+        "endColumn": 29
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 2416,
+        "column": 19,
+        "messageId": "tooDeeply",
+        "endLine": 2416,
+        "endColumn": 22
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+        "line": 2417,
+        "column": 21,
+        "messageId": "tooDeeply",
+        "endLine": 2417,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+        "line": 2418,
+        "column": 21,
+        "messageId": "tooDeeply",
+        "endLine": 2418,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 2429,
+        "column": 19,
+        "messageId": "tooDeeply",
+        "endLine": 2429,
+        "endColumn": 21
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 2444,
+        "column": 19,
+        "messageId": "tooDeeply",
+        "endLine": 2444,
+        "endColumn": 21
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+        "line": 2449,
+        "column": 21,
+        "messageId": "tooDeeply",
+        "endLine": 2449,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 2471,
+        "column": 19,
+        "messageId": "tooDeeply",
+        "endLine": 2471,
+        "endColumn": 21
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (5). Maximum allowed is 4.",
+        "line": 2482,
+        "column": 19,
+        "messageId": "tooDeeply",
+        "endLine": 2482,
+        "endColumn": 21
+      },
+      {
+        "ruleId": "max-depth",
+        "severity": 1,
+        "message": "Blocks are nested too deeply (6). Maximum allowed is 4.",
+        "line": 2487,
+        "column": 21,
+        "messageId": "tooDeeply",
+        "endLine": 2487,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 20. Maximum allowed is 15.",
+        "line": 3305,
+        "column": 77,
+        "messageId": "complex",
+        "endLine": 3305,
+        "endColumn": 79
+      }
+    ]
+  },
+  {
+    "file": "server/services/ana/__tests__/history-window.test.ts",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  },
+  {
+    "file": "server/services/ana/history-window.ts",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  },
+  {
+    "file": "server/services/ana/submission-chat-handler.ts",
+    "errors": 0,
+    "warnings": 9,
+    "messages": [
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 16. Maximum allowed is 15.",
+        "line": 439,
+        "column": 23,
+        "messageId": "complex",
+        "endLine": 439,
+        "endColumn": 25
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (1366). Maximum allowed is 500.",
+        "line": 749,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 1775,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'buildSystemPrompt' has too many lines (129). Maximum allowed is 100.",
+        "line": 782,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 782,
+        "endColumn": 34
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'buildStreamingSystemPrompt' has too many lines (116). Maximum allowed is 100.",
+        "line": 934,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 934,
+        "endColumn": 43
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'parseStreamingStructure' has a complexity of 20. Maximum allowed is 15.",
+        "line": 1061,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 1061,
+        "endColumn": 40
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "severity": 1,
+        "message": "'fallbackAnswer' is defined but never used. Allowed unused args must match /^_/u.",
+        "line": 1063,
+        "column": 3,
+        "messageId": "unusedVar",
+        "endLine": 1063,
+        "endColumn": 17
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "severity": 1,
+        "message": "'fallbackRewriteContent' is defined but never used. Allowed unused args must match /^_/u.",
+        "line": 1064,
+        "column": 3,
+        "messageId": "unusedVar",
+        "endLine": 1064,
+        "endColumn": 25
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Async function 'handleSubmissionChat' has too many lines (438). Maximum allowed is 100.",
+        "line": 1210,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 1210,
+        "endColumn": 43
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async function 'handleSubmissionChat' has a complexity of 77. Maximum allowed is 15.",
+        "line": 1210,
+        "column": 8,
+        "messageId": "complex",
+        "endLine": 1210,
+        "endColumn": 43
+      }
+    ]
+  }
+]

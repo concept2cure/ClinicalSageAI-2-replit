@@ -1,0 +1,1 @@
+1 test file failed before locator fix (authoringUnsavedWork: Save moved out of .ed-doc-actions); after fix that file + documentCanvasPolish + workbenchA11ySweep: 51/51 pass. Other 198 related files: pass (2392 tests).

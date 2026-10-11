@@ -272,7 +272,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
         question:
           'Provide the study treatment context at the time of the adverse event, including treatment arm, blinding status, dosing, and route of administration.',
         guidance:
-          'Per ICH E3 Section 12.3, each safety narrative must document the study drug exposure context including treatment arm assignment, dose at event onset, duration of exposure, and blinding status. For blinded studies, the narrative should maintain the blind unless unblinding was required for patient safety per ICH E6(R2) Section 3.3.3. The temporal relationship between drug exposure and event onset is a key element of causality assessment per the WHO-UMC system.',
+          'Per ICH E3 Section 12.3, each safety narrative must document the study drug exposure context including treatment arm assignment, dose at event onset, duration of exposure, and blinding status. For blinded studies, the narrative should maintain the blind unless unblinding was required for patient safety per ICH E6(R3) Annex 1 §2.11 (Randomisation Procedures and Unblinding). The temporal relationship between drug exposure and event onset is a key element of causality assessment per the WHO-UMC system.',
         fields: [
           {
             id: 'treatment_arm',
@@ -1071,7 +1071,7 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
         question:
           'Complete the finalization steps for the safety narrative, including medical review, quality checks, regulatory deadlines, and any outstanding follow-up items.',
         guidance:
-          'Per ICH E6(R2) and 21 CFR 312.32, safety narratives must undergo medical review and quality control before submission. Expedited IND safety reports (7-day and 15-day) have strict regulatory timelines. The narrative must be consistent with the safety database entries and CIOMS/MedWatch forms. FDA expects narratives to be included in IND annual reports (21 CFR 312.33), CSR appendices (ICH E3), and NDA/BLA safety summaries (ICH M4E). Ensure all follow-up information is incorporated before finalization.',
+          'Per ICH E6(R3) Annex 1 §3.13 and 21 CFR 312.32, safety narratives must undergo medical review and quality control before submission. Expedited IND safety reports (7-day and 15-day) have strict regulatory timelines. The narrative must be consistent with the safety database entries and CIOMS/MedWatch forms. FDA expects narratives to be included in IND annual reports (21 CFR 312.33), CSR appendices (ICH E3), and NDA/BLA safety summaries (ICH M4E). Ensure all follow-up information is incorporated before finalization.',
         fields: [
           {
             id: 'medical_review_completed',
@@ -1140,8 +1140,8 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             severity: 'warning',
             title: 'Medical Review Not Completed',
             message:
-              'Per ICH E6(R2) Section 4.11, the sponsor\'s medical officer must review all safety reports. Individual patient safety narratives should be reviewed by a qualified physician before inclusion in the CSR or submission to regulatory authorities. Ensure medical sign-off is obtained before finalizing the narrative.',
-            reference: 'ICH E6(R2) Section 4.11, ICH E3 Section 12.3',
+              'Per ICH E6(R3) Annex 1 §3.13 (Safety Assessment and Reporting), the sponsor\'s medical officer must review all safety reports. Individual patient safety narratives should be reviewed by a qualified physician before inclusion in the CSR or submission to regulatory authorities. Ensure medical sign-off is obtained before finalizing the narrative.',
+            reference: 'ICH E6(R3) Annex 1 §3.13, ICH E3 Section 12.3',
           },
           {
             id: 'quality_check_missing',

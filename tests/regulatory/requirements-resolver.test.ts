@@ -173,6 +173,11 @@ describe('resolveRequirements — the one dispatch', () => {
 
 // Recorded from documentSectionRequirements at a425d1de, before the extraction.
 // Fingerprint, then the input as JSON; three to a line.
+// 2026-10-09: 12 exact CMC leaves and two structural parents intentionally expand
+// the enumerated inputs; affected ancestor listings change, unrelated hashes stay pinned.
+// 2026-10-10: seven exact pharmacology leaves add 21 variants; only the
+// existing 2.6/m2.6 parent lists change. The other 661 fingerprints are preserved.
+// Delta: docs/evidence/D4/2026-10-10-ana-ind-pharmacology-leaf-guidance/requirements-snapshot-delta.json
 const PINNED_TABLE = `
 b40bf211f7e54507 {"document":"1"}  cd2025612b986822 {"document":"1.1"}  4a2ae5b79a8739e0 {"document":"1.1.1"}
 8fec1080817ffabb {"document":"1.1.2"}  2cc355087e894708 {"document":"1.1.3"}  62dc7cedc05894e2 {"document":"1.1.4"}
@@ -186,20 +191,20 @@ f42168be678a9483 {"document":"1.3.5.1"}  c93bc3959673cc0e {"document":"1.9"}  71
 f1f3c35a4086ba94 {"document":"2.3.P"}  29aa02ba77745811 {"document":"2.3.R"}  b4dc6b0ba6eef8e9 {"document":"2.3.S"}
 f2593dc20c2937c6 {"document":"2.4"}  c5c3d11581e04987 {"document":"2.5"}  74d3056b0e69cad7 {"document":"2.5.1"}
 979219718f04e8ba {"document":"2.5.2"}  a32e09f149e8a0ab {"document":"2.5.3"}  af185da915e6f50b {"document":"2.5.4"}
-fb039127fb58a342 {"document":"2.5.5"}  528d68a49f43a829 {"document":"2.5.6"}  6e19345bf473d778 {"document":"2.6"}
+fb039127fb58a342 {"document":"2.5.5"}  528d68a49f43a829 {"document":"2.5.6"}  dc1fa651cfa9aeb6 {"document":"2.6"}
 641da6b341c5886f {"document":"2.6.1"}  fd62a9de87bb6fed {"document":"2.6.2"}  fbbd0a76969d3459 {"document":"2.6.3"}
 a908663e04b07a7c {"document":"2.6.4"}  cc88e6265a133793 {"document":"2.6.5"}  46d8063bca81aa4a {"document":"2.6.6"}
 b3fcf7aecff12593 {"document":"2.6.7"}  bfae4c818f791136 {"document":"2.7"}  554f75ea14dcb4de {"document":"2.7.1"}
 bf55b7118d2203ea {"document":"2.7.2"}  b87f32b2e555bc51 {"document":"2.7.3"}  adcd03fd610bbf7e {"document":"2.7.4"}
-90c5a251ec745be5 {"document":"2.7.5"}  78059bec4e347313 {"document":"2.7.6"}  2db1d7043ad87387 {"document":"3"}
-e667893bc1efb633 {"document":"3.2"}  4d6a51fe57bf11be {"document":"3.2.A"}  8c00475a017a2828 {"document":"3.2.P"}
+90c5a251ec745be5 {"document":"2.7.5"}  78059bec4e347313 {"document":"2.7.6"}  d968e0dfd69c0025 {"document":"3"}
+5508a54c3241ad28 {"document":"3.2"}  4d6a51fe57bf11be {"document":"3.2.A"}  768bb186a39e709a {"document":"3.2.P"}
 f10ddeeede2cd042 {"document":"3.2.P.1"}  768df392ed92a438 {"document":"3.2.P.2"}  3a326fd360644751 {"document":"3.2.P.3"}
 0a04b396534bb259 {"document":"3.2.P.3.1"}  4d89c000ce9d6c2f {"document":"3.2.P.3.2"}  080b889d14c1e649 {"document":"3.2.P.3.3"}
 f448598ea431c0c9 {"document":"3.2.P.3.4"}  f909e46d17bff646 {"document":"3.2.P.3.5"}  a19ce6bd2fdc64d3 {"document":"3.2.P.4"}
 247b72352962aec8 {"document":"3.2.P.5"}  3dca6adb8409e2c2 {"document":"3.2.P.5.1"}  802e9ad08a57473d {"document":"3.2.P.5.2"}
 15dc73730bee21f4 {"document":"3.2.P.5.3"}  435e068edd83ecfd {"document":"3.2.P.5.4"}  acabe2b2db8af499 {"document":"3.2.P.5.5"}
 0fff94e22c6fa526 {"document":"3.2.P.5.6"}  6b460d092a932cf0 {"document":"3.2.P.6"}  b74727ab54a52621 {"document":"3.2.P.7"}
-81f6d8f436835c88 {"document":"3.2.P.8"}  8a1f5e4fe6b882d9 {"document":"3.2.R"}  1be2a6b75051f4e9 {"document":"3.2.S"}
+81f6d8f436835c88 {"document":"3.2.P.8"}  8a1f5e4fe6b882d9 {"document":"3.2.R"}  d3fe6824d42d2397 {"document":"3.2.S"}
 7913e3a9792e5c7e {"document":"3.2.S.1"}  9983a5c764c7c3ea {"document":"3.2.S.2"}  42afa7e5d87865d0 {"document":"3.2.S.2.1"}
 1ec0368e3d7a8e92 {"document":"3.2.S.2.2"}  7034242f517014f4 {"document":"3.2.S.2.3"}  d5ba0fa7638b857e {"document":"3.2.S.2.4"}
 75464beb57ea3781 {"document":"3.2.S.2.5"}  c5d5d7c40c7a4cef {"document":"3.2.S.2.6"}  cf84a4d3d8ba075e {"document":"3.2.S.3"}
@@ -232,20 +237,20 @@ f42168be678a9483 {"document":"m1.3.5.1"}  c93bc3959673cc0e {"document":"m1.9"}  
 f1f3c35a4086ba94 {"document":"m2.3.P"}  29aa02ba77745811 {"document":"m2.3.R"}  b4dc6b0ba6eef8e9 {"document":"m2.3.S"}
 f2593dc20c2937c6 {"document":"m2.4"}  c5c3d11581e04987 {"document":"m2.5"}  74d3056b0e69cad7 {"document":"m2.5.1"}
 979219718f04e8ba {"document":"m2.5.2"}  a32e09f149e8a0ab {"document":"m2.5.3"}  af185da915e6f50b {"document":"m2.5.4"}
-fb039127fb58a342 {"document":"m2.5.5"}  528d68a49f43a829 {"document":"m2.5.6"}  6e19345bf473d778 {"document":"m2.6"}
+fb039127fb58a342 {"document":"m2.5.5"}  528d68a49f43a829 {"document":"m2.5.6"}  dc1fa651cfa9aeb6 {"document":"m2.6"}
 641da6b341c5886f {"document":"m2.6.1"}  fd62a9de87bb6fed {"document":"m2.6.2"}  fbbd0a76969d3459 {"document":"m2.6.3"}
 a908663e04b07a7c {"document":"m2.6.4"}  cc88e6265a133793 {"document":"m2.6.5"}  46d8063bca81aa4a {"document":"m2.6.6"}
 b3fcf7aecff12593 {"document":"m2.6.7"}  bfae4c818f791136 {"document":"m2.7"}  554f75ea14dcb4de {"document":"m2.7.1"}
 bf55b7118d2203ea {"document":"m2.7.2"}  b87f32b2e555bc51 {"document":"m2.7.3"}  adcd03fd610bbf7e {"document":"m2.7.4"}
-90c5a251ec745be5 {"document":"m2.7.5"}  78059bec4e347313 {"document":"m2.7.6"}  2db1d7043ad87387 {"document":"m3"}
-e667893bc1efb633 {"document":"m3.2"}  4d6a51fe57bf11be {"document":"m3.2.A"}  8c00475a017a2828 {"document":"m3.2.P"}
+90c5a251ec745be5 {"document":"m2.7.5"}  78059bec4e347313 {"document":"m2.7.6"}  d968e0dfd69c0025 {"document":"m3"}
+5508a54c3241ad28 {"document":"m3.2"}  4d6a51fe57bf11be {"document":"m3.2.A"}  768bb186a39e709a {"document":"m3.2.P"}
 f10ddeeede2cd042 {"document":"m3.2.P.1"}  768df392ed92a438 {"document":"m3.2.P.2"}  3a326fd360644751 {"document":"m3.2.P.3"}
 0a04b396534bb259 {"document":"m3.2.P.3.1"}  4d89c000ce9d6c2f {"document":"m3.2.P.3.2"}  080b889d14c1e649 {"document":"m3.2.P.3.3"}
 f448598ea431c0c9 {"document":"m3.2.P.3.4"}  f909e46d17bff646 {"document":"m3.2.P.3.5"}  a19ce6bd2fdc64d3 {"document":"m3.2.P.4"}
 247b72352962aec8 {"document":"m3.2.P.5"}  3dca6adb8409e2c2 {"document":"m3.2.P.5.1"}  802e9ad08a57473d {"document":"m3.2.P.5.2"}
 15dc73730bee21f4 {"document":"m3.2.P.5.3"}  435e068edd83ecfd {"document":"m3.2.P.5.4"}  acabe2b2db8af499 {"document":"m3.2.P.5.5"}
 0fff94e22c6fa526 {"document":"m3.2.P.5.6"}  6b460d092a932cf0 {"document":"m3.2.P.6"}  b74727ab54a52621 {"document":"m3.2.P.7"}
-81f6d8f436835c88 {"document":"m3.2.P.8"}  8a1f5e4fe6b882d9 {"document":"m3.2.R"}  1be2a6b75051f4e9 {"document":"m3.2.S"}
+81f6d8f436835c88 {"document":"m3.2.P.8"}  8a1f5e4fe6b882d9 {"document":"m3.2.R"}  d3fe6824d42d2397 {"document":"m3.2.S"}
 7913e3a9792e5c7e {"document":"m3.2.S.1"}  9983a5c764c7c3ea {"document":"m3.2.S.2"}  42afa7e5d87865d0 {"document":"m3.2.S.2.1"}
 1ec0368e3d7a8e92 {"document":"m3.2.S.2.2"}  7034242f517014f4 {"document":"m3.2.S.2.3"}  d5ba0fa7638b857e {"document":"m3.2.S.2.4"}
 75464beb57ea3781 {"document":"m3.2.S.2.5"}  c5d5d7c40c7a4cef {"document":"m3.2.S.2.6"}  cf84a4d3d8ba075e {"document":"m3.2.S.3"}
@@ -315,11 +320,11 @@ cd94d42cc1d48e08 {"document":"5.3.1.99"}  d1c481c6a617cf97 {"document":"5.3.2.99
 71b33c210c74a17c {"document":"3.2.s.4"}  b87f32b2e555bc51 {"document":" 2.7.3 "}  f7c188c1f039aab4 {"document":"pre_ind_meeting"}
 f7c188c1f039aab4 {"document":"PRE_IND_MEETING"}  85a81d1dbe378983 {"document":"end_of_phase_2_meeting"}  85a81d1dbe378983 {"document":"END_OF_PHASE_2_MEETING"}
 2d7649a7c96cd48f {"document":"pre_nda_meeting"}  2d7649a7c96cd48f {"document":"PRE_NDA_MEETING"}  6ad9594815bef1a1 {"document":"pre_bla_meeting"}
-6ad9594815bef1a1 {"document":"PRE_BLA_MEETING"}  59876328aabc3a3c {"document":"ind_initial"}  59876328aabc3a3c {"document":"IND_INITIAL"}
-05d14b57e72c8420 {"document":"ind_protocol_amendment"}  05d14b57e72c8420 {"document":"IND_PROTOCOL_AMENDMENT"}  d493f5903aa46c0c {"document":"ind_information_amendment"}
+6ad9594815bef1a1 {"document":"PRE_BLA_MEETING"}  db6ec28d12a9029a {"document":"ind_initial"}  db6ec28d12a9029a {"document":"IND_INITIAL"}
+9b6e41b27a68cacc {"document":"ind_protocol_amendment"}  9b6e41b27a68cacc {"document":"IND_PROTOCOL_AMENDMENT"}  d493f5903aa46c0c {"document":"ind_information_amendment"}
 d493f5903aa46c0c {"document":"IND_INFORMATION_AMENDMENT"}  fd97f5fd4c09b3a5 {"document":"ind_cmc_amendment"}  fd97f5fd4c09b3a5 {"document":"IND_CMC_AMENDMENT"}
-101d3437c313c5b5 {"document":"ind_response_to_clinical_hold"}  101d3437c313c5b5 {"document":"IND_RESPONSE_TO_CLINICAL_HOLD"}  1c52f0d0d06c1025 {"document":"ind_safety_report"}
-1c52f0d0d06c1025 {"document":"IND_SAFETY_REPORT"}  751b699919cf785d {"document":"ind_annual_report"}  751b699919cf785d {"document":"IND_ANNUAL_REPORT"}
+101d3437c313c5b5 {"document":"ind_response_to_clinical_hold"}  101d3437c313c5b5 {"document":"IND_RESPONSE_TO_CLINICAL_HOLD"}  56e1c4d14b99d796 {"document":"ind_safety_report"}
+56e1c4d14b99d796 {"document":"IND_SAFETY_REPORT"}  751b699919cf785d {"document":"ind_annual_report"}  751b699919cf785d {"document":"IND_ANNUAL_REPORT"}
 0dbb6e1f372a036b {"document":"dsur"}  0dbb6e1f372a036b {"document":"DSUR"}  487d27b0833ecaad {"document":"nda_bla_annual_report"}
 487d27b0833ecaad {"document":"NDA_BLA_ANNUAL_REPORT"}  3fe9f88c24392cbd {"document":"nda"}  3fe9f88c24392cbd {"document":"NDA"}
 1fd87f7eb1e661f5 {"document":"bla"}  1fd87f7eb1e661f5 {"document":"BLA"}  a2aaa72efc1fbbb4 {"document":"nda_pas"}
@@ -381,6 +386,42 @@ f3cfbb2e7d6599e0 {"document":"smpc"}  dac1f91b5987f30e {"document":"II.6.1"}  6a
 697a765bb33b507b {"document":"Totally Fabricated Section 99"}  c63ab4b951507fa4 {"document":"clinical-study-report"}  1e72548c25606fe8 {"document":"ich-e3"}
 b36291f307ffae23 {"document":"m9"}  176c058cf3810b76 {"document":"csr","section":""}  b87f32b2e555bc51 {"document":"2.7.3","section":"12.2"}
 887533ba3fdd848b {"document":""}  887533ba3fdd848b {"document":42}  887533ba3fdd848b {}
+409d9f3b219d98f0 {"document":"3.2.P.2.1"}  88db3f53d2014d67 {"document":"3.2.P.2.1.1"}  84ddf9feb7b828cc {"document":"3.2.P.2.1.2"}
+94941c1bdab579a2 {"document":"3.2.P.2.2"}  0e77ca0987080d71 {"document":"3.2.P.2.2.1"}  849f182e1f51224d {"document":"3.2.P.2.2.2"}
+1a07a3be6eb7ed2d {"document":"3.2.P.2.2.3"}  d405bd7e4e2158a9 {"document":"3.2.P.2.3"}  360072e2350fdcab {"document":"3.2.P.2.4"}
+c25b2f87a8dc20df {"document":"3.2.P.2.5"}  21f14641359025cf {"document":"3.2.P.2.6"}  a6d79fed505eb217 {"document":"3.2.S.1.1"}
+938c08fe7cfdabb3 {"document":"3.2.S.1.2"}  60b8a40682ea2b29 {"document":"3.2.S.1.3"}  409d9f3b219d98f0 {"document":"m3.2.P.2.1"}
+88db3f53d2014d67 {"document":"m3.2.P.2.1.1"}  84ddf9feb7b828cc {"document":"m3.2.P.2.1.2"}  94941c1bdab579a2 {"document":"m3.2.P.2.2"}
+0e77ca0987080d71 {"document":"m3.2.P.2.2.1"}  849f182e1f51224d {"document":"m3.2.P.2.2.2"}  1a07a3be6eb7ed2d {"document":"m3.2.P.2.2.3"}
+d405bd7e4e2158a9 {"document":"m3.2.P.2.3"}  360072e2350fdcab {"document":"m3.2.P.2.4"}  c25b2f87a8dc20df {"document":"m3.2.P.2.5"}
+21f14641359025cf {"document":"m3.2.P.2.6"}  a6d79fed505eb217 {"document":"m3.2.S.1.1"}  938c08fe7cfdabb3 {"document":"m3.2.S.1.2"}
+60b8a40682ea2b29 {"document":"m3.2.S.1.3"}  e3dd9918f659ed80 {"document":"3.2.P.2.1.99"}  480d6f5aed9184bf {"document":"3.2.P.2.1.1.99"}
+eebf037b55223ee9 {"document":"3.2.P.2.1.2.99"}  001310d4d19b1212 {"document":"3.2.P.2.2.99"}  ade719ae70a9b6d4 {"document":"3.2.P.2.2.1.99"}
+c826abdfc4ea65fd {"document":"3.2.P.2.2.2.99"}  b6dc1d0560a80f2f {"document":"3.2.P.2.2.3.99"}  bca5e25b9f1882f4 {"document":"3.2.P.2.3.99"}
+e1d20ceac78d2ad4 {"document":"3.2.P.2.4.99"}  0025305eb13f2a4b {"document":"3.2.P.2.5.99"}  c4ef802111b77bed {"document":"3.2.P.2.6.99"}
+0f2b05c0528442e5 {"document":"3.2.S.1.1.99"}  387f3662b3a39c31 {"document":"3.2.S.1.2.99"}  cb2b762715eb6313 {"document":"3.2.S.1.3.99"}
+
+338fb72654728cb1 {"document":"2.6.2.1"}
+ee69589c3ac2b062 {"document":"2.6.2.2"}
+c6a8be3cade5ea23 {"document":"2.6.2.3"}
+e7d51105369ddd8b {"document":"2.6.2.4"}
+a4b06c1a219913ef {"document":"2.6.2.5"}
+cc3fffab698d16a5 {"document":"2.6.2.6"}
+f5600f9aea81b9c7 {"document":"2.6.2.7"}
+338fb72654728cb1 {"document":"m2.6.2.1"}
+ee69589c3ac2b062 {"document":"m2.6.2.2"}
+c6a8be3cade5ea23 {"document":"m2.6.2.3"}
+e7d51105369ddd8b {"document":"m2.6.2.4"}
+a4b06c1a219913ef {"document":"m2.6.2.5"}
+cc3fffab698d16a5 {"document":"m2.6.2.6"}
+f5600f9aea81b9c7 {"document":"m2.6.2.7"}
+94c05744c3f29c70 {"document":"2.6.2.1.99"}
+25a71ea4c8463952 {"document":"2.6.2.2.99"}
+508d5c442a66680e {"document":"2.6.2.3.99"}
+0ab2d19842272f17 {"document":"2.6.2.4.99"}
+1ce8834da9bc0958 {"document":"2.6.2.5.99"}
+c3569e0bebd0ad65 {"document":"2.6.2.6.99"}
+3db3c63cca1e373d {"document":"2.6.2.7.99"}
 `;
 
 const PINNED: Record<string, string> = Object.fromEntries(

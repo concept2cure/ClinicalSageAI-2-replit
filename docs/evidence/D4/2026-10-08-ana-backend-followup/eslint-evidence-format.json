@@ -1,0 +1,29 @@
+{
+  "change": "Omit only duplicate source fields from ESLint JSON; retain all diagnostics and counts. Source base and final code are pinned separately.",
+  "omitted_source_echoes": [
+    {
+      "evidence_file": "cancellation/eslint-production-before.json",
+      "source_file": "server/services/ana/AnaToolExecutor.ts",
+      "omitted_source_sha256": "0d54548c770d08d5fff8a16aca16c28902c1b57ab6bd964d5f036c1efc07ebe8",
+      "bytes": 1128614
+    },
+    {
+      "evidence_file": "cancellation/eslint-after.json",
+      "source_file": "server/services/ana/AnaToolExecutor.ts",
+      "omitted_source_sha256": "fb13cc9964b70a3d7bd30f79ff036a77c33b35d45f6e3bde20fbd91dcfae44ea",
+      "bytes": 1128818
+    },
+    {
+      "evidence_file": "gateway-queue/eslint-production-before.json",
+      "source_file": "server/services/ai-gateway/gateway.ts",
+      "omitted_source_sha256": "110e7da7bb4a0aa092b20fb6ffb64f1e91b7a7be4eb7f2b05af1aa1e87db8e35",
+      "bytes": 219878
+    },
+    {
+      "evidence_file": "gateway-queue/eslint-production-after.json",
+      "source_file": "server/services/ai-gateway/gateway.ts",
+      "omitted_source_sha256": "a26650b12092cf4ee7ad8ad37a25c629dd0a1422a5dbc5c3d9af99b28f86a9ad",
+      "bytes": 220093
+    }
+  ]
+}

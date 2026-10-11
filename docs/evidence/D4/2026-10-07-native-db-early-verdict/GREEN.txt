@@ -1,0 +1,27 @@
+✔ native verdict and its retained report precede the broad suite (1.130313ms)
+✔ both suites run when shared preparation and native checks pass (1.48131ms)
+✔ Provision a deploy-shaped database for the real-database tests fails the job while the independent broad suite still runs (0.387985ms)
+✔ Run real-database tests (unmocked pg, RLS_ENFORCE=on) fails the job while the independent broad suite still runs (0.492717ms)
+✔ Upload real-database test results fails the job while the independent broad suite still runs (0.20109ms)
+✔ shared preparation failure at actions/checkout@11d5960a326750d5838078e36cf38b85af677262 blocks both suites (0.387203ms)
+✔ shared preparation failure at Setup Node.js blocks both suites (0.409244ms)
+✔ shared preparation failure at Install dependencies blocks both suites (0.155319ms)
+✔ shared preparation failure at Install Postgres client blocks both suites (0.156468ms)
+✔ shared preparation failure at Apply GCC migrations blocks both suites (0.184612ms)
+✔ shared preparation failure at Smoke — apply RLS rollout migrations (0019/0020/0021) blocks both suites (0.232403ms)
+✔ a broad failure retains the earlier native verdict and fails the job (0.2466ms)
+✔ cancellation and missing or failed shared preparation cannot start the broad suite (0.44664ms)
+✔ native and broad failures remain blocking for build and release evidence (0.999675ms)
+✔ native and broad suites retain distinct databases and production RLS (0.284185ms)
+✔ both artifacts upload after failures with the existing pinned action and paths (0.212616ms)
+✔ Run real-database tests (unmocked pg, RLS_ENFORCE=on) propagates the actual shell failure status (9.861141ms)
+✔ Run integration tests propagates the actual shell failure status (5.051997ms)
+✔ a failed fresh install cannot execute the deploy migration (6.871638ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 355.654434

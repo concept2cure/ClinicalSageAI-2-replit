@@ -213,34 +213,35 @@ describe('mapWithConcurrency', () => {
 });
 
 describe('describeToolPlan', () => {
-  it('produces friendly labels for known tools, incorporating key args', () => {
+  // Labels come from each tool's register entry (ANA-SUMMARY S3,
+  // step-presentation.ts): the input is the preview, never part of the label.
+  it('produces friendly labels for known tools, in the doing form', () => {
     const steps = describeToolPlan([
       call('extract_document_structure', { text: '...' }),
       call('search_document', { query: 'indemnification' }),
       call('compare_document_versions', { old_text: 'a', new_text: 'b' }),
     ]);
     expect(steps.map(s => s.label)).toEqual([
-      'Analyzing the document structure',
-      'Searching the document for "indemnification"',
-      'Comparing the two document versions',
+      "Extracting the document's structure",
+      'Searching inside the document',
+      'Comparing two versions of the text',
     ]);
     expect(steps[0].tool).toBe('extract_document_structure');
   });
 
-  it('truncates long argument values in the label', () => {
+  it('never carries an argument value in the label', () => {
     const long = 'x'.repeat(200);
     const [step] = describeToolPlan([call('search_document', { query: long })]);
-    expect(step.label.length).toBeLessThan(120);
-    expect(step.label).toContain('…');
+    expect(step.label).toBe('Searching inside the document');
   });
 
-  it('falls back to a humanized name for unknown tools', () => {
+  it('reads "Running a step" for an unknown tool, never its name', () => {
     const [step] = describeToolPlan([call('some_new_tool', {})]);
-    expect(step.label).toBe('Some new tool');
+    expect(step.label).toBe('Running a step');
   });
 
   it('handles a missing query gracefully', () => {
     const [step] = describeToolPlan([call('search_literature', {})]);
-    expect(step.label).toBe('Searching the literature for it');
+    expect(step.label).toBe('Searching the literature');
   });
 });

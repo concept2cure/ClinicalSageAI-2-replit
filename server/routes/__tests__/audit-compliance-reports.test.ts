@@ -85,7 +85,7 @@ describe('GET /api/audit/reports — the catalog', () => {
     expect(res.body).toMatchObject({
       success: true,
       canRun: false,
-      readers: 'organisation owners, admins and managers, and platform administrators',
+      readers: 'organisation owners, admins, managers and approvers, and platform administrators',
     });
     expect(res.body.reports).toHaveLength(8);
     expect(res.body.reports.find((r: { id: string }) => r.id === 'audit-trail').endpoint).toBe('/api/audit/export/signed');

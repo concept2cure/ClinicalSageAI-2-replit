@@ -1,0 +1,15 @@
+server/routes/c2c/project-intake.ts | HEAD w/e: 0 0 | now w/e: 0 0
+client/src/concept2cure/v2/clinicalRegulatoryGraphFlag.ts | HEAD w/e: 0 0 | now w/e: 0 0
+client/src/concept2cure/v2/Shell.tsx | HEAD w/e: 9 0 | now w/e: 9 0
+client/src/concept2cure/v2/surfaces/Projects.tsx | HEAD w/e: 7 0 | now w/e: 7 0
+client/src/concept2cure/v2/surfaces/ProjectHome.tsx | HEAD w/e: 9 0 | now w/e: 9 0
+client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx | HEAD w/e: 5 0 | now w/e: 5 0
+client/src/concept2cure/v2/__tests__/projectHomeReadiness.test.tsx | HEAD w/e: 0 0 | now w/e: 0 0
+client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx | HEAD w/e: 0 0 | now w/e: 0 0
+client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx | HEAD w/e: 0 0 | now w/e: 0 0
+server/routes/c2c/__tests__/project-intake-code.test.ts | NEW | now w/e: 0 0
+client/src/concept2cure/v2/dossierReadiness.ts | NEW | now w/e: 0 0
+client/src/concept2cure/v2/__tests__/projectHomeWorkspaceGating.test.tsx | NEW | now w/e: 0 0
+client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx | NEW | now w/e: 0 0
+client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx | NEW | now w/e: 0 0
+client/src/concept2cure/v2/__tests__/submissionCenterProgramColumn.test.tsx | NEW | now w/e: 0 0

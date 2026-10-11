@@ -54,4 +54,11 @@ describe('buildUsRegionalEnvelope', () => {
   it('rejects a missing application number', () => {
     expect(() => buildUsRegionalEnvelope({ ...base, applicationNumber: '' })).toThrow(/ENVELOPE_INVALID/);
   });
+
+  // QA 2026-10-08 (j6): an envelope that names no sponsor was built with its
+  // <sponsor> block empty, silently. The applicant is required, as the number
+  // is: refused by name, never left out.
+  it.each(['', '   '])('rejects a missing sponsor name (%j) by name, rather than omitting <name>', (sponsorName) => {
+    expect(() => buildUsRegionalEnvelope({ ...base, sponsorName })).toThrow(/ENVELOPE_INVALID: sponsorName is required/);
+  });
 });

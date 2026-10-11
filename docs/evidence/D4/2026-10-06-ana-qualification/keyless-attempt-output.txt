@@ -1,0 +1,5 @@
+{"level":40,"time":"2026-10-06T17:24:34.218Z","pid":49,"hostname":"6bafce8f9cda","context":{},"msg":"[database] DATABASE_NEON_NEW_SECRET or DATABASE_URL not found, database features will be unavailable"}
+IA review: NOT_EXECUTED; 0/39 attributable turns; reviewer pending
+record: docs/evidence/D4/2026-10-06-ana-qualification/claude-opus-4-ia-review.json
+{"status":"NOT_EXECUTED","plannedTurns":39,"capturedTurns":0,"attributableTurns":0}
+{"level":20,"time":"2026-10-06T17:24:34.220Z","pid":49,"hostname":"6bafce8f9cda","context":{},"msg":"[ai-gateway] [AI Gateway] Initialized — providers: , strategy: task_based, deterministic: false"}

@@ -88,8 +88,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   useEffect(() => {
     if (!isBootstrapping && !isAuthenticated) {
-      // Redirect to login with return URL
-      const returnTo = encodeURIComponent(location);
+      // Redirect to login with return URL. The query is part of it: the shell
+      // URL names the open program (?program=, v2/shellProject.ts), and a
+      // signed-out deep link that lost it on the way through sign-in landed on
+      // "No project selected" (QA 2026-10-08, j1). `location` is the path only.
+      const returnTo = encodeURIComponent(location + window.location.search);
       setLocation(`/concept2cure/login?returnTo=${returnTo}`);
     }
   }, [isAuthenticated, isBootstrapping, location, setLocation]);

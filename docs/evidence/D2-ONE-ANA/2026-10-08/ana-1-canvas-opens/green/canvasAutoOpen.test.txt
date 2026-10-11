@@ -1,0 +1,14 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx > The canvas opens while AnA builds > a document named by the turn being written opens beside the conversation, with no click 184ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx > The canvas opens while AnA builds > a conversation reopened from history opens nothing by itself 32ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx > The canvas opens while AnA builds > at 1100px or narrower it is offered, not opened over the conversation 263ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx > The canvas opens while AnA builds > never takes the pane from a document the person has open 239ms
+ ✓ client/src/concept2cure/v2/__tests__/canvasAutoOpen.test.tsx > The canvas opens while AnA builds > closed by the person, it stays closed 196ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  01:06:36
+   Duration  3.68s (transform 1.50s, setup 158ms, import 1.97s, tests 919ms, environment 479ms)
+

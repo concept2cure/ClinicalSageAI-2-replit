@@ -1,0 +1,269 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered distinguishes a failed search from a verified dossier gap
+[AnA submission-chat] advanced RAG retrieval failed, returning empty: fixture retrieval unavailable
+
+stderr | server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap
+[AnA submission-chat-stream] advanced retrieval failed: fixture retrieval unavailable
+
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: Which intended use should this cover? 5ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps a buffered answer-only response out of the proposal store: I cannot verify efficacy without the study results. 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > preserves an explicit proposal and its scope 2ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > a clarification is not a rewrite proposal > keeps streamed questions in the answer channel without a proposal 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered permits clarification without inventing a rewrite or gap source 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming permits clarification without inventing a rewrite or gap source 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > buffered retains the ending of a long clarification answer and declares the omitted middle 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > streaming retains the ending of a long clarification answer and declares the omitted middle 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > submission prompt IA boundaries > keeps the same correction in the gateway conversation turns 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > preserves an explicitly emitted rewrite and persists its body in history 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > retains a long user correction in streaming model input 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > streamed follow-up and proposal controls > a bare text fallback is an answer, never an inferred proposal 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered distinguishes a failed search from a verified dossier gap 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming distinguishes a failed search from a verified dossier gap 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > buffered declares actually shortened evidence passages 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > retrieval uncertainty reaches the model > streaming declares actually shortened evidence passages 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > buffered retains the question and supplied answer before creating an explicit proposal 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > streaming retains the question and supplied answer before creating an explicit proposal 1ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > buffered keeps contradictory retrieved sources distinct from a missing passage 0ms
+ ✓ server/services/ana/__tests__/submission-chat-ia.test.ts > clarification round trips through real handlers > streaming keeps contradictory retrieved sources distinct from a missing passage 0ms
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered refuses a colleague thread before history, memory, or a model call 8ms
+   → promise resolved "{ threadId: 'thread-1', …(13) }" instead of rejecting
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming refuses a colleague thread before history, memory, or a model call 1ms
+   → expected [ { type: 'metadata', …(6) }, …(2) ] to deep equally contain ObjectContaining{…}
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered uses only the caller-resolved ID for context and writes 1ms
+   → expected 'thread-1' to be 'caller-thread' // Object.is equality
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming uses only the caller-resolved ID for context and writes 1ms
+   → expected "vi.fn()" to be called with arguments: [ 'thread-1', 3, 'ana-submission', 7 ]
+
+Number of calls: 0
+
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered fails closed when the caller identity is missing 1ms
+   → expected TypeError: input.onStream is not a functi… to match object { code: 'AUTH_REQUIRED' }
+ × server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming fails closed when the caller identity is missing 1ms
+   → expected [ { type: 'metadata', …(6) }, …(5) ] to deep equally contain ObjectContaining{…}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered refuses a colleague thread before history, memory, or a model call
+AssertionError: promise resolved "{ threadId: 'thread-1', …(13) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "answer": "not reached",
++   "artifactId": "ART-1",
++   "citations": [],
++   "confirmApply": null,
++   "conversation": {
++     "historyMessages": 0,
++     "priorCitations": 0,
++   },
++   "intent": "rewrite",
++   "latencyMs": 0,
++   "model": "fixture/fixture",
++   "projectId": 2,
++   "provider": "fixture",
++   "retrieval": {
++     "artifactsInScope": 1,
++     "chunksConsidered": 0,
++     "chunksRetrieved": 0,
++     "retrievalQuery": "Rewrite this section for Japan.",
++   },
++   "rewrite": null,
++   "threadId": "thread-1",
++   "usage": {
++     "completionTokens": 20,
++     "promptTokens": 30,
++     "totalTokens": 50,
++   },
+  }
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:176:72
+    174|     h.openThread.mockRejectedValue(Object.assign(new Error('fixture fo…
+    175|     reply('not reached');
+    176|     if (mode === 'buffered') await expect(handleSubmissionChat(request…
+       |                                                                        ^
+    177|     else {
+    178|       const events: StreamEvent[] = []; await handleSubmissionChatStre…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming refuses a colleague thread before history, memory, or a model call
+AssertionError: expected [ { type: 'metadata', …(6) }, …(2) ] to deep equally contain ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "code": "THREAD_FORBIDDEN",
+  "type": "error",
+}
+
++ Received:
+[
+  {
+    "artifactId": "ART-1",
+    "conversation": {
+      "historyMessages": 0,
+      "priorCitations": 0,
+    },
+    "intent": "rewrite",
+    "projectId": 2,
+    "retrieval": {
+      "artifactsInScope": 1,
+      "chunksRetrieved": 0,
+      "retrievalQuery": "Rewrite this section for Japan.",
+    },
+    "threadId": "thread-1",
+    "type": "metadata",
+  },
+  {
+    "citations": [],
+    "type": "citations",
+  },
+  {
+    "artifactId": "ART-1",
+    "latencyMs": 0,
+    "model": "fixture/fixture",
+    "projectId": 2,
+    "provider": "fixture",
+    "threadId": "thread-1",
+    "type": "done",
+    "usage": {
+      "completionTokens": 20,
+      "promptTokens": 30,
+      "totalTokens": 50,
+    },
+  },
+]
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:179:22
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered uses only the caller-resolved ID for context and writes
+AssertionError: expected 'thread-1' to be 'caller-thread' // Object.is equality
+
+Expected: "caller-thread"
+Received: "thread-1"
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:185:136
+    183|   it.each(['buffered', 'streaming'])('%s uses only the caller-resolved…
+    184|     h.openThread.mockResolvedValue('caller-thread');
+    185|     if (mode === 'buffered') { reply('Which population?'); const resul…
+       |                                                                                                                                        ^
+    186|     else { streamed('Which population?'); await handleSubmissionChatSt…
+    187|     expect(h.openThread).toHaveBeenCalledWith('thread-1', 3, 'ana-subm…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming uses only the caller-resolved ID for context and writes
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'thread-1', 3, 'ana-submission', 7 ]
+
+Number of calls: 0
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:187:26
+    185|     if (mode === 'buffered') { reply('Which population?'); const resul…
+    186|     else { streamed('Which population?'); await handleSubmissionChatSt…
+    187|     expect(h.openThread).toHaveBeenCalledWith('thread-1', 3, 'ana-subm…
+       |                          ^
+    188|     expect(h.readHistory).toHaveBeenCalledWith('caller-thread');
+    189|     expect(h.memory).toHaveBeenCalledWith(expect.objectContaining({ th…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > buffered fails closed when the caller identity is missing
+AssertionError: expected TypeError: input.onStream is not a functi… to match object { code: 'AUTH_REQUIRED' }
+
+- Expected
++ Received
+
+- {
+-   "code": "AUTH_REQUIRED",
++ TypeError {
++   "message": "input.onStream is not a function",
+  }
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:194:74
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/ana/__tests__/submission-chat-ia.test.ts > private clarification context belongs to the caller > streaming fails closed when the caller identity is missing
+AssertionError: expected [ { type: 'metadata', …(6) }, …(5) ] to deep equally contain ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "code": "AUTH_REQUIRED",
+  "type": "error",
+}
+
++ Received:
+[
+  {
+    "artifactId": "ART-1",
+    "conversation": {
+      "historyMessages": 0,
+      "priorCitations": 0,
+    },
+    "intent": "rewrite",
+    "projectId": 2,
+    "retrieval": {
+      "artifactsInScope": 1,
+      "chunksRetrieved": 0,
+      "retrievalQuery": "Rewrite this section for Japan.",
+    },
+    "threadId": "thread-1",
+    "type": "metadata",
+  },
+  {
+    "channel": "answer",
+    "content": "Which ",
+    "type": "delta",
+  },
+  {
+    "channel": "answer",
+    "content": "populat",
+    "type": "delta",
+  },
+  {
+    "channel": "answer",
+    "content": "ion?",
+    "type": "delta",
+  },
+  {
+    "citations": [],
+    "type": "citations",
+  },
+  {
+    "artifactId": "ART-1",
+    "latencyMs": 0,
+    "model": "fixture/fixture",
+    "projectId": 2,
+    "provider": "fixture",
+    "threadId": "thread-1",
+    "type": "done",
+    "usage": {
+      "completionTokens": 20,
+      "promptTokens": 30,
+      "totalTokens": 50,
+    },
+  },
+]
+
+ ❯ server/services/ana/__tests__/submission-chat-ia.test.ts:195:135
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 20 passed (26)
+   Start at  10:11:34
+   Duration  447ms (transform 147ms, setup 67ms, import 111ms, tests 35ms, environment 0ms)
+

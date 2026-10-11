@@ -1,0 +1,19 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 ci:launch-scope:selftest
+> node scripts/ci/check-launch-scope.selftest.mjs
+
+(node:19) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✅ selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS on the seeded violation
+selftest FAILED: the gate did not refuse a launch module missing from the 20260810 keep-list
+{
+  "ok": true,
+  "apps": 7,
+  "launchSurfaces": 30,
+  "launchModules": 13,
+  "filesChecked": 25,
+  "findings": []
+}

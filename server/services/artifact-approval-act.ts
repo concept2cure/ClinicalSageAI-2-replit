@@ -63,9 +63,11 @@ export type ReviewQuorumVerdict = { met: true } | { met: false; message: string 
 
 /**
  * P12 review quorum: when reviewers are assigned, every active reviewer of the
- * latest round must have completed and every decision in that round must be
- * 'approve'. Withdrawn assignments are excluded; a round whose assignments were
- * all withdrawn, or no assignments at all, has no quorum to enforce.
+ * latest round must have completed and have exactly one decision attributed
+ * to that assignment's reviewer, approving the current version. Withdrawn
+ * assignments and their decisions are excluded; a round whose assignments were
+ * all withdrawn, or no assignments at all, has no quorum to enforce. This
+ * policy is not scientific source qualification or evidence of source review.
  *
  * `artifactPk` is concept2cure_artifacts.id (the serial key the review tables
  * reference), not artifact_id. A read error propagates: the caller must not
@@ -85,17 +87,26 @@ export async function reviewQuorumVerdict(
   organizationId: number,
   currentVersion: number
 ): Promise<ReviewQuorumVerdict> {
+  // Invalid scope/version must not become an empty query and a clearance.
+  const validId = (value: number) => Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
+  if (![artifactPk, organizationId, currentVersion].every(validId)) {
+    return { met: false, message: 'Cannot approve: a valid artifact, organization and current version are required.' };
+  }
+
   const assignments = (
     await q.query(
-      `SELECT review_round, status FROM concept2cure_review_assignments
+      `SELECT id, reviewer_id, review_round, status FROM concept2cure_review_assignments
        WHERE artifact_id = $1 AND organization_id = $2
        ORDER BY review_round DESC`,
       [artifactPk, organizationId]
     )
-  ).rows as Array<{ review_round: number; status: string }>;
+  ).rows as Array<{ id: number; reviewer_id: number; review_round: number; status: string }>;
   if (assignments.length === 0) return { met: true };
 
   const latestRound = Number(assignments[0].review_round);
+  if (!validId(latestRound)) {
+    return { met: false, message: 'Cannot approve: the latest review round is invalid. Route this document for review again.' };
+  }
   const active = assignments.filter(
     a => Number(a.review_round) === latestRound && a.status !== 'withdrawn'
   );
@@ -109,13 +120,20 @@ export async function reviewQuorumVerdict(
     };
   }
 
-  const decisions = (
+  const recordedDecisions = (
     await q.query(
-      `SELECT decision, version_reviewed FROM concept2cure_review_decisions
+      `SELECT assignment_id, reviewer_id, decision, version_reviewed FROM concept2cure_review_decisions
        WHERE artifact_id = $1 AND review_round = $2 AND organization_id = $3`,
       [artifactPk, latestRound, organizationId]
     )
-  ).rows as Array<{ decision: string; version_reviewed: number | string | null }>;
+  ).rows as Array<{ assignment_id: number; reviewer_id: number; decision: string; version_reviewed: number | string | null }>;
+  // A withdrawn reviewer cannot veto the remaining reviewers, and their old
+  // approval cannot fill a missing active decision. Unknown assignments remain
+  // in the set below so corrupt/orphaned approvals fail rather than disappear.
+  const withdrawn = new Set(assignments
+    .filter(a => Number(a.review_round) === latestRound && a.status === 'withdrawn')
+    .map(a => Number(a.id)));
+  const decisions = recordedDecisions.filter(d => !withdrawn.has(Number(d.assignment_id)));
   const nonApprovals = decisions.filter(d => d.decision !== 'approve');
   if (nonApprovals.length > 0) {
     return {
@@ -125,6 +143,28 @@ export async function reviewQuorumVerdict(
         .join(', ')})`,
     };
   }
+  const incomplete: ReviewQuorumVerdict = {
+    met: false,
+    message: 'Cannot approve: each active reviewer must have exactly one recorded decision. Route this document for review again.',
+  };
+  const mismatched: ReviewQuorumVerdict = {
+    met: false,
+    message: 'Cannot approve: review decisions do not match their assigned reviewers. Route this document for review again.',
+  };
+  const byAssignment = new Map(active.map(a => [Number(a.id), a]));
+  if (byAssignment.size !== active.length || active.some(a => !validId(Number(a.id)) || !validId(Number(a.reviewer_id)))) {
+    return mismatched;
+  }
+  const decidedAssignments = new Set<number>();
+  for (const decision of decisions) {
+    const assignmentId = Number(decision.assignment_id);
+    const assignment = byAssignment.get(assignmentId);
+    if (!assignment || Number(decision.reviewer_id) !== Number(assignment.reviewer_id)) return mismatched;
+    if (decidedAssignments.has(assignmentId)) return incomplete;
+    decidedAssignments.add(assignmentId);
+  }
+  if (decidedAssignments.size !== active.length) return incomplete;
+
   const stale = decisions.filter(d => Number(d.version_reviewed) !== Number(currentVersion));
   if (stale.length > 0) {
     const seen = [...new Set(stale.map(d => String(d.version_reviewed)))].join(', ');
@@ -285,6 +325,11 @@ async function blockingContradictions(
       projectId,
       artifactId,
     );
+    // An absent, malformed or self-contradictory check is not a clearance.
+    if (typeof blocked !== 'boolean' || !Array.isArray(blockingFindings) || !Array.isArray(warningFindings) ||
+        blocked !== (blockingFindings.length > 0)) {
+      throw new Error('Contradiction check returned an invalid verdict.');
+    }
     if (!blocked) return null;
     return {
       httpStatus: 409,
@@ -301,13 +346,17 @@ async function blockingContradictions(
       },
     };
   } catch (contradictionError) {
-    // As the status route has always done: a check that could not run does
-    // not block (its table may not exist yet).
+    // Approval and release require a completed check. Missing infrastructure
+    // is unavailable, never permission to sign without assessing conflicts.
     console.warn(
-      'Contradiction check skipped:',
+      'Contradiction check unavailable:',
       contradictionError instanceof Error ? contradictionError.message : contradictionError,
     );
-    return null;
+    return {
+      httpStatus: 503,
+      code: 'CONTRADICTION_CHECK_UNAVAILABLE',
+      message: 'This document cannot be approved or locked because its conflicts could not be checked. Try again after the check is available.',
+    };
   }
 }
 

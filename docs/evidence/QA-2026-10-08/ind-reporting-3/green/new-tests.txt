@@ -1,0 +1,381 @@
+# Green: the same test files on this change (working tree), vitest.config.ts, RLS_ENFORCE=off.
+# Lines kept: each test result and the summary.
+
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > auth + RBAC > 401/403 unauthenticated or wrong role 36ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > GET / → 200 lists the supported form ids 54ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /FDA_1571/build → 200 returns a field map + missingRequired 16ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > form discovery + build > POST /nope/build → 400 for an unsupported form 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 ready for a complete, consistent IND form set 3ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 200 not ready when sponsor name diverges 3ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > cross-form QC > POST /qc → 400 without forms[] 2ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → 200 application/pdf with X-Form-* headers 87ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_356H/pdf → X-Form-Required-Blank names the required boxes still empty 1935ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /FDA_3674/pdf → the header is present and EMPTY when none is blank 109ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /nope/pdf → 400 for an unsupported form 5ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /1572/pdf-all → 200 returns base64 PDFs per investigator 868ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 returns one disclosure PDF per disclosing investigator 22ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > PDF rendering > POST /3455/pdf-all → 200 with an empty documents array when none disclose 5ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > 401 when unauthenticated 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 200 PDF from stored sponsor 91ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1572/pdf-from-records → 200 with investigator records 759ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > POST /1571/pdf-from-records → 404 for an unknown sponsor 8ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > pdf-from-records (DB-backed) > does not load another org's sponsor (tenant scoping → 404) 5ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 401 when unauthenticated 3ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 400 without a projectId (a governed artifact must associate with a project) 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 404 for a project in another org (never create an artifact under another tenant) 6ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > governed artifact (DB-backed) > 201 persists a governed form artifact (structured field map) the platform now knows exists 21ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists ONE governed artifact per investigator for 1572 22ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 persists one artifact per DISCLOSING investigator for 3455 (non-disclosing excluded) 11ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 201 with an empty artifacts array for 3455 when no investigator discloses (certify none on 3454) 6ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 400 for a form that is not per-investigator (use /:formId/artifact instead) 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > per-investigator governed artifacts (DB-backed) > 404 for a project in another org (never create per-investigator artifacts under another tenant) 5ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → the program record, what each form will produce, and nothing placed yet 54ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET / without a program still lists the forms and their plans 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET /?projectIdent → 404 for a program that is not this organization's 15ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > POST /FDA_1571/build fills sponsor, drug, indication and IND number from the record — none of them typed 13ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a stated value wins over the record, and a blank one does not erase it 11ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > the sponsor address, IND type and phase the panel states land where the 1571 build reads them; unstated, they stay missing 13ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > GET / carries the registry's IND type and phase options the panel offers 5ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the open program supplies the form facts > a build that NAMES an unresolvable program is refused, not answered from typed fields 5ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > PUT /program-facts records the sponsor address and IND type on the program, and the 1571 build reads them from the record 41ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > PUT /program-facts refuses an IND type outside the registry, an IND type on a program that is not an IND, an empty body, and another organisation's program — writing nothing 17ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the sponsor address and IND type are recorded on the program > a stated value in the build request still wins over the recorded one 12ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with its project record gets a governed artifact registered against that record 12ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > Save to dossier for an open program > a program with no project record is refused 409 PROGRAM_NOT_ANCHORED, and nothing is written 10ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > places the signed form as a Module 1 leaf pointing at the retained bytes 65ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > re-attaching a corrected signature replaces the leaf instead of filing the form twice 76ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > files the financial certification at its own catalogued section, not with the forms 41ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses a file that is not a PDF by its bytes, whatever it claims to be 7ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > refuses the BLANK official template — attaching it would file an unsigned form as a signed one 23ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not invent a sequence to file into 19ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > will not file into a program that has no submission record at all 9ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > never files into another organization's program 10ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the open program, and refuses an unsupported form 8ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > a sponsor's completed official form is filed into the sequence > requires the regulatory-author role 3ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > refuses an upload that names no sequence, and files nothing 18ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > files into the ORIGINAL 0000 when the person names it, although a newer 0001 exists 59ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > a form placed in two sequences is listed in both, and replacing is per sequence 130ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the person chooses the sequence a completed form is filed into > refuses a sequence of another submission, and a frozen one, before any bytes are stored 48ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > one verdict from one engine > a 1572 with no investigator recorded is a missing-investigator verdict, the same one the PDF reports 792ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > one verdict from one engine > with investigators recorded, the build is still one per investigator 4ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > an IND program is offered only the forms the registry says apply to an IND 9ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > an NDA program is offered 356h and not the IND application 12ms
+ ✓ server/routes/__tests__/ind-forms.contract.integration.test.ts > the listing is scoped to the program > a form that does not apply to the program is refused at filing, not placed 12ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > lists the supported forms from the engine 123ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > builds with only the entered metadata and renders the server missingRequired verdict 308ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > downloads the streamed FDA PDF and reports the honest render kind + coverage 133ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > surfaces the regulatory-author role gate honestly 9ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > saves a governed artifact to the open project’s dossier 120ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does not call a data-complete artifact "ready" when boxes are left on the form 45ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > says "ready" only when the data is complete AND the form leaves nothing 50ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > an absent sponsorMustComplete is "not reported", never "nothing left" 68ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a program with no project record: the 409 is reported as nothing saved, never as a save or an audit-logged build 60ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > a 200 with no artifact id is not reported as any kind of save 47ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does NOT save (or guess a project) when no project is open 61ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > names the official template and the boxes still left blank on it 44ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > counts a required box the project has no value for, which `unmapped` never names 45ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > says the server did not report, rather than implying a clean form 47ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > an EMPTY X-Form-Required-Blank is "assessed, none" and claims nothing 59ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — real FDA forms engine > does not claim the PDF arrived when the browser blocked the download 77ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > asks the engine for the open program and shows the recorded facts, not input boxes 49ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > states what each form will produce BEFORE anything is rendered, and who reviewed the asset 41ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > a reconstruction is never described as the official form 28ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > names the program on every build so the server fills from the record, and never echoes the record back 141ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > the phase and the IND type start on "Not stated — choose", offer the registry's options, and send nothing until chosen 123ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the program record fills the forms > with no program open it still works standalone and claims no record 44ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > files the completed form into the ORIGINAL 0000 the person chose, although a newer 0001 exists 126ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > sends nothing until a sequence is chosen, and sends the one chosen 206ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > is reachable and operable from the keyboard, and names the form it files 248ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > reports a refusal in the server’s own words and claims nothing was filed 75ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — filing the sponsor’s completed form > shows a form already filed in each sequence, with the digest of the bytes the sponsor signed 90ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanel.test.tsx > IndFormsPanel — the form is named once > reads "FDA 1571", not "FDA FDA_1571" — the engine ids are canonical and were pasted after another "FDA" 87ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > lists the project’s submission from the project-scoped read 146ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > an empty project says so, which is not the same as a failure 73ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > a failed read is a failure with a retry, and the retry reads again 602ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage lists the project’s submissions > keeps "Open Submission Center", which opens on this project 212ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > shows the server’s verdict, its blockers and its counts, from the readiness endpoint 174ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a cleared verdict is the server’s, and says so in words 100ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > a response with no gate is unanswered, never cleared 96ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the Submit stage shows the server’s dispatch verdict > no submission and no sequence are said in plain words 187ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > an IND project whose only submission is an MAA is not told it has no submission 61ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > a CER project (no application type is CER) names its submissions instead of denying them 79ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — the two Submit panels never contradict each other > a submission with no project recorded is not gated by name: no verdict, and the panels agree 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > states each gate the server cleared without assessing, in the server’s words 71ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > with no gate breakdown, says the external validator did not run 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeSubmitStage.test.tsx > Project home — a cleared verdict carries what the server did not assess > a cleared verdict whose validator ran says nothing it did not assess 106ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > a pack lists only the types an engine computes — no not-computed tile inside it 123ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > a pack button counts the reports it runs, not the ones no engine computes 24ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > engine-less types are listed once, as not computed in this release 26ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 1 — a type no engine computes > is said to be not computed when asked for, and nothing is run under its name 50ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 2 — a request about controlled documents > is sent to Audit & compliance reports and runs nothing 440ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 2 — a request about controlled documents > still runs the controlled substances ledger when that is what is asked for 57ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 3 — the program the report runs over > names the open program on the run, not a project id 36ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 3 — the program the report runs over > with no program open, asks which program, and opening one leads the canvas with it 48ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 5 — the catalog follows the program’s product type > offers a biologic program no 510(k) prompt, and runs no 510(k) report when asked 123ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx > 6 — the report names its scope > shows the program’s name, not "project — 11" 43ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > auth + RBAC gating > 401 when unauthenticated (no user) 46ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > auth + RBAC gating > 403 when the user lacks the regulatory-author role 6ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > auth + RBAC gating > admin role is allowed through 5ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /readiness → 200 with a verdict 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /readiness → 400 on a bad filingType 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /clock → 400 without receiptDate 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /clock → 200 with receiptDate 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/lifecycle-validate → 200 allows original first; blocks amendment-first 8ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/lifecycle-validate → 400 without required fields 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/history-audit → 200 valid history vs flagged amendment-first 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/history-audit → 400 without sequenceTypes 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /portfolio → 200 listing the seeded IND submission 16ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /portfolio/drift/csv → 200 text/csv attachment 18ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /submission/:id/overview → 400 on a non-numeric id 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /submission/:id/overview → 404 for a missing submission 5ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cover-letter/pdf → 200 application/pdf 60ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cover-letter/pdf → 400 without required fields 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr → 200 E2B(R3) elements + completeness 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr?format=xml → 200 application/xml 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr → 400 without an event 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message → 200 transmittable message + readiness 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message?format=xml → 200 application/xml 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message → 400 without gateway/senderId/messageNumber 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report, /classify, /pdf and the draft route → 400 naming each unstated field, never 500 13ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report accepts an onset stated as "unknown" and prints it; a blank onset is refused 5ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > with expectedness not recorded the verdict is NOT_DETERMINED, and file / draft refuse with that name (422), never NOT_REPORTABLE 7ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > with expectedness not recorded, a non-serious or not-suspected event is NOT_REPORTABLE on its stated facts 7ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing → 200 with rows + tabulation 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing?format=csv → 200 text/csv attachment 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing → 400 without events/period 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa → 200 with the LOA model + m1.4.1 leaf intent 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa → 400 without the required identifiers 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa/pdf → 200 application/pdf 18ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /right-of-reference → 200 with the m1.4.2 model 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /authorized-persons/pdf → 200 application/pdf 6ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cross-reference-register → 200 not ready when an LOA is missing 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cross-reference-register → 400 without references[] 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /envelope → 200 application/xml 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > API discovery > GET /openapi.json → 200 with a generated OpenAPI 3.1 spec 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file → 201 creates an amendment sequence 34ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file → 400 without a 4-digit sequenceNumber 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file with an ICSR → 201 also files a checksummed m5.3.5 leaf 40ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > GET /sequence/:id/manifest → 200 with the filed leaf 5ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /sequence/:id/dispatch-gate → 200 with a verdict 8ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /sequence/:id/dispatch-gate/snapshot → 201 then GET /snapshots → 200 14ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/cockpit → 200 with per-sequence gates 18ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/dashboard → 200 8ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/drift → 200 with a digest 17ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > Module 1 transmittal — the m1.1 Form 1571 leaf > POST /safety-report/file places the Module 1 transmittal pair, and says the 1571 has no document without a sponsor 51ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > Module 1 transmittal — the m1.1 Form 1571 leaf > POST /safety-report/file attaches the REAL filled Form 1571 to m1.1 when a sponsor is named 122ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > Module 1 transmittal — the m1.1 Form 1571 leaf > refuses to attach a Form 1571 that is missing required fields, naming them 75ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST /submission/:id/cross-references → 201 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST /submission/:id/cross-references → 400 on a bad file type 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > GET /submission/:id/cross-references → 200 includes the record 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > register is NOT ready while the LOA is not on file, then ready after PATCH 9ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/cross-references/:id/file-loa → 201 files the m1.4.1 leaf and authorizes it 33ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/file-loa → 400 without a 4-digit sequenceNumber 6ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/file-loa → 404 for an unknown cross-reference 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > does not leak another org's cross-references 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > PATCH unknown id → 404 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > DELETE /cross-references/:id → 204 then absent 5ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > POST /submission/:id/safety-reports → 201 drafts a tracked report 5ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > POST /safety-reports → 422 for a non-reportable event 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports → 200 lists the draft 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404 10ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports/overdue → 200 includes the unfiled past-deadline draft 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > the cockpit counts the overdue safety report from the register, whatever the body says 41ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > refuses to file a draft that is not the draft being filed 9ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > filing with draftId marks it filed and drops it from overdue 30ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > does not leak another org's safety reports 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > POST /submission/:id/annual-reports → 201 drafts a tracked report with a due date 5ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > refuses a report with no reporting period dates as 400 VALIDATION, not 500 and not 404 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > POST /annual-reports → 400 without indNumber/productName 2ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > GET /annual-reports → 200 lists the draft 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > GET /annual-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404 8ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > overdue with a far-future asOf includes it; filing then drops it 43ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > POST /submission/:id/amendments → 201 drafts a tracked amendment 7ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > POST /amendments → 400 without indNumber/changedDocuments 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > GET /amendments → 200 lists the draft 5ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > GET /amendments/:amendmentId → 200 roundtrips the draft; cross-org + unknown → 404 14ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > filing with draftId marks the amendment filed + links its sequence 29ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > with NO gateway configured, transmit → 503 (NOT transmitted) and the row stays prepared 24ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a simulated receipt handed back by the transport is never recorded as transmitted (503) 24ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a transport failure → 502 (NOT transmitted) and the row stays prepared 15ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > prepare → transmit (real gateway receipt) → acknowledge lifecycle (ready case) 24ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > rejects transmit when the ICSR is not transmit-ready (422 with the gaps); transport never called 14ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > an AR acknowledgment marks a TRANSMITTED report rejected with errors 22ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses to transmit a report that is no longer prepared (409): no second send of the same message 19ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a study report with no study registration number is prepared but not transmit-ready 11ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement for a report that was never transmitted (409), and the row is unchanged 15ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged" 19ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement that names a different message number (422) 19ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > 400 without gateway; 404 transmitting an unknown id 6ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > gates the anchored submission, not a newer same-named one of another project 107ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a same-named submission of another project is not this program’s: no submission 12ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — the program’s submission is the one anchored to it (LX-22) > a same-named submission with no recorded project is NOT matched by name: nothing is gated, and the screen says how to anchor it 15ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > gates the open program's sequence, not the organisation's first submission 17ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program whose submission has no sequence yet is an honest empty state — never another program's gate 7ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program with no submission at all says so, naming the program 6ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > with no program open the gate is not run against anything 5ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a failed discovery is an error, not an empty state 9ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — briefing-book / LOA / right-of-reference cards > briefing-book POSTs the real route with the checklist identity and renders the server model + gaps 383ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — briefing-book / LOA / right-of-reference cards > LOA carries the checklist sponsor as the authorized party and renders the model + gap verdict 242ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — briefing-book / LOA / right-of-reference cards > right-of-reference carries the checklist sponsor and renders the m1.4.2 model 167ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — briefing-book / LOA / right-of-reference cards > a failed assemble renders the server’s words — never success 198ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — regulated choices on the File cards start unstated (P-21) > the meeting type and the referenced file types start on "Not stated — choose" and send nothing until chosen 213ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: assemble renders the classification, then File into sequence creates the ectd_sequences row 802ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: no regulated select is pre-selected, and an untouched one is never sent 235ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: a refusal thrown by the request layer reads as one sentence, ending once 158ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: the 4-digit sequence number is required, never guessed 152ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: a NOT_REPORTABLE classification removes the filing affordance with the server’s reason 224ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > a failed filing reports the server’s words — never a fabricated sequence 245ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > annual-report: assemble renders the 312.33 model + gaps, then files as an annual sequence 312ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > amendment: the plan renders the server leaves + warnings, then files as an amendment sequence 252ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > amendment: category and change kind start unstated, are never sent untouched, and the planner's refusal is shown 146ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: an onset stated as unknown goes up as "unknown", never as a blank 213ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > safety-report: a NOT_DETERMINED verdict reads "not determined: expectedness not assessed" and offers nothing to file 207ms
+ ✓ client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx > IndLifecycle — lifecycle deliverables file into a REAL eCTD sequence > with no submissionId on the checklist, filing is honestly unavailable — nothing is guessed 129ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > with a program open, the recorded sponsor address and IND type are shown, and a build sends neither — the record is the source 524ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > "Save to program" records the sponsor address and IND type on the program, then re-reads the record 184ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a refused save says why, in the server's words, as an error 110ms
+ ✓ client/src/concept2cure/v2/__tests__/indFormsPanelProgramFacts.test.tsx > IndFormsPanel — the sponsor address and IND type are recorded on the program > a program that is not an IND has no IND type to record 91ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a type no engine computes > is refused 422 and nothing is computed or written 26ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > runs from its own provider, not the readiness orchestrator 46ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > is refused for a program whose product type it does not apply to 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > resolves the program through the strict anchor resolver and runs over its project 15ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > refuses a program with no project record: 409, nothing computed 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > refuses a scope id that is not the program’s project 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the run names its scope > stores the project’s name for the renderer, not only its row id 12ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a run computed with no blocker > renders below final until it is finalized 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > its confidence is the document's measured provenance completeness, not a count of the records present 198ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > a completeness that was not measured is no confidence at all, so the run stays below final 20ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > 7-day: unexpected LIFE-THREATENING suspected adverse reaction 3ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > 7-day: unexpected FATAL suspected adverse reaction 1ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > 15-day: serious + unexpected + suspected but NOT fatal/life-threatening (hospitalization) 1ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > 15-day: medically important serious unexpected suspected reaction 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > NOT reportable: EXPECTED reaction (listed in the IB), even if serious/fatal 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > NOT reportable: NOT suspected (no reasonable possibility — causality unrelated) 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > NOT reportable: unlikely causality is not a suspected adverse reaction 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > NOT reportable: NON-serious AE (eventType AE), even if unexpected + suspected 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > classifyIndSafetyReport — 21 CFR 312.32 > NOT reportable: a recorded "expected" determination is reported as such 1ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20: with expectedness not recorded there is no verdict > expectedness not recorded: the verdict is NOT_DETERMINED — never NOT_REPORTABLE — with no clock and no inferred expectedness 1ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20: with expectedness not recorded there is no verdict > expectedness not recorded on a serious, suspected event is NOT_DETERMINED — expectedness decides it 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > a NOT-SUSPECTED event with expectedness unrecorded is not reportable, on the stated causality 1ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > a NON-SERIOUS event with expectedness unrecorded is not reportable, on the stated seriousness 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > non-serious AND not suspected names both stated facts 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > the assembled report of such an event has no report to file and reads "not individually reportable", with expectedness "not recorded" 1ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > a recorded expectedness on a non-serious or not-suspected event keeps its existing verdict 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > P-20 follow-up: "not determined" only where expectedness decides the outcome > a not-determined verdict produces no report to file and says so in the document 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > suspectedness / expectedness derivation > definite/probable/possible are suspected; unlikely/unrelated are not 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > suspectedness / expectedness derivation > expectedness wording: "unexpected"/"not listed" => unexpected; else expected 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > document model + amendment intent > builds a narrative section tree covering the required sections 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > document model + amendment intent > amendment intent: type "amendment", m1.12.4 leaf, lifecycleOp new 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > document model + amendment intent > amendment intent adds an m5.3.5 leaf when an ICSR backs the case 1ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > document model + amendment intent > amendment intent is null for NOT_REPORTABLE events 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > document model + amendment intent > assembleIndSafetyReport wires classification + document + intent together 1ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > refuses to classify or assemble when the determinations and dates were not stated, naming each one 1ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > a single unstated field is named on its own, and nothing is defaulted in its place 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > a value outside the enum is refused, not passed through 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an onset date stated explicitly as unknown is accepted and printed as unknown 2ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > a blank onset date is refused and the refusal says it may be stated as unknown 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an onset stated both as a date and as unknown is refused, not resolved for the person 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an unparseable date is refused (400), not thrown from toISOString (500) 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > a non-serious AE needs no seriousness criterion, and the report does not invent one 2ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an absent patient id or country is an explicit gap, never the word "undefined" 0ms
+ ✓ server/services/ind-lifecycle/__tests__/ind-safety-report-service.test.ts > nothing regulated is assumed — the engine refuses, naming the fields > an unrecorded expectedness is reported as not recorded, never as "expected" 1ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > sponsorToInfo > maps fields and composes a one-line address + signatory → authorized rep 2ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > agentToInfo > maps the US agent name/address/phone 1ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > investigatorToInfo > builds the full name with credentials and joins sub-investigators 2ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > assembleFormMetadata > assembles metadata from records and lets overrides win 1ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > assembleFormMetadata > omits empty collections when no records are supplied 0ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > maps an IND program: sponsor from the organisation, drug from product_name, IND number from application_number 1ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > an NDA / BLA / ANDA program carries its number as the application number — never as an IND number 1ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > a program type the forms have no box for (MAA, 510K, CER) contributes no number and no application type 0ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > omits what the record does not hold — no empty strings that would read as present 1ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > an unnumbered IND program yields no IND number — an original submission has none yet 1ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > layers under caller overrides through assembleFormMetadata — a typed serial number wins, a typed blank does not erase the record 0ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > maps the recorded sponsor address and IND type to where the 1571 build reads them 0ms
+ ✓ server/services/ind-forms/__tests__/form-context-assembler.test.ts > programToFormMetadata — the program record is the source of the form facts > a blank address or IND type is absent, and an IND type is never carried for a program that is not an IND 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > treats unset / misspelled NODE_ENV as production (strict) 2ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > resolveDispatchEnvironment — fails toward production > only relaxes for a recognized non-production value 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > blocks when zero Shadow Review runs have completed 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > evaluateShadowPresenceGate — never-reviewed is not clean > clears once at least one completed run exists 2ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > names every composed gate by its corpus rule and carries its own blockers 3ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > the gates, taken together, are exactly the composed verdict — nothing shown that does not block, nothing blocking unshown 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > the dispatch verdict, gate by gate, as named rules > attaches each finding's rule, and says so when a code has none 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > P11-28b: an otherwise-clear sequence awaiting only its own signature is open to dispatch-on-signing, not to dispatch now 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a structural error blocks all three — signing never clears a content defect 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a missing Shadow Review blocks dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an external-validator failure blocks dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an orchestrator run awaiting its signer blocks dispatch-on-signing — the sequence signature would never be read 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an invalid signature blocks all three, including freeze — tamper evidence is never signed over 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > an undetermined lookup blocks dispatch-now and dispatch-on-signing 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a signature already on record: all three clear, and nothing is "resolved by signing" 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > composeStepVerdicts — each step verdict carries every gate it must > a type that requires no signature: all three clear on an otherwise-clear sequence 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > says why the external gate cleared without a report 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > carries the sentence on the external gate view only when it cleared 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28) > a gate that blocks keeps its blockers and no not-assessed note 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original FDA IND is held to the record's IND requirements, as errors 3ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > an original NDA is held to the marketing requirements, not the IND's 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is not held to the application's Module 1 list (no "1.20 missing" on an amendment) 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing IND sequence is held to its 1.1 form (Form FDA 1571), as an error, and to nothing else 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a continuing marketing-application sequence is still not held to a Module 1 list 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > readinessOptionsForSequence — required sections decided per sequence > a region or kind the record does not model keeps the profile list as warnings, never errors 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > is null for any stage but Validated 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > holds when the validation finds no error, and says whether a verdict was recorded 0ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > does not hold when the validation now finds errors, and says what to do 1ms
+ ✓ server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts > validatedStageOf — does a recorded Validated stage still hold? > an undetermined count does not hold — unknown is not zero 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > is attributed characters over the text, as a whole percent 2ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > is floored, so a document is never rounded up past the finalize threshold 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > a document with no text is not measured: null, never 0 or 100 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > measureProvenanceCompleteness — the share of the text with a recorded origin > carries the partition it was measured from 2ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > is the dossier's measured provenance completeness 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > a record-rich document with little traced text is not raised by its records 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > a thin document whose every character has a recorded origin is 100 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > is null — nothing — when the completeness was not measured 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > lineageTraceConfidence — the measure, not a count of the records present > is null when the decision record could not be read: the trace is not measured in full 2ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > the rendered trace states its provenance completeness and what it was measured from > prints the figure, the characters behind it and their partition, linked to the span lineage 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > the rendered trace states its provenance completeness and what it was measured from > says it was not measured rather than printing a number 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > the rendered trace states its provenance completeness and what it was measured from > lists the untraced text as a gap 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > the data-lineage table names what its figure is > prints the recorded confidence beside its basis, never a bare "Confidence" 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > the data-lineage table names what its figure is > says the basis was not recorded when the writer recorded none 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > dossierToRenderedReport > produces a document-scoped RenderedReport for the evidence-trace type 0ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > dossierToRenderedReport > includes the expected sections 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > dossierToRenderedReport > emits AI-disclosed narrative for AnA reasoning 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > dossierToRenderedReport > carries provenance atoms on the decision and data-lineage tables 1ms
+ ✓ server/services/report-os/__tests__/lineage-trace-report.test.ts > governed seal integration (the whole point) > the EXISTING seal captures real provenance atoms — not the empty set 2ms
+ ✓ server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts > buildDocumentLineageDossier — provenance completeness > measures the share of the current text whose origin the span lineage records 1040ms
+ ✓ server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts > buildDocumentLineageDossier — provenance completeness > a document with no span lineage measures 0 — the text is there and none of it is traced 1ms
+ ✓ server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts > buildDocumentLineageDossier — provenance completeness > a lineage read that fails is not measured (null), never a zero 1ms
+ ✓ server/services/ana/__tests__/lineage-dossier-provenance-completeness.test.ts > buildDocumentLineageDossier — provenance completeness > a document with no text is measured as having nothing to measure 1ms
+ ✓ server/services/ana/__tests__/lineage-dossier-decisions-unavailable.test.ts > summarizeDecisions > carries the reason the read failed, alongside the zeros it did not measure 1ms
+ ✓ server/services/ana/__tests__/lineage-dossier-decisions-unavailable.test.ts > summarizeDecisions > reports a genuinely empty read as measured 0ms
+ ✓ server/services/ana/__tests__/lineage-dossier-decisions-unavailable.test.ts > the exported XML > states the read failed instead of printing seven zeros 3ms
+ ✓ server/services/ana/__tests__/lineage-dossier-decisions-unavailable.test.ts > the exported XML > still prints the rollup when the read succeeded and is genuinely empty 1ms
+ ✓ server/services/ana/__tests__/lineage-dossier-decisions-unavailable.test.ts > lineageTraceConfidence > is no figure at all on a dossier whose decision read failed 0ms
+ ✓ server/services/ana/__tests__/lineage-dossier-decisions-unavailable.test.ts > lineageTraceConfidence > is the measured completeness for a dossier whose decisions were genuinely read 0ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > does not count a document referenced only by a delete toward unfinalized 151ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > keys every unresolved entry exactly as the ref it came from 11ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it 186ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing 137ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly 108ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section 73ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal 61ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf 73ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section 84ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section 129ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > neither stages nor reports as unresolved a document referenced only by a delete 12ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees 131ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees 124ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees 274ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees 157ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped 121ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each finding is a named corpus rule > shows the rule’s title and id, its regions, its corpus severity and where it is enforced 191ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each finding is a named corpus rule > a finding whose code no rule names says so, instead of passing for a rule 27ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > renders every gate the server composed, the release signature included, with its own blockers 24ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > no gate is a bare pass or fail: each states its outcome in words, beside its rule 28ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNamedRules.test.tsx > DispatchReadiness — each gate is the rule it enforces, in words > never says dispatch is permitted while the server blocks it, and shows no percentage 22ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > says "Not assessed" and why when no validator ran, never "Satisfied" 106ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > does not call the validator clean in the cleared verdict when it never ran 22ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessNotAssessed.test.tsx > the external validator gate > still says "Satisfied" when the validator ran and its report was clean 20ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > does NOT clear an unreviewed sequence the server blocks 55ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > clears only when the SERVER says every composed gate is clear 13ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > treats a response carrying no gate as UNANSWERED, never as cleared 13ms
+ Test Files  19 passed (19)
+      Tests  376 passed (376)

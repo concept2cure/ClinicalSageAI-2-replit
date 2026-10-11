@@ -41,3 +41,22 @@ export function readEnvFiles(root) {
 export function resolveEnv(root, processEnv = process.env) {
   return { ...readEnvFiles(root), ...processEnv };
 }
+
+/** Evidence belongs to the actual run date unless an explicit historical run is selected. */
+export function resolveRunDate(value = process.env.VALIDATION_RUN_DATE, now = new Date()) {
+  const date = value ?? now.toISOString().slice(0, 10);
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+      !Number.isFinite(parsed.valueOf()) || parsed.toISOString().slice(0, 10) !== date) {
+    throw new Error('VALIDATION_RUN_DATE must be a calendar-valid YYYY-MM-DD date.');
+  }
+  return date;
+}
+
+/** Presence evidence uses effective configuration and never carries credential values. */
+export function configurationPresence(required, env) {
+  const present = key => typeof env[key] === 'string' && env[key].trim().length > 0;
+  const providerConfigured = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'KIMI_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_API_KEY']
+    .some(key => present(key) && !/^sk-\.\.\./.test(env[key]));
+  return { set: required.filter(present), unset: required.filter(key => !present(key)), providerConfigured };
+}

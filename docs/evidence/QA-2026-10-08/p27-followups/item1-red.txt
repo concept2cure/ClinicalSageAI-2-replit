@@ -1,0 +1,18 @@
+ × server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > takes no application number or applicant from its input, and asks for the project instead 11ms
+ × server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > writes the recorded application number and applicant, never the model-supplied ones 1234ms
+ × server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses by name when the project records no application number, and builds nothing 21ms
+ × server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses by name when the organisation records no usable applicant name 24ms
+ × server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses a call that names no project, even with model-supplied identity, and reads nothing 33ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > takes no application number or applicant from its input, and asks for the project instead
+AssertionError: expected { …(10) } to not have property "application_id"
+ FAIL  server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > writes the recorded application number and applicant, never the model-supplied ones
+AssertionError: expected "vi.fn()" to be called with arguments: [ Anything, 1, …(1) ]
+ FAIL  server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses by name when the project records no application number, and builds nothing
+AssertionError: expected true to be undefined
+ FAIL  server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses by name when the organisation records no usable applicant name
+AssertionError: expected undefined to be 'PACKAGE_IDENTITY_MISSING' // Object.is equality
+ FAIL  server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts > package_ectd_for_region — identity from the record (P-27) > refuses a call that names no project, even with model-supplied identity, and reads nothing
+AssertionError: expected undefined to be 'PACKAGE_IDENTITY_MISSING' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  5 failed (5)

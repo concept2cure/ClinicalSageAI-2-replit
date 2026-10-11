@@ -8,12 +8,12 @@
      Document authoring editor + CMC/IND/Dossier surface styles
      ═════════════════════════════════════════════════════════════════ */
 
-  /* Editor mode: suppress the global AnA assist column so the editor's own 3 columns get full width. */
+  /* Editor mode: the shell is nav | page (the AnA column went with the rail, ana-2a). */
   .shell[data-editor='true'] {
-    grid-template-columns: var(--rail) 1fr 0 !important;
+    grid-template-columns: var(--rail) 1fr !important;
   }
   .shell[data-editor='true'][data-collapsed='true'] {
-    grid-template-columns: var(--rail-collapsed) 1fr 0 !important;
+    grid-template-columns: var(--rail-collapsed) 1fr !important;
   }
   .shell[data-editor='true'] .page {
     padding: 0;
@@ -221,9 +221,11 @@
     --ed-crumbs-floor: 180px;
     --ed-doc-h-gap: 12px;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--ed-doc-h-gap);
+    row-gap: 8px;
     padding: 10px 18px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
@@ -260,14 +262,29 @@
     color: var(--text-400);
     flex-shrink: 0;
   }
+  /* The header (.ed-doc-h wraps) has two parts (QA 2026-10-08, walk 2, j5):
+     the trail and the governed acts, then the panels and tools. Nothing in it
+     is clipped.
+     Until then one nowrap scroller held twenty-three controls, and Save,
+     E-sign and Place into filing sat past its edge at 1440px (x 2362–3269 in
+     a box ending at 1076) and at 390px. */
+  .ed-doc-commit {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+  }
   .ed-doc-actions {
     display: flex;
     align-items: center;
     gap: 6px;
-    flex: 0 0 auto;
-    flex-wrap: nowrap;
-    max-width: calc(100% - var(--ed-crumbs-floor) - var(--ed-doc-h-gap));
-    overflow-x: auto;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    max-width: 100%;
   }
   .ed-doc-scroll {
     flex: 1;
@@ -567,6 +584,15 @@
   .ed-comments-h {
     font-size: 12px;
     font-weight: 600;
+  }
+  /* AnA's work card in the editor's pane: a share of the pane, scrolled on
+     its own, so the conversation under it keeps room for the answer (QA
+     2026-10-08, walk 2, j5: at full height only the chips were visible). */
+  .ed-comments > .ed-ana-work {
+    flex: 0 1 auto;
+    max-height: 38%;
+    overflow-y: auto;
+    padding: 0;
   }
   .ed-comments-h-row {
     display: flex;
@@ -1628,6 +1654,312 @@
     font-size: 12px;
     color: var(--text-300);
   }
+  /* A document AnA built while another is open beside the conversation, or
+     at a width with no room beside it: offered here, never forced open
+     (docs/design/ONE_ANA_ONE_CANVAS.md, slice 1). Empty, it takes no space. */
+  .ct-ready-doc:empty {
+    display: none;
+  }
+  .ct-ready-doc {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto 8px;
+    width: 100%;
+    max-width: 760px;
+    padding: 6px 8px 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-100);
+    font-size: 13px;
+    color: var(--text-200);
+  }
+  .ct-ready-doc-t {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Where a handed-over question was asked (ONE_ANA_ONE_CANVAS.md, slice 8). */
+  .ct-ask-origin {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto 8px;
+    width: 100%;
+    max-width: 760px;
+    font-size: 13px;
+    color: var(--text-200);
+  }
+  .ct-ask-origin-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px 2px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+  .ct-ready-doc-x {
+    border: 0;
+    background: none;
+    color: var(--text-300);
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 6px;
+    cursor: pointer;
+  }
+  /* ── The canvas's Documents list (ONE_ANA_ONE_CANVAS.md §4.3) ──
+     The list state of the right-hand column, portalled into
+     `.ct-canvas-pane` like the editor. It scrolls inside itself. */
+  .ct-canvas-pane > .cdl {
+    flex: 1;
+    min-height: 0;
+  }
+  .cdl {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 12px);
+    background: var(--bg-000);
+    padding: 14px 16px 16px;
+  }
+  .cdl-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .cdl-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-100);
+  }
+  .cdl-title:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .cdl-scope {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .cdl-scope-btn {
+    border: 0;
+    background: none;
+    padding: 5px 10px;
+    font-size: 12.5px;
+    color: var(--text-200);
+    cursor: pointer;
+  }
+  .cdl-scope-btn + .cdl-scope-btn {
+    border-left: 1px solid var(--border);
+  }
+  .cdl-scope-btn[aria-pressed='true'] {
+    background: var(--accent-000);
+    color: var(--accent-200);
+    font-weight: 600;
+  }
+  .cdl-close {
+    margin-left: auto;
+    border: 0;
+    background: none;
+    color: var(--text-300);
+    padding: 4px 6px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: inline-flex;
+  }
+  .cdl-close:hover {
+    background: var(--bg-100);
+    color: var(--text-100);
+  }
+  .cdl-sub {
+    margin: 6px 0 10px;
+    font-size: 12.5px;
+    color: var(--text-300);
+  }
+  .cdl-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .cdl-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+  }
+  .cdl-row-main {
+    flex: 1 1 220px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .cdl-row-t {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-100);
+    overflow-wrap: anywhere;
+  }
+  .cdl-row-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    font-size: 12px;
+    color: var(--text-300);
+  }
+  /* The status in words; colour only repeats what the word says. */
+  .cdl-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-100);
+    color: var(--text-200);
+    font-weight: 600;
+  }
+  .cdl-pill[data-status='IN_REVIEW'] {
+    border-color: var(--warning);
+    color: var(--text-100);
+  }
+  .cdl-pill[data-status='APPROVED'],
+  .cdl-pill[data-status='FROZEN'] {
+    border-color: var(--success);
+    color: var(--text-100);
+  }
+  .cdl-row-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .cdl-note,
+  .cdl-empty {
+    margin: 4px 0 8px;
+    font-size: 12.5px;
+    color: var(--text-200);
+  }
+  .cdl-note[data-tone='err'] {
+    color: var(--error);
+  }
+  /* A document the list opened, while its record is read. */
+  .cdl-reading {
+    padding: 12px 0;
+  }
+  /* The status pill in an open document's bar, beside its title. */
+  .dcv-bar .cdl-pill {
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+  /* ── The Download menu (editor/DownloadMenu.tsx, §4.5) ──
+     A working copy, marked as one, and the controlled export, offered only
+     for a sealed document. Never wider than the screen.
+     The menu is NOT laid out inside its button's box: the editor's toolbar
+     (`.ed-doc-actions`, overflow-x:auto) is a scroll box on both axes and cut
+     an absolutely placed menu off at its own height, so no item could be seen.
+     It opens in the top layer (a manual popover) where the browser has one,
+     fixed either way, placed from its button by menuPlacement.ts (through
+     DownloadMenu.tsx's `placeMenu`). `inset`, `margin` and `color` undo the
+     browser's own popover box. */
+  .dlm {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .dlm-menu {
+    position: fixed;
+    inset: auto;
+    top: 0;
+    left: 0;
+    margin: 0;
+    z-index: 130;
+    width: max-content;
+    min-width: 240px;
+    max-width: min(320px, calc(100vw - 32px));
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-000);
+    color: var(--text-100);
+    box-shadow: 0 8px 24px color-mix(in oklab, var(--black) 14%, transparent);
+  }
+  .dlm-group + .dlm-group {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+  }
+  .dlm-sec {
+    padding: 6px 8px 2px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-300);
+  }
+  .dlm-reason {
+    display: block;
+    padding: 0 8px 4px;
+    font-size: 12px;
+    color: var(--text-200);
+  }
+  .dlm-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    width: 100%;
+    border: 0;
+    background: none;
+    text-align: left;
+    padding: 7px 8px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+  .dlm-item:hover,
+  .dlm-item:focus-visible {
+    background: var(--bg-100);
+  }
+  .dlm-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .dlm-item[aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+  .dlm-item[aria-disabled='true'] .dlm-item-t {
+    color: var(--text-300);
+  }
+  .dlm-item-t {
+    font-size: 13px;
+    color: var(--text-100);
+  }
+  .dlm-item-d {
+    font-size: 12px;
+    color: var(--text-300);
+  }
+  .dlm-err {
+    flex-basis: 100%;
+    font-size: 12px;
+    color: var(--error);
+  }
   @media (max-width: 1100px) {
     .ct-main[data-canvas-open] > .ct-conv {
       display: none;
@@ -1701,6 +2033,13 @@
       flex: 0 0 auto;
       max-height: 38%;
     }
+    /* The Summary sheet replaces the stacked work dock here (ANA-SUMMARY S4):
+       a third region at 38% of 844px was a strip too short to read a turn in.
+       The header chip and each turn's Summary button open the sheet
+       (TurnSummarySheet); a drafted artifact list, when there is one, stays. */
+    .ct-side-work {
+      display: none;
+    }
     .ct-side-work,
     .ct-artifacts {
       width: 100%;
@@ -1772,17 +2111,22 @@
       /* The keyboard hint is for a keyboard. There is not one here. */
       display: none;
     }
-    .dcv-workbench > .ed,
-    .dcv-workbench > .ed[data-comments='true'] {
+    /* One column at phone width, wherever the editor is mounted. Scoped to
+       the canvas only, the Authoring surface kept its 220px outline beside
+       the page, and the page column was 114px wide at 390px (QA 2026-10-08,
+       walk 2, j5). */
+    .ed,
+    .ed[data-comments='true'],
+    .ed[data-no-comments] {
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: auto minmax(0, 1fr);
     }
-    .dcv-workbench > .ed > .ed-tree {
+    .ed > .ed-tree {
       max-height: 180px;
       border-right: 0;
       border-bottom: 1px solid var(--border);
     }
-    .dcv-workbench > .ed[data-comments='true'] > .ed-comments {
+    .ed[data-comments='true'] > .ed-comments {
       width: 100%;
     }
     /* ── The editor's own chrome at phone width ──
@@ -1791,14 +2135,23 @@
        inside the canvas at 390px because that is the state this change was
        asked to prove, and they hold wherever `.ed` is mounted.
 
-       The header's action row stays the horizontal scroller it is on the
-       desktop. Wrapping it was tried and measured: eighteen controls became a
-       ten-row header 470px tall, which pushed the document off the screen and
-       left the rail overlaying the rows below it. A scroller keeps the
-       document where it is, and every control in it is still reached by Tab. */
+       The header's panel and tool row is a horizontal scroller here. Wrapping
+       it was tried and measured: eighteen controls became a ten-row header
+       470px tall, which pushed the document off the screen and left the rail
+       overlaying the rows below it. A scroller keeps the document where it
+       is, and every control in it is still reached by Tab. The governed acts
+       (.ed-doc-commit) are not in it: they wrap above it and stay on screen
+       (QA 2026-10-08, walk 2, j5). */
     .ed-doc-h {
       --ed-crumbs-floor: 0px;
       padding: 8px 12px;
+    }
+    .ed-doc-actions {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+    .ed-doc-commit {
+      justify-content: flex-start;
     }
     .ed-doc-actions .btn,
     .ed-doc-h .btn,

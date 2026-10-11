@@ -1,0 +1,23 @@
+RUNNER FAILURE: no timing observation executed.
+Command: node_modules/.bin/tsx /workspace/scratch/c2099bdce0e4/remote-downstream-performance.mts
+Exit code: 1. The CLI could not open its local IPC pipe.
+node:net:2145
+      const error = new UVExceptionWithHostPort(rval, 'listen', address, port);
+                    ^
+
+Error: listen EPERM: operation not permitted /tmp/tsx-0/6.pipe
+    at Server.setupListenHandle [as _listen2] (node:net:2145:21)
+    at listenInCluster (node:net:2224:12)
+    at Server.listen (node:net:2361:5)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/tsx/dist/cli.mjs:53:31537
+    at new Promise (<anonymous>)
+    at createIpcServer (file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/tsx/dist/cli.mjs:53:31515)
+    at async file:///workspace/scratch/bd36ee581acd/concept2cure/node_modules/tsx/dist/cli.mjs:55:459 {
+  code: 'EPERM',
+  errno: -1,
+  syscall: 'listen',
+  address: '/tmp/tsx-0/6.pipe',
+  port: -1
+}
+
+Node.js v24.19.0

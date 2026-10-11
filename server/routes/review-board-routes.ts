@@ -46,6 +46,7 @@ import { Router, Request, Response } from 'express';
 
 import { requestPgClient, MissingRequestDbContextError } from '../db/requestDb';
 import { buildAuthoringReviewBoard, type ReviewScope } from '../services/review/authoring-review-board';
+import { readVaultReviewQueue } from '../services/review/vault-review-queue';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('review-board-routes');
@@ -140,7 +141,15 @@ export default function createReviewBoardRoutes(): Router {
         limit,
         itemId,
       });
-      return res.json({ success: true, data: board });
+      // Vault versions in review (QA 2026-10-08, walk 2, j3 (b)): Send for
+      // review on a Vault version assigns nobody, so it was in no queue. Listed
+      // beside the Authoring rows with who may sign each. A failed read is null
+      // (said as unread on the board), never an empty list.
+      const vaultReviews = await readVaultReviewQueue({ sql, orgId, userId, scope, programId, limit }).catch((err) => {
+        logger.warn('vault review queue unavailable', { err: err instanceof Error ? err.message : String(err) });
+        return null;
+      });
+      return res.json({ success: true, data: { ...board, vaultReviews } });
     } catch (error: any) {
       if (error instanceof MissingRequestDbContextError) {
         return res.status(500).json({ success: false, error: 'REQUEST_DB_CONTEXT_REQUIRED' });

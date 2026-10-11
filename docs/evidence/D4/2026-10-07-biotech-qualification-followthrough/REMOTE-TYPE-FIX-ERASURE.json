@@ -1,0 +1,40 @@
+{
+  "scope": "Two fixture annotation edits; esbuild type erasure is not semantic TypeScript proof",
+  "baseline": "bd886f5d3a766ba35179f98ecb053f61420f69f6",
+  "published": "d46df5e1c406b0e8347385bcc0963dc02fd3e513",
+  "node": "v24.19.0",
+  "esbuildVersion": "0.28.1",
+  "transformOptions": {
+    "loader": "ts",
+    "target": "es2022",
+    "format": "esm",
+    "sourcemap": false,
+    "legalComments": "none",
+    "minify": false
+  },
+  "files": [
+    {
+      "file": "server/services/ana/__tests__/derived-spreadsheet-sql.test.ts",
+      "originalPublishedAndBaselineSourceIdentical": true,
+      "originalSourceSha256": "b16f6eb7bce0a4fd02ec95347b18fccbb8e926f1cec97311ee7650983690afee",
+      "editedSourceSha256": "841d199d9adc0fb5c16efffa0e76e084bade1cc27b8d91f6c4bbf3c1da0017fa",
+      "sourceChanged": true,
+      "originalEmittedJsSha256": "3df37812a2cc57af0529e3712d33abeb7bb82e5b0efac05f585fd72c03277001",
+      "editedEmittedJsSha256": "3df37812a2cc57af0529e3712d33abeb7bb82e5b0efac05f585fd72c03277001",
+      "emittedJsIdentical": true,
+      "emittedJsBytes": 7963
+    },
+    {
+      "file": "server/services/document-data-disposition/__tests__/recorded-lineage.pglite.integration.test.ts",
+      "originalPublishedAndBaselineSourceIdentical": true,
+      "originalSourceSha256": "be9152e34c0af05b2de4c491d62c4690c52c3ed0ce5a16a8c9694bef87d48731",
+      "editedSourceSha256": "e6c0f3139020dac16b1cabfe99b14f315ae748bf0fd436db62461f8d5ccf4598",
+      "sourceChanged": true,
+      "originalEmittedJsSha256": "ab9ddf6cdab8a2f7bf2661f5a0673bbad33c0c5984bfff47b05a1da328c46146",
+      "editedEmittedJsSha256": "ab9ddf6cdab8a2f7bf2661f5a0673bbad33c0c5984bfff47b05a1da328c46146",
+      "emittedJsIdentical": true,
+      "emittedJsBytes": 11136
+    }
+  ],
+  "success": true
+}

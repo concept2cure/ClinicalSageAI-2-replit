@@ -1,0 +1,8 @@
+# real PostgreSQL 16 with pgvector, RLS_ENFORCE=on as app_service, migrated twice with 20261008c: every dbtest touching the Data Room, its sources, adopt, upload, the Vault read, chunks and passages
+ Test Files  38 passed (38)
+      Tests  303 passed (303)
+
+# deploy-migrate.mjs, twice, on the database above:
+✅ Schema migration complete — safe to roll services.
+✅ Schema migration complete — safe to roll services.
+# after: cre_evidence_sources has extracted_text, char_count, page_count, text_extracted_at; index idx_cre_sources_client_fts exists.

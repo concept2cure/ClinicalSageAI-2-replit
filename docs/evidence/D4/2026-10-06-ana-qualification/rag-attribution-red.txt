@@ -1,0 +1,122 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+ ✓ server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > control: a fully attributable, complete record can meet an approved test copy 3ms
+ × server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > legacy records without judge/plan attribution are incomplete, not newly qualified 7ms
+   → expected 'PASS' to be 'INCOMPLETE' // Object.is equality
+ × server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > does not trust a true judgeVerified flag when the served judge version is wrong 1ms
+   → expected 'PASS' to be 'INCOMPLETE' // Object.is equality
+ × server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > rejects a judge that actually used the generator even when requested aliases differ 1ms
+   → expected 'PASS' to be 'INCOMPLETE' // Object.is equality
+ × server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > rejects the wrong actual generator provider 1ms
+   → expected 'PASS' to be 'INCOMPLETE' // Object.is equality
+ × server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > does not let a missing planned hard case disappear from the record 1ms
+   → expected 'PASS' to be 'INCOMPLETE' // Object.is equality
+ × server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > an answered negative control that fabricated unsupported information is a failed control 1ms
+   → expected 'PASS' to be 'FAIL' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > legacy records without judge/plan attribution are incomplete, not newly qualified
+AssertionError: expected 'PASS' to be 'INCOMPLETE' // Object.is equality
+
+Expected: "INCOMPLETE"
+Received: "PASS"
+
+ ❯ server/eval/pq/__tests__/pq-rag-attribution.test.ts:31:32
+     29|     delete (r as { attribution?: unknown }).attribution;
+     30|     delete (r as { plannedItemIds?: unknown }).plannedItemIds;
+     31|     expect(verdict(r).verdict).toBe('INCOMPLETE');
+       |                                ^
+     32|   });
+     33|   it('does not trust a true judgeVerified flag when the served judge v…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > does not trust a true judgeVerified flag when the served judge version is wrong
+AssertionError: expected 'PASS' to be 'INCOMPLETE' // Object.is equality
+
+Expected: "INCOMPLETE"
+Received: "PASS"
+
+ ❯ server/eval/pq/__tests__/pq-rag-attribution.test.ts:35:32
+     33|   it('does not trust a true judgeVerified flag when the served judge v…
+     34|     const r = record(); r.items[0].judgeServedModel = 'different-judge…
+     35|     expect(verdict(r).verdict).toBe('INCOMPLETE');
+       |                                ^
+     36|   });
+     37|   it('rejects a judge that actually used the generator even when reque…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > rejects a judge that actually used the generator even when requested aliases differ
+AssertionError: expected 'PASS' to be 'INCOMPLETE' // Object.is equality
+
+Expected: "INCOMPLETE"
+Received: "PASS"
+
+ ❯ server/eval/pq/__tests__/pq-rag-attribution.test.ts:41:32
+     39|     r.attribution.judge.pinnedVersion = 'generator-pin';
+     40|     r.items[0].judgeServedModel = 'generator-pin';
+     41|     expect(verdict(r).verdict).toBe('INCOMPLETE');
+       |                                ^
+     42|   });
+     43|   it('rejects the wrong actual generator provider', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > rejects the wrong actual generator provider
+AssertionError: expected 'PASS' to be 'INCOMPLETE' // Object.is equality
+
+Expected: "INCOMPLETE"
+Received: "PASS"
+
+ ❯ server/eval/pq/__tests__/pq-rag-attribution.test.ts:45:32
+     43|   it('rejects the wrong actual generator provider', () => {
+     44|     const r = record(); r.items[0].servedProvider = 'openai';
+     45|     expect(verdict(r).verdict).toBe('INCOMPLETE');
+       |                                ^
+     46|   });
+     47|   it('does not let a missing planned hard case disappear from the reco…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > does not let a missing planned hard case disappear from the record
+AssertionError: expected 'PASS' to be 'INCOMPLETE' // Object.is equality
+
+Expected: "INCOMPLETE"
+Received: "PASS"
+
+ ❯ server/eval/pq/__tests__/pq-rag-attribution.test.ts:49:32
+     47|   it('does not let a missing planned hard case disappear from the reco…
+     48|     const r = record(); r.plannedItemIds.push('q2-hard-case');
+     49|     expect(verdict(r).verdict).toBe('INCOMPLETE');
+       |                                ^
+     50|   });
+     51|   it('an answered negative control that fabricated unsupported informa…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/eval/pq/__tests__/pq-rag-attribution.test.ts > RAG PQ checks actual serving attribution and complete case coverage > an answered negative control that fabricated unsupported information is a failed control
+AssertionError: expected 'PASS' to be 'FAIL' // Object.is equality
+
+Expected: "FAIL"
+Received: "PASS"
+
+ ❯ server/eval/pq/__tests__/pq-rag-attribution.test.ts:56:32
+     54|     r.items.push({ ...r.items[0], itemId: 'negative', negativeControl:…
+     55|       faithfulness: null as unknown as number, negativeControlPassed: …
+     56|     expect(verdict(r).verdict).toBe('FAIL');
+       |                                ^
+     57|   });
+     58| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  13:10:57
+   Duration  371ms (transform 81ms, setup 73ms, import 37ms, tests 17ms, environment 0ms)
+

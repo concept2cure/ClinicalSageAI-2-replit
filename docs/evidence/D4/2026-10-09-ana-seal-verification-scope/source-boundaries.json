@@ -1,0 +1,6 @@
+{
+  "release_base": "b9a87ab1704b5a59e1293070748b3e99c940d5c1",
+  "route_outside_raw_verification_field_forwarding_byte_identical": true,
+  "service_outside_verification_DTO_guard_and_deferred_pool_byte_identical": true,
+  "client_shared_and_persistence_SQL_unchanged": true
+}

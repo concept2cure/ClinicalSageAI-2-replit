@@ -1,0 +1,25 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/bd36ee581acd/concept2cure
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > scopes every artifact read to the caller organization
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > issues no artifact read at all without an organization
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > still returns the workflow definition when the org is absent
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus is tenant-scoped > returns null for a submission type with no workflow, scoped or not
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus marks a step complete only on evidence > with no project records, marks no step complete and no step it cannot track as done
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > getWorkflowStatus marks a step complete only on evidence > computes progress over tracked steps only
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > enrichment reuses the real workflow snapshot > issues the two tenant-scoped workflow SELECTs once for a /workflow turn
+ ↓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > enrichment reuses the real workflow snapshot > still issues no workflow artifact SELECT without a tenant
+ ✓ server/services/ana-ri/__tests__/workflow-status-tenancy.test.ts > captures original workflow overlap baseline outputs 4ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 8 skipped (9)
+   Start at  22:58:05
+   Duration  5.50s (transform 3.76s, setup 74ms, import 5.03s, tests 6ms, environment 0ms)
+
+JSON report written to /workspace/scratch/bd36ee581acd/concept2cure/docs/evidence/D4/2026-10-09-ana-workflow-read-overlap/baseline-capture.json

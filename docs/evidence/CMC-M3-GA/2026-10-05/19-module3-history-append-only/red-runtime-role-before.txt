@@ -1,0 +1,16 @@
+== As app_service (runtime role), RLS on, tenant 1 — BEGIN … ROLLBACK, nothing kept
+BEGIN
+ set_config |              set_config              | set_config 
+------------+--------------------------------------+------------
+ 1          | 4e971444-566f-41d0-81ee-9f97ed85aca7 | admin
+(1 row)
+
+-- rewrite a signed section snapshot
+UPDATE 1
+-- delete a signed section snapshot
+DELETE 1
+-- rewrite who did a provenance event
+UPDATE 1
+-- delete a provenance event
+DELETE 1
+ROLLBACK

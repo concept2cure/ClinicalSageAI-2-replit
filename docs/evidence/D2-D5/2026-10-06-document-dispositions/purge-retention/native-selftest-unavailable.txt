@@ -1,0 +1,24 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> concept2cure-riai@1.0.0 ci:purge-coverage:selftest
+> node scripts/ci/check-purge-coverage.selftest.mjs
+
+node:net:2145
+      const error = new UVExceptionWithHostPort(rval, 'listen', address, port);
+                    ^
+
+Error: listen EPERM: operation not permitted /tmp/pcs-FokhiI/.s.PGSQL.5432
+    at Server.setupListenHandle [as _listen2] (node:net:2145:21)
+    at listenInCluster (node:net:2224:12)
+    at Server.listen (node:net:2361:5)
+    at BASE_DDL (file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/check-purge-coverage.selftest.mjs:190:10)
+    at new Promise (<anonymous>)
+    at file:///workspace/scratch/bd36ee581acd/concept2cure/scripts/ci/check-purge-coverage.selftest.mjs:188:7 {
+  code: 'EPERM',
+  errno: -1,
+  syscall: 'listen',
+  address: '/tmp/pcs-FokhiI/.s.PGSQL.5432',
+  port: -1
+}
+
+Node.js v24.19.0

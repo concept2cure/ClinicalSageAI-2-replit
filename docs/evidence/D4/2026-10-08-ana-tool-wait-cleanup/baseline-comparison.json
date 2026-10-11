@@ -1,0 +1,23 @@
+{
+  "broader_process_exit": 1,
+  "broader_tests": {
+    "passed": 262,
+    "failed": 1,
+    "total": 263,
+    "files": 20
+  },
+  "new_regressions": {
+    "passed": 16,
+    "failed": 0,
+    "files": 3
+  },
+  "unchanged_existing_test_blob": "5b201cc62d514d872873994ba4513ea47a6f07d6",
+  "same_failure_on_unmodified_baseline": true,
+  "failures": [
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts",
+      "name": "a follow-up keeps the tools its conversation used (TP-RL-3) a step the person declined is not carried, and a first turn is offered what it was"
+    }
+  ],
+  "qualification_interpretation": "No newly failing test. One pre-existing failure retained, not skipped or weakened. Actual exit 1 is preserved in qualification-verdict.json. Full unchanged publication gate must independently pass."
+}

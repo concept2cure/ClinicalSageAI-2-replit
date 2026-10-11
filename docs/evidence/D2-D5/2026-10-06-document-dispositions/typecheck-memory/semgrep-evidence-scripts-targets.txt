@@ -1,0 +1,2 @@
+docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/c2c-ts-prewarm.cjs
+docs/evidence/D2-D5/2026-10-06-document-dispositions/typecheck-memory/seed-batches.cjs

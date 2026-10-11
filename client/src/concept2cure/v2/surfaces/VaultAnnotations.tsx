@@ -153,7 +153,8 @@ function useActorId(given: number | null | undefined): number | null {
   return user?.id && /^\d+$/.test(user.id) ? Number(user.id) : null;
 }
 
-function useAnnotations(projectId: string, documentId: string) {
+/** The list is read on mount and again whenever `refreshKey` changes (the parent bumps it after a change). */
+function useAnnotations(projectId: string, documentId: string, refreshKey: number | undefined) {
   const [data, setData] = useState<AnnotationsShape | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
   const load = useCallback(async () => {
@@ -167,8 +168,8 @@ function useAnnotations(projectId: string, documentId: string) {
       setReadError(said(e));
     }
   }, [projectId, documentId]);
-  useEffect(() => { void load(); }, [load]);
-  return { data, readError, load };
+  useEffect(() => { void load(); }, [load, refreshKey]);
+  return { data, readError };
 }
 
 interface Ctx { projectId: string; actorId: number | null; currentId: string | null; family: OpenByVersion[]; onDone: (text: string) => void }
@@ -524,21 +525,23 @@ export interface VaultAnnotationsProps {
   projectId: string;
   /** The version the panel is opened on; a new annotation is posted on it. */
   documentId: string;
-  /** Called after the server recorded a change. */
+  /** Called after the server recorded a change. The parent re-reads and bumps `refreshKey`; this panel is not remounted. */
   onChanged: () => void;
+  /** Changing it reads the list again. The Vault passes its re-read counter, so one change is one read. */
+  refreshKey?: number;
   /** The signed-in user's id; read from the session when not given. */
   actorId?: number | null;
 }
 
-export function VaultAnnotations({ projectId, documentId, onChanged, actorId }: VaultAnnotationsProps) {
+export function VaultAnnotations({ projectId, documentId, onChanged, refreshKey, actorId }: VaultAnnotationsProps) {
   const me = useActorId(actorId);
-  const { data, readError, load } = useAnnotations(projectId, documentId);
+  const { data, readError } = useAnnotations(projectId, documentId, refreshKey);
   const [adding, setAdding] = useState(false);
   const [done, setDone] = useState<string | null>(null);
+  // No read here: the parent's re-read bumps `refreshKey`, and that is the one read after a change.
   const changed = (text: string) => {
     setDone(text);
     setAdding(false);
-    void load();
     onChanged();
   };
   const ctx: Ctx = {

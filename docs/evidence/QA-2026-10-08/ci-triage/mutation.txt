@@ -1,0 +1,39 @@
+# Mutation runs: HEAD e79cca4d9 export + this change's tests; one product mutation at a time (git archive copy, not the shared tree)
+
+## M1 carriedToolsFrom carries every step, including declined/errored ones (server/services/ana/tool-trace.ts)
+mutation applied: 1
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > a step the person declined is not carried, and a first turn is offered what it was 10ms
+   → expected [ 'list_platform_commands', …(3) ] to not include 'list_cmc_registers'
+      Tests  1 failed | 12 passed (13)
+
+## M2 stream.ts never carries the thread's tools (carriedTools stays [])
+mutation applied: 1
+ × server/routes/ana-ri/__tests__/stream-tool-carry-over.test.ts > a follow-up keeps the tools its conversation used (TP-RL-3) > the tool the previous turn ran is offered on the first call and on every round after it 15ms
+   → expected [ 'list_platform_commands', …(2) ] to include 'list_cmc_registers'
+      Tests  1 failed | 12 passed (13)
+
+## M3 useAnaChat never confirms a steer receipt (recordSteerReceipt always returns early)
+mutation applied: 1
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-progress.test.ts > the progress record over a real stream > holds a steer as pending from acceptance until the server confirms it landed 92ms
+   → expected [ 'Focus on the safety endpoints' ] to deeply equal []
+      Tests  1 failed | 5 passed (6)
+
+## M4 ind-forms: a program with no anchor answered 200 governed:false again (the removed branch's status)
+mutation applied: 1
+ × tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > refuses 409 PROGRAM_NOT_ANCHORED for a program with no project record — nothing inserted, no "unplaced" audit row 9ms
+   → expected "vi.fn()" to be called with arguments: [ 409 ]
+ × tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > a program whose anchor lookup answers "none" is refused, not saved unplaced 2ms
+   → expected "vi.fn()" to be called with arguments: [ 409 ]
+ × tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > the refusal claims nothing when the audit store rejects — no audited:true, no write 3ms
+   → expected "vi.fn()" to be called with arguments: [ 409 ]
+ × tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > the refusal claims nothing when the audit store resolves unpersisted — no audited:true, no write 2ms
+   → expected "vi.fn()" to be called with arguments: [ 409 ]
+ Test Files  1 failed (1)
+      Tests  4 failed | 6 passed (10)
+
+## M5 ind-forms: the anchor lookup is not strict (a failed lookup reads as 'no project record')
+mutation applied: 1
+ × tests/routes/ind-forms-artifact-ident.test.ts > POST /:formId/artifact — program-spine ident (anchored, or refused) > an anchor lookup that cannot complete is a 500 — never read as "no project record", never a save 12ms
+   → expected "vi.fn()" to be called with arguments: [ 500 ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)

@@ -1,0 +1,17 @@
+# head-signoff: --config vitest.config.ts client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx
+# exit 1
+ × client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > NO_PENDING_APPROVAL, confirmed by the poll: the line, and the dialog closes 219ms
+ × client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > STALE_APPROVAL, confirmed by the poll (the run waits on another step): the same 43ms
+ × client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > a refusal the poll does not confirm keeps today’s error, and the dialog 51ms
+ × client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > checked before the signing step: an approval already decided is never submitted 41ms
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > NO_PENDING_APPROVAL, confirmed by the poll: the line, and the dialog closes
+Error: It looks like undefined was passed instead of a matcher. Did you do something like getByText(undefined)?
+ FAIL  client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > STALE_APPROVAL, confirmed by the poll (the run waits on another step): the same
+Error: It looks like undefined was passed instead of a matcher. Did you do something like getByText(undefined)?
+ FAIL  client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > a refusal the poll does not confirm keeps today’s error, and the dialog
+Error: It looks like undefined was passed instead of a matcher. Did you do something like getByText(undefined)?
+ FAIL  client/src/concept2cure/components/ana/__tests__/governedSignoffDecidedElsewhere.test.tsx > 8. an approval already decided on another device > checked before the signing step: an approval already decided is never submitted
+Error: It looks like undefined was passed instead of a matcher. Did you do something like getByText(undefined)?

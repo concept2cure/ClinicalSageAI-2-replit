@@ -1,0 +1,76 @@
+AUTO-FILED · CONFIRM
+v1.0
+NOT SENT FOR REVIEW
+Vorelinib-DS-Specification-J3
+Module 3 · quality - Emily Watson - updated 1h ago
+Vorelinib-DS-Specification-J3.pdf · 645 B · SHA-256 9d053f22b56c…
+Review file removal
+SUBMISSION
+Filing
+File into an eCTD sequence. The leaf points at the vault copy, so what is assembled is what is stored here.
+Place into submission…
+DOSSIER FILING
+Folder
+Module 3 · Quality
+Classifier (medium confidence): Uploaded as Module 3 · quality, so Module 3; the name did not identify a section.
+Confirm filing
+Move to…
+Module 1 · Administrative
+Module 2 · Summaries
+Module 3 · Quality
+Module 4 · Nonclinical
+Module 5 · Clinical
+eCTD sequences
+Agency correspondence
+Shared · Templates
+Move
+DETAILS
+Title
+Protocol-Stability
+Type
+Other
+Classification
+Internal
+Edit details
+DETAILS
+Title
+Vorelinib DS Stability Protocol STB-0042
+Type
+Protocol
+Classification
+Internal
+Edit details
+DETAILS
+Title
+Vorelinib-Batch-Analysis-DS
+Type
+Other
+Classification
+Internal
+Edit details
+DETAILS
+Title
+Vorelinib-DS-Specification-J3
+Type
+Module 3 · quality
+Classification
+Internal
+Edit details
+FILE
+Size
+645 B
+SHA-256
+9d053f22b56c27a4…
+VERSIONS
+The versions of this document could not be read. No list is shown because it would be incomplete. Reload the page to try again.
+Upload new version
+REVIEW ANNOTATIONS
+The review annotations could not be read; none are shown rather than an incomplete list. Too many document requests. Please wait.
+Add annotation
+RELATED DOCUMENTS
+Related documents could not be read; none are shown rather than an incomplete list. Too many document requests. Please wait.
+Relate a document
+HISTORY
+This document's history could not be read. Nothing is shown rather than an incomplete history.
+Ask AnA
+Download

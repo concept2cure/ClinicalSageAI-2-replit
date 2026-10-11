@@ -1,0 +1,238 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 503s when the thread store is not provisioned — never a 200 empty list
+[AnA] Thread listing failed: conversation store not provisioned
+
+stderr | server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s on any other read failure — never a 200 empty list
+[AnA] Thread listing failed: connection reset
+
+stderr | server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s when the PROJECT-scoped ai_threads read fails (previously swallowed)
+[AnA] Thread listing failed: ai_threads join blew up
+
+stderr | server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 500s when the transcript read fails — an unreadable thread is not an empty one
+[AnA] Thread messages failed: connection reset
+
+stderr | server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 503s when the message store is not provisioned
+[AnA] Thread messages failed: message store not provisioned
+
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > returns the org rows on a healthy read 25ms
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 503s when the thread store is not provisioned — never a 200 empty list 6ms
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s on any other read failure — never a 200 empty list 4ms
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads > 500s when the PROJECT-scoped ai_threads read fails (previously swallowed) 4ms
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 500s when the transcript read fails — an unreadable thread is not an empty one 6ms
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 404s only when the thread genuinely resolves to no store 4ms
+ ✓ server/routes/__tests__/chat-threads-read-honesty.test.ts > GET /api/chat/threads/:threadId/messages > 503s when the message store is not provisioned 3ms
+stderr | server/routes/chat/__tests__/threads-program-list.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/chat/__tests__/threads-program-list.test.ts
+{
+  "timestamp": "2026-10-08T01:14:26.159Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > reports a failed read as a failure, not as no threads
+[AnA] Thread listing failed: conversation store not provisioned
+
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > programIdForThread > accepts a UUID (normalised to lower case) and nothing else 2ms
+ × server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > lists the org's threads bound to the program, newest first, with the first user message as title 6ms
+   → expected 'SELECT t.id, t.created_at, t.updated_…' to match /t\.user_id = \$4/
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > refuses a program id that is not a UUID rather than querying with it 1ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > returns nothing without an organization — never a cross-tenant list 1ms
+ ✓ server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > reports a failed read as a failure, not as no threads 1ms
+ × server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > scopes the recents list to the signed-in person 1ms
+   → expected '\n        SELECT t.id, t.created_at, …' to match /t\.organization_id = \$1 AND t\.user_…/
+ × server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > scopes the project list to the signed-in person 1ms
+   → expected 'SELECT t.id, t.created_at, t.updated_…' to match /t\.user_id = \$4/
+ × server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > lists nothing for a caller it cannot identify, rather than the organisation's 2ms
+   → expected "vi.fn()" to not be called at all, but actually been called 2 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "
+            SELECT t.id, t.created_at, t.updated_at,
+              (SELECT content FROM chat_messages
+                WHERE thread_id = t.id AND role = 'user'
+                ORDER BY created_at ASC LIMIT 1) AS title
+            FROM chat_threads t
+            WHERE t.organization_id = $1
+            ORDER BY t.updated_at DESC
+            LIMIT $2
+          ",
+      Array [
+        7,
+        10,
+      ],
+    ]
+
+  2nd vi.fn() call:
+
+    Array [
+      "SELECT t.id, t.created_at, t.updated_at, t.program_id,
+              (SELECT content FROM chat_messages
+                WHERE thread_id = t.id AND role = 'user'
+                ORDER BY created_at ASC LIMIT 1) AS title
+            FROM chat_threads t
+            WHERE t.organization_id = $1 AND t.program_id = $2
+            ORDER BY COALESCE(t.updated_at, t.created_at) DESC
+            LIMIT $3",
+      Array [
+        7,
+        "0f3c1a2b-1111-4222-8333-444455556666",
+        10,
+      ],
+    ]
+
+
+Number of calls: 2
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/chat/__tests__/threads-program-list.test.ts > listThreads by program > lists the org's threads bound to the program, newest first, with the first user message as title
+AssertionError: expected 'SELECT t.id, t.created_at, t.updated_…' to match /t\.user_id = \$4/
+
+- Expected:
+/t\.user_id = \$4/
+
++ Received:
+"SELECT t.id, t.created_at, t.updated_at, t.program_id,
+          (SELECT content FROM chat_messages
+            WHERE thread_id = t.id AND role = 'user'
+            ORDER BY created_at ASC LIMIT 1) AS title
+        FROM chat_threads t
+        WHERE t.organization_id = $1 AND t.program_id = $2
+        ORDER BY COALESCE(t.updated_at, t.created_at) DESC
+        LIMIT $3"
+
+ ❯ server/routes/chat/__tests__/threads-program-list.test.ts:51:17
+     49|     expect(sql).toMatch(/organization_id = \$1/);
+     50|     expect(sql).toMatch(/role = 'user'/);
+     51|     expect(sql).toMatch(/t\.user_id = \$4/);
+       |                 ^
+     52|     expect(params).toEqual([7, PID.toLowerCase(), 5, 41]);
+     53|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > scopes the recents list to the signed-in person
+AssertionError: expected '\n        SELECT t.id, t.created_at, …' to match /t\.organization_id = \$1 AND t\.user_…/
+
+- Expected:
+/t\.organization_id = \$1 AND t\.user_id = \$3/
+
++ Received:
+"
+        SELECT t.id, t.created_at, t.updated_at,
+          (SELECT content FROM chat_messages
+            WHERE thread_id = t.id AND role = 'user'
+            ORDER BY created_at ASC LIMIT 1) AS title
+        FROM chat_threads t
+        WHERE t.organization_id = $1
+        ORDER BY t.updated_at DESC
+        LIMIT $2
+      "
+
+ ❯ server/routes/chat/__tests__/threads-program-list.test.ts:90:17
+     88|     await listThreads({ query: {}, tenantId: 7, user: { id: 41 } } as …
+     89|     const [sql, params] = query.mock.calls[0];
+     90|     expect(sql).toMatch(/t\.organization_id = \$1 AND t\.user_id = \$3…
+       |                 ^
+     91|     expect(params).toEqual([7, 10, 41]);
+     92|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > scopes the project list to the signed-in person
+AssertionError: expected 'SELECT t.id, t.created_at, t.updated_…' to match /t\.user_id = \$4/
+
+- Expected:
+/t\.user_id = \$4/
+
++ Received:
+"SELECT t.id, t.created_at, t.updated_at, t.program_id,
+          (SELECT content FROM chat_messages
+            WHERE thread_id = t.id AND role = 'user'
+            ORDER BY created_at ASC LIMIT 1) AS title
+        FROM chat_threads t
+        WHERE t.organization_id = $1 AND t.program_id = $2
+        ORDER BY COALESCE(t.updated_at, t.created_at) DESC
+        LIMIT $3"
+
+ ❯ server/routes/chat/__tests__/threads-program-list.test.ts:98:17
+     96|     await listThreads({ query: { program_id: PID }, tenantId: 7, user:…
+     97|     const [sql, params] = query.mock.calls[0];
+     98|     expect(sql).toMatch(/t\.user_id = \$4/);
+       |                 ^
+     99|     expect(params[3]).toBe(41);
+    100|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/chat/__tests__/threads-program-list.test.ts > listThreads lists only the caller's own conversations > lists nothing for a caller it cannot identify, rather than the organisation's
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 2 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "
+            SELECT t.id, t.created_at, t.updated_at,
+              (SELECT content FROM chat_messages
+                WHERE thread_id = t.id AND role = 'user'
+                ORDER BY created_at ASC LIMIT 1) AS title
+            FROM chat_threads t
+            WHERE t.organization_id = $1
+            ORDER BY t.updated_at DESC
+            LIMIT $2
+          ",
+      Array [
+        7,
+        10,
+      ],
+    ]
+
+  2nd vi.fn() call:
+
+    Array [
+      "SELECT t.id, t.created_at, t.updated_at, t.program_id,
+              (SELECT content FROM chat_messages
+                WHERE thread_id = t.id AND role = 'user'
+                ORDER BY created_at ASC LIMIT 1) AS title
+            FROM chat_threads t
+            WHERE t.organization_id = $1 AND t.program_id = $2
+            ORDER BY COALESCE(t.updated_at, t.created_at) DESC
+            LIMIT $3",
+      Array [
+        7,
+        "0f3c1a2b-1111-4222-8333-444455556666",
+        10,
+      ],
+    ]
+
+
+Number of calls: 2
+
+ ❯ server/routes/chat/__tests__/threads-program-list.test.ts:108:23
+    106|       expect(r.body).toEqual({ threads: [] });
+    107|     }
+    108|     expect(query).not.toHaveBeenCalled();
+       |                       ^
+    109|   });
+    110| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  4 failed | 11 passed (15)
+   Start at  01:14:23
+   Duration  2.22s (transform 877ms, setup 96ms, import 1.59s, tests 76ms, environment 0ms)
+

@@ -1,0 +1,23 @@
+2026-10-10T06:08:52.9419385Z [command]/usr/bin/git log -1 --format=%H
+2026-10-10T06:08:52.9440161Z 88fa1606c5b50daf1cb50686d743fe26e041b441
+2026-10-10T06:09:56.8067298Z   ✓ applied: migrations/20261008f_stats_computation_runs.sql
+2026-10-10T06:10:05.2570337Z ##[group]Run npm run ci:purge-coverage
+2026-10-10T06:10:05.2570795Z [36;1mnpm run ci:purge-coverage[0m
+2026-10-10T06:10:05.2621360Z shell: /usr/bin/bash -e {0}
+2026-10-10T06:10:05.2621723Z env:
+2026-10-10T06:10:05.2622239Z   DATABASE_URL: postgresql://postgres@localhost:5432/c2c_blank_proof?sslmode=disable
+2026-10-10T06:10:05.2622825Z ##[endgroup]
+2026-10-10T06:10:05.3441654Z 
+2026-10-10T06:10:05.3441969Z > concept2cure-riai@1.0.0 ci:purge-coverage
+2026-10-10T06:10:05.3442495Z > node scripts/ci/check-purge-coverage.mjs
+2026-10-10T06:10:05.3442673Z 
+2026-10-10T06:10:05.4082560Z    note: 2 schema-qualified purge entr(y/ies) are OUTSIDE this gate's scope (it measures public.* only): vault.document_chunks, vault.documents
+2026-10-10T06:10:05.4423804Z    retained immutable evidence (outside customer-content erasure): 1
+2026-10-10T06:10:05.4425210Z      document_data_dispositions: Immutable attributed disposition receipts retained with the audit trail under POLICY-DR-007 section 1; UPDATE, DELETE and TRUNCATE are refused by the 20261006 migration.
+2026-10-10T06:10:05.4430774Z ❌ purge-coverage: NEW org-keyed table(s) a tenant purge cannot reach:
+2026-10-10T06:10:05.4431314Z   - stats_computation_runs
+2026-10-10T06:10:05.4431756Z 
+2026-10-10T06:10:05.4432105Z Either add it to PURGE_CHILD_TABLES (FK-safe order) or give it an ON DELETE
+2026-10-10T06:10:05.4432790Z CASCADE path from a table already there. A tenant that asks to be erased
+2026-10-10T06:10:05.4433397Z must not keep rows in a table nobody remembered to list.
+2026-10-10T06:10:05.4529330Z ##[error]Process completed with exit code 1.

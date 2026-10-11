@@ -1,0 +1,99 @@
+{
+  "checked_commit": "7111deff00bc17e0b3aefeccfa40a16975ccc74a",
+  "scope": "Prior remote CI, separate from this W3/D4 verifier patch",
+  "runs": [
+    {
+      "id": 37896595653,
+      "name": "CI",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37896595653",
+      "head_sha": "7111deff00bc17e0b3aefeccfa40a16975ccc74a"
+    },
+    {
+      "id": 37896595429,
+      "name": "Tier 5 Browser Smoke",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37896595429",
+      "head_sha": "7111deff00bc17e0b3aefeccfa40a16975ccc74a"
+    },
+    {
+      "id": 37896595222,
+      "name": "Repo Health Baseline Refresh",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37896595222",
+      "head_sha": "7111deff00bc17e0b3aefeccfa40a16975ccc74a"
+    },
+    {
+      "id": 37896595214,
+      "name": "C2C Agent \u2014 Validate & Audit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37896595214",
+      "head_sha": "7111deff00bc17e0b3aefeccfa40a16975ccc74a"
+    },
+    {
+      "id": 37896595284,
+      "name": "CodeQL",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37896595284",
+      "head_sha": "7111deff00bc17e0b3aefeccfa40a16975ccc74a"
+    },
+    {
+      "id": 37896595322,
+      "name": "Semgrep",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37896595322",
+      "head_sha": "7111deff00bc17e0b3aefeccfa40a16975ccc74a"
+    }
+  ],
+  "browser": {
+    "job_id": 113709234745,
+    "failed_step": "Provision the application schema from scratch",
+    "browser_tests": "skipped after provisioning failure",
+    "job_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37896595429/job/113709234745",
+    "log_error_excerpts": [
+      "ERROR:  relation \"user_sessions\" does not exist",
+      "ERROR:  relation \"ana_runs\" does not exist",
+      "ERROR:  relation \"auth_users\" does not exist at character 13"
+    ]
+  },
+  "semgrep": {
+    "job_id": 113709234729,
+    "blocking_findings": 5,
+    "baseline": "661a2c93aff2f7799e8d55f7ab0f92d5ebfcac19",
+    "findings": [
+      {
+        "path": "docs/evidence/QA-2026-10-08/walk2-majors/walk-2/h.mjs",
+        "line": 97,
+        "rule": "detect-non-literal-regexp"
+      },
+      {
+        "path": "server/services/ana/__tests__/package-ectd-for-region-recorded-identity.test.ts",
+        "line": 67,
+        "rule": "path-join-resolve-traversal"
+      },
+      {
+        "path": "server/services/clinical-regulatory-evidence/dataset-profile.ts",
+        "line": 140,
+        "rule": "detect-non-literal-regexp"
+      },
+      {
+        "path": "server/services/part11/__tests__/one-signing-authority-policy.test.ts",
+        "line": 96,
+        "rule": "detect-non-literal-regexp"
+      },
+      {
+        "path": "server/services/tasking/__tests__/task-project.pglite.test.ts",
+        "line": null,
+        "rule": "path-join-resolve-traversal"
+      }
+    ],
+    "job_url": "https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37896595322/job/113709234729"
+  },
+  "verdict": "Remote release qualification remains blocked. No schema/Semgrep change in this one-workstream delivery."
+}

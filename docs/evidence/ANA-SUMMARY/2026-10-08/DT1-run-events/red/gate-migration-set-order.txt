@@ -1,0 +1,10 @@
+# mutation: the entry moved after TENANT_ISOLATION_SWEEP
+  The sweep attaches tenant_isolation_policy to every integer tenant-keyed
+  table that exists WHEN IT RUNS. Anything ordered after it is never swept,
+  so a tenant table ships with no policy — silently, because the policy
+  count goes UP when unprotected tables are added.
+
+  Same invariants are pinned by tests/schema-contract (which also APPLIES
+  the set); this is the fast pre-flight.
+
+exit 1

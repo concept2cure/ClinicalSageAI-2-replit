@@ -1,0 +1,13 @@
+Exact verified source: a5dc3f3d84ba62a06806f8455897fe0554ae654d
+Exact source tree: 4c20c1c7bb1a5df4b0dd5e8fdcddb80030596174
+Job: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/37669994264/job/112964288705
+Job conclusion: success.
+Step 17: Server SQL resolves against the LIVE provisioned schema (ratchet) — success.
+Unchanged baseline: 39 absent names; zero NEW missing relations.
+Provision, deploy, replay, RLS coverage, readiness and post-deploy invariants completed successfully.
+
+2026-10-07T19:06:34.5587148Z ##[group]Run npm run ci:tables-live-schema
+2026-10-07T19:06:34.6702525Z > concept2cure-riai@1.0.0 ci:tables-live-schema
+2026-10-07T19:06:35.1543722Z [ci:tables-live-schema] 1297 relations on the live database; 758 referenced by server SQL; 13 resolved as functions; 39 absent
+2026-10-07T19:06:35.1547458Z [ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (39 baselined)
+

@@ -1,0 +1,9 @@
+# mutation: stream-no-seal-order
+# test: server/routes/ana-ri/__tests__/stream-run-events.test.ts -t "flush, then seal"
+ × server/routes/ana-ri/__tests__/stream-run-events.test.ts > flush, then seal, then release > the record is written after the mirror closes, and the mirror is released after it 41ms
+   → expected [] to deeply equal [ 'mirror.close', …(1) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/ana-ri/__tests__/stream-run-events.test.ts > flush, then seal, then release > the record is written after the mirror closes, and the mirror is released after it
+AssertionError: expected [] to deeply equal [ 'mirror.close', …(1) ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
