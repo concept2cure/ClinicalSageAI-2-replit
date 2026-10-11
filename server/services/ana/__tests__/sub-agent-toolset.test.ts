@@ -78,6 +78,13 @@ describe('childToolsFrom', () => {
     const parent = ['search_literature', 'save_document_to_vault', 'run_agent', 'check_grounding', 'lookup_ich_guideline'].map(tool);
     expect(childToolsFrom(parent).map(t => t.name)).toEqual(['search_literature', 'lookup_ich_guideline']);
   });
+  it('a hosted tool is never offered to a child, even under a research name', () => {
+    // Web search, web fetch and code execution run on Anthropic's own
+    // infrastructure and carry a name but no schema. A child may not reach one.
+    const hosted = { type: 'web_search_20250305', name: 'search_literature' } as never;
+    expect(childToolsFrom([hosted])).toEqual([]);
+    expect(childToolsFrom([hosted, tool('lookup_ich_guideline')]).map(t => t.name)).toEqual(['lookup_ich_guideline']);
+  });
   it('a tool the tenant denied (absent from the parent set) is absent from the child set', () => {
     expect(childToolsFrom([tool('search_literature')]).map(t => t.name)).not.toContain('search_drug_adverse_events');
   });

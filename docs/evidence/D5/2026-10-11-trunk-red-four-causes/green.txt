@@ -1,0 +1,44 @@
+# After the change.
+
+### The 7 suites, with .env (RLS_ENFORCE=on)
+ Test Files  7 passed (7)
+      Tests  97 passed (97)
+
+### The same 7, RLS_ENFORCE=off — as CI runs them, with no .env
+ Test Files  7 passed (7)
+      Tests  97 passed (97)
+
+### Proof tier (the Lint job's failing step)
+ Test Files  121 passed (121)
+      Tests  1372 passed (1372)
+
+### The 20 suites sharing disposition-fixture.ts
+ Test Files  20 passed (20)
+      Tests  341 passed (341)
+
+### Regression over every touched area
+#   report-os routes, the registry suites, document-data-disposition,
+#   tests/schema-contract, the New Project wizard
+ Test Files  134 passed (134)
+      Tests  1688 passed (1688)
+
+### Each repaired gate shown still to bite (diagnostics reverted after each)
+#  setTenantContextTx stops pinning the isolation switches
+      Tests  8 failed | 62 passed (70)
+#  setTenantContextTx drops the stamp entirely
+      Tests  10 failed | 60 passed (70)
+#  the nonclinical blueprint drops 2.6.2, orphaning its seven leaves
+      Tests  1 failed | 8 passed (9)    AssertionError: 2.6.2.1 has no parent section
+#  the wizard posts the project to the wrong path
+      Tests  4 failed | 3 passed (7)    AssertionError: the wizard never posted the project
+
+### Gates
+ci:error-envelope                     PASS
+ci:tenant-isolation:no-regression     PASS
+ci:discarded-audit-write              PASS
+ci:sign-ceremony                      PASS
+tsc --noEmit                          no error in any changed file
+eslint <changed files>                exit 0
+
+### No production file changed
+#  git diff --name-only is 8 files, all of them fixtures or suites.
