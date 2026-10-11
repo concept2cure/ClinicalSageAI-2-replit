@@ -1,0 +1,13 @@
+Mutant G06-not-told-as-fact: this page’s limit is stated as a fact about the record
+
+--- client/src/concept2cure/v2/editor/anaInsertGate.ts
+- `This page has no record of which model wrote this answer, ${CANT_INSERT}. ${ASK_AGAIN}`
++ `The model that wrote this answer can’t be checked, ${CANT_INSERT}. ${ASK_AGAIN}`
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > says what this view was not told apart from what the record says: no list is not an empty one 11ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > an answer whose record does not name its models: the offer is disabled, failing closed 801ms
+      Tests  2 failed | 30 passed (32)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

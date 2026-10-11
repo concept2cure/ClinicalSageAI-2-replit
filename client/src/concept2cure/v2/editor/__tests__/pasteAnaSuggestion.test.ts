@@ -9,8 +9,15 @@
  * off (the database default) a copied AnA insertion pasted elsewhere kept
  * `data-author-id="ana"` and its turn, never meeting the insert gate, and its
  * accept was then filed as AnA's. A pasted AnA mark the host does not admit
- * is now the pasting person's, with no turn: what a paste with track changes
- * on already records.
+ * is now the pasting person's.
+ *
+ * Round 13 (round 11's UI review, Part 11): the person becomes the proposer,
+ * but the words still came from AnA's turn. The swap had dropped the turn, so
+ * the decision recorded AnA's words as the person's own, with no source. A
+ * pasted suggestion now keeps the turn it came from, under every author and
+ * with track changes on or off, and a pasted AnA deletion is the person's as
+ * an insertion is. Only a paste or a drop carries a turn: text the person
+ * types is theirs alone.
  */
 import { afterEach, describe, expect, it } from 'vitest';
 import { Editor } from '@tiptap/core';
@@ -22,9 +29,10 @@ import { TrackChanges, collectSuggestions } from '../suggestions';
 const TURN_A = '6f1c2a4e-9b3d-4e21-8a7f-0c5d1e2b3a41';
 const HUMAN = { id: 'user-7', name: 'Jordan Medical Writer' };
 const ANA_INS = `<p><ins data-author-id="ana" data-author-name="AnA (AI draft)" data-at="2026-10-05T10:00:00Z" data-source-record="${TURN_A}">ORR 42% in the 10 mg arm.</ins></p>`;
+const ANA_DEL = `<p>Kept. <del data-author-id="ana" data-author-name="AnA (AI draft)" data-at="2026-10-05T10:00:00Z" data-source-record="${TURN_A}">Struck by AnA.</del></p>`;
 
 const editors: Editor[] = [];
-function makeEditor(tracking: boolean, admitsAnaSource?: (sourceRecord: string | null) => boolean): Editor {
+function makeEditor(tracking: boolean, admitsAnaSource?: (sourceRecord: string | null) => boolean, content = '<p></p>'): Editor {
   const ed = new Editor({
     element: document.createElement('div'),
     extensions: [
@@ -32,7 +40,7 @@ function makeEditor(tracking: boolean, admitsAnaSource?: (sourceRecord: string |
       TableKit.configure({ table: { resizable: false } }),
       TrackChanges.configure({ enabled: tracking, author: HUMAN, ...(admitsAnaSource ? { admitsAnaSource } : {}) }),
     ],
-    content: '<p></p>',
+    content,
   });
   editors.push(ed);
   return ed;
@@ -47,10 +55,16 @@ const paste = (ed: Editor, html: string) =>
 const suggestions = (ed: Editor) => collectSuggestions(ed.state.doc).map((r) => [r.kind, r.authorId, r.authorName, r.sourceRecord, r.text]);
 
 describe('pasting an AnA suggestion', () => {
-  it('track changes off: one the host does not admit becomes the pasting person’s, with no turn', () => {
+  it('track changes off: one the host does not admit becomes the pasting person’s, still naming the turn it came from', () => {
     const ed = makeEditor(false);
     paste(ed, ANA_INS);
-    expect(suggestions(ed)).toEqual([['insertion', HUMAN.id, HUMAN.name, null, 'ORR 42% in the 10 mg arm.']]);
+    expect(suggestions(ed)).toEqual([['insertion', HUMAN.id, HUMAN.name, TURN_A, 'ORR 42% in the 10 mg arm.']]);
+  });
+
+  it('track changes off: a pasted AnA deletion the host does not admit is the person’s too, naming its turn', () => {
+    const ed = makeEditor(false);
+    paste(ed, ANA_DEL);
+    expect(suggestions(ed)).toEqual([['deletion', HUMAN.id, HUMAN.name, TURN_A, 'Struck by AnA.']]);
   });
 
   it('track changes off: one the host admits keeps AnA’s name and turn', () => {
@@ -65,9 +79,21 @@ describe('pasting an AnA suggestion', () => {
     expect(suggestions(ed)).toEqual([['insertion', 'user-9', 'Kim Reviewer', null, 'Assay 98.5%.']]);
   });
 
-  it('track changes on: the paste is the person’s, as it already was (negative control)', () => {
+  it('track changes on: the paste is the person’s, naming the turn its words came from', () => {
     const ed = makeEditor(true);
     paste(ed, ANA_INS);
-    expect(suggestions(ed).map(([kind, author, , turn]) => [kind, author, turn])).toEqual([['insertion', HUMAN.id, null]]);
+    expect(suggestions(ed).map(([kind, author, , turn]) => [kind, author, turn])).toEqual([['insertion', HUMAN.id, TURN_A]]);
+  });
+
+  it('track changes on: a pasted AnA deletion is the person’s insertion with no turn: AnA proposed striking those words, not writing them', () => {
+    const ed = makeEditor(true);
+    paste(ed, ANA_DEL);
+    expect(suggestions(ed).map(([kind, author, , turn, text]) => [kind, author, turn, text])).toEqual([['insertion', HUMAN.id, null, 'Kept. Struck by AnA.']]);
+  });
+
+  it('track changes on: text the person types inside AnA’s suggestion is theirs, with no turn (negative control)', () => {
+    const ed = makeEditor(true, undefined, ANA_INS);
+    ed.commands.insertContentAt(5, 'typed ');
+    expect(suggestions(ed).map(([kind, author, , turn, text]) => [kind, author, turn, text])).toContainEqual(['insertion', HUMAN.id, null, 'typed ']);
   });
 });

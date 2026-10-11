@@ -1,0 +1,12 @@
+Mutant C02-unfinished-dropped: the conversation does not carry whether an answer finished
+
+--- client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+- unfinished: answerUnfinished(m) || undefined,
++ 
+
+Tests run: client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s refused inserts > an answer that did not finish is refused, whoever wrote it 684ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,14 @@
+Mutant G10-ask-again-overpromises: the remedy promises insertability the rule will refuse
+
+--- client/src/concept2cure/v2/editor/anaInsertGate.ts
+- const ASK_AGAIN = 'Ask again to get an answer with its own record.';
++ const ASK_AGAIN = 'Ask again for an answer you can insert.';
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses a model the record does not name, even one marked qualified, one model or several 8ms
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > says what this view was not told apart from what the record says: no list is not an empty one 1ms
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > fails closed on a record that was not made or not confirmed, in the activity strip’s own words 1ms
+      Tests  3 failed | 8 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,14 @@
+Mutant R08-vouched-without-source: a proposer reads as verified though the turn vouched for nothing
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- if (metadata.proposedByVerified !== true) return false;
++ return metadata.proposedByVerified === true;
+  if (metadata.proposedByVerified !== true) return false;
+
+Tests run: client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — the AnA turn a decided change came from > a row from before the words were checked is not called verified 14ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — the AnA turn a decided change came from > a machine author is "as recorded by the editing client" until the turn vouches for the words 1ms
+      Tests  2 failed | 33 passed (35)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

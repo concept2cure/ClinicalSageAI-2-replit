@@ -1,0 +1,64 @@
+{
+  "measured": [
+    {
+      "theme": "light",
+      "what": "button-disabled",
+      "fg": "rgb(173, 81, 50)",
+      "bg": "rgb(250, 249, 245)",
+      "fontSize": "11.5px",
+      "opacity": "0.5",
+      "cursor": "not-allowed",
+      "transitionDuration": "0s",
+      "transitionProperty": "all",
+      "outline": "none",
+      "ratio": 4.98,
+      "ratioAtOpacity": 2.08
+    },
+    {
+      "theme": "dark",
+      "what": "button-disabled",
+      "fg": "rgb(232, 145, 111)",
+      "bg": "rgb(38, 38, 36)",
+      "fontSize": "11.5px",
+      "opacity": "0.5",
+      "cursor": "not-allowed",
+      "transitionDuration": "0s",
+      "transitionProperty": "all",
+      "outline": "none",
+      "ratio": 6.29,
+      "ratioAtOpacity": 2.63
+    }
+  ],
+  "boxes": [
+    {
+      "theme": "light",
+      "vp": "desktop-1280",
+      "found": false
+    },
+    {
+      "theme": "light",
+      "vp": "tablet-768",
+      "found": false
+    },
+    {
+      "theme": "light",
+      "vp": "mobile-375",
+      "found": false
+    },
+    {
+      "theme": "dark",
+      "vp": "desktop-1280",
+      "found": false
+    },
+    {
+      "theme": "dark",
+      "vp": "tablet-768",
+      "found": false
+    },
+    {
+      "theme": "dark",
+      "vp": "mobile-375",
+      "found": false
+    }
+  ]
+}

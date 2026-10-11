@@ -1,0 +1,12 @@
+Mutant B01-bridge-unfinished-dropped: the bridge does not pass on whether the answer finished
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- insert: (text, author, record, unfinished) => insertAnaText(text, author, record, unfinished),
++ insert: (text, author, record) => insertAnaText(text, author, record, false),
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.insert — AnA’s answer goes in only under the governed-write rule (round 11) > refuses an AnA answer that did not finish, even one the rule admits (round 13) 151ms
+      Tests  1 failed | 43 passed (44)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -2814,6 +2814,11 @@
 .c2c-v2 .ct-ref-l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .c2c-v2 .ct-ref-go{color:var(--text-500);display:inline-flex;flex-shrink:0;}.c2c-v2 .ct-ref-go svg{width:12px;height:12px;}
 .c2c-v2 .ct-ref:hover .ct-ref-go{color:var(--accent-100);}
+/* A refused insert (the governed-write rule's GE-P-3 state, AnA reasoning
+   round 13) looks and hovers like the off control it is, as .ct-head-open does.
+   Its reason sits outside the button, at full strength. */
+.c2c-v2 .ct-ref:disabled{opacity:.5;cursor:not-allowed;}
+.c2c-v2 .ct-ref:disabled:hover{background:var(--bg-050);border-color:var(--border);color:var(--text-200);}
 
 .c2c-v2 .ct-ground{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-top:2px;}
 .c2c-v2 .ct-ground-l{font-size:10.5px;color:var(--text-500);text-transform:uppercase;letter-spacing:.04em;margin-right:2px;}

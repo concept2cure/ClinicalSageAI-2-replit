@@ -41,7 +41,7 @@ import '../styles/project-home-v2.css';
 
 /* The audit-metadata reader moved with the audit rail; its unit test and any
    other reader keep this import path. */
-export { describeAuditMetadata } from '../editor/DocumentWorkbench';
+export { describeAuditMetadata, describeAuditSource } from '../editor/DocumentWorkbench';
 
 export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // BP-W0-7: was 'draft', so the editor opened onto a list that excluded every

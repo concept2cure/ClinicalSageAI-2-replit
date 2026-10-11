@@ -1,0 +1,150 @@
+Round 13's own suites, green, on the final tree (round 13 + its design-review fixes, with trunk 275707c7a merged).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx
+
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > mounts DocumentCanvas beneath a turn whose draft carries authoringDocId, read from the store 149ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > puts what was checked directly under the answer, above the canvas whose drafted figures it does not check 50ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > keeps a document-backed draft OUT of the side-panel artifact list, and a legacy draft IN it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > a turn without a document gets no canvas 39ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > finds the document in a rehydrated turn’s tool trace, and never in prose 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > hides the side column while a canvas is expanded, and Open full editor mounts the one workbench in place 127ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays 340ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the canvas keeps up with AnA (2026-10-01) > re-reads the document when AnA’s turn ends 185ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > offers no insert while no document is open 228ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > inserts a settled answer into the open section as an AnA suggestion, naming its turn record 724ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > when the editor closes, the offer reopens it: the suggestion still lands where the person sees it 1266ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > an answer a model not approved for regulatory drafting wrote: the offer is disabled, says why, and inserts nothing 665ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > an answer whose record does not name its models: the offer is disabled, failing closed 761ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA knows the document open beside the conversation (2026-10-01) > sends the open document and section with the turn, and nothing once the editor closes 357ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a sealed document is known to AnA, and takes no insert (2026-10-01) > names the frozen document on the turn but offers no insert into it 285ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a section not yet drafted is one ask away (2026-10-01) > opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section 1067ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates the document from the draft, split at its headings, and opens it beside the conversation 291ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > opens the document already made from that turn instead of creating a second copy 246ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates nothing when it cannot check for an earlier copy, and says so 175ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed 21ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM 19ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > the audit rail reports each row’s chain verdict > shows the note only on the row whose verdict is intact: false, naming the fields 790ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > the audit rail reports each row’s chain verdict > stamps every row with the instant it happened, not only "3 h ago" 401ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > the audit rail reports each row’s chain verdict > describes a comment row by the passage it quoted 430ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > GETs the export with the bearer token and saves the package as a file 571ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > shows the server’s refusal on the rail when the export cannot be recorded (503), and saves nothing 503ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > a person without access to the record is told so — not shown a failed read or an empty trail 266ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > says so when the session is not authenticated (401), rather than nothing 424ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > auditIntegrityNote > speaks only for intact: false on a chained row 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > describeAuditMetadata — comments and bulk decisions recorded whole > describes a comment or reply by its quoted passage, capped at 80 characters 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > describeAuditMetadata — comments and bulk decisions recorded whole > samples the first three texts of a bulk act and claims no omission when none was recorded 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer a model not approved for regulatory drafting wrote: disabled, and the reason is on screen 779ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > a frozen document takes no insert, and the offer says so rather than failing on the click 350ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer cut off before it finished: disabled, whoever wrote it 412ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer whose models the record does not give: disabled, failing closed 354ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer every model of which may write governed content is inserted, naming its turn (negative control) 447ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > a paste of the suggestion it admitted keeps AnA’s name; one from a turn it did not admit is the person’s 511ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.insert — AnA’s answer goes in only under the governed-write rule (round 11) > refuses an AnA answer the rule does not admit, or whose models are not given, and changes nothing 292ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.insert — AnA’s answer goes in only under the governed-write rule (round 11) > refuses an AnA answer that did not finish, even one the rule admits (round 13) 113ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.insert — AnA’s answer goes in only under the governed-write rule (round 11) > inserts an AnA answer it admits, and a person’s text is not its business (negative controls) 150ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > redlines the open section when the base hash is the section as loaded 133ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > redlines when the base updated_at is the section as loaded, in either serialization 112ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when the hash AnA read is not the stored content, and changes nothing 109ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when the section was saved after AnA read it, and changes nothing 86ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses stale when either of two bases differs 121ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses no-base when the proposal names no version of the section 103ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > refuses wrong-section when the proposal is for a section that is not open 80ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — which section, and which version of it > passes the editor’s own refusal through, and keeps the existing fields 92ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — text the editor cannot strike > passes unsupported-content through for a quote in inline code, and changes nothing 97ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — after a save > a base read before the save is stale after it, through the old bridge and the new one 209ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — a sealed document > refuses not-editable on a frozen document 87ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose — a sealed document > refuses for the seal itself, even where the editor would take the proposal 152ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > <p>Use <code>batch_id</code> here.</p>: a proposal on "batch_id" refuses unsupported-content 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > <p>Use <code>batch_id</code> here.</p>: a proposal on "Use batch_id here." refuses unsupported-content 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > <pre><code>let x = 1;</code></pre><p>Closing.</p>: a proposal on "x = 1" refuses unsupported-content 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > <pre><code>let x = 1;</code></pre><p>Closing.</p>: a proposal on "x = 1" refuses unsupported-content 8ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > a draft over a selection of "batch_id" returns false 13ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > a draft over a selection of "Use batch_id" returns false 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D1 — text that cannot be struck is refused, not silently kept > the plain text beside the code still takes a proposal 50ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D2 — an edge space is never owned only by the suggestion > a replacement that ends in a space before the document’s own 32ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D2 — an edge space is never owned only by the suggestion > a replacement that ends in a space at its paragraph’s end 43ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D2 — an edge space is never owned only by the suggestion > a replacement that starts with a space after a quote ending in one 40ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D2 — an edge space is never owned only by the suggestion > a replacement that drafted over a selection ends in a space before the document’s own 36ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D2 — an edge space is never owned only by the suggestion > a replacement that keeps an edge space the document does not have 33ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > a struck item goes on accept 51ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > a struck middle item goes on accept 57ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > a list replacing an item becomes sibling items 58ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > so does a numbered one 58ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > so does a list drafted over a selected item 43ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > paragraphs replacing an item stay in it 48ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > refuses structural for a whole item replaced by "## Heading\n\nBody", which a list item cannot be 10ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > refuses structural for a whole item replaced by "| A | B |\n| --- | --- |\n| 1 | 2 |", which a list item cannot be 20ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D3 — whole list items > refuses structural for a whole item replaced by "- a\n\nAfter the list", which a list item cannot be 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D4 — the person’s selection does not grow over AnA’s insertion > a selection of "25 C" keeps exactly its words 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D4 — the person’s selection does not grow over AnA’s insertion > a selection of "at 25 C" keeps exactly its words 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D4 — the person’s selection does not grow over AnA’s insertion > a selection of " for use" keeps exactly its words 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D4 — the person’s selection does not grow over AnA’s insertion > a caret at the end of the quote stays there, before AnA’s words 11ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D5 — real text that looks like a reader marker still anchors > a prefix line that is a paragraph’s own text 9ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D5 — real text that looks like a reader marker still anchors > a suffix line that is a paragraph’s own text 7ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D5 — real text that looks like a reader marker still anchors > still reads a real marker past, and still refuses context that fits neither way 12ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > round two, D6 — the documented trailing-paragraph limit > a section ending in a list gains the editor’s empty paragraph on any transaction 10ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s refused inserts > each refused offer is described by its own reason: one element id per offer 1347ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s refused inserts > an answer that did not finish is refused, whoever wrote it 700ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s refused inserts > the reason reads at the repo’s own contrast for why a control is off, and the button looks off 657ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > says so, and offers one way out: a new conversation in the open project 270ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > starts a new conversation and asks the same question again in it 71ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > is not offered while AnA is answering 66ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > offers nothing for another refusal 40ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > offers nothing for no code 41ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes off: one the host does not admit becomes the pasting person’s, still naming the turn it came from 161ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes off: a pasted AnA deletion the host does not admit is the person’s too, naming its turn 27ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes off: one the host admits keeps AnA’s name and turn 22ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > a pasted person’s suggestion keeps its author (negative control) 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes on: the paste is the person’s, naming the turn its words came from 19ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes on: a pasted AnA deletion is the person’s insertion with no turn: AnA proposed striking those words, not writing them 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes on: text the person types inside AnA’s suggestion is theirs, with no turn (negative control) 13ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > is stable for the same change — the id must survive a round trip 2ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > separates two runs by the same author in the same minute 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > separates an insertion from a deletion of identical text 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > separates the same text proposed by different authors 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > separates the same text proposed in different minutes 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > carries its kind in the clear, so a row is legible without a join 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > changeIdOf > tolerates a suggestion with no recorded author or timestamp 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > decisionOf > carries the text, because accepting a change destroys it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > decisionOf > records a rejection, which changes no text and is otherwise unrecorded 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > decisionOf > keeps the proposer distinct from the decider 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > notifyResolved > never lets a failing recorder undo the edit the reviewer just made 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > notifyResolved > hands the host a complete decision 2ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > notifyResolved > is a no-op when no host is listening 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata > reads a rejection back as a sentence naming what was refused 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata > surfaces the model behind an accepted AI draft, and that it was edited 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata > says so when an accepted draft names no generating model 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata > leaves unrecognised metadata alone rather than dumping a payload 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — bulk decisions > reads a bulk rejection back with its count and a sample 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — bulk decisions > admits when the stored summary was capped 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — bulk decisions > is null when the row carries no verdict or no count 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > says the turn served the words, never that a model wrote them 1ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > names each reason RULE 2 gives, in the words the insert gate uses 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a model the record does not name gets no verdict, because there is nothing to judge 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a row that recorded no model list is not a record that names none 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a turn that did not answer says so: the rail holds what the gate could only guess at 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a named turn that does not vouch for the words says so, and why 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a change from no AnA turn has no second line at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a bulk decision counts the changes, the ones a model may not write, and the ones that do not verify 2ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > one change from one turn reads as one, not as a plural 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — the AnA turn a decided change came from > a verified AnA proposal says it was verified, from which turn, and which model wrote it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — the AnA turn a decided change came from > a row from before the words were checked is not called verified 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — the AnA turn a decided change came from > a machine author is "as recorded by the editing client" until the turn vouches for the words 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — the AnA turn a decided change came from > the bulk decision line stays the decision; its turns are the second line 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — the AnA turn a decided change came from > an accepted AI draft names the turn record it came from (round 12) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditMetadata — the AnA turn a decided change came from > a decision with no source reads as it did (negative control) 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > admits a finished answer every model of which may write governed content 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > a caller must say whether the answer finished, rather than getting "it did" by default 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses an answer a model not approved for regulatory drafting wrote, naming it, with no remedy the screen cannot carry out 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses when any one of the models that worked on it is not admitted, without saying which words it wrote 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses an approved model whose performance qualification has not passed, and says asking again will not change that 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses a model the record does not name, even one marked qualified, one model or several 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > says what this view was not told apart from what the record says: no list is not an empty one 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > fails closed on a record that was not made or not confirmed, in the activity strip’s own words 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > anaInsertRefusal > refuses an answer that did not finish before anything else, however it was recorded 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > answerUnfinished > a stop, a failed stream, a cut-short phase, a cancelled run or an answer cut off is unfinished text 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > answerUnfinished > a finished answer, and one the loop forced to an end, is whole text (negative control) 0ms
+ Test Files  9 passed (9)
+      Tests  142 passed (142)
+
+Plus, after the design-view test was added to kill mutant P02:
+  authoringAnaInsertGate.test.tsx — 7 passed (was 6)
