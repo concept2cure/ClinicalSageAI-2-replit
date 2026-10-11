@@ -7,6 +7,28 @@
  */
 import { vi } from 'vitest';
 import { getTableColumns } from 'drizzle-orm';
+import { switchPinTerms } from '../../db/sessionScope';
+
+/**
+ * The statement a governed transaction issues immediately after BEGIN, exactly
+ * as server/services/tenant/governed-tenant-context.ts builds it.
+ *
+ * Derived, not transcribed. Three suites each held their own copy of the
+ * one-term form, and when the pin of the isolation switches was added to the
+ * same statement (so a governed transaction cannot inherit a bypass) all three
+ * went red on a string compare while the route was correct. What these suites
+ * pin is the ORDER — BEGIN, the stamp, the domain writes, the chain row, COMMIT
+ * — and the tenant the chain row carries, which each case asserts separately.
+ * The stamp's own text is server/db/sessionScope's subject, not this harness's.
+ *
+ * A function, not a constant: `switchPinTerms` reads RLS_ENFORCE at call time,
+ * and this module is imported before the env is loaded, so a constant would
+ * freeze `app.rls_enforce` at '' and disagree with the route for any developer
+ * whose .env sets it on. Called at assertion time, the expectation and the
+ * route read the same environment.
+ */
+export const tenantStampSql = (): string =>
+  `SELECT set_config('app.current_tenant_id', $1, true), ${switchPinTerms(true)}`;
 
 export function createReportOsHarness() {
   const queued = { select: [] as unknown[][], insert: [] as unknown[][], update: [] as unknown[][] };

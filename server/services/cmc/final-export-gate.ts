@@ -30,6 +30,9 @@ import { buildCanonicalGovernedState } from '../governed-ana-execution.js';
 import { compiledRecordIsComplete, parsedDeterministicJson, readSectionTables } from './compiled-record';
 import { describeDrift, findSectionDrift, type SectionDrift } from './section-drift';
 import { findEvidenceDrift } from './source-evidence';
+import { readContradictionRegisters } from './contradiction-registers';
+import { detectContradictions } from '../cmc-impact-contradiction-engine';
+import { unrecordedCriticalFindings } from './contradiction-lifecycle';
 
 export interface Module3GovernedState {
   totalSections: number;
@@ -69,6 +72,14 @@ export interface Module3GovernedState {
    * moves the link before the section is filed.
    */
   supersededEvidenceSections: SectionDrift[];
+  /**
+   * Critical contradictions the detector finds in the program's records now
+   * that the contradiction record does not hold: never swept, or the data
+   * changed since the sweep. The gate used to count only recorded findings,
+   * and only the manual sweep records them, so a program never swept read
+   * export-ready over a rejected batch (GA review 2026-10-05, plan item 5).
+   */
+  unrecordedCriticalFindings: Array<{ contradictionType: string; details: string }>;
   canonicalGovernedState: Record<string, unknown> | null;
   /**
    * Did the governed-decision fabric actually produce a verdict? False when the
@@ -108,6 +119,101 @@ export interface FinalExportGateVerdict {
  * is fixed by the section key, and placement itself re-checks org, submission
  * and lock state on every leaf write.
  */
+/**
+ * The governed-decision fabric's verdict for this project, and whether it was
+ * reached at all.
+ *
+ * Fails CLOSED and says so: an evaluation that throws reports
+ * `governedStateEvaluated: false` and blocks, because a caller must never read
+ * a failed evaluation as a fabric that looked and found nothing.
+ */
+async function evaluateGovernedFabric(a: {
+  orgId: number;
+  projectId: string;
+  actorId: string;
+  intendedAction: 'export' | 'publish';
+  totalSections: number;
+  approvedSections: number;
+  allApproved: boolean;
+  provenanceComplete: boolean;
+  unresolvedCount: number;
+  openCritical: number;
+  isStale: boolean;
+}): Promise<{
+  canonicalGovernedState: Record<string, any> | null;
+  governedStateEvaluated: boolean;
+  fabricBlocks: boolean;
+  governedDecisionsBlock: boolean;
+}> {
+  let canonicalGovernedState: Record<string, any> | null;
+  let governedStateEvaluated: boolean;
+  let fabricBlocks: boolean;
+  try {
+    canonicalGovernedState = await buildCanonicalGovernedState({
+      context: {
+        organizationId: String(a.orgId),
+        projectId: String(a.projectId),
+        actorId: a.actorId,
+        intendedAction: a.intendedAction,
+        documentType: 'cmc_module3',
+        ctdSection: '3',
+      },
+      documentState: {
+        hasContent: a.totalSections > 0,
+        hasEvidence: a.totalSections > 0,
+        hasBeenReviewed: a.approvedSections > 0,
+        hasApproval: a.allApproved,
+        // See the docstring: this gate precedes placement and authorizes it.
+        hasPlacement: true,
+        placementValid: true,
+        hasProvenance: a.provenanceComplete,
+        unresolvedContradictionCount: a.unresolvedCount,
+        criticalContradictionCount: a.openCritical,
+        isStale: a.isStale,
+        completenessScore: a.totalSections > 0 ? a.approvedSections / a.totalSections : 0,
+      },
+      exportState: {
+        humanReviewApproved: a.allApproved,
+        // The sections in cmc_module3_sections come from the deterministic
+        // composer; the AI narrative refinement runs in the orchestrator's
+        // m3.refine step and does not write this table.
+        aiGenerated: false,
+        provenanceComplete: a.provenanceComplete,
+      },
+    });
+    governedStateEvaluated = true;
+    fabricBlocks =
+      canonicalGovernedState.derivedFlags?.isBlocked === true ||
+      canonicalGovernedState.derivedFlags?.hasUnresolvedGovernedDecisions === true;
+  } catch {
+    governedStateEvaluated = false;
+    fabricBlocks = true;
+    canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true, blocked: true };
+  }
+  return {
+    canonicalGovernedState,
+    governedStateEvaluated,
+    fabricBlocks,
+    governedDecisionsBlock:
+      (canonicalGovernedState as any)?.derivedFlags?.hasUnresolvedGovernedDecisions === true,
+  };
+}
+
+/**
+ * The same deterministic detector the sweep runs, over the same registers, so
+ * the gate refuses what a sweep would find even when nobody ran one. A read
+ * that fails throws, and the gate's caller refuses (fail closed).
+ */
+async function detectUnrecordedCritical(
+  pool: ReturnType<typeof getPool>,
+  orgId: number,
+  projectId: string,
+  stored: Array<{ contradiction_type?: unknown; details?: unknown }>,
+): Promise<Array<{ contradictionType: string; details: string }>> {
+  const detected = detectContradictions(await readContradictionRegisters(pool, { organizationId: orgId, projectId }));
+  return unrecordedCriticalFindings(detected, stored).map((c) => ({ contradictionType: c.contradictionType, details: c.details }));
+}
+
 export async function evaluateModule3GovernedState(params: {
   orgId: number;
   projectId: string;
@@ -123,7 +229,7 @@ export async function evaluateModule3GovernedState(params: {
       [orgId, projectId]
     ),
     pool.query(
-      `SELECT severity, status FROM cmc_contradictions WHERE organization_id = $1 AND project_id = $2`,
+      `SELECT severity, status, contradiction_type, details FROM cmc_contradictions WHERE organization_id = $1 AND project_id = $2`,
       [orgId, projectId]
     ),
     // Sections with no lineage row: compiled content whose source cannot be
@@ -142,6 +248,7 @@ export async function evaluateModule3GovernedState(params: {
     findSectionDrift(pool, orgId, projectId),
     findEvidenceDrift(pool, orgId, projectId),
   ]);
+  const unrecorded = await detectUnrecordedCritical(pool, orgId, projectId, contradictionsRes.rows || []);
 
   const sections = sectionsRes.rows;
   const contradictions = contradictionsRes.rows || [];
@@ -175,56 +282,20 @@ export async function evaluateModule3GovernedState(params: {
   // be complete, and a section with no lineage row breaks it.
   const provenanceComplete = totalSections > 0 && sectionsWithoutProvenance === 0;
 
-  let canonicalGovernedState: Record<string, any> | null;
-  let governedStateEvaluated: boolean;
-  let fabricBlocks: boolean;
-  try {
-    canonicalGovernedState = await buildCanonicalGovernedState({
-      context: {
-        organizationId: String(orgId),
-        projectId: String(projectId),
-        actorId,
-        intendedAction: params.intendedAction ?? 'export',
-        documentType: 'cmc_module3',
-        ctdSection: '3',
-      },
-      documentState: {
-        hasContent: totalSections > 0,
-        hasEvidence: totalSections > 0,
-        hasBeenReviewed: approvedSections > 0,
-        hasApproval: allApproved,
-        // See the docstring: this gate precedes placement and authorizes it.
-        hasPlacement: true,
-        placementValid: true,
-        hasProvenance: provenanceComplete,
-        unresolvedContradictionCount: unresolvedCount,
-        criticalContradictionCount: openCritical,
-        isStale: staleSections > 0 || driftedApprovedSections.length > 0,
-        completenessScore: totalSections > 0 ? approvedSections / totalSections : 0,
-      },
-      exportState: {
-        humanReviewApproved: allApproved,
-        // The sections in cmc_module3_sections come from the deterministic
-        // composer; the AI narrative refinement runs in the orchestrator's
-        // m3.refine step and does not write this table.
-        aiGenerated: false,
-        provenanceComplete,
-      },
+  const { canonicalGovernedState, governedStateEvaluated, fabricBlocks, governedDecisionsBlock } =
+    await evaluateGovernedFabric({
+      orgId,
+      projectId,
+      actorId,
+      intendedAction: params.intendedAction ?? 'export',
+      totalSections,
+      approvedSections,
+      allApproved,
+      provenanceComplete,
+      unresolvedCount,
+      openCritical,
+      isStale: staleSections > 0 || driftedApprovedSections.length > 0,
     });
-    governedStateEvaluated = true;
-    fabricBlocks =
-      canonicalGovernedState.derivedFlags?.isBlocked === true ||
-      canonicalGovernedState.derivedFlags?.hasUnresolvedGovernedDecisions === true;
-  } catch {
-    // Fail closed, and SAY the evaluation did not happen — a caller must not
-    // read this as a fabric that looked and found nothing.
-    governedStateEvaluated = false;
-    fabricBlocks = true;
-    canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true, blocked: true };
-  }
-
-  const governedDecisionsBlock =
-    (canonicalGovernedState as any)?.derivedFlags?.hasUnresolvedGovernedDecisions === true;
 
   return {
     state: {
@@ -237,6 +308,7 @@ export async function evaluateModule3GovernedState(params: {
       unplaceableApprovedSections,
       driftedApprovedSections,
       supersededEvidenceSections,
+      unrecordedCriticalFindings: unrecorded,
       canonicalGovernedState,
       governedStateEvaluated,
       fabricBlocks,
@@ -272,6 +344,7 @@ export async function evaluateFinalExportGate(params: {
     data.staleSections > 0 ||
     data.driftedApprovedSections.length > 0 ||
     data.supersededEvidenceSections.length > 0 ||
+    data.unrecordedCriticalFindings.length > 0 ||
     data.sectionsWithoutProvenance > 0 ||
     data.incompleteApprovedSections.length > 0 ||
     data.unplaceableApprovedSections.length > 0
@@ -295,6 +368,10 @@ export async function evaluateFinalExportGate(params: {
         ? `${data.supersededEvidenceSections.length} approved section(s) read CMC records taken from a Vault document that ` +
           `has since been superseded or withdrawn. Verify each record against the current version and move its evidence ` +
           `link (or correct the record and recompile) before final export: ${describeDrift(data.supersededEvidenceSections)}`
+        : data.unrecordedCriticalFindings.length > 0
+        ? `${data.unrecordedCriticalFindings.length} critical contradiction(s) in the program's current records are not ` +
+          `recorded: run the contradiction sweep, then resolve or correct them before final export ` +
+          `(${data.unrecordedCriticalFindings.map((c) => c.contradictionType).join(', ')})`
         : data.sectionsWithoutProvenance > 0
           ? `${data.sectionsWithoutProvenance} section(s) have no recorded source lineage, so the audit trail required for export is incomplete`
           : !data.governedStateEvaluated

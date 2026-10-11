@@ -1,0 +1,25 @@
+# The two orderings the unapproved-model-pin gate refuses
+
+## ordering 1 — the file deleted, its baseline entry kept
+✗ unapproved-model-pins: 1 problem(s)
+
+  server/routes/agent-swarm.ts: 0 pin(s), baseline says 7 — tighten the baseline to 0 in this change
+
+A pinned unapproved model serves any non-high-risk request, whatever it drafts. For
+regulatory drafting or review, drop the pin and pass taskType document_drafting or
+regulatory_review. Otherwise add the file to scripts/ci/unapproved-model-pins-baseline.json with the reason it is safe.
+exit: 1
+
+## ordering 2 — the baseline entry removed, the file kept
+✗ unapproved-model-pins: 1 problem(s)
+
+  server/routes/agent-swarm.ts: 7 pin(s), baseline allows 0 — server/routes/agent-swarm.ts:207 (gpt-4o), server/routes/agent-swarm.ts:236 (gpt-4o), server/routes/agent-swarm.ts:265 (gpt-4o), server/routes/agent-swarm.ts:299 (gpt-4o), server/routes/agent-swarm.ts:317 (gpt-4o), server/routes/agent-swarm.ts:340 (gpt-4o), server/routes/agent-swarm.ts:358 (gpt-4o)
+
+A pinned unapproved model serves any non-high-risk request, whatever it drafts. For
+regulatory drafting or review, drop the pin and pass taskType document_drafting or
+regulatory_review. Otherwise add the file to scripts/ci/unapproved-model-pins-baseline.json with the reason it is safe.
+exit: 1
+
+## after the retirement — both gone
+✓ unapproved-model-pins: 27 known pin(s), each with a recorded reason; no new ones
+exit: 0

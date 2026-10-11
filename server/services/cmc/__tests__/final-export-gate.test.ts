@@ -183,3 +183,56 @@ describe('evaluateFinalExportGate — completeness is checked, not just approval
     expect(verdict.data.incompleteApprovedSections ?? verdict.error).toBeTruthy();
   });
 });
+
+/*
+ * Plan item 5 (GA review 2026-10-05): the gate counted only the contradictions
+ * a sweep had recorded, and only the manual sweep records them. A program
+ * never swept — or whose data changed since its sweep — read export-ready over
+ * a rejected batch. The gate now runs the sweep's own detector over the same
+ * registers and refuses a critical finding the record does not hold.
+ */
+describe('evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep', () => {
+  const PROGRAM = '5b0c7a1e-0000-4000-8000-000000000005';
+  const REJECTED = 'At least one batch is rejected while Module 3 composition may include releasable assertions.';
+  const mock = (stored: Array<Record<string, unknown>>) =>
+    queryImpl.mockImplementation(async (sql: string) => {
+      if (sql.includes('cmc_section_lineage')) return { rows: [{ n: 0 }] };
+      if (sql.includes('FROM cmc_module3_sections')) return { rows: [section({}), section({})] };
+      if (sql.includes('FROM cmc_contradictions')) return { rows: stored };
+      if (sql.includes('FROM cmc_batch_records')) return { rows: [{ batchNumber: 'B-7', disposition: 'rejected' }] };
+      return { rows: [] };
+    });
+
+  it('REFUSES when the records hold a critical conflict that was never swept', async () => {
+    mock([]);
+    const verdict = await evaluateFinalExportGate({ orgId: 1, projectId: PROGRAM, actorId: 'u1' });
+    expect(verdict.allowed).toBe(false);
+    expect(verdict.error).toMatch(/not recorded: run the contradiction sweep/);
+    expect(verdict.data.unrecordedCriticalFindings).toEqual([{ contradictionType: 'batch_rejected', details: REJECTED }]);
+  });
+
+  it('ALLOWS when the same finding is recorded and resolved over the same data', async () => {
+    mock([{ severity: 'critical', status: 'resolved', contradiction_type: 'batch_rejected', details: REJECTED }]);
+    const verdict = await evaluateFinalExportGate({ orgId: 1, projectId: PROGRAM, actorId: 'u1' });
+    expect(verdict.data.unrecordedCriticalFindings).toEqual([]);
+    expect(verdict.allowed).toBe(true);
+  });
+
+  it('a recorded, open finding is refused as before — counted once, by its status', async () => {
+    mock([{ severity: 'critical', status: 'open', contradiction_type: 'batch_rejected', details: REJECTED }]);
+    const verdict = await evaluateFinalExportGate({ orgId: 1, projectId: PROGRAM, actorId: 'u1' });
+    expect(verdict.allowed).toBe(false);
+    expect(verdict.data.unrecordedCriticalFindings).toEqual([]);
+    expect(verdict.data.openCriticalContradictions).toBe(1);
+  });
+
+  it('a register read that fails refuses — it is not an empty sweep', async () => {
+    queryImpl.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM cmc_batch_records')) throw new Error('relation is not readable');
+      if (sql.includes('cmc_section_lineage')) return { rows: [{ n: 0 }] };
+      if (sql.includes('FROM cmc_module3_sections')) return { rows: [section({}), section({})] };
+      return { rows: [] };
+    });
+    await expect(evaluateFinalExportGate({ orgId: 1, projectId: PROGRAM, actorId: 'u1' })).rejects.toThrow(/not readable/);
+  });
+});

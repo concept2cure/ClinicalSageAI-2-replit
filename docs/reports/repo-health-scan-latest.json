@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-11T22:39:57.053Z",
+  "generatedAt": "2026-10-11T23:28:16.861Z",
   "git": {
-    "sha": "56ceff4e53176e8c7b69d7cbe6c4ea9ed4d4991f",
+    "sha": "a241b716a072bc3656df7920684d9ae8164a4893",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2068,7 +2068,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 280813
+        "bytes": 292728
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2080,11 +2080,11 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 189160
+        "bytes": 194672
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 185800
+        "bytes": 186572
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2207,10 +2207,6 @@
         "bytes": 113223
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "bytes": 112780
-      },
-      {
         "file": "server/routes/report-os.ts",
         "bytes": 112190
       },
@@ -2248,7 +2244,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 104301
+        "bytes": 105258
+      },
+      {
+        "file": "server/api/cmc/routes.ts",
+        "bytes": 103227
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
@@ -2290,7 +2290,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5954
+        "lines": 6163
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2314,7 +2314,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3717
+        "lines": 3801
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2350,7 +2350,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3248
+        "lines": 3257
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2409,10 +2409,6 @@
         "lines": 2504
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2440
-      },
-      {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "lines": 2406
       },
@@ -2461,6 +2457,10 @@
         "lines": 2189
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2186
+      },
+      {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
         "lines": 2175
       },
@@ -2477,6 +2477,14 @@
         "lines": 2116
       },
       {
+        "file": "client/src/concept2cure/v2/editor/suggestions.ts",
+        "lines": 2112
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 2106
+      },
+      {
         "file": "server/services/precedent-engine.ts",
         "lines": 2097
       },
@@ -2485,16 +2493,8 @@
         "lines": 2093
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 2089
-      },
-      {
         "file": "server/routes/510k-estar-routes.ts",
         "lines": 2083
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/suggestions.ts",
-        "lines": 2077
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",

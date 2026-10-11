@@ -20,7 +20,7 @@ import {
   MAX_LIVE_AGENTS_PER_PROCESS,
 } from '@shared/ana/run-control-limits';
 import { isProductionEnv } from '../ai-gateway/pii-screen.js';
-import type { AnaTool } from '../ai-gateway/types.js';
+import type { AnaTool, AnyAnaTool } from '../ai-gateway/types.js';
 
 /**
  * ADR-0015 §2: on outside production, off in production until the S7 capture
@@ -68,9 +68,18 @@ export const RESEARCH_TOOLS = [
 
 const RESEARCH: ReadonlySet<string> = new Set(RESEARCH_TOOLS);
 
-/** The child's tools: RESEARCH_TOOLS ∩ the parent's governed set, in the parent's order. */
-export function childToolsFrom(governed: readonly AnaTool[]): AnaTool[] {
-  return governed.filter(t => RESEARCH.has(t.name));
+/**
+ * The child's tools: RESEARCH_TOOLS ∩ the parent's governed set, in the
+ * parent's order.
+ *
+ * The parent's set may hold Anthropic-hosted tools (web search, web fetch,
+ * code execution), which carry a name but no schema and run on Anthropic's
+ * own infrastructure. A child is never offered one: the schema is required
+ * here, so a hosted tool could not reach a child even if it took one of these
+ * names.
+ */
+export function childToolsFrom(governed: readonly AnyAnaTool[]): AnaTool[] {
+  return governed.filter((t): t is AnaTool => RESEARCH.has(t.name) && 'input_schema' in t);
 }
 
 export type AgentRole = 'research' | 'verify';
