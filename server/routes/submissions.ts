@@ -343,11 +343,16 @@ router.get('/market-support', limiter, requireRole(AUTHOR), async (req, res) => 
     ]);
     const markets = market ? [market] : Object.keys(REGION_IDENTITY);
     const asOf = new Date().toISOString().slice(0, 10);
-    // The request's pinned, tenant-scoped connection, never the shared pool
-    // (ci:requestdb-coverage). The rule packs it reads are reference data, so
-    // the scope does not narrow the answer; the shared pool in a tenant-facing
-    // route is the thing the gate exists to keep out.
-    const out = await readMarketSupport(requestPgClient(req), markets.map((m) => ({ applicationType, market: m })), asOf);
+    /* The request's own pinned connection, not the shared pool
+       (ci:requestdb-coverage). readMarketSupport reads the platform's active
+       rule packs — reference data, not this tenant's rows — but it reads them
+       on the caller's request scope like every other read in this router, so
+       the route holds no second path to the database. */
+    const out = await readMarketSupport(
+      requestPgClient(req),
+      markets.map((m) => ({ applicationType, market: m })),
+      asOf,
+    );
     res.json({ applicationType, asOf, markets: out });
   } catch (err) {
     fail(res, err);

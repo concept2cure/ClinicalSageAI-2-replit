@@ -335,7 +335,10 @@ async function listRuns(req: Request, res: Response, pool: RunsQuery): Promise<v
 
 /** Wrap a handler so a failure is a 500 with words, never an empty result. */
 const guarded =
-  (fn: (req: Request, res: Response, pool: RunsQuery) => Promise<void>, pool: (req: Request) => RunsQuery) =>
+  (
+    fn: (req: Request, res: Response, pool: RunsQuery) => Promise<void>,
+    pool: (req: Request) => RunsQuery,
+  ) =>
   async (req: Request, res: Response) => {
     try {
       await fn(req, res, pool(req));
@@ -348,14 +351,16 @@ const guarded =
   };
 
 /**
- * Register the live run reads. `pool` is a seam for the route tests.
- *
- * Every statement runs on the REQUEST's pinned, tenant-scoped connection
- * (requestPgClient), never the shared pool: these reads carry the organisation
- * in their own SQL, and the scope is the second of the two walls the header
- * describes, not a substitute for it (ci:requestdb-coverage).
+ * Register the live run reads. `pool` is a seam for the route tests; it is
+ * handed the request so the default is the request's own pinned connection
+ * rather than the shared pool (ci:requestdb-coverage): these reads are
+ * tenant-scoped, and on the request scope RLS applies to them as it does to
+ * every other read in this router.
  */
-export function mountRunReadRoutes(router: Router, opts: { pool?: (req: Request) => RunsQuery } = {}): void {
+export function mountRunReadRoutes(
+  router: Router,
+  opts: { pool?: (req: Request) => RunsQuery } = {},
+): void {
   const pool = opts.pool ?? ((req: Request) => requestPgClient(req) as unknown as RunsQuery);
   router.get('/runs', guarded(listRuns, pool));
   router.get('/runs/:runId/events', guarded(readRunEvents, pool));

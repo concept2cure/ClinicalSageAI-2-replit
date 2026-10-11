@@ -5974,8 +5974,8 @@
    "site": "AnaToolExecutor.ts:6069",
    "present": {
     "verb": "review",
-    "object": "an SOP against its requirements",
-    "source": "engine",
+    "object": "the SOP against its topic's requirements",
+    "source": "authoring",
     "preview": [
      "topic"
     ]
