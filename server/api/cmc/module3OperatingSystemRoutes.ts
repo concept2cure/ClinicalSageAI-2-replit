@@ -35,6 +35,8 @@ import { governedActorId, requireEditorAccess } from '../../middleware/orgMember
 import { clientIpOf } from '../../utils/client-ip';
 import { requireRole } from '../../middleware/auth';
 import { requireGovernedReason } from '../../routes/governed-reason';
+import { resolveSignerOrgRole } from '../../services/part11/resolve-signer-role';
+import { isSigningAuthorized } from '../../services/part11/signing-authority';
 
 /** The §11.50(a)(3) meanings a signature may carry. */
 type SignatureMeaning = (typeof SIGNATURE_MEANINGS)[number];
@@ -319,9 +321,14 @@ router.patch('/contradictions/:id/resolve', requireEditorAccess, async (req, res
     const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const userId = governedActorId(req);
     if (!userId) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+    /* A critical finding blocks every section approval; clearing one is a
+       signer's decision, not any member's (GA plan item 4, separation of
+       duties). The role comes from the membership row, as for a signature. */
+    const signingAuthority = isSigningAuthorized(await resolveSignerOrgRole(userId, orgId));
     const out = await resolveContradiction({
       organizationId: orgId,
       userId,
+      signingAuthority,
       contradictionId: id,
       reason: (req.body ?? {}).resolutionNote,
       ipAddress: clientIpOf(req) ?? undefined,
@@ -559,6 +566,20 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       });
     }
     const signMeaning: SignatureMeaning = meaningParse.data;
+    /* The signer's own reason, or no signature. The route used to record
+       'Approved Module 3 section <key>' when none was stated — a reason the
+       code made up, against recordGovernedAction's contract (GA plan item 4).
+       Checked before authority and the password, so nothing is spent. */
+    const reasonCheck = requireGovernedReason((req.body ?? {}).reason);
+    if (!reasonCheck.ok) {
+      return res.status(400).json({ success: false, error: 'REASON_REQUIRED', detail: reasonCheck.error, field: 'reason' });
+    }
+    const signReason = reasonCheck.reason;
+    /* Idempotency, per organisation: the client's key is namespaced so one
+       tenant's key can never collide with another's (the column is globally
+       unique, and a collision made the signature fail with a 500). */
+    const rawKey = (req.body ?? {}).idempotencyKey;
+    const idempotencyKey = typeof rawKey === 'string' && rawKey.trim() ? `cmc-m3-approve:${orgId}:${rawKey.trim()}` : null;
 
     /* §11.10(g): identity is not authority. Batch release, specification
        approval and register qualification each ask whether the signer may
@@ -576,18 +597,6 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
 
     const pool = getPool();
 
-    const blocking = await pool.query(
-      `SELECT id FROM cmc_contradictions
-       WHERE organization_id = $1 AND project_id = $2 AND status <> 'resolved' AND severity = 'critical'
-       LIMIT 1`,
-      [orgId, projectId]
-    );
-    if (blocking.rows.length > 0) {
-      return res
-        .status(409)
-        .json({ success: false, error: 'Critical contradictions must be resolved before approval.' });
-    }
-
     // The version snapshot + section flip + provenance event + the hash-chained
     // governed-action record are one atomic transaction: approval either lands
     // as a complete §11 signature (audit chain included) or not at all —
@@ -597,16 +606,65 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
     try {
       await client.query('BEGIN');
 
+      /* A retry with the same key replays the approval it already made,
+         rather than signing twice or failing on the key. */
+      if (idempotencyKey) {
+        const prior = await client.query(
+          `SELECT id, payload FROM c2c_ana_actions WHERE org_id = $1 AND idempotency_key = $2 LIMIT 1`,
+          [orgId, idempotencyKey],
+        );
+        if (prior.rows[0]) {
+          await client.query('ROLLBACK');
+          const p = prior.rows[0].payload ?? {};
+          return res.json({
+            success: true,
+            replayed: true,
+            sectionKey,
+            versionNumber: p.versionNumber ?? null,
+            approvedVersionId: p.approvedVersionId ?? null,
+            governance: { actionId: prior.rows[0].id },
+          });
+        }
+      }
+
+      /* Everything the signature depends on is read INSIDE the transaction,
+         with the section row locked: a sweep, a recompile or a second signer
+         that commits after these reads cannot slip between the check and the
+         signature (GA plan item 4). */
       const sectionRes = await client.query(
-        `SELECT id, deterministic_json, narrative_text, approval_state, stale, stale_reason
+        `SELECT id, deterministic_json, narrative_text, approval_state, stale, stale_reason, compiled_hash
          FROM cmc_module3_sections
-         WHERE organization_id = $1 AND project_id = $2 AND section_key = $3`,
+         WHERE organization_id = $1 AND project_id = $2 AND section_key = $3
+         FOR UPDATE`,
         [orgId, projectId, sectionKey]
       );
       const section = sectionRes.rows[0];
       if (!section) {
         await client.query('ROLLBACK');
         return res.status(404).json({ success: false, error: 'Section not found' });
+      }
+      /* What the signer read (the read-before-sign panel shows the content
+         hash) is what is signed: a recompile since then is refused. */
+      const readHash = (req.body ?? {}).compiledHash;
+      if (typeof readHash === 'string' && readHash.trim() && readHash.trim() !== String(section.compiled_hash ?? '')) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          success: false,
+          error: 'SECTION_CHANGED',
+          detail: `§${sectionKey} was recompiled after you read it. Read the current content, then sign. Nothing was signed.`,
+        });
+      }
+      const blocking = await client.query(
+        `SELECT id FROM cmc_contradictions
+         WHERE organization_id = $1 AND project_id = $2 AND status <> 'resolved' AND severity = 'critical'
+         LIMIT 1`,
+        [orgId, projectId]
+      );
+      if (blocking.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return res
+          .status(409)
+          .json({ success: false, error: 'Critical contradictions must be resolved before approval.' });
       }
 
       /* The export gate's rule, applied at the signature. An approval is a
@@ -694,12 +752,16 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         ]
       );
       const approvedVersionId = insertedVersion.rows[0].id;
-      await client.query(
+      const flipped = await client.query(
         `UPDATE cmc_module3_sections
          SET approval_state = 'approved', approved_version_id = $1, updated_at = NOW()
-         WHERE id = $2`,
-        [approvedVersionId, section.id]
+         WHERE id = $2 AND compiled_hash IS NOT DISTINCT FROM $3`,
+        [approvedVersionId, section.id, section.compiled_hash ?? null]
       );
+      if (flipped.rowCount === 0) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ success: false, error: 'SECTION_CHANGED', detail: `§${sectionKey} changed while it was being signed. Nothing was signed.` });
+      }
       await client.query(
         `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
          VALUES ($1,$2,'section',$3,'approved',$4::jsonb,$5)`,
@@ -713,10 +775,6 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       );
 
       const signTarget = `cmc_module3_section:${projectId}/${sectionKey}`;
-      const signReason =
-        typeof (req.body ?? {}).reason === 'string' && (req.body as any).reason.trim()
-          ? (req.body as any).reason.trim()
-          : `Approved Module 3 section ${sectionKey}`;
       // §11.10(e) hash-chained governed-action record (audit_logs + c2c_ana_actions),
       // the same ledger the specification-approve and batch-release endpoints write.
       const governance = await recordGovernedAction(client, {
@@ -728,7 +786,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         payload: { meaning: signMeaning, versionNumber, approvedVersionId },
         domain: 'cmc',
         surface: 'cmc-module3-section-approve',
-        idempotencyKey: (req.body ?? {}).idempotencyKey ?? null,
+        idempotencyKey,
       });
 
       // 21 CFR Part 11 signature row, same transaction as the ledger pair.

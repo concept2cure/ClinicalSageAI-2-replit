@@ -122,8 +122,13 @@ describe('module3OperatingSystemRoutes', () => {
 
   it('section approve proceeds past the re-auth gate on success (then honors the contradiction block)', async () => {
     mockVerifyReauth.mockResolvedValueOnce({ ok: true });
-    // First query after the gate is the critical-contradiction check.
-    mockQuery.mockResolvedValueOnce({ rows: [{ id: 'c-1' }] });
+    /* The critical-contradiction check runs INSIDE the transaction, after the
+       section row is locked (GA plan item 4): BEGIN, the section, then it. */
+    mockQuery
+      .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: COMPLETE, approval_state: 'draft', stale: false }] }) // section, FOR UPDATE
+      .mockResolvedValueOnce({ rows: [{ id: 'c-1' }] }) // contradiction check: one critical open
+      .mockResolvedValueOnce({}); // ROLLBACK
 
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
@@ -137,11 +142,11 @@ describe('module3OperatingSystemRoutes', () => {
   it('approves a section atomically and records a hash-chained governed action (§11)', async () => {
     mockVerifyReauth.mockResolvedValueOnce({ ok: true });
     mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({}) // BEGIN
       .mockResolvedValueOnce({
         rows: [{ id: 'sec-1', deterministic_json: COMPLETE, narrative_text: 'The drug product is a tablet.', approval_state: 'draft', stale: false }],
-      }) // section
+      }) // section, FOR UPDATE
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({ rows: [] }) // drift: lineage against live sources
       .mockResolvedValueOnce({ rows: [] }) // drift: sources of the project
       .mockResolvedValueOnce({ rows: [{ max_version: 2 }] }) // version max
@@ -202,7 +207,6 @@ describe('module3OperatingSystemRoutes', () => {
     // must refuse it first, with the same rule.
     mockVerifyReauth.mockResolvedValueOnce({ ok: true });
     mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({}) // BEGIN
       .mockResolvedValueOnce({
         rows: [{
@@ -210,7 +214,8 @@ describe('module3OperatingSystemRoutes', () => {
           deterministic_json: { completeness: 0, missingInputs: ['containerClosureDescription', 'suitabilityJustification'] },
           approval_state: 'draft',
         }],
-      }) // section
+      }) // section, FOR UPDATE
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({}); // ROLLBACK
 
     const res = await request(app)
@@ -246,14 +251,14 @@ describe('module3OperatingSystemRoutes', () => {
     // the same reading the export gate applies.
     mockVerifyReauth.mockResolvedValueOnce({ ok: true });
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: '{}', approval_state: 'draft' }] })
-      .mockResolvedValueOnce({});
+      .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: '{}', approval_state: 'draft' }] }) // section
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check
+      .mockResolvedValueOnce({}); // ROLLBACK
 
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.S.1/approve')
-      .send({ reason: 'approve', meaning: 'approval', reauth: { password: 'ok' } });
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'ok' } });
 
     expect(res.status).toBe(409);
     expect(res.body.error).toContain('3.2.S.1');

@@ -137,6 +137,8 @@ export async function reconcileContradictions(
 export async function resolveContradiction(a: {
   organizationId: number;
   userId: number;
+  /** Whether the resolver's role carries signing authority; a critical finding needs it. */
+  signingAuthority: boolean;
   contradictionId: string;
   reason: unknown;
   ipAddress?: string;
@@ -154,6 +156,13 @@ export async function resolveContradiction(a: {
     const row = rows[0];
     if (!row) return refuse(404, 'NOT_FOUND', 'Contradiction not found.');
     if (row.status === 'resolved') return refuse(409, 'ALREADY_RESOLVED', 'That contradiction is already resolved.');
+    if (row.severity === 'critical' && !a.signingAuthority) {
+      return refuse(
+        403,
+        'ESIGNATURE_NO_AUTHORITY',
+        'A critical finding blocks every section approval, so resolving it needs a role with signing authority. Nothing was changed.',
+      );
+    }
     await client.query(
       `UPDATE cmc_contradictions SET status = 'resolved', updated_at = NOW() WHERE id = $1 AND organization_id = $2`,
       [row.id, a.organizationId],

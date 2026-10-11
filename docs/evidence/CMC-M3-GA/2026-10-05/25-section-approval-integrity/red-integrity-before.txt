@@ -1,0 +1,173 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts
+{
+  "timestamp": "2026-10-05T14:06:36.127Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stdout | server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts
+{
+  "timestamp": "2026-10-05T14:06:38.956Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T14:06:38.957Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts
+{
+  "timestamp": "2026-10-05T14:06:38.962Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: the reason is the signer’s > refuses an approval with no stated reason — before the password, before any SQL 40ms
+   → expected 404 to be 400 // Object.is equality
+ × server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: the reason is the signer’s > records exactly the reason the signer stated 7ms
+   → {"success":false,"error":"Section not found"}: expected 404 to be 200 // Object.is equality
+ × server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: what it depends on is read inside the transaction > locks the section, then reads the blocking contradictions, after BEGIN 5ms
+   → expected -1 to be greater than 1
+ × server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: what it depends on is read inside the transaction > refuses when the section was recompiled after the signer read it, and signs nothing 4ms
+   → expected 404 to be 409 // Object.is equality
+ × server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: what it depends on is read inside the transaction > guards the state flip on the hash it read 5ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: the idempotency key is the organisation’s > namespaces the key by organisation on the ledger 3ms
+   → Cannot read properties of undefined (reading '1')
+ × server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: the idempotency key is the organisation’s > a retry with the same key replays the approval it made, and signs nothing new 3ms
+   → expected 404 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: the reason is the signer’s > refuses an approval with no stated reason — before the password, before any SQL
+AssertionError: expected 404 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 404
+
+ ❯ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts:77:26
+     75|     for (const reason of [undefined, '', 'ok']) {
+     76|       const res = await request(app).post(URL).send({ reason, meaning:…
+     77|       expect(res.status).toBe(400);
+       |                          ^
+     78|       expect(res.body).toMatchObject({ error: 'REASON_REQUIRED', field…
+     79|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: the reason is the signer’s > records exactly the reason the signer stated
+AssertionError: {"success":false,"error":"Section not found"}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts:86:50
+     84|   it('records exactly the reason the signer stated', async () => {
+     85|     const res = await request(app).post(URL).send({ reason: REASON, me…
+     86|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+     87|     expect((mockRecordGoverned.mock.calls[0] as unknown[])[1]).toMatch…
+     88|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: what it depends on is read inside the transaction > locks the section, then reads the blocking contradictions, after BEGIN
+AssertionError: expected -1 to be greater than 1
+ ❯ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts:99:18
+     97|     const blocking = order.findIndex((s) => /FROM cmc_contradictions/.…
+     98|     expect(begin).toBeGreaterThanOrEqual(0);
+     99|     expect(lock).toBeGreaterThan(begin);
+       |                  ^
+    100|     expect(blocking).toBeGreaterThan(lock);
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: what it depends on is read inside the transaction > refuses when the section was recompiled after the signer read it, and signs nothing
+AssertionError: expected 404 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 404
+
+ ❯ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts:105:24
+    103|   it('refuses when the section was recompiled after the signer read it…
+    104|     const res = await request(app).post(URL).send({ reason: REASON, me…
+    105|     expect(res.status).toBe(409);
+       |                        ^
+    106|     expect(res.body.error).toBe('SECTION_CHANGED');
+    107|     expect(mockRecordGoverned).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: what it depends on is read inside the transaction > guards the state flip on the hash it read
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts:114:23
+    112|     await request(app).post(URL).send({ reason: REASON, meaning: 'appr…
+    113|     const flip = h.calls.find(([s]) => /^\s*UPDATE cmc_module3_section…
+    114|     expect(flip?.[0]).toMatch(/compiled_hash IS NOT DISTINCT FROM \$3/…
+       |                       ^
+    115|     expect(flip?.[1]).toEqual(['ver-1', 'sec-1', 'hash-A']);
+    116|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: the idempotency key is the organisation’s > namespaces the key by organisation on the ledger
+TypeError: Cannot read properties of undefined (reading '1')
+ ❯ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts:122:44
+    120|   it('namespaces the key by organisation on the ledger', async () => {
+    121|     await request(app).post(URL).send({ reason: REASON, meaning: 'appr…
+    122|     expect((mockRecordGoverned.mock.calls[0] as unknown[])[1]).toMatch…
+       |                                            ^
+    123|     const lookup = h.calls.find(([s]) => /FROM c2c_ana_actions/.test(s…
+    124|     expect(lookup?.[1]).toEqual([101, 'cmc-m3-approve:101:k-1']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: the idempotency key is the organisation’s > a retry with the same key replays the approval it made, and signs nothing new
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts:130:24
+    128|     h.prior = { id: 'act-earlier', payload: { versionNumber: 4, approv…
+    129|     const res = await request(app).post(URL).send({ reason: REASON, me…
+    130|     expect(res.status).toBe(200);
+       |                        ^
+    131|     expect(res.body).toMatchObject({ replayed: true, versionNumber: 4,…
+    132|     expect(mockRecordGoverned).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  14:06:30
+   Duration  9.38s (transform 5.96s, setup 170ms, import 8.56s, tests 72ms, environment 0ms)
+
