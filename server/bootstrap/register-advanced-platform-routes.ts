@@ -22,7 +22,6 @@ import realtimeCollab from '../routes/realtime-collab.js';
 import graphrag from '../routes/graphrag.js';
 import anaCortexFt from '../routes/ana-cortex-ft.js';
 import globalCompliance from '../routes/global-compliance.js';
-import agentSwarm from '../routes/agent-swarm.js';
 import realWorldEvidence from '../routes/real-world-evidence.js';
 import regulatoryDigitalTwin from '../routes/regulatory-digital-twin.js';
 import submissionTwin from '../routes/submission-twin.js';
@@ -159,7 +158,6 @@ export async function registerAdvancedPlatformRoutes({
       { path: '/api/graphrag', router: graphrag, name: 'GraphRAG' },
       { path: '/api/ana-cortex-ft', router: anaCortexFt, name: 'AnA Intelligence Fine-Tuning' },
       { path: '/api/compliance', router: globalCompliance, name: 'Global Regulatory Compliance' },
-      { path: '/api/agent-swarm', router: agentSwarm, name: 'Agent Swarm' },
       { path: '/api/real-world-evidence', router: realWorldEvidence, name: 'Real-World Evidence' },
       { path: '/api/regulatory-digital-twin', router: regulatoryDigitalTwin, name: 'Regulatory Digital Twin' },
       { path: '/api/submission-twin', router: submissionTwin, name: 'Submission Twin' },
