@@ -13,6 +13,7 @@ import { csrReports } from '../../shared/schema.js';
 import { recordUsage, checkQuota } from './usage-metering.js';
 import { e3ParentNumber } from './ind/ctd/csr-e3-guidance.js';
 import { resolveRequirements } from './ind/ctd/requirements-resolver.js';
+import { acceptModelDraft } from './csr/unsupplied-statistics.js';
 
 // AI-powered drafting via the unified AI client (Claude primary)
 let ai: { complete: (messages: any, options?: any) => Promise<string> } | null = null;
@@ -504,7 +505,10 @@ export async function draftCSRSectionWithProvenance(
         }
       );
 
-      if (content && content.length > 0) {
+      // Rule 2: a statistical or results section drafted from metadata alone
+      // may not state a figure nobody supplied (csr/unsupplied-statistics.ts);
+      // a refused draft records why on the lineage and falls to the template.
+      if (acceptModelDraft(section.number, content, info, baseLineage)) {
         return {
           number: section.number,
           content,
@@ -514,7 +518,7 @@ export async function draftCSRSectionWithProvenance(
           lineage: Object.keys(baseLineage).length > 0 ? baseLineage : null,
         };
       }
-      // Empty content — fall through to template
+      // Empty, or refused above — fall through to the template.
     } catch (err) {
       console.warn(
         `[CSR Builder] AI drafting failed for section ${section.number}, using template:`,
@@ -603,7 +607,8 @@ ${info.treatmentDuration ? `- Treatment Duration: ${info.treatmentDuration}` : '
 
 Write professional regulatory prose suitable for FDA/EMA submission. Use precise clinical language.
 Do NOT use markdown. Write in plain text with section headers in CAPS.
-Include placeholders like [DATA TO BE INSERTED] where actual study data would go.`;
+Include placeholders like [DATA TO BE INSERTED] where actual study data would go.
+Never state a statistic that is not given above: no p-value, confidence interval, percentage, ratio, count or significance level. Write [DATA TO BE INSERTED] instead.`;
 }
 
 /**
@@ -652,6 +657,11 @@ async function generateSectionWithAI(
         userId: aiContext?.userId,
       }
     );
+    // Same guard as the provenance path: a statistical section that states a
+    // figure the study information does not contain is not used.
+    if (content && !acceptModelDraft(section.number, content, info)) {
+      return generateSectionTemplate(section, info);
+    }
     return content;
   } catch (err) {
     console.warn(`[CSR Builder] AI drafting failed for section ${section.number}, using template:`, err);
@@ -862,7 +872,10 @@ function generateSectionTemplate(
 
     '9.3': `Patients eligible for this study were adults with a confirmed diagnosis of ${info.indication}.\n\n[Inclusion and exclusion criteria to be populated from protocol]`,
 
-    '9.7': `The statistical analysis plan (SAP) was finalized prior to database lock. The primary analysis population was the intent-to-treat (ITT) population, defined as all randomized patients who received at least one dose of study treatment. The primary endpoint of ${info.primaryEndpoint} was analyzed using [statistical method to be specified]. A two-sided significance level of 0.05 was used for the primary analysis.${info.sampleSize ? `\n\nSample size: ${info.sampleSize} patients were planned to provide [X]% power to detect a clinically meaningful difference.` : ''}`,
+    // Until 2026-10-05 this stated that the SAP was finalised before database
+    // lock, that the primary population was ITT and that a two-sided 0.05 level
+    // was used — facts nobody supplied. Each is now a placeholder for the SAP.
+    '9.7': `[DATA TO BE INSERTED FROM THE SAP]\n\nThe statistical analysis plan (SAP) was finalized on [date, relative to database lock]. The primary analysis population was [population and its definition]. The primary endpoint of ${info.primaryEndpoint} was analyzed using [statistical method]. A [one- or two-sided] significance level of [alpha] was used for the primary analysis.${info.sampleSize ? `\n\nSample size: ${info.sampleSize} patients were planned to provide [X]% power to detect [the planned difference].` : ''}`,
 
     '9.8': `[DATA TO BE INSERTED]\n\nChanges to the conduct of the study after it began: [list each protocol amendment with its number, date and rationale, or state that there were none]. Changes to the planned analyses: [describe each departure from the protocol- or SAP-specified analyses, when it was decided and whether before or after unblinding, or state that there were none].`,
 

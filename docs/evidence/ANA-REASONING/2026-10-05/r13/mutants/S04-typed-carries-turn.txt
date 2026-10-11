@@ -1,0 +1,12 @@
+Mutant S04-typed-carries-turn: text the person types inside AnA’s suggestion carries her turn
+
+--- client/src/concept2cure/v2/editor/suggestions.ts
+- const turns = ui === 'paste' || ui === 'drop' ? pastedTurns(fix.doc, from, to) : [];
++ const turns = pastedTurns(fix.doc, from, to);
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/pasteAnaSuggestion.test.ts > pasting an AnA suggestion > track changes on: text the person types inside AnA’s suggestion is theirs, with no turn (negative control) 21ms
+      Tests  1 failed | 6 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -68,7 +68,21 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, url: string, body?: any) => {
     if (url === '/api/statistical-defensibility/assess') {
-      return ok({ overallScore: 78, overallRating: 'Moderate', reviewerRiskLevel: 'Medium', criticalIssues: ['No multiplicity adjustment for the key secondary'], majorIssues: [], recommendations: ['Pre-specify the estimand per ICH E9(R1)'] });
+      return ok({
+        status: 'assessed',
+        engine: 'deterministic',
+        sampleSize: 152,
+        power: 0.8,
+        judgment: {
+          overallVerdict: 'marginal',
+          overallRisk: 'moderate',
+          actionRecommendation: 'proceed_with_conditions',
+          dimensions: [
+            { name: 'Estimand Clarity', verdict: 'marginal', score: 55, rationale: 'No estimand framework specified.', flags: ['ICH E9(R1)'] },
+          ],
+          escalationReasons: [],
+        },
+      });
     }
     if (url === '/api/biostat/assurance') return ok({ assurance: 0.72, powerAtPriorMean: 0.9, nPerArm: body.nPerArm });
     return ok({});
@@ -85,21 +99,41 @@ function selectCalculator(title: string) {
 }
 
 describe('BiostatWorkbench — real statistical engine', () => {
-  it('runs a reviewer-risk defensibility assessment and renders the server result', async () => {
+  // 2026-10-05: the assessment is the deterministic judgment engine's, not a
+  // model's score. The form sends the engine's inputs; the card renders its verdict.
+  it('sends the engine its inputs and renders the deterministic verdict', async () => {
     render(<BiostatWorkbench {...props()} />);
     fill(/^Indication$/, 'NSCLC');
-    fill(/^Study design$/, 'randomized double-blind');
-    fill(/^Primary endpoint$/, 'PFS');
+    fill(/^Effect size/, '0.5');
     fireEvent.click(screen.getByRole('button', { name: /Assess defensibility/ }));
 
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => c[1] === '/api/statistical-defensibility/assess');
       expect(call).toBeTruthy();
-      expect(call![2]).toMatchObject({ indication: 'NSCLC', studyDesign: 'randomized double-blind', primaryEndpoint: 'PFS' });
+      expect(call![2]).toMatchObject({
+        indication: 'NSCLC', endpointType: 'continuous', studyType: 'superiority',
+        effectSize: 0.5, alpha: 0.05, powerTarget: 0.8, attritionRate: 0.1,
+      });
     });
-    expect(await screen.findByText('78')).toBeTruthy();
-    expect(screen.getByText(/No multiplicity adjustment/)).toBeTruthy();
-    expect(screen.getByText(/Pre-specify the estimand/)).toBeTruthy();
+    expect(await screen.findByText('152')).toBeTruthy();
+    expect(screen.getAllByText('marginal').length).toBeGreaterThan(0);
+    expect(screen.getByText(/No estimand framework specified/)).toBeTruthy();
+  });
+
+  it('shows the engine’s own sentence when it cannot judge the design, and no verdict', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/statistical-defensibility/assess') {
+        throw Object.assign(new Error('No verdict was formed. Missing or invalid: effectSize.'), {
+          name: 'ApiRequestError',
+          status: 422,
+        });
+      }
+      return ok({});
+    });
+    render(<BiostatWorkbench {...props()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Assess defensibility/ }));
+    expect(await screen.findByText(/Missing or invalid: effectSize/)).toBeTruthy();
+    expect(screen.queryByText('Verdict')).toBeNull();
   });
 
   it('computes assurance from the real design-stats endpoint and renders only the response', async () => {

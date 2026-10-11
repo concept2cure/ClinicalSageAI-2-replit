@@ -26,7 +26,13 @@ interface DesignOption {
   rank: number;
   endpoint: string;
   statisticalMethod: string;
-  suggestedSampleSize: number;
+  /**
+   * The median N of the precedents behind this option, or null when none
+   * recorded one. Until 2026-10-05 a missing median was filled by endpoint
+   * keyword (survival 400, PFS 350, response 200, else 300): a figure from
+   * nowhere, presented beside the precedent-based success probability.
+   */
+  suggestedSampleSize: number | null;
   successProbability: number;
   agencyBreakdown: Record<string, { approved: number; total: number; rate: number }>;
   precedentCount: number;
@@ -284,10 +290,7 @@ export class RegulatoryOutcomeOptimizerService {
         adjustedRate = (baseRate + methodCorr) / 2;
       }
 
-      const medianSampleSize =
-        entry.sampleSizes.length > 0
-          ? this.median(entry.sampleSizes)
-          : this.estimateSampleSize(entry.endpoint);
+      const medianSampleSize = entry.sampleSizes.length > 0 ? this.median(entry.sampleSizes) : null;
 
       const agencyBreakdown: Record<string, { approved: number; total: number; rate: number }> = {};
       for (const [agency, stats] of Object.entries(entry.agencyResults)) {
@@ -310,20 +313,9 @@ export class RegulatoryOutcomeOptimizerService {
       });
     }
 
-    // If no historical data, provide heuristic defaults
-    if (options.length === 0) {
-      options.push({
-        rank: 1,
-        endpoint: filterEndpoint || 'Overall Survival',
-        statisticalMethod: 'Log-rank test',
-        suggestedSampleSize: 300,
-        successProbability: 0,
-        agencyBreakdown: {},
-        precedentCount: csrPrecedents.length,
-        rationale:
-          'No regulatory outcome data available for this combination. Recommendation is based on general clinical trial conventions. Ingest regulatory outcomes to improve predictions.',
-      });
-    }
+    // With no regulatory outcome data there is no option to recommend. Until
+    // 2026-10-05 this invented one — overall survival, log-rank, N = 300 —
+    // "based on general clinical trial conventions". An empty list is the answer.
 
     // Sort by success probability descending
     options.sort((a, b) => b.successProbability - a.successProbability);
@@ -336,15 +328,6 @@ export class RegulatoryOutcomeOptimizerService {
     const sorted = [...values].sort((a, b) => a - b);
     const mid = Math.floor(sorted.length / 2);
     return sorted.length % 2 !== 0 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
-  }
-
-  private estimateSampleSize(endpoint: string): number {
-    const lower = endpoint.toLowerCase();
-    if (lower.includes('survival') || lower.includes('os')) return 400;
-    if (lower.includes('pfs') || lower.includes('progression')) return 350;
-    if (lower.includes('response') || lower.includes('orr')) return 200;
-    if (lower.includes('biomarker')) return 150;
-    return 300;
   }
 
   private generateRationale(
@@ -519,22 +502,11 @@ export class RegulatoryOutcomeOptimizerService {
         });
       }
 
-      // --- Vary sample size ---
-      const baseSampleSize = designParams.sampleSize || 300;
-      const sampleSizeMultipliers = [0.5, 0.75, 1.25, 1.5, 2.0];
-      for (const multiplier of sampleSizeMultipliers) {
-        const variedSize = Math.round(baseSampleSize * multiplier);
-        // Power-based heuristic: higher sample size increases success probability
-        const powerGain = Math.min(0.15, Math.log(multiplier) * 0.1);
-        const adjustedRate = Math.max(0, Math.min(1, baselineSuccessRate + powerGain));
-        scenarios.push({
-          parameter: 'sample_size',
-          value: String(variedSize),
-          predictedSuccessRate: Math.round(adjustedRate * 1000) / 1000,
-          delta: Math.round((adjustedRate - baselineSuccessRate) * 1000) / 1000,
-          sampleSizeImpact: `${multiplier < 1 ? 'Decrease' : 'Increase'} by ${Math.round(Math.abs(multiplier - 1) * 100)}%`,
-        });
-      }
+      // Sample size is not varied. The outcome data relates endpoints and
+      // methods to approval; it does not relate N to approval, and the
+      // "power gain" of log(multiplier) × 0.1 added to an approval rate here
+      // until 2026-10-05 had no basis. Power at a given N is the sizing
+      // engine's (study-design/sample-size.ts), not an approval probability.
 
       return {
         baselineSuccessRate: Math.round(baselineSuccessRate * 1000) / 1000,
@@ -549,18 +521,16 @@ export class RegulatoryOutcomeOptimizerService {
     }
   }
 
-  private describeSampleSizeImpact(endpoint: string, currentSize?: number): string {
-    const lower = endpoint.toLowerCase();
-    if (lower.includes('survival') || lower.includes('os')) {
-      return 'Typically requires larger sample sizes (300-500+)';
-    }
-    if (lower.includes('response') || lower.includes('orr')) {
-      return 'Moderate sample size requirements (150-300)';
-    }
-    if (lower.includes('biomarker')) {
-      return 'Lower sample size requirements (50-200)';
-    }
-    return currentSize ? `Current: ${currentSize}` : 'Variable';
+  /**
+   * What the outcome data says about sample size for a scenario: nothing.
+   * Until 2026-10-05 this answered from the endpoint's name ("survival":
+   * 300-500+, "response": 150-300, "biomarker": 50-200) — ranges with no
+   * source. Sample size for a design is the sizing engine's.
+   */
+  private describeSampleSizeImpact(_endpoint: string, currentSize?: number): string {
+    return currentSize
+      ? `Not modelled by outcome data (current design: ${currentSize}); size it with the sample-size engine.`
+      : 'Not modelled by outcome data; size it with the sample-size engine.';
   }
 
   // -------------------------------------------------------------------------

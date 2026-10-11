@@ -9,7 +9,15 @@
  * computed result through the handler.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// Module 2 tools read the program's completed CSRs (ana/module2-csr-inputs.ts);
+// the loader is mocked so the M2.7 cases stay offline.
+const csrRecords = vi.hoisted(() => ({ rows: [] as unknown[] }));
+vi.mock('../../csr/load-csr-inputs-for-project.js', () => ({
+  loadCsrInputsForProject: vi.fn(async () => csrRecords.rows),
+}));
+
 import { getToolHandler } from '../AnaToolExecutor.js';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
@@ -332,23 +340,53 @@ describe('characterize_pk handler', () => {
   });
 });
 
+// 2026-10-05 (CLAUDE.md Rule 2): the summary's figures come from the program's
+// completed CSR records, never from a csrs[] array in the tool input — which
+// the model writes. These cases used to pass a model-supplied CSR and expect a
+// draft built from it.
 describe('draft_clinical_summary_m2_7 handler', () => {
-  it('returns needs_parameters without CSRs', async () => {
+  const MODEL_SUPPLIED = [
+    { studyId: 'S1', phase: '1', primaryEndpoint: 'safety', primaryResult: 'well tolerated', sampleSize: 48, saeCount: 0 },
+  ];
+
+  it('composes nothing from figures in the tool input when no program is open', async () => {
     const handler = getToolHandler('draft_clinical_summary_m2_7')!;
-    const out = JSON.parse(await handler({ csrs: [], indication: 'x', investigationalProduct: 'y' }));
-    expect(out.status).toBe('needs_parameters');
+    const out = JSON.parse(await handler({ csrs: MODEL_SUPPLIED, indication: 'oncology', investigationalProduct: 'BX-115' }));
+    expect(out.ok).toBe(false);
+    expect(out.status).toBe('needs_project');
+    expect(out.ignoredSuppliedFigures).toBe(true);
+    expect(out).not.toHaveProperty('content');
   });
 
-  it('drafts the M2.7 summary from a CSR', async () => {
+  it('says so when the program has no completed CSR', async () => {
+    csrRecords.rows = [];
     const handler = getToolHandler('draft_clinical_summary_m2_7')!;
     const out = JSON.parse(
-      await handler({
-        csrs: [{ studyId: 'S1', phase: '1', primaryEndpoint: 'safety', primaryResult: 'well tolerated', sampleSize: 48, saeCount: 0 }],
-        indication: 'oncology',
-        investigationalProduct: 'BX-115',
-      }),
+      await handler({ indication: 'oncology', investigationalProduct: 'BX-115' }, { organizationId: 3, projectId: 9 } as never),
+    );
+    expect(out.status).toBe('needs_data');
+  });
+
+  it('drafts the M2.7 summary from the program’s CSR records, not from the tool input', async () => {
+    csrRecords.rows = [
+      { studyId: 'X-301', protocolNumber: 'X-301', phase: '3', studyDesign: 'randomized, double-blind', primaryEndpoint: 'ORR',
+        primaryResult: 'See §11.4 (Efficacy Results) of the CSR for tabulated results.', sampleSize: 312, csrSections: [] },
+    ];
+    const handler = getToolHandler('draft_clinical_summary_m2_7')!;
+    const out = JSON.parse(
+      await handler(
+        { csrs: MODEL_SUPPLIED, indication: 'oncology', investigationalProduct: 'BX-115' },
+        { organizationId: 3, projectId: 9 } as never,
+      ),
     );
     expect(out.status).toBe('drafted');
     expect(out.sectionKey).toBe('2.7');
+    expect(out.source).toEqual({ csrBuildJobsForProject: 9, studies: 1 });
+    expect(out.ignoredSuppliedFigures).toBe(true);
+    expect(out.content).toContain('X-301');
+    expect(out.content).toContain('312 subjects');
+    expect(out.content).not.toContain('well tolerated');
+    expect(out.content).not.toMatch(/\b48 subjects/);
   });
 });
+

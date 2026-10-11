@@ -1,0 +1,12 @@
+Mutant C05-mismatch-reason-hidden: the dimmed "ask again in a new conversation" offer says nothing about why
+
+--- client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+- const reason = disabled ? 'AnA is still answering. A new conversation can start once she has finished.' : null;
++ const reason: string | null = null;
+
+Tests run: client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/conversationProjectMismatch.test.tsx > A conversation that belongs to another project > is not offered while AnA is answering 70ms
+      Tests  1 failed | 4 passed (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

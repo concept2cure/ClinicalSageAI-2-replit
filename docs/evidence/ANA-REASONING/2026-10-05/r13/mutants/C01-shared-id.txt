@@ -1,0 +1,12 @@
+Mutant C01-shared-id: every refused offer shares one id, so all read the first turn’s reason
+
+--- client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+- const refusalId = `ct-insert-refusal-${React.useId()}`;
++ const refusalId = 'ct-insert-refusal-turn';
+
+Tests run: client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s refused inserts > each refused offer is described by its own reason: one element id per offer 1221ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

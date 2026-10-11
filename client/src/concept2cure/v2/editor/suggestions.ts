@@ -1471,15 +1471,15 @@ const setContentUntracked =
     return commands.setContent(content);
   };
 
-/** `fragment` with each insertion mark `swap` replaces swapped, at any depth. */
-function swapInsertionMarks(fragment: Fragment, swap: (mark: PMMark) => PMMark | null): Fragment {
+/** `fragment` with each suggestion mark (insertion or deletion) `swap` replaces swapped, at any depth. */
+function swapSuggestionMarks(fragment: Fragment, swap: (mark: PMMark) => PMMark | null): Fragment {
   const nodes: PMNode[] = [];
   fragment.forEach((node) => {
     if (!node.isText) {
-      nodes.push(node.copy(swapInsertionMarks(node.content, swap)));
+      nodes.push(node.copy(swapSuggestionMarks(node.content, swap)));
       return;
     }
-    const mark = node.marks.find((m) => m.type.name === 'insertion');
+    const mark = node.marks.find((m) => m.type.name === 'insertion' || m.type.name === 'deletion');
     const next = mark ? swap(mark) : null;
     nodes.push(mark && next ? node.mark(next.addToSet(mark.removeFromSet(node.marks))) : node);
   });
@@ -1492,10 +1492,16 @@ function swapInsertionMarks(fragment: Fragment, swap: (mark: PMMark) => PMMark |
  * rule admits (anaInsertGate.ts). A paste or a drop of an AnA suggestion was a
  * second way in: with track changes off (the database default) it kept her
  * name and turn, never met that rule, and its accept was filed as hers. A
- * pasted AnA suggestion now keeps them only when the host admits its turn
+ * pasted AnA suggestion now keeps her name only when the host admits its turn
  * (one its insert gate admitted); any other becomes the pasting person's, at
- * this minute, with no turn, which is what a paste with track changes on
- * already records. Other authors' suggestions are left as they are.
+ * this minute. Other authors' suggestions are left as they are.
+ *
+ * It keeps the turn (round 13, round 11's UI review, Part 11 §11.10(e)). The
+ * person is the proposer now, but the words came from AnA's turn, and the
+ * swap had dropped it: the decision then filed AnA's words as the person's
+ * own, with no source. With the turn kept, the decision names it, and the
+ * server verifies the words against it and records which models wrote them
+ * (round 10). A pasted deletion is swapped as an insertion is.
  */
 export function reattributePasted(
   slice: Slice,
@@ -1505,9 +1511,39 @@ export function reattributePasted(
   const swap = (mark: PMMark): PMMark | null => {
     if (mark.attrs.authorId !== ANA_SUGGESTION_AUTHOR_ID) return null;
     if (admitsAnaSource?.((mark.attrs.sourceRecord as string | null) ?? null)) return null;
-    return mark.type.create({ ...mark.attrs, ...suggestionMarkAttrs(person, minuteBucket()) });
+    return mark.type.create({ ...mark.attrs, authorId: person.id, authorName: person.name, at: minuteBucket() });
   };
-  return new Slice(swapInsertionMarks(slice.content, swap), slice.openStart, slice.openEnd);
+  return new Slice(swapSuggestionMarks(slice.content, swap), slice.openStart, slice.openEnd);
+}
+
+/**
+ * The turns a pasted run's insertions came from, by position, so the person's
+ * insertion that replaces them can still name each (round 13). Only an
+ * insertion's turn is AnA's words: a deletion's turn proposed striking text
+ * she did not write.
+ */
+function pastedTurns(doc: PMNode, from: number, to: number): Array<[number, number, string]> {
+  const runs: Array<[number, number, string]> = [];
+  doc.nodesBetween(from, to, (node, pos) => {
+    if (!node.isText) return;
+    const turn = node.marks.find((m) => m.type.name === 'insertion')?.attrs.sourceRecord;
+    if (typeof turn === 'string' && turn) runs.push([Math.max(from, pos), Math.min(to, pos + node.nodeSize), turn]);
+  });
+  return runs;
+}
+
+/**
+ * Track changes on: mark [from, to) as the person's pending insertion, clearing
+ * any deletion mark it inherited. A paste or a drop (`edit`'s uiEvent) is the
+ * person's insertion still naming the turn its words came from (round 13);
+ * text they type carries no turn.
+ */
+function markPersonInsertion(fix: Transaction, from: number, to: number, insMark: PMMark, edit: Transaction): void {
+  const ui = edit.getMeta('uiEvent');
+  const turns = ui === 'paste' || ui === 'drop' ? pastedTurns(fix.doc, from, to) : [];
+  fix.removeMark(from, to, fix.doc.type.schema.marks.deletion);
+  fix.addMark(from, to, insMark);
+  for (const [x, y, turn] of turns) fix.addMark(x, y, insMark.type.create({ ...insMark.attrs, sourceRecord: turn }));
 }
 
 export const TrackChanges = Extension.create<
@@ -1778,8 +1814,7 @@ export const TrackChanges = Extension.create<
                   const a = fix.mapping.map(insStart, -1) + restoredSize;
                   const b = a + step.slice.size;
                   if (b > a) {
-                    fix.removeMark(a, b, delType);
-                    fix.addMark(a, b, insMark);
+                    markPersonInsertion(fix, a, b, insMark, tr);
                     mutated = true;
                   }
                 }

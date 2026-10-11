@@ -221,6 +221,12 @@ describe('EditorBridge.insert — AnA\u2019s answer goes in only under the gover
     noRedline();
   });
 
+  it('refuses an AnA answer that did not finish, even one the rule admits (round 13)', async () => {
+    const bridge = await openBridge();
+    expect(bridge().insert(TEXT, ANA, { status: 'recorded', id: TURN, sha256: SHA, servedBy: [QUALIFIED] }, true)).toBe(false);
+    noRedline();
+  });
+
   it('inserts an AnA answer it admits, and a person\u2019s text is not its business (negative controls)', async () => {
     const bridge = await openBridge();
     expect(bridge().insert(TEXT, ANA, { status: 'recorded', id: TURN, sha256: SHA, servedBy: [QUALIFIED] })).toBe(true);

@@ -1,9 +1,11 @@
 /**
  * Clinical Trial Statistics & Estimands — deterministic knowledge engine.
  *
- * Pure, closed-form, reproducible TypeScript. NO LLM, NO network, NO database,
- * NO imports from other services. Every recommendation, threshold and citation
- * is hard-coded from primary regulatory and statistical sources:
+ * Pure, reproducible TypeScript. NO LLM, NO network, NO database. The only
+ * imports are the canonical deterministic stats engine (stats/normal,
+ * stats/group-sequential-oc), used for the group-sequential boundaries so there
+ * is one implementation of that math. Every recommendation, threshold and
+ * citation is hard-coded from primary regulatory and statistical sources:
  *
  *   - ICH E9 (1998)        — Statistical Principles for Clinical Trials.
  *   - ICH E9(R1) (2019)    — Addendum on Estimands and Sensitivity Analysis.
@@ -42,11 +44,15 @@
  * the subsection is what is meant: a sponsor checks the number.
  *
  * Determinism contract: identical input always yields identical output. No
- * Date.now(), no Math.random(), no I/O. Numeric routines are closed-form
- * (normal-approximation sample sizing; inverse-CDF by rational approximation).
+ * Date.now(), no Math.random(), no I/O. Sample sizing is closed-form
+ * (normal approximation; inverse-CDF by rational approximation); interim
+ * boundaries are the canonical engine's deterministic numerical integration.
  *
  * @module server/services/trial-statistics/trial-statistics-knowledge
  */
+
+import { normalCdf } from '../stats/normal';
+import { solveSpendingBoundaries } from '../stats/group-sequential-oc';
 
 // ═════════════════════════════════════════════════════════════════════════════
 // SECTION 0 — Shared numeric primitives (deterministic, closed-form)
@@ -98,21 +104,6 @@ function normInv(p: number): number {
       ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
   }
   return x;
-}
-
-/** Standard-normal CDF via erf, used for power back-calculation. Deterministic. */
-function normCdf(x: number): number {
-  // Abramowitz & Stegun 7.1.26 erf approximation.
-  const t = 1 / (1 + 0.3275911 * Math.abs(x) / Math.SQRT2);
-  const y =
-    1 -
-    (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) *
-      t +
-      0.254829592) *
-      t *
-      Math.exp((-x * x) / 2);
-  const cdf = 0.5 * (1 + (x >= 0 ? y : -y));
-  return cdf;
 }
 
 /** Round to a fixed number of decimals; deterministic banker-free rounding. */
@@ -1223,10 +1214,27 @@ export interface DesignAdaptiveResult {
   rationale: string;
   typeOneErrorControl: string;
   operationalCautions: string[];
-  /** Illustrative interim boundaries where a closed form applies. */
-  interimBoundaries: { look: number; informationFraction: number; nominalZ: number; nominalAlpha: number }[];
+  /** Illustrative interim boundaries (canonical Lan-DeMets solve; see boundaryConvention). */
+  interimBoundaries: InterimBoundary[];
+  /** How interimBoundaries were derived; null when there are none. */
+  boundaryConvention: string | null;
   regulatoryConsiderations: string[];
   citations: string[];
+}
+
+export interface InterimBoundary {
+  look: number;
+  informationFraction: number;
+  /** Efficacy boundary on the z-scale (|Z| ≥ nominalZ; symmetric two-sided). */
+  nominalZ: number;
+  /** Two-sided nominal significance level of the boundary, 2(1 − Φ(nominalZ)). */
+  nominalAlpha: number;
+  /** One-sided nominal significance level of the boundary, 1 − Φ(nominalZ). */
+  oneSidedNominalAlpha: number;
+  /** Cumulative one-sided alpha spent by this look on each side. */
+  cumulativeAlphaSpentPerSide: number;
+  /** One-sided alpha spent at this look on each side. */
+  incrementalAlphaSpentPerSide: number;
 }
 
 interface AdaptationMeta {
@@ -1253,54 +1261,55 @@ function adaptationMeta(t: AdaptationType): AdaptationMeta {
 }
 
 /**
- * O'Brien-Fleming-type nominal alpha boundaries via the Lan-DeMets spending
- * function alpha*(t) = 2 - 2*Phi(z_{alpha/2} / sqrt(t)). Deterministic.
+ * Lan-DeMets O'Brien-Fleming-type interim boundaries for `looks` equally spaced
+ * analyses, delegated to the canonical engine (stats/group-sequential-oc
+ * `solveSpendingBoundaries`): each look's boundary is solved by exact recursive
+ * numerical integration of the joint null distribution of the sequential
+ * statistics, so the correlation between looks is accounted for and the
+ * cumulative type I error equals the target exactly (to grid resolution).
+ *
+ * Convention: `totalAlpha` is the TWO-SIDED familywise alpha (default 0.05).
+ * The boundaries are symmetric, each side spending α/2 one-sided with the
+ * Lan-DeMets O'Brien-Fleming function — the gsDesign/rpact convention, under
+ * which two-sided 0.05 ≡ one-sided 0.025 (two looks: 2.963 / 1.969).
+ *
+ * 2026-10-05: replaced a per-look conversion of the incremental spend to a
+ * nominal z_{1−Δα/2}, which ignored the correlation between looks (final
+ * boundary 2.0101 instead of 1.969 for two looks), and removed an unused
+ * private Pocock copy. Pinned by tests/biostat/adaptive-and-spending-reference.test.ts.
  */
-function obfSpending(totalAlpha: number, looks: number): { look: number; informationFraction: number; nominalZ: number; nominalAlpha: number }[] {
-  const out: { look: number; informationFraction: number; nominalZ: number; nominalAlpha: number }[] = [];
-  const zHalf = normInv(1 - totalAlpha / 2);
-  let cumulativeSpent = 0;
-  for (let i = 1; i <= looks; i++) {
-    const t = i / looks;
-    const cumAlpha = 2 - 2 * normCdf(zHalf / Math.sqrt(t));
-    const incremental = Math.max(0, cumAlpha - cumulativeSpent);
-    cumulativeSpent = cumAlpha;
-    // Convert the incremental two-sided spend at this look to a nominal Z.
-    const nominalAlpha = incremental;
-    const nominalZ = normInv(1 - nominalAlpha / 2);
-    out.push({
-      look: i,
-      informationFraction: round(t, 4),
-      nominalZ: round(nominalZ, 4),
-      nominalAlpha: round(nominalAlpha, 6),
-    });
+function obfSpending(totalAlpha: number, looks: number): InterimBoundary[] {
+  if (!(totalAlpha > 0 && totalAlpha < 1)) {
+    throw new Error(`alpha ${totalAlpha} must be in (0, 1)`);
   }
-  return out;
+  const perSide = totalAlpha / 2;
+  const fractions = Array.from({ length: looks }, (_, i): number => (i + 1) / looks);
+  const solved = solveSpendingBoundaries(fractions, perSide, 'obrien-fleming');
+  return solved.efficacyBoundaries.map((z: number, i: number): InterimBoundary => {
+    const oneSidedNominal = 1 - normalCdf(z);
+    return {
+      look: i + 1,
+      informationFraction: round(fractions[i], 4),
+      nominalZ: round(z, 4),
+      nominalAlpha: round(2 * oneSidedNominal, 6),
+      oneSidedNominalAlpha: round(oneSidedNominal, 6),
+      cumulativeAlphaSpentPerSide: round(solved.cumulativeAlpha[i], 6),
+      incrementalAlphaSpentPerSide: round(solved.incrementalAlpha[i], 6),
+    };
+  });
 }
 
-/**
- * Pocock-type constant-boundary nominal alpha via the Lan-DeMets Pocock
- * spending function alpha*(t) = alpha * ln(1 + (e-1)*t). Deterministic.
- */
-function pocockSpending(totalAlpha: number, looks: number): { look: number; informationFraction: number; nominalZ: number; nominalAlpha: number }[] {
-  const out: { look: number; informationFraction: number; nominalZ: number; nominalAlpha: number }[] = [];
-  let cumulativeSpent = 0;
-  for (let i = 1; i <= looks; i++) {
-    const t = i / looks;
-    const cumAlpha = totalAlpha * Math.log(1 + (Math.E - 1) * t);
-    const incremental = Math.max(0, cumAlpha - cumulativeSpent);
-    cumulativeSpent = cumAlpha;
-    const nominalAlpha = incremental;
-    const nominalZ = normInv(1 - nominalAlpha / 2);
-    out.push({
-      look: i,
-      informationFraction: round(t, 4),
-      nominalZ: round(nominalZ, 4),
-      nominalAlpha: round(nominalAlpha, 6),
-    });
-  }
-  return out;
+/** How the illustrative interim boundaries were derived; null when there are none. */
+function boundaryConventionFor(boundaries: InterimBoundary[]): string | null {
+  return boundaries.length > 0 ? BOUNDARY_CONVENTION : null;
 }
+
+const BOUNDARY_CONVENTION =
+  "Lan-DeMets O'Brien-Fleming alpha spending, equally spaced looks; symmetric two-sided " +
+  'boundaries with each side spending alpha/2 (one-sided). Boundaries solved by exact ' +
+  'recursive numerical integration of the joint null distribution of the sequential ' +
+  'statistics (correlation between looks accounted for). nominalAlpha is the two-sided ' +
+  'nominal significance level of each boundary.';
 
 /**
  * Select / design an adaptation with type-I-error-control considerations.
@@ -1319,7 +1328,7 @@ export function designAdaptiveDesign(params: DesignAdaptiveParams): DesignAdapti
   let spending: AlphaSpendingFunction;
   let rationale: string;
   let typeOneErrorControl: string;
-  let interimBoundaries: { look: number; informationFraction: number; nominalZ: number; nominalAlpha: number }[] = [];
+  let interimBoundaries: InterimBoundary[] = [];
 
   switch (params.goal) {
     case 'stop-early-efficacy':
@@ -1476,6 +1485,7 @@ export function designAdaptiveDesign(params: DesignAdaptiveParams): DesignAdapti
     typeOneErrorControl,
     operationalCautions,
     interimBoundaries,
+    boundaryConvention: boundaryConventionFor(interimBoundaries),
     regulatoryConsiderations,
     citations: [
       'FDA Adaptive Designs for Clinical Trials of Drugs and Biologics (2019)',

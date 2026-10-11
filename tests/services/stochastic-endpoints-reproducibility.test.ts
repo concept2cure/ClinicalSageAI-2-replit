@@ -1,70 +1,19 @@
 /**
- * Reproducibility tests for the served-statistic simulation services that were
- * de-fabricated in GA workstream #3 (seeded RNG + provenance). These two
- * services run pure Monte Carlo / power simulations with no database access, so
- * they are exercised directly here.
+ * Reproducibility tests for the served-statistic simulation service that was
+ * de-fabricated in GA workstream #3 (seeded RNG + provenance). It runs pure
+ * power simulations with no database access, so it is exercised directly here.
  *
  * The contract: same inputs (or the same explicit seed) reproduce identical
  * simulated statistics, and every simulation carries a provenance record whose
  * inputs hash is stable.
+ *
+ * The MonteCarloService block that used to live here was removed with
+ * server/services/monte-carlo-service.ts (no production caller; canonical
+ * simulation and test distributions are server/services/stats/*).
  */
 
 import { describe, it, expect } from 'vitest';
-import { MonteCarloService } from '../../server/services/monte-carlo-service';
 import { PowerSampleSizeService } from '../../server/services/power-sample-size-service';
-
-describe('MonteCarloService.runSimulation — reproducibility', () => {
-  const params = {
-    design_type: 'parallel',
-    test_type: 'superiority',
-    endpoint_type: 'continuous',
-    alpha: 0.05,
-    effect_size: 0.5,
-    variability: 1.0,
-    sample_size: 100,
-    n_simulations: 500,
-    dropout_rate: 0.1,
-    allocation_ratio: [1.0, 1.0],
-  };
-
-  it('same inputs reproduce identical empirical power, type I error, and CI', async () => {
-    const svc = new MonteCarloService();
-    const a = await svc.runSimulation(params);
-    const b = await svc.runSimulation(params);
-    expect(a.empirical_power).toEqual(b.empirical_power);
-    expect(a.type_i_error).toEqual(b.type_i_error);
-    expect(a.confidence_interval).toEqual(b.confidence_interval);
-    expect(a.seed).toEqual(b.seed);
-  });
-
-  it('a cross-instance run with the same derived seed matches', async () => {
-    const a = await new MonteCarloService().runSimulation(params);
-    const b = await new MonteCarloService().runSimulation(params);
-    expect(a.empirical_power).toEqual(b.empirical_power);
-  });
-
-  it('an explicit seed reproduces and overrides the derived seed', async () => {
-    const svc = new MonteCarloService();
-    const a = await svc.runSimulation({ ...params, seed: 12345 });
-    const b = await svc.runSimulation({ ...params, seed: 12345 });
-    expect(a.seed).toEqual(12345);
-    expect(a.empirical_power).toEqual(b.empirical_power);
-  });
-
-  it('attaches a provenance record with a stable inputs hash', async () => {
-    const a = await new MonteCarloService().runSimulation(params);
-    const b = await new MonteCarloService().runSimulation(params);
-    expect(a.provenance.reproducible).toBe(true);
-    expect(a.provenance.method).toBe('monte-carlo:runSimulation');
-    expect(a.provenance.inputsSha256).toEqual(b.provenance.inputsSha256);
-  });
-
-  it('produces a power in [0,1] (sanity)', async () => {
-    const a = await new MonteCarloService().runSimulation(params);
-    expect(a.empirical_power).toBeGreaterThanOrEqual(0);
-    expect(a.empirical_power).toBeLessThanOrEqual(1);
-  });
-});
 
 describe('PowerSampleSizeService — reproducibility', () => {
   it('simulateGroupSequentialTrial reproduces simulated power and carries provenance', () => {
