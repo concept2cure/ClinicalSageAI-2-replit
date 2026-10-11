@@ -101,6 +101,12 @@ describe('A conversation that belongs to another project', () => {
     fireEvent.click(btn);
     expect(chatReset).not.toHaveBeenCalled();
     expect(chatSend).not.toHaveBeenCalled();
+    /* The dimmed look is not the explanation. A `title` is not shown to a
+       keyboard or touch user and is unreliable on a disabled control, so the
+       reason is visible text the button is described by (round 13). */
+    const reason = document.getElementById(btn.getAttribute('aria-describedby') ?? '');
+    expect(reason?.textContent).toBe('AnA is still answering. A new conversation can start once she has finished.');
+    expect(btn.getAttribute('title')).toBeNull();
   });
 
   it.each([['another refusal', 'THREAD_FORBIDDEN'], ['no code', undefined]])('offers nothing for %s', (_label, code) => {

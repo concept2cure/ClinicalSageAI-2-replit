@@ -1,0 +1,12 @@
+Mutant C03-low-contrast: the conversation’s reason drops back to the bare minimum contrast
+
+--- client/src/concept2cure/v2/surfaces/ConversationThread.tsx
+- <span id={refusalId} style={{ flexBasis: '100%', fontSize: 12, color: 'var(--text-300)' }}>
++ <span id={refusalId} style={{ flexBasis: '100%', fontSize: 11.5, color: 'var(--text-400)' }}>
+
+Tests run: client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s refused inserts > the reason reads at the repo’s own contrast for why a control is off, and the button looks off 698ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

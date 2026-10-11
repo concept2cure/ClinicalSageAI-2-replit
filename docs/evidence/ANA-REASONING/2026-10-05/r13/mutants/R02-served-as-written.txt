@@ -1,0 +1,14 @@
+Mutant R02-served-as-written: the rail claims models wrote the words, which the record does not say
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- return `, served by ${listed(names)}.
++ return `, written by ${listed(names)}.
+
+Tests run: client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > says the turn served the words, never that a model wrote them 8ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > names each reason RULE 2 gives, in the words the insert gate uses 1ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a turn that did not answer says so: the rail holds what the gate could only guess at 1ms
+      Tests  3 failed | 32 passed (35)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

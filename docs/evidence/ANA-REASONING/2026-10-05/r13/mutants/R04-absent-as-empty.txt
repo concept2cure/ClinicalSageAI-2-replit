@@ -1,0 +1,14 @@
+Mutant R04-absent-as-empty: a decision that recorded no model list reads as a record naming none
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- const clause = Array.isArray(s.servedBy)
+    ? servedClause(s.servedBy as RecordedServedModel[])
+    : '; the models that served it were not recorded with this decision.';
++ const clause = servedClause(Array.isArray(s.servedBy) ? (s.servedBy as RecordedServedModel[]) : []);
+
+Tests run: client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a row that recorded no model list is not a record that names none 8ms
+      Tests  1 failed | 34 passed (35)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

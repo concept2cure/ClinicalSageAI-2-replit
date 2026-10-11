@@ -1,0 +1,23 @@
+The whole client suite on the final tree.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run client/src/concept2cure/v2/ client/src/concept2cure/components/ana/
+
+This run was still in progress when the round was committed, so no total is claimed here.
+What it had reported by then: exactly four failures, all in one file, none of them this round's:
+
+ × client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends no indication when none was typed, and the review says it is not stated 222ms
+ × client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends exactly the indication the person typed 293ms
+ × client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > records the class that was chosen, and the review shows it 161ms
+ × client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — a filing type that fixes the class asks nothing > an NDA is recorded as a drug with no product-type question 146ms
+
+Attribution: client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx
+fails with "Cannot read properties of undefined (reading 'indication')" and "… (reading 'productType')".
+It arrived with 4f53d90f3 (intake and readiness, another lane, 2026-10-08) and imports only
+surfaces/Projects — none of the files round 13 touches, directly or transitively through the
+imports checked. That is the basis for the attribution: the round's changes were NOT reverted
+to reproduce it, so this is reasoning from the dependency graph, not a bisect. Handed on in
+docs/work-orders/README.md rather than fixed here, since it is another lane's workstream.
+
+An earlier complete run of the same command, before the design-review fixes, was:
+  Test Files  2 failed | 542 passed (544)
+  Tests       8 failed | 5652 passed (5660)
+— the four above, plus four trackedChangeDecisions pins that this round then updated.
