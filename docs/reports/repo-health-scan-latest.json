@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-11T22:23:50.742Z",
+  "generatedAt": "2026-10-11T22:39:57.053Z",
   "git": {
-    "sha": "de0fceff88e52011218f6f99ddfac0e7dd6897ac",
+    "sha": "56ceff4e53176e8c7b69d7cbe6c4ea9ed4d4991f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2092,7 +2092,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 169224
+        "bytes": 170486
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2310,7 +2310,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4225
+        "lines": 4252
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
