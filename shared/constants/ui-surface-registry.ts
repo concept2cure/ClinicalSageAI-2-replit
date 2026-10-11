@@ -487,7 +487,51 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'beaker',
     group: 'quality-cmc',
     uiKit: 'cmc',
-    apiPrefixes: ['/api/cmc', '/api/cmc/module3-os', '/api/cmc/specifications', '/api/cmc/stability'],
+    // 2026-10-05 (decision P-13, CMC / Module 3 joins the launch catalog): the
+    // bare '/api/cmc' and '/api/cmc/module3-os' replaced by the segments the
+    // CMC screens call, and the dead '/api/cmc/stability' mount dropped.
+    // Attribution is by longest prefix, so the bare claim made every handler
+    // under it answer as launch at the flip, called or not. Everything else
+    // under /api/cmc is unmapped, which production refuses: deliberately so
+    // for /variations/classify and /projects/:id/process-capability until a
+    // launch screen calls them. Each prefix needs a caller in the CMC
+    // screens (server/middleware/__tests__/launch-scope-api-gate.test.ts;
+    // docs/evidence/CMC-M3-GA/2026-10-05/20-cmc-api-allowlist/).
+    apiPrefixes: [
+      '/api/cmc/drug-substances',
+      '/api/cmc/drug-products',
+      '/api/cmc/analytical-methods',
+      '/api/cmc/qc-testing',
+      '/api/cmc/stability-studies',
+      '/api/cmc/process-validation',
+      '/api/cmc/change-control',
+      '/api/cmc/comparability-studies',
+      '/api/cmc/container-closures',
+      '/api/cmc/reference-standards',
+      '/api/cmc/impurity-profiles',
+      '/api/cmc/dissolution-profiles',
+      '/api/cmc/material-specs',
+      '/api/cmc/formulation-records',
+      '/api/cmc/manufacturing-processes',
+      '/api/cmc/characterization-studies',
+      '/api/cmc/quality/qbd',
+      '/api/cmc/ich-compliance',
+      '/api/cmc/control-strategy',
+      '/api/cmc/specifications',
+      '/api/cmc/batch-records',
+      '/api/cmc/module3-board',
+      '/api/cmc/agency-questions',
+      '/api/cmc/module3-os/sections',
+      '/api/cmc/module3-os/compile',
+      '/api/cmc/module3-os/contradictions',
+      '/api/cmc/module3-os/readiness',
+      '/api/cmc/module3-os/provenance',
+      '/api/cmc/module3-os/guard',
+      '/api/cmc/module3-os/place-into-submission',
+      '/api/cmc/module3-os/build-state',
+      '/api/cmc/module3-os/build-section',
+      '/api/cmc/module3-os/source-evidence',
+    ],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

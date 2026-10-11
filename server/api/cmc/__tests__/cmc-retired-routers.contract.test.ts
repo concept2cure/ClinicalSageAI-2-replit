@@ -22,6 +22,27 @@
  * register-core-routes.ts where it used to be mounted, and in
  * docs/evidence/CMC-M3-GA/2026-10-05/15-retired-cmc-routers/README.md.
  *
+ * The same day, narrowing the cmc surface's API claim from the bare '/api/cmc'
+ * to the 33 prefixes its screens call (decision P-13) found seven more
+ * uncalled handlers inside the LIVE routers, and they were deleted too
+ * (docs/evidence/CMC-M3-GA/2026-10-05/20-cmc-api-allowlist/):
+ *   - routes.ts POST /insights/take-action: a task assigned to a hard-coded
+ *     'CMC Team Lead' → POST /api/tasks/tasks;
+ *   - routes.ts POST /compliance/check-rules: every non-'compliant' row scored
+ *     as a violation → POST /api/cmc/ich-compliance;
+ *   - routes.ts POST /generate-enhanced-blueprint: a model drafting Module 3
+ *     text with no organisation and no record → GET /api/cmc/quality/qbd/
+ *     :projectId, POST /api/cmc/control-strategy and POST /api/cmc/module3-os/
+ *     compile/:projectId;
+ *   - module3ConvergenceRoutes.ts POST /classify-artifact/:projectId → AnA's
+ *     module3_classify_source and /api/cmc/module3-os/source-evidence;
+ *   - module3ConvergenceRoutes.ts GET /source-lineage/:projectId/:sectionKey →
+ *     GET /api/cmc/module3-os/provenance/:projectId/:sectionKey and
+ *     /build-state/:projectId;
+ *   - module3BuildStateRoutes.ts GET /uploaded-sources/:projectId and
+ *     GET /section-labels → /build-state/:projectId, which carries each
+ *     section's label and uploaded-source count.
+ *
  * ── What is pinned ───────────────────────────────────────────────────────────
  *   1. none of the files exists — under either extension, so a rename to .ts
  *      does not bring one back;
@@ -35,7 +56,8 @@
  *      wherever the /api boundary only warns (server/middleware/authBoundary.ts:
  *      development, staging, test). Deleting the router must not delete that;
  *   4. no client code calls a retired path — a client wired to one now gets a
- *      404, which is the failure this would otherwise find in production.
+ *      404, which is the failure this would otherwise find in production;
+ *   5. no CMC router declares one of the seven deleted handlers again.
  *
  * STATIC on purpose, like cmc-route-uniqueness.contract.test.ts: it reads
  * source, so it names the file and line it objects to and cannot be satisfied
@@ -87,7 +109,15 @@ const RETIRED_PREFIXES = [
  * server/api/cmc/routes.ts and stays.
  */
 const RETIRED_CLIENT_PATH =
-  /\/api\/cmc\/(?:blueprint|change-impact-simulator|manufacturing-tuner|preclinical-translator|global-compliance|audit-risk-monitor|cmc-copilot|test-event|status\b|workflows|documents|module3\/|portfolio|playbook|projects['"`?])/;
+  /\/api\/cmc\/(?:blueprint|change-impact-simulator|manufacturing-tuner|preclinical-translator|global-compliance|audit-risk-monitor|cmc-copilot|test-event|status\b|workflows|documents|module3\/|portfolio|playbook|projects['"`?]|insights\/|compliance\/|generate-enhanced-blueprint|module3-os\/(?:classify-artifact|source-lineage|uploaded-sources|section-labels))/;
+
+/**
+ * Handlers deleted from the live routers (pin 5), by the path each router
+ * declares. Matched on the path whatever the method, so a GET of the same
+ * name does not slip back in.
+ */
+const RETIRED_HANDLER_PATH =
+  /^\/(?:insights\/take-action|compliance\/check-rules|generate-enhanced-blueprint|classify-artifact\/|source-lineage\/|uploaded-sources\/|section-labels$)/;
 
 const read = (rel: string) => fs.readFileSync(path.join(repoRoot, rel), 'utf8');
 const lineOf = (src: string, index: number) => src.slice(0, index).split('\n').length;
@@ -180,6 +210,27 @@ describe('the retired CMC routers stay retired', () => {
       });
     }
     expect(hits, `Client calls to retired CMC endpoints:\n  ${hits.join('\n  ')}`).toEqual([]);
+  });
+
+  it('no CMC router declares a deleted handler again', () => {
+    const dir = 'server/api/cmc';
+    const files = fs
+      .readdirSync(path.join(repoRoot, dir))
+      .filter((f) => /\.(?:ts|js)$/.test(f))
+      .map((f) => `${dir}/${f}`)
+      .concat(['server/routes/cmc-module3-board.routes.ts', 'server/routes/cmc-agency-questions.routes.ts']);
+    let declared = 0;
+    const hits: string[] = [];
+    for (const rel of files) {
+      const src = read(rel);
+      for (const m of src.matchAll(/router\.(get|post|put|patch|delete)\(\s*['"`]([^'"`]+)['"`]/g)) {
+        declared += 1;
+        if (RETIRED_HANDLER_PATH.test(m[2])) hits.push(`${rel}:${lineOf(src, m.index ?? 0)} ${m[1].toUpperCase()} ${m[2]}`);
+      }
+    }
+    // The live family is found, so an empty result is not a parser that read nothing.
+    expect(declared, 'no route declarations found — wrong directory or a broken parser').toBeGreaterThan(60);
+    expect(hits, `Deleted CMC handlers are declared again:\n  ${hits.join('\n  ')}`).toEqual([]);
   });
 
   it('the Module 3 operating system writes no canonical source of its own', () => {

@@ -14,8 +14,27 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('../../services/license-manager.js', () => ({ canAccessModule: vi.fn(async () => ({ allowed: true })) }));
 const dbQuery = vi.hoisted(() => vi.fn(async () => ({ rows: [] as unknown[] })));
 vi.mock('../../db.js', () => ({ pool: { query: (...a: unknown[]) => dbQuery(...(a as [])) } }));
+/* Surfaces added to the real launch catalog for one describe block, so the
+   gate production builds can be asked about an app before the catalog lists it
+   (CMC / Module 3, P-13, below). Empty everywhere else: every other case runs
+   against the catalog exactly as shipped. */
+const catalogPlus = vi.hoisted(() => ({ ids: [] as string[] }));
+vi.mock('../../../shared/constants/launch-scope', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../../shared/constants/launch-scope')>();
+  class CatalogPlus extends Set<string> {
+    has(id: string) {
+      return super.has(id) || catalogPlus.ids.includes(id);
+    }
+  }
+  return { ...real, LAUNCH_SURFACE_IDS: new CatalogPlus(real.LAUNCH_SURFACE_IDS) };
+});
 
 import { invalidateEnforcementModeCache } from '../../services/entitlements/enforcement-mode';
+import { NEVER_GATED } from '../../services/entitlements/api-prefix-map';
+import { launchScopeApiVerdict } from '../../services/entitlements/launch-scope-api';
+import { LAUNCH_SURFACE_IDS } from '../../../shared/constants/launch-scope';
+import { UI_SURFACES } from '../../../shared/constants/ui-surface-registry';
+import { checkLaunchScopeApi, REAL } from '../../../scripts/ci/check-launch-scope-api';
 import { buildPrefixMap, moduleEntitlementGate } from '../moduleEntitlementGate';
 
 // Real launch ids (shared/constants/launch-scope.ts): `tasks` is a launch app,
@@ -326,5 +345,89 @@ describe('the real registry, unattributed paths enforced', () => {
     // /api/cortex/health is public; the rest of /api/cortex is not.
     expect(await passes('/api/cortex/health')).toBe(true);
     expect(await passes('/api/cortex/threads')).toBe(false);
+  });
+});
+
+/* CMC / Module 3 joins the launch catalog (decision P-13, 2026-10-05: a US FDA
+   IND for a small molecule, phase 1–2). Attribution is by longest prefix at a
+   segment boundary, so while the cmc surface claimed the bare '/api/cmc', the
+   flip would have made EVERY path under it answer 'launch': handlers no screen
+   calls (a model drafting specifications with no organisation, a task assigned
+   to a hard-coded 'CMC Team Lead', an artifact classifier acting as 'system'),
+   and routes deliberately withheld until a launch screen calls them. The cmc
+   surface now claims the 33 segment prefixes its screens call, and nothing
+   else. Each case is asked of the real registry with the catalog plus cmc, as
+   it will stand at the flip. */
+describe('the real registry with CMC / Module 3 in the catalog (P-13)', () => {
+  const withCmc: ReadonlySet<string> = new Set([...LAUNCH_SURFACE_IDS, 'cmc']);
+  const verdict = (p: string) => launchScopeApiVerdict(p, buildPrefixMap(), NEVER_GATED, withCmc);
+
+  /* Deleted 2026-10-05 for want of a caller (docs/evidence/CMC-M3-GA/
+     2026-10-05/20-cmc-api-allowlist/), or withheld by P-13's scope boundary. */
+  const NOT_LAUNCH = [
+    '/api/cmc',
+    '/api/cmc/insights/take-action',
+    '/api/cmc/compliance/check-rules',
+    '/api/cmc/generate-enhanced-blueprint',
+    '/api/cmc/module3-os/classify-artifact/p-1',
+    '/api/cmc/module3-os/source-lineage/p-1/3.2.P.5',
+    '/api/cmc/module3-os/uploaded-sources/p-1',
+    '/api/cmc/module3-os/section-labels',
+    '/api/cmc/variations/classify',
+    '/api/cmc/projects/p-1/process-capability',
+    '/api/cmc/stability/studies',
+    '/api/cmc/status',
+  ];
+
+  it('claims none of the deleted or withheld /api/cmc paths: each is unmapped, which production refuses', () => {
+    const answered = Object.fromEntries(NOT_LAUNCH.map((p) => [p, verdict(p)]));
+    expect(answered).toEqual(Object.fromEntries(NOT_LAUNCH.map((p) => [p, 'unmapped'])));
+  });
+
+  it('the gate production builds refuses them 403 LAUNCH_SCOPE, and serves what the CMC screens call', async () => {
+    catalogPlus.ids = ['cmc'];
+    try {
+      const gate = moduleEntitlementGate(buildPrefixMap(), { launchScope: 'on', unattributed: 'enforce' });
+      for (const p of NOT_LAUNCH) {
+        const { res, passed } = await run(gate, p);
+        expect({ p, passed, status: res.statusCode, code: res.body?.error?.code }).toEqual({ p, passed: false, status: 403, code: 'LAUNCH_SCOPE' });
+      }
+      for (const p of [
+        '/api/cmc/drug-substances',
+        '/api/cmc/stability-studies/12/shelf-life',
+        '/api/cmc/specifications/7/approve',
+        '/api/cmc/batch-records/7/release',
+        '/api/cmc/quality/qbd/p-1',
+        '/api/cmc/module3-os/compile/p-1',
+        '/api/cmc/module3-os/guard/final-export/p-1',
+        '/api/cmc/module3-os/place-into-submission/p-1',
+      ]) {
+        expect((await run(gate, p)).passed, p).toBe(true);
+      }
+    } finally {
+      catalogPlus.ids = [];
+    }
+  });
+
+  /* The walker ci:launch-scope-api runs, over the CMC surface's own import
+     graph from client/src/concept2cure/v2/surfaceViews.ts. */
+  const walk = checkLaunchScopeApi(REAL, buildPrefixMap(), withCmc);
+  const cmcCalls = [...walk.all].filter(([p, e]) => e.surfaces.has('cmc') && (p === '/api/cmc' || p.startsWith('/api/cmc/')));
+
+  it('every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse', () => {
+    expect(walk.unresolved).toEqual([]);
+    // A wrong walk root would make the assertion below pass over nothing.
+    expect(cmcCalls.length).toBeGreaterThan(40);
+    expect(cmcCalls.filter(([, e]) => e.verdict !== 'launch').map(([p, e]) => `${e.verdict} ${p}`)).toEqual([]);
+    expect(walk.violations.map((v) => `${v.verdict} ${v.path} ← ${v.surfaces.join(', ')}`)).toEqual([]);
+  });
+
+  it('claims no /api/cmc prefix the CMC screens do not call', () => {
+    const prefixes = UI_SURFACES.find((s) => s.id === 'cmc')?.apiPrefixes ?? [];
+    expect(prefixes.length).toBeGreaterThan(0);
+    // A mount root admits every handler mounted under it, called or not.
+    expect(prefixes.filter((p) => p === '/api/cmc' || p === '/api/cmc/module3-os')).toEqual([]);
+    const uncalled = prefixes.filter((pre) => !cmcCalls.some(([p]) => p === pre || p.startsWith(`${pre}/`)));
+    expect(uncalled, `cmc apiPrefixes no CMC screen calls:\n  ${uncalled.join('\n  ')}`).toEqual([]);
   });
 });

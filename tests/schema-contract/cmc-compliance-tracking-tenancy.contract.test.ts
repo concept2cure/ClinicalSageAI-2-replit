@@ -27,9 +27,12 @@
  *
  * (2026-10-05: projectRoutes.ts, the writer this was found on, was retired with
  * no caller — server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts.
- * The model, the backfill and the strict read below are unchanged by that, and
- * stay pinned: a writer bound to the model must still be able to stamp the
- * tenant.)
+ * The same day the reader, POST /compliance/check-rules, was deleted from
+ * routes.ts with no caller too; the program's ICH compliance check is
+ * POST /api/cmc/ich-compliance. The model, the backfill and the strict
+ * predicate below are unchanged by either, and stay pinned: a writer bound to
+ * the model must still be able to stamp the tenant, and nothing in routes.ts
+ * may read the table with the widened predicate again.)
  *
  * ── Why a backfill is correct here, and not merely convenient ─────────────────
  * The pattern this repo has settled on for a legacy NULL tenant (see
@@ -130,9 +133,9 @@ describe('the applied schema and the product write are the cause', () => {
 
 describe('the read predicate this replaced leaked across tenants (control)', () => {
   it('OR organization_id IS NULL hands one org another org’s compliance findings', async () => {
-    // Verbatim the predicate at server/api/cmc/routes.ts:1707. Not a test of
-    // current behaviour — a control proving the assertions below are
-    // load-bearing rather than vacuously true.
+    // Verbatim the predicate POST /compliance/check-rules carried (routes.ts,
+    // deleted 2026-10-05). Not a test of current behaviour — a control proving
+    // the assertions below are load-bearing rather than vacuously true.
     const { rows } = await pg.query<{ guideline: string }>(
       `SELECT guideline FROM compliance_tracking WHERE organization_id = $1 OR organization_id IS NULL`,
       [MINE],

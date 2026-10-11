@@ -120,6 +120,86 @@ export interface FinalExportGateVerdict {
  * and lock state on every leaf write.
  */
 /**
+ * The governed-decision fabric's verdict for this project, and whether it was
+ * reached at all.
+ *
+ * Fails CLOSED and says so: an evaluation that throws reports
+ * `governedStateEvaluated: false` and blocks, because a caller must never read
+ * a failed evaluation as a fabric that looked and found nothing.
+ */
+async function evaluateGovernedFabric(a: {
+  orgId: number;
+  projectId: string;
+  actorId: string;
+  intendedAction: 'export' | 'publish';
+  totalSections: number;
+  approvedSections: number;
+  allApproved: boolean;
+  provenanceComplete: boolean;
+  unresolvedCount: number;
+  openCritical: number;
+  isStale: boolean;
+}): Promise<{
+  canonicalGovernedState: Record<string, any> | null;
+  governedStateEvaluated: boolean;
+  fabricBlocks: boolean;
+  governedDecisionsBlock: boolean;
+}> {
+  let canonicalGovernedState: Record<string, any> | null;
+  let governedStateEvaluated: boolean;
+  let fabricBlocks: boolean;
+  try {
+    canonicalGovernedState = await buildCanonicalGovernedState({
+      context: {
+        organizationId: String(a.orgId),
+        projectId: String(a.projectId),
+        actorId: a.actorId,
+        intendedAction: a.intendedAction,
+        documentType: 'cmc_module3',
+        ctdSection: '3',
+      },
+      documentState: {
+        hasContent: a.totalSections > 0,
+        hasEvidence: a.totalSections > 0,
+        hasBeenReviewed: a.approvedSections > 0,
+        hasApproval: a.allApproved,
+        // See the docstring: this gate precedes placement and authorizes it.
+        hasPlacement: true,
+        placementValid: true,
+        hasProvenance: a.provenanceComplete,
+        unresolvedContradictionCount: a.unresolvedCount,
+        criticalContradictionCount: a.openCritical,
+        isStale: a.isStale,
+        completenessScore: a.totalSections > 0 ? a.approvedSections / a.totalSections : 0,
+      },
+      exportState: {
+        humanReviewApproved: a.allApproved,
+        // The sections in cmc_module3_sections come from the deterministic
+        // composer; the AI narrative refinement runs in the orchestrator's
+        // m3.refine step and does not write this table.
+        aiGenerated: false,
+        provenanceComplete: a.provenanceComplete,
+      },
+    });
+    governedStateEvaluated = true;
+    fabricBlocks =
+      canonicalGovernedState.derivedFlags?.isBlocked === true ||
+      canonicalGovernedState.derivedFlags?.hasUnresolvedGovernedDecisions === true;
+  } catch {
+    governedStateEvaluated = false;
+    fabricBlocks = true;
+    canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true, blocked: true };
+  }
+  return {
+    canonicalGovernedState,
+    governedStateEvaluated,
+    fabricBlocks,
+    governedDecisionsBlock:
+      (canonicalGovernedState as any)?.derivedFlags?.hasUnresolvedGovernedDecisions === true,
+  };
+}
+
+/**
  * The same deterministic detector the sweep runs, over the same registers, so
  * the gate refuses what a sweep would find even when nobody ran one. A read
  * that fails throws, and the gate's caller refuses (fail closed).
@@ -202,56 +282,20 @@ export async function evaluateModule3GovernedState(params: {
   // be complete, and a section with no lineage row breaks it.
   const provenanceComplete = totalSections > 0 && sectionsWithoutProvenance === 0;
 
-  let canonicalGovernedState: Record<string, any> | null;
-  let governedStateEvaluated: boolean;
-  let fabricBlocks: boolean;
-  try {
-    canonicalGovernedState = await buildCanonicalGovernedState({
-      context: {
-        organizationId: String(orgId),
-        projectId: String(projectId),
-        actorId,
-        intendedAction: params.intendedAction ?? 'export',
-        documentType: 'cmc_module3',
-        ctdSection: '3',
-      },
-      documentState: {
-        hasContent: totalSections > 0,
-        hasEvidence: totalSections > 0,
-        hasBeenReviewed: approvedSections > 0,
-        hasApproval: allApproved,
-        // See the docstring: this gate precedes placement and authorizes it.
-        hasPlacement: true,
-        placementValid: true,
-        hasProvenance: provenanceComplete,
-        unresolvedContradictionCount: unresolvedCount,
-        criticalContradictionCount: openCritical,
-        isStale: staleSections > 0 || driftedApprovedSections.length > 0,
-        completenessScore: totalSections > 0 ? approvedSections / totalSections : 0,
-      },
-      exportState: {
-        humanReviewApproved: allApproved,
-        // The sections in cmc_module3_sections come from the deterministic
-        // composer; the AI narrative refinement runs in the orchestrator's
-        // m3.refine step and does not write this table.
-        aiGenerated: false,
-        provenanceComplete,
-      },
+  const { canonicalGovernedState, governedStateEvaluated, fabricBlocks, governedDecisionsBlock } =
+    await evaluateGovernedFabric({
+      orgId,
+      projectId,
+      actorId,
+      intendedAction: params.intendedAction ?? 'export',
+      totalSections,
+      approvedSections,
+      allApproved,
+      provenanceComplete,
+      unresolvedCount,
+      openCritical,
+      isStale: staleSections > 0 || driftedApprovedSections.length > 0,
     });
-    governedStateEvaluated = true;
-    fabricBlocks =
-      canonicalGovernedState.derivedFlags?.isBlocked === true ||
-      canonicalGovernedState.derivedFlags?.hasUnresolvedGovernedDecisions === true;
-  } catch {
-    // Fail closed, and SAY the evaluation did not happen — a caller must not
-    // read this as a fabric that looked and found nothing.
-    governedStateEvaluated = false;
-    fabricBlocks = true;
-    canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true, blocked: true };
-  }
-
-  const governedDecisionsBlock =
-    (canonicalGovernedState as any)?.derivedFlags?.hasUnresolvedGovernedDecisions === true;
 
   return {
     state: {
