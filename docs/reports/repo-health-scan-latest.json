@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-11T22:16:11.821Z",
+  "generatedAt": "2026-10-11T22:23:50.742Z",
   "git": {
-    "sha": "93c7df7c102e3fb484c67b6a6ea321b25968aa24",
+    "sha": "de0fceff88e52011218f6f99ddfac0e7dd6897ac",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2268,7 +2268,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "bytes": 100223
+        "bytes": 100606
       }
     ],
     "largeFilesByLines": [
@@ -2558,7 +2558,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 1903
+        "lines": 1911
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
