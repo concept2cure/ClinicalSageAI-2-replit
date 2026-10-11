@@ -104,8 +104,14 @@ Filed beside this README:
 - `red.txt` — round 13's tests against trunk's code, before any source change:
   27 of 71 fail, each on the defect it was written for.
 - `green.txt` — every suite, green.
-- `related.txt` — the full client suite on the merged tree, with the one red
-  that is **not** this round's, attributed.
+- `related.txt` — the full client suite on the merged tree, and what became of
+  every red in it: the 4 wizard failures root-caused to a cross-lane merge and
+  fixed here (test-only, with two product mutants proving the repair restores
+  coverage rather than hiding a defect), and the 2 biostat failures shown to be
+  a tree caught mid-merge, green at HEAD. It also corrects this round's own
+  claim that the wizard "imports nothing round 13 touches", which is false as
+  written: six of this round's files are in its graph, none rendered and none
+  issuing a request.
 - `mutants/` — every mutant and its verdict.
 - `lint.txt` — no file gains a warning.
 - `tsc.txt` — exit 0.

@@ -32,6 +32,18 @@
 #  the wizard posts the project to the wrong path
       Tests  4 failed | 3 passed (7)    AssertionError: the wizard never posted the project
 
+### Addendum: setup.test.ts, the fourth suite with the same stale stamp
+ Test Files  1 passed (1)
+      Tests  14 passed (14)     # with RLS_ENFORCE=on, and with it off
+#  shown still to bite -- the stamp dropped from setTenantContextTx:
+      Tests  1 failed | 13 passed (14)
+
+### The other three suites that assert the stamp (all already correct)
+#  withTenantConnection-scope-before-checkout.test.ts (prefix match),
+#  saved-precedent-queries.rls.test.ts, stability-tenant-isolation.contract.test.ts
+ Test Files  3 passed (3)
+      Tests  17 passed (17)     # both postures
+
 ### Gates
 ci:error-envelope                     PASS
 ci:tenant-isolation:no-regression     PASS
@@ -41,4 +53,4 @@ tsc --noEmit                          no error in any changed file
 eslint <changed files>                exit 0
 
 ### No production file changed
-#  git diff --name-only is 8 files, all of them fixtures or suites.
+#  git diff --name-only is 9 files across both commits, all fixtures or suites.
