@@ -128,6 +128,7 @@ vi.mock('../../services/auditService', async (importOriginal) => ({
 
 import reportOsRouter from '../report-os';
 import logger from '../../utils/logger';
+import { tenantStampSql } from './_report-os-route-harness';
 
 /** Every line handed to the logger, whichever scoped logger sent it (DP-67). */
 const logs: Array<{ level: string; message: string; context: unknown }> = [];
@@ -149,7 +150,6 @@ app.use((req, _res, next) => {
 });
 app.use('/api/report-os', reportOsRouter);
 
-const STAMP = "SELECT set_config('app.current_tenant_id', $1, true)";
 const SUBMISSION = '00000000-0000-4000-8000-0000000000aa';
 const BUNDLE_ID = '11111111-1111-4111-8111-111111111111';
 const run = (status: string, over: Record<string, unknown> = {}) => ({
@@ -231,7 +231,7 @@ describe('POST /deliveries platform_send: the letter, the record and the chain r
     const { deliveryId, correspondenceId, status } = res.body.data;
     expect(status).toBe('sent');
     expect(correspondenceId).toMatch(/^[0-9a-f-]{36}$/);
-    expect(h.statements.slice(0, 2)).toEqual(['BEGIN', STAMP]);
+    expect(h.statements.slice(0, 2)).toEqual(['BEGIN', tenantStampSql()]);
     expect(h.statements.slice(-2)).toEqual(['COMMIT', '<released>']);
     expect(at(CORRESPONDENCE)).toBeGreaterThan(1);
     expect(at(MEMORY)).toBeGreaterThan(at(CORRESPONDENCE));
@@ -340,7 +340,7 @@ describe('POST /deliveries external_pdf_export (P1-44)', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(res.body.data.status).toBe('exported');
     expect(count(CORRESPONDENCE)).toBe(0);
-    expect(h.statements.slice(0, 2)).toEqual(['BEGIN', STAMP]);
+    expect(h.statements.slice(0, 2)).toEqual(['BEGIN', tenantStampSql()]);
     expect(at(/<audit row>/)).toBeGreaterThan(at(MEMORY));
     expect(h.statements.slice(-2)).toEqual(['COMMIT', '<released>']);
     expect(auditEntry()).toMatchObject({

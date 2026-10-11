@@ -66,8 +66,28 @@ describe('Nonclinical summaries — only the canonical CTD 2.6 subtree', () => {
     const canonical = Object.values(CTD_AUTHORING_GUIDANCE).filter(s => s.code.startsWith('2.6.'));
     expect(outline.id).toBe(getApplicationType('ICH_NONCLIN_SUMMARY')!.defaultSectionBlueprint);
     expect(outline.sections.map(s => [s.code, s.title, s.contentType])).toEqual(canonical.map(s => [s.code, s.title, s.contentType]));
-    expect(outline.sections.map(s => s.code)).toEqual(['2.6.1', '2.6.2', '2.6.3', '2.6.4', '2.6.5', '2.6.6', '2.6.7']);
+    /* The pin stays written out rather than derived from the guidance, so an
+       emptied or re-coded guidance table cannot make the equality above pass
+       vacuously. ICH M4S gives 2.6.2 (Pharmacology Written Summary) seven
+       leaves, and the outline projects them; 2.6.4 and 2.6.6 are written
+       summaries whose own M4S leaves are not in the guidance table yet, so
+       they appear here as sections without children. Update this list with
+       that table, never the other way round. */
+    expect(outline.sections.map(s => s.code)).toEqual([
+      '2.6.1',
+      '2.6.2', '2.6.2.1', '2.6.2.2', '2.6.2.3', '2.6.2.4', '2.6.2.5', '2.6.2.6', '2.6.2.7',
+      '2.6.3', '2.6.4', '2.6.5', '2.6.6', '2.6.7',
+    ]);
     expect(outline.sections.every(s => s.module === 2)).toBe(true);
+    /* "Only the canonical subtree" means no orphan leaf: every leaf's parent
+       is itself a section of this outline. A leaf whose parent is absent would
+       render under a heading the author never sees. */
+    const codes = new Set(outline.sections.map(s => s.code));
+    for (const section of outline.sections) {
+      const parent = section.code.split('.').slice(0, -1).join('.');
+      if (parent.split('.').length < 3) continue; // 2.6.x is a top-level leaf of the subtree
+      expect(codes.has(parent), `${section.code} has no parent section`).toBe(true);
+    }
   });
 });
 
