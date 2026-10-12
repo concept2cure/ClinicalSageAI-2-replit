@@ -232,11 +232,31 @@ export function agentTraceStatus(mechanical: MechanicalStatus, fullResult: strin
 }
 
 const BUDGET_SHORT: Record<string, string> = { rounds: 'round limit', tokens: 'token budget', time: 'time budget' };
+/* A stop that was not a budget: the loop's own reason, in the person's words. */
+const STOP_SHORT: Record<string, string> = {
+  duplicate_thrash: 'a step it kept repeating',
+  max_rounds: 'round limit',
+  budget_exhausted: 'a budget',
+  approval_timeout: 'an approval nobody answered',
+};
+
+/** How much of a verify agent's work actually compared anything. */
+function assessedOf(r: Record<string, unknown>): string {
+  if (!Array.isArray(r.checks)) return '';
+  const total = r.checks.length;
+  const compared = r.checks.filter(c => (c as { outcome?: unknown } | null)?.outcome !== 'not_assessed').length;
+  return total > 0 ? ` (${compared} of ${total} checks compared anything)` : '';
+}
 
 /**
  * One line for a finished `run_agent` step, from what the result says it did:
- * role, status, the budget that stopped it, the verdict. Never a prefix of the
- * JSON, which would end mid-objective.
+ * role, status, what stopped it, the verdict and how much it compared. Never a
+ * prefix of the JSON, which would end mid-objective.
+ *
+ * The line reaches the person's row AND the next turn's context, so it must
+ * not overstate: an agent that failed after real work "did not finish" rather
+ * than "did not run", a stop names what stopped it, and a verdict never
+ * travels without how many of its checks compared anything (review 2026-10-11).
  */
 export function agentResultSummary(fullResult: string): string {
   const r = parsed(fullResult);
@@ -244,10 +264,20 @@ export function agentResultSummary(fullResult: string): string {
   const agent = (r.agent ?? {}) as { role?: unknown };
   const who = agent.role === 'verify' ? 'verification agent' : 'agent';
   if (isText(r.error)) {
-    return `${who}: did not run (${r.error}${isText(r.code) ? `, ${r.code}` : ''})`;
+    // `started`: the runner had made at least one model call for it.
+    const verb = r.started === true ? 'did not finish' : 'did not run';
+    return `${who}: ${verb} (${r.error}${isText(r.code) ? `, ${r.code}` : ''})`;
   }
   const status = typeof r.status === 'string' ? r.status : 'unknown';
-  const budget = typeof r.budget === 'string' && BUDGET_SHORT[r.budget] ? ` (${BUDGET_SHORT[r.budget]})` : '';
-  const verdict = typeof r.verdict === 'string' ? `, ${r.verdict}` : '';
-  return `${who}: ${status}${budget}${verdict}`;
+  const stop =
+    (typeof r.budget === 'string' && BUDGET_SHORT[r.budget]) ||
+    (status !== 'completed' && typeof r.stoppedReason === 'string' && STOP_SHORT[r.stoppedReason]) ||
+    '';
+  const verdict = typeof r.verdict === 'string' ? `, ${r.verdict}${assessedOf(r)}` : '';
+  return `${who}: ${status}${stop ? ` (${stop})` : ''}${verdict}`;
+}
+
+export function agentEndedByHoldExpiry(fullResult: string): boolean {
+  const r = parsed(fullResult);
+  return r?.endedBy === 'hold_expired';
 }

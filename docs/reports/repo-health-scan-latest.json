@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T06:25:57.685Z",
+  "generatedAt": "2026-10-12T06:44:11.120Z",
   "git": {
-    "sha": "04c92dc4056fbc52aa98b451a4afb248b5804a62",
+    "sha": "f8389536311921b2e480b070c1a16e1030325816",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2080,7 +2080,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 194672
+        "bytes": 194986
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2160,7 +2160,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
-        "bytes": 128542
+        "bytes": 128470
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2188,7 +2188,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "bytes": 116834
+        "bytes": 116624
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2196,7 +2196,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
-        "bytes": 114943
+        "bytes": 114827
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
@@ -2236,7 +2236,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
-        "bytes": 108037
+        "bytes": 107943
       },
       {
         "file": "server/routes/c2c/projects.ts",
@@ -2244,7 +2244,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 105258
+        "bytes": 106835
       },
       {
         "file": "server/api/cmc/routes.ts",
@@ -2322,7 +2322,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 3801
+        "lines": 3806
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2477,16 +2477,16 @@
         "lines": 2155
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 2145
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
         "lines": 2116
       },
       {
         "file": "client/src/concept2cure/v2/editor/suggestions.ts",
         "lines": 2112
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 2106
       },
       {
         "file": "server/services/precedent-engine.ts",

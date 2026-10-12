@@ -31,6 +31,53 @@ export interface QuestionOption {
   description?: string;
   /** When true, selecting this option triggers an issue flag. */
   flagsIssue?: boolean;
+  /**
+   * What taking this position commits the programme to, in one line — the
+   * consequence, not a restatement of the label. A person choosing between
+   * 505(b)(1) and 505(b)(2), or between a 510(k) and a De Novo, is choosing
+   * what evidence they will owe and whose data they may rely on; the option
+   * should say that much before they pick it.
+   */
+  commits?: string;
+  /**
+   * What makes this a real position: the part, annex or guideline it comes
+   * from (e.g. '21 CFR 314.54', 'ICH M4Q', 'MDR Annex IX'). Never a model's
+   * paraphrase — these are written in the flow or the governed catalogue.
+   */
+  authority?: string;
+}
+
+/**
+ * The value a field carries when the person took a position the list did not
+ * offer. No listed option may use it; an invariant test over every flow holds
+ * that. Their words travel beside it, under {@link otherFieldId}.
+ */
+export const OTHER_POSITION = '__other__';
+
+/** Where the person's own words for `fieldId` are carried in an answer. */
+export function otherFieldId(fieldId: string): string {
+  return `${fieldId}__other`;
+}
+
+/** The most AnA will take as a position written in the person's own words. */
+export const OWN_POSITION_MAX_CHARS = 2_000;
+
+/**
+ * A question's list is rarely the whole world. Where a field declares this,
+ * the person may take a position of their own and write it down, and AnA
+ * records it as their wording rather than as one of the positions she offered
+ * (founder's directive, 2026-10-12).
+ *
+ * Absent, the list is closed: an unlisted answer is refused, and the refusal
+ * says the list is closed rather than calling the person's answer invalid.
+ */
+export interface OwnPositionAllowed {
+  /** The label on the escape hatch. Default: 'Something else'. */
+  label?: string;
+  /** What AnA needs in their own words. Shown beside the box, and in the refusal when it is empty. */
+  prompt?: string;
+  /** Whether words are required when this is chosen. Default true: an unexplained 'other' is not an answer. */
+  required?: boolean;
 }
 
 export interface QuestionField {
@@ -41,6 +88,8 @@ export interface QuestionField {
   helpText?: string;
   required?: boolean;
   options?: QuestionOption[];
+  /** The person may take a position this list does not offer (see OwnPositionAllowed). */
+  allowOther?: OwnPositionAllowed;
   validation?: FieldValidation;
   /** Default value pre-filled from project context or prior answers. */
   defaultValue?: string | string[] | number | boolean;
@@ -171,6 +220,14 @@ export interface FlowState {
   currentNodeId: string;
   /** All collected answers keyed by nodeId → { fieldId: value }. */
   answers: Record<string, Record<string, unknown>>;
+  /**
+   * Positions the person wrote themselves, keyed nodeId → fieldId → their
+   * words. Kept apart from `answers` on purpose: a consumer reading `answers`
+   * sees OTHER_POSITION and cannot mistake their wording for a position AnA
+   * offered, and a document built from this interview can say which answers
+   * were the person's own.
+   */
+  ownWords?: Record<string, Record<string, string>>;
   /** Node ids that have been completed. */
   completedNodes: string[];
   /** Issues detected so far. */
@@ -218,6 +275,8 @@ export interface IntelligenceFlowCompleteEvent {
   flowCategory: FlowCategory;
   /** All collected answers. */
   answers: Record<string, Record<string, unknown>>;
+  /** Positions the person wrote themselves (FlowState.ownWords). */
+  ownWords?: Record<string, Record<string, string>>;
   /** All issues detected. */
   issues: DetectedIssue[];
   /** Summary of what was collected. */

@@ -156,8 +156,8 @@ export function createLabelingFlow(): FlowDefinition {
               { value: 'dermatology', label: 'Dermatology' },
               { value: 'ophthalmology', label: 'Ophthalmology' },
               { value: 'rare_disease', label: 'Rare Disease / Orphan' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'rems_required',
@@ -226,8 +226,8 @@ export function createLabelingFlow(): FlowDefinition {
               { value: 'globalsubmit', label: 'GlobalSubmit' },
               { value: 'docubridge', label: 'DocuBridge SPL Module' },
               { value: 'custom', label: 'Custom / In-house SPL tool' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'labeling_languages',
@@ -237,8 +237,8 @@ export function createLabelingFlow(): FlowDefinition {
               { value: 'english', label: 'English' },
               { value: 'spanish', label: 'Spanish' },
               { value: 'french', label: 'French (Canadian market)' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             helpText: 'FDA requires English. Additional languages may be needed for territories or global filings.',
           },
           {
@@ -567,8 +567,8 @@ export function createLabelingFlow(): FlowDefinition {
               { value: 'topical', label: 'Topical' },
               { value: 'inhalation', label: 'Inhalation' },
               { value: 'ophthalmic', label: 'Ophthalmic' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'dose_modifications',
@@ -1014,8 +1014,8 @@ export function createLabelingFlow(): FlowDefinition {
             options: [
               { value: 'with_each_dispensing', label: 'With each dispensing (standard)' },
               { value: 'rems_distribution', label: 'Through REMS distribution system' },
-              { value: 'other', label: 'Other distribution method' },
             ],
+            allowOther: { label: 'Other distribution method' },
           },
         ],
         issueChecks: [

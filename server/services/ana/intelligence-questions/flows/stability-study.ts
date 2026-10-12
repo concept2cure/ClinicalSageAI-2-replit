@@ -114,8 +114,8 @@ export function createStabilityStudyFlow(): FlowDefinition {
               { value: 'transdermal', label: 'Transdermal Patch' },
               { value: 'suppository', label: 'Suppository' },
               { value: 'bulk_api', label: 'Bulk API (drug substance)' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             visibleWhen: {
               field: 'product_type',
               operator: 'neq',
@@ -299,8 +299,8 @@ export function createStabilityStudyFlow(): FlowDefinition {
               { value: 'high_voltage_leak', label: 'High Voltage Leak Detection (HVLD)' },
               { value: 'dye_ingress', label: 'Dye Ingress (microbial challenge)' },
               { value: 'headspace_analysis', label: 'Headspace Gas Analysis' },
-              { value: 'other', label: 'Other Method' },
             ],
+            allowOther: { label: 'Other Method' },
           },
           {
             id: 'extractables_leachables',
@@ -504,8 +504,8 @@ export function createStabilityStudyFlow(): FlowDefinition {
               { value: 'anvisa', label: 'Brazil ANVISA' },
               { value: 'asean', label: 'ASEAN (ACTD format)' },
               { value: 'who_pq', label: 'WHO Prequalification' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             helpText: 'Different regulatory authorities may have specific stability data expectations beyond ICH Q1A(R2). Identify all target markets to ensure the stability data package is sufficient.',
           },
           {
@@ -742,8 +742,8 @@ export function createStabilityStudyFlow(): FlowDefinition {
               { value: 'uv_vis', label: 'UV-Vis Spectrophotometry' },
               { value: 'potentiometric', label: 'Potentiometric Titration' },
               { value: 'ce', label: 'Capillary Electrophoresis' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             helpText: 'The assay method must be validated per ICH Q2(R2) and demonstrated to be stability-indicating through forced degradation studies.',
           },
           {

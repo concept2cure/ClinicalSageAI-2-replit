@@ -2678,8 +2678,13 @@ export function mountStreamRoute(router: Router): void {
                 toolName: toolUse.name,
                 arguments: (toolUse.input ?? {}) as Record<string, unknown>,
                 result: { resultBytes: resultStr.length },
-                // Telemetry keeps the mechanical status: the call ran and returned.
-                status: toolStatus === 'incomplete' ? 'success' : toolStatus,
+                /* The outcome the person's record carries, not a rounded one:
+                   an agent cut short at a budget recorded as a plain success
+                   left the ledger disagreeing with the record they can open,
+                   and nobody querying it could find which runs were cut short
+                   (review 2026-10-11; the column is free text, as
+                   toolRegistry.ts says of 'cancelled'). */
+                status: toolStatus,
                 errorMessage: toolErrorMessage,
                 latencyMs: Date.now() - toolStart,
               });
