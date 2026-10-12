@@ -496,7 +496,7 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'beaker',
     group: 'quality-cmc',
     uiKit: 'cmc',
-    // 2026-10-05 (decision P-13, CMC / Module 3 joins the launch catalog): the
+    // 2026-10-05 (decision P-28, CMC / Module 3 joins the launch catalog): the
     // bare '/api/cmc' and '/api/cmc/module3-os' replaced by the segments the
     // CMC screens call, and the dead '/api/cmc/stability' mount dropped.
     // Attribution is by longest prefix, so the bare claim made every handler

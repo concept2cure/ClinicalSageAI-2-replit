@@ -75,7 +75,7 @@ ANCHOR=$(cat "$OUT/program.json" | JQ '.meta.projectAnchorId // .data.meta.proje
   || bad "program created with NO PM-spine anchor: $(cat "$OUT/program.json" | JQ '.meta.projectAnchorSkipped // empty') - $(cat "$OUT/program.json" | JQ '.meta.projectAnchorDetail // empty' | head -c 220)"
 
 step "3. Process development registers the drug substance (feeds 3.2.S.1/S.2)"
-# A SMALL MOLECULE, which is what this platform composes Module 3 for (P-13,
+# A SMALL MOLECULE, which is what this platform composes Module 3 for (P-28,
 # 2026-10-05). This program used to register a monoclonal antibody -
 # modality "biologic", route "CHO cell culture", INN "belantezumab" - and the
 # compile composed twenty-one small-molecule Module 3 sections for it, ICH Q3A
@@ -95,7 +95,7 @@ echo "$DSROUTE" | grep -q "chemical synthesis" && ok "the drug substance carries
 
 step "3c. A biologic program is refused Module 3 composition, and told where to author it"
 # The composition boundary, end to end (services/cmc/composition-scope.ts,
-# P-13 2026-10-05). This platform composes small-molecule Module 3 for a US
+# P-28 2026-10-05). This platform composes small-molecule Module 3 for a US
 # IND; ICH Q6B, Q5A(R2) and Q5C are not modelled, and composing anyway applied
 # Q3A impurity reasoning to a biologic. Until this step the simulation's own
 # program WAS a CHO cell-culture mAb and composed twenty-one sections for it.

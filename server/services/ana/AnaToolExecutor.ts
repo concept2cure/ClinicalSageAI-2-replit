@@ -20117,6 +20117,31 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
     });
   }
 
+  /* An interview whose answers reach no record is not offered where the
+     launch boundary is enforced (decision P-28, 2026-10-12).
+     `buildInterviewCommitPlan` produces entries for the CMC specification flow
+     and an EMPTY plan for every other category, so a protocol, CSR, 510(k),
+     CER, SOP, NDA or BLA interview could be started, answered to the end, and
+     commit nothing. Walking a person through that and then saving nothing is
+     an empty result standing in for a refusal. The list is the commit path's
+     own (services/cmc/interview-commit.ts), not a second one here.
+
+     Off the boundary — a development server — every flow stays available: the
+     engine and its question sets are what a person builds against. */
+  const { flowCommitsToRecord } = await import('../cmc/interview-commit.js');
+  const { launchScopeEnforced } = await import('../entitlements/launch-scope.js');
+  if (launchScopeEnforced() && !flowCommitsToRecord(category)) {
+    return JSON.stringify({
+      error:
+        `The "${documentType}" interview is not available in this release: its answers reach no record, so ` +
+        `completing it would save nothing. The interview that commits is the CMC specification flow, which ` +
+        `writes the drug substance, drug product, method, specification and stability registers. For a ` +
+        `protocol, a CSR, a 510(k), a CER or an SOP, author the document in Document editor & authoring.`,
+      flow: category,
+      commits: false,
+    });
+  }
+
   const engineCtx = intelligenceEngineContext(ctx);
 
   try {

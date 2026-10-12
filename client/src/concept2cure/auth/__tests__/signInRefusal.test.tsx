@@ -46,4 +46,24 @@ describe('a refused sign-in', () => {
     const alert = await signInWith({ code: 'AUTH_011', message: 'No organization assigned' });
     expect(alert.textContent).toBe('No organization assigned');
   });
+
+  /* A server that cannot send the verification code now refuses the sign-in
+     (services/auth/login-code-delivery.ts) instead of answering success with a
+     masked address, so this page has to carry that refusal. It must read as the
+     server's problem: a tester told their credentials were wrong resets a
+     password that is fine, and a tester told nothing waits for a code that
+     cannot arrive. The page shows the server's sentence verbatim — these cases
+     pin that the sentence survives the page, and that nothing about it reads as
+     a rejected password. */
+  it('AUTH_OTP_UNDELIVERABLE is shown as the server\'s problem, not the password\'s', async () => {
+    const alert = await signInWith({
+      code: 'AUTH_OTP_UNDELIVERABLE',
+      message:
+        'We could not send your verification code, so sign-in cannot be completed. ' +
+        'This is a problem with the server, not with your account — contact your administrator.',
+    });
+    expect(alert.textContent).toMatch(/could not send your verification code/);
+    expect(alert.textContent).toMatch(/not with your account/);
+    expect(alert.textContent).not.toMatch(/error\.invalidCredentials|incorrect|password/i);
+  });
 });

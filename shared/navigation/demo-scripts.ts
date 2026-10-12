@@ -81,10 +81,10 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
     audience: 'A new subscriber team learning to run their regulatory work here.',
     minutes: 8,
     description:
-      'The complete working tour of the launch catalog: the Projects portfolio and a real program, the Vault, Authoring and the protocol workspace, the Submission Center, Submission Readiness, QMS controlled documents, Reporting & analytics with its audit and compliance reports, and the audit trail — each stop showing what the team actually does there.',
+      'The complete working tour of the launch catalog: the Projects portfolio and a real program, the Vault, Authoring and the protocol workspace, CMC / Module 3, the Submission Center, Submission Readiness, QMS controlled documents, Reporting & analytics with its audit and compliance reports, and the audit trail — each stop showing what the team actually does there.',
     steps: [
       {
-        say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, through the seven apps of this release, and they can interrupt with a question at any moment.',
+        say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, through the eight apps of this release, and they can interrupt with a question at any moment.',
       },
       {
         say: 'Projects is the front door: every regulatory program with its workstream, stage, readiness and blockers. In the demo workspace that is "[Demo · Biotech] C2C-101", an anti-IL-23 antibody IND, beside "[Demo · MDX] NeuroPanel-Dx", an IVD 510(k) — the same portfolio holds both.',
@@ -111,7 +111,11 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'protocol-dev' },
       },
       {
-        say: 'The Submission Center is the operations cockpit: from planning a submission through its sequences, build and validation, up to dispatch — everything from one place, and freezing or dispatching stays a person’s signature.',
+        say: 'CMC / Module 3 is where the chemistry, manufacturing and controls record is kept and the quality module is built: the substance, product, method, specification, batch and stability registers feed one deterministic compile, a contradiction sweep names what disagrees, and a fail-closed export gate holds the module until every section is approved under Part 11. What it composes is small-molecule Module 3 for a US IND; a biologic or a marketing application is refused by name and authored in the editor instead.',
+        navigate: { target: 'cmc' },
+      },
+      {
+        say: 'The Submission Center is the operations cockpit: from planning a submission through its sequences, build and validation, up to dispatch — everything from one place, and freezing or dispatching stays a person’s signature. The approved Module 3 reaches a sequence from the CMC module, as placed leaves — never retyped here.',
         navigate: { target: 'submissions' },
       },
       {
