@@ -1,0 +1,7 @@
+mutant P14-06: the refusal carries no reason text, so a caller must invent its own
+verdict: KILLED
+Tests  1 failed | 5 passed (6)
+
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx > EditorBridge.propose — the governed-write rule, as insert applies it (round 14, SEC-A-7) > refuses a redline whose turn the rule does not admit, and names the model as the reason 337ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)

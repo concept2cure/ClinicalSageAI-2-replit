@@ -1,0 +1,7 @@
+mutant P14-05: the unfinished flag is dropped, so a stopped answer may redline
+verdict: KILLED
+Tests  1 failed | 5 passed (6)
+
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx > EditorBridge.propose — the governed-write rule, as insert applies it (round 14, SEC-A-7) > fails closed when the models are not given at all, or the answer did not finish 158ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
