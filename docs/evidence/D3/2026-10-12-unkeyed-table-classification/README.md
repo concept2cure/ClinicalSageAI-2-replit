@@ -157,3 +157,71 @@ it.
 `ci:unkeyed-request-tables:strict` — "no per-request table lacks a tenant key",
 the end state rather than the triage — remains at 105 and is unaffected by this
 work, which was always about deciding each one rather than re-keying them.
+
+---
+
+# Third pass: the two findings I had recorded rather than fixed are now fixed
+
+The second pass left `capa_records` and `q_submissions` as findings — the
+text-program-id shape, in no spec, isolated only by their reading routes' joins
+— because adding a policy looked like it could silently empty two
+customer-facing lists. **That caution was based on a wrong reading of the
+policy, and measuring it settled the matter.**
+
+## What I had wrong
+
+Both tables' readers import the **shared** pool (`server/db/runtime.ts`), and
+that pool sets no session scope — `applySessionScope` is called only from
+`middleware/establishRequestTenantScope.ts` and `db/withTenantConnection.ts`.
+I reasoned from that to "a policy would evaluate `app.current_org_id` on a
+connection where it is unset and return zero rows", i.e. the CAPA list and the
+Q-submission list would go empty.
+
+Wrong, and the policy says so in its first arm:
+
+```sql
+NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+OR <the parent predicate>
+```
+
+On a connection with no GUCs, `app.rls_enforce` is empty, `NULLIF` gives NULL,
+and `NULL IS DISTINCT FROM 'on'` is **true** — the policy admits every row. It
+is inert exactly where the readers are unscoped, and binds exactly where a
+request has established a scope. That is the platform's designed posture, and I
+should have measured it before concluding.
+
+## Measured, four cases, as a non-superuser
+
+`measured.txt`, on `c2c_dbtest` as `app_service` — a superuser bypasses RLS
+unconditionally and would prove nothing:
+
+| case | rows visible | meaning |
+|---|---|---|
+| no GUCs set | **2** (both organisations) | inert — today's shared-pool readers unaffected |
+| `rls_enforce=on`, no organisation | **0** | fail closed |
+| `rls_enforce=on`, organisation A | **1** (A's only) | isolates |
+| `rls_enforce=on`, organisation B | **1** (B's only) | isolates |
+
+## The change
+
+Both tables joined the spec list in
+`db/migrations/20260813_child_table_parent_scoped_rls.sql` — its text-program-id
+class — with a dated amendment note in the file, as RULE 1 requires of an
+in-place amendment. The migration took the **text-comparison** path its own
+2026-09-08 amendment added, announcing it:
+
+> `WARNING: [child-rls] capa_records → regulatory_programs: key or tenant
+> column type does not fit the integer-tenant predicate — policied by text
+> comparison instead` … `NOTICE: capa_records scoped to
+> regulatory_programs(organization_id)`
+
+`ci:migration-set-order` and `ci:migration-drop-safety` both still pass at 374
+migrations. Nothing was removed from that file.
+
+`capa_records` was also already correct at the application level and had been
+repaired once before: `routes/mdx-postmarket.ts` joins `regulatory_programs`
+INNER and filters on `p.organization_id`, after a `LEFT JOIN` with
+`OR p.organization_id IS NULL` had returned every orphaned CAPA to every
+tenant. So this is defence in depth on that path, and the first line of defence
+on `q_submissions`' five readers.
