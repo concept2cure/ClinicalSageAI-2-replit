@@ -216,6 +216,10 @@ interface CanvasPortfolio {
 interface CanvasOverview {
   organizationId: number;
   tier: string;
+  /** Whether `tier` was read, or assumed after a failed capability lookup
+   *  (server entitlement-map.ts). Absent on a server that predates the flag,
+   *  which is read as resolved — the flag only ever withdraws a claim. */
+  tierResolved?: boolean;
   segments: string[];
   leadProgram: CanvasLeadProgram | null;
   /** The open program named by `?programId=`, and whether it leads (server
@@ -780,10 +784,32 @@ const RO_SEV: Record<string, string> = { critical: 'Critical', high: 'High', med
 
 /* ── Mini charts ── */
 
+/** A spec field as a number, or null when the spec does not carry one.
+ *
+ *  `Number(x) || 0` reads an absent field, a null and a NaN as zero, which is
+ *  how a ring with no value drew an empty ring labelled "0 of 100" — the
+ *  not-computed-as-zero defect the rest of this surface was fixed for. A
+ *  genuine 0 survives this; nothing else does. */
+export function roSpecNum(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  if (!text) return null;
+  const n = Number(text);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** What a chart says when its spec does not carry the series it draws. */
+function ROChartNoData({ label }: { label: string }) {
+  return <div className="ro-svg-cap">{label} — no series data. Connect the live provider.</div>;
+}
+
 function ROChart({ chartType, spec }: { chartType: string; spec: Record<string, unknown> }) {
   const s = spec || {};
   if (chartType === 'readiness_ring') {
-    const v = Math.max(0, Math.min(100, Number(s.value) || 0));
+    const raw = roSpecNum(s.value);
+    if (raw === null) return <ROChartNoData label={(s.label as string) || 'Readiness'} />;
+    const v = Math.max(0, Math.min(100, raw));
     const R = 34;
     const C = 2 * Math.PI * R;
     const off = C * (1 - v / 100);
@@ -801,7 +827,12 @@ function ROChart({ chartType, spec }: { chartType: string; spec: Record<string, 
     );
   }
   if (chartType === 'forecast_band') {
-    const a = Math.max(0, Math.min(100, Number(s.anchor) || 60));
+    /* `Number(s.anchor) || 60` invented an anchor, and the five points below
+       are a fixed shape drawn from it — a trajectory with no measurement behind
+       it, in a governed report (HS-1008-5). No anchor, no band. */
+    const anchor = roSpecNum(s.anchor);
+    if (anchor === null) return <ROChartNoData label={(s.label as string) || 'Trajectory'} />;
+    const a = Math.max(0, Math.min(100, anchor));
     const pts: [number, number][] = [[0, a], [1, a + 3], [2, a - 2], [3, a + 6], [4, a + 2]];
     const x = (i: number) => 14 + i * 62;
     const y = (v: number) => 96 - (v / 100) * 80;
@@ -819,7 +850,14 @@ function ROChart({ chartType, spec }: { chartType: string; spec: Record<string, 
     );
   }
   if (chartType === 'trend') {
-    const d: number[] = Array.isArray(s.points) ? (s.points as number[]) : [62, 66, 64, 70, 73];
+    /* The fallback was the literal series [62, 66, 64, 70, 73]: a rising line
+       drawn for any report whose spec carried no points (HS-1008-5). Fixture
+       data in a governed path is exactly what this repository forbids. */
+    const points = Array.isArray(s.points) ? (s.points as unknown[]).map(roSpecNum) : null;
+    if (!points || points.length < 2 || points.some(n => n === null)) {
+      return <ROChartNoData label={(s.label as string) || 'Trend'} />;
+    }
+    const d = points as number[];
     const x = (i: number) => 14 + i * (252 / (d.length - 1));
     const y = (v: number) => 96 - (v / 100) * 80;
     const line = d.map((v, i) => `${x(i)},${y(v)}`).join(' ');
@@ -1477,6 +1515,14 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   // "preview on another plan" control (canonical entitlement UX), not persisted.
   const [tierOverride, setTierOverride] = useState<string | null>(null);
   const realTier = data?.tier ?? 'standard';
+  /* HS-1008-4. `requireReportEntitlement` degrades to `standard` when the
+     capability lookup throws, which is right for the gate and was wrong for the
+     screen: an enterprise customer whose lookup failed saw "Plan: Standard" and
+     a wall of locked tiles, with nothing saying their plan had not been read.
+     The locks stay — entitlement still fails closed — but the plan is no longer
+     asserted. Absent (an older server) is read as resolved: the flag only
+     withdraws a claim, never adds one. */
+  const tierResolved = data?.tierResolved !== false;
   const tier = tierOverride ?? realTier;
   const previewing = tierOverride != null && tierOverride !== realTier;
   /* "Find a report": the words in the field stay there after a search, as in
@@ -1881,8 +1927,22 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
               review 2026-10-01). It says it is one, and names the real plan. */}
           {previewing && (
             <div className="ro-dash-note" role="status" data-testid="rc-tier-preview">
-              {I.info} Previewing {tierLabel(tier)}. Your organization's plan is {tierLabel(realTier)}.{' '}
-              <button type="button" className="rc-chip" onClick={() => setTierOverride(null)}>Back to {tierLabel(realTier)}</button>
+              {I.info} Previewing {tierLabel(tier)}.{' '}
+              {tierResolved
+                ? <>Your organization's plan is {tierLabel(realTier)}.{' '}</>
+                : <>Your organization's plan could not be read, so it is not named here.{' '}</>}
+              <button type="button" className="rc-chip" onClick={() => setTierOverride(null)}>
+                {tierResolved ? <>Back to {tierLabel(realTier)}</> : <>Stop previewing</>}
+              </button>
+            </div>
+          )}
+          {/* Not previewing, and the plan was never read: say so where the plan
+              is shown, so a wall of locks is not read as the plan's doing. */}
+          {!previewing && !tierResolved && (
+            <div className="ro-dash-note" role="status" data-testid="rc-tier-unresolved">
+              {I.alertTriangle} Your organization's plan could not be read just now, so paid
+              capabilities are shown locked. This is not a statement about your plan — try again
+              in a moment, and contact your administrator if it persists.
             </div>
           )}
           <label className="gov-label" htmlFor={fieldId} style={{ display: 'block', marginBottom: 5 }}>Find a report</label>
