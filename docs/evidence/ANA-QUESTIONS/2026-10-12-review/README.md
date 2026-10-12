@@ -188,4 +188,10 @@ this landed; these are the findings as reported, and each needs its own slice:
   investigation and the IVDR performance study did not exist as positions
   either, and the coverage gate did not scan the `clinical_trial` family at
   all;
-- an EU-only device programme is still required to state a US risk class.
+- ~~an EU-only device programme is still required to state a US risk class.~~
+  **repaired** — `2026-10-12-no-us-filing/`. The EU field had carried
+  'Not applicable / No EU filing planned' since it was written; the US field,
+  the required one, had no equivalent, so the programme had to assert an FDA
+  class or claim not to know one. Both fields now offer it, the reader states
+  no class for it, and FDA named beside "no US filing planned" is reported as
+  the contradiction it is.

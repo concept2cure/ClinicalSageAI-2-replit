@@ -131,6 +131,8 @@ export const DECLARED_NON_FACTS: Readonly<Record<string, Readonly<Record<string,
   device_class: {
     not_classified:
       'The person has said they do not know the class yet. Not knowing is not a contradiction of any route, so it marks nothing.',
+    no_us_filing:
+      'No US filing is planned. It states the absence of a filing rather than a class, exactly as the MDR field\u2019s \'na\' does — and the FDA routes are already marked for a programme that named another regulator, by the regulator rule rather than by this.',
   },
   device_classification: {
     ivd:

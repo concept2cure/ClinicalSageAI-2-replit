@@ -395,7 +395,7 @@ export function createProjectSetupFlow(): FlowDefinition {
         section: 'product_regulatory',
         question: 'Which application are you making?',
         guidance:
-          'The application decides what evidence you owe and whose data you may rely on. These positions are the platform’s own filing registry, annotated with what taking each one commits the programme to and the authority behind it, and narrowed to what the modality frame allows this product — so a monoclonal antibody is offered a biologics licence and not an NDA, and a small molecule is offered 505(b)(1), 505(b)(2) and the ANDA route in the frame’s own order.',
+          'The application decides what evidence you owe and whose data you may rely on. These positions are the platform’s own filing registry, annotated with what taking each one commits the programme to and the authority behind it, and narrowed to what the modality frame allows this product — so a monoclonal antibody is offered a biologics licence and not an NDA, and a small molecule is offered 505(b)(1), 505(b)(2) and the ANDA route in the frame’s own order. The filing that permits the study rather than the sale is offered after them, because a programme before its marketing application still has one to name.',
         fields: [
           {
             id: 'submission_type',
@@ -461,7 +461,17 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'class_ii', label: 'Class II — General + Special Controls' },
               { value: 'class_iii', label: 'Class III — Premarket Approval Required' },
               { value: 'not_classified', label: 'Not Yet Classified' },
+              /* The EU field has carried 'Not applicable / No EU filing
+                 planned' all along; this one had no equivalent, so a required
+                 question compelled a European programme to assert an FDA
+                 class or to claim it did not know one — two different
+                 statements, neither of them true of it. The MDR field's own
+                 wording is reused, because the two questions are the same
+                 question about two regulators (2026-10-12 review). */
+              { value: 'no_us_filing', label: 'Not applicable / No US filing planned' },
             ],
+            helpText:
+              'The FDA class. A programme filing only in Europe says so here rather than stating a class it has not determined — and if the US follows later, AnA asks again.',
           },
           {
             id: 'product_code',
