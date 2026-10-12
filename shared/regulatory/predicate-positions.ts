@@ -62,14 +62,14 @@ const POSITIONS: readonly PredicatePosition[] = [
     value: 'multiple_predicates',
     label: 'A primary predicate and additional predicates',
     commits:
-      'A primary predicate for the intended use, with further predicates for separate technological features — each of which must itself have the same intended use. It widens what you may rely on and widens what FDA will compare.',
+      'Two cases the 2014 guidance allows: a device with more than one intended use, each supported by its own predicate, or one intended use with features taken from several predicates that share it. What it does not allow is taking the indications from one and the technology from another. It widens what you may rely on and widens what FDA will compare.',
     authority: 'FDA, The 510(k) Program: Evaluating Substantial Equivalence (2014), § V',
   },
   {
     value: 'split_predicate',
     label: 'A split predicate — indications from one device, technology from another',
     commits:
-      'FDA does not accept this. The 2014 substantial-equivalence guidance states that a split predicate is not a permissible basis, so naming one invites a Refuse to Accept decision or a finding of not substantially equivalent. If the indications and the technology come from different devices, the honest readings are a De Novo or a new intended use.',
+      'FDA does not accept this. The 2014 substantial-equivalence guidance states that a split predicate \u2014 the indications for use from one device and the technological characteristics from another \u2014 is not a permissible basis, so a submission resting on one invites a finding of not substantially equivalent. If the indications and the technology come from different devices, the honest readings are a De Novo or a 510(k) for the new intended use.',
     authority: 'FDA, The 510(k) Program: Evaluating Substantial Equivalence (2014) — split predicates not permitted',
   },
   {
