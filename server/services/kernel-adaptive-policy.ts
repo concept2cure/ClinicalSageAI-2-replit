@@ -70,6 +70,23 @@ export async function recordKernelPolicyOutcome(input: KernelPolicyOutcomeInput)
   }
 }
 
+/**
+ * The preferred routing strategy, learned from ONE organisation's recorded
+ * outcomes — or null when there is nothing to learn from.
+ *
+ * Until 2026-10-12 the statement read
+ * `AND ($3::int IS NULL OR organization_id = $3)` and both callers pass
+ * `organizationId: … || null` (routes/chat/send-message.ts:744,
+ * ana-kernel-orchestrator.ts:29), so a turn whose organisation could not be
+ * resolved chose its strategy from the average quality scores of EVERY
+ * tenant's outcomes: one organisation's results steering another's routing,
+ * and a cross-tenant aggregate returned to the caller.
+ *
+ * No organisation now means no hint, which is not a loss of behaviour: both
+ * callers read `policyHint?.preferredStrategy || routingPlan.strategy`, so the
+ * turn falls back to the router's own deterministic strategy rather than to
+ * another tenant's.
+ */
 export async function getKernelPolicyHint(params: {
   organizationId?: number | null;
   route: string;
@@ -79,6 +96,8 @@ export async function getKernelPolicyHint(params: {
 }): Promise<KernelPolicyHint | null> {
   const lookbackDays = params.lookbackDays ?? 14;
   const minSamples = params.minSamples ?? 20;
+  const organizationId = Number(params.organizationId);
+  if (!Number.isInteger(organizationId) || organizationId <= 0) return null;
 
   try {
     const result = await pool.query(
@@ -86,13 +105,13 @@ export async function getKernelPolicyHint(params: {
        FROM ai_kernel_policy_outcomes
        WHERE route = $1
          AND task_type = $2
-         AND ($3::int IS NULL OR organization_id = $3)
+         AND organization_id = $3
          AND created_at >= NOW() - (($4::text || ' days')::interval)
        GROUP BY strategy
        HAVING COUNT(*) >= $5
        ORDER BY avg_quality DESC
        LIMIT 1`,
-      [params.route, params.taskType, params.organizationId || null, lookbackDays, minSamples]
+      [params.route, params.taskType, organizationId, lookbackDays, minSamples]
     );
 
     if (result.rows.length === 0) return null;
