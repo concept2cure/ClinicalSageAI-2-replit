@@ -10,8 +10,9 @@ the contract suite 1/0 both sides (its pre-existing max-lines warning, which
 fires once per file and so does not multiply).
 typecheck: npm run -s typecheck:fast -> exit 0
 
-WIDER REGRESSION: a run over authoring-atomic-mutations.test.ts and the whole
-tests/schema-contract/ directory was still in progress when this round was
-committed, so no total is claimed here. It is recorded in regression.txt when
-it lands. The suites that exercise the changed handler directly are the 37
-above; the mutants are what establish the behaviour.
+WIDER REGRESSION: landed, and recorded in regression.txt beside this file —
+103 test files, 1359 tests, all passing, over
+server/routes/__tests__/authoring-atomic-mutations.test.ts and the whole
+tests/schema-contract/ directory. regression.txt states which tree that run
+covers and which one the pre-push gates cover, because they are not the same
+commit.
