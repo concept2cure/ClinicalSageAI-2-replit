@@ -18,10 +18,17 @@
  * screen for a message that cannot arrive, with no way to tell this from a slow
  * mail server, and the product reads as broken for an unknowable reason.
  *
- * That is the state `scripts/ops/pilot-go-no-go.mjs` measures and calls the
- * decisive blocker: "SMTP_HOST + SMTP_USER + SMTP_PASS MISSING —
- * getTransporter() returns null, so login OTP emails are never sent and NO
- * tester can complete a login."
+ * `scripts/ops/pilot-go-no-go.mjs` names that state its decisive hard failure:
+ * "SMTP_HOST + SMTP_USER + SMTP_PASS MISSING — getTransporter() returns null,
+ * so login OTP emails are never sent and NO tester can complete a login."
+ *
+ * The probe judges the environment it runs in, so a run from a development
+ * container says nothing about what a deployment has set (that is the whole
+ * point of `--include-local-env`). The defect here does not depend on any
+ * deployment's state either way: the routes claimed delivery without ever
+ * asking whether delivery was possible, and that claim was wrong whenever it
+ * was not. Whether this particular deployment has SMTP set is an operator
+ * question, not something this module or its tests can observe.
  *
  * The sign-up handler in `routes/auth.ts` already refuses on exactly this
  * condition, and says why in its own comment: "A deployment that cannot mail
