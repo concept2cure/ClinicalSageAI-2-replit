@@ -36,6 +36,7 @@ const FACT_SETS: ProgrammeFacts[] = [
   { modality: 'biosimilar' },
   { modality: 'small_molecule' },
   { modality: 'mab' },
+  { modality: 'combination' },
   { predicateNamed: 'K123456 — Acme Stent', predicate: 'named' },
   { predicate: 'none' },
   { predicate: 'nse' },
@@ -216,6 +217,27 @@ describe('which statute governs the product', () => {
     expect(bla.reason).toMatch(/NOT claiming biosimilarity/);
     expect(cautionFor('EU_MAA', { modality: 'biosimilar' })!.reason).toMatch(/Article 8\(3\)/);
     expect(cautionFor('EU_GENERIC_DCP', { modality: 'mab' })!.availability).toBe('inapplicable');
+  });
+});
+
+describe('a drug-device combination product', () => {
+  it('is told the lead centre decides, in the frame\u2019s own words', () => {
+    /* The US side offers it no route at all and says why; the EU side offers
+       all four medicines routes, because the frame holds no European
+       equivalent to narrow them — so each is marked instead. */
+    const caution = cautionFor('EU_MAA', { modality: 'combination' })!;
+    expect(caution.availability).toBe('needs_basis');
+    expect(caution.reason).toMatch(/drug-device combination/);
+    expect(caution.reason, 'the frame says why in its own words').toMatch(/primary mode of action under 21 CFR Part 3/);
+    expect(caution.authority).toMatch(/21 CFR Part 3/);
+    for (const id of ['EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP']) {
+      expect(cautionFor(id, { modality: 'combination' })!.availability, id).toBe('needs_basis');
+    }
+  });
+
+  it('leaves a device or an IVD route alone, which is the other half of the question', () => {
+    expect(cautionFor('US_510K', { modality: 'combination' })).toBeNull();
+    expect(cautionFor('EU_MDR_CLASS_IIB', { modality: 'combination' })).toBeNull();
   });
 });
 

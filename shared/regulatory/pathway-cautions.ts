@@ -34,7 +34,7 @@ import type { PositionCaution } from '../types/intelligence-questions.js';
 import { agencyFor } from './agency-positions.js';
 import type { IvdrClass } from './device-class.js';
 import { getApplicationType } from './global-document-registry.js';
-import { MODALITY_LABEL, type Modality } from './modality.js';
+import { MODALITY_FRAME, MODALITY_LABEL, type Modality } from './modality.js';
 import { annotatedPositionIds, positionFor } from './pathway-positions.js';
 import { canonicalRegionOf, type CanonicalRegion } from './region-identity.js';
 
@@ -253,6 +253,26 @@ const CAUTION_RULES: readonly CautionRule[] = [
       `You have said this is ${productWords(f)} — approved under section 505 of the FD&C Act rather than licensed ` +
       'as a biological product — so a biologics licence is not the route for it.',
     authority: 'FD&C Act 505; PHS Act 351(i) definition of a biological product',
+  },
+
+  /* -- A combination product: the lead centre decides, not the product type
+        The US side offers nothing for one and says why in the frame's own
+        words (governed-options.ts). The EU side offers all four medicines
+        routes, because the frame holds no European equivalent to narrow them
+        — so a combination product was offered an Article 8(3) MAA, a
+        conditional MA, a biosimilar application and a generic DCP with
+        nothing said (2026-10-12 review). ------------------------------- */
+  {
+    id: 'combination_product_route_undecided',
+    positions: ['EU_MAA', 'EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP'],
+    availability: 'needs_basis',
+    when: f => f.modality === 'combination',
+    reason: () =>
+      'You have said this is a drug-device combination. ' +
+      `${MODALITY_FRAME.combination.centerBasis} Which route applies follows from that determination rather than ` +
+      'from the product type, so the application has to say what the primary mode of action is and which ' +
+      'regulation governs it.',
+    authority: '21 CFR Part 3 (US); MDR (EU) 2017/745 Art 1(8)-(9) and Directive 2001/83/EC Art 1(2) for the EU division',
   },
 
   /* -- A biosimilar claim, or the absence of one -------------------------- */
