@@ -72,7 +72,179 @@ module-level, not symbol-level, search.
 
 ---
 
-## D-2. The QMS and inspection migrations — SAFE, but NOT in this session.
+## D-2. The QMS and inspection migrations — NOT LANDED. The blocker is a column.
+
+**Final: the two files stay off `C2C_MIGRATION_FILES`. The reason is not Rule 1
+and not Rule 2 — it is that the Part 11 guard two entries below them hard-fails
+the deploy until `public.electronic_signatures` carries `created_at`.**
+
+This decision moved twice before it landed, and the sequence is the useful part:
+
+1. **Held**, as "a new capability while the launch rows are red."
+2. **Reversed**, because that premise was false: `qms` IS a launch app, granted
+   by default, and its surface has been rendering "Could not be read" in
+   production. Fixing a broken catalog entry serves Rule 2 rather than bending it.
+3. **Held again**, because the deep check found the actual blocker — and only the
+   deep check could.
+
+### The blocker
+
+`20261001_qms_document_signature_required.sql` self-guards with `to_regclass`
+and returns a NOTICE while `qms_documents` is absent. **The moment the table
+exists it stops no-opping** and runs its own preflight: it requires SEVEN columns
+on `public.electronic_signatures` — `organization_id`, `signed_target`,
+`signature_type`, `superseded_by`, `is_valid`, `verification_status`,
+`created_at` — and `RAISE EXCEPTION`s if any is missing.
+
+`created_at` is **absent** from the drizzle journal's
+`CREATE TABLE "electronic_signatures"` (`migrations/0000_sweet_joseph.sql`) and
+**nothing in the 372-entry set adds it.** `shared/schema.ts` declares it, so a
+database provisioned by `drizzle-kit push` has it and one migrated only through
+the set does not — and which production is cannot be answered from a container
+with no live database. That is exactly the `ci:tables-live-schema` check I had
+already flagged as unavailable, now with a concrete consequence.
+
+`tests/schema-contract/tenant-isolation-sweep.contract.test.ts` — "C-33: the
+batch applies in set order, **twice**" — fails on pass 1 at that file with
+precisely this message when the two entries are added:
+
+```
+pass 1: migrations/20261001_qms_document_signature_required.sql failed —
+  [qms-document-signature-required] public.electronic_signatures lacks
+  superseded_by, created_at; the guard would refuse every approval.
+```
+
+**So landing it risks a broken deploy for every tenant.** That is categorically
+worse than the broken Quality surface it fixes — and that surface fails
+*honestly*, saying "Could not be read" rather than showing a zero. A broken
+deploy has no honest failure mode.
+
+### The prerequisite, by name
+
+1. A migration adding `created_at` to `public.electronic_signatures` (and
+   asserting the other six), placed **before** `20261001`.
+2. Then the two QMS files go **above** `20261001`, where
+   `ci:migration-guard-order` now holds the ordering.
+3. The contract fixture also needs `db/migrations/20260725_esig_gate_columns_port.sql`
+   (set index 43) hand-applied: the fixture's slice starts at `BATCH_START`
+   (index 78) so it never applies the file that supplies `superseded_by`. That
+   one IS a fixture gap, of the class the fixture's own comments describe three
+   times. **`created_at` is not** — it is a real gap and that hand-apply does not
+   fix it.
+
+The Rule 1 replay analysis (clean: 43 statements, all `IF NOT EXISTS`, all ten
+tables `public` + `organization_id integer NOT NULL`, one creator each) is
+recorded in `migration-set.mjs` beside the commented-out entries, so whoever
+clears the prerequisite does not redo it.
+
+### What DID land
+
+`ci:migration-guard-order`, which is independently valuable and carries no deploy
+risk. For every (table, guard) pair in the set — triggers, added constraints,
+RLS enable/force, policies — the creator's index must be lower than the guard's.
+Verified before writing it: with the QMS files misplaced after the trigger file,
+`ci:migration-set-order`, `ci:migration-drop-safety` and
+`ci:migration-deploy-path` **all pass**. It has a `--selftest` that builds that
+case both ways, it is in `.husky/pre-push`, and it is green on the live set with
+zero baselined entries.
+
+Its own first run found a bug in itself: it reported `electronic_signatures` as
+violating, having discarded the schema qualifier and collided
+`regulatory_harmonization.electronic_signatures` (created at index 124) with
+`public.electronic_signatures` (guarded at index 54). Keys are `schema.table`
+now. A gate's first finding is a claim about the code like any other.
+
+---
+
+## D-2 (superseded twice) — the reasoning held first, kept because the sequence is the point.
+
+**I held this, then reversed it when the evidence came back, and the reversal is
+the right call. Both files are now on `C2C_MIGRATION_FILES`, placed above
+`20261001_qms_document_signature_required.sql`, with a new gate protecting that
+placement.**
+
+### What changed my mind
+
+I held it as "a new capability while the launch rows are red." That premise is
+false. `qms` **is a launch app**: `shared/constants/launch-scope.ts` lists it with
+`surfaces: ['quality']` and `modules: ['quality']`, granted to a new organisation
+by default, and `client/src/concept2cure/quality/hooks.ts` reads
+`/api/mdx/qms/documents`, `/templates`, `/review-due` and `/training/compliance`
+live. Those routes read tables that were on no applier but `install-fresh`.
+
+So the Quality surface has been rendering **"Could not be read" on every load, for
+every organisation, in production.** It failed honestly — `SopRegister` computes
+`regFailed` instead of showing a zero, and `/readiness` degrades per block on
+`42P01` so "a zero from an absent system" is not an all-clear — which is why
+nobody caught it as a data-integrity bug. But a launch app whose primary store
+does not exist is a **broken promise, not a deferred feature**, and Rule 2 exists
+to stop new capability, not to keep a shipped catalog entry broken. Fixing it
+*serves* Rule 2.
+
+And the second fact the review did not have: because `qms_documents` has never
+existed, `20261001_qms_document_signature_required.sql` has self-guarded with
+`to_regclass` and **no-opped on every deploy since it landed** — so the Part 11
+§11.50/§11.70 database guard for controlled documents has never existed on any
+deployed database. Placing the creator correctly is what finally arms it.
+
+### The Rule 1 case, which is clean
+
+All 43 statements across both files are `CREATE TABLE` / `CREATE [UNIQUE] INDEX`,
+every one `IF NOT EXISTS`. No DROP, no ALTER, no `ADD CONSTRAINT`, no DML, no DO
+block, no self-transaction — nothing can fail on a replay, and 20260610's eight
+CHECKs are inline in their `CREATE TABLE` so they are never re-validated over
+rows a later file admitted. All ten tables are unqualified (so `public`) with
+`organization_id integer NOT NULL REFERENCES organizations(id)`, which is the
+final sweep's own selector, so each is policied without an entry in the
+hand-maintained non-public list. Each table has exactly **one** creator in the
+repository, so the outcome worth hunting for — `CREATE TABLE IF NOT EXISTS` over
+a table that already exists in a different shape, a silent no-op leaving the
+columns wrong — has no rival shape to collide with.
+
+### The gate, because the placement was load-bearing and nothing checked it
+
+Ordered *after* the trigger file, the tables arrive on deploy N and the guard on
+deploy N+1, leaving a window in which `UPDATE qms_documents SET status =
+'effective'` commits **with no electronic signature**, on a surface that can by
+then write to it. The set has made that mistake twice
+(`20260224_binder_evidence_source_types`, `20260617_precedent_org_isolation`).
+
+**Verified, not assumed:** with the two files misplaced after the trigger file,
+`ci:migration-set-order`, `ci:migration-drop-safety` and
+`ci:migration-deploy-path` **all pass.** So `ci:migration-guard-order` is new:
+for every (table, guard) pair in the set — triggers, added constraints, RLS
+enable/force, policies — the creator's index must be lower than the guard's. It
+is in `.husky/pre-push`, it has a `--selftest` that constructs this exact case in
+both orders, and it is green on the live set with **zero** baselined entries.
+
+Its own first run found a bug in itself, which is recorded in the script: it
+reported `electronic_signatures` as violating, because it discarded the schema
+qualifier and collided `regulatory_harmonization.electronic_signatures` (created
+at index 124) with `public.electronic_signatures` (guarded at index 54). Keys are
+now `schema.table`. A gate's first finding is a claim about the code like any
+other, and it did not survive checking either.
+
+### The residual I did NOT fix, deliberately
+
+Every child FK in both files is a bare single-column reference, so nothing in the
+database requires `inspection_findings → inspections`,
+`finding_responses → inspection_findings`, `readiness_assessments → inspections`,
+`qms_training_records → qms_documents` or
+`labeling_translations → labeling_documents` to be the **same organisation's**.
+The services close it in application code and the sweep policies each row by its
+own `organization_id`, so a child written with org A under org B's parent would
+be shown to A. The repo's current practice is a `NOT VALID` same-org key
+(`20261008d_cre_source_study_ref.sql`, `20261008f_stats_computation_runs.sql`).
+
+It must be a **guarded ALTER in a new file, never an in-place amendment** of
+these `CREATE TABLE`s: install-fresh databases already have these tables, so an
+inline amendment is a silent no-op exactly where it is needed. Conflating it with
+this change would have risked the placement, which is the part with a Part 11
+window behind it. **This is the next migration to write.**
+
+---
+
+## D-2 (superseded) — the reasoning I held first, kept because the reversal is the point.
 
 **Decision: do not add `20260511_qms_and_labeling.sql` or
 `20260610_inspection_readiness.sql` to `C2C_MIGRATION_FILES` now. The Rule 1
