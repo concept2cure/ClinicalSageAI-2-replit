@@ -27,6 +27,7 @@ import crypto from 'crypto';
 
 import { qualifyServedModels, type QualifiedServedModel } from '../ai-governance/approved-models';
 import type { TurnOutcome } from '../ana/turn-record';
+import { listTurnRecords } from '../ana/turn-record-verify';
 import { hashPayload } from '../audit/chain.js';
 import { verifyAuthoringTrailRow, type StoredTrailRow, type TrailRowVerdict } from './authoring-evidence';
 import { MAX_TURN_RECORDS_PER_CHECK, turnServedModels, verifyMachineText, type MachineClaimReason } from './machine-claim-verify';
@@ -58,6 +59,18 @@ const NOT_VOUCHED: Record<MachineClaimReason, string> = {
   text_not_in_record: 'the turn record does not hold this text',
   too_many_turns: `more AnA turns than one decision verifies (at most ${MAX_TURN_RECORDS_PER_CHECK})`,
 };
+
+const STORE_ABSENT = {
+  ok: false as const,
+  reason: 'turn_record_not_found' as const,
+  why: 'the turn record store is not provisioned',
+};
+
+/** Whether this deployment has the turn-record store at all. */
+async function turnRecordStorePresent(executor: Queryable): Promise<boolean> {
+  const present = await executor.query(`SELECT to_regclass('public.ana_turn_records') IS NOT NULL AS present`);
+  return Boolean(present.rows[0]?.present);
+}
 
 /** What RULE 2 says of the models a turn record names, or why it could not be read. */
 export type TurnServedModelsVerdict =
@@ -97,10 +110,7 @@ export async function servedModelsForTurn(
   /* Never throw into the caller's transaction for want of the store, for the
      reason `resolveTurnRecordSources` states: a failed statement aborts the
      transaction the write is being checked for. */
-  const present = await executor.query(`SELECT to_regclass('public.ana_turn_records') IS NOT NULL AS present`);
-  if (!present.rows[0]?.present) {
-    return { ok: false, reason: 'turn_record_not_found', why: 'the turn record store is not provisioned' };
-  }
+  if (!(await turnRecordStorePresent(executor))) return STORE_ABSENT;
   const read = await turnServedModels(executor, tenantId, id);
   if (!read.ok) return { ok: false, reason: read.reason, why: NOT_VOUCHED[read.reason] };
   return {
@@ -110,6 +120,41 @@ export async function servedModelsForTurn(
     outcome: read.outcome,
     servedBy: qualifyServedModels(read.servedBy),
   };
+}
+
+/**
+ * The same verdict for a reference that may name a RECORD or the RUN that
+ * served it (AnA reasoning round 15).
+ *
+ * Why both: `POST /docs/from-draft` has two callers and they name different
+ * things. The browser sends the record id (`ConversationThread.tsx` sends
+ * `m.turnRecord.id`), and the in-process AnA tool sends the RUN id — stream.ts
+ * passes `turnId: runId` into the tool context (:2385, :2503, :2619), which
+ * `authoring-draft-tool.ts` copies into `provenance.turnId`. Without the run
+ * path every document the drafting TOOL creates would read 'unverified'.
+ *
+ * A run is tried only after the record lookup fails, and `run_id` is TEXT (not
+ * uuid), so a reference that is not a record id is safe to try as one — no
+ * 22P02. A run naming more than one record is refused rather than guessed at:
+ * attributing a document's prose to the models of whichever record sorted
+ * first would be a fact nobody checked.
+ */
+export async function servedModelsForTurnOrRun(
+  executor: Queryable,
+  tenantId: number,
+  ref: unknown,
+): Promise<TurnServedModelsVerdict> {
+  const direct = await servedModelsForTurn(executor, tenantId, ref);
+  if (direct.ok) return direct;
+  const raw = typeof ref === 'string' ? ref.trim().slice(0, 200) : '';
+  if (!raw) return direct;
+  if (!(await turnRecordStorePresent(executor))) return STORE_ABSENT;
+  const byRun = await listTurnRecords(executor, tenantId, { runId: raw, limit: 2 });
+  if (byRun.length === 0) return direct;
+  if (byRun.length > 1) {
+    return { ok: false, reason: 'too_many_turns', why: 'more than one turn record names this run' };
+  }
+  return servedModelsForTurn(executor, tenantId, byRun[0].id);
 }
 
 /**

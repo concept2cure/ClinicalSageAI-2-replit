@@ -1,0 +1,14 @@
+Lint, against origin/concept2cure-v2. now=errors/warnings. No file gains one.
+
+server/services/authoring/authoring-from-draft.ts                                                    now=0/0      trunk=0/0
+server/services/authoring/authoring-record.ts                                                        now=0/0      trunk=0/0
+server/services/authoring/authoring-draft-tool.ts                                                    now=0/0      trunk=0/0
+server/services/authoring/machine-claim-verify.ts                                                    now=0/0      trunk=0/0
+authoringFromDraftProvenance.pglite.integration.test.ts (new)   0 problems
+
+The first draft of this change DID gain one — createDocumentFromDraft went to
+complexity 17 against a limit of 15 — and the resolution was extracted into
+governedWriteOf() rather than baselined. The mutants were retargeted at the
+extracted function and re-run; all 10 still die.
+
+typecheck: npm run -s typecheck:fast -> exit 0
