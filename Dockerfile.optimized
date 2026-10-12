@@ -103,11 +103,44 @@ ENV ANA_DOCX_PYTHON=/opt/docx-runtime/bin/python
 # and checksum together. /usr/local/bin/verapdf is the launcher pdfa-pipeline.ts
 # (VERAPDF_BINARY, default `verapdf`) and pilot-go-no-go.mjs (VERAPDF_COMMAND)
 # both resolve from PATH.
+#
+# The fetch retries because Maven Central refuses a share of requests from
+# shared CI egress, and the refusal is not always a retryable status. This is
+# not a standing breakage and should not be read as one: across the twenty most
+# recent CI runs the image build failed here exactly ONCE, in run 13271, on
+# `curl: (22) The requested URL returned error: 404` for this exact URL -- with
+# the build passing sixteen minutes earlier (13270) and eighteen minutes later
+# (13272), and this version and checksum byte-identical in all three. The
+# artifact was present the whole time. Separately, repeated fetches of it from
+# one host earned a 429 and then a 200.
+#
+# So a SINGLE upstream blip failed the whole production image, which meant the
+# Production Image Boot job never reached the thing it exists to check --
+# whether the shipped build boots. That is the same shape as a gate that cannot
+# load: guarding nothing, loudly. `--retry-all-errors` is required rather than
+# plain `--retry` precisely because 404 is not in curl's retryable set, and a
+# 404 is what was actually served.
+#
+# No `--retry-delay`: giving one replaces curl's exponential backoff with a
+# fixed wait, and a fixed wait is the wrong shape here. Measured while writing
+# this -- repeated fetches of this jar from one host earned a SUSTAINED 429, and
+# `--retry 5 --retry-delay 2` exhausted all five attempts inside about ten
+# seconds, well short of the refusal window, and failed exactly as the
+# unretried fetch did. Left to back off on its own (1s, 2s, 4s, ... bounded by
+# --retry-max-time) curl waits across the window instead of inside it. A fetch
+# that needs the full 300s is still cheaper than an image that does not build.
+#
+# Retrying cannot weaken the supply-chain guarantee, and that was verified, not
+# assumed: a payload that is not the pinned artifact still fails
+# `sha256sum -c` ("computed checksum did NOT match"), and an artifact that is
+# genuinely absent exhausts the bounded retries in seconds and fails the build.
+# An unavailable validator still stops the image; it is never skipped.
 ARG VERAPDF_VERSION=1.30.2
 ARG VERAPDF_SHA256=287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332
 RUN set -eu; \
     mkdir -p /opt/verapdf; \
-    curl -fsSL -o /opt/verapdf/verapdf-cli.jar \
+    curl -fsSL --retry 8 --retry-all-errors --retry-max-time 300 \
+      -o /opt/verapdf/verapdf-cli.jar \
       "https://repo1.maven.org/maven2/org/verapdf/apps/cli/${VERAPDF_VERSION}/cli-${VERAPDF_VERSION}.jar"; \
     echo "${VERAPDF_SHA256}  /opt/verapdf/verapdf-cli.jar" | sha256sum -c -; \
     printf '#!/bin/sh\nexec java -Djava.awt.headless=true -jar /opt/verapdf/verapdf-cli.jar "$@"\n' \

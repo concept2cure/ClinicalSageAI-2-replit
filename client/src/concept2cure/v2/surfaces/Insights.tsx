@@ -14,6 +14,13 @@ import { publishShellProject, shellProgramId, shellProgramName, useShellProject 
 import '../styles/project-home-v2.css';
 import '../styles/insights-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { BundlesPanel } from './InsightsBundlesPanel';
+import { CatalogPanel } from './InsightsCatalogPanel';
+import { RunsPanel } from './InsightsRunsPanel';
+import { SchedulesPanel } from './InsightsSchedulesPanel';
+import { RunEvidence } from './InsightsRunEvidence';
+import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
+import type { ReportRunRow } from './insightsLibraryModel';
 
 /* ── Entitlement tiers (mdx-entitlements) ── */
 
@@ -549,6 +556,38 @@ interface DashboardData {
   rows?: PortfolioRow[];
   markets?: string[];
   program?: ProgramCtx;
+  /**
+   * The server capped the rollup and there are more programs than these.
+   *
+   * `portfolio/fetch.ts` reads `ORG_ROLLUP_CAP + 1` rows and sets `truncated`
+   * when it got more than the cap (100). The flag reached the client type and
+   * was never rendered, so an organisation with more than 100 programs saw
+   * "100 programs · avg readiness N%" presented as its portfolio, with the
+   * average taken over the first hundred. A capped board that does not say so
+   * is a silent cap on a governed figure.
+   */
+  truncated?: boolean;
+}
+
+/**
+ * What a portfolio reply covers: all of them, or the first N of more.
+ *
+ * PURE, and separate from the router so the sentence can be tested without
+ * driving the canvas. `portfolio/fetch.ts` caps the rollup at
+ * `ORG_ROLLUP_CAP` (100) and reads one row past it to set `truncated`; a reply
+ * that said "across your 100 programs" to an organisation with 150 would be a
+ * silent cap on the figure an executive reads as their position.
+ */
+function roPortfolioCovers(count: number, truncated: boolean): string {
+  if (truncated) {
+    /* NOT "the highest-ranked": fetchOrgPrograms selects `ORG_ROLLUP_CAP + 1`
+       rows with no ORDER BY, and attentionRanked sorts only within whatever
+       hundred came back. Calling them the top programmes would promise a
+       selection the query does not make, and would read as "nothing worse than
+       this exists". */
+    return `${count} of your organization's programs — there are more, and these are not a ranked selection.`;
+  }
+  return `Readiness across your ${count} program${count > 1 ? 's' : ''}.`;
 }
 
 /**
@@ -587,7 +626,8 @@ function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCt
     // entitled or has none; show an honest empty, never a fabricated board.
     const rows = ctx.portfolio.programs ? roPortfolioFrom(ctx.portfolio.programs) : [];
     if (rows.length === 0) return { tool: name, text: `Your plan unlocks the portfolio rollup, but there are no governed programs to roll up yet. Once a program with a readiness run exists in your organization, its board view appears here.`, report: null, dashboard: null };
-    return { tool: name, text: `Readiness across your ${rows.length} program${rows.length > 1 ? 's' : ''}. The numbers are the governed readiness scores, ranked — not recomputed here.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: 'Board view across all programs', rows }, report: null };
+    const truncated = ctx.portfolio.summary?.truncated === true;
+    return { tool: name, text: `${roPortfolioCovers(rows.length, truncated)} The numbers are the governed readiness scores, ranked — not recomputed here.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: 'Board view across all programs', rows, truncated }, report: null };
   }
   if (name === 'compare_regions') {
     const markets = roMarketsIn(utterance);
@@ -819,13 +859,20 @@ function reportHeading(report: RenderedReport): { fam: { label?: string; region?
   return { fam: RO_FAMILY[report.family ?? ''] || {}, scope: report.scopeLabel ?? 'This program' };
 }
 
-function ROReport({ report, onExport, onFinalize, seal, compact }: {
+function ROReport({ report, onExport, onFinalize, seal, compact, runId }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
   /** Offered only to a role that may finalize, on a run that is not final. */
   onFinalize?: () => void;
   seal?: ReportSeal | null;
   compact?: boolean;
+  /** The governed run behind the report, when there is one. It unlocks the
+   *  evidence disclosure: GET /runs/:id/seal re-verifies the sealing act and
+   *  GET /runs/:id/dependencies says what the run read. Both were callable all
+   *  along — inside the prefix this surface already claims — and neither had a
+   *  caller, so a sealed report re-opened from the history showed no evidence
+   *  at all (see InsightsRunEvidence.tsx). */
+  runId?: number | null;
 }) {
   if (!report) return null;
   const { fam, scope } = reportHeading(report);
@@ -853,6 +900,7 @@ function ROReport({ report, onExport, onFinalize, seal, compact }: {
         </section>
       ))}
       {!compact && <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} />}
+      {!compact && runId != null && <RunEvidence runId={runId} />}
     </div>
   );
 }
@@ -871,7 +919,7 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashb
     const avg = known.length ? Math.round(known.reduce((a, v) => a + v, 0) / known.length) : null;
     return (
       <div className="ro-dash">
-        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{rows.length} programs</span>{avg == null ? <span className="ro-status">readiness not computed</span> : <span className="ro-status">avg readiness {avg}%{known.length < rows.length ? ` · ${rows.length - known.length} not computed` : ''}</span>}</div></div></div>
+        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta">{/* A capped board says it is capped, here, beside the count it caps. */}<span>{dashboard.truncated ? `first ${rows.length} programs` : `${rows.length} programs`}</span>{avg == null ? <span className="ro-status">readiness not computed</span> : <span className="ro-status">avg readiness {avg}%{known.length < rows.length ? ` · ${rows.length - known.length} not computed` : ''}</span>}</div></div></div>
         <div className="ro-port-grid">
           {rows.map((r, i) => (
             <div key={i} className="ro-port-card">
@@ -883,6 +931,17 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashb
           ))}
         </div>
         <div className="ro-dash-note">{I.info} Readiness values are the governed scores per program, in the order the server ranked them. The average is taken here, over the programs that have one.</div>
+        {/* The server read one row past its cap to detect this; saying nothing
+            would present a hundred-program board as the whole portfolio and an
+            average over it as the organisation's. */}
+        {dashboard.truncated && (
+          <div className="ro-dash-note" role="status" data-testid="ro-port-truncated">
+            {I.alertTriangle} Your organization has more programs than this board shows. The rollup is capped
+            at {rows.length}, and the server selects them without an ordering — so these are not the
+            highest-risk or least-ready ones, and the average above is over them only, not over your whole
+            portfolio.
+          </div>
+        )}
       </div>
     );
   }
@@ -1083,6 +1142,103 @@ async function downloadRunPdf(runId: number, rep: RenderedReport): Promise<{ ok:
   }
 }
 
+/**
+ * GET /bundles/:bundleId/export.pdf through the canonical downloadBlob.
+ *
+ * The bundle PDF is a governed export: the server records a chain row with the
+ * export id and how many of its reports were final AT EXPORT, and prints each
+ * report's bundled status beside its current one (`pdf/bundle-pdf.ts`). So the
+ * only thing this has to get right is to say what was saved, or why nothing was.
+ */
+async function downloadBundlePdf(bundleId: string, name: string): Promise<{ ok: boolean; text: string }> {
+  try {
+    const res = await apiRequest('GET', `/api/report-os/bundles/${encodeURIComponent(bundleId)}/export.pdf`);
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      return { ok: false, text: `No file saved — ${serverMessage(body) ?? 'the export service did not say why'}.` };
+    }
+    const blob = await res.blob();
+    const filename = `${safeFileName(name || 'report-bundle', 'report-bundle')}_${bundleId.slice(0, 8)}.pdf`;
+    return downloadBlob(filename, blob)
+      ? { ok: true, text: `Saved ${filename}.` }
+      : { ok: false, text: 'No file saved — this browser refused the download.' };
+  } catch (e) {
+    return { ok: false, text: `No file saved — ${e instanceof Error ? e.message : String(e)}.` };
+  }
+}
+
+/**
+ * A run from the history, rendered as the canvas's report.
+ *
+ * Distinct from {@link fetchRenderedRun}, which is keyed on the catalog type a
+ * fresh run was started from. A historical run carries its own type id and
+ * scope, and `GET /runs/:id/rendered` refuses with 409 when a finalized run's
+ * seal no longer verifies — so a refusal is returned as its reason, never as
+ * an empty report.
+ */
+/** Why a historical run could not be opened, in the reader's terms. 409 is the
+ *  seal re-verification refusal and has to say so: it is the one case where a
+ *  record EXISTS and is deliberately withheld. */
+function openRunRefusal(label: string, status: number, payload: unknown): string {
+  if (status === 409) {
+    return `"${label}" could not be opened: its seal no longer verifies against the audit chain, ` +
+      'so the sealed document is withheld.';
+  }
+  return `Couldn't open "${label}" — ${serverMessage(payload) ?? 'the server did not say why'}.`;
+}
+
+/** The rendered payload mapped onto the canvas's report, keyed on the run row. */
+function reportFromRenderedRow(
+  rendered: Record<string, any>,
+  row: ReportRunRow,
+  type: ReportType | undefined,
+): RenderedReport {
+  const status = typeof rendered.status === 'string' ? rendered.status : row.status;
+  const scopeLabel = typeof rendered.scopeLabel === 'string' && rendered.scopeLabel
+    ? rendered.scopeLabel
+    : row.scopeId;
+  const truthfulness = rendered.truthfulness && Array.isArray(rendered.truthfulness.reasons)
+    ? rendered.truthfulness
+    : { allowedStatus: status, downgradedFrom: 'final', reasons: [] };
+  return {
+    reportTypeId: rendered.reportTypeId ?? row.reportTypeId,
+    reportTypeLabel: type?.label ?? row.reportTypeLabel,
+    family: type?.family ?? '',
+    scopeType: rendered.scopeType ?? row.scopeType,
+    scopeId: rendered.scopeId ?? row.scopeId,
+    scopeLabel,
+    generatedAt: rendered.generatedAt ?? row.completedAt ?? row.createdAt,
+    status,
+    truthfulness,
+    sections: rendered.sections,
+  };
+}
+
+async function fetchRenderedRunRow(
+  row: ReportRunRow,
+  catalog: ReportType[],
+): Promise<{ report: RenderedReport } | { note: string }> {
+  let res: Response;
+  try {
+    res = await apiRequest('GET', `/api/report-os/runs/${row.id}/rendered`);
+  } catch (e) {
+    const err = e as { status?: unknown; payload?: unknown } | null;
+    if (typeof err?.status === 'number') {
+      return { note: openRunRefusal(row.reportTypeLabel, err.status, err.payload) };
+    }
+    return { note: `Couldn't open "${row.reportTypeLabel}" — ${e instanceof Error ? e.message : String(e)}.` };
+  }
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    return { note: openRunRefusal(row.reportTypeLabel, res.status, body) };
+  }
+  const rendered = body?.data;
+  if (!rendered || !Array.isArray(rendered.sections)) {
+    return { note: `"${row.reportTypeLabel}" returned no document, so nothing is shown in its place.` };
+  }
+  return { report: reportFromRenderedRow(rendered, row, catalog.find((t) => t.typeId === row.reportTypeId)) };
+}
+
 /** A finalized run's signature and seal, as the server returned them. */
 export interface ReportSeal {
   signer: string | null;
@@ -1267,6 +1423,14 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const [signing, setSigning] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  /* Which artifact-pane view is open. 'report' is the report/dashboard/landing
+     pane this surface has always shown and stays the default; the other four
+     are the library panels for the routes the 2026-10-01 reporting review left
+     with no screen (see the Insights*Panel modules). */
+  const [paneView, setPaneView] = useState<'report' | LibraryView>('report');
+  /* Runs chosen in Run history, waiting to be bundled. Held here so the choice
+     survives moving between the Runs and Bundles panels. */
+  const [bundlePicks, setBundlePicks] = useState<number[]>([]);
 
   useEffect(() => { setFound(null); setRunNote(null); setReport(null); setReportRunId(null); setSeal(null); setDashboard(null); }, [seg]);
   /* The result sits just above the field; keep it in view as it changes. */
@@ -1369,6 +1533,67 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const onSealed = (sealed: ReportSeal) => {
     setSeal(sealed);
     setReport(r => (r ? { ...r, status: 'final' } : r));
+  };
+
+  /* ── The library panels ─────────────────────────────────────────────────
+     The catalog the panels render carries each type's entitlement decided
+     against the tier IN VIEW (roDecide), not the organisation's, so a preview
+     unlocks the catalog exactly as it unlocks the find box. */
+  const libraryCatalog: LibraryReportType[] = catalog.map((t) => {
+    const d = roDecide(t.typeId, t.family, tier);
+    return {
+      typeId: t.typeId,
+      label: t.label,
+      family: t.family,
+      scopes: t.scopes,
+      segments: t.segments,
+      runnable: t.runnable,
+      entitled: d.entitled,
+      requiredTier: tierLabel(d.requiredTier),
+    };
+  });
+
+  /* A run opened from the history replaces the artifact pane. Its seal is
+     dropped: the seal state belongs to a finalize performed here, and showing
+     the previous report's signature beside another report's document would
+     attribute a signature to a record nobody signed. */
+  const openRunFromHistory = async (row: ReportRunRow) => {
+    setBusy(true);
+    setRunNote(null);
+    const result = await fetchRenderedRunRow(row, catalog);
+    setBusy(false);
+    if ('note' in result) {
+      setPaneView('report');
+      setReport(null);
+      setReportRunId(null);
+      setSeal(null);
+      setRunNote(result.note);
+      return;
+    }
+    setDashboard(null);
+    setSeal(null);
+    setReport(result.report);
+    setReportRunId(row.id);
+    setPaneView('report');
+    pushCanvasTop();
+  };
+
+  const exportBundle = async (bundleId: string, name: string) => {
+    const out = await downloadBundlePdf(bundleId, name);
+    /* The tone matters: fireToast defaults to 'ok', which draws a green check.
+       A refusal ("Exporting this bundle requires the enterprise plan") under a
+       green tick is the defect toast.tsx's own header names, and exportRep
+       beside this already passes the tone. */
+    fireToast(out.text, out.ok ? undefined : 'error');
+  };
+
+  /* A report run from the catalog shows its document, as a run from the find
+     box does. */
+  const runFromCatalog = (t: LibraryReportType) => {
+    const type = catalog.find((c) => c.typeId === t.typeId);
+    if (!type) return;
+    setPaneView('report');
+    void runReport(type);
   };
 
   // Four-state render: loading → honest error → honest empty (no flagship
@@ -1586,13 +1811,64 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
         </div>
       </div>
 
-      {/* -- Right: the report / dashboard artifact -- */}
+      {/* -- Right: the report / dashboard artifact, and the library beside it --
+           The four library tabs are the screens for the report-os and insights
+           routes the 2026-10-01 reporting review left with no caller; see
+           the Insights*Panel modules and the `insights` row of
+           shared/constants/ui-surface-registry.ui-v2.ts. 'Report' is the pane
+           this surface has always shown and remains the default, so a reader
+           who never opens a tab sees exactly what they saw before. -- */}
       <div className="rc-canvas" ref={canvasRef}>
-        {report ? <ROReport
+        <div className="rl-tabs" role="tablist" aria-label="Reporting views">
+          {([{ id: 'report' as const, label: 'Report', icon: I.fileText }, ...LIBRARY_VIEWS]).map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              role="tab"
+              aria-selected={paneView === v.id}
+              className={'rl-tab' + (paneView === v.id ? ' on' : '')}
+              onClick={() => { setPaneView(v.id); pushCanvasTop(); }}
+            >
+              {v.icon} {v.label}
+            </button>
+          ))}
+        </div>
+
+        {paneView === 'catalog' ? (
+          <CatalogPanel
+            types={libraryCatalog}
+            onRun={runFromCatalog}
+            canRun={canWrite}
+            programLabel={p.code}
+          />
+        ) : paneView === 'runs' ? (
+          <RunsPanel
+            types={libraryCatalog}
+            onOpen={(row) => void openRunFromHistory(row)}
+            onBundle={(ids) => { setBundlePicks(ids); setPaneView('bundles'); pushCanvasTop(); }}
+            canBundle={canWrite}
+          />
+        ) : paneView === 'schedules' ? (
+          <SchedulesPanel
+            types={libraryCatalog}
+            scope={{ scopeType: p.scope, scopeId: p.scopeId }}
+            canWrite={canWrite}
+            onSaved={fireToast}
+          />
+        ) : paneView === 'bundles' ? (
+          <BundlesPanel
+            pendingRunIds={bundlePicks}
+            canWrite={canWrite}
+            onExport={(id, name) => void exportBundle(id, name)}
+            onSaved={fireToast}
+            onClearPending={() => setBundlePicks([])}
+          />
+        ) : report ? <ROReport
             report={report}
             onExport={exportRep}
             onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => setSigning(true) : undefined}
             seal={seal}
+            runId={reportRunId}
           />
           : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} scope={p.scope} catalog={catalog} />
           : (

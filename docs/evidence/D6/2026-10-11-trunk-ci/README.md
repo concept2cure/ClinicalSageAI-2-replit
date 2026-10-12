@@ -43,3 +43,103 @@ tree.
   the deep-research one did.
 - **`Test` / `Integration Tests` / `Coverage (ratchet)`** were not reached in
   this session.
+
+## The `Test` job: 10 files, 25 tests — all green
+
+CI's run read 10 failed files / 25 failed tests out of 46,710. Two of them
+(`artifact-status-lock-covers-approval`, `artifact-approval-ceremony`) were
+already fixed on trunk by `5abe8101e`, so they are green on the merged tree
+without any change here. The other eight:
+
+| File | Cause | Fix |
+|---|---|---|
+| `biopharma-programs-router-columns.contract.test.ts` | `sponsor_address`/`ind_type` declared twice; the file could not load (42701) | the duplicate removed (`2274cf036`) |
+| `report-os-audit-recording`, `report-os-delivery-recording`, `report-os-finalize-signature`, `setup` | Each pinned the tenant stamp as the literal `SELECT set_config('app.current_tenant_id', $1, true)`. `ac688076e` (D3, 2026-10-08) pins the isolation switches in the SAME statement, so `app.rls_enforce`, `app.bypass_rls` and `app.is_admin` cannot leak from one request to the next. The statement grew; the four fixtures did not. | each builds the expected statement from `switchPinTerms(true)` — its own source — so the next change to the stamp cannot leave them stale |
+| `document-data-disposition/consumers.pglite` | The fixture built `vault.document_catalog` without the attribution columns `migrations/20261008e` adds, so the server's real query failed on `c.catalog_state` (42703) | the fixture adds those eight columns and the migration's CHECK |
+| `newProjectWizardRegulatedChoices` | The helper read the request body from `apiRequest.mock.calls[0]`. Since `a3dd2889b` the wizard first reads `GET /api/submissions/market-support`, so call 0 is that GET and its body is `undefined` | the helper finds the call by method and path |
+| `japan-us-nonclinical-outline-repairs` | It asserted BOTH "equal to the canonical 2.6 set" and a flat list of seven codes. `88fa1606c` promoted the seven M4S pharmacology leaves (2.6.2.x) into the authoring guidance after primary-source review, so the canonical subtree now has depth and the two assertions contradicted each other | the flat list becomes the TOP-LEVEL codes (what actually catches "all of Module 2" or a second tree) plus a check that every code is inside `2.6` |
+
+All ten files together: 144 tests, exit 0 (`green-test-job-ten-files.txt`).
+
+Every one was a test that had not followed a deliberate product change — none
+was a defect in the shipped code.
+
+## `Coverage (ratchet)`: not a coverage drop
+
+The ratchet never compared anything. Its whole output was:
+
+```
+[ci:coverage-ratchet] ❌ no coverage summary at coverage/coverage-summary.json.
+
+  This gate reads the report; it does not produce it. Run the suite with
+  --coverage --coverage.reporter=json-summary first.
+```
+
+The "Measure coverage" step ran the suite, the suite exited 1 on the 25 failing
+tests, and no summary was written (no text-summary table appears in the log
+either). So the Coverage job is downstream of the `Test` failures above, not a
+coverage regression. It should clear once those are green; this session did not
+produce a coverage report to prove the ratchet passes.
+
+### Correction, after the merge: these fixtures were fixed twice
+
+While this session was fixing them, another session landed `010959e36`
+("Trunk CI: 16 red tests from four stale fixtures, one of which had switched
+off a gate") and `94c42b598` (the `regulatory_programs` fixture), covering the
+same files. The merge conflicted in five of them.
+
+Trunk's versions were taken for all five, and this session's were withdrawn, so
+there is ONE fix per fixture. The `document-data-disposition` fixture needed a
+further withdrawal: trunk added the catalog's attribution columns to the shared
+harness, which is the better place, so the block this session had added to the
+suite became a duplicate `ADD COLUMN` and failed with 42701.
+
+What remains from this session in the end: the pushed `biopharma-programs`
+duplicate-column fix (`2274cf036`, which `94c42b598` also addressed), and the
+diagnosis recorded here. The ten files pass together on the merged tree: 144
+tests, exit 0.
+
+This is the third overlap of the day (after `d3e303611` on the scanner gates).
+Two sessions reading the same red CI and fixing the same files is waste; the
+board's claim section is the mechanism for avoiding it.
+
+## `Integration Tests`, step 10 (the real-database tier): one stale toggle test
+
+The job's own log is unreadable (225,000 lines; only the last 5,000 are
+retrievable, and the two failures sit at lines 7,926 and 202,584, with the
+artifacts that name them on a host this environment's egress denies). So the
+tier was reproduced locally instead, provisioned the way that job provisions:
+`install-fresh.mjs` then `deploy-migrate.mjs` as the postgres superuser, with
+`APP_SERVICE_DB_PASSWORD` set at install time, then `npm run test:db` under
+`RLS_ENFORCE=on`.
+
+**A first attempt was worthless and is recorded as a warning.** Provisioned
+against a database whose `app_service` password was set by hand afterwards, the
+tier reported 69 failed files and 452 failed tests, every one an
+`OWNERSHIP_CHECK_FAILED` from missing grants. That was the provisioning, not
+the code. A reproduction that is not deploy-shaped measures nothing.
+
+Done faithfully: **158 of 159 files pass, 1,645 of 1,648 tests**. One file
+fails, with three tests: `tests/db/document-catalog-toggles.dbtest.ts`
+(`red-db-tier-toggles.txt`).
+
+It asserted that the bootstrap creates BOTH toggle rows disabled. `88ab56f67`
+(2026-10-08) changed the catalog row from `false` to `true` and said why in its
+message: *"ana.document_catalog is created ON (founder decision 2026-10-08);
+the embedding row stays off."* The code follows a founder decision; the test
+was not updated.
+
+The test now follows it, and keeps its teeth:
+
+- the creation case asserts the catalog row ON and the embedding row OFF by key,
+  and still that each description says what it does;
+- "the key written is the key read" was proving nothing once the row is created
+  on, so it now drives the row OFF (the capability goes off) and back ON (it
+  returns) — a test that only ever saw `true` could not tell this key from one
+  nobody reads;
+- the per-organization case clears the platform flag first, so what it measures
+  is the per-org list alone.
+
+8 of 8 pass. This was a stale test, not a fail-open defect: `resolveEnabled`
+and `readFeatureState` both fail closed, and the row carrying a per-upload cost
+(`ana.vault_chunking`) still waits for an operator.

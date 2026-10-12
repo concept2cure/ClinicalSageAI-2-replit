@@ -1,0 +1,37 @@
+# After the change. Flags as shipped:
+#   curl -fsSL --retry 8 --retry-all-errors --retry-max-time 300
+# (no --retry-delay: it would replace curl's exponential backoff with a fixed wait)
+
+### The pins are correct — checked against the live registry
+published cli-1.30.2.jar.sha256 : 287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332
+ARG VERAPDF_SHA256 in Dockerfile: 287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332
+sha256sum of the downloaded jar : 287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332
+size                            : 16038834 bytes
+Main-Class / coordinates        : org.verapdf.apps:cli, versions 1.30.1 / 1.30.2 / 1.30.3 present
+HTTP status for the pinned URL  : 200
+
+### Behaviour, with the shipped flags, against a stand-in registry
+CASE 1 - transient: 404 three times, then the real jar
+   curl exit=0  checksum exit=0  elapsed=7s     <- recovers AND verifies
+CASE 2 - tamper: a payload that is not the pinned artifact
+   curl exit=0  checksum exit=1  elapsed=0s     <- integrity still refuses
+CASE 3 - gone: 404 on every attempt
+   curl exit=22 checksum exit=1  elapsed=255s   <- bounded give-up, build fails
+
+# CASE 2 is the one that matters: retrying buys more chances at the PINNED
+# bytes and nothing else. CASE 3 shows an absent artifact still stops the
+# image, inside the 300s bound, rather than hanging or being skipped.
+
+### Rejected first attempt, kept here because it is why the flags look as they do
+--retry 5 --retry-delay 2 --retry-all-errors --retry-max-time 180
+   against a sustained 429 from the real registry:
+   curl: (22) The requested URL returned error: 429   (x6)
+   RUN-body exit=22
+# All five attempts burned in ~10s, inside the refusal window. A fixed delay
+# defeats the point; curl's own exponential backoff does not.
+
+### Scope
+# curl was the only unretried network fetch in Dockerfile.optimized.
+# The others (apt-get, pip, npm ci) retry internally.
+# Changed: Dockerfile.optimized only. Version, checksum, URL and the
+# sha256sum -c verification are untouched.

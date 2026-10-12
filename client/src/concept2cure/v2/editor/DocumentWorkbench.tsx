@@ -903,10 +903,22 @@ export interface EditorBridge {
    * Redline one quoted passage of the open section as an attributed tracked
    * suggestion (the editor handle's `proposeReplacement`). Asynchronous: the
    * base hash is checked over the loaded content with WebCrypto. Refuses
-   * `wrong-section`, `no-base`, `stale` and `not-editable` for itself (see
-   * EditorBridgeProposeResult); otherwise the editor's own refusals.
+   * `model-not-approved`, `wrong-section`, `no-base`, `stale` and
+   * `not-editable` for itself (see EditorBridgeProposeResult); otherwise the
+   * editor's own refusals.
+   *
+   * `record` and `unfinished` are the AnA turn's, exactly as `insert` takes
+   * them, and are checked the same way: this door redlines AnA's words into
+   * the section and the person's next Save stores them, so the governed-write
+   * rule holds here too. Omitted for a person's own redline, which the rule
+   * is not about; omitted for AnA's, it refuses.
    */
-  propose: (proposal: EditorBridgeProposal, author: SuggestionAuthor) => Promise<EditorBridgeProposeResult>;
+  propose: (
+    proposal: EditorBridgeProposal,
+    author: SuggestionAuthor,
+    record?: AnaTurnRecordStatus,
+    unfinished?: boolean,
+  ) => Promise<EditorBridgeProposeResult>;
 }
 
 /** An anchored proposal as the conversation hands it to the open section. */
@@ -926,6 +938,13 @@ export interface EditorBridgeProposal extends ReplacementProposal {
 
 /**
  * Why the bridge refused, beyond the editor's own reasons:
+ *   - model-not-approved: the governed-write rule does not admit the AnA turn
+ *     these words came from, or this view was not told which models served it.
+ *     Carries the reason as the sentence `anaInsertRefusal` returned, so a
+ *     caller shows the wording round 13 settled on instead of inventing its
+ *     own — the mistake that produced a toast naming a cause that was untrue.
+ *     (That sentence says "inserted", which is the insert door's verb. When a
+ *     caller renders it, it should become this door's: see round 14's README.)
  *   - wrong-section: the proposal is for a section that is not the open one,
  *     so its quote was read from other text;
  *   - no-base: it names no version of the section, so nothing shows the quote
@@ -936,6 +955,7 @@ export interface EditorBridgeProposal extends ReplacementProposal {
  */
 export type EditorBridgeProposeResult =
   | { ok: true }
+  | { ok: false; reason: 'model-not-approved'; message: string }
   | { ok: false; reason: ProposeRefusal | 'stale' | 'wrong-section' | 'no-base' };
 
 /**
@@ -1574,6 +1594,20 @@ export function DocumentWorkbench({
      keeps AnA's name (suggestions.ts, the paste door); any other pasted AnA
      suggestion becomes the pasting person's, still naming its turn. */
   const admittedAnaSources = useRef(new Set<string>());
+  /* The same rule `insertAnaText` applies, in the shape `propose` returns. Its
+     own function so the bridge effect's arrow stays under the file's limits. */
+  const anaProposeRefusal = useCallback(
+    (
+      author: SuggestionAuthor,
+      record: AnaTurnRecordStatus | undefined,
+      unfinished: boolean,
+    ): { ok: false; reason: 'model-not-approved'; message: string } | null => {
+      if (author.id !== ANA_SUGGESTION_AUTHOR_ID) return null;
+      const message = anaInsertRefusal(record, unfinished);
+      return message ? { ok: false, reason: 'model-not-approved', message } : null;
+    },
+    [],
+  );
   const insertAnaText = useCallback(
     (text: string, author: SuggestionAuthor, record: AnaTurnRecordStatus | undefined, unfinished = false): boolean => {
       if (author.id === ANA_SUGGESTION_AUTHOR_ID && anaInsertRefusal(record, unfinished)) return false;
@@ -1620,10 +1654,16 @@ export function DocumentWorkbench({
          the base: re-reading would not make a frozen document take it. The
          hash is WebCrypto's, so this is asynchronous — and the section is
          checked again after it, since a save can land while it runs. */
-      /* Not gated by the insert's governed-write rule: it has no production
-         caller (2026-10-05). A caller that redlines with AnA's text must apply
-         anaInsertRefusal to the turn's record first, as insert does (round 11). */
-      propose: async (proposal, author) => {
+      /* The governed-write rule first, before the section, the seal and the
+         base (round 14). It is the cheapest check — no WebCrypto, no await —
+         and the truest: a redline refused for a stale base when the real cause
+         is an unapproved model sends the person to re-read a section, which
+         cannot help. The door has no production caller yet, which is why the
+         check goes in now rather than being left to the caller that will be
+         written against it. */
+      propose: async (proposal, author, record, unfinished = false) => {
+        const refusedModel = anaProposeRefusal(author, record, unfinished);
+        if (refusedModel) return refusedModel;
         if (!live) return { ok: false, reason: 'stale' };
         if (proposal.sectionId !== loaded.id) return { ok: false, reason: 'wrong-section' };
         if (docSealed) return { ok: false, reason: 'not-editable' };
@@ -1637,7 +1677,7 @@ export function DocumentWorkbench({
       live = false;
       onEditorBridge(null);
     };
-  }, [onEditorBridge, activeDocId, activeSection, docSealed, authoringContext, insertAnaText]);
+  }, [onEditorBridge, activeDocId, activeSection, docSealed, authoringContext, insertAnaText, anaProposeRefusal]);
 
   /* With no project open there is no AuthoringContextPack to build (it requires
      a projectId), so the document/section identity still travels as module

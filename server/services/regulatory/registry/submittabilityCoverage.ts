@@ -157,9 +157,10 @@ const EMA_CENTRALISED_STEP =
  * submissions EMA names (MAAs, variations, renewals, PSURs, ASMFs). Nothing
  * else is sent to the eSubmission Gateway by this module. Fix round 2
  * (2026-10-05): the round-1 rule was "EU + EMA + eCTD", which also caught
- * EU_ORPHAN, EU_SCIENTIFIC_ADVICE, EU_PIP and EU_PRIME — they carry
- * submissionFormat 'eCTD' in the registry — and told an orphan-designation
- * applicant the centralised procedure applied.
+ * EU_ORPHAN, EU_SCIENTIFIC_ADVICE, EU_PIP and EU_PRIME — they carried
+ * submissionFormat 'eCTD' in the registry then (they declare 'IRIS' since
+ * g-eu-medicines-dated-facts) — and told an orphan-designation applicant the
+ * centralised procedure applied.
  */
 const EMA_CENTRALISED_FAMILIES = new Set([
   'marketing_authorization',
@@ -170,18 +171,25 @@ const EMA_CENTRALISED_FAMILIES = new Set([
 ]);
 
 /**
- * EMA filings received through IRIS, keyed by registry id rather than family:
- * `pre_submission` and `designation` also hold EU_REF_LAB and EU_ACCEL_ASSESS,
- * which nothing on record routes to IRIS. Each row is regulator text
- * (ema.europa.eu search results, facts rows 4-5). The platform has no IRIS
- * connector (Rule 2), so these are `unconnected`, not `portal`: this module does
- * not assert that no machine channel exists.
+ * EMA filings received through IRIS: the entries whose registry record declares
+ * `submissionFormat: 'IRIS'`. Not keyed by family — `pre_submission` and
+ * `designation` also hold EU_REF_LAB and EU_ACCEL_ASSESS, which nothing on
+ * record routes to IRIS — and not by a list of ids beside the registry: until
+ * 2026-10-05 (step g-eu-medicines-dated-facts) the registry declared these
+ * filings 'eCTD' and only this module knew better. The registry entry is now
+ * the one statement; the map below only words each filing's reason. Each row
+ * is regulator text (ema.europa.eu search results, g-submission-channel-function
+ * facts rows 4-5; g-eu-medicines-dated-facts facts). The platform has no IRIS
+ * connector (Rule 2), so these are `unconnected`, not `portal`: this module
+ * does not assert that no machine channel exists, so IRIS is deliberately not
+ * in PORTAL_ONLY_FORMATS.
  */
 const EMA_IRIS_CHANNEL = 'EMA IRIS (Regulatory & Scientific Information Management Platform)';
-const EMA_IRIS_FILINGS: ReadonlyMap<string, string> = new Map([
+const EMA_IRIS_REASON_DEFAULT = 'The filing type is submitted to EMA through IRIS';
+const EMA_IRIS_REASONS: ReadonlyMap<string, string> = new Map([
   ['EU_ORPHAN', 'Orphan designation applications are submitted to EMA through IRIS (EMA, since 2018)'],
   ['EU_SCIENTIFIC_ADVICE', 'Scientific advice requests are submitted to EMA through IRIS (EMA, since 2020-10-19)'],
-  ['EU_PIP', 'Paediatric investigation plan applications are submitted to EMA through IRIS (EMA)'],
+  ['EU_PIP', 'Paediatric investigation plan, waiver and compliance-check applications are submitted to EMA through IRIS (EMA)'],
   ['EU_PRIME', 'PRIME eligibility requests are submitted to EMA through IRIS (EMA)'],
 ]);
 const EMA_IRIS_STEP =
@@ -212,9 +220,13 @@ export function submissionChannelFor(entry: RegulatoryApplicationType): Submissi
     if (DEVICE_FAMILIES.has(String(entry.applicationFamily))) {
       return { kind: 'gateway', region: 'ema', name: 'eudamed' };
     }
-    const iris = EMA_IRIS_FILINGS.get(entry.id);
-    if (iris) {
-      return { kind: 'unconnected', channel: EMA_IRIS_CHANNEL, reason: iris, applicantStep: EMA_IRIS_STEP };
+    if (entry.submissionFormat === 'IRIS') {
+      return {
+        kind: 'unconnected',
+        channel: EMA_IRIS_CHANNEL,
+        reason: EMA_IRIS_REASONS.get(entry.id) ?? EMA_IRIS_REASON_DEFAULT,
+        applicantStep: EMA_IRIS_STEP,
+      };
     }
     if (entry.submissionFormat === 'eCTD' && EMA_CENTRALISED_FAMILIES.has(String(entry.applicationFamily))) {
       return {

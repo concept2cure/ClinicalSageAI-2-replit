@@ -1,0 +1,135 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/cmc/__tests__/final-export-gate.test.ts
+{
+  "timestamp": "2026-10-05T13:56:30.771Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — completeness is checked, not just approval > REFUSES export when an approved section compiled at 0% completeness 3ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — completeness is checked, not just approval > ALLOWS export when every approved section is actually complete 1ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — completeness is checked, not just approval > REFUSES export when an approved section was compiled before its tables were carried 2ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — completeness is checked, not just approval > REFUSES when an approved section still lists missing inputs, even at high completeness 1ms
+ ✓ server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — completeness is checked, not just approval > names which sections are incomplete in the refusal 0ms
+ × server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep > REFUSES when the records hold a critical conflict that was never swept 6ms
+   → expected true to be false // Object.is equality
+ × server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep > ALLOWS when the same finding is recorded and resolved over the same data 2ms
+   → expected undefined to deeply equal []
+ × server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep > a recorded, open finding is refused as before — counted once, by its status 1ms
+   → expected undefined to deeply equal []
+ × server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep > a register read that fails refuses — it is not an empty sweep 5ms
+   → promise resolved "{ allowed: true, data: { …(13) } }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep > REFUSES when the records hold a critical conflict that was never swept
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/cmc/__tests__/final-export-gate.test.ts:209:29
+    207|     mock([]);
+    208|     const verdict = await evaluateFinalExportGate({ orgId: 1, projectI…
+    209|     expect(verdict.allowed).toBe(false);
+       |                             ^
+    210|     expect(verdict.error).toMatch(/not recorded: run the contradiction…
+    211|     expect(verdict.data.unrecordedCriticalFindings).toEqual([{ contrad…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep > ALLOWS when the same finding is recorded and resolved over the same data
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/cmc/__tests__/final-export-gate.test.ts:217:53
+    215|     mock([{ severity: 'critical', status: 'resolved', contradiction_ty…
+    216|     const verdict = await evaluateFinalExportGate({ orgId: 1, projectI…
+    217|     expect(verdict.data.unrecordedCriticalFindings).toEqual([]);
+       |                                                     ^
+    218|     expect(verdict.allowed).toBe(true);
+    219|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep > a recorded, open finding is refused as before — counted once, by its status
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ server/services/cmc/__tests__/final-export-gate.test.ts:225:53
+    223|     const verdict = await evaluateFinalExportGate({ orgId: 1, projectI…
+    224|     expect(verdict.allowed).toBe(false);
+    225|     expect(verdict.data.unrecordedCriticalFindings).toEqual([]);
+       |                                                     ^
+    226|     expect(verdict.data.openCriticalContradictions).toBe(1);
+    227|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/cmc/__tests__/final-export-gate.test.ts > evaluateFinalExportGate — a detected contradiction is not waved through for want of a sweep > a register read that fails refuses — it is not an empty sweep
+AssertionError: promise resolved "{ allowed: true, data: { …(13) } }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "allowed": true,
++   "data": {
++     "approvedSections": 2,
++     "canonicalGovernedState": {
++       "derivedFlags": {
++         "hasUnresolvedGovernedDecisions": false,
++         "isBlocked": false,
++       },
++     },
++     "driftedApprovedSections": [],
++     "fabricBlocks": false,
++     "governedDecisionsBlock": false,
++     "governedStateEvaluated": true,
++     "incompleteApprovedSections": [],
++     "openCriticalContradictions": 0,
++     "sectionsWithoutProvenance": 0,
++     "staleSections": 0,
++     "supersededEvidenceSections": [],
++     "totalSections": 2,
++     "unplaceableApprovedSections": [],
++   },
+  }
+
+ ❯ server/services/cmc/__tests__/final-export-gate.test.ts:236:90
+    234|       return { rows: [] };
+    235|     });
+    236|     await expect(evaluateFinalExportGate({ orgId: 1, projectId: PROGRA…
+       |                                                                                          ^
+    237|   });
+    238| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 5 passed (9)
+   Start at  13:56:28
+   Duration  2.64s (transform 1.28s, setup 104ms, import 2.17s, tests 27ms, environment 0ms)
+
