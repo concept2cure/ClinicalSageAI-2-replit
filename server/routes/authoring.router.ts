@@ -2534,6 +2534,13 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
        UPDATE takes also serializes the ledger chain extension. */
     const client = await pool.connect();
     let result: { rows: any[] };
+    /* Whether the restored text reached the filing, and when it did not, why.
+       Not `| null` like the save's: a revert ALWAYS commits (the save does so
+       only when content changed), and the catch below rethrows, so reaching
+       the response means both this and `result` were assigned. Stating that
+       keeps the branch out of the response and the handler under the
+       complexity ratchet. */
+    let governedCommit: CommitSectionResult;
     try {
       await client.query('BEGIN');
       result = await client.query(
@@ -2582,7 +2589,14 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
        * revision, which is a complete and truthful answer to "why did this
        * change". A mechanism describing itself is not a person being
        * impersonated. */
-      await commitSectionToFiling({
+      /* The verdict is KEPT and reported, as the save (:2392) and the
+         AI-draft accept (:4328) report theirs. It was discarded here, so a
+         revert whose filing commit was refused answered a plain success while
+         the filing kept the pre-revert text — each store internally
+         consistent, nothing saying otherwise, which is the shape of the
+         defect this very block's header describes one layer up. Found by the
+         exit-path verification of round 15. */
+      governedCommit = await commitSectionToFiling({
         client,
         sectionId: String(sectionId),
         content: String(revision.content ?? ''),
@@ -2629,6 +2643,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
       section: result.rows[0],
       message: `Section reverted to revision ${rev_id}`,
       reverted_from: revision.created_at,
+      filing: filingResponse(governedCommit),
     });
   } catch (error) {
     console.error('Error reverting section:', error);
