@@ -28,21 +28,48 @@ export function parseDraftSourceReferences(raw: unknown): DraftSourceReference[]
   return refs;
 }
 
+/**
+ * Whether the loaded document is the one the reference names, in the version it names, still
+ * readable and still available: same project, same content hash on the row and on its catalog
+ * entry, extracted or catalogued, not withdrawn or superseded, and extracted text of exactly the
+ * length the reference recorded. Every clause is a reason to refuse; one predicate so the refusal
+ * has one definition.
+ */
+type LoadedDocument = Awaited<ReturnType<typeof import('../vault/document-catalog.service.js').loadDocumentForOrg>>;
+/** What `verifiable` establishes: the document exists, it has a catalog entry, and it has text. */
+type VerifiedDocument = NonNullable<LoadedDocument> & { catalog: NonNullable<NonNullable<LoadedDocument>['catalog']>; extractedText: string };
+
+function verifiable(doc: LoadedDocument, ref: DraftSourceReference, programId: string): doc is VerifiedDocument {
+  if (!doc || doc.programId.toLowerCase() !== programId.toLowerCase()) return false;
+  if (doc.contentHash.toLowerCase() !== ref.contentHash) return false;
+  if (!doc.catalog || doc.catalog.contentHash !== doc.contentHash) return false;
+  if (!['extracted', 'cataloged'].includes(doc.catalog.status)) return false;
+  if (['remove_data', 'supersede'].includes(doc.disposition ?? '')) return false;
+  return !!doc.extractedText?.trim() && doc.extractedText.length === ref.span.totalChars;
+}
+
 export async function verifyDraftSourceReferences(
   refs: DraftSourceReference[], pool: Queryable, organizationId: number, programId: string,
-  /** Filled with each verified excerpt's text, for the drafted-figure check (S5a). */
-  excerpts?: Array<{ documentId: string; contentHash: string; text: string }>,
+  /**
+   * Filled with each verified excerpt's text, for the drafted-figure check (S5a) and the
+   * cross-document claims check (section-claims-check.ts). `ctdSection` and `documentType` are the
+   * catalogued facts that give the cited document its role in a comparison (`claimDocRoleOf`);
+   * both may be absent, and the role is then `other`, which makes no role convention bind.
+   */
+  excerpts?: Array<{ documentId: string; contentHash: string; text: string; ctdSection?: string | null; documentType?: string | null }>,
 ): Promise<VerifiedDraftSourceReference[]> {
   const { loadDocumentForOrg } = await import('../vault/document-catalog.service.js');
   const verified: VerifiedDraftSourceReference[] = [];
   for (const ref of refs) {
     const doc = await loadDocumentForOrg(ref.documentId, organizationId, { includeText: true, executor: pool, programId, currentOnly: true });
-    if (!doc || doc.programId.toLowerCase() !== programId.toLowerCase() ||
-        doc.contentHash.toLowerCase() !== ref.contentHash || !doc.catalog || doc.catalog.contentHash !== doc.contentHash ||
-        !['extracted', 'cataloged'].includes(doc.catalog.status) ||
-        ['remove_data', 'supersede'].includes(doc.disposition ?? '') ||
-        !doc.extractedText?.trim() || doc.extractedText.length !== ref.span.totalChars) throw new Error('Source references could not be verified');
-    excerpts?.push({ documentId: doc.id, contentHash: doc.contentHash, text: doc.extractedText.slice(0, ref.span.end) });
+    if (!verifiable(doc, ref, programId)) throw new Error('Source references could not be verified');
+    excerpts?.push({
+      documentId: doc.id,
+      contentHash: doc.contentHash,
+      text: doc.extractedText.slice(0, ref.span.end),
+      ctdSection: doc.ctdSection ?? null,
+      documentType: doc.documentType ?? null,
+    });
     verified.push({ documentId: doc.id, programId, contentHash: doc.contentHash,
       title: doc.documentTitle || doc.fileName, span: ref.span,
       completeText: ref.span.end === doc.extractedText.length,

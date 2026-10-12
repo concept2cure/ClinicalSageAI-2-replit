@@ -24,9 +24,11 @@
  * @module server/services/market-specs/document-template-library
  */
 
-import { e3TopLevel, e3Children, type E3Section } from '../ind/ctd/index.js';
+import { e3TopLevel, type E3Section } from '../ind/ctd/index.js';
+import { e3SectionSummary } from '../ind/ctd/csr-e3-guidance.js';
 import { SMPC_QRD_SECTIONS } from '../labeling/smpc-qrd-catalog';
 import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
+import { citeE6R3 } from '../../../shared/regulatory/ich-e6r3';
 import { GLOBAL_REGISTRY, getApplicationType } from '../../../shared/regulatory/global-document-registry';
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap';
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy';
@@ -68,16 +70,31 @@ export interface DocumentTemplateStructure {
   sections: TemplateSection[];
 }
 
+/**
+ * The Investigator's Brochure's basis, from the platform's one record of
+ * ICH E6(R3) (shared/regulatory/ich-e6r3.ts): Appendix A, confidence `recall`,
+ * carrying the currency fact `ich-e6r3-gcp-step4` so the Step 4 date is read
+ * from the registry and is never copied into this file. `url` is FDA's hosted
+ * E6(R3) copy — where a reader can go, not a claim that it was read; the note
+ * `citeE6R3` supplies says it was not.
+ */
+const IB_APPENDIX_A = citeE6R3({ kind: 'appendix', id: 'A' });
+const IB_BASIS: RegulatoryBasis = {
+  ...IB_APPENDIX_A,
+  url: 'https://www.fda.gov/media/169090/download',
+  note: [IB_APPENDIX_A.note, "the section numbers below are this library's ordinals, not E6 numbering"]
+    .filter((part): part is string => Boolean(part))
+    .join('; '),
+};
+
 /** A template whose shown basis is the one rendering of its structured basis — the two cannot disagree. */
 function withBasis(t: Omit<DocumentTemplateStructure, 'regulatoryBasis'> & { basis: RegulatoryBasis }): DocumentTemplateStructure {
   return { ...t, regulatoryBasis: basisLabel(t.basis) };
 }
 
-/** One ICH E3 top-level heading as a template section: its purpose, or what it carries, or the headings under it. */
+/** One ICH E3 top-level heading as a template section, its purpose the tree's own one-line summary. */
 function e3TemplateSection(s: E3Section): TemplateSection {
-  const purpose = s.purpose
-    ?? (s.contains?.length ? s.contains.join('; ') : `Covers ${e3Children(s.number).map((c) => `${c.number} ${c.title}`).join('; ')}.`);
-  return { number: s.number, heading: s.title, purpose, required: s.applies === 'always' };
+  return { number: s.number, heading: s.title, purpose: e3SectionSummary(s), required: s.applies === 'always' };
 }
 
 /**
@@ -393,12 +410,24 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     ],
   },
 
-  // ── Investigator's Brochure (ICH E6) ────────────────────────────────────────
-  {
+  // ── Investigator's Brochure (ICH E6(R3) Appendix A) ─────────────────────────
+  // 2026-10-05, re-checked 2026-10-11 (g-csr-copies-onto-e3, finding 8): the
+  // guideline in force puts the IB in Appendix A. This entry's label was
+  // migrated off the superseded revision on trunk on 2026-10-08, so what this
+  // step adds is the TYPED basis `IB_BASIS` — built by `citeE6R3` from
+  // shared/regulatory/ich-e6r3.ts, so the citation text, its `recall`
+  // confidence and its currency fact all have one home, and the dated status is
+  // read from the currency registry rather than written out here. A bare string
+  // would read as settled regulator text; the rendered label says `recall`.
+  // The headings are unchanged; 1–6 are this library's ordinals, not E6
+  // numbering. Facts:
+  // docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/
+  // 2026-10-05-record/g-csr-copies-onto-e3-facts.md.
+  withBasis({
     id: 'investigators_brochure',
     title: "Investigator's Brochure (IB)",
     families: ['ectd', 'ctis'],
-    regulatoryBasis: 'ICH E6(R3) Good Clinical Practice Appendix A',
+    basis: IB_BASIS,
     sections: [
       { number: '1', heading: 'Summary', purpose: 'Concise summary of the significant physical, chemical, pharmaceutical, pharmacological, toxicological, and clinical information.', required: true },
       { number: '2', heading: 'Introduction', purpose: 'Chemical/generic name, properties, rationale, and anticipated indications.', required: true },
@@ -407,7 +436,7 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
       { number: '5', heading: 'Effects in Humans', purpose: 'Pharmacokinetics, safety, efficacy, and marketing experience in humans.', required: true },
       { number: '6', heading: 'Summary of Data and Guidance for the Investigator', purpose: 'Overall discussion and guidance on recognising/treating possible overdose and adverse reactions.', required: true },
     ],
-  },
+  }),
 
   // ── EU Risk Management Plan (GVP Module V) ──────────────────────────────────
   {

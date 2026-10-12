@@ -292,6 +292,14 @@ CREATE TABLE IF NOT EXISTS submission_leaves (
   -- assembler test with a missing-column error rather than a useful one.
   document_uuid   UUID,
   document_type   TEXT,
+  -- The study a leaf belongs to and the STF file-tag it is referenced under
+  -- (migrations/20261012_submission_leaf_stf_study_tagging.sql). FDA validation
+  -- 1789 refuses a Module 4/5 study file that no Study Tagging File references,
+  -- and the packager refuses the sequence; these are what satisfy it. The
+  -- Drizzle model selects them, so omitting them here fails every assembler test
+  -- with a missing-column error rather than a useful one.
+  study_id        TEXT,
+  stf_file_tag    TEXT,
   leaf_guid       TEXT,
   parent_leaf_id  INTEGER,
   checksum        TEXT,

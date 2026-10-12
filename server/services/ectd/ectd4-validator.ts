@@ -27,6 +27,8 @@
 
 import { anyLeafSatisfies } from './section-code-match';
 import { requiredSectionProfileFor } from './required-sections';
+import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
+import { canonicalRegionOf } from '../../../shared/regulatory/region-identity';
 
 import crypto from 'crypto';
 import {
@@ -98,6 +100,78 @@ export interface ECTDLeaf {
   studyId?: string;
   /** Optional lifecycle target leaf id — required for replace/append/delete operations */
   lifecycleTarget?: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STUDY TAGGING FILE COVERAGE (FDA eCTD validation 1789)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/*
+ * The ONE check of whether a study file is referenced by a Study Tagging File.
+ * The v3.2.2 packager (regional-packager.ts) refuses a sequence on it, the
+ * hardened validator reaches it through auditStudyIdTagging, and qualify reads
+ * its count off the bundle. 2026-10-05 (g-stf-1789-fail-closed): before this
+ * the packager silently dropped untagged leaves from STF generation (so its
+ * `untagged` count was always 0), auditStudyIdTagging accepted the lifecycle
+ * operator as a study id and warned, and neither said 1789.
+ *
+ * Basis — regulator text read through search (fda.gov is refused by this
+ * environment's egress policy, so the PDFs were not opened), checked
+ * 2026-10-05, fda.gov/media/160970, 165675 and 135247: validation 1789 fires
+ * when "a file has been submitted in a study section without providing an STF
+ * file"; STFs are not required for 4.3 Literature references, 5.2 Tabular
+ * listings, 5.4 Literature references and 5.3.6 Postmarketing reports. 1789 is
+ * one of the high-severity study-data Technical Rejection Criteria. Record:
+ * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-stf-1789-fail-closed-facts.md.
+ */
+
+/** Module 4/5 sections whose files need no STF (FDA TRC 1789). */
+export const STF_NOT_REQUIRED_SECTIONS: readonly string[] = ['4.3', '5.2', '5.3.6', '5.4'];
+
+const TRC_1789_RULE = 'FDA TRC 1789 — a file in a Module 4/5 study section must be referenced by a Study Tagging File (FDA Study Data Technical Rejection Criteria, fda.gov/media/160970; regulator text read through search, 2026-10-05)';
+
+/** Whether a file placed at this CTD section must be referenced by an STF (FDA TRC 1789). */
+export function requiresStfReference(section: string): boolean {
+  const code = normalizeCtdCode(section) ?? '';
+  return /^[45](\.|$)/.test(code) && !STF_NOT_REQUIRED_SECTIONS.some((s) => code === s || code.startsWith(`${s}.`));
+}
+
+/**
+ * The facts the coverage check needs about one leaf, from either leaf model:
+ * the CTD section in any accepted spelling ('5.3.5.1', 'm5.3.5.1'); the
+ * lifecycle operation (a delete ships no file, so it needs no STF reference);
+ * the study id and the STF file-tag.
+ */
+export type StfCoverageLeaf = { section: string; title: string; operation?: string; studyId?: string | null; stfFileTag?: string | null };
+
+/**
+ * Every leaf in a 1789 study section that no Study Tagging File would
+ * reference: no study id, or (where the model carries one) no file-tag.
+ *
+ * @param options.region the sequence's region in any platform vocabulary
+ *   ('fda', 'US', 'ema', 'EU', ...). A US sequence, an unknown region and no
+ *   region get an error: 1789 is FDA's rejection criterion, and an unknown
+ *   target is not assumed to be lenient. Any other region gets a warning — this
+ *   platform does not encode whether that region requires an STF.
+ * @param options.fileTagModelled true when the caller's leaf model carries the
+ *   STF file-tag (the packager's EctdLeaf); false for the leaf validator's
+ *   ECTDLeaf, which has no file-tag field, so only the study id is checked.
+ */
+export function auditStfCoverage(leaves: readonly StfCoverageLeaf[], options: { region?: string; fileTagModelled: boolean }): ValidationFinding[] {
+  const region = canonicalRegionOf(options.region);
+  const severity: ValidationSeverity = region === undefined || region === 'US' ? 'error' : 'warning';
+  const covered = (l: StfCoverageLeaf) => !!l.studyId?.trim() && (!options.fileTagModelled || !!l.stfFileTag?.trim());
+  return leaves.filter((l) => l.operation !== 'delete' && requiresStfReference(l.section) && !covered(l)).map((l, i) => {
+    const studyId = l.studyId?.trim();
+    return {
+      id: `STF${i + 1}`, severity, sectionCode: l.section, rule: TRC_1789_RULE,
+      code: studyId ? 'STF_MISSING_FILE_TAG' : 'STF_MISSING_STUDY_ID',
+      message: `"${l.title}" (section ${l.section}) has no ${studyId ? 'file-tag' : 'study id'}, so no Study Tagging File references it. ` +
+        `FDA validation 1789 rejects a sequence with a file in a Module 4/5 study section (any but ${STF_NOT_REQUIRED_SECTIONS.join(', ')}) that no STF references.`,
+      fix: studyId ? `Give the leaf the STF file-tag that classifies it within study ${studyId}.`
+        : 'Give the leaf its controlling study id (the STUDYID of its datasets) and its STF file-tag.',
+    };
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

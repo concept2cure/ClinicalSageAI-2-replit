@@ -15,12 +15,12 @@
 
 import {
   e3TopLevel,
-  e3Children,
   renderE3Brief,
   LIFECYCLE_DOCUMENT_TYPES,
   type E3Section,
   type LifecycleComponent,
 } from '../ind/ctd/index.js';
+import { e3SectionSummary } from '../ind/ctd/csr-e3-guidance.js';
 import {
   FDA_FORMAL_MEETING_TIMELINES,
   FDA_FORMAL_MEETINGS_GUIDANCE,
@@ -90,12 +90,9 @@ function e3NarrativeElements(): string {
 // Template Registry
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** One ICH E3 top-level heading as a template section: its purpose, or what it carries, or the headings under it. */
+/** One ICH E3 top-level heading as a template section, its guidance the tree's own one-line summary. */
 function e3TemplateSection(s: E3Section): TemplateSection {
-  const children = e3Children(s.number);
-  const guidance = s.purpose
-    ?? (s.contains?.length ? s.contains.join('; ') : `Covers ${children.map((c) => `${c.number} ${c.title}`).join('; ')}.`);
-  return { heading: `${s.number}. ${s.title}`, required: s.applies === 'always', guidance };
+  return { heading: `${s.number}. ${s.title}`, required: s.applies === 'always', guidance: e3SectionSummary(s) };
 }
 
 /** One ICH E2F heading as a template section, numbered as E2F numbers it. */

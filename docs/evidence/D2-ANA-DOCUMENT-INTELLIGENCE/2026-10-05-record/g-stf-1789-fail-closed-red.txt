@@ -1,0 +1,342 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/stf-coverage-1789.test.ts
+{
+  "timestamp": "2026-10-05T13:42:51.025Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T13:42:51.026Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ectd/__tests__/stf-coverage-1789.test.ts
+{
+  "timestamp": "2026-10-05T13:42:51.026Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ectd/__tests__/stf-coverage-1789.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ectd/__tests__/stf-coverage-1789.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ectd/__tests__/stf-coverage-1789.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a 5.3.5.1 leaf whose only "id" is its lifecycle operator is an error citing 1789 10ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > is an error for a US sequence and a warning for an EU one 3ms
+   → expected 'warning' to be 'error' // Object.is equality
+ × server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > covers every M4/M5 section 1789 names, including 4.2.3.7 and 5.3.7 3ms
+   → m4.2.1.1: expected [ 'warning' ] to deeply equal [ 'error' ]
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > says nothing about 4.3, 5.2, 5.3.6 and 5.4, which need no STF, nor about M1-M3 1ms
+ × server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a leaf with a real study id passes; a delete ships no file and is not checked 2ms
+   → expected [ { id: 'STF1', …(6) } ] to deeply equal []
+ × server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStfCoverage — the one coverage check > is exported from the leaf validator 1ms
+   → expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStfCoverage — the one coverage check > when the caller models file-tags, a study id without a tag is still not covered 1ms
+   → audit is not a function
+ × server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: an untagged 5.3.5.1 report refuses the package, citing 1789 and naming the file 168ms
+   → expected null to be an instance of ValidationError
+ × server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a study id with no file-tag is refused too (the leaf would be in no STF) 90ms
+   → promise resolved "{ …(10) }" instead of rejecting
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: 5.3.6 postmarketing reports and 5.4 literature need no STF and package 58ms
+ × server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > EMA: the untagged report packages, and the bundle counts it instead of hiding it 79ms
+   → expected { studies: 1, leaves: 1, untagged: +0 } to deeply equal { studies: 1, leaves: 1, untagged: 1 }
+ × server/services/ectd/__tests__/stf-coverage-1789.test.ts > qualify — an uncovered study file is an error, not a warning > stfCoverageFindings reports untagged study files as errors citing 1789 1ms
+   → expected 'undefined' to be 'function' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a 5.3.5.1 leaf whose only "id" is its lifecycle operator is an error citing 1789
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ectd/__tests__/stf-coverage-1789.test.ts:48:22
+     46|   it('a 5.3.5.1 leaf whose only "id" is its lifecycle operator is an e…
+     47|     const findings = auditStudyIdTagging([ectdLeaf({ sectionCode: 'm5.…
+     48|     expect(findings).toHaveLength(1);
+       |                      ^
+     49|     expect(findings[0].severity).toBe('error');
+     50|     expect(findings[0].code).toBe('STF_MISSING_STUDY_ID');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > is an error for a US sequence and a warning for an EU one
+AssertionError: expected 'warning' to be 'error' // Object.is equality
+
+Expected: "error"
+Received: "warning"
+
+ ❯ server/services/ectd/__tests__/stf-coverage-1789.test.ts:56:54
+     54|   it('is an error for a US sequence and a warning for an EU one', () =…
+     55|     const l = [ectdLeaf({ sectionCode: 'm5.3.1.2' })];
+     56|     expect(auditStudyIdTagging(l, 'US')[0].severity).toBe('error');
+       |                                                      ^
+     57|     expect(auditStudyIdTagging(l, 'EU')[0].severity).toBe('warning');
+     58|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > covers every M4/M5 section 1789 names, including 4.2.3.7 and 5.3.7
+AssertionError: m4.2.1.1: expected [ 'warning' ] to deeply equal [ 'error' ]
+
+- Expected
++ Received
+
+  [
+-   "error",
++   "warning",
+  ]
+
+ ❯ server/services/ectd/__tests__/stf-coverage-1789.test.ts:63:53
+     61|     for (const sectionCode of ['m4.2.1.1', 'm4.2.3.7', 'm5.3.3.1', 'm5…
+     62|       const f = auditStudyIdTagging([ectdLeaf({ sectionCode })]);
+     63|       expect(f.map((x) => x.severity), sectionCode).toEqual(['error']);
+       |                                                     ^
+     64|     }
+     65|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a leaf with a real study id passes; a delete ships no file and is not checked
+AssertionError: expected [ { id: 'STF1', …(6) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "code": "STF_MISSING_STUDY_ID",
++     "fix": "Tag the leaf with the controlling study identifier (matches CDISC ODM / FDA STF)",
++     "id": "STF1",
++     "message": "Leaf \"Study report\" in section m5.3.5.1 lacks @study-id",
++     "rule": "FDA Study Tagging File (STF) Specification v2.6.1",
++     "sectionCode": "m5.3.5.1",
++     "severity": "warning",
++   },
++ ]
+
+ ❯ server/services/ectd/__tests__/stf-coverage-1789.test.ts:75:95
+     73|   it('a leaf with a real study id passes; a delete ships no file and i…
+     74|     expect(auditStudyIdTagging([ectdLeaf({ sectionCode: 'm5.3.5.1', st…
+     75|     expect(auditStudyIdTagging([ectdLeaf({ sectionCode: 'm5.3.5.1', op…
+       |                                                                                               ^
+     76|   });
+     77| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStfCoverage — the one coverage check > is exported from the leaf validator
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/ectd/__tests__/stf-coverage-1789.test.ts:81:76
+     79| describe('auditStfCoverage — the one coverage check', () => {
+     80|   it('is exported from the leaf validator', () => {
+     81|     expect(typeof (validator as Record<string, unknown>).auditStfCover…
+       |                                                                            ^
+     82|   });
+     83|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStfCoverage — the one coverage check > when the caller models file-tags, a study id without a tag is still not covered
+TypeError: audit is not a function
+ ❯ server/services/ectd/__tests__/stf-coverage-1789.test.ts:88:15
+     86|       auditStfCoverage: typeof import('../ectd4-validator').auditStfCo…
+     87|     }).auditStfCoverage;
+     88|     const f = audit(
+       |               ^
+     89|       [{ section: '5.3.5.1', title: 'CSR', studyId: 'ABC-301' }],
+     90|       { region: 'fda', fileTagModelled: true },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: an untagged 5.3.5.1 report refuses the package, citing 1789 and naming the file
+AssertionError: expected null to be an instance of ValidationError
+ ❯ server/services/ectd/__tests__/stf-coverage-1789.test.ts:134:19
+    132|     try {
+    133|       const err = await run().then(() => null, (e: unknown) => e);
+    134|       expect(err).toBeInstanceOf(ValidationError);
+       |                   ^
+    135|       expect((err as Error).message).toMatch(/1789/);
+    136|       expect((err as Error).message).toContain('s2-report.pdf');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a study id with no file-tag is refused too (the leaf would be in no STF)
+AssertionError: promise resolved "{ …(10) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "displayName": "P · FDA original #0000",
++   "dtdStatus": {
++     "missing": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "missingStylesheets": [
++       "ectd-2-0.xsl",
++       "us-regional.xsl",
++     ],
++     "present": [],
++     "required": [
++       "ich-ectd-3-2.dtd",
++       "us-regional-v3-3.dtd",
++     ],
++     "selfContained": false,
++   },
++   "format": "ectd",
++   "leafManifest": [
++     {
++       "backbone": "m1/us/us-regional.xml",
++       "ctdSection": "1.2",
++       "fileName": "cover.pdf",
++       "href": "m1/us/1-2/cover.pdf",
++       "leafId": "leaf-1-2-cover",
++       "md5": "244a63bb94809a08acc0037747d0c56f",
++       "operation": "new",
++       "title": "Cover",
++     },
++     {
++       "backbone": "index.xml",
++       "ctdSection": "5.3.5.1",
++       "fileName": "s1-report.pdf",
++       "href": "m5/5-3-5-1/study-001/s1-report.pdf",
++       "leafId": "leaf-5-3-5-1-s1-report",
++       "md5": "1ee334773cd150882e39caaf2987d6d9",
++       "operation": "new",
++       "title": "Study 1 report",
++     },
++     {
++       "backbone": "index.xml",
++       "ctdSection": "4.2.3.2",
++       "fileName": "tox.pdf",
++       "href": "m4/4-2-3-2/tox-01/tox.pdf",
++       "leafId": "leaf-4-2-3-2-tox",
++       "md5": "5220d444b690c9824538f89a166b5e77",
++       "operation": "new",
++       "title": "tox.pdf",
++     },
++     {
++       "backbone": "index.xml",
++       "ctdSection": "5.3.5.1",
++       "fileName": "stf-study-001.xml",
++       "href": "m5/5-3-5-1/study-001/stf-study-001.xml",
++       "leafId": "leaf-5-3-5-1-stf-study-001",
++       "md5": "020dad5f90cc22eeac402f081e92916e",
++       "operation": "new",
++       "title": "Study Tagging File — STUDY-001",
++     },
++   ],
++   "path": "/tmp/stf1789-iSm8Of/out/123456-0000-fda.zip",
++   "regionalBackbone": {
++     "conformanceGap": "<applicant-info> has no <applicant-contacts>: no applicant contact was supplied",
++     "file": "m1/us/us-regional.xml",
++     "region": "fda",
++     "regionConformant": false,
++   },
++   "sha256": "3491c182133df7fabe6c85f3d8d71aaeeeedc83d3ba62a10d8b3ec5bd6677e36",
++   "sizeBytes": 3845,
++   "stf": {
++     "leaves": 1,
++     "studies": 1,
++     "untagged": 0,
++   },
++   "submissionGrade": {
++     "agencyFormsAsIssued": [],
++     "allPdfA": false,
++     "notConverted": [
++       "cover.pdf",
++       "s1-report.pdf",
++       "tox.pdf",
++     ],
++     "pdfLeaves": 3,
++     "pdfaConverted": 0,
++     "total": 3,
++   },
+  }
+
+ ❯ server/services/ectd/__tests__/stf-coverage-1789.test.ts:148:25
+    146|     const { work, run } = await pack('fda', [{ ctdSection: '4.2.3.2', …
+    147|     try {
+    148|       await expect(run()).rejects.toThrow(/1789[\s\S]*tox\.pdf|tox\.pd…
+       |                         ^
+    149|     } finally {
+    150|       await fs.rm(work, { recursive: true, force: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > EMA: the untagged report packages, and the bundle counts it instead of hiding it
+AssertionError: expected { studies: 1, leaves: 1, untagged: +0 } to deeply equal { studies: 1, leaves: 1, untagged: 1 }
+
+- Expected
++ Received
+
+  {
+    "leaves": 1,
+    "studies": 1,
+-   "untagged": 1,
++   "untagged": 0,
+  }
+
+ ❯ server/services/ectd/__tests__/stf-coverage-1789.test.ts:171:26
+    169|     try {
+    170|       const bundle = await run();
+    171|       expect(bundle.stf).toEqual({ studies: 1, leaves: 1, untagged: 1 …
+       |                          ^
+    172|     } finally {
+    173|       await fs.rm(work, { recursive: true, force: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  server/services/ectd/__tests__/stf-coverage-1789.test.ts > qualify — an uncovered study file is an error, not a warning > stfCoverageFindings reports untagged study files as errors citing 1789
+AssertionError: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/ectd/__tests__/stf-coverage-1789.test.ts:183:23
+    181|       | ((stf: { studies: number; leaves: number; untagged: number }) …
+    182|       | undefined;
+    183|     expect(typeof fn).toBe('function');
+       |                       ^
+    184|     const f = fn!({ studies: 1, leaves: 2, untagged: 3 });
+    185|     expect(f).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 2 passed (12)
+   Start at  13:42:47
+   Duration  4.20s (transform 2.05s, setup 158ms, import 3.07s, tests 420ms, environment 0ms)
+

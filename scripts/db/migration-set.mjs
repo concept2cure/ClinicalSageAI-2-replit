@@ -3151,6 +3151,9 @@ export const C2C_MIGRATION_FILES = [
   // only; drops nothing. docs/design/ANA_DETACH_2026-10-08.md §3; evidence
   // docs/evidence/ANA-SUMMARY/2026-10-08/DT1-run-events/.
   'migrations/20261008f_ana_run_events.sql',
+  // A submission leaf names the study it belongs to and its STF file-tag, so a US
+  // sequence can satisfy FDA validation 1789 rather than be refused by it (D2).
+  'migrations/20261012_submission_leaf_stf_study_tagging.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

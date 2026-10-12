@@ -27,12 +27,21 @@ before it reaches an agency.
 
 | | Steps |
 |---|---|
-| Landed, with evidence on `concept2cure-v2` | **70** |
-| Implemented, awaiting review or commit | 8 |
+| Landed, with evidence on `concept2cure-v2` | **73** |
+| Implemented, awaiting review or commit | 6 |
 | Not started | 110 |
 | **Plan total** | **188** |
 
-Batch 1 is complete (29/29). Batch 2 is at 29/35. The per-step evidence is in
+Batch 1 is complete (29/29). Batch 2 is at 31/35.
+
+Beside the plan, the **clinical figure claim engine** landed on 2026-10-12
+(`896611af`): 9,053 lines over 20 modules, green on all 431 cases of its
+specification corpus, with the 12 outstanding round-2 label cases closed. The
+owner reversed the earlier decision not to ship it on 2026-10-05. Its evidence
+is [`clinical-claims-corpus.md`](clinical-claims-corpus.md) and
+[`clinical-claims-r2-label-facts.md`](clinical-claims-r2-label-facts.md), and
+the change that makes it reachable from the editor is
+[`g-claims-reach-the-author-facts.md`](g-claims-reach-the-author-facts.md). The per-step evidence is in
 this directory as `<step-id>-red.txt`, `-green.txt` and `-facts.md`: the test
 failing against the old code, the same test passing, and every regulator fact
 the step relies on with its URL and check date, or labelled `recall`.
@@ -87,6 +96,29 @@ Module 1 misfilings found in round 1 all sat in copies no test enumerated.
 | `788ca613` | AnA is offered the section tool when the turn names a code ("2.7.3", "2.6.2", "5.3.5.3"). |
 | `df30b4bb` | The section-requirements, technical-rules and database-lock tools are always offered. |
 | `a8c237a9` | Chat SAE narratives ask for every ICH E3 §12.3.2 element, with no invented causality scale. |
+
+### The documents are set against each other
+
+A reviewer's first question is whether the figures agree across the dossier. Nothing in the
+platform answered it; the one figure check that existed asks whether a number is present in a
+cited source, which a wrong number passes.
+
+| Commit | What is now true |
+|---|---|
+| `896611af` | USPI 6.1, SmPC 4.8, Module 2.7.3 / 2.7.4, the ISS and the CSR can be set against each other: two figures are compared only when their frames are identical — study, population, arm, scope, timepoint, effect measure, interval level — and a pair that is not is said to be not compared, with the slot that differs. 431 adversarial cases, all green. |
+| `896611af` | A label table whose unit sits in its title or a units row is read as percentages, so the label's 14% no longer "agrees" with the CSR's count of 14 patients. |
+| `896611af` | An SmPC 4.8 per-term frequency is compared with the CSR, so an EU dossier's headline AE rate being wrong by 6 points is reported instead of dropped by role. |
+| `896611af` | "All Grades" and "Any Grade", "Grades 3 or 4" and "Grade 3-4" are one measure each, so an oncology label AE table compares with its CSR at all. |
+| `896611af` | The exposure sentence 21 CFR 201.57(c)(7) uses is read in its three phrasings, so a 612-vs-621 transposition is visible. |
+
+### The record reaches the author, and the author can satisfy what it refuses
+
+| Commit | What is now true |
+|---|---|
+| `bb166714` | A drafted section's figures are set against the figures the documents it cites state for the same frame, at save, on the editor line beside the figure check. The figure check says whether a number is in a source; this says whether it agrees. |
+| `4b77deb8` | The section check tells the author what the record says the section must contain, and no longer emits "Include discussion of stability as required by FDA guidelines" — a word-presence test that cited an agency. |
+| `837a3f65` | The five copies of the ICH E3 structure are one: the DOCX blueprint had ten top-level headings where E3 has sixteen, Introduction numbered 3 instead of 7, and shipped "No deaths occurred during the study." as default text. |
+| (this round) | FDA validation 1789 is refused at packaging — a US sequence whose Module 4/5 study files would be in no Study Tagging File — **and satisfiable**: `submission_leaves` and AnA's packaging tool now carry the study id and the STF file-tag, which nothing on the platform could before. |
 
 ### Fail closed, instead of a false "ready"
 

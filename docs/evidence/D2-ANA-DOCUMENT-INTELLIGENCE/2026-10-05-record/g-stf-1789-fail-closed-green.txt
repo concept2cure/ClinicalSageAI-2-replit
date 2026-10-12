@@ -1,0 +1,665 @@
+# g-stf-1789-fail-closed — green run, 2026-10-05
+# Command: npx vitest run --config vitest.config.ts <new test> + every test file importing a changed file (42 files)
+# The 4 failures in cross-reference-packaging.test.ts are the intended refusal: its fixture packages an FDA
+# 5.3.5.1 study report with no study id or STF file-tag. That file is outside this step's file list; the
+# one-line fixture fix is in needs_elsewhere, and a patched copy of the file passes 5/5 (shown at the end).
+
+ ✓ tests/schema-contract/ectd-sequence-continuity.contract.test.ts > C-31: the C-31 migration makes ectd_compilations carry the validator columns > application_number and sequence_number exist on ectd_compilations 64ms
+ ✓ tests/schema-contract/ectd-sequence-continuity.contract.test.ts > C-31: the gate runs off ectd_compilations alone when ectd_submissions is absent > the expected next sequence produces NO findings — and never SEQ_QUERY_FAILED 31ms
+ ✓ tests/schema-contract/ectd-sequence-continuity.contract.test.ts > C-31: the gate runs off ectd_compilations alone when ectd_submissions is absent > a duplicate sequence is caught (history read from compilations) 18ms
+ ✓ tests/schema-contract/ectd-sequence-continuity.contract.test.ts > C-31: the gate runs off ectd_compilations alone when ectd_submissions is absent > a gap is caught 2ms
+ ✓ tests/schema-contract/ectd-sequence-continuity.contract.test.ts > C-31: the gate runs off ectd_compilations alone when ectd_submissions is absent > an application with no history requires 0000 first (not a false outage) 3ms
+ ✓ tests/schema-contract/ectd-sequence-continuity.contract.test.ts > C-31: when ectd_submissions IS present its sequences join the history > an ectd_submissions with no organization_id is DROPPED, not read across tenants 8ms
+ ✓ tests/schema-contract/ectd-sequence-continuity.contract.test.ts > C-31: when ectd_submissions IS present its sequences join the history > a sequence recorded only in a SCOPABLE ectd_submissions joins the history 13ms
+ ✓ tests/schema-contract/ectd-sequence-continuity.contract.test.ts > C-31: when ectd_submissions IS present its sequences join the history > and it is scoped: another tenant does not inherit that history 2ms
+ ✓ tests/schema-contract/ectd-sequence-continuity.contract.test.ts > C-31: a genuine DB outage still blocks (invariant preserved) > a query failure produces SEQ_QUERY_FAILED, not a silent empty history 1ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > generates a well-formed, checksum-verified FDA package with a working lifecycle 753ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region ema (well-formed + checksums) 318ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region pmda (well-formed + checksums) 385ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > package identity: one id contract across the package API > GET /packages/:packageId resolves the numeric row id as well as the pkg_ text id (tenant-scoped either way) 129ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 404s when the package is not in the tenant 77ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 409s when the package is not locked 15ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REQUIRES the operator’s reason — no placeholder is ever written into the audit row 19ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles for Health Canada (the gate’s own remediation for a CA transmit) 61ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES to store a bundle whose identifiers changed while it was being assembled (STALE_ASSEMBLY), and never reverts the newer metadata 38ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES to store a bundle whose CONTENT changed while it was being assembled: a mapping added or removed meanwhile bumps the package’s content revision 27ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > captures the revision BEFORE reading content: a mapping change that lands during the content read discards the zip too 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > stores the new bundle WITHOUT the previous bundle’s preflight summary (a summary that outlives its bundle is aggregated as current) 12ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a package that never recorded a content revision is protected too: the first mapping change during assembly discards the bundle 17ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > records the CONTENT FINGERPRINT the bundle was built from (sections, mappings, declared placements, artifact content) so the transmit gate can prove the zip still reflects the package 13ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v3.2.2 qualification > qualifies region ca (well-formed + checksums) 577ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > eCTD v4.0 qualification > generates a well-formed RPS package, verifies checksums + in-message integrity, and a lifecycle revise 185ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > walks the sections in a DETERMINISTIC order: the row id breaks a tie on sortOrder, so identical content cannot assemble to different bytes 31ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > records the content fingerprint for a DEVICE format too (eSTAR), where the leaf model differs 31ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a discarded stale assembly removes its durable (S3) copy too, and says so 31ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > merges the descriptor onto the package’s CURRENT metadata, not the pre-assembly snapshot 24ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles ONE LEAF PER ARTIFACT at each artifact's own CTD section, persists, and returns the descriptor 42ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > FAILS CLOSED on an unplaceable section: LEAF-UNPLACED error, leaf excluded, counts match what shipped 13ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REJECTS a declared code that is not a real heading (3.foo) instead of nesting it under a container 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > SURFACES a module disagreement (CSR section, artifact filed under Module 3) instead of filing it silently 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > ships an artifact mapped twice (duplicate row, or into two sections) as ONE leaf and surfaces the duplicate mapping 15ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > the same document at two DIFFERENT sections (a reference cited from 4.3 and 5.4) is two leaves, not a duplicate 73ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > composes leaf file names inside the 64-character eCTD rule, keeping the artifact discriminator 113ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > BLOCKS when the package records no agency identifiers — never ships an internal id as the application number 13ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REJECTS a malformed application number (it becomes a filesystem path component) 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > BLOCKS an IND package whose recorded application number carries a prefix, naming FDA’s six-digit form — and never rewrites it 62ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > hands the recorded regulatory contact to the packager as the us-regional applicant contact 58ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > BLOCKS an IND package that records no regulatory contact, naming it after the missing paths 61ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a contact recorded while the bundle was being assembled makes it stale (STALE_ASSEMBLY) 47ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > holds only an FDA backbone to FDA’s forms: the same IND package assembled for Health Canada is not 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s on a sequence that is not four digits (path-traversal vector) and never reaches the packager 3ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > accepts a four-digit sequence and passes it through, once there is a filing for it to follow 195ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a submission type the region has no code for — 'amendment' reached the packager and 500'd 93ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > names the accepted terms when a follow-up declares no submission type at all 27ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a changed leaf reaches the PACKAGER as a replace, pointing at the sequence that holds the version it supersedes 44ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > an FDA cover letter is never a replace: a revised one files NEW, beside the one on file (sweep F13) 31ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a leaf byte-identical to the one on file is NOT handed to the packager — a sequence carries what changed 125ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > the descriptor and its validation describe the leaves that SHIPPED, not the ones the drop removed 221ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a follow-up in which nothing changed rather than storing a leafless bundle as transmittable 118ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a gap and a backfill: a sequence out of order is diffed against filings made after it 17ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > stores the leaf manifest on the descriptor — the inventory the NEXT sequence diffs against 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a RENAMED section does not file the same document twice — the leaf name is not its identity 23ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > WITHDRAWS a named document: a delete reaches the packager with no bytes, and is not counted as a file 30ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a withdrawal of something this package never filed 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembling does NOT file the sequence: only a successful transmit puts a leaf on file 14ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > runQualification (full suite, preserved reports) > runs FDA v3 + v4 and writes reports with exact spec versions 746ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > refuses a vendored stylesheet that checksums.txt does not record 1122ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > refuses a manifest entry whose agency artifact is GONE from the drop point 550ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles the same content to the same bytes twice — the lifecycle diff and the signed digest both depend on it 1157ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a follow-up sequence on a package that has transmitted nothing — an assembled-but-unsent bundle is not on file 35ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s when region and format disagree (FDA + pmda_ectd) 15ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a packager REFUSAL answers 422 with its findings persisted and clears the stale bundle — never a bare 500 with an old zip left transmittable 32ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s a region override that contradicts a DEVICE family (510k is an FDA eSTAR; PMDA cannot be its region) 15ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a PMDA region override re-derives the format, and the descriptor records the format the packager BUILT 31ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > a DRAFT artifact in an IND package assembles with an error-severity LEAF-UNAPPROVED finding, and governed transmit refuses the stored bundle 17ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > an all-approved package (approved and locked) has no LEAF-UNAPPROVED finding and no error 16ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > every non-approved status counts (review, and a status outside the vocabulary), one finding per artifact 36ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > the v4.0 schema drop point has the same three fault classes 444ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > applies to a DEVICE format too: a review artifact in a 510(k) eSTAR bundle is refused at transmit 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > an APPROVED artifact edited after approval (v2, approved v1) is LEAF-UNAPPROVED, and governed transmit refuses the stored bundle 38ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > a LOCKED artifact is bound to the version it was locked at, and an approval that recorded no version is not proof 40ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > approved v1, edited to v2, then LOCKED at v2 is LEAF-UNAPPROVED, names the way back, and governed transmit refuses 19ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > the remedy for an approved artifact edited after approval names approved → review, then review → approved 32ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > the approval an artifact had at assembly is part of the content fingerprint (filable) 31ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > describes the leaves that SHIP: a draft whose leaf is byte-identical to the one on file is not in the sequence, and is not a finding 78ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > vendored-artifact integrity covers the stylesheets too > POSITIVE CONTROL: a recorded stylesheet verifies clean 623ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > skips (does not fail) a region whose regional DTD is absent from a partial drop 381ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > states the AMENDMENT package's skip too, not only the original sequence's 834ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > DTD validity activates per region, not all-or-nothing > POSITIVE CONTROL: with no drop-point at all, every backbone is skipped and none fails 1004ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone with no DOCTYPE at all (it must not vanish from the report) 88ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone whose DOCTYPE carries no parseable SYSTEM identifier 59ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS a backbone whose DOCTYPE points OUTSIDE the package (not self-contained) 24ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > FAILS an unreadable backbone rather than reporting nothing about its DTD 33ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > backbone DOCTYPE is reported, never silently skipped > STILL skips (does not fail) when the DOCTYPE is right but the DTD is unvendored 27ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > POSITIVE CONTROL: a real generated package declares and validates its DTDs > emits an xmllint DTD row for every backbone when the drop-point is complete 379ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > passes a pointer to a leaf ID the prior backbone carries, from index.xml and from the regional backbone 5ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > FAILS a file-path pointer, which names no leaf 9ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > FAILS an ID no leaf of the prior backbone carries 12ms
+ ✓ server/services/ectd/qualification/__tests__/qualification.test.ts > unresolvedModifiedFiles — a pointer must name a leaf the prior package carries > FAILS a Module 1 pointer that climbs out of the regional backbone too few folders 13ms
+ ✓ tests/golden-journeys/submission-export-validation.journey.test.ts > eCTD export → reopen → external-validator qualification > assembles a real package, reopens it, re-verifies checksums, and qualifies it externally 1035ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `failed` and the run rolls up to `failed` when gatewayReady=false 1458ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 3 — package.validate wires validateEctdPackageHardened > step is `complete` and run suspends at awaiting-signature when gatewayReady=true (happy path) 1056ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 5 — m3.refine wires buildModule3WithNarrative > skips m3.refine when inputs.useAI=false; m3.regional sees deterministic m3.compose output 387ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 5 — m3.refine wires buildModule3WithNarrative > calls buildModule3WithNarrative with inputs.organizationId/projectId/userId when useAI=true 12ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > enqueues via launchCSRBuildAsync, transitions to awaiting-async, returns run.status=awaiting-async 2ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) returns the run unchanged when the job is still running 3ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) drives the step to complete and runs downstream when the job is complete 185ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — csr.draft-narrative async enqueue + resume > runOrchestrator({resumeRunId}) throws on tenant mismatch (previousRun.organizationId !== inputs.organizationId) 2ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Move 6 — getRunResumeReadiness > returns ready:false on org mismatch (the SELECT filters by organization_id) 37ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > threads submissionFk into every persistRun + persistStepEvent INSERT when supplied (Move 3 happy path) 438ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > leaves submissionFk NULL on every INSERT when caller omits it (back-compat) 221ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > refuses to persist a non-positive submissionFk — coerces to NULL rather than corrupting the column 115ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6 > Move 6: awaiting-async enqueue carries submissionFk on the suspended-run persistRun INSERT 8ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all 98ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > package.sign transitions to `awaiting-signature` when no matching signature exists (IND submission, no sig in DB) 97ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path drives package.sign to `complete` when a matching signature row exists 245ms
+ ✓ tests/unit/submission-package-orchestrator-moves-3-5-6.test.ts > Path-to-GA §C.11 — package.sign e-sig gate > resume path leaves the run in `awaiting-signature` when no signature row exists yet 85ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — happy path > runs every step to complete|skipped and produces a gateway-ready package 1184ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — m3.refine with useAI=true > swaps the deterministic sections for the AI-refined set and surfaces refinementMeta 30ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — validator rejection > fails package.validate and surfaces run.status === "partial" when gatewayReady=false 415ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — tenant isolation > throws on organizationId === 0 BEFORE any persistence call 6ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — tenant isolation > throws when organizationId is undefined (cast-through) 1ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — awaiting-async resume > first call suspends in awaiting-async; second call with resumeRunId completes 373ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — awaiting-async resume > a resumed IND run whose validation was skipped is `partial`, not `complete` — the gate was never checked 1066ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — awaiting-async resume cross-tenant > rejects when the resuming caller is a different org from the originator 2ms
+ ✓ tests/integration/orchestrator-e2e-ind.test.ts > Phase-1 IND e2e — Move-7 region widening (KR) > persists a KR submission run without raising a 23514 check_violation 165ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — encrypted leaves > refuses to package a leaf that carries an /Encrypt dictionary, naming the leaf 702ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — encrypted leaves > packages the same set without the secured leaf 128ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses a secured 540 KB leaf (trailer past the head window, before the tail window) 7ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > refuses secured PDF bytes shipped under a non-.pdf name 7ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > the template set is derived from the templates, and covers four of the route's thirteen regions 2ms
+ ✓ server/services/submission-gateways/__tests__/encrypted-leaf-refused.test.ts > regional packager — leaf security judged on the bytes > packages a filled official Form FDA 1571 at m1.1 byte-for-byte, as FDA issued it 1569ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > a region WITH a template composes its regional section 1516ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > a region with NO template is skipped naming the region — not "no inputs" 563ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > region CN is reported the same way — the fix is not UK-specific 504ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > region BR is reported the same way — the fix is not UK-specific 281ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > region SG is reported the same way — the fix is not UK-specific 686ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > GLOBAL is reported as not-applicable, NOT as a missing template 7ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > "skipped (no inputs)" still means exactly that when no sources were supplied 36ms
+ ✓ tests/unit/orchestrator-regional-skip-reason.test.ts > m3.regional distinguishes "no inputs" from "no template for this region" > an unsupported region with no sources is also "no inputs" — the caller is told the nearer cause 72ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a declared-clean PDF is NOT assessed for security or size — the verdict says so 7ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a declared violation is still reported, and marked as declared 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a file with no extension or format is not judged for type — it used to pass 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > no files is not a conformant package 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > measured facts > reads encryption from the bytes and calls a measured clean set conformant 954ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > measured facts > does not flag an FDA form submitted as FDA issued it 189ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF attachments" and never read is not_assessed, with PDF_NO_SECURITY listed 2ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF (eSTAR form)" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "PDF/A-1b" and never read is not_assessed, with PDF_NO_SECURITY listed 2ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > us-estar leaf declared "eSTAR" and never read is not_assessed, with PDF_NO_SECURITY listed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > an unread leaf declared as a non-PDF format is still not assessed for security 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > a declared format never narrows which byte rules apply > a declared encrypted:true is still a finding, not a not-assessed entry 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "estar") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "form") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.docx" (declared "a") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar refuses the fragment token "x.pdf" (declared "attachments") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd refuses the fragment token "x.pdf" (declared "pd") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd refuses the fragment token "x.pdf" (declared "df") 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF (eSTAR form)" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF attachments" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared "PDF" as a PDF 11ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-estar accepts "x.pdf" declared undefined as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd accepts "x.pdf" declared "PDF/A-1b" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > us-ectd accepts "x.PDF" declared undefined as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > eu-mdr accepts "td.pdf" declared "pdf/a" as a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.docx is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xpt is flagged on each and x.pdf on none 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xml is flagged on each and x.pdf on none 3ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.xlsx is flagged on each and x.pdf on none 4ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > accepted file types match canonical format tokens, not substrings > every spec is PDF-only, so x.txt is flagged on each and x.pdf on none 5ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > pdfa-detect exports the predicate 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a .pdf whose header is past 1 KB is judged for security — and refused, as the packager and transmit guard refuse it 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a .pdf whose bytes are not a PDF is reported under ACCEPTED_FILE_TYPES, not accepted by its extension 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > so does a leaf DECLARED as PDF whose bytes are not a PDF 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > secured PDF bytes under a non-.pdf name are still judged 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > a measured non-PDF leaf (neither name nor header) is judged, not left unassessed 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > one "is this a PDF leaf" predicate: name ends .pdf OR %PDF- in the first 1 KB > the packager and the transmit guard use the shared predicate, not an inline copy 12ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a .pdf whose bytes are not a PDF is an error whatever format is declared 5ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a file whose extension is not accepted is flagged even when declared as an accepted format 16ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a declared format that disagrees with an accepted extension is flagged 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a declared format that agrees with the extension is not flagged 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > an unread file with no extension, judged only by its declared format, is not assessed for type 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > an unread file with no extension declared as a format that is not accepted is still reported 1ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a read file with no extension whose bytes are a PDF is judged 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a dotted name whose suffix is not an extension is judged by its declared format 0ms
+ ✓ server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a real extension is still read: letters, digits, letter-digit mixes and longer extensions 0ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a Module 3 replace points at the ID 0000 filed that document under, in 0000/index.xml 187ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a Module 1 replace, carried by the regional backbone two folders down, climbs out to 0000/m1/us/us-regional.xml 222ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a delete names the withdrawn leaf the same way, and carries no checksum and no href: it ships no file 63ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > registers a handler for every submission-center tool 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > exposes every submission-center tool in ALL_ANA_TOOLS with a valid schema 14ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > diffs prior vs desired and assigns operations 27ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > forwards the prior leaf ID + backbone and prior_sequence_prefix so a replace names the leaf it supersedes 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > never names a prior leaf by its file path: listed with only an href, a replace carries no pointer 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > refuses to auto-load a prior sequence without tenant context (org from ToolContext only) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > does NOT engage auto-load when explicit prior_leaves are supplied (org not required) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > maps v3 operations to RPS and emits one document + CoU per leaf 111ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > points relatedContextOfUse at the prior sequence for a lifecycle op 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > returns serialized RPS message XML when include_xml is set 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf-<study-id>.xml per study, pointing at index.xml leaf IDs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a leaf has no index.xml leaf ID 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > check_ectd_cross_references (pure) > resolves present references and flags missing targets 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > validate_ectd_package (pure) > returns a verdict, score, and findings for a leaf set 5ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > explain_validation_findings refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > cross_region_gap_analysis validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > dispatch_qc_check refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > trace_provenance refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence refuses without org/user context (upsertLeaf is tenant-scoped) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence validates required inputs before touching the core 16ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > check_consistency validates required inputs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules returns the corpus without tenant context 18ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > the recorded manifest names, for every leaf, the backbone that carries it and the ID it carries there 163ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a withdrawal is recorded with the pointer it filed, so a later sequence still folds it out 274ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > a prior leaf recorded without its backbone ID gets no modified-file at all — never a file path 1ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > modified-file names the superseded leaf by backbone and ID > the packager refuses a follow-up replace that names no superseded leaf, as it refuses such a delete 7ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > the packager refuses a modified-file that names no leaf > a file path 8ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > the packager refuses a modified-file that names no leaf > a file path with a fragment 2ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > the packager refuses a modified-file that names no leaf > a same-root pointer 1ms
+ ✓ server/services/submission-gateways/__tests__/modified-file-leaf-id.test.ts > the packager refuses a modified-file that names no leaf > a pointer that climbs back out mid-path 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules validates the region enum 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec returns a single spec by id 10ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec filters by market without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec validates the family enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template returns a document spine by id 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template lists a family without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting enforces a spec and flags a bad name 4ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting errors on an unknown spec 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_submission_requirements returns and assesses a type 108ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility checks all-criteria-met 15ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility errors on an unknown designation 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change recommends a category from flags 19ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change lists the catalog without flags 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure gap-checks a CER 24ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device applies the MDR rules 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_reviewer_checklist returns the 510(k) reviewer questions 88ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device validates the framework 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_biocompatibility_endpoints returns endpoints for a permanent implant 56ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure now handles rmf 142ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint assembles the reverse-workflow view 80ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint validates the submission type 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer refuses without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer requires a report_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy maps device evidence across regions 54ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy validates the kind 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_regulatory_timeline returns the 510(k) RTA + decision goal 30ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint now includes a readiness scorecard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_udi computes the GS1 check digit 17ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_electrical_standards adds collaterals from facts 5ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_sterilization_requirements resolves the method standard 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_regulatory_capabilities enumerates the layer 17ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product maps PMOA to the lead center 104ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product validates components 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_qms returns the clause structure and gap-checks 24ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_labeling adds sterile elements for a sterile device 25ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document requires a numeric document_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document refuses without org/user context 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document validates required inputs 1ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > emits new/replace/delete with modified-file, and omits the deleted leaf from the ZIP 190ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > returns 3.2.A.1, 3.2.A.2, 3.2.A.3 21ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > marks 3.2.A.2 as not applicable when the substance is RECORDED as a chemical synthesis 41ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > names the route itself when one IS recorded 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > does NOT declare 3.2.A.2 not applicable from a row that records no origin either way 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeAppendices > lists novel excipients in 3.2.A.3 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeRegional > returns US-specific subsections for US region 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeRegional > returns EU-specific subsections for EU region 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeFullModule3 > returns S, P, A, and R sections together 84ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > composeFullModule3 > injects cross-references for sections that depend on others 23ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > module3-extensions > injectAllCrossReferences > does not crash on empty input 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.3 QOS from a full Module 3 composition 46ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > flags missing inputs in M2.3 gaps 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.4 from nonclinical studies 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > m2-summary-builders > builds M2.7 from CSR inputs 1ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > every modified-file RESOLVES to a leaf the prior sequence actually filed — Module 1 included 297ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > exposes a per-sequence leafManifest that round-trips into prior leaves for lifecycle diffing 38ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > hashes the shipped bytes for the manifest, ignoring a wrong caller-supplied leaf.md5 7ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > writes the ICH-required root index-md5.txt = MD5(index.xml) on the canonical packager 33ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > lifecycle packaging — manifest → operator → canonical packager > packages a bytes-less delete (empty sourcePath) without crashing and ships no file for it 6ms
+ ✓ server/services/submission-gateways/__tests__/lifecycle-packaging.test.ts > package layout — Module 1 leaves reach the regional backbone > ships an m1.1 leaf under m1/us and a precise 3.2.S.4.2 leaf at full depth 9ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > csr-tabulation-builders > builds disposition, demographics, efficacy, AE tables 30ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > csr-tabulation-builders > reports correct subject counts in AE summary 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > flags missing us-regional.xml for US submissions 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > rejects non-4-digit sequence numbers 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > flags package size over FDA 4 GB gateway limit 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-regional-rules > accepts valid EU application number format 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing XML declaration 13ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing DOCTYPE 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags missing eCTD namespace 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > flags leaf missing required attributes 3ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > reports the W3C spelling of xmlns:xlink as DTD_WRONG_XLINK_NS, naming the #FIXED value 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > raises no xlink finding for the value the DTD fixes 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > passes the vendored conformant backbone fixture with zero findings 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > does not read <leaf> inside an XML comment as a leaf 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > validateDtdConformance > fails the vendored non-conformant backbone fixture on every seeded violation 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > enforceMd5Checksums > flags malformed MD5 4ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > enforceMd5Checksums > detects MD5 mismatch when buffers provided 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > auditStudyIdTagging > flags M5.3.5 leaf without study-id 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > ectd-validator-hardening > auditStudyIdTagging > does not flag M3 leaves (study-id not required) 0ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > runs end-to-end and produces all step records 1399ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > skips downstream steps when source data is missing 7ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > marks downstream steps stale when an upstream step changes 1ms
+ ✓ server/__tests__/services/submission-orchestrator.test.ts > submission-package-orchestrator > records input hashes for incremental rebuild detection 295ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > the resolver itself distinguishes one level from two (the check is not vacuous) 2ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > fda: m1/us/us-regional.xml points its DTD at util/dtd/us-regional-v3-3.dtd 202ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > ema: m1/eu/eu-regional.xml points its DTD at util/dtd/eu-regional.dtd 88ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > pmda: m1/jp/jp-regional.xml points its DTD at util/dtd/jp-regional.dtd 87ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > ca: m1/ca/ca-regional.xml points its DTD at util/dtd/ca-regional.dtd 69ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > regional backbone DOCTYPE resolves to the bundled util/dtd/ folder > the ICH index.xml at the root references util/dtd/ directly 61ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > fda: m1/us/us-regional.xml points its stylesheet at util/style/us-regional.xsl 56ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > the ICH index.xml carries a stylesheet PI that resolves to util/style/ectd-2-0.xsl 20ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > stylesheet references resolve to the bundled util/style/ folder > bundles vendored *.xsl into util/style/ and checksums them into the MD5 index 56ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > the backbone roots declare xmlns:xlink with the value the DTDs fix > index.xml: <ectd:ectd> declares xmlns:xlink="http://www.w3c.org/1999/xlink" 96ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-dtd-path.test.ts > the backbone roots declare xmlns:xlink with the value the DTDs fix > m1/us/us-regional.xml: <fda-regional:fda-regional> declares xmlns:xlink="http://www.w3c.org/1999/xlink" 411ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > the component helper produces a byte-identical digest to the wrapper (no signature invalidated) 10ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > full sign-prep → persist(JSON) → resume cycle reproduces the digest (the integrity-guard invariant) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > depends only on (leaves, validatorOutcome, identity) — deep-cloned components hash the same; a tampered leaf does not 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > HYDRATES the signed snapshot (no re-derive) — a run whose source cannot reproduce the package still signs 26ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > stays awaiting-signature (no drift) when the snapshot is intact but no signature exists yet 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed when the persisted snapshot no longer matches its signed digest 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed (not throw) on a structurally-malformed snapshot 11ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > flags a resume whose identity differs from the signed snapshot (not mislabeled as corruption) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > legacy runs without a snapshot fall back to re-derive + drift-check 889ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > completes when the persisted seal is valid 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed when the seal does not verify (forged snapshot+digest, no valid seal) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed (downgrade) when a snapshot-bearing run has its seal STRIPPED under a sealed posture 1ms
+ ✓ server/services/ectd/__tests__/orchestrator-real-package.test.ts > composedSectionBlocks > lays a section out as its narrative, then each table under its title 11ms
+ ✓ server/services/ectd/__tests__/orchestrator-real-package.test.ts > assembleRealPackage > produces a real ICH backbone, real checksums, and href-keyed buffers 517ms
+ ✓ server/services/ectd/__tests__/orchestrator-real-package.test.ts > assembleRealPackage > is DETERMINISTIC across re-renders (drift check depends on stable checksums) 76ms
+ ✓ server/services/ectd/__tests__/orchestrator-real-package.test.ts > assembleRealPackage > drives the hardened validator: DTD conformance runs (no DTD_NO_BACKBONE) and MD5 verifies 70ms
+ ✓ server/services/ectd/__tests__/orchestrator-real-package.test.ts > assembleRealPackage > fails closed with no backbone: DTD_NO_BACKBONE is an error and the package is not gateway-ready 42ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > always blocks a package over the gateway size limit 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > clears a small package with no flags set 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks unconverted PDF/A only in production when ECTD_REQUIRE_PDFA is set 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > blocks a non-self-contained DTD package only when ECTD_REQUIRE_DTD is set in production 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > names the absent STYLESHEETS when the self-containment gap is stylesheet-only 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > never renders a non-self-contained package as a blocker that names nothing 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-boolean selfContained as UNPROVEN, never as cleared 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > treats a non-array missing list as un-itemised, not as "nothing missing" 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > warns (does not block) when a required flag is set but the bundle has no evidence 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > HARD-blocks a bundle built for another region (backbone region ≠ transmit target), in every environment 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > region identity holds WITHOUT backbone evidence: an eSTAR built for FDA is refused by PMDA and EMA, and a descriptor-declared region is honoured 1ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a bundle built for the target region passes the region-identity checks 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > a PDF/A grade with no fields is NOT evidence: under ECTD_REQUIRE_PDFA in production it warns "cannot prove", never passes 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > evaluatePreTransmit > folds the external gate when enforceExternal is on (route layer) 0ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > refuses to transmit an over-limit package (before hitting the gateway) 2ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > guarded transmit > still refuses without authorization (auth gate precedes the package gate) 0ms
+ × server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > resolves a valid reference and reports it on the bundle 30ms
+ × server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > flags a dangling reference (TARGET_NOT_FOUND) but does not block by default 31ms
+ ✓ server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > flags a reference to a withdrawn (delete) target as TARGET_DELETED 166ms
+ × server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > blocks a production build with a broken reference when ECTD_REQUIRE_XREF=true 12ms
+ × server/services/submission-gateways/__tests__/cross-reference-packaging.test.ts > cross-reference enforcement in packageEctdSubmission > is a no-op when no cross-references are declared 3ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > carries the absent stylesheets from the packager into the transmit blocker 224ms
+ ✓ server/services/submission-gateways/__tests__/pre-transmit-check.test.ts > packager → pre-transmit: the stylesheet gap survives the bundle > POSITIVE CONTROL: a complete drop-point clears the same gate 587ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > helpers > slugifies study ids to folder-safe names 2ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > helpers > computes the common directory of package paths 12ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > refuses to file a 510(k) as a New Drug Application 74ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > refuses pma, de_novo, maa and cta for the same reason 58ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > STF cross-linking in packageEctdSubmission > generates a per-study stf-<study-id>.xml in each study folder, cross-linked to that study's leaves 385ms
+ ✓ server/services/submission-gateways/__tests__/stf-packaging.test.ts > STF cross-linking in packageEctdSubmission > is a no-op when there are no study leaves (bundle.stf undefined) 53ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > never emits fdaat1 for anything that is not actually an NDA 256ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > an original IND is not declared an IND Safety Report 42ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > a follow-up sequence does not guess that it is an original 15ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > both refusals are ValidationErrors — the type every caller branches on to show the reason 20ms
+ ✓ server/services/submission-gateways/__tests__/fda-filing-identity.test.ts > FDA backbone declares only a filing identity it was given > the unresolved-submission-type refusal names terms that actually resolve 6ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > names the file after the study, not stf.xml 11ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > keeps the sponsor study-id verbatim in the XML and case-folds only the file name 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (S&1) instead of escaping it 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc 301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc_301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (abc/301) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses a study id that cannot form an eCTD file name (xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) instead of escaping it 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file name: "stf-" + study-id + ".xml" (ICH STF v2.6.1) > refuses two studies whose ids fold to the same STF file name 16ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > exports the dataset and define.xml tag lists with the study-data TRC basis 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for an .xpt dataset carrying a free-text tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > throws citing 1735 for a define.xml carrying a document tag 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF file-tags on standardized datasets (FDA TRC 1735) > accepts the 1735 tags on .xpt and define.xml leaves 29ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes a doc-content per leaf pointing at its index.xml leaf, holding an info-type file-tag, and no <leaf> 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > refuses a leaf with no index.xml leaf ID or no path to index.xml 18ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > does not tag a deleted leaf: it ships no file to describe 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > writes the study title from metadata and never invents a category 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > warns, without refusing, on a document tag outside the recall list 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > escapes XML metacharacters in titles 0ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > skips and counts untagged (no studyId) leaves 1ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > throws when a tagged leaf is missing its file-tag 6ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > STF XML shape: doc-content -> index.xml leaf ID, holding file-tag > emits the DTD declaration and ectd/xlink namespaces, one file per study in sorted order 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an original IND sequence is an Original Application, sub-type original 5ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a sequence with no type recorded is treated as an original 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an amendment / response sequence is an Original Application, sub-type amendment 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a withdrawal sequence is refused, never coded as an Original Application 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > an annual sequence is an Annual Report 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > a sequence carrying a safety-report leaf is an IND Safety Report, whatever its type says 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > fdaSubmissionTypeFor — the sequence decides the submission type > every derived value resolves to the us-regional code the FDA vocabulary defines 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > buildPackagerInputFromCore — the fda admin block > carries the application type and the sequence-derived submission type for an FDA sequence 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > buildPackagerInputFromCore — the fda admin block > codes an annual sequence as an annual report 1ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > buildPackagerInputFromCore — the fda admin block > adds no fda block for a non-FDA sequence 0ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > us-regional.xml — the emitted submission-type follows the sequence > without the fda block an original IND is no longer coded as an IND safety report 40ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > us-regional.xml — the emitted submission-type follows the sequence > an original IND sequence is emitted as fdaat4 / fdast1 / fdasst1 27ms
+ ✓ server/services/ectd/__tests__/core-to-packager-fda-admin.test.ts > us-regional.xml — the emitted submission-type follows the sequence > an amendment is emitted as fdast1 with sub-type fdasst4; an annual report as fdast5 102ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > ships m5/5-3-5-1/study-001/stf-study-001.xml whose doc-content resolves to the report leaf ID in index.xml 262ms
+ ✓ server/services/ectd/__tests__/stf-generator.test.ts > regional packager writes the STF under its spec name and links it to index.xml leaf IDs > refuses to package an .xpt study leaf tagged outside the 1735 list 32ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — auth gating > returns 401 when no JWT principal is present 84ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — auth gating > returns 403 when JWT principal is present but org context is missing 17ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 404 when getRun returns null (collapsed miss-or-cross-org) 11ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 404 when URL submissionId does not match the run's submissionId 17ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — run lookup + status checks > returns 409 when run.status is not awaiting-signature 13ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns 401 when password verification fails (NEVER 200, no signature row) 11ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > creates a signature and persists bound_payload_digest on the happy path 11ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > REGRESSION: a signature whose audit row cannot be written does not exist at all 57ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses the password alone from a signer with an authenticator enrolled (400, no signature) 11ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > signs with the password and the enrolled code, and records both 11ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses an account that is not active (401), as the route always has, before comparing anything 8ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > refuses a locked account (423) before its password is compared 10ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns the existing signatureId without creating a duplicate when one already exists (idempotent) 3ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > resolves a concurrent-signing race idempotently on a 23505 unique violation 14ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > surfaces 500 on a non-race createElectronicSignature failure 7ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — credential + signature creation > returns 422 when no documentId anchor can be resolved (lineage unresolved) 6ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on invalid signatureMeaning (closed enum, only "approval" allowed) 10ms
+ ✓ tests/unit/submission-sign-release-route.test.ts > POST /api/submissions/:submissionId/sign-release — body schema enforcement > returns 400 on empty reason (§11.50 requires a meaning manifestation) 9ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts > index.xml references the regional Module 1 backbone > fda: a leaf under the ICH Module 1 heading points at m1/us/us-regional.xml with its real MD5 194ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts > index.xml references the regional Module 1 backbone > ema: a leaf under the ICH Module 1 heading points at m1/eu/eu-regional.xml with its real MD5 229ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts > index.xml references the regional Module 1 backbone > pmda: a leaf under the ICH Module 1 heading points at m1/jp/jp-regional.xml with its real MD5 96ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts > index.xml references the regional Module 1 backbone > ca: a leaf under the ICH Module 1 heading points at m1/ca/ca-regional.xml with its real MD5 106ms
+ ✓ server/services/submission-gateways/__tests__/regional-backbone-referenced.test.ts > index.xml references the regional Module 1 backbone > the in-repo DTD-conformance layer accepts the referenced backbone 70ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > answers for an EU MAA instead of returning null 15ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > answers for a J-NDA from the JP region profile 1ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > infers the home region of a region-specific type when none is given 22ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > keeps the IND, NDA and BLA profiles the validator already enforced 135ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > does not tell an MAA or J-NDA that a conditional appendix (3.2.A) is missing 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > does not demand an EU 1.1 table of contents of an eCTD MAA 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > is null — not another region’s set — where no profile exists 2ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > required-sections — one profile, reachable outside the validator > hands out a profile no caller can edit for everyone else 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > ectd4-validator reads the shared profile > assesses an EU MAA package against the EU profile 27ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > ectd4-validator reads the shared profile > cites each profile’s own basis, not the IND regulation, on a missing NDA section 0ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > ectd4-validator reads the shared profile > does not lend the FDA NDA set to an NDA validated for another region 1ms
+ ✓ server/services/ectd/__tests__/required-sections-profile.test.ts > ectd4-validator reads the shared profile > no longer carries its own copy of the profile 14ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a 5.3.5.1 leaf whose only "id" is its lifecycle operator is an error citing 1789 11ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > is an error for a US sequence and a warning for an EU one 31ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > covers every M4/M5 section 1789 names, including 4.2.3.7 and 5.3.7 1ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > says nothing about 4.3, 5.2, 5.3.6 and 5.4, which need no STF, nor about M1-M3 1ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStudyIdTagging — TRC 1789, no stand-in study id > a leaf with a real study id passes; a delete ships no file and is not checked 0ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStfCoverage — the one coverage check > is exported from the leaf validator 0ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > auditStfCoverage — the one coverage check > when the caller models file-tags, a study id without a tag is still not covered 0ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: an untagged 5.3.5.1 report refuses the package, citing 1789 and naming the file 32ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: a study id with no file-tag is refused too (the leaf would be in no STF) 29ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > FDA: 5.3.6 postmarketing reports and 5.4 literature need no STF and package 317ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > regional packager — a study file with no STF > EMA: the untagged report packages, and the bundle counts it instead of hiding it 242ms
+ ✓ server/services/ectd/__tests__/stf-coverage-1789.test.ts > qualify — an uncovered study file is an error, not a warning > stfCoverageFindings reports untagged study files as errors citing 1789 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > returns the signed manifest when every control verifies 22ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > carries the signer, time and meaning of the active signature (§11.50, review P11-4) 8ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > passes a missing manifestation field through as null, not as a stand-in 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > accepts an unsealed run under an unsealed posture 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a leaf was swapped after signing (digest drift) 4ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the digest was forged to match a tampered manifest (seal failure) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a seal exists but the key is gone (unverifiable control) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the signature was superseded or rolled back 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES as signature-unverifiable — NOT revoked — when the signature lookup could not run (WO-16B finding 14) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES a change to the identity tuple (org swap) even with intact leaves 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses an unknown or cross-tenant run 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run with no package.sign step 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run still awaiting a signature 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a skipped signature gate rather than treating it as signed 4ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a legacy run signed before snapshot persistence 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > passes when rendered bytes hash to the signed checksums 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > fails closed on a missing leaf rather than passing it 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > reports a leaf whose bytes do not match the signed checksum 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > refusalHttpStatus > maps integrity failures to 422, distinct from workflow-state 409s 0ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 1: no options → ZIP-level validation only (backward compat) 34ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 2: options.region=FDA + non-regional leaves → MISSING_REGIONAL_FDA finding 10ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 3: priorSequenceNumbers=["0000","0002"] + sequenceNumber="0003" → SEQUENCE_GAP for 0001 5ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 4: valid leaf array → leaf-only ValidationResult 82ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 5: authenticated principal WITHOUT organizationId → 403 (route uses requireTenant) 38ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 6: invalid region string ("XX") → 400 from zod enum guard 13ms
+ ✓ tests/unit/ectd-export-routes.test.ts > GET /api/ectd/export/by-run/:runId/signed > returns the §11.50 manifestation of the release signature (review P11-4) 50ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the canonical export > returns the package bytes as a zip when it validates 63ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the canonical export > refuses a package that fails structural validation, and returns no zip 15ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the canonical export > refuses an incomplete package when requireComplete is set 10ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the assembly's audit rows > a download whose rows were lost says so in its headers, and still returns the package 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the assembly's audit rows > a download whose rows were written says so, with no code 3ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the assembly's audit rows > a refused (invalid) package carries the outcome in its JSON body 3ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the project a governed export is recorded against > records it against the project that anchors the submission's program — not a project that shares the submission's id 5ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the project a governed export is recorded against > a program with no project anchor is delivered audited-unplaced, and says so 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the project a governed export is recorded against > a submission with no program is delivered audited-unplaced — nothing is attributed by an id that happens to match 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId — the project a governed export is recorded against > an unplaced export whose audit row did not persist is refused, and no package is returned 6ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete that carries a sourcePath, naming the leaf (the AnA tool mapping) 139ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete in a follow-up sequence that names no modified-file 15ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > packages a backbone-only delete with a modified-file: no file, no checksum line, no href, no checksum 168ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses any delete in sequence 0000, where nothing is on file to withdraw 16ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > validateFilename > rejects empty, bad extension, over-length, and invalid characters 2ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > validateFilename > accepts a spec-compliant lowercase name 0ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > computeChecksum > is the MD5 of the buffer (32 hex, deterministic) 6ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > quickValidate > is 0% complete with all required sections missing 1ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > quickValidate > is 100% complete when every required section is present 1ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > quickValidate > reports partial completeness and the specific missing sections 1ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > quickValidate > applies the NDA profile (not IND) to a non-IND submission 1ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > validatePackage — submission type > does not flag IND-only sections as missing on a non-IND submission 45ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > validatePackage — submission type > still validates IND required sections for an IND submission 1ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > validatePackage > flags every missing required section on an empty package 0ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > validatePackage > raises no missing-section errors when all required sections are present with valid checksums 1ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > validatePackage > flags a malformed MD5 checksum 0ms
+ ✓ server/services/ectd/__tests__/ectd4-validator.test.ts > validatePackage > blocks valid on a non-conformant (2-6-2) filename — not merely a warning 33ms
+ ✓ server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts > every sequence-history query is tenant-scoped > passes the organization id to the primary history table 15ms
+ ✓ server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts > every sequence-history query is tenant-scoped > passes the organization id to the secondary history table too 1ms
+ ✓ server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts > every sequence-history query is tenant-scoped > never issues a history query without an organization parameter 4ms
+ ✓ server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts > an unusable tenant scope blocks rather than falling back > blocks on organizationId=0 and issues NO query 7ms
+ ✓ server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts > an unusable tenant scope blocks rather than falling back > blocks on organizationId=-1 and issues NO query 4ms
+ ✓ server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts > an unusable tenant scope blocks rather than falling back > blocks on organizationId=NaN and issues NO query 1ms
+ ✓ server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts > an unusable tenant scope blocks rather than falling back > says the history was not verified, never that there is none 1ms
+ ✓ server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts > a secondary table that cannot be scoped is dropped, not read > carries on with the primary when ectd_submissions has no organization_id 1ms
+ ✓ server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts > a secondary table that cannot be scoped is dropped, not read > still tolerates the table being absent entirely 1ms
+ ✓ server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts > a secondary table that cannot be scoped is dropped, not read > dropping the secondary fails toward BLOCKING, never toward a silent pass 9ms
+ ✓ server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts > a secondary table that cannot be scoped is dropped, not read > a real outage on the secondary still blocks (not treated as unscopable) 3ms
+ ✓ server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts > tenant scoping changes the verdict, not just the SQL > does not see another tenant’s sequence as a duplicate 0ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS message builder > emits a well-structured submissionUnit.xml with the FDA Regional IG OID 12ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS message builder > is deterministic given the same input 10ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS message builder > escapes XML metacharacters in titles 1ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS message builder > derives stable UUIDs 2ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS validator > passes a well-formed message 4ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS validator > flags a non-UUID submissionUnit id 1ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS validator > flags an invalid submission-unit-type code 0ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS validator > flags a non-whole priorityNumber and a folder/sequence mismatch 0ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS validator > flags a documentReference that resolves to nothing 1ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS validator > flags a dangling relatedContextOfUse against the cumulative CoU set 1ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS validator > rejects a submissionUnit title over 128 characters 0ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS validator > flags a context-of-use code that is not in the CL2 list (presence alone is not enough) 1ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > RPS validator > flags a keyword with no code 0ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > v3.2.2 → v4.0 forward compatibility > maps lifecycle operations to RPS operation codes 0ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > v3.2.2 → v4.0 forward compatibility > converts leaves into CoUs + reusable documents and validates clean 8ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > v3.2.2 → v4.0 forward compatibility > does NOT fabricate a document integrity hash from metadata when none is supplied 1ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > v3.2.2 → v4.0 forward compatibility > uses the real per-leaf SHA-256 when one is supplied 0ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > v3.2.2 → v4.0 forward compatibility > refuses to package a zero-byte source as a leaf (fail closed) 2ms
+ ✓ server/services/ectd/ectd4/__tests__/ectd4-rps.test.ts > v3.2.2 → v4.0 forward compatibility > sets relatedContextOfUse for a replace against a prior sequence 0ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > mock interception sanity > detectSequenceGaps routes pool.query through the hoisted mock (not real Postgres) 11ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > emits SEQ_FIRST_NOT_0000 when history is empty and the new sequence is not 0000 10ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > is silent when history is empty and the new sequence IS 0000 0ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > emits SEQ_DUPLICATE when the new sequence already exists in history 1ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > emits SEQ_GAP when the new sequence skips forward (0000, 0001 → 0003) 1ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > SEQ_DUPLICATE takes precedence when the candidate sequence is both in-history and below high-water mark 0ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > emits SEQ_REGRESSION when the new sequence is below the high-water mark and not a duplicate 10ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > emits SEQ_HISTORICAL_GAP when historical sequences themselves contain a hole 1ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > emits SEQ_QUERY_FAILED as a gateway-blocking error when the DB query rejects 20ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > does NOT misclassify a non-0000 submission as SEQ_FIRST_NOT_0000 when the DB is unreachable 2ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > SEQ_QUERY_FAILED flips gatewayReady to false in the composite validator 9ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > detectSequenceGaps (DB-backed) > queries both history sources separately, each with the application bound to $1 (C-31) 1ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > validateEctdPackageHardened (composite) > aggregates findings into separate regional / sequence / dtd / structural buckets 2ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > validateEctdPackageHardened (composite) > gatewayReady is false when sequence has any error 3ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > validateEctdPackageHardened (composite) > gatewayReady is false when regional has any error (CN package missing CN regional XML) 1ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > validateEctdPackageHardened (composite) > hardenedScore deducts heavier for regional / sequence errors than structural 1ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > validateEctdPackageHardened (composite) > summary recounts errors/warnings/infos from the merged structural bucket 6ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > validateEctdPackageHardened (composite) > flags DTD failures when backbone XML is malformed 1ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > flattenFindings > returns one entry per finding across all four categories 1ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > flattenFindings > preserves severity, message, and fix on every entry 0ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > flattenFindings > uses ruleId as code for regional findings, scope+leafPath are carried through 0ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > flattenFindings > uses code as code for sequence findings (no ruleId field) 0ms
+ ✓ tests/unit/ectd-validator-hardening-uncovered.test.ts > flattenFindings > carries filePath on dtd findings 0ms
+ ✓ server/services/ectd/__tests__/section-code-match.test.ts > sectionMatches > a leaf under the required node satisfies it 12ms
+ ✓ server/services/ectd/__tests__/section-code-match.test.ts > sectionMatches > the node satisfies itself 0ms
+ ✓ server/services/ectd/__tests__/section-code-match.test.ts > sectionMatches > reads both spellings — the placement writes the m-prefix, other writers do not 0ms
+ ✓ server/services/ectd/__tests__/section-code-match.test.ts > sectionMatches > respects the boundary — a longer code is not a child unless a separator follows 25ms
+ ✓ server/services/ectd/__tests__/section-code-match.test.ts > sectionMatches > nothing satisfies an empty code, in either direction 0ms
+ ✓ server/services/ectd/__tests__/section-code-match.test.ts > sectionMatches > anyLeafSatisfies asks the same question of a set 0ms
+ ✓ server/services/ectd/__tests__/section-code-match.test.ts > validatePackage — a placed Module 3 is not missing Module 3 > does NOT report drug substance or drug product missing when every leaf is placed 35ms
+ ✓ server/services/ectd/__tests__/section-code-match.test.ts > validatePackage — a placed Module 3 is not missing Module 3 > still reports a section that genuinely has no leaf 1ms
+ ✓ server/services/ectd/__tests__/section-code-match.test.ts > validatePackage — a placed Module 3 is not missing Module 3 > reports drug substance missing when only drug product is placed 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > folds EVERY preceding sequence, not just the most recent 12ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > a later filing of the same leaf supersedes the earlier one 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > a withdrawn leaf drops out of the effective state 1ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > each surviving leaf remembers the sequence that actually holds it 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > reports the most recent prior sequence number 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > loadLatestPriorManifestBySubmission — cumulative prior state > does NOT read only a single prior compilation 0ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > lifecycle diff over the folded prior state > supersedes a leaf last filed two sequences back as REPLACE pointing at that sequence 9ms
+ ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts > lifecycle diff over the folded prior state > still emits new for a genuinely first-time leaf 0ms
+ ✓ tests/audit-hi-8-ectd-export-hardening.test.ts > HI-8 · canonical eCTD index.xml is consistently v3.2.2 > DOCTYPE points at util/dtd and dtd-version is 3.2 (no 4.0 mismatch) 2ms
+ ✓ tests/audit-hi-8-ectd-export-hardening.test.ts > HI-8 · regional generation fails closed on unsupported regions > maps supported core regions and THROWS on unknown (no silent fallback) 1ms
+ ✓ tests/audit-hi-8-ectd-export-hardening.test.ts > HI-8 · ZIP validator surfaces missing bundled DTDs > warns when index.xml references a DTD that is not bundled under util/dtd/ 11ms
+ ✓ tests/audit-hi-8-ectd-export-hardening.test.ts > HI-8 · ZIP validator surfaces missing bundled DTDs > does not warn when the referenced DTD IS bundled 27ms
+ ✓ tests/audit-hi-8-ectd-export-hardening.test.ts > HI-8 · ZIP validator surfaces missing bundled DTDs > warns when index.xml references a stylesheet that is not bundled under util/style/ 74ms
+ ✓ tests/audit-hi-8-ectd-export-hardening.test.ts > HI-8 · ZIP validator surfaces missing bundled DTDs > does not warn about the stylesheet when it IS bundled under util/style/ 2ms
+ ✓ tests/audit-hi-8-ectd-export-hardening.test.ts > HI-8 · ZIP validator surfaces missing bundled DTDs > re-verifies util/index-md5.txt against the shipped bytes (mismatch = error) 15ms
+ ✓ tests/audit-hi-8-ectd-export-hardening.test.ts > HI-8 · DTD bundling mechanism + documented drop-point > the canonical packager bundles vendored DTDs into util/dtd/ (no fabrication) 0ms
+ ✓ tests/audit-hi-8-ectd-export-hardening.test.ts > HI-8 · DTD bundling mechanism + documented drop-point > ships a documented DTD vendoring point with required-file list + policy 1ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > CHECKSUM_MISMATCH (buffer vs declared MD5) > fires when buffer MD5 differs from declared checksum 16ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > CHECKSUM_MISMATCH (buffer vs declared MD5) > does not fire when buffer MD5 matches declared checksum 1ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > MISSING_STUDY_ID (M5 clinical leaves) > fires on an m5.3.5 leaf with no studyId 1ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > MISSING_STUDY_ID (M5 clinical leaves) > does NOT fire on m5.3 (parent, no sub-section, no study) 9ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > MISSING_STUDY_ID (M5 clinical leaves) > does NOT fire on m3.2.S leaf with no studyId 0ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > detectSequenceGapsFromArray > returns [] for an empty list 1ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > detectSequenceGapsFromArray > returns [] for ['0000'] (single, no gap) 0ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > detectSequenceGapsFromArray > returns ['0001'] for ['0000', '0002'] (single interior gap) 2ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > detectSequenceGapsFromArray > returns ['0000', '0001'] for ['0002', '0003'] (missing start) 1ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > detectSequenceGapsFromArray > returns [] for ['0000', '0001', '0002'] (contiguous) 0ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > INVALID_LIFECYCLE_TARGET (lifecycle ops must reference prior leaf) > fires on operation='replace' with a lifecycleTarget not in priorLeafIds 0ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > INVALID_LIFECYCLE_TARGET (lifecycle ops must reference prior leaf) > does NOT fire on operation='new' (no target required) 0ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > validateRegionalPackage (canonical, strict backbone check) > US: fires FDA-ESG-004 when us-regional.xml is missing 0ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > validateRegionalPackage (canonical, strict backbone check) > US: no FDA-ESG-004 finding when us-regional.xml backbone is present 0ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > validateRegionalPackage (canonical, strict backbone check) > EU: fires EMA-CESP-001 on an empty leaf set 0ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > validateRegionalPackage (canonical, strict backbone check) > JP: fires PMDA-001 on an empty leaf set 0ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > validatePackage with options.region (legacy-loose adapter) > FDA: fires MISSING_REGIONAL_FDA when no m1.1 section and no m1/us/ path 5ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > validatePackage with options.region (legacy-loose adapter) > FDA: no MISSING_REGIONAL_FDA when a leaf has sectionCode m1.1 9ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > validatePackage with options.region (legacy-loose adapter) > FDA: no MISSING_REGIONAL_FDA when a leaf has filePath under m1/us/ 0ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > validatePackage with options.region (legacy-loose adapter) > EMA: fires MISSING_REGIONAL_EMA on an empty leaf set 0ms
+ ✓ tests/unit/ectd4-validator-extensions.test.ts > validatePackage with options.region (legacy-loose adapter) > accepts the canonical RegulatoryRegion code US (equivalent to FDA) 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafIdSlug > drops the extension, lowercases, and dashes non-alphanumerics 2ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafIdSlug > falls back to "file" for an empty slug 17ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > gives leaves in the SAME section distinct IDs (the duplicate-ID bug) 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > dedupes a true collision with a deterministic numeric suffix 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > createLeafIdAssigner > always produces a valid XML ID token 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > buildMd5Index > sorts by codepoint, not locale (stable across environments) 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > buildMd5Index > emits "md5  relPath" lines 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > files an m-prefixed Module 1 leaf under the regional folder, not "mm/" 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > spells a Module 1 leaf the same way whichever form the caller stored 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > keeps a precise Module 3 section precise — 3.2.S.4.2 is not 3.2.S 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > gives one CTD section one folder, whatever case it was typed in 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > a Module 2-5 leaf resolves against the root backbone, not a regional one 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > keeps the per-study subfolder for a study report 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > leafPackagePath — the module and folder a leaf resolves to > follows the region for Module 1 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > recognises the m-prefixed form every Module 1 filing path writes 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > recognises the bare form too 0ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > is false for Modules 2-5, so they are not swept into the regional backbone 0ms
+ ✓ server/services/ectd/ectd4/__tests__/rps-cou-code-systems.test.ts > RPS context-of-use code systems > accepts the ICH-governed Module 2–5 contexts the converter emits 32ms
+ ✓ server/services/ectd/ectd4/__tests__/rps-cou-code-systems.test.ts > RPS context-of-use code systems > still refuses a malformed code under the ICH code system 1ms
+ ✓ server/services/ectd/ectd4/__tests__/rps-cou-code-systems.test.ts > RPS context-of-use code systems > still refuses an unrecognised code system outright 1ms
+ ✓ server/services/ectd/ectd4/__tests__/rps-cou-code-systems.test.ts > RPS context-of-use code systems > still refuses a non-catalogued code under the FDA code system 1ms
+ ✓ server/services/submission-gateways/__tests__/regional-packager.test.ts > isModule1Section — which backbone a leaf is written into > an unparseable section belongs to no module — leafPackagePath refuses it by name 57ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > resolves a reference by CTD section code 3ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > resolves a reference by filename 1ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > resolves a reference by relative href tail 0ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > flags a missing target as TARGET_NOT_FOUND 0ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > flags a link to a deleted leaf as TARGET_DELETED 0ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > resolves by explicit leafKey identity 0ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > partitions a mixed batch into resolved + broken and echoes ref ids 0ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > treats an empty reference set as ok 0ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > does not let a href tail substring-match a shorter filename 0ms
+ ✓ server/services/ectd/__tests__/cross-reference-resolver.test.ts > resolveCrossReferences > flags a href whose tail only substring-matches as TARGET_NOT_FOUND 0ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > every FDA rule the platform enforces maps to a corpus rule that is not "external" 11ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > no corpus rule claims a check the FDA registry says nothing runs 1ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > PDF_NO_SECURITY is answered as checked by the platform, not by the agency validator 9ms
+ ✓ server/services/ectd/__tests__/validation-rule-corpus-enforcement.test.ts > acceptance corpus agrees with the FDA technical-rules registry > PDF_NO_SECURITY names each enforcement point, and each one refuses a secured leaf 1ms
+ ✓ server/services/ectd/__tests__/ectd4-validator-module1-numbering.test.ts > eCTD leaf validator — Module 1 codes mean what the FDA profile says > IND asks only for headings the US profile declares 2ms
+ ✓ server/services/ectd/__tests__/ectd4-validator-module1-numbering.test.ts > eCTD leaf validator — Module 1 codes mean what the FDA profile says > NDA asks only for headings the US profile declares 1ms
+ ✓ server/services/ectd/__tests__/ectd4-validator-module1-numbering.test.ts > eCTD leaf validator — Module 1 codes mean what the FDA profile says > BLA asks only for headings the US profile declares 0ms
+ ✓ server/services/ectd/__tests__/ectd4-validator-module1-numbering.test.ts > eCTD leaf validator — Module 1 codes mean what the FDA profile says > never asks an NDA or BLA for Application Status either, nor an NDA for Promotional Material 1ms
+ ✓ server/services/ectd/__tests__/ectd4-validator-module1-numbering.test.ts > eCTD leaf validator — Module 1 codes mean what the FDA profile says > never asks an IND for Application Status, Meetings or Pediatric Administrative Information 0ms
+ ✓ server/services/ectd/__tests__/ectd4-validator-module1-numbering.test.ts > eCTD leaf validator — Module 1 codes mean what the FDA profile says > asks for the Investigator’s Brochure and general plan where the FDA files them 0ms
+ ✓ server/services/ectd/__tests__/ectd4-validator-module1-numbering.test.ts > eCTD leaf validator — a check that did not run is never a pass > does not report 100% complete for a type it has no required set for 0ms
+ ✓ server/services/ectd/__tests__/ectd4-validator-module1-numbering.test.ts > eCTD leaf validator — a check that did not run is never a pass > says so when it cannot assess a submission type 1ms
+ ✓ server/services/ectd/__tests__/ectd4-validator-module1-numbering.test.ts > eCTD leaf validator — a check that did not run is never a pass > agrees with validatePackage that a placed child satisfies a required node 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ValidationError: FDA validation 1789 (technical rejection): 1 file(s) in Module 4/5 study sections would be referenced by no Study Tagging File — study.pdf (section 5.3.5.1, no study id). Give each its study id and STF file-tag, or file it under 4.3, 5.2, 5.3.6 or 5.4 if that is where it belongs.
+ValidationError: FDA validation 1789 (technical rejection): 1 file(s) in Module 4/5 study sections would be referenced by no Study Tagging File — study.pdf (section 5.3.5.1, no study id). Give each its study id and STF file-tag, or file it under 4.3, 5.2, 5.3.6 or 5.4 if that is where it belongs.
+ValidationError: FDA validation 1789 (technical rejection): 1 file(s) in Module 4/5 study sections would be referenced by no Study Tagging File — study.pdf (section 5.3.5.1, no study id). Give each its study id and STF file-tag, or file it under 4.3, 5.2, 5.3.6 or 5.4 if that is where it belongs.
+ Test Files  1 failed | 41 passed (42)
+      Tests  4 failed | 642 passed (646)
+
+# cross-reference-packaging.test.ts with the fixture leaf given studyId 'STUDY-001' + stfFileTag 'study-report' (diff below):
+38c38
+<       : { ctdSection: '5.3.5.1', operation: 'new', sourcePath: path.join(src, 'study.pdf'), fileName: 'study.pdf', title: 'Study Report' },
+>       : { ctdSection: '5.3.5.1', operation: 'new', sourcePath: path.join(src, 'study.pdf'), fileName: 'study.pdf', title: 'Study Report', studyId: 'STUDY-001', stfFileTag: 'study-report' },
+ Test Files  1 passed (1)
+      Tests  5 passed (5)

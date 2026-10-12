@@ -35,7 +35,12 @@ async function pkg(work: string, opts: {
     opts.deleteTarget
       ? { ctdSection: '5.3.5.1', operation: 'delete', sourcePath: '', fileName: 'study.pdf', title: 'Study Report',
           modifiedFile: '../0000/index.xml#leaf-5-3-5-1-study' }
-      : { ctdSection: '5.3.5.1', operation: 'new', sourcePath: path.join(src, 'study.pdf'), fileName: 'study.pdf', title: 'Study Report' },
+      /* studyId / stfFileTag: a file in a Module 4/5 study section must be referenced by a Study
+         Tagging File or FDA rejects the sequence (validation 1789), and the packager refuses to
+         build one it would reject. This fixture packages a 5.3.5.1 study report, so it carries
+         them; without them it was modelling a sequence FDA would have thrown back. */
+      : { ctdSection: '5.3.5.1', operation: 'new', sourcePath: path.join(src, 'study.pdf'), fileName: 'study.pdf', title: 'Study Report',
+          studyId: 'STUDY-001', stfFileTag: 'study-report-body' },
   ];
   const prevEnv: Record<string, string | undefined> = {};
   for (const [k, v] of Object.entries(opts.env ?? {})) { prevEnv[k] = process.env[k]; process.env[k] = v; }
