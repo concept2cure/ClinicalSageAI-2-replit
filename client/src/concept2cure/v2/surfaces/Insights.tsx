@@ -100,6 +100,9 @@ interface ReportType {
   label: string;
   family: string;
   scopes: string[];
+  /** The scopes an engine actually computes it over — a subset of `scopes`
+   *  (server CanvasReportType.computedScopes), empty when none does. */
+  computedScopes: string[];
   segments: string[];
   t: { allowPartial?: boolean; requireBlockers?: boolean; requireConfidence?: boolean; requireExplicitGaps?: boolean; forbidFinal?: boolean; requireDisclosure?: boolean };
   /** An engine computes it over a program; otherwise it is shown as not computed and never run. */
@@ -112,6 +115,7 @@ interface CanvasReportType {
   label: string;
   family: string;
   allowedScopes?: string[];
+  computedScopes?: string[];
   allowedClientSegments?: string[];
   truthfulnessRules?: Record<string, unknown>;
   runnable?: boolean;
@@ -124,6 +128,11 @@ function catalogFrom(rows: CanvasReportType[] | undefined): ReportType[] {
     label: r.label,
     family: r.family,
     scopes: r.allowedScopes ?? [],
+    /* An older server answers no `computedScopes`. The declared scopes are then
+       all that is known, and saying "runs over" of them is the claim this field
+       exists to drop — so with none, the card says nothing about where it runs
+       rather than repeating the declaration. */
+    computedScopes: r.computedScopes ?? [],
     segments: r.allowedClientSegments ?? [],
     t: (r.truthfulnessRules ?? {}) as ReportType['t'],
     runnable: r.runnable === true,
@@ -1023,8 +1032,17 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashb
 
        Readiness is real, so it is stated ONCE, as what it is: a
        programme-level figure. The per-market grid keeps only the rows the
-       governed record could actually fill per market, and they are all empty,
-       which is the honest answer until the regional providers are connected. */
+       governed record could actually fill per market, and they are all empty.
+
+       2026-10-12: the `regional` engine computes a market's Module 1 content
+       gaps (services/report-os/regional/filing-readiness.ts), so the old note
+       here — "connect the live regional providers to populate the deltas" — now
+       names work that is done and still would not fill this grid, which makes
+       it the wrong reason to give a reader. The real reason is structural: a
+       market assessment is of the filing the program is RECORDED for, and a
+       program records one. Assessing this program against a second market would
+       assess a filing that does not exist, which is the refusal that engine
+       exists to make. So the grid stays empty and says why. */
     const tRows: [string, string | null][] = [['Module completeness', null], ['Region-specific gaps', null]];
     return (
       <div className="ro-dash">
@@ -1039,7 +1057,7 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashb
           </div>
         )}
         <ROTable columns={['Requirement', ...m]} rows={tRows.map((r) => [r[0], ...m.map(() => r[1] ?? '--')])} />
-        <div className="ro-dash-note">{I.info} No per-market assessment is in the governed record, so every market cell reads "--". Connect the live regional providers to populate the deltas.</div>
+        <div className="ro-dash-note">{I.info} No per-market comparison is in the governed record, so every market cell reads "--". A market assessment is of the filing this program is recorded for, and a program records one — so {prog.code} can be assessed for its own market, not against a second one it is not filing in. Open the report catalog for the market assessment of its recorded filing.</div>
       </div>
     );
   }
@@ -1614,6 +1632,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
       label: t.label,
       family: t.family,
       scopes: t.scopes,
+      computedScopes: t.computedScopes,
       segments: t.segments,
       runnable: t.runnable,
       entitled: d.entitled,

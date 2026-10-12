@@ -29,7 +29,15 @@ export interface LibraryReportType {
   typeId: string;
   label: string;
   family: string;
+  /** Where the type is DECLARED to run (the registry's allowedScopes). */
   scopes: string[];
+  /**
+   * Where an engine actually computes it, which is what a card may claim.
+   * A market filing assessment declares program, project and submission and is
+   * computed over one program only; printing the declaration read as an offer
+   * of a run at a scope that answers REPORT_TYPE_NOT_COMPUTED.
+   */
+  computedScopes: string[];
   segments: string[];
   /** An engine computes it; a row without this is never offered as a control. */
   runnable: boolean;
