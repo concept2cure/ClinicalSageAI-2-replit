@@ -83,3 +83,77 @@ down here so the next session starts from the citation set rather than from
 scratch: intersect the baseline's `unreviewed` entries with the spec list in
 `20260813_child_table_parent_scoped_rls.sql` first, then work the remainder by
 hand.
+
+---
+
+# Second pass: all 105 decided, and what the sweep found on the way
+
+`ci:unkeyed-request-tables:unreviewed` is at **zero**. Three of the eight
+nightly zero-baseline gates now pass (`tenant-isolation`, `proof-tier`,
+`unkeyed-request-tables:unreviewed`), where one did this morning.
+
+## How each of the 105 was decided, and on what authority
+
+| how | n | authority |
+|---|---|---|
+| citation, single-level RLS spec | 19 | `20260813_child_table_parent_scoped_rls.sql` specs list, machine-derived from `pg_constraint` |
+| citation, chained (grandchild) spec | 5 | the same file's `chained` list (ledger L202/L203) |
+| read back off a live deploy-shaped database | 12 | `pg_policies` / `information_schema` on `c2c_dbtest` |
+| reachability sweep + DDL + the reading statement | 57 | the sweep below |
+| already reviewed before today | 9 | prior sessions |
+| **not decided** | **0** | |
+
+**4 of the 12 live-verified entries do not belong in this baseline at all.**
+`knowledge_graph_edges`, `knowledge_graph_nodes`, `lumen_knowledge_graph_edges`
+and `regulatory_twin_simulations` each carry `organization_id` **and**
+`tenant_isolation_policy` on a deploy-shaped database. They are listed because
+**the gate reads the creating migration and not a later `ALTER`**, so a tenant
+column added afterwards reads as absent. That is a gate blind spot, recorded in
+each entry; `regulatory_harmonization.audit_log` is a second shape of the same
+problem — it carries `user_organization`, a tenant-ish column under a name
+outside the gate's four canonical ones.
+
+## The sweep, and the one thing it found
+
+For each of the final 57: every reader under `server/`, which of those are
+router files that `server/bootstrap/*` and `server/startup/*` **actually
+mount**, and whether any such mounted reader contains no tenant key at all.
+
+Three candidates came back. Two are the same production-fenced test harness
+(`assembly_docs`, `assembly_audit_logs` → `server/routes/test-assembly.ts`,
+mounted only under `testRoutesEnabled`, which `startup/env.ts:20-24` records as
+*"Fenced OFF in production by default"*). One was a false match: `templates`'
+other candidate, `ana-cortex-ft.ts`, does not query that table — the grep hit
+the word in another context.
+
+**And one real exposure, found before the sweep and fixed:** `citation_chains`,
+read by `GET /api/graphrag/citation-trace/:documentId` with the request path
+parameter as the anchor, on a table with no tenant column, RLS off and zero
+policies, behind `authenticateToken` alone. Full account and fix:
+`docs/evidence/D3/2026-10-12-graphrag-citation-trace/`. That is a fourth
+instance of the class the baseline's header warns about, and it was sitting here
+as "unreviewed" — which is the case for working this gate rather than carrying
+it.
+
+## Three findings recorded rather than fixed
+
+- **`capa_records` and `q_submissions`** are the TEXT-program-id shape and are
+  **not** in the parent-scoped spec, so their isolation rests on the reading
+  route's join rather than on a policy. Adding them to that spec is the
+  structural fix.
+- **`compliance.access_controls` / `compliance.data_integrity_checks`** —
+  `cortexComplianceService.ts` names `org_id, user_id, permission, granted_by,
+  expires_at`; the live table has **none** of them, so every statement fails
+  42703. This is exactly the class WO-14 documents for the Cortex family
+  (*"the service names 27 columns the shape lacks, across six tables"*) and is
+  two more tables for its table. WO-14 is open pending the founder's
+  Route A / Route B decision.
+- **`knowledge_documents`** — `sage-plus-service.ts` searches `content ILIKE`
+  with no tenant predicate. Not reachable today: the only mounted entry into
+  that module is `routes/health.ts`, which imports `healthCheck` alone. A
+  latent risk, not a live one — but the day that search is mounted it must be
+  org-scoped, as the `citation_chains` read beside it had to be.
+
+`ci:unkeyed-request-tables:strict` — "no per-request table lacks a tenant key",
+the end state rather than the triage — remains at 105 and is unaffected by this
+work, which was always about deciding each one rather than re-keying them.
