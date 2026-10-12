@@ -41,8 +41,10 @@ import {
   ScheduleTruthNote,
   ViewOnlyNote,
   isRowList,
+  readFailureOf,
   rowsOf,
   type LibraryReportType,
+  type ReadFailure,
 } from './insightsLibraryShared';
 
 interface Draft {
@@ -240,26 +242,26 @@ function ScheduleTable({
 /** The three honest outcomes of the read, and the table when there is one. */
 function SchedulesBody({
   loading,
-  failed,
+  failure,
   rows,
   canWrite,
   onToggle,
   onRetry,
 }: {
   loading: boolean;
-  failed: boolean;
+  failure: ReadFailure | null;
   rows: SubscriptionRow[];
   canWrite: boolean;
   onToggle: (row: SubscriptionRow) => void;
   onRetry: () => void;
 }) {
   if (loading) return <EmptyState busy icon={I.calendar} title="Reading your schedules…" />;
-  if (failed) {
+  if (failure) {
     return (
       <ErrorState
-        title="Couldn't read your schedules"
-        message="The schedule records could not be read. Nothing is shown in their place."
-        retry={onRetry}
+        title={failure.title}
+        message={failure.message}
+        {...(failure.retryable ? { retry: onRetry } : {})}
         testId="rl-schedules-error"
       />
     );
@@ -369,7 +371,7 @@ export function SchedulesPanel({
 
       <SchedulesBody
         loading={subs.loading}
-        failed={Boolean(subs.error)}
+        failure={subs.error ? readFailureOf(subs, 'your schedules') : null}
         rows={rows}
         canWrite={canWrite}
         onToggle={(row) => void toggleEnabled(row)}

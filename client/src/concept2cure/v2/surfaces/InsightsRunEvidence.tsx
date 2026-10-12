@@ -46,7 +46,7 @@ import {
   type RunDependencyRow,
   type RunSealView,
 } from './insightsLibraryModel';
-import { isRowList, rowsOf } from './insightsLibraryShared';
+import { isRowList, readFailureOf, rowsOf } from './insightsLibraryShared';
 
 /** The seal's four checks, each with the server's own written reason. */
 function SealChecks({ view }: { view: RunSealView }) {
@@ -118,11 +118,12 @@ function SealSection({ runId }: { runId: number }) {
     return <p className="rl-sub">Reading the sealing record…</p>;
   }
   if (seal.error || !view) {
+    const f = readFailureOf(seal, 'the sealing record');
     return (
       <ErrorState
-        title="Couldn't read the sealing record"
-        message="The seal and its audit-chain record could not be read, so nothing is claimed about them."
-        retry={() => setAttempt((n) => n + 1)}
+        title={f.title}
+        message={`${f.message} Nothing is claimed about the seal either way.`}
+        {...(f.retryable ? { retry: () => setAttempt((n) => n + 1) } : {})}
         testId="rl-seal-error"
       />
     );
@@ -181,11 +182,12 @@ function DependencySection({ runId }: { runId: number }) {
 
   if (deps.loading) return <p className="rl-sub">Reading the run's sources…</p>;
   if (deps.error) {
+    const f = readFailureOf(deps, "the run's sources");
     return (
       <ErrorState
-        title="Couldn't read the run's sources"
-        message="The providers this run recorded could not be read. Nothing is shown in their place."
-        retry={() => setAttempt((n) => n + 1)}
+        title={f.title}
+        message={f.message}
+        {...(f.retryable ? { retry: () => setAttempt((n) => n + 1) } : {})}
         testId="rl-deps-error"
       />
     );

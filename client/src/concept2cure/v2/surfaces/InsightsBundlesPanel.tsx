@@ -28,7 +28,7 @@ import {
   whenText,
   type BundleRow,
 } from './insightsLibraryModel';
-import { PanelAlert, PanelHead, StatusTag, isRowList, rowsOf } from './insightsLibraryShared';
+import { PanelAlert, PanelHead, StatusTag, isRowList, readFailureOf, rowsOf } from './insightsLibraryShared';
 
 function BundleCard({ bundle, onExport }: { bundle: BundleRow; onExport: () => void }) {
   return (
@@ -157,12 +157,17 @@ export function BundlesPanel({
       {bundles.loading ? (
         <EmptyState busy icon={I.layers} title="Reading your bundles…" />
       ) : bundles.error ? (
-        <ErrorState
-          title="Couldn't read your bundles"
-          message="The bundle records could not be read. Nothing is shown in their place."
-          retry={() => setAttempt((n) => n + 1)}
-          testId="rl-bundles-error"
-        />
+        (() => {
+          const f = readFailureOf(bundles, 'your bundles');
+          return (
+            <ErrorState
+              title={f.title}
+              message={f.message}
+              {...(f.retryable ? { retry: () => setAttempt((n) => n + 1) } : {})}
+              testId="rl-bundles-error"
+            />
+          );
+        })()
       ) : rows.length === 0 ? (
         <EmptyState
           icon={I.layers}

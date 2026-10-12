@@ -33,6 +33,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import { InsightsCanvas } from '../surfaces/Insights';
 import { CANVAS_REPORT_TYPES } from './_insights-catalog-fixture';
 import { RUNS_WINDOW, runsSearchCaveat } from '../surfaces/insightsLibraryModel';
+import { readFailureOf } from '../surfaces/insightsLibraryShared';
 import { RunsPanel } from '../surfaces/InsightsRunsPanel';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
@@ -492,5 +493,61 @@ describe("a bundle's PDF is named for what it is", () => {
     const pane = document.querySelector('.rc-canvas')!;
     expect(pane.textContent ?? '').not.toMatch(/download all reports|all reports as one|the reports as one PDF/i);
     expect(screen.getByRole('button', { name: /Export manifest PDF/ })).toBeTruthy();
+  });
+});
+
+describe('a failed read says WHICH failure it was', () => {
+  /* `useLiveData` reports the HTTP status and none of these reads consulted it,
+     so a 403 from the tenant guard and an expired session both rendered as an
+     outage with a Try again that cannot succeed. A reader clicks it, it fails
+     identically, and nothing tells them to sign in or that their role is the
+     reason. */
+
+  const refused = (status: number) =>
+    ({ ok: false, status, json: async () => ({ error: 'no' }) }) as unknown as Response;
+
+  it('a 403 on the run history is a role refusal with NO retry', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) =>
+      url.startsWith('/api/report-os/runs') ? refused(403) : route(url),
+    );
+    await renderCanvas();
+    await openTab(/Run history/);
+    const err = await screen.findByTestId('rl-runs-error');
+    expect(err.textContent ?? '').toMatch(/do not have access/);
+    expect(err.textContent ?? '').toMatch(/retrying will not change the answer/);
+    // The defect: a retry that cannot succeed.
+    expect(within(err).queryByRole('button', { name: /Try again/i })).toBeNull();
+  });
+
+  it('an expired session says to sign in, not that the server failed', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) =>
+      url.startsWith('/api/insights/subscriptions') ? refused(401) : route(url),
+    );
+    await renderCanvas();
+    await openTab(/Schedules/);
+    const err = await screen.findByTestId('rl-schedules-error');
+    expect(err.textContent ?? '').toMatch(/session has expired/);
+    expect(within(err).queryByRole('button', { name: /Try again/i })).toBeNull();
+  });
+
+  it('a 500 keeps the retry, because retrying could change the answer', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) =>
+      url.startsWith('/api/report-os/bundles') ? refused(500) : route(url),
+    );
+    await renderCanvas();
+    await openTab(/Bundles/);
+    const err = await screen.findByTestId('rl-bundles-error');
+    expect(within(err).getByRole('button', { name: /Try again/i })).toBeTruthy();
+  });
+
+  it('readFailureOf classifies each status, and only the reachable ones retry', () => {
+    expect(readFailureOf({ error: 'e', status: 401 }, 'x').retryable).toBe(false);
+    expect(readFailureOf({ error: 'e', status: 403 }, 'x').retryable).toBe(false);
+    expect(readFailureOf({ error: 'e', status: 404 }, 'x').retryable).toBe(false);
+    expect(readFailureOf({ error: 'e', status: 500 }, 'x').retryable).toBe(true);
+    // status 0 is the one case a retry is actually for: nothing reached the server.
+    const unreached = readFailureOf({ error: 'e', status: 0 }, 'x');
+    expect(unreached.retryable).toBe(true);
+    expect(unreached.message).toMatch(/did not reach the server/);
   });
 });

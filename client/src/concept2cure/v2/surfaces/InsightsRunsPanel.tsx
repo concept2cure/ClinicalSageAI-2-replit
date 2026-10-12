@@ -27,7 +27,15 @@ import {
   whenText,
   type ReportRunRow,
 } from './insightsLibraryModel';
-import { PanelHead, StatusTag, isRowList, rowsOf, type LibraryReportType } from './insightsLibraryShared';
+import {
+  PanelHead,
+  StatusTag,
+  isRowList,
+  readFailureOf,
+  rowsOf,
+  type LibraryReportType,
+  type ReadFailure,
+} from './insightsLibraryShared';
 
 /** The filter bar. Every control maps to a parameter the route accepts. */
 function RunFilters({
@@ -195,7 +203,7 @@ export function RunsPanel({
 
       <RunsBody
         loading={runs.loading}
-        failed={Boolean(runs.error)}
+        failure={runs.error ? readFailureOf(runs, 'the run history') : null}
         filtered={filtered}
         rows={rows}
         canBundle={canBundle}
@@ -211,7 +219,7 @@ export function RunsPanel({
 /** The three honest outcomes of the read, and the table when there is one. */
 function RunsBody({
   loading,
-  failed,
+  failure,
   filtered,
   rows,
   canBundle,
@@ -221,7 +229,7 @@ function RunsBody({
   onRetry,
 }: {
   loading: boolean;
-  failed: boolean;
+  failure: ReadFailure | null;
   filtered: boolean;
   rows: ReportRunRow[];
   canBundle: boolean;
@@ -231,12 +239,14 @@ function RunsBody({
   onRetry: () => void;
 }) {
   if (loading) return <EmptyState busy icon={I.history} title="Reading the run history…" />;
-  if (failed) {
+  if (failure) {
+    /* A refusal offers no retry: the server answered, and clicking again gets
+       the same answer. Only an unreached server or a 5xx is retryable. */
     return (
       <ErrorState
-        title="Couldn't read the run history"
-        message="The governed run records could not be read. Nothing is shown in their place."
-        retry={onRetry}
+        title={failure.title}
+        message={failure.message}
+        {...(failure.retryable ? { retry: onRetry } : {})}
         testId="rl-runs-error"
       />
     );
