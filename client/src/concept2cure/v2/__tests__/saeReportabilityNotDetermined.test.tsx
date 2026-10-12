@@ -125,6 +125,45 @@ describe('an unassessed SAE case is not a non-reportable one', () => {
     expect(box.textContent).not.toMatch(/Reportability not determined/);
   });
 
+  /* ── The boundary the FIRST version of this fix got wrong (C-7c) ──────────
+     It inferred "no verdict" as `unassessedInputs.length > 0`. Decision P-20's
+     follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md) and `classifyIndSafetyReport`'s
+     Gate 0 both hold that an event recorded NON-SERIOUS, or not suspected, is
+     not expedited on those stated facts — a determination — even with
+     expectedness still blank. So a decided case was headed "Reportability not
+     determined", which is the mirror of the defect this screen was fixed for.
+     The engine now decides (`reportabilityDetermined`) and this screen reads it. */
+  it('does NOT say "not determined" for a case ruled out on its stated facts', async () => {
+    renderWith(caseRow({
+      // Recorded not serious; expectedness and causality never assessed.
+      reportingUnassessedInputs: ['expectedness', 'causality'],
+      reportingDetermined: true,
+      reportingBasis:
+        'No expedited reporting clock — not serious. Decided on the facts recorded; expectedness, causality are not assessed and does not change it.',
+    }));
+    const box = await screen.findByTestId('sae-reporting-clock');
+    expect(box.getAttribute('data-state')).toBe('determined-none');
+    expect(box.textContent).not.toMatch(/Reportability not determined/);
+    expect(box.textContent).toMatch(/No expedited reporting clock/);
+  });
+
+  it('still says "not determined" when the engine says there is no verdict', async () => {
+    renderWith(caseRow({
+      reportingUnassessedInputs: ['expectedness'],
+      reportingDetermined: false,
+      reportingBasis: UNASSESSED_BASIS,
+    }));
+    const box = await screen.findByTestId('sae-reporting-clock');
+    expect(box.getAttribute('data-state')).toBe('not-assessed');
+    expect(box.textContent).toMatch(/Reportability not determined/);
+  });
+
+  it('falls back to the old inference on a server that does not send the verdict', async () => {
+    // Previous behaviour, not a guess at a field the server did not send.
+    renderWith(caseRow({ reportingUnassessedInputs: ['causality'], reportingBasis: UNASSESSED_BASIS }));
+    expect((await screen.findByTestId('sae-reporting-clock')).getAttribute('data-state')).toBe('not-assessed');
+  });
+
   it('leaves a real 15-day clock alone', async () => {
     renderWith(caseRow({
       reportingCategory: '15-day',

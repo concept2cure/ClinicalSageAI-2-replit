@@ -142,6 +142,87 @@ describe('computeExpeditedReportingClock — category determination', () => {
     expect(r.basis).not.toMatch(/— not serious/);
   });
 
+  /* ── Gate 0: a stated fact decides the verdict (P-20 follow-up) ───────────
+     `docs/LAUNCH_DEFINITION_OF_DONE.md`: "'Not determined' applies only where
+     expectedness decides the outcome. An event recorded as non-serious, or as
+     not suspected, is not expedited on those stated facts, and the verdict says
+     so." The canonical IND engine has that as Gate 0
+     (`classifyIndSafetyReport`, ind-safety-report-service.ts:314); this clock
+     did not, so a decided case still reported unassessed inputs and a reader
+     that treated any unassessed input as "no verdict" headed it "Reportability
+     not determined" — which is what the SafetyNarrative box did on 2026-10-12
+     before this gate existed. */
+  describe('reportabilityDetermined (Gate 0)', () => {
+    it('a case recorded NOT SERIOUS is determined, even with expectedness and causality blank', () => {
+      const r = computeExpeditedReportingClock(
+        { awarenessDate: '2026-07-01', seriousnessCriteria: [] },
+        utc('2026-07-05'),
+      );
+      expect(r.category).toBe('none');
+      // Still an honest record of what the verdict was made WITHOUT …
+      expect(r.unassessedInputs).toEqual(['expectedness', 'causality']);
+      // … but there IS a verdict, decided on the recorded fact.
+      expect(r.reportabilityDetermined).toBe(true);
+      // So the basis must not disclaim the determination it just made.
+      expect(r.basis).not.toMatch(/NOT a determination/);
+      expect(r.basis).toMatch(/Decided on the facts recorded/);
+    });
+
+    it('a case recorded NOT SUSPECTED is determined too', () => {
+      const r = computeExpeditedReportingClock(
+        { awarenessDate: '2026-07-01', seriousnessCriteria: ['hospitalization'], causality: 'not related' },
+        utc('2026-07-05'),
+      );
+      expect(r.reportabilityDetermined).toBe(true);
+      expect(r.basis).not.toMatch(/NOT a determination/);
+    });
+
+    it('a case whose SERIOUSNESS is unassessed has NO verdict', () => {
+      const r = computeExpeditedReportingClock(
+        { awarenessDate: '2026-07-01', seriousnessCriteria: null },
+        utc('2026-07-05'),
+      );
+      expect(r.reportabilityDetermined).toBe(false);
+      expect(r.basis).toMatch(/NOT a determination that the case is non-reportable/);
+    });
+
+    it('a serious, suspected case with EXPECTEDNESS unassessed has no verdict — the case P-20 is about', () => {
+      // Gate 0 does not fire (both stated facts point toward reporting), so
+      // expectedness decides, and it is not recorded.
+      const r = computeExpeditedReportingClock(
+        { awarenessDate: '2026-07-01', seriousnessCriteria: ['hospitalization'], causality: 'related' },
+        utc('2026-07-05'),
+      );
+      expect(r.category).toBe('none');
+      expect(r.unassessedInputs).toEqual(['expectedness']);
+      expect(r.reportabilityDetermined).toBe(false);
+    });
+
+    it('a running clock is a determination', () => {
+      const r = computeExpeditedReportingClock(
+        {
+          awarenessDate: '2026-07-01',
+          seriousnessCriteria: ['hospitalization'],
+          causality: 'related',
+          expectedness: 'unexpected',
+        },
+        utc('2026-07-05'),
+      );
+      expect(r.category).toBe('15-day');
+      expect(r.reportabilityDetermined).toBe(true);
+    });
+
+    it('a running clock with no anchorable Day 0 is still a determination', () => {
+      const r = computeExpeditedReportingClock(
+        { seriousnessCriteria: ['death'], causality: 'related', expectedness: 'unexpected' },
+        utc('2026-07-05'),
+      );
+      expect(r.category).toBe('7-day');
+      expect(r.dueDate).toBeNull();
+      expect(r.reportabilityDetermined).toBe(true);
+    });
+  });
+
   it('names only the inputs that are actually missing', () => {
     const r = computeExpeditedReportingClock(
       { awarenessDate: '2026-07-01', seriousnessCriteria: ['hospitalization'], causality: 'not related' },
