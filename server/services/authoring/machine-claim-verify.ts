@@ -166,6 +166,43 @@ async function readRecord(q: Queryable, orgId: number, id: string): Promise<Read
   return { stored, intact: true, ...outputsOf(stored) };
 }
 
+/** What a record says served the turn, read without checking any words. */
+export type TurnServedModelsRead =
+  | { ok: true; turnRecordId: string; recordSha256: string; outcome: TurnOutcome; servedBy: ServedModel[] }
+  | { ok: false; reason: Extract<MachineClaimReason, 'turn_record_not_found' | 'record_not_intact'> };
+
+/**
+ * The models a turn record names, with no text to check against it.
+ *
+ * `verifyMachineText` answers "did THIS turn write THESE words", and three of
+ * SEC-A-7's doors need only the first half of that: which models served the
+ * turn, so RULE 2 can be applied to them. `POST /docs/from-draft` has no
+ * quotable span to offer at all — the whole document is the model's prose — so
+ * the text check is not merely skipped there, it does not apply.
+ *
+ * It shares `readRecord` with `verifyMachineText`, so "read a record, confirm
+ * it is intact, and say what served it" has one implementation. A door that
+ * also has text to check keeps calling `verifyMachineText`, which still does
+ * both.
+ *
+ * The id is NOT validated here: a caller that has not checked its shape would
+ * send a malformed one to a uuid column and raise 22P02 inside its own
+ * transaction. `servedModelsForTurn` in authoring-record.ts is the checked
+ * entry point, and is what doors should call.
+ */
+export async function turnServedModels(q: Queryable, orgId: number, turnRecordId: string): Promise<TurnServedModelsRead> {
+  const read = await readRecord(q, orgId, turnRecordId);
+  if (!read.stored) return { ok: false, reason: 'turn_record_not_found' };
+  if (!read.intact) return { ok: false, reason: 'record_not_intact' };
+  return {
+    ok: true,
+    turnRecordId: read.stored.id,
+    recordSha256: read.stored.recordSha256,
+    outcome: read.stored.outcome,
+    servedBy: read.servedBy,
+  };
+}
+
 /**
  * Check each claim against the turn record it names, within one organization.
  * Every claim comes back exactly once, verified or with its reason.

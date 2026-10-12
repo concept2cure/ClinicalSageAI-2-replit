@@ -1,0 +1,13 @@
+Command: the four turn-record suites and both new SEC-A-7 suites.
+
+ turn-record-served-models + turn-record-served-by.pglite
+ + turn-served-models.pglite + authoringFromDraftProvenance.pglite
+ Test Files  4 passed (4)
+      Tests  31 passed (31)
+
+Every server/services/ana/__tests__/turn-record* suite:
+ Test Files  6 passed (6)
+      Tests  40 passed (40)
+
+Lint: turn-record-models.ts now=0/0 trunk=0/0; the test file 0/0.
+typecheck: exit 0

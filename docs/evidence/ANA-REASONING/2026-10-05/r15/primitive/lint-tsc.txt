@@ -1,0 +1,7 @@
+Lint, against origin/concept2cure-v2. No file gains a warning.
+
+server/services/authoring/authoring-record.ts                                                        now=0/0      trunk=0/0
+server/services/authoring/machine-claim-verify.ts                                                    now=0/0      trunk=0/0
+server/services/authoring/__tests__/turn-served-models.pglite.test.ts (new)        0 warnings
+
+typecheck: npm run -s typecheck:fast -> exit 0

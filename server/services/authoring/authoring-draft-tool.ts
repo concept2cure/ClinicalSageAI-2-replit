@@ -135,7 +135,12 @@ export async function draftAuthoringDocumentTool(
   const provenance: ProvenanceInput = { source: 'ana' };
   if (ctx.threadId) provenance.conversationId = String(ctx.threadId);
   if (ctx.turnId) provenance.turnId = String(ctx.turnId);
-  if (ctx.model) provenance.model = String(ctx.model);
+  /* `ctx.model` is NOT set here any more (round 15, SEC-A-7 door 2). The model
+     recorded on a drafted document comes from the turn record this draft names,
+     or from nothing — one rule, no privileged channel beside it. Setting it
+     here would be inert in any case: `createDocumentFromDraft` parses the
+     provenance of both its callers, and `parseProvenance` no longer accepts
+     `model`. Leaving the line would read as attribution that still happens. */
 
   const parsed = parseDraftInput({ ...input, programId, provenance });
   if (!parsed.ok) return JSON.stringify({ error: parsed.error });
