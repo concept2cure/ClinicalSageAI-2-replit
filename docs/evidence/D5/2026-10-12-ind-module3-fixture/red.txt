@@ -1,0 +1,32 @@
+# Full vitest suite at HEAD 17f6330f2 (vitest.config.ts; *.dbtest.ts excluded,
+# so no Postgres is needed and CI's Test job is reproducible locally).
+
+ Test Files  5 failed | 3795 passed | 8 skipped (3808)
+      Tests  27 failed | 46770 passed | 81 skipped (46930)
+ Duration  4129.51s
+
+# This file, on its own:
+ server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts
+      Tests  11 failed | 3 passed (14)
+
+# The cause, verbatim:
+SubmissionError: Sequence 0000 was not marked Validated: its validation found 2 errors.
+  3.2.S: There is no 3.2.S Drug Substance leaf in the original IND (sequence 0000), and no
+  cross-reference on record covers 3.2.S with a Letter of Authorization on file. An initial
+  IND carries its chemistry, manufacturing and controls information (21 CFR 312.23(a)(7)), or
+  incorporates it by reference to a file whose holder has authorized it (21 CFR 312.23(b)).
+  To clear this, place Module 3 from the CMC module (CMC / Module 3, "Place into the
+  submission"), or record the cross-reference to the Drug Master File that holds 3.2.S,
+  naming 3.2.S among its sections, with its Letter of Authorization on file (Module 1.4.1).
+  3.2.P: [the same, for Drug Product]
+ at validateForValidatedStatus server/services/submission-service/submission-service.ts:757:11
+ at Module.transitionSequence server/services/submission-service/submission-service.ts:673:49
+
+# And the two stale counts:
+AssertionError: expected 'Sequence 0000 was not marked Validate...' to match /found 7 errors/
+AssertionError: expected { holds: false, ...(3) } to match object { holds: false, ...(2) }
+  -   "errors": 7
+  +   "errors": 9
+
+# Last touched 2026-10-08 17:29 by 2b6bca73f -- the same session as yesterday's
+# four fixture causes, and outside the 24-hour hand-on window.

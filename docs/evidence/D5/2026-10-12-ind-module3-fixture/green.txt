@@ -1,0 +1,21 @@
+### The suite
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+
+### Regression: every suite under submission-service/ and ectd/
+ Test Files  110 passed | 1 skipped (111)
+      Tests  1329 passed | 2 skipped (1331)
+
+### Shown still to bite
+# originalIndModule3Headings() forced to return [] -- the Module 3 requirement
+# dropped from production:
+      Tests  2 failed | 12 passed (14)
+  AssertionError: expected 'Sequence 0000 was not marked Validate...' to match /found 9 errors/
+# So the fixture SATISFIES the regulation rather than hiding it. Diagnostic
+# reverted; git diff --stat on assess-dispatch-readiness.ts clean.
+
+### Gates
+eslint server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts   exit 0
+
+### Scope
+# One file changed, a test fixture. No production file touched.
