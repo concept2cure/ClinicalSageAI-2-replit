@@ -40,8 +40,63 @@ complexity threshold this cycle.
    on review alone. `audit:repo-health:full-strict` already reports 95 files over
    1,500 lines against a ceiling of 82 — this is a known, tracked shape, not a
    surprise.
-3. **The line is held.** The ratchet cannot grow now. Deferring costs nothing
-   further; doing it badly costs a regression in code no test covers.
+3. ~~**The line is held.** The ratchet cannot grow now.~~ **This was false, and
+   the numbers say so: this work order recorded 95 files over 1,500 lines and
+   the tree reached 114.** See *Why the line was not held* below. Reasons 1 and
+   2 stand — deferring the decomposition is still right — but it was deferred
+   on a protection that did not exist.
+
+## Why the line was not held (measured 2026-10-12)
+
+`audit:repo-health:no-regression` does gate the two oversized-file dimensions:
+`hasRegression()` fails on a positive `largeFilesByBytes` or
+`largeFilesByLines` delta (`scripts/audits/repo-health-scan.mjs:510-514`). It
+compares against `docs/reports/repo-health-scan-latest.json`, and the scan
+reads that baseline before it writes, so there is no self-reference inside a
+run.
+
+What removes the teeth is outside the run.
+`.github/workflows/repo-health-baseline-refresh.yml` regenerates that same file
+on **every push to `concept2cure-v2`** and commits it back. Its stated
+rationale is sound for the repository it was written for:
+
+> Rather than require each PR to hand-bump the baseline, this regenerates it on
+> every merge to concept2cure-v2 and commits the result back. PRs branched
+> after a merge therefore always see delta 0 — the gate stays strict and
+> self-healing.
+
+**But RULE 0 means this repository has no PRs.** Every change is a direct push
+to trunk, so there is no "PR branched after a merge" to protect: each push's own
+growth is committed into the baseline before any later run can compare against
+it. Measured today, with the tree 32 files above the strict ceiling of 82:
+
+```
+$ git show HEAD:docs/reports/repo-health-scan-latest.json   # refreshed 10:17 UTC
+largeFilesByBytes: 57   largeFilesByLines: 114
+
+$ npm run audit:repo-health:no-regression
+- delta files over byte threshold: 0
+- delta files over line threshold: 0        ← green, at 114 against a ceiling of 82
+```
+
+`.husky/pre-push` ran no repo-health gate at all, so nothing caught growth
+before it landed either.
+
+### The fix, and why it blocks nothing today
+
+`audit:repo-health:ceiling` — `--strict` with the ceilings set to the **measured
+counts (57 / 114)**. The numbers live in `package.json`, where the auto-refresh
+cannot reach them and the "moves DOWN only" convention already applies, and it
+runs in both `.husky/pre-push` and the CI Lint job (~1.2s, Node builtins only).
+
+Set at the measurement, so every file that exists today passes and only the
+*next* one fails. Proven by making it fail: adding one 1,600-line file takes it
+to 115 and the gate refuses with *"115 files exceed 1500 lines, above the
+ceiling of 114"*; removing the file restores green.
+
+**This does not do the decomposition, and does not pretend to.** It makes the
+deferral honest: the line is held from here, so reasons 1 and 2 can stand on
+their own.
 
 ## When to do it
 

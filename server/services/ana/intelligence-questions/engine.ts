@@ -22,6 +22,7 @@ import { OTHER_POSITION, otherFieldId } from '../../../../shared/types/intellige
 import type { FlowEngineContext, FlowStepResult } from './types.js';
 import { getFlowDefinition } from './flows/index.js';
 import { runIssueChecks, runCrossNodeAnalysis } from './issue-detector.js';
+import { cautionedChoiceNotices, programmeFactsFrom, withCautions } from './programme-facts.js';
 import { validateAnswers } from './validators.js';
 
 /* ─── Public API ─────────────────────────────────────────────────────── */
@@ -123,8 +124,20 @@ export function advanceFlow(
   const updatedOwnWords =
     Object.keys(own).length > 0 ? { ...(state.ownWords ?? {}), [nodeId]: own } : state.ownWords;
 
+  /* A position the programme's own answers contradict is offered, marked, and
+     recorded when it is taken: the facts are read from everything the
+     interview holds INCLUDING this node, so a question that asks for the
+     classification and the route together still leaves the record even where
+     the caution could not have been drawn in time (founder's decision,
+     2026-10-12). */
+  const facts = programmeFactsFrom({ ...flattenAnswers(state.answers), ...answers });
+
   // Run issue checks (node-level + cross-node cumulative)
-  const newIssues = [...ownPositionNotices(currentNode, own, nodeId), ...runIssueChecks(currentNode, answers)];
+  const newIssues = [
+    ...ownPositionNotices(currentNode, own, nodeId),
+    ...cautionedChoiceNotices(currentNode, answers, facts),
+    ...runIssueChecks(currentNode, answers),
+  ];
   const allIssues = [...state.issues, ...newIssues];
 
   // Run cross-node analysis with the updated state
@@ -418,7 +431,13 @@ function buildQuestionEvent(
     return evaluatePredicate(f.visibleWhen, allAnswerValues);
   });
 
-  const nodeWithVisibleFields = { ...node, fields: visibleFields };
+  /* The positions the answers so far speak against are marked here, where the
+     question is drawn, and nothing is removed: an absent option is a question
+     lying by omission (shared/types PositionAvailability). */
+  const nodeWithVisibleFields = {
+    ...node,
+    fields: withCautions(visibleFields, programmeFactsFrom(allAnswerValues)),
+  };
 
   return {
     flowId: definition.id,

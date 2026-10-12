@@ -18,6 +18,13 @@
  *
  * It never invents a position: every option is drawn from the question the
  * server sent, and a field with no listed positions is drawn as the input it is.
+ *
+ * Nor does it ever remove one. Where the server has marked a position the
+ * programme's own answers speak against, this draws the caution on the row and
+ * leaves the row selectable: the person keeps the choice and AnA records the
+ * basis they took it on (shared/types PositionAvailability). A position that
+ * simply vanished would be the question lying by omission, and the engine has
+ * been bitten by hidden options once already.
  */
 import React, { useMemo, useState } from 'react';
 
@@ -26,6 +33,7 @@ import {
   OWN_POSITION_MAX_CHARS,
   otherFieldId,
   type IntelligenceQuestionEvent,
+  type PositionCaution,
   type QuestionField,
   type QuestionOption,
 } from '@shared/types/intelligence-questions';
@@ -41,8 +49,26 @@ export interface AnaQuestionCardProps {
   busy?: boolean;
 }
 
-/** A field the person picks from, rather than types into. */
-const PICKED: ReadonlySet<QuestionField['type']> = new Set(['select', 'radio', 'multi_select', 'checkbox', 'yes_no']);
+/**
+ * A field the person picks from, rather than types into.
+ *
+ * `agency_select` and `country_select` are here because the engine has always
+ * declared them and no renderer ever implemented them: they fell through to a
+ * text input, so the agency — the answer that decides the Module 1 backbone,
+ * the validation profile and the gateway — was typed prose. A field of either
+ * type still draws as an input where the question carries no positions, which
+ * is what `country_select` does today: the platform holds a governed agency
+ * vocabulary and no governed country one.
+ */
+const PICKED: ReadonlySet<QuestionField['type']> = new Set([
+  'select',
+  'radio',
+  'multi_select',
+  'checkbox',
+  'yes_no',
+  'agency_select',
+  'country_select',
+]);
 
 const YES_NO: QuestionOption[] = [
   { value: 'yes', label: 'Yes' },
@@ -75,6 +101,32 @@ function notReady(fields: readonly QuestionField[], answers: Answers): boolean {
   });
 }
 
+/** How a marked position reads. The reason itself names the answer that marks it. */
+const CAUTION_LEAD: Readonly<Record<PositionCaution['availability'], string>> = {
+  inapplicable: 'Your own answers contradict this',
+  needs_basis: 'This position needs a basis',
+};
+
+const CAUTION_CLASS: Readonly<Record<PositionCaution['availability'], string>> = {
+  inapplicable: 'is-inapplicable',
+  needs_basis: 'is-needs-basis',
+};
+
+/** Why the programme's own answers speak against this position — not a refusal of it. */
+function Caution({ caution, taken }: { caution: PositionCaution; taken: boolean }) {
+  return (
+    <span className={`ana-q-position-caution ${CAUTION_CLASS[caution.availability]}`}>
+      <span className="ana-q-caution-lead">{CAUTION_LEAD[caution.availability]}.</span> {caution.reason}
+      <span className="ana-q-caution-authority">{caution.authority}</span>
+      {taken ? (
+        <span className="ana-q-caution-taken">
+          AnA keeps this position open and records the basis you take it on.
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 /** One position, with what it commits you to and what makes it one. */
 function Position({
   field,
@@ -88,8 +140,9 @@ function Position({
   onPick: () => void;
 }) {
   const multi = isMulti(field);
+  const marked = option.caution ? ` ${CAUTION_CLASS[option.caution.availability]}` : '';
   return (
-    <label className={`ana-q-position${checked ? ' is-picked' : ''}`}>
+    <label className={`ana-q-position${checked ? ' is-picked' : ''}${marked}`}>
       <input
         type={multi ? 'checkbox' : 'radio'}
         name={field.id}
@@ -104,6 +157,7 @@ function Position({
           <span className="ana-q-position-desc">{option.description}</span>
         ) : null}
         {option.authority ? <span className="ana-q-position-authority">{option.authority}</span> : null}
+        {option.caution ? <Caution caution={option.caution} taken={checked} /> : null}
       </span>
     </label>
   );

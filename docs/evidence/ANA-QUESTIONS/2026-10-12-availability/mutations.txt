@@ -1,0 +1,52 @@
+# 16 mutations, all red
+# Each is applied to the working tree, the named test is run, and the file is restored.
+# driver: scratchpad/mutate.py + mutate2.py
+
+RED       an inapplicable position is hidden instead of marked
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > marking is not hiding > offers the same positions, in the same order, with and without the facts 8ms | × shared/regulatory/__tests__/pathway-availability.test.ts > marking is not hiding > leaves the positions nothing speaks against unmarked 1ms
+RED       the drawn question drops the positions it marked
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the question a person reads > marks the route the stated class speaks against, and removes nothing 12ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the question a person reads > marks a De Novo once a predicate has been named 2ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the question a person reads > drops a caution the rules no longer justify, rather than letting it ride 1ms
+RED       a caution travels without the authority that makes it one
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > the class the sponsor states > marks a 510(k) for a Class III device, and names the basis that would allow it 7ms | × shared/regulatory/__tests__/pathway-availability.test.ts > what every rule must satisfy > says something, with the authority that makes it say it 2ms
+RED       'not yet classified' is read as a class
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > which answer states which fact > states no fact where the person said they do not know, or said nothing 9ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the question a person reads > marks the route the stated class speaks against, and removes nothing 3ms
+RED       the class is matched by prefix, so Class III reads as Class II
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > which answer states which fact > reads the class and the predicate the flows actually ask for 10ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > which answer states which fact > states no fact where the person said they do not know, or said nothing 3ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the question a person reads > marks the route the stated class speaks against, and removes nothing 3ms
+RED       a cautioned choice leaves no trace
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > taking a marked position > is allowed, and leaves a record carrying the reason and the authority 5ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > taking a marked position > reads a fact that arrives in the same answer as the choice 3ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > taking a marked position > records it even where the fact arrives with the choice, and could not have marked it in time 4ms
+RED       the record of a cautioned choice drops its authority
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > taking a marked position > is allowed, and leaves a record carrying the reason and the authority 6ms
+RED       the De Novo rule fires whether or not a predicate was named
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > an answer nobody has given > speaks against nothing at all 10ms | × shared/regulatory/__tests__/pathway-availability.test.ts > a De Novo > needs a basis once a predicate is named, and says which basis 1ms | × shared/regulatory/__tests__/pathway-availability.test.ts > a De Novo > needs a basis for a device the sponsor has called Class III 1ms
+RED       the EU rule closes the route the stated class IS for
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > the EU class routes > close a route the stated class is not the route for 4ms | × shared/regulatory/__tests__/pathway-availability.test.ts > the EU class routes > leave the route the stated class IS the route for 5ms
+RED       the question is drawn without the programme's facts
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the question a person reads > marks the route the stated class speaks against, and removes nothing 7ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the question a person reads > marks a De Novo once a predicate has been named 2ms
+RED       the facts ignore the answer that arrives with the choice
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > taking a marked position > reads a fact that arrives in the same answer as the choice 6ms
+RED       the route is asked before the classification again
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the question a person reads > asks the classification before the route, which is what makes the mark possible 9ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the question a person reads > marks the route the stated class speaks against, and removes nothing 1ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the question a person reads > marks a De Novo once a predicate has been named 1ms
+RED       the card draws the position without its caution
+          test: client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx
+          first failures: × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a position the answers contradict > is still offered, and says what contradicts it and on whose authority 40ms | × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a position the answers contradict > can be taken, and says AnA records the basis once it is 37ms | × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a position the answers contradict > leaves the positions nothing speaks against unmarked 9ms
+RED       the card refuses a cautioned position instead of recording it
+          test: client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx
+          first failures: × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a position the answers contradict > can be taken, and says AnA records the basis once it is 75ms
+RED       an absent fact is read as a contradiction
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > which answer states which fact > reads the class and the predicate the flows actually ask for 12ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > which answer states which fact > states no fact where the person said they do not know, or said nothing 3ms | × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > the question a person reads > marks the route the stated class speaks against, and removes nothing 3ms
+RED       a rule marks a position with no fact behind it
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > an answer nobody has given > speaks against nothing at all 13ms | × shared/regulatory/__tests__/pathway-availability.test.ts > an answer nobody has given > is not invented from a class the person said they do not know 2ms | × shared/regulatory/__tests__/pathway-availability.test.ts > a De Novo > is not marked for the route that is ABOUT a predicate 2ms

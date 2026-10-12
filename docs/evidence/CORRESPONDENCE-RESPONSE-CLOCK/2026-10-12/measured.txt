@@ -1,0 +1,63 @@
+MEASURED 2026-10-12T10:41:00Z
+
+$ the response clock and the restored producer
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > a letter we sent 2ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > an internal note 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > one recorded as needing no response 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > one already responded to 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > one already closed 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > an acknowledgement 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > an approval 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > meeting minutes 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > our own response letter 1ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > an internal triage memo 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter that puts us on no clock is not tracked > one with no receipt date and no stated date 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > the date the agency stated governs, whatever the table says > a complete response letter due next week is due_soon, not a year out 4ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > the date the agency stated governs, whatever the table says > a stated date already past is overdue and critical 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > with no stated date, the window comes from the class and the family > a complete response letter runs a year — the 14-day rule would have shouted at month one 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > with no stated date, the window comes from the class and the family > a refuse-to-file letter runs 30 days, and at day 31 it is overdue 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > with no stated date, the window comes from the class and the family > a 510(k) Additional Information hold runs 180 days and names withdrawal 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > with no stated date, the window comes from the class and the family > a PMA deficiency runs the same 180 days, on the CFR rather than on guidance 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > with no stated date, the window comes from the class and the family > the SAME information request on a drug application has no codified window at all 2ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter with no date on record is never reported as overdue > an undated clinical hold is a warning, because the study is stopped 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter with no date on record is never reported as overdue > an undated drug information request is information, because the review continues 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > the governed table is complete and cites what it claims > every correspondence type is either an agency letter class or deliberately not one 0ms
+ ✓ server/services/regulatory-correspondence/__tests__/response-clock.test.ts > the governed table is complete and cites what it claims > every window with a day count cites a regulation or a named convention 3ms
+ ✓ server/services/ana-ri/__tests__/mdx-correspondence-signal.test.ts > the alert reads the real store, scoped to the caller > reads c2c_correspondence for this organisation, inbound and unanswered only 4ms
+ ✓ server/services/ana-ri/__tests__/mdx-correspondence-signal.test.ts > what it says, and what it refuses to say > names the agency’s own date when the letter carries one 2ms
+ ✓ server/services/ana-ri/__tests__/mdx-correspondence-signal.test.ts > what it says, and what it refuses to say > a drug information request with no date is reported as having none, not as overdue 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-correspondence-signal.test.ts > what it says, and what it refuses to say > a 510(k) Additional Information hold is dated from the 180-day window and names withdrawal 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-correspondence-signal.test.ts > what it says, and what it refuses to say > raises nothing for a complete response letter eleven months out — the 14-day rule would have 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-correspondence-signal.test.ts > what it says, and what it refuses to say > raises nothing for our own outbound response letter 0ms
+ ✓ server/services/ana-ri/__tests__/mdx-correspondence-signal.test.ts > a read that cannot run is not an empty result > raises no correspondence alert and does not pretend the snapshot is complete 2ms
+ Test Files  2 passed (2)
+      Tests  29 passed (29)
+
+$ every suite touching the changed modules (correspondence OS, ana-ri, the deadline radar, the correspondence routes, shared/regulatory)
+ Test Files  101 passed | 1 skipped (102)
+      Tests  1546 passed | 7 skipped (1553)
+
+$ npx tsc --noEmit -p tsconfig.json  ->  exit 0
+
+$ npm run ci:unbacked-tables:strict
+[ci:unbacked-tables] 1491 tables/views created across migrations, drizzle and runtime DDL; 730 referenced in server SQL; 20 unbacked (strict mode)
+
+$ npm run ci:sql-interpolation
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1006 baselined interpolation(s) in 214 file(s); the baseline may only shrink.
+
+── MUTATIONS ───────────────────────────────────────────────────────────
+=== MUTATION 1 — the table beats the agency's stated date ===
+ × server/services/ana-ri/__tests__/mdx-correspondence-signal.test.ts > what it says, and what it refuses to say > names the agency’s own date when the letter carries one 11ms
+ × server/services/regulatory-correspondence/__tests__/response-clock.test.ts > the date the agency stated governs, whatever the table says > a complete response letter due next week is due_soon, not a year out 14ms
+ × server/services/regulatory-correspondence/__tests__/response-clock.test.ts > the date the agency stated governs, whatever the table says > a stated date already past is overdue and critical 2ms
+      Tests  3 failed | 26 passed (29)
+=== MUTATION 2 — an undated letter is called overdue ===
+ × server/services/regulatory-correspondence/__tests__/response-clock.test.ts > with no stated date, the window comes from the class and the family > the SAME information request on a drug application has no codified window at all 9ms
+ × server/services/regulatory-correspondence/__tests__/response-clock.test.ts > a letter with no date on record is never reported as overdue > an undated drug information request is information, because the review continues 1ms
+ × server/services/ana-ri/__tests__/mdx-correspondence-signal.test.ts > what it says, and what it refuses to say > a drug information request with no date is reported as having none, not as overdue 9ms
+      Tests  3 failed | 26 passed (29)
+=== MUTATION 3 — the 14-day rule comes back (upcoming now alerts) ===
+ × server/services/ana-ri/__tests__/mdx-correspondence-signal.test.ts > what it says, and what it refuses to say > raises nothing for a complete response letter eleven months out — the 14-day rule would have 9ms
+      Tests  1 failed | 28 passed (29)
+=== restored ===
+      Tests  29 passed (29)
