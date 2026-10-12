@@ -29,10 +29,17 @@ describe('the positions', () => {
     expect(predicateOptions().map(o => o.value)).toEqual(predicatePositions().map(p => p.value));
   });
 
-  it('keeps one predicate apart from several, and says what several widens', () => {
+  it('keeps one predicate apart from several, and names BOTH cases several covers', () => {
     expect(predicatePositionFor('single_predicate')!.commits).toMatch(/single legally marketed device/);
-    expect(predicatePositionFor('multiple_predicates')!.commits).toMatch(/same intended use/);
-    expect(predicatePositionFor('multiple_predicates')!.commits).toMatch(/widens what FDA will compare/);
+    const several = predicatePositionFor('multiple_predicates')!.commits;
+    /* The 2014 guidance allows two cases and this named only the second until a
+       review caught it: more than one intended use, each with its own
+       predicate; or one intended use with features from several predicates
+       that share it. */
+    expect(several).toMatch(/more than one intended use/);
+    expect(several).toMatch(/features taken from several predicates that share it/);
+    expect(several, 'and says what it does not allow').toMatch(/indications from one and the technology from another/);
+    expect(several).toMatch(/widens what FDA will compare/);
   });
 
   it('offers the split predicate and says FDA does not accept it', () => {
@@ -40,7 +47,12 @@ describe('the positions', () => {
        absence, which teaches nobody anything. */
     const split = predicatePositionFor('split_predicate')!;
     expect(split.commits).toMatch(/FDA does not accept this/);
-    expect(split.commits).toMatch(/Refuse to Accept|not substantially equivalent/);
+    /* The consequence the guidance actually states is a finding of not
+       substantially equivalent. "Expect a Refuse to Accept decision" was an
+       overstatement — an RTA is a completeness decision — and a review caught
+       it. */
+    expect(split.commits).toMatch(/not substantially equivalent/);
+    expect(split.commits, 'the overstated consequence is gone').not.toMatch(/Refuse to Accept/);
     expect(split.authority).toMatch(/not permitted/);
   });
 

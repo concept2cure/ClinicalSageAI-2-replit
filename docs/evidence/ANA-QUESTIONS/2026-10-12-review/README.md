@@ -134,32 +134,56 @@ Recorded rather than quietly carried. The verify pass was still running when
 this landed; these are the findings as reported, and each needs its own slice:
 
 **Enforcement and reach**
-- A route question with **no positions** (the Japan path) accepts any string as
-  a governed position: the validator's option check does not apply, so an API
-  or tool caller can store ungoverned prose where the card would have sent the
-  person's own words. The card is honest; the field is not.
-- `primary_regulatory_agency` may still be unvalidated prose depending on how
-  the validator treats an `agency_select`, and the route question then tells the
-  sponsor no agency was named — after they named one.
-- A required field gated on a field **in its own node** is an unanswerable loop:
-  the draw hides it (prior answers only) and the validator demands it (prior +
-  submitted). Live on two `cmc-specification` fields. Pre-existing, not mine.
-- `additional_agencies` is never drawn, so `facts.regions` can hold one region.
+- ~~A route question with **no positions** (the Japan path) accepts any string
+  as a governed position.~~ **Closed** — `validators.ts:126` refuses any string
+  but `OTHER_POSITION` on a field that declares a catalogue and resolved to no
+  options, and `__tests__/a-question-that-offers-positions-enforces-them.test.ts`
+  (*refuses a position, because it offered none*) holds it. Landed in the
+  enforcement slice of this same batch; this entry was written before it.
+- ~~`primary_regulatory_agency` may still be unvalidated prose depending on how
+  the validator treats an `agency_select`.~~ **Closed** — the option check runs
+  wherever `field.options` exists rather than only for `select` and `radio`, so
+  an `agency_select` is enforced; *refuses an agency it does not offer, rather
+  than storing prose* and *does not then tell them no agency was named* hold
+  both halves.
+- ~~A required field gated on a field **in its own node** is an unanswerable
+  loop. Live on two `cmc-specification` fields.~~ **Closed** — such a field is
+  SENT with its predicate and the card decides it, and
+  `same-question-gate.test.ts` (*leaves no required field unanswerable
+  anywhere*) walks **every** flow rather than the two that had it, so the shape
+  cannot come back in a third place. Verified again 2026-10-12 against the
+  twelve gated fields in `cmc-specification` and the one in its
+  container-closure flow: every gate is `eq`/`in` on a field in the same node,
+  all are drawn, and the validator evaluates over prior + submitted, so the
+  demand can always be met.
+- ~~`additional_agencies` is never drawn, so `facts.regions` can hold one
+  region.~~ **Closed** by the same repair, and pinned by *sends a field gated
+  on its own question, with the gate intact*. The cross-node check added in
+  `2026-10-12-no-us-filing/` reads both agency fields, which is a second
+  consumer that would fail if it stopped being drawn.
 - The launch-scope gate may refuse every flow these commits touch in
   production, which would mean none of this reaches a user yet. That needs
   checking before any claim about user-visible behaviour.
 
-**Regulatory content (eight more, from the SME lens)**
-- the MDR Class IIa route offers Annex X type-examination, which Art 52(6) does
-  not allow; the IVDR Class B route cites Art 48(7), which is Class C; the
-  companion-diagnostic consultation cites Art 48(6), which is the Class D
-  expert-panel paragraph; the Class D reference-laboratory verification cites
-  Annex IX § 4.4 rather than § 4.9 (and § 4.12 for batches); Annex VIII Rule
-  3(f) is cited for "Class C or D" where it yields C; the 513(g) position cites
-  the reclassification-petition regulation; the Q-submission cites the
-  Breakthrough Devices section; the split-predicate consequence overstates what
-  the 2014 guidance says; the LDT position understates where the 2024 rule now
-  stands.
+**Regulatory content (eight more, from the SME lens)** — **all closed in
+`2026-10-12-citations/`**; re-verified line by line on 2026-10-12 and recorded
+here so the list does not read as open:
+
+| Was | Now |
+|---|---|
+| Class IIa offers the Annex X type-examination | the position says it is **not** open to Class IIa; authority `Art 52(6), Annexes IX and XI`, with a gate (*does not offer a Class IIa device a route Article 52(6) withholds*) |
+| IVDR Class B cites Art 48(7) (Class C) | `IVDR Art 48, Annex IX` — the article and the annex, not a paragraph that would be wrong |
+| the companion-diagnostic consultation cites Art 48(6) | `IVDR Art 48, Annex IX` |
+| the Class D reference lab cites Annex IX § 4.4 | `IVDR Art 48, Art 100; Annex IX` |
+| Rule 3(f) cited for "Class C or D" | the position states Rule 3(f) yields **C**, and that another rule may reach D |
+| 513(g) cites the reclassification petition (860.123) | `FD&C Act 513(g)` and FDA's own 513(g) procedures; a gate asserts 860.123 is **absent** |
+| the Q-submission cites 515B (Breakthrough Devices) | the Q-Submission Program guidance; a gate asserts 515B is absent |
+| the split-predicate consequence overstates the 2014 guidance | attributed, not asserted: the guidance *states* a split predicate is not a permissible basis, and a submission resting on one *invites* a finding of NSE |
+| the LDT position understates the 2024 rule | says it was vacated by a federal court in 2025 **and** that where it rests now is not something AnA tracks |
+
+The general rule the batch adopted: a citation precise enough to be wrong is
+worse than one broad enough to be right. Paragraph-level citations were kept
+only where they had been checked.
 
 **Duplication**
 - the MDR class is still hand-written in two flows and normalised by three
@@ -177,6 +201,21 @@ this landed; these are the findings as reported, and each needs its own slice:
   unmarked, while the same product is honestly refused in the US;
 - the IVDR class option presents a recall-level paraphrase as checked Article
   48 authority, discarding the `basis` the platform keeps for exactly that;
-- `US_IND` is offered to nobody and the escape-hatch warning then says AnA
-  holds nothing for it, which is false;
-- an EU-only device programme is still required to state a US risk class.
+- ~~`US_IND` is offered to nobody and the escape-hatch warning then says AnA
+  holds nothing for it, which is false;~~ **repaired** —
+  `2026-10-12-investigational/`. The finding's wording needed a correction of
+  its own: a programme that states only a statute ("Biologic (BLA)") carries no
+  modality, takes the unnarrowed list and WAS offered the IND, so the accurate
+  statement is *a programme that states its modality was never offered it*. The
+  repair went wider than the finding: the catalogue annotated one
+  investigational filing out of five, so the EU CTA, the MDR clinical
+  investigation and the IVDR performance study did not exist as positions
+  either, and the coverage gate did not scan the `clinical_trial` family at
+  all;
+- ~~an EU-only device programme is still required to state a US risk class.~~
+  **repaired** — `2026-10-12-no-us-filing/`. The EU field had carried
+  'Not applicable / No EU filing planned' since it was written; the US field,
+  the required one, had no equivalent, so the programme had to assert an FDA
+  class or claim not to know one. Both fields now offer it, the reader states
+  no class for it, and FDA named beside "no US filing planned" is reported as
+  the contradiction it is.

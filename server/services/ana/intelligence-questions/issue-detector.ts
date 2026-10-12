@@ -12,6 +12,7 @@
 
 import type { QuestionNode, DetectedIssue, FlowState, FlowDefinition } from './types.js';
 import { evaluatePredicate } from './engine.js';
+import { programmeFactsFrom } from './programme-facts.js';
 
 /**
  * Evaluate all issue checks on a question node against the provided answers.
@@ -142,6 +143,36 @@ interface CrossNodeRule {
 }
 
 const CROSS_NODE_RULES: CrossNodeRule[] = [
+  /* The two answers about the US cannot both be true. The agencies are read
+     through the same fact reader every other rule uses, so this agrees with
+     the routes the person was offered rather than re-reading the agency
+     answers in a second vocabulary. */
+  {
+    id: 'xn_no_us_filing_while_naming_fda',
+    appliesTo: ['project_setup'],
+    check(flat) {
+      if (strVal(flat['device_class']) !== 'no_us_filing') return null;
+      const regions = programmeFactsFrom(flat).regions ?? [];
+      if (!regions.includes('US')) return null;
+      return {
+        checkId: 'xn_no_us_filing_while_naming_fda',
+        severity: 'warning',
+        title: 'You have named FDA and said no US filing is planned',
+        message:
+          'The classification question records no US filing, and FDA is among the agencies for this project. One of ' +
+          'the two is out of date: either the US is in scope and the device has a class — AnA can work the ' +
+          'classification regulation through with you — or it is not, and FDA should come off the list so she stops ' +
+          'configuring the Module 1 backbone, the validation profile and the gateway for it.',
+        reference: '21 CFR 860 (classification); 21 CFR 807, 814 (premarket submission)',
+        questionId: '_cross_node',
+        triggerValues: {
+          device_class: flat['device_class'],
+          primary_regulatory_agency: flat['primary_regulatory_agency'],
+          additional_agencies: flat['additional_agencies'],
+        },
+      };
+    },
+  },
   {
     id: 'xn_pediatric_without_safety_monitoring',
     appliesTo: ['protocol_development', 'ind_submission'],

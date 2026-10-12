@@ -1,0 +1,30 @@
+# 9 mutations, all red
+# driver: scratchpad/mutate22.py (apply, run the named test, restore)
+
+RED       the IVDR Class B route cites a paragraph of Article 48 again
+          test: shared/regulatory/__tests__/pathway-positions.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > cites a paragraph only where it has been verified, and an article otherwise 9ms
+RED       the Class D reference laboratory cites a section of Annex IX again
+          test: shared/regulatory/__tests__/pathway-positions.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > cites a paragraph only where it has been verified, and an article otherwise 9ms
+RED       a Class IIa device is offered the Annex X type-examination
+          test: shared/regulatory/__tests__/pathway-positions.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > does not offer a Class IIa device a route Article 52(6) withholds 9ms
+RED       a companion diagnostic is put in 'Class C or D' by Rule 3(f)
+          test: shared/regulatory/__tests__/pathway-positions.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > puts a companion diagnostic in the class Rule 3(f) puts it in 8ms
+RED       the 513(g) request cites the reclassification petition again
+          test: shared/regulatory/__tests__/pathway-positions.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > cites the 513(g) and Q-submission procedures rather than a neighbouring section 8ms
+RED       the Q-submission cites the Breakthrough Devices section again
+          test: shared/regulatory/__tests__/pathway-positions.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > cites the 513(g) and Q-submission procedures rather than a neighbouring section 11ms
+RED       the LDT position claims to know where the law now rests
+          test: shared/regulatory/__tests__/pathway-positions.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > says where the LDT position stands, and that AnA does not track it 11ms
+RED       the multiple-predicate position names only one of the two cases
+          test: shared/regulatory/__tests__/predicate-positions.test.ts
+          first failures: × shared/regulatory/__tests__/predicate-positions.test.ts > the positions > keeps one predicate apart from several, and names BOTH cases several covers 7ms
+RED       the split predicate promises a Refuse to Accept decision again
+          test: shared/regulatory/__tests__/predicate-positions.test.ts
+          first failures: × shared/regulatory/__tests__/predicate-positions.test.ts > the positions > offers the split predicate and says FDA does not accept it 6ms
