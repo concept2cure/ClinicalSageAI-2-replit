@@ -27,6 +27,7 @@
  * this table states current law until that proposal is adopted.
  */
 
+import { IVDR_CLASSES, MDR_DECLARED_CLASSES, mdrClassINeedsNotifiedBody, type IvdrClass, type MdrDeclaredClass } from '../../../shared/regulatory/device-class';
 import { listProgramDocuments, validateDocument } from './post-market.service';
 import type {
   PostMarketDocument,
@@ -38,8 +39,11 @@ import {
 } from '../../../shared/regulatory/regulatory-basis';
 
 export type EuRegulation = 'MDR' | 'IVDR';
-export type EuMdrClass = 'I' | 'Is' | 'Im' | 'Ir' | 'IIa' | 'IIb' | 'III';
-export type EuIvdrClass = 'A' | 'B' | 'C' | 'D';
+/* One vocabulary, in shared/regulatory/device-class.ts: a sponsor declares
+   seven MDR classes and four IVDR ones, and the Annex VIII rules yield four
+   MDR classes. These names are kept so every caller here is unchanged. */
+export type EuMdrClass = MdrDeclaredClass;
+export type EuIvdrClass = IvdrClass;
 export type EuDeviceClass = EuMdrClass | EuIvdrClass;
 
 export type DocLifecycleStatus =
@@ -145,9 +149,9 @@ const RECALL_NOTE = 'Not re-read against the EUR-Lex text; regulator hosts are b
 const mdr = (ref: string): RegulatoryBasis => ({ ref, confidence: 'recall', url: MDR_URL, note: RECALL_NOTE });
 const ivdr = (ref: string): RegulatoryBasis => ({ ref, confidence: 'recall', url: IVDR_URL, note: RECALL_NOTE });
 
-const MDR_ALL: readonly EuMdrClass[] = ['I', 'Is', 'Im', 'Ir', 'IIa', 'IIb', 'III'];
-const MDR_CLASS_I: readonly EuMdrClass[] = ['I', 'Is', 'Im', 'Ir'];
-const IVDR_ALL: readonly EuIvdrClass[] = ['A', 'B', 'C', 'D'];
+const MDR_ALL: readonly EuMdrClass[] = MDR_DECLARED_CLASSES;
+const MDR_CLASS_I: readonly EuMdrClass[] = MDR_DECLARED_CLASSES.filter(c => c === 'I' || mdrClassINeedsNotifiedBody(c));
+const IVDR_ALL: readonly EuIvdrClass[] = IVDR_CLASSES;
 
 const MDR_PSUR_MADE_AVAILABLE =
   'Made available to the notified body involved in the conformity assessment and, on request, to competent authorities (MDR Art 86(3))';

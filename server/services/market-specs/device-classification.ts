@@ -56,6 +56,7 @@
  * @module server/services/market-specs/device-classification
  */
 
+import { type IvdrClass, type MdrRuleClass } from '../../../shared/regulatory/device-class';
 import { basisLabel, type RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis';
 
 /** One row of an EU classification rule table. */
@@ -188,7 +189,11 @@ function factValueProblem(spec: FactSpec, value: unknown): string | null {
 
 // ── MDR (Annex VIII) ──────────────────────────────────────────────────────────
 
-export type MdrClass = 'I' | 'IIa' | 'IIb' | 'III';
+/* The four classes the Annex VIII rules YIELD. Is, Im and Ir are not rule
+   outcomes — they are a Class I device with one further aspect — so the
+   declared vocabulary has seven values and this has four; the relation is
+   `mdrRuleClassOf` in the shared module. */
+export type MdrClass = MdrRuleClass;
 
 export interface MdrDeviceFacts {
   /**
@@ -664,7 +669,7 @@ export function classifyMdr(facts: MdrDeviceFacts): MdrClassification {
 
 // ── IVDR (Annex VIII) ─────────────────────────────────────────────────────────
 
-export type IvdrClass = 'A' | 'B' | 'C' | 'D';
+export type { IvdrClass };
 
 /** A string fact value, refused unread when it is longer than `MAX_FACT_TEXT_LENGTH`. */
 function boundedText(name: string, value: string): string {

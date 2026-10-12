@@ -30,7 +30,9 @@
  */
 
 import { agencyFor } from '../../../../shared/regulatory/agency-positions.js';
+import { IVDR_CLASSES } from '../../../../shared/regulatory/device-class.js';
 import { MODALITY_FRAME, MODALITY_LABEL } from '../../../../shared/regulatory/modality.js';
+import { IVDR_CONFORMITY_ROUTES } from '../../regulatory/ivdr-classification.js';
 import type { ProgrammeFacts } from '../../../../shared/regulatory/pathway-cautions.js';
 import {
   pathwayOptions,
@@ -104,6 +106,29 @@ function medicineOptions(input: GovernedOptionInput, region: 'US' | 'EU') {
  * is a deadlock rather than a closed list.
  */
 /**
+ * The IVDR risk classes, each saying the Article 48 route that follows from
+ * it. The classes and the routes are both the platform's own
+ * (`shared/regulatory/device-class.ts` and
+ * `server/services/regulatory/ivdr-classification.ts`, which holds the one
+ * statement of Article 48 per class) — this only puts them in a question.
+ *
+ * The class is not a preference and the question does not pretend it is: the
+ * Annex VIII rules decide it, the rule engine can derive it from the device's
+ * facts, and what a sponsor states here is their declaration of the outcome.
+ */
+function ivdrClassOptions(): Array<{ value: string; label: string; commits: string; authority: string }> {
+  return IVDR_CLASSES.map(cls => {
+    const route = IVDR_CONFORMITY_ROUTES[cls];
+    return {
+      value: cls,
+      label: `Class ${cls} — ${route.notifiedBodyRequired ? 'notified body' : 'no notified body'}`,
+      commits: route.summary,
+      authority: `IVDR (EU) 2017/746 Art 48; ${route.annexes}`,
+    };
+  });
+}
+
+/**
  * Why a regulator this catalogue DOES cover can still hold no route for this
  * programme. One case reaches it: a combination product, for which the frame
  * holds no pathways at all — and the frame says why in its own words, so that
@@ -134,6 +159,12 @@ function withoutOptions(field: QuestionField, helpText: string): QuestionField {
 
 function resolveField(field: QuestionField, input: GovernedOptionInput): QuestionField {
   if (!field.optionsFrom) return field;
+  /* The IVDR classes do not depend on the regulator named: they ARE the
+     European classification, and a question that asks them is asking about
+     the EU whatever else the programme is doing. */
+  if (field.optionsFrom === 'ivdr_class_positions') {
+    return { ...field, options: ivdrClassOptions() };
+  }
   const { region, note } = whoseRoutes(input.facts);
   const said = (reason: string) => (field.helpText ? `${field.helpText} ${reason}` : reason);
   /* No positions, and the reason in their place. The escape hatch is the

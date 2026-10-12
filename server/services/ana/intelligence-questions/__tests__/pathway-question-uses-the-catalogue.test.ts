@@ -247,6 +247,78 @@ describe('the medicines route question', () => {
   });
 });
 
+describe('the IVDR class question', () => {
+  /** The classification question as a diagnostics programme is drawn it. */
+  const classificationNode = (productType: string) => {
+    const result = advanceFlow(
+      { ...stateWith({ product_details: { product_type: productType } }), currentNodeId: 'regulatory_targets' },
+      'regulatory_targets',
+      { primary_regulatory_agency: 'EU' },
+      ctx('ivd'),
+    );
+    expect(result.event?.node.id, 'a diagnostics project goes to the classification question').toBe(
+      'device_classification',
+    );
+    return result.event!.node;
+  };
+
+  it('is asked of a diagnostics programme — the first question anywhere to ask it', () => {
+    const field = classificationNode('diagnostic').fields.find(f => f.id === 'ivdr_class')!;
+    expect(field, 'the IVDR class was enumerated eight times and asked nowhere').toBeDefined();
+    expect(field.options?.map(o => o.value)).toEqual(['A', 'B', 'C', 'D']);
+  });
+
+  it('answers in the spelling the rest of the platform already stores', async () => {
+    /* The IVDR class column, the endpoint's zod enum and the read-side
+       adapters all speak bare 'A'-'D'. This is the first interview field whose
+       values are that same vocabulary. */
+    const values = classificationNode('diagnostic').fields.find(f => f.id === 'ivdr_class')!.options!.map(o => o.value);
+    expect(values).not.toContain('class_a');
+    const { programmeFactsFrom } = await import('../programme-facts.js');
+    expect(programmeFactsFrom({ ivdr_class: 'C' })).toEqual({ ivdrClass: 'C' });
+    expect(programmeFactsFrom({ ivdr_class: 'Class D' }), 'a spelling a person might use').toEqual({ ivdrClass: 'D' });
+    expect(programmeFactsFrom({ ivdr_class: 'E' }), 'there is no Class E').toEqual({});
+  });
+
+  it('states the Article 48 route each class commits the programme to, from the platform’s own statement', () => {
+    const options = classificationNode('diagnostic').fields.find(f => f.id === 'ivdr_class')!.options!;
+    const by = (value: string) => options.find(o => o.value === value)!;
+    expect(by('A').label).toMatch(/no notified body/);
+    expect(by('A').commits).toMatch(/EU declaration of conformity/);
+    expect(by('B').label).toMatch(/notified body/);
+    expect(by('C').commits, 'the companion-diagnostic consultation').toMatch(/consults a medicines authority/);
+    expect(by('D').commits, 'the reference laboratory').toMatch(/EU reference laboratory/);
+    expect(by('D').commits).toMatch(/common specifications/);
+    for (const option of options) expect(option.authority, option.value).toMatch(/Art 48/);
+  });
+
+  it('does not ask a diagnostics programme its MDR class, which is the wrong regulation', () => {
+    const asked = classificationNode('diagnostic').fields.map(f => f.id);
+    expect(asked).toContain('ivdr_class');
+    expect(asked, 'an IVD is classified under the IVDR, not the MDR').not.toContain('eu_mdr_class');
+  });
+
+  it('does not ask a device programme its IVDR class either', () => {
+    const asked = classificationNode('medical_device').fields.map(f => f.id);
+    expect(asked).toContain('eu_mdr_class');
+    expect(asked).not.toContain('ivdr_class');
+  });
+
+  it('offers the MDR classes a sponsor can actually declare, including the Class I variants', () => {
+    const mdr = classificationNode('medical_device').fields.find(f => f.id === 'eu_mdr_class')!;
+    expect(mdr.options!.map(o => o.value)).toEqual([
+      'class_i',
+      'class_is',
+      'class_im',
+      'class_ir',
+      'class_iia',
+      'class_iib',
+      'class_iii',
+      'na',
+    ]);
+  });
+});
+
 describe('the escape hatch on a catalogue that admits what it does not hold', () => {
   /* The flows that ask this question declare `allowOther` themselves. The
      resolver guarantees it anyway, because this catalogue covers the US and
