@@ -29,7 +29,7 @@ interface EndpointForAssessment {
 }
 import { anaBiostatsOrchestrator } from './ana-biostats/orchestrator';
 import { toBiostatsInput } from './ana-biostats/request-input';
-import type { JudgmentResult, JudgmentVerdict, StatisticalInput } from './ana-biostats/types';
+import type { ComputationAssumption, ComputationResult, JudgmentResult, JudgmentVerdict, StatisticalInput } from './ana-biostats/types';
 
 /**
  * A defensibility assessment, from the deterministic judgment engine
@@ -55,6 +55,22 @@ export type DefensibilityAssessment =
       engine: 'deterministic';
       sampleSize: number | null;
       power: number | null;
+      /**
+       * What the engine says it computed. Carried since 2026-10-12.
+       *
+       * The payload held only sampleSize, power and the judgment, so nothing
+       * on screen stated the method or the hazard ratio the sizing used — and
+       * the workbench labelled the engine's `effectSize` "Hazard ratio" when
+       * the engine reads it as the hazard-ratio REDUCTION. A sponsor typing
+       * their protocol's HR of 0.7 was sized for HR 0.300: 50 subjects where
+       * 550 is right, with nothing in the response to contradict the label.
+       * `formula` prints "HR=0.700", which is the line that would have caught
+       * it, and `assumptions` names the event rate the engine defaulted —
+       * which is what turns events into subjects.
+       */
+      method: string | null;
+      formula: string | null;
+      assumptions: ComputationAssumption[];
       judgment: Pick<
         JudgmentResult,
         | 'overallVerdict'
@@ -67,6 +83,70 @@ export type DefensibilityAssessment =
         | 'escalationReasons'
       >;
     };
+
+/**
+ * A `ComputationRefusal` reported as the assessment's own answer.
+ *
+ * A refusal is the engine declining to invent a figure, not a fault — and it
+ * threw straight out of this service, so a caller that asked for an assessment
+ * got an exception. Same defect the ana-biostats routes had until 2026-10-11:
+ * the refusal contract only works if every caller reports a refusal AS one.
+ *
+ * The engine's own sentence is the message, because it names the input AND the
+ * convention — for a time-to-event design, that `effectSize` is the
+ * hazard-ratio reduction, which is the thing a mislabelled field got wrong.
+ * Anything that is not a refusal is rethrown: a real fault must not be dressed
+ * as a missing parameter.
+ */
+function refusalAsAssessment(err: unknown): DefensibilityAssessment {
+  const e = err as { name?: unknown; message?: unknown; field?: unknown };
+  if (e?.name !== 'ComputationRefusal') throw err;
+  return {
+    status: 'needs_parameters',
+    engine: 'deterministic',
+    errors: typeof e.field === 'string' ? [{ field: e.field }] : [],
+    message: typeof e.message === 'string' ? e.message : NEEDS_PARAMETERS_MESSAGE,
+  };
+}
+
+/**
+ * The 'assessed' payload: the figures the engine computed, what it says about
+ * HOW it computed them, and the judgment OF that computation.
+ *
+ * `method`, `formula` and `assumptions` are carried since 2026-10-12. The
+ * payload held only the N, the power and the judgment, so nothing on screen
+ * stated the method or — in the formula — the hazard ratio the sizing used.
+ * The workbench meanwhile labelled the engine's `effectSize` "Hazard ratio"
+ * when the engine reads it as the hazard-ratio REDUCTION, so a sponsor typing
+ * their protocol's HR of 0.7 was sized for HR 0.300 (50 subjects where 550 is
+ * right) with nothing in the response to contradict the label. `formula`
+ * prints "HR=0.700"; `assumptions` names the event rate the engine defaulted,
+ * which is what turns events into subjects.
+ */
+function assessedFrom(
+  computation: ComputationResult | null,
+  j: JudgmentResult,
+): DefensibilityAssessment {
+  return {
+    status: 'assessed',
+    engine: 'deterministic',
+    sampleSize: computation?.adjustedTotal ?? computation?.sampleSize.total ?? null,
+    power: computation?.power ?? null,
+    method: computation?.method ?? null,
+    formula: computation?.formula ?? null,
+    assumptions: computation?.assumptions ?? [],
+    judgment: {
+      overallVerdict: j.overallVerdict,
+      overallRisk: j.overallRisk,
+      actionRecommendation: j.actionRecommendation,
+      confidence: j.confidence,
+      dimensions: j.dimensions,
+      fragility: j.fragility,
+      endpointMethodFit: j.endpointMethodFit,
+      escalationReasons: j.escalationReasons,
+    },
+  };
+}
 
 const NEEDS_PARAMETERS_MESSAGE =
   'The statistics engine could not assess this design: the inputs listed in errors are missing or invalid. ' +
@@ -151,7 +231,12 @@ class StatisticalDefensibilityService {
    * (ana-biostats/request-input.ts).
    */
   async assessDefensibility(request: Record<string, unknown>): Promise<DefensibilityAssessment> {
-    const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(request) as Partial<StatisticalInput>);
+    let result: ReturnType<typeof anaBiostatsOrchestrator.quickCompute>;
+    try {
+      result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(request) as Partial<StatisticalInput>);
+    } catch (err) {
+      return refusalAsAssessment(err);
+    }
     if (!result.validation.valid || !result.judgment) {
       return {
         status: 'needs_parameters',
@@ -160,23 +245,7 @@ class StatisticalDefensibilityService {
         message: NEEDS_PARAMETERS_MESSAGE,
       };
     }
-    const j = result.judgment;
-    return {
-      status: 'assessed',
-      engine: 'deterministic',
-      sampleSize: result.computation?.adjustedTotal ?? result.computation?.sampleSize.total ?? null,
-      power: result.computation?.power ?? null,
-      judgment: {
-        overallVerdict: j.overallVerdict,
-        overallRisk: j.overallRisk,
-        actionRecommendation: j.actionRecommendation,
-        confidence: j.confidence,
-        dimensions: j.dimensions,
-        fragility: j.fragility,
-        endpointMethodFit: j.endpointMethodFit,
-        escalationReasons: j.escalationReasons,
-      },
-    };
+    return assessedFrom(result.computation ?? null, result.judgment);
   }
 
   /**
