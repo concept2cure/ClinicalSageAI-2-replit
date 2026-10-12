@@ -1,10 +1,36 @@
 /**
  * Audit-trail attestation report generator.
  *
- * Produces a customer-facing attestation that the audit trail for a tenant
- * has not been tampered with. Walks the hash chain in `audit_events`
- * scoped to the customer's organization, recomputes each row's hash, and
- * reports any mismatches.
+ * Produces a customer-facing attestation about the audit trail for a tenant.
+ * Walks the hash chain in `audit_events` scoped to the customer's organization
+ * and checks that each row's stored `previous_hash` is the prior row's stored
+ * `record_hash` — i.e. that the LINKS JOIN — reporting any that do not.
+ *
+ * ── WHAT IT DOES NOT DO, STATED HERE BECAUSE IT WAS STATED WRONG ────────────
+ * This header used to say it "recomputes each row's hash". It does not. The
+ * loop below compares two STORED columns; nothing re-derives a hash from a
+ * row's contents, and the trigger's recipe does not cover the before/after
+ * values. So a row EDITED IN PLACE, with its stored hashes left alone, passes.
+ * What the check does establish is that no row was removed, inserted or
+ * reordered, because any of those breaks the join.
+ *
+ * That distinction reached the customer-facing copy once already — the surface
+ * claimed INTACT meant "nothing altered or removed" (2026-10-11 coverage
+ * review, C-22) — and the copy was corrected while this header, which is where
+ * the next reader starts, still carried the overclaim. The report now states
+ * its own method in its SIGNED body (`verifies`), so the scope travels with the
+ * verdict and cannot be detached from it or re-widened by a paraphrase.
+ *
+ * ── AND WHY RE-DERIVING IS NOT THE FIX (product decision, 2026-10-12) ───────
+ * Re-deriving a hash per entry would need a recipe, and the rows already in the
+ * chain were written under the CURRENT one. Changing it would make every
+ * historical row un-reproducible and the report would say BROKEN across the
+ * whole pre-cutover span. An inspector reading that does not conclude "the
+ * recipe changed"; they conclude the trail is compromised. A narrow true claim
+ * beats a broad claim that cannot be kept, so the recipe is left alone and the
+ * limit is declared. Widening the claim needs new data — before/after values in
+ * the hashed envelope, from a dated cutover — which is a schema decision, not
+ * a report change.
  *
  * The report is signed (HMAC-SHA256 over the report body) so an external
  * auditor can verify it was issued by the platform and not modified after
@@ -45,8 +71,28 @@
 import crypto from 'crypto';
 import type { Pool, PoolClient } from 'pg';
 
+/**
+ * What every report this service issues checked, and what it did not.
+ *
+ * One frozen constant so the statement cannot drift from the loop that
+ * implements it, and so a reader diffing two reports sees the method change if
+ * it ever does.
+ */
+export const ATTESTATION_METHOD = Object.freeze({
+  method: 'stored-link-continuity' as const,
+  covers: Object.freeze([
+    'Every entry\u2019s stored previous_hash is the prior entry\u2019s stored record_hash, so no entry was removed, inserted or reordered within the attested span.',
+    'Every entry in the span carries a hash (an unhashed entry makes the verdict UNVERIFIABLE, never INTACT).',
+  ]),
+  doesNotCover: Object.freeze([
+    'The CONTENTS of an entry. No hash is re-derived from a row\u2019s fields, and the chain trigger\u2019s recipe does not cover the before/after values, so an entry edited in place with its stored hashes left intact is not detected.',
+    'Any entry written before the hash chain was switched on. Those carry no hash and cannot honestly be given one.',
+  ]),
+});
+
 export interface AttestationReport {
-  schemaVersion: '1.0';
+  /** 1.1 added `verifies`, so a reader can tell a scoped attestation from a bare verdict. */
+  schemaVersion: '1.1';
   organization: { id: number; slug: string; name: string };
   generatedAt: string;
   windowStart: string | null;
@@ -71,6 +117,22 @@ export interface AttestationReport {
   attestation: 'INTACT' | 'BROKEN' | 'EMPTY' | 'UNVERIFIABLE';
   /** Present on UNVERIFIABLE; plain-language reason for the reader. */
   unverifiableReason?: string;
+  /**
+   * The method this attestation used, in the signed body.
+   *
+   * An attestation that does not declare its method invites the reader to
+   * assume the strongest one. This one checks stored-link continuity, which is
+   * a real and useful property — a removed, inserted or reordered row breaks
+   * the join — and is NOT a statement about entry contents. Signed alongside
+   * the verdict so the two cannot be separated.
+   */
+  verifies: {
+    method: 'stored-link-continuity';
+    /** What a passing verdict does establish. */
+    covers: readonly string[];
+    /** What it does not, so the gap is on the record rather than inferred. */
+    doesNotCover: readonly string[];
+  };
   signature: {
     algorithm: 'HMAC-SHA256';
     keyId: string;
@@ -141,7 +203,8 @@ export async function generateAttestation(
 
   if (rows.length === 0) {
     return signed({
-      schemaVersion: '1.0',
+      schemaVersion: '1.1',
+      verifies: ATTESTATION_METHOD,
       organization: org,
       generatedAt: new Date().toISOString(),
       windowStart: null,
@@ -208,7 +271,8 @@ export async function generateAttestation(
   const unhashedEntries = rows.length - hashedEntries;
 
   const base = {
-    schemaVersion: '1.0' as const,
+    schemaVersion: '1.1' as const,
+    verifies: ATTESTATION_METHOD,
     organization: org,
     generatedAt: new Date().toISOString(),
     windowStart: rows[0].timestamp,
