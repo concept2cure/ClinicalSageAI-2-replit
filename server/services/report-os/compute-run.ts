@@ -143,42 +143,58 @@ async function applyLineage(
  * record — so a failure to compute is a failed run and never another report in
  * its place.
  */
+/** The readiness orchestrator's options, omitting what this caller does not have. */
+function readinessOptions(input: ComputeRunInput): Parameters<typeof computeInitialRun>[3] {
+  return {
+    ...(input.programProjectIds ? { programProjectIds: input.programProjectIds } : {}),
+    ...(input.explicitRegistryId ? { explicitRegistryId: input.explicitRegistryId } : {}),
+    ...(input.explicitSubmissionType ? { explicitSubmissionType: input.explicitSubmissionType } : {}),
+  };
+}
+
+/**
+ * The market assessment, with its refusals turned into {@link ReportTypeNotComputed}.
+ *
+ * It refuses rather than guesses — a program with no registry context, a program
+ * filing in another market, a scope that is not one program — and each refusal
+ * is the market's own reason (regional/filing-readiness.ts).
+ */
+async function regionalRun(input: ComputeRunInput): Promise<RunComputationResult> {
+  const declared = input.declared ?? {};
+  try {
+    return await computeRegionalRun(input.typeId, input.organizationId, input.scopeType, input.scopeId, {
+      region: declared.region ?? null,
+      label: declared.label ?? null,
+      dataDependencies: declared.dataDependencies ?? null,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'RegionalNotComputed') {
+      throw new ReportTypeNotComputed(error.message);
+    }
+    throw error;
+  }
+}
+
 export async function computeRunForType(input: ComputeRunInput): Promise<ComputeRunResult> {
   const { engine, typeId, organizationId, scopeType, scopeId } = input;
 
   if (engine === 'domain') {
     return { computed: await computeDomainRun(typeId, organizationId, scopeType, scopeId) };
   }
-
   if (engine === 'regional') {
-    try {
-      return {
-        computed: await computeRegionalRun(typeId, organizationId, scopeType, scopeId, {
-          region: input.declared?.region ?? null,
-          label: input.declared?.label ?? null,
-          dataDependencies: input.declared?.dataDependencies ?? null,
-        }),
-      };
-    } catch (error) {
-      /* The market assessment refuses rather than guesses, and each refusal is
-         the market's own reason (regional/filing-readiness.ts). */
-      if (error instanceof Error && error.name === 'RegionalNotComputed') {
-        throw new ReportTypeNotComputed(error.message);
-      }
-      throw error;
-    }
+    return { computed: await regionalRun(input) };
   }
-
   if (engine === 'readiness' || engine === 'lineage') {
     /* The lineage trace computes the generic run FIRST and then replaces its
        figures with the dossier's — that is what the route has always done, and
        the generic providers' observations are what the run's evidence panel
        shows it read. */
-    const computed = await computeInitialRun(organizationId, scopeType as ReportScope, scopeId, {
-      ...(input.programProjectIds ? { programProjectIds: input.programProjectIds } : {}),
-      ...(input.explicitRegistryId ? { explicitRegistryId: input.explicitRegistryId } : {}),
-      ...(input.explicitSubmissionType ? { explicitSubmissionType: input.explicitSubmissionType } : {}),
-    });
+    const computed = await computeInitialRun(
+      organizationId,
+      scopeType as ReportScope,
+      scopeId,
+      readinessOptions(input),
+    );
     if (engine === 'lineage') {
       return { computed, lineageRendered: await applyLineage(computed, input) };
     }
