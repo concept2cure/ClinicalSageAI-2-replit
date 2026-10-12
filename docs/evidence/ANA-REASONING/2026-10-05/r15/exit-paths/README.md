@@ -80,7 +80,14 @@ right.** Both are corrected in place rather than footnoted, because the wrong
 version is the kind a later session would build on.
 
 1. **It is not "the only place in the server that compares the two stores'
-   text". There are two, and both are gates.** The approval
+   text". There are two, and both are gates.** *(Two refuters disagreed here:
+   one held that "no code anywhere compares the text except one equality
+   predicate inside one approval function", the other named the second
+   comparison. They are not reconciled by weighing confidence — I read
+   `commit-section-to-filing.ts` and found the predicate and its audit row at
+   the lines quoted below, so the second refuter is right and the held finding
+   is wrong on this point. Recorded because a reader of this file should know
+   the panel split, and on what.)* The approval
    (`approveBoundFilingSections`, `AND (ds.content ->> 'text') = sig.text`) is
    one. The other is inside `commitSectionToFiling` itself: a save over an
    `approved` section whose filing text differs withdraws the approval —
