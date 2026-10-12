@@ -30,6 +30,9 @@
  */
 
 import { agencyFor } from '../../../../shared/regulatory/agency-positions.js';
+import { IVDR_CLASSES } from '../../../../shared/regulatory/device-class.js';
+import { MODALITY_FRAME, MODALITY_LABEL } from '../../../../shared/regulatory/modality.js';
+import { IVDR_CONFORMITY_ROUTES } from '../../regulatory/ivdr-classification.js';
 import type { ProgrammeFacts } from '../../../../shared/regulatory/pathway-cautions.js';
 import {
   pathwayOptions,
@@ -58,8 +61,27 @@ function deviceDomainOf(input: GovernedOptionInput): PathwayDomain {
   return 'medical_devices';
 }
 
+/**
+ * Whose routes a list belongs to, in the words that are true of it.
+ *
+ * For a medicine the regulator IS the agency: EMA grants a marketing
+ * authorisation. For a device or a diagnostic in the EU it is not — the MDR
+ * and IVDR routes are assessed by a notified body, and EMA has no part in
+ * them beyond the companion-diagnostic consultation. Saying "these are EMA's
+ * routes" over the MDR class routes is a deterministic sentence that is
+ * simply false, which a review caught (founder's directive, 2026-10-12).
+ */
+function euRoutesAre(domain: PathwayDomain): string {
+  if (domain === 'pharma_biotech') return `These are ${agencyFor('EU')}’s routes.`;
+  const regulation = domain === 'diagnostics_ivd' ? 'IVDR' : 'MDR';
+  return (
+    `These are the EU ${regulation} conformity assessment routes. A notified body assesses them — ` +
+    `${agencyFor('EU')} has no part in them, beyond the companion-diagnostic consultation.`
+  );
+}
+
 /** Whose routes a list belongs to, said plainly, including when it was assumed. */
-function whoseRoutes(facts: ProgrammeFacts): { region: 'US' | 'EU' | null; note: string } {
+function whoseRoutes(facts: ProgrammeFacts, domain: PathwayDomain): { region: 'US' | 'EU' | null; note: string } {
   const named = facts.primaryRegion;
   if (!named) {
     return {
@@ -77,7 +99,9 @@ function whoseRoutes(facts: ProgrammeFacts): { region: 'US' | 'EU' | null; note:
         'Describe the route you are taking and she will record it in your words.',
     };
   }
-  return { region, note: `These are ${agencyFor(named)}’s routes.` };
+  /* FDA regulates medicines and devices alike, so its name is right for both;
+     only the EU splits the two. */
+  return { region, note: region === 'EU' ? euRoutesAre(domain) : `These are ${agencyFor(named)}’s routes.` };
 }
 
 /**
@@ -102,25 +126,83 @@ function medicineOptions(input: GovernedOptionInput, region: 'US' | 'EU') {
  * field for a Japanese programme would have no answer that satisfies it, which
  * is a deadlock rather than a closed list.
  */
+/**
+ * The IVDR risk classes, each saying the Article 48 route that follows from
+ * it. The classes and the routes are both the platform's own
+ * (`shared/regulatory/device-class.ts` and
+ * `server/services/regulatory/ivdr-classification.ts`, which holds the one
+ * statement of Article 48 per class) — this only puts them in a question.
+ *
+ * The class is not a preference and the question does not pretend it is: the
+ * Annex VIII rules decide it, the rule engine can derive it from the device's
+ * facts, and what a sponsor states here is their declaration of the outcome.
+ */
+function ivdrClassOptions(): Array<{ value: string; label: string; commits: string; authority: string }> {
+  return IVDR_CLASSES.map(cls => {
+    const route = IVDR_CONFORMITY_ROUTES[cls];
+    return {
+      value: cls,
+      label: `Class ${cls} — ${route.notifiedBodyRequired ? 'notified body' : 'no notified body'}`,
+      commits: route.summary,
+      authority: `IVDR (EU) 2017/746 Art 48; ${route.annexes}`,
+    };
+  });
+}
+
+/**
+ * Why a regulator this catalogue DOES cover can still hold no route for this
+ * programme. One case reaches it: a combination product, for which the frame
+ * holds no pathways at all — and the frame says why in its own words, so that
+ * is what the person is told rather than a sentence written here.
+ */
+function nothingToOffer(input: GovernedOptionInput): string {
+  const modality = input.facts.modality;
+  if (modality && MODALITY_FRAME[modality].pathways.length === 0) {
+    return (
+      `AnA holds no route for ${MODALITY_LABEL[modality].toLowerCase()}: ` +
+      `${MODALITY_FRAME[modality].centerBasis} Until that determination is made the route follows from it rather ` +
+      'than from the product type, so describe the route you are taking and she will record it in your words.'
+    );
+  }
+  return (
+    'AnA holds no route to market for this programme — describe the route you are taking and she will record it ' +
+    'in your words.'
+  );
+}
+
+/** A question with no positions: the reason in their place, and the hatch as the answer. */
+function withoutOptions(field: QuestionField, helpText: string): QuestionField {
+  const bare: QuestionField = { ...field, helpText };
+  delete bare.options;
+  bare.allowOther = field.allowOther ?? { prompt: 'Which route are you taking, in your own words?' };
+  return bare;
+}
+
 function resolveField(field: QuestionField, input: GovernedOptionInput): QuestionField {
   if (!field.optionsFrom) return field;
-  const { region, note } = whoseRoutes(input.facts);
-  const helpText = field.helpText ? `${field.helpText} ${note}` : note;
-  if (!region) {
-    /* No positions, and the reason in their place. The escape hatch is the
-       answer here, so it is never dropped. */
-    const bare: QuestionField = { ...field, helpText };
-    delete bare.options;
-    bare.allowOther = field.allowOther ?? { prompt: 'Which route are you taking, in your own words?' };
-    return bare;
+  /* The IVDR classes do not depend on the regulator named: they ARE the
+     European classification, and a question that asks them is asking about
+     the EU whatever else the programme is doing. */
+  if (field.optionsFrom === 'ivdr_class_positions') {
+    return { ...field, options: ivdrClassOptions() };
   }
+  const domain: PathwayDomain =
+    field.optionsFrom === 'medicine_pathway_positions' ? 'pharma_biotech' : deviceDomainOf(input);
+  const { region, note } = whoseRoutes(input.facts, domain);
+  const said = (reason: string) => (field.helpText ? `${field.helpText} ${reason}` : reason);
+  /* No positions, and the reason in their place. The escape hatch is the
+     answer here, so it is never dropped. */
+  if (!region) return withoutOptions(field, said(note));
   const options =
     field.optionsFrom === 'medicine_pathway_positions'
       ? medicineOptions(input, region)
-      : pathwayOptions({ domain: deviceDomainOf(input), region });
+      : pathwayOptions({ domain, region });
+  /* A regulator this catalogue covers, and still nothing for this programme —
+     an empty select would say "choose one of none". */
+  if (options.length === 0) return withoutOptions(field, said(nothingToOffer(input)));
   return {
     ...field,
-    helpText,
+    helpText: said(note),
     options,
     allowOther: field.allowOther ?? { prompt: 'Which route are you taking, in your own words?' },
   };

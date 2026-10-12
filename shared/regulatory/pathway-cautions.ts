@@ -32,6 +32,7 @@
 
 import type { PositionCaution } from '../types/intelligence-questions.js';
 import { agencyFor } from './agency-positions.js';
+import type { IvdrClass } from './device-class.js';
 import { getApplicationType } from './global-document-registry.js';
 import { MODALITY_LABEL, type Modality } from './modality.js';
 import { annotatedPositionIds, positionFor } from './pathway-positions.js';
@@ -74,11 +75,23 @@ export interface ProgrammeFacts {
   /** The MDR class the sponsor states for the EU. */
   euMdrClass?: 'I' | 'IIa' | 'IIb' | 'III';
   /**
+   * The IVDR class the sponsor states for the EU. Until the classification
+   * question landed no interview could state it at all, so the IVDR routes
+   * were offered to a diagnostics programme flat.
+   */
+  ivdrClass?: IvdrClass;
+  /**
    * The modality behind the product the sponsor named
    * (`product-modality.ts`). It decides which statute governs the product, so
    * it speaks against a route under the other one.
    */
   modality?: Modality;
+  /**
+   * Which statute governs the product, where the answer said that much and no
+   * more — "Biologic (BLA)", "Prescription Drug (NDA)". A modality always
+   * implies its statute, so this is read only when there is no modality.
+   */
+  statute?: 'biologic' | 'chemical';
 }
 
 /** The modalities that are biological products, licensed rather than approved. */
@@ -86,6 +99,41 @@ const BIOLOGICAL: readonly Modality[] = ['protein', 'mab', 'adc', 'vaccine', 'ce
 
 /** The modalities the FD&C Act approves under section 505. */
 const CHEMICAL: readonly Modality[] = ['small_molecule', 'peptide', 'oligonucleotide'];
+
+/**
+ * Which statute the answers put the product under: the modality where one was
+ * named, and otherwise the statute the answer stated on its own. A combination
+ * product sits under neither until its primary mode of action is determined
+ * (21 CFR Part 3), so it resolves to null.
+ */
+function statuteIn(facts: ProgrammeFacts): 'biologic' | 'chemical' | null {
+  if (facts.modality && BIOLOGICAL.includes(facts.modality)) return 'biologic';
+  if (facts.modality && CHEMICAL.includes(facts.modality)) return 'chemical';
+  return facts.statute ?? null;
+}
+
+/** How to name the product in a reason: the modality if one was given, else the statute. */
+function productWords(facts: ProgrammeFacts): string {
+  if (facts.modality) return MODALITY_LABEL[facts.modality].toLowerCase();
+  return facts.statute === 'biologic' ? 'a biological product' : 'a product approved under section 505';
+}
+
+/**
+ * The IVDR classes each position applies to. Four of these are routes and two
+ * are steps inside one — the Article 48(6) consultation and the Class D
+ * reference-laboratory verification — and the classes decide both.
+ */
+const IVDR_POSITION_CLASSES: Readonly<Record<string, readonly IvdrClass[]>> = {
+  EU_IVDR_CLASS_A: ['A'],
+  EU_IVDR_CLASS_B: ['B'],
+  /* The registry holds C and D as one entry; the classes are two. */
+  EU_IVDR_CLASS_CD: ['C', 'D'],
+  /* A companion diagnostic is Class C or D (Annex VIII Rule 3(f)). */
+  EU_CDX_IVDR_D: ['C', 'D'],
+  EU_IVDR_ART48_CONSULT: ['C', 'D'],
+  /* An EU reference laboratory is designated for Class D devices. */
+  EU_REF_LAB: ['D'],
+};
 
 /** The MDR class each class route is the route FOR. */
 const MDR_POSITION_CLASS: Readonly<Record<string, 'I' | 'IIa' | 'IIb' | 'III'>> = {
@@ -111,6 +159,21 @@ interface CautionRule {
 function regionOfPosition(positionId: string): CanonicalRegion | null {
   const entry = getApplicationType(positionId);
   return (entry && canonicalRegionOf(String(entry.region))) || null;
+}
+
+/**
+ * What the filing IS, in words true of it. For a medicine the regulator is the
+ * agency: EMA grants a marketing authorisation. For a device or a diagnostic
+ * in the EU it is not — the MDR and IVDR routes are a notified body's
+ * assessment — so naming EMA over an MDR class route is a sentence that is
+ * simply false (a review caught it, 2026-10-12).
+ */
+function filingIs(positionId: string, region: CanonicalRegion): string {
+  const segment = String(getApplicationType(positionId)?.segment ?? '');
+  if (region === 'EU' && (segment === 'medical_devices' || segment === 'diagnostics_ivd')) {
+    return `an EU conformity assessment under the ${segment === 'diagnostics_ivd' ? 'IVDR' : 'MDR'}`;
+  }
+  return `a filing to ${agencyFor(region)}`;
 }
 
 /** 'FDA', 'FDA and EMA', 'FDA, EMA and PMDA' — the agencies as a person wrote them. */
@@ -143,7 +206,7 @@ const CAUTION_RULES: readonly CautionRule[] = [
       const region = regionOfPosition(id)!;
       const them = listed(f.regions ?? []);
       return (
-        `You have named ${them} for this project, and this is a filing to ${agencyFor(region)}. ` +
+        `You have named ${them} for this project, and this is ${filingIs(id, region)}. ` +
         `If you are filing there as well, name ${agencyFor(region)} among the agencies and this route is open.`
       );
     },
@@ -175,21 +238,20 @@ const CAUTION_RULES: readonly CautionRule[] = [
     id: 'biological_under_505',
     positions: ['US_NDA', 'US_505B2', 'US_ANDA'],
     availability: 'inapplicable',
-    when: f => Boolean(f.modality && BIOLOGICAL.includes(f.modality)),
+    when: f => statuteIn(f) === 'biologic',
     reason: f =>
-      `You have said this is ${MODALITY_LABEL[f.modality!].toLowerCase()}, which is a biological product: it is ` +
-      'licensed under section 351 of the PHS Act, not approved under section 505 of the FD&C Act. Since the BPCIA ' +
-      'transition of 2020 there is no 505 route for it.',
+      `You have said this is ${productWords(f)}, which is licensed under section 351 of the PHS Act rather than ` +
+      'approved under section 505 of the FD&C Act. Since the BPCIA transition of 2020 there is no 505 route for it.',
     authority: 'PHS Act 351; FD&C Act 505; BPCIA § 7002(e) transition (23 March 2020)',
   },
   {
     id: 'chemical_as_biologic',
     positions: ['US_BLA', 'US_351K', 'EU_BIOSIMILAR_MAA'],
     availability: 'inapplicable',
-    when: f => Boolean(f.modality && CHEMICAL.includes(f.modality)),
+    when: f => statuteIn(f) === 'chemical',
     reason: f =>
-      `You have said this is ${MODALITY_LABEL[f.modality!].toLowerCase()}, which is approved under section 505 of ` +
-      'the FD&C Act rather than licensed as a biological product, so a biologics licence is not the route for it.',
+      `You have said this is ${productWords(f)} — approved under section 505 of the FD&C Act rather than licensed ` +
+      'as a biological product — so a biologics licence is not the route for it.',
     authority: 'FD&C Act 505; PHS Act 351(i) definition of a biological product',
   },
 
@@ -219,12 +281,30 @@ const CAUTION_RULES: readonly CautionRule[] = [
     id: 'biological_as_generic',
     positions: ['EU_GENERIC_DCP'],
     availability: 'inapplicable',
-    when: f => Boolean(f.modality && BIOLOGICAL.includes(f.modality)),
+    when: f => statuteIn(f) === 'biologic',
     reason: f =>
-      `A generic application under Article 10(1) is for a product with the same qualitative and quantitative ` +
-      `composition as the reference: ${MODALITY_LABEL[f.modality!].toLowerCase()} is a biological product, for which ` +
-      'the route is a biosimilar application under Article 10(4).',
+      'A generic application under Article 10(1) is for a product with the same qualitative and quantitative ' +
+      `composition as the reference, and you have said this is ${productWords(f)} — for which the route is a ` +
+      'biosimilar application under Article 10(4).',
     authority: 'Directive 2001/83/EC Art 10(1) against Art 10(4)',
+  },
+
+  /* -- The IVDR class decides the route the same way, and until the
+        classification question landed nothing could state it ------------- */
+  {
+    id: 'ivdr_class_route_mismatch',
+    positions: Object.keys(IVDR_POSITION_CLASSES),
+    availability: 'inapplicable',
+    when: (f, id) => Boolean(f.ivdrClass) && !IVDR_POSITION_CLASSES[id].includes(f.ivdrClass!),
+    reason: (f, id) => {
+      const applies = IVDR_POSITION_CLASSES[id].join(' or ');
+      const label = positionFor(id)?.label ?? id;
+      return (
+        `You have said this assay is Class ${f.ivdrClass} under the IVDR. ${label} applies to Class ${applies}, and ` +
+        'the classification rules decide the conformity assessment route rather than a choice between them.'
+      );
+    },
+    authority: 'IVDR (EU) 2017/746 Art 47, Art 48, Annex VIII',
   },
 
   /* -- US: a De Novo is for a device with no predicate -------------------- */
@@ -265,7 +345,7 @@ const CAUTION_RULES: readonly CautionRule[] = [
           'determination is one of the two conditions for a De Novo request rather than a basis for filing again.'
         : 'You have said there is no legally marketed device to compare to. Substantial equivalence is a comparison, so ' +
           'there is no 510(k) to make — which is the first condition for a De Novo request.',
-    authority: 'FD&C Act 513(i), 513(f)(2)(A); 21 CFR 807.100(b), 860.220(a)',
+    authority: 'FD&C Act 513(i), 513(f)(2)(A); 21 CFR 807.100(b), 860 Subpart D',
   },
 
   /* -- US: a Class III device is a PMA unless it is preamendments --------- */
@@ -288,7 +368,10 @@ const CAUTION_RULES: readonly CautionRule[] = [
     reason: () =>
       'You have said Class I. Most Class I devices are exempt from premarket notification by their own ' +
       'classification regulation, so check the exemption and the limitations on it before filing one.',
-    authority: '21 CFR 807.85; the classification part’s own § .9 limitations of exemption',
+    /* The exemption is granted by the device's own classification regulation
+       and limited by that part's § .9; 21 CFR 807.85 is a different exemption
+       (custom devices and relabellers) and was the wrong citation. */
+    authority: '21 CFR 862–892 — the classification regulation and its own § .9 limitations of exemption',
   },
 
   /* -- US: a PMA is the Class III route ----------------------------------- */
@@ -299,8 +382,8 @@ const CAUTION_RULES: readonly CautionRule[] = [
     when: f => f.deviceClass === 'I' || f.deviceClass === 'II',
     reason: f =>
       `Premarket approval is the route for a Class III device, and you have said Class ${f.deviceClass}. A PMA for a ` +
-      'device of a lower class is answerable, but the application has to say why the classification does not decide ' +
-      'the route.',
+      'device of a lower class is answerable — a transitional device, or one reclassified into Class II, for which ' +
+      'FDA has called for premarket approval — but that is a basis the application has to state.',
     authority: 'FD&C Act 515; 21 CFR 814.1(c)',
   },
 ];

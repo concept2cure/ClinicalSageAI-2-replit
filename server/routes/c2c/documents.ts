@@ -39,6 +39,7 @@ import {
   replaceAuthorSpans,
   assertLineageCoversContent,
 } from '../../services/clinical-regulatory-evidence/span-lineage.service.js';
+import { checkFilingWritable } from '../../services/authoring/document-lock.js';
 import {
   normalizeRulePackProvenance,
   rulePackProvenanceSelectSql,
@@ -563,6 +564,29 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+
+      /* ── A SEALED DOCUMENT'S FILED TEXT IS SEALED TOO ────────────────────
+       * The authoring freeze sets `authoring_documents.status = 'FROZEN'` and
+       * writes `frozen_documents`; it does not touch `c2c_documents`, and the
+       * lifecycle check above reads only that. So this route — the MDx editor's
+       * save, and the writer of the store an eCTD leaf is materialized from —
+       * was the one content path that could change a FROZEN or APPROVED
+       * document's text while its seal, and every signature over it, covered
+       * the editing layer only. §11.10(e) requires the record a signature is
+       * applied to be protected from alteration.
+       *
+       * Through the ONE canonical guard, which is that module's own stated
+       * rule ("one guard, called by every writer"), and on the TRANSACTION
+       * client, so a concurrent freeze cannot commit between the check and the
+       * write. A filing with no bound authoring document is unaffected. */
+      const seal = await checkFilingWritable(client, String(id), orgId);
+      if (!seal.writable) {
+        await client.query('ROLLBACK');
+        client.release();
+        return res
+          .status(seal.code === 'SEAL_CHECK_UNAVAILABLE' ? 503 : 403)
+          .json({ code: seal.code, error: seal.code, message: seal.reason });
+      }
 
       // Set GUCs for Part-11 trigger attribution.
       //

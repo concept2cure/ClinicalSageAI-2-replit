@@ -639,8 +639,8 @@ describe('the accepted-author read at save time', () => {
 
     expect(decisions.map((d) => d.decision)).toEqual(['accept']);
     expect(collectSuggestions(canvas().state.doc)).toHaveLength(0);
-    expect(ref.current!.takeAcceptedAuthors()).toEqual([ANA]);
-    expect(ref.current!.takeAcceptedInsertions()).toEqual([{ authorId: 'ana', text: DRAFT, turnRecordId: null }]);
+    expect(ref.current!.peekAcceptedAuthors()).toEqual([ANA]);
+    expect(ref.current!.peekAcceptedInsertions()).toEqual([{ authorId: 'ana', text: DRAFT, turnRecordId: null }]);
   });
 
   it('attributes nothing to AnA once the accepted text is gone from the section', async () => {
@@ -657,8 +657,8 @@ describe('the accepted-author read at save time', () => {
 
     // The shipped code returned ["ana"] here, and the next save stamped the
     // revision "AI draft accepted".
-    expect(ref.current!.takeAcceptedAuthors()).toEqual([]);
-    expect(ref.current!.takeAcceptedInsertions()).toEqual([]);
+    expect(ref.current!.peekAcceptedAuthors()).toEqual([]);
+    expect(ref.current!.peekAcceptedInsertions()).toEqual([]);
   });
 
   it('the ribbon Undo after accepting one’s own tracked insertion leaves the accepted text (gap (e))', async () => {
@@ -674,16 +674,21 @@ describe('the accepted-author read at save time', () => {
     expect(decisions.map((d) => d.decision)).toEqual(['accept']);
     expect(canvas().state.doc.textContent).toBe(own.accepted);
     expect(pendingOf(canvas())).toEqual([]);
-    expect(ref.current!.takeAcceptedInsertions()).toEqual([{ authorId: REVIEWER.id, text: own.pending, turnRecordId: null }]);
+    expect(ref.current!.peekAcceptedInsertions()).toEqual([{ authorId: REVIEWER.id, text: own.pending, turnRecordId: null }]);
   });
 
   it('answers the same whichever list the host reads first', async () => {
     const { ref, accept } = await mountTracked();
     accept();
-    expect(ref.current!.takeAcceptedInsertions()).toEqual([{ authorId: 'ana', text: DRAFT, turnRecordId: null }]);
-    expect(ref.current!.takeAcceptedAuthors()).toEqual([ANA]);
-    // Read-and-clear, as before.
-    expect(ref.current!.takeAcceptedAuthors()).toEqual([]);
-    expect(ref.current!.takeAcceptedInsertions()).toEqual([]);
+    /* Reading no longer clears (round 15, SEC-A-7 door 1): the host emptied
+       the store before sending the PATCH, so a refused save lost the
+       attribution and the retry recorded AnA's clauses as a human's. Only a
+       save that LANDED clears it, through `clearAcceptedContributions`, which
+       authoringClaimSurvivesRefusedSave.test.tsx pins through the surface. */
+    expect(ref.current!.peekAcceptedInsertions()).toEqual([{ authorId: 'ana', text: DRAFT, turnRecordId: null }]);
+    expect(ref.current!.peekAcceptedAuthors()).toEqual([ANA]);
+    ref.current!.clearAcceptedContributions();
+    expect(ref.current!.peekAcceptedAuthors()).toEqual([]);
+    expect(ref.current!.peekAcceptedInsertions()).toEqual([]);
   });
 });

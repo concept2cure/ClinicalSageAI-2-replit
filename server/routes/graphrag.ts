@@ -596,9 +596,40 @@ const router = Router();
  * Resolve the pg pool for a request. The router is mounted without a
  * per-request pool injection, and nothing ever sets `req.pool` / `req.app.pool`
  * — so both were always undefined and every route 500'd on `pool.query` of
- * undefined. Fall back to the canonical instrumented pool (which carries RLS
- * tenant scoping when a scope is active on the request) while still honoring an
- * explicit injection if a test or caller provides one.
+ * undefined. Fall back to the canonical pool while still honoring an explicit
+ * injection if a test or caller provides one.
+ *
+ * ── What this pool does NOT do (corrected 2026-10-12) ──────────────────────
+ * This comment used to claim the canonical pool "carries RLS tenant scoping
+ * when a scope is active on the request". It does not, and the difference is
+ * the whole behaviour of this file. `server/db/runtime.ts` (behind the
+ * `server/db.ts` re-export) sets NO session variables and installs no connect
+ * hook; `applySessionScope` is called from exactly two places,
+ * `middleware/establishRequestTenantScope.ts` and `db/withTenantConnection.ts`,
+ * both of which pin ONE connection and apply the GUCs to that. A checkout from
+ * this shared pool therefore carries no `app.current_tenant_id`, whatever
+ * scope is active in AsyncLocalStorage.
+ *
+ * knowledge_graph_nodes, knowledge_graph_edges and (since 2026-10-12)
+ * citation_chains are policied by
+ * db/migrations/20260813_knowledge_graph_tenant_keys.sql with an UNCONDITIONAL
+ * predicate — `organization_id = current_setting('app.current_tenant_id')`,
+ * with no `app.rls_enforce` bypass arm and no super-admin arm, deliberately, so
+ * unattributed rows reach nobody. On a connection with no GUC that predicate is
+ * NULL for every row, so every read through this pool returns ZERO rows.
+ * Measured on a deploy-shaped database as the real runtime role: three seeded
+ * nodes, `SELECT count(*)` = 0 unscoped, 1 scoped to the owning tenant.
+ *
+ * So these routes are fail-closed — they cannot leak — but they are also
+ * INERT, and they report that inertness as success with an empty graph. That is
+ * a dead feature wearing a 200, and it is recorded rather than quietly fixed
+ * here: making GraphRAG serve data again means moving these reads onto
+ * `requestPgClient(req)` (server/db/requestDb.ts — the request-pinned client
+ * that carries the scope and never falls back to this pool), which is a
+ * behaviour change on a surface outside the launch catalog and therefore a
+ * product call, not a session's.
+ * See docs/work-orders/WO-19-graphrag-reads-are-inert.md and
+ * docs/evidence/D3/2026-10-12-citation-chains-tenant-key/.
  */
 function resolvePool(req: Request): Pool {
   return (req as any).pool || (req.app as any).pool || getPool();
@@ -616,6 +647,12 @@ router.post('/query', async (req: Request, res: Response) => {
   if (!body.query) return res.status(400).json({ error: 'query is required' });
 
   const queryId = uuidv4();
+  /* Every graph table this route reads is org-keyed and policied, citation_chains
+     included since 2026-10-12. The citation read still states the organisation
+     explicitly — and skips the enrichment entirely when none can be resolved,
+     rather than running unscoped — because RLS alone scopes nothing on this
+     router's unscoped pool checkout (see resolvePool). */
+  const queryOrganizationId = getSecureOrgId(req);
   const weights = body.hybridWeights || {
     vectorSimilarity: 0.4,
     graphTraversal: 0.4,
@@ -673,16 +710,29 @@ router.post('/query', async (req: Request, res: Response) => {
 
     // Step 6: Build citation chains
     const citationChains: CitationChain[] = [];
-    if (body.includeCitationChains) {
+    if (body.includeCitationChains && queryOrganizationId) {
       try {
+        /* These ids come from an org-scoped traversal, so they are already
+           this tenant's — but citation_chains has no tenant column and no
+           policy, so the constraint is stated here too rather than assumed.
+           Same shape as the citation-trace read below. */
         const citResult = await pool.query(
           `
-          SELECT id, source_document_id, target_document_id, citation_type, context, confidence
-          FROM citation_chains
-          WHERE source_document_id = ANY($1::text[]) OR target_document_id = ANY($1::text[])
+          SELECT c.id, c.source_document_id, c.target_document_id, c.citation_type, c.context, c.confidence
+          FROM citation_chains c
+          WHERE (
+                  (c.source_document_id = ANY($1::text[]) AND EXISTS (
+                     SELECT 1 FROM knowledge_graph_nodes n
+                      WHERE n.organization_id = $2::int
+                        AND n.source_document_id = c.source_document_id))
+               OR (c.target_document_id = ANY($1::text[]) AND EXISTS (
+                     SELECT 1 FROM knowledge_graph_nodes n
+                      WHERE n.organization_id = $2::int
+                        AND n.source_document_id = c.target_document_id))
+                )
           LIMIT 50
         `,
-          [traversalResult.entities.filter(e => e.entityType === 'document').map(e => e.id)]
+          [traversalResult.entities.filter(e => e.entityType === 'document').map(e => e.id), queryOrganizationId]
         );
         for (const row of citResult.rows) {
           citationChains.push({
@@ -959,19 +1009,68 @@ router.get('/citation-trace/:documentId', async (req: Request, res: Response) =>
   const { documentId } = req.params;
   const depth = parseInt(req.query.depth as string) || 2;
 
+  /* `citation_chains` carries NO tenant column, has RLS OFF and zero policies
+     (verified on a deploy-shaped database, 2026-10-12), and this read was
+     `WHERE source_document_id = ANY($1) OR target_document_id = ANY($1)` with
+     $1 starting as the UNCHECKED path parameter and widening a hop per
+     `?depth=`. This router is mounted behind authenticateToken alone
+     (bootstrap/register-advanced-platform-routes.ts:158), so any authenticated
+     user of any tenant could pass another tenant's document id and walk that
+     tenant's citation graph — the linked ids, the citation type, the `context`
+     (the quoted source text), the page and the section. The write path at :762
+     already resolved an organisation; this read never did, and the sibling
+     tables created by the same migration (knowledge_graph_nodes/_edges) were
+     given organization_id and a policy while this one was not.
+
+     The organisation is required, and traversal may only start from, and step
+     through, documents this organisation can see — proved against
+     knowledge_graph_nodes, which IS org-keyed and policied.
+
+     The structural half landed the same day: citation_chains now carries
+     organization_id with RLS, FORCE and the same unconditional policy as its
+     two siblings, backfilled from knowledge_graph_nodes where the citing
+     document resolves to exactly one organisation and left NULL — visible to
+     nobody — where it does not. The predicate below is kept as well, and on
+     purpose: it is the only thing scoping this read on a connection that
+     carries no tenant GUC, which is every connection this router gets today
+     (see resolvePool). Two independent controls, neither relying on the other.
+     Evidence docs/evidence/D3/2026-10-12-citation-chains-tenant-key/. */
+  const organizationId = getSecureOrgId(req);
+  if (!organizationId) {
+    return res.status(403).json({
+      success: false,
+      error: 'ORG_REQUIRED',
+      message: 'Organization context required.',
+    });
+  }
+
   try {
     const chains: CitationChain[] = [];
     let currentDocIds = [documentId];
 
     for (let d = 0; d < depth; d++) {
       try {
+        /* The end that matched our frontier must be a document this
+           organisation can see, so a traversal cannot begin at — or step onto —
+           a foreign document. Both arms are needed: a chain is reachable from
+           either of its ends. */
         const result = await pool.query(
           `
-          SELECT id, source_document_id, target_document_id, citation_type, context, page_number, section_id, confidence, created_at
-          FROM citation_chains
-          WHERE source_document_id = ANY($1::text[]) OR target_document_id = ANY($1::text[])
+          SELECT c.id, c.source_document_id, c.target_document_id, c.citation_type, c.context,
+                 c.page_number, c.section_id, c.confidence, c.created_at
+          FROM citation_chains c
+          WHERE (
+                  (c.source_document_id = ANY($1::text[]) AND EXISTS (
+                     SELECT 1 FROM knowledge_graph_nodes n
+                      WHERE n.organization_id = $2::int
+                        AND n.source_document_id = c.source_document_id))
+               OR (c.target_document_id = ANY($1::text[]) AND EXISTS (
+                     SELECT 1 FROM knowledge_graph_nodes n
+                      WHERE n.organization_id = $2::int
+                        AND n.source_document_id = c.target_document_id))
+                )
         `,
-          [currentDocIds]
+          [currentDocIds, organizationId]
         );
 
         const newDocIds: string[] = [];

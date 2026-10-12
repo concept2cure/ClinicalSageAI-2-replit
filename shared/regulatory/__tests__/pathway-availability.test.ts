@@ -42,6 +42,10 @@ const FACT_SETS: ProgrammeFacts[] = [
   { deviceClass: 'I' },
   { deviceClass: 'II' },
   { deviceClass: 'III' },
+  { ivdrClass: 'A' },
+  { ivdrClass: 'B' },
+  { ivdrClass: 'C' },
+  { ivdrClass: 'D' },
   { euMdrClass: 'I' },
   { euMdrClass: 'IIa' },
   { euMdrClass: 'IIb' },
@@ -66,7 +70,14 @@ describe('the agency the sponsor named', () => {
     const caution = cautionFor('EU_MDR_CLASS_III', { regions: ['US'] })!;
     expect(caution.availability).toBe('inapplicable');
     expect(caution.reason).toMatch(/You have named FDA/);
+    /* And it names the filing in words true of it: an MDR class route is a
+       notified body's conformity assessment, not a filing to EMA. */
+    expect(caution.reason).toMatch(/an EU conformity assessment under the MDR/);
     expect(caution.reason, 'the way out must be actionable').toMatch(/name EMA among the agencies/);
+    expect(cautionFor('EU_IVDR_CLASS_B', { regions: ['US'] })!.reason).toMatch(/under the IVDR/);
+    expect(cautionFor('EU_MAA', { regions: ['US'] })!.reason, 'a medicine IS filed to EMA').toMatch(
+      /a filing to EMA/,
+    );
     /* The authority is the statute behind the position itself: what makes an
        MDR route the EU's is the MDR, and that is the position's own citation. */
     expect(caution.authority).toBe(positionFor('EU_MDR_CLASS_III')!.authority);
@@ -107,7 +118,10 @@ describe('a programme with nothing to compare to', () => {
     expect(caution.availability).toBe('inapplicable');
     expect(caution.reason).toMatch(/no legally marketed device to compare to/);
     expect(caution.reason).toMatch(/first condition for a De Novo/);
-    expect(caution.authority).toMatch(/860\.220\(a\)/);
+    /* The regulation is cited at subpart level: 860.220 is the De Novo
+       request's content and format, not who may make one, and this module
+       does not state a section it has not verified. */
+    expect(caution.authority).toMatch(/860 Subpart D/);
     expect(cautionFor('US_510K_IVD', { predicate: 'none' })!.availability).toBe('inapplicable');
   });
 
@@ -202,6 +216,39 @@ describe('which statute governs the product', () => {
     expect(bla.reason).toMatch(/NOT claiming biosimilarity/);
     expect(cautionFor('EU_MAA', { modality: 'biosimilar' })!.reason).toMatch(/Article 8\(3\)/);
     expect(cautionFor('EU_GENERIC_DCP', { modality: 'mab' })!.availability).toBe('inapplicable');
+  });
+});
+
+describe('the IVDR class routes', () => {
+  it('close the routes the stated class is not the route for', () => {
+    const caution = cautionFor('EU_IVDR_CLASS_B', { ivdrClass: 'D' })!;
+    expect(caution.availability, 'the class decides the route under Art 48').toBe('inapplicable');
+    expect(caution.reason).toMatch(/Class D under the IVDR/);
+    expect(caution.reason).toMatch(/applies to Class B/);
+    expect(caution.authority).toMatch(/Art 47, Art 48, Annex VIII/);
+  });
+
+  it('keep Class C and Class D on the one entry the registry holds for them', () => {
+    expect(cautionFor('EU_IVDR_CLASS_CD', { ivdrClass: 'C' })).toBeNull();
+    expect(cautionFor('EU_IVDR_CLASS_CD', { ivdrClass: 'D' })).toBeNull();
+    expect(cautionFor('EU_IVDR_CLASS_CD', { ivdrClass: 'A' })!.availability).toBe('inapplicable');
+  });
+
+  it('close the companion-diagnostic route to a Class A or B assay', () => {
+    /* A companion diagnostic is Class C or D (Annex VIII Rule 3(f)). */
+    expect(cautionFor('EU_CDX_IVDR_D', { ivdrClass: 'B' })!.availability).toBe('inapplicable');
+    expect(cautionFor('EU_CDX_IVDR_D', { ivdrClass: 'C' })).toBeNull();
+  });
+
+  it('close the reference-laboratory step to anything but Class D', () => {
+    /* An EU reference laboratory is designated for Class D devices. */
+    expect(cautionFor('EU_REF_LAB', { ivdrClass: 'C' })!.availability).toBe('inapplicable');
+    expect(cautionFor('EU_REF_LAB', { ivdrClass: 'D' })).toBeNull();
+  });
+
+  it('say nothing about a device route, which is a different regulation', () => {
+    expect(cautionFor('EU_MDR_CLASS_IIB', { ivdrClass: 'D' })).toBeNull();
+    expect(cautionFor('US_510K_IVD', { ivdrClass: 'D' })).toBeNull();
   });
 });
 

@@ -473,13 +473,35 @@ export function createProjectSetupFlow(): FlowDefinition {
             id: 'eu_mdr_class',
             label: 'EU MDR Classification',
             type: 'select',
+            /* An in-vitro diagnostic has no MDR class: it is classified under
+               the IVDR, which is the next question. Asking both of a
+               diagnostics programme asked one of them about the wrong
+               regulation (founder's directive, 2026-10-12). */
+            visibleWhen: { field: 'product_type', operator: 'not_in', value: ['diagnostic', 'ivd'] },
             options: [
               { value: 'class_i', label: 'Class I' },
+              { value: 'class_is', label: 'Class Is — sterile' },
+              { value: 'class_im', label: 'Class Im — measuring function' },
+              { value: 'class_ir', label: 'Class Ir — reusable surgical instrument' },
               { value: 'class_iia', label: 'Class IIa' },
               { value: 'class_iib', label: 'Class IIb' },
               { value: 'class_iii', label: 'Class III' },
               { value: 'na', label: 'Not applicable / No EU filing planned' },
             ],
+          },
+          {
+            id: 'ivdr_class',
+            label: 'EU IVDR Classification',
+            type: 'select',
+            /* The first interview question anywhere to ask the IVDR class. It
+               was enumerated in eight places and asked nowhere, so a
+               diagnostics programme could not be configured for Europe at all
+               and the IVDR routes were offered to it flat. */
+            visibleWhen: { field: 'product_type', operator: 'in', value: ['diagnostic', 'ivd'] },
+            optionsFrom: 'ivdr_class_positions',
+            helpText:
+              'The Annex VIII rules decide the class (Rules 1–7), and the class decides the conformity assessment route under Article 48. AnA can work the rules through with you — ask her to classify the assay — and what you state here is your declaration of the outcome.',
+            allowOther: { prompt: 'Which class, in your own words?' },
           },
         ],
         defaultNext: 'medtech_regulatory',
@@ -523,6 +545,17 @@ export function createProjectSetupFlow(): FlowDefinition {
             type: 'text',
             placeholder: 'e.g., BSI, TUV SUD, Dekra',
             visibleWhen: { field: 'eu_mdr_class', operator: 'neq', value: 'na' },
+          },
+        ],
+        /* A device project reaches the multi-country timeline too. The
+           2026-10-12 region slice said it did and it did not: the only branch
+           to that node was on `submission_route`, which a device project
+           skips, so a device programme that had just said its filing was
+           multi-country was never asked about it. */
+        branches: [
+          {
+            when: { field: 'multi_country_submission', operator: 'eq', value: true },
+            goto: 'multi_country_setup',
           },
         ],
         defaultNext: 'team_assignment',

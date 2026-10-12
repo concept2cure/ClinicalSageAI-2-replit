@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T13:47:52.733Z",
+  "generatedAt": "2026-10-12T19:16:21.929Z",
   "git": {
-    "sha": "5c18e32f0b479a7cf76bc319152e387b40701b78",
+    "sha": "267ff29516480898f15bfdaa9f74778392f078fd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2101,7 +2101,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 385994
+        "bytes": 393825
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2109,7 +2109,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 306419
+        "bytes": 308558
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2192,12 +2192,12 @@
         "bytes": 133645
       },
       {
-        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "bytes": 132755
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 133042
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 131841
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "bytes": 132755
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2244,10 +2244,6 @@
         "bytes": 114269
       },
       {
-        "file": "server/routes/report-os.ts",
-        "bytes": 113367
-      },
-      {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
         "bytes": 113223
       },
@@ -2257,7 +2253,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "bytes": 110977
+        "bytes": 111496
+      },
+      {
+        "file": "server/routes/report-os.ts",
+        "bytes": 111351
       },
       {
         "file": "server/routes/auth.ts",
@@ -2285,7 +2285,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
-        "bytes": 107943
+        "bytes": 108308
       },
       {
         "file": "server/routes/c2c/projects.ts",
@@ -2327,11 +2327,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8473
+        "lines": 8604
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6413
+        "lines": 6455
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2418,6 +2418,10 @@
         "lines": 2992
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2894
+      },
+      {
         "file": "server/routes/auth.ts",
         "lines": 2890
       },
@@ -2426,16 +2430,12 @@
         "lines": 2889
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2877
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "lines": 2798
       },
       {
         "file": "server/routes/report-os.ts",
-        "lines": 2813
-      },
-      {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2798
+        "lines": 2772
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2555,7 +2555,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "lines": 2060
+        "lines": 2067
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
@@ -2583,7 +2583,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
-        "lines": 2003
+        "lines": 2004
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",

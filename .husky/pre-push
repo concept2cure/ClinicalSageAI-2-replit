@@ -135,6 +135,26 @@ if ! npm run --silent ci:migration-set-order 2>&1; then
   echo ""
   exit 1
 fi
+
+# A table's CREATE must precede the file that attaches a guard to it. A guard on
+# an absent table self-guards and NO-OPS, so ordered first it arrives only on the
+# deploy AFTER the one that creates the table — and in between the table exists
+# and the guard does not. For qms_documents that window is a controlled document
+# reaching 'effective' with no electronic signature (21 CFR Part 11 §11.50).
+# The set has made this mistake twice and the order gate above is blind to it:
+# verified 2026-10-12 by misplacing the two QMS files, which ci:migration-set-order,
+# ci:migration-drop-safety and ci:migration-deploy-path all passed.
+echo "   Validating that guarded tables are created before they are guarded..."
+if ! npm run --silent ci:migration-guard-order:selftest >/dev/null 2>&1 || ! npm run --silent ci:migration-guard-order 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Migration guard-order check FAILED."
+  echo "   A trigger, constraint, RLS enable or policy is attached to a table that"
+  echo "   C2C_MIGRATION_FILES creates LATER, so the guard no-ops on the deploy that"
+  echo "   creates the table and only arms on the next one."
+  echo "   Move the creator above the guard in scripts/db/migration-set.mjs."
+  echo ""
+  exit 1
+fi
 echo "   ✅ Migration apply-order passed."
 
 # The sibling hazard to apply-order, and the same shape of invisible: the

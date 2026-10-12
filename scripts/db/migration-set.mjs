@@ -2882,6 +2882,96 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20261001_organization_retention_settings.sql', // P1-22-org (ADR-0014 §6): one public org-keyed table, no DROP; above the pair so the sweep gives it RLS
   'migrations/20261001_domain_history_append_only.sql', // P1-24 (DP-15/16): append-only triggers on workflow_history, document_audit_logs, regulatory_audit_logs, c2c_ana_actions, authoring_signatures; after every creator; no table, no DROP
   'migrations/20261001_users_sessions_ended_at.sql', // P0-4b (IAM-04 b): users.sessions_ended_at + a trigger stamping it when status leaves 'active'; additive, no table, no DROP of anything the set creates
+  // ── The QMS and inspection stores reach a deployed database (2026-10-12, D2) ─
+  // `qms` IS a launch app — shared/constants/launch-scope.ts lists it with
+  // surfaces ['quality'] and modules ['quality'], granted to a new organisation
+  // by default — and client/src/concept2cure/quality/hooks.ts reads
+  // /api/mdx/qms/documents, /templates, /review-due and /training/compliance
+  // live. Those routes read tables that were on no applier but install-fresh, so
+  // the Quality surface rendered "Could not be read" on every load, for every
+  // organisation, in production. It failed HONESTLY — SopRegister computes
+  // `regFailed` rather than showing a zero, and /readiness degrades per block on
+  // 42P01 so "a zero from an absent system" is not an all-clear — but a launch
+  // app whose primary store does not exist is a broken promise, not a deferred
+  // feature. That is why this is not a Rule 2 "new capability": it makes an
+  // existing catalog entry work.
+  //
+  // THEY GO ABOVE 20261001_qms_document_signature_required.sql, AND THE ORDER IS
+  // LOAD-BEARING. That file installs the Part 11 §11.50/§11.70 constraint
+  // triggers refusing qms_documents → effective/retired without a
+  // same-transaction signature, and it self-guards with `to_regclass` — so with
+  // no table it has no-opped with a NOTICE on every deploy since it landed, and
+  // the database guard for controlled documents has never existed anywhere.
+  // Placed AFTER it, the tables would arrive on deploy N and the triggers only on
+  // deploy N+1, leaving a window in which `UPDATE qms_documents SET status =
+  // 'effective'` commits with no electronic signature, on a table the Quality
+  // surface can by then write to. The set has made exactly that mistake twice
+  // (20260224_binder_evidence_source_types, 20260617_precedent_org_isolation) and
+  // ci:migration-set-order does not check it — it pins only the sweep, the tail
+  // triple, existence and duplicates. Placed here, one deploy creates the tables
+  // and arms the guard.
+  //
+  // Rule 1: every statement in both files is CREATE TABLE / CREATE [UNIQUE]
+  // INDEX, all IF NOT EXISTS (32 and 11). No DROP, no ALTER, no ADD CONSTRAINT,
+  // no DML, no DO block, no self-transaction — nothing can fail on a replay, and
+  // 20260610's eight CHECKs are inline in their CREATE TABLE so they are never
+  // re-validated over rows a later file admitted. All ten tables are unqualified
+  // (so `public`) with `organization_id integer NOT NULL REFERENCES
+  // organizations(id)`, which is the final sweep's own selector, so each is
+  // policied without an entry in the hand-maintained non-public list. Each table
+  // has exactly ONE creator in the repository, so there is no rival shape for IF
+  // NOT EXISTS to skip over. Every FK target (organizations, users,
+  // regulatory_programs) is a BASE_SCHEMA_SENTINEL asserted by deploy-migrate's
+  // preflight.
+  //
+  // KNOWN RESIDUAL for whoever lands them: every child FK in both files is a
+  // bare single-column reference, so nothing in the database requires
+  // inspection_findings → inspections, finding_responses → inspection_findings,
+  // readiness_assessments → inspections, qms_training_records → qms_documents or
+  // labeling_translations → labeling_documents to be the SAME organisation's. The
+  // services close it in application code and the sweep policies each row by its
+  // own organization_id, so a child written with org A under org B's parent would
+  // be shown to A. The repo's current practice is a NOT VALID same-org key
+  // (20261008d_cre_source_study_ref.sql, 20261008f_stats_computation_runs.sql).
+  // It must be a GUARDED ALTER in a NEW file, never an in-place amendment of
+  // these CREATE TABLEs: install-fresh databases already have these tables, so an
+  // inline amendment is a silent no-op exactly where it is needed.
+  //
+  // ── WHY THEY ARE NOT ON THE SET YET (2026-10-12) ──────────────────────────
+  // NOT a Rule 1 replay problem — the replay case is clean (above). The blocker
+  // is 20261001_qms_document_signature_required.sql, two entries below. While
+  // `qms_documents` does not exist it RAISEs a NOTICE and returns. The moment it
+  // DOES exist, that file runs its own preflight: it requires SEVEN columns on
+  // public.electronic_signatures — organization_id, signed_target,
+  // signature_type, superseded_by, is_valid, verification_status, created_at —
+  // and `RAISE EXCEPTION`s if any is missing, which FAILS THE DEPLOY.
+  //
+  // `created_at` is absent from the drizzle journal's CREATE TABLE
+  // "electronic_signatures" (migrations/0000_sweet_joseph.sql) and NOTHING in
+  // this set adds it. `shared/schema.ts` declares it, so a database provisioned
+  // by drizzle push has it and one migrated only through this set does not —
+  // and which production is cannot be answered from a container with no live
+  // database. `tests/schema-contract/tenant-isolation-sweep.contract.test.ts`
+  // ("C-33: the batch applies in set order, twice") fails on pass 1 at that file
+  // with exactly this message when the two entries are added here.
+  //
+  // So landing them risks a broken deploy for EVERY tenant, which is worse than
+  // the broken Quality surface it fixes (that surface fails honestly — it says
+  // "Could not be read" rather than showing a zero). The prerequisite is a
+  // migration that adds `created_at` to public.electronic_signatures, and
+  // asserts the other six, placed before 20261001; then these two go here, above
+  // it. ci:migration-guard-order now protects that ordering.
+  //
+  // Note for whoever runs the contract test: its fixture applies only the slice
+  // from BATCH_START (db/migrations/022_stability_v2.sql, index 78), so it never
+  // applies db/migrations/20260725_esig_gate_columns_port.sql (index 43), which
+  // supplies `superseded_by`. That one is a fixture gap of the class the
+  // fixture's own comments describe three times and needs hand-applying there,
+  // the way 20260524_program_workbench_schema.sql already is. `created_at` is a
+  // real gap and is not fixed by that.
+  //   'migrations/20260511_qms_and_labeling.sql',
+  //   'migrations/20260610_inspection_readiness.sql',
+
   'migrations/20261001_qms_document_signature_required.sql', // P0-18 (DP-01 residual): deferred constraint triggers refusing qms_documents → effective/retired without a same-transaction signature; after 20260813d (signed_target); no table, no DROP
 
   // ── IND lifecycle and assessment tables reach every deployed database (2026-10-01, D1) ─

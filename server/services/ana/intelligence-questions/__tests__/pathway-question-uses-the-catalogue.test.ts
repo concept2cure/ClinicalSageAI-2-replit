@@ -81,7 +81,15 @@ describe('the pathway question', () => {
     expect(values).toEqual(pathwayOptions({ domain: 'medical_devices', region: 'EU' }).map(o => o.value));
     expect(values, 'the EU class routes').toContain('EU_MDR_CLASS_III');
     expect(values, 'a 510(k) is not a European route').not.toContain('US_510K');
-    expect(drawnRouteField('EU').helpText).toMatch(/These are EMA’s routes/);
+    /* And it says so in words that are true of a device: the MDR routes are a
+       notified body's assessment, not EMA's — which is what a device project
+       was told until a review caught it. */
+    expect(drawnRouteField('EU').helpText).toMatch(/EU MDR conformity assessment routes/);
+    expect(drawnRouteField('EU').helpText).toMatch(/notified body assesses them/);
+    expect(drawnRouteField('EU', 'diagnostic').helpText, 'an assay is IVDR').toMatch(/EU IVDR conformity/);
+    expect(drawnRouteField('US').helpText, 'FDA regulates both, so its name is right for both').toMatch(
+      /These are FDA’s routes/,
+    );
   });
 
   it('offers a diagnostics programme the IVD positions, in whichever region', () => {
@@ -139,25 +147,45 @@ describe('the pathway question', () => {
     expect(valuesOf(field)).toEqual(pathwayOptions({ domain: 'medical_devices', region: 'US' }).map(o => o.value));
   });
 
-  it('asks for the predicate on any 510(k), which is what names one', () => {
+  it('sends the predicate question with its gate, for the card to decide', () => {
+    /* `predicate_device` is gated on the route — a field in its OWN question —
+       so the server cannot decide it: the person has not chosen a route yet
+       when the question is drawn. It is sent with its predicate and the card
+       shows it the moment a 510(k) is picked. Until the 2026-10-12 review this
+       node dropped it, so a person choosing a 510(k) was never asked for the
+       predicate at all. */
     const node = advanceFlow(
       stateWith({ regulatory_targets: { primary_regulatory_agency: 'US', product_type: 'medical_device' } }),
       'device_classification',
       { device_class: 'class_ii' },
       ctx('medtech'),
     ).event!.node;
-    const predicate = node.fields.find(f => f.id === 'predicate_device');
-    expect(predicate, 'the predicate question is drawn only once a 510(k) is chosen').toBeUndefined();
-    const full = advanceFlow(
-      stateWith({
-        regulatory_targets: { primary_regulatory_agency: 'US', product_type: 'medical_device' },
-        medtech_regulatory: { device_submission_pathway: 'US_510K' },
-      }),
+    const predicate = node.fields.find(f => f.id === 'predicate_device')!;
+    expect(predicate, 'the question a 510(k) turns on must reach the person').toBeDefined();
+    expect(predicate.visibleWhen).toEqual({
+      field: 'device_submission_pathway',
+      operator: 'eq',
+      value: 'US_510K',
+    });
+  });
+
+  it('still decides a gate that an EARLIER question answered', () => {
+    /* The notified-body question is gated on the EU class, asked in the
+       previous node, so the server decides it as it always did. */
+    const withoutEu = advanceFlow(
+      stateWith({ regulatory_targets: { primary_regulatory_agency: 'US', product_type: 'medical_device' } }),
       'device_classification',
-      { device_class: 'class_ii' },
+      { device_class: 'class_ii', eu_mdr_class: 'na' },
       ctx('medtech'),
     ).event!.node;
-    expect(full.fields.find(f => f.id === 'predicate_device')).toBeDefined();
+    expect(withoutEu.fields.find(f => f.id === 'notified_body'), 'no EU filing planned').toBeUndefined();
+    const withEu = advanceFlow(
+      stateWith({ regulatory_targets: { primary_regulatory_agency: 'EU', product_type: 'medical_device' } }),
+      'device_classification',
+      { device_class: 'class_ii', eu_mdr_class: 'class_iib' },
+      ctx('medtech'),
+    ).event!.node;
+    expect(withEu.fields.find(f => f.id === 'notified_body')).toBeDefined();
   });
 });
 
@@ -216,6 +244,17 @@ describe('the medicines route question', () => {
     expect(biosimilar.caution!.reason).toMatch(/section 505/);
   });
 
+  it('offers nothing for a combination product, and says why in the frame’s own words', () => {
+    /* The modality frame holds no pathways for a combination product, because
+       the lead centre is assigned by primary mode of action. An empty select
+       would say "choose one of none". */
+    const field = drawnSubmissionField('US', 'combination_product');
+    expect(field.options).toBeUndefined();
+    expect(field.helpText).toMatch(/holds no route for combination/i);
+    expect(field.helpText, 'the reason is the frame\u2019s own').toMatch(/primary mode of action under 21 CFR Part 3/);
+    expect(field.allowOther).toBeDefined();
+  });
+
   it('is not asked of a device project at all', () => {
     /* A device project is routed past it — and if it ever reached the node,
        the field is hidden rather than asking a device its NDA type. */
@@ -233,6 +272,78 @@ describe('the medicines route question', () => {
       ctx('medtech'),
     );
     expect(reachedAnyway.state.answers.submission_route, 'nothing demanded of a device here').toEqual({});
+  });
+});
+
+describe('the IVDR class question', () => {
+  /** The classification question as a diagnostics programme is drawn it. */
+  const classificationNode = (productType: string) => {
+    const result = advanceFlow(
+      { ...stateWith({ product_details: { product_type: productType } }), currentNodeId: 'regulatory_targets' },
+      'regulatory_targets',
+      { primary_regulatory_agency: 'EU' },
+      ctx('ivd'),
+    );
+    expect(result.event?.node.id, 'a diagnostics project goes to the classification question').toBe(
+      'device_classification',
+    );
+    return result.event!.node;
+  };
+
+  it('is asked of a diagnostics programme — the first question anywhere to ask it', () => {
+    const field = classificationNode('diagnostic').fields.find(f => f.id === 'ivdr_class')!;
+    expect(field, 'the IVDR class was enumerated eight times and asked nowhere').toBeDefined();
+    expect(field.options?.map(o => o.value)).toEqual(['A', 'B', 'C', 'D']);
+  });
+
+  it('answers in the spelling the rest of the platform already stores', async () => {
+    /* The IVDR class column, the endpoint's zod enum and the read-side
+       adapters all speak bare 'A'-'D'. This is the first interview field whose
+       values are that same vocabulary. */
+    const values = classificationNode('diagnostic').fields.find(f => f.id === 'ivdr_class')!.options!.map(o => o.value);
+    expect(values).not.toContain('class_a');
+    const { programmeFactsFrom } = await import('../programme-facts.js');
+    expect(programmeFactsFrom({ ivdr_class: 'C' })).toEqual({ ivdrClass: 'C' });
+    expect(programmeFactsFrom({ ivdr_class: 'Class D' }), 'a spelling a person might use').toEqual({ ivdrClass: 'D' });
+    expect(programmeFactsFrom({ ivdr_class: 'E' }), 'there is no Class E').toEqual({});
+  });
+
+  it('states the Article 48 route each class commits the programme to, from the platform’s own statement', () => {
+    const options = classificationNode('diagnostic').fields.find(f => f.id === 'ivdr_class')!.options!;
+    const by = (value: string) => options.find(o => o.value === value)!;
+    expect(by('A').label).toMatch(/no notified body/);
+    expect(by('A').commits).toMatch(/EU declaration of conformity/);
+    expect(by('B').label).toMatch(/notified body/);
+    expect(by('C').commits, 'the companion-diagnostic consultation').toMatch(/consults a medicines authority/);
+    expect(by('D').commits, 'the reference laboratory').toMatch(/EU reference laboratory/);
+    expect(by('D').commits).toMatch(/common specifications/);
+    for (const option of options) expect(option.authority, option.value).toMatch(/Art 48/);
+  });
+
+  it('does not ask a diagnostics programme its MDR class, which is the wrong regulation', () => {
+    const asked = classificationNode('diagnostic').fields.map(f => f.id);
+    expect(asked).toContain('ivdr_class');
+    expect(asked, 'an IVD is classified under the IVDR, not the MDR').not.toContain('eu_mdr_class');
+  });
+
+  it('does not ask a device programme its IVDR class either', () => {
+    const asked = classificationNode('medical_device').fields.map(f => f.id);
+    expect(asked).toContain('eu_mdr_class');
+    expect(asked).not.toContain('ivdr_class');
+  });
+
+  it('offers the MDR classes a sponsor can actually declare, including the Class I variants', () => {
+    const mdr = classificationNode('medical_device').fields.find(f => f.id === 'eu_mdr_class')!;
+    expect(mdr.options!.map(o => o.value)).toEqual([
+      'class_i',
+      'class_is',
+      'class_im',
+      'class_ir',
+      'class_iia',
+      'class_iib',
+      'class_iii',
+      'na',
+    ]);
   });
 });
 

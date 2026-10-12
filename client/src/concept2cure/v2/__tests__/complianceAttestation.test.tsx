@@ -22,6 +22,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+const authUser = vi.hoisted(() => ({ get: vi.fn() }));
+vi.mock('@/services/portal/authService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/portal/authService')>()),
+  useAuthUser: () => authUser.get(),
+}));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
@@ -65,6 +70,7 @@ function serve(report: Partial<AttestationReport> | { status: number }) {
 /* Braces, not an implicit return: vitest invokes whatever a beforeEach returns
    as a cleanup hook, and `mockReset()` returns the mock itself. */
 beforeEach(() => {
+  authUser.get.mockReset().mockReturnValue({ permissions: ['audit:attest'] });
   apiRequest.mockReset();
 });
 afterEach(() => cleanup());
@@ -98,6 +104,80 @@ describe('a member who may not run reports', () => {
     // complianceReports.test.tsx asserts no /^Run/ control exists for a reader.
     expect(screen.queryByRole('button', { name: /^Run/ })).toBeNull();
     expect(apiRequest).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * A manager may READ the audit trail and may not ATTEST to it (coverage review
+ * C-24). The catalog's `canRun` includes managers and approvers; the attestation
+ * route admits admin and owner. So the control was offered and the click got a
+ * 403. The session now derives `audit:attest` from the route's own role set and
+ * this screen reads it.
+ */
+describe('a manager who may read the trail but not attest to it', () => {
+  it('is not offered the control, because the server would refuse the click', () => {
+    serve({});
+    // The reader verdict is true — this is exactly the case the gap allowed.
+    authUser.get.mockReturnValue({ permissions: ['governed:write'] });
+    render(<AuditAttestation canRun />);
+    expect(screen.queryByRole('button', { name: /^Run/ })).toBeNull();
+    expect(screen.getByTestId('attestation-readers')).toBeTruthy();
+    expect(apiRequest).not.toHaveBeenCalled();
+  });
+
+  it('offers it to an admin, whose session carries the permission', () => {
+    serve({});
+    authUser.get.mockReturnValue({ permissions: ['governed:write', 'report:finalize', 'audit:attest'] });
+    render(<AuditAttestation canRun />);
+    expect(screen.queryByRole('button', { name: /^Run/ })).toBeTruthy();
+  });
+
+  it('offers it on an older session that carries no permissions array — the server still decides', () => {
+    // Unknown is not refused: withholding an administrator's control on a guess
+    // is the worse failure, which is what the two precedents already settled.
+    serve({});
+    authUser.get.mockReturnValue({});
+    render(<AuditAttestation canRun />);
+    expect(screen.queryByRole('button', { name: /^Run/ })).toBeTruthy();
+  });
+});
+
+/**
+ * The attestation declares its own method, and the screen shows it (C-22).
+ *
+ * The surface claimed INTACT meant "nothing altered or removed". The service
+ * compares two STORED columns — each row's `previous_hash` against the prior
+ * row's `record_hash` — and never re-derives a hash from a row's fields, so an
+ * entry edited IN PLACE with its stored hashes left alone passes. The copy was
+ * corrected; the module headers on both sides still carried the overclaim, which
+ * is where the next reader starts.
+ *
+ * The scope now travels inside the HMAC-signed body, so it cannot be separated
+ * from the verdict or re-widened by a paraphrase.
+ */
+describe('the declared method', () => {
+  it('shows what the attestation establishes and what it does not', async () => {
+    serve({
+      verifies: {
+        method: 'stored-link-continuity',
+        covers: ['No entry was removed, inserted or reordered.'],
+        doesNotCover: ['The CONTENTS of an entry. No hash is re-derived from a row\u2019s fields.'],
+      },
+    });
+    await runIt();
+    const method = await screen.findByTestId('attestation-method');
+    expect(method.textContent).toMatch(/It establishes/);
+    expect(method.textContent).toMatch(/removed, inserted or reordered/);
+    // The half a reader would otherwise assume away.
+    expect(method.textContent).toMatch(/It does not establish/);
+    expect(method.textContent).toMatch(/CONTENTS of an entry/);
+  });
+
+  it('shows nothing rather than a scope it invented, on a server that sends none', async () => {
+    serve({});
+    await runIt();
+    await screen.findByTestId('attestation-result');
+    expect(screen.queryByTestId('attestation-method')).toBeNull();
   });
 });
 

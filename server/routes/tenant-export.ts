@@ -32,6 +32,8 @@
 
 import { Router, Request, Response } from 'express';
 
+import { AUDIT_ATTEST_ROLES } from '../../shared/constants/permissions.js';
+
 import { authenticateToken } from '../middleware/auth';
 import { pool } from '../db';
 import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
@@ -63,11 +65,22 @@ function getOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * The gate on every route in this router: admin or owner.
+ *
+ * It reads AUDIT_ATTEST_ROLES rather than repeating the two role names, so the
+ * set the server admits and the permission the session derives
+ * (AUDIT_ATTEST_PERMISSION, orgMembership.ts `sessionPermissions`) cannot drift.
+ * They drifted before: the Compliance Reports surface offered "Run attestation"
+ * on the catalog's READER verdict — owner, admin, manager, approver — and a
+ * manager got a 403 from a control the UI had offered (coverage review C-24).
+ * One list, two readers.
+ */
 function isAdmin(req: Request): boolean {
   const u = (req as any).user;
   if (!u) return false;
-  if (u.role === 'admin' || u.role === 'owner') return true;
-  if (Array.isArray(u.roles) && (u.roles.includes('admin') || u.roles.includes('owner'))) {
+  if (AUDIT_ATTEST_ROLES.includes(String(u.role ?? ''))) return true;
+  if (Array.isArray(u.roles) && u.roles.some((r: unknown) => AUDIT_ATTEST_ROLES.includes(String(r)))) {
     return true;
   }
   return false;
