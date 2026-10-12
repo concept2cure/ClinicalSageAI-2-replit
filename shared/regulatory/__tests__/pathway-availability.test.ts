@@ -26,11 +26,14 @@ import {
   cautionFor,
   cautionablePositionIds,
   pathwayOptions,
+  positionFor,
   type ProgrammeFacts,
 } from '../pathway-positions.js';
 
 /** Every fact a flow can state today, one at a time. */
 const FACT_SETS: ProgrammeFacts[] = [
+  { regions: ['US'] },
+  { regions: ['EU'] },
   { predicateNamed: 'K123456 — Acme Stent' },
   { deviceClass: 'I' },
   { deviceClass: 'II' },
@@ -51,6 +54,46 @@ describe('an answer nobody has given', () => {
     // 'Not yet classified' reaches the catalogue as an absent fact, by design.
     expect(cautionFor('US_PMA', {})).toBeNull();
     expect(cautionFor('US_510K', {})).toBeNull();
+  });
+});
+
+describe('the agency the sponsor named', () => {
+  it('closes a filing to a regulator they did not name, and says how to open it', () => {
+    const caution = cautionFor('EU_MDR_CLASS_III', { regions: ['US'] })!;
+    expect(caution.availability).toBe('inapplicable');
+    expect(caution.reason).toMatch(/You have named FDA/);
+    expect(caution.reason, 'the way out must be actionable').toMatch(/name EMA among the agencies/);
+    /* The authority is the statute behind the position itself: what makes an
+       MDR route the EU's is the MDR, and that is the position's own citation. */
+    expect(caution.authority).toBe(positionFor('EU_MDR_CLASS_III')!.authority);
+    expect(caution.authority).toMatch(/MDR Art 52/);
+  });
+
+  it('leaves every filing to a regulator they did name', () => {
+    for (const id of ['US_510K', 'US_PMA', 'US_NDA', 'US_IND']) {
+      expect(cautionFor(id, { regions: ['US'] }), id).toBeNull();
+    }
+    for (const id of ['EU_MAA', 'EU_MDR_CLASS_III']) {
+      expect(cautionFor(id, { regions: ['US', 'EU'] }), id).toBeNull();
+    }
+  });
+
+  it('names every agency the sponsor gave, not just the first', () => {
+    expect(cautionFor('EU_MAA', { regions: ['US', 'JP'] })!.reason).toMatch(/FDA and PMDA/);
+    expect(cautionFor('EU_MAA', { regions: ['US', 'JP', 'CA'] })!.reason).toMatch(/FDA, PMDA and Health Canada/);
+  });
+
+  it('comes before every other mark, because a filing is made to a regulator or not at all', () => {
+    // Class III would otherwise mark a 510(k) as needing a basis; the wrong
+    // regulator is the more fundamental objection and is the one reported.
+    const caution = cautionFor('US_510K', { regions: ['EU'], deviceClass: 'III' })!;
+    expect(caution.availability).toBe('inapplicable');
+    expect(caution.reason).toMatch(/You have named EMA/);
+  });
+
+  it('says nothing where no agency has been named', () => {
+    expect(cautionFor('EU_MAA', {})).toBeNull();
+    expect(cautionFor('EU_MAA', { regions: [] }), 'an empty list is not a statement').toBeNull();
   });
 });
 

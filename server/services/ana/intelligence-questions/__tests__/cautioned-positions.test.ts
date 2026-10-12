@@ -21,7 +21,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import type { FlowState, QuestionNode } from '../types.js';
+import { agencyOptions } from '@shared/regulatory/agency-positions';
+import type { FlowState, QuestionField, QuestionNode } from '../types.js';
 import { advanceFlow } from '../engine.js';
 import { cautionedChoiceNotices, factFields, programmeFactsFrom, withCautions } from '../programme-facts.js';
 
@@ -43,6 +44,17 @@ const pathwayOptionsOf = (event: { node: QuestionNode } | null) =>
   event!.node.fields.find(f => f.id === 'device_submission_pathway')!.options!;
 
 describe('which answer states which fact', () => {
+  it('reads every agency the project named, in whichever vocabulary', () => {
+    expect(programmeFactsFrom({ primary_regulatory_agency: 'US' })).toEqual({ regions: ['US'] });
+    expect(
+      programmeFactsFrom({ primary_regulatory_agency: 'US', additional_agencies: ['EU', 'who'] }),
+      'WHO prequalification is not a region, and is not read as one',
+    ).toEqual({ regions: ['US', 'EU'] });
+    // The nine hand-written values this question used to carry still resolve.
+    expect(programmeFactsFrom({ primary_regulatory_agency: 'ema' })).toEqual({ regions: ['EU'] });
+    expect(programmeFactsFrom({ primary_regulatory_agency: '__other__' }), 'own words name no region').toEqual({});
+  });
+
   it('reads the class and the predicate the flows actually ask for', () => {
     expect(programmeFactsFrom({ device_class: 'class_iii' })).toEqual({ deviceClass: 'III' });
     expect(programmeFactsFrom({ device_class: 'class_ii' }), 'iii must not match ii').toEqual({ deviceClass: 'II' });
@@ -118,6 +130,71 @@ describe('the question a person reads', () => {
     };
     expect(withCautions([field], {})[0].options![0].caution).toBeUndefined();
     expect(withCautions([field], { deviceClass: 'III' })[0].options![0].caution!.availability).toBe('needs_basis');
+  });
+});
+
+describe('the agency question itself', () => {
+  const everyField = async (): Promise<QuestionField[]> => {
+    const { getAvailableFlows, getFlowDefinition } = await import('../flows/index.js');
+    const ctx = { organizationId: 7, userId: 3, projectId: null };
+    return getAvailableFlows(ctx).flatMap(f =>
+      (getFlowDefinition(f.category, ctx)?.nodes ?? []).flatMap(n => n.fields),
+    );
+  };
+
+  it('offers the governed positions wherever a flow asks it, and is not a text box', async () => {
+    /* `agency_select` is a field type the engine has always declared and no
+       renderer ever implemented, so it fell through to a text input. This
+       holds that no flow can ask it bare again. */
+    const asked = (await everyField()).filter(f => f.type === 'agency_select');
+    expect(asked.length, 'a scan that found no agency question proves nothing').toBeGreaterThan(0);
+    for (const field of asked) {
+      expect(field.options?.map(o => o.value), field.id).toEqual(agencyOptions().map(o => o.value));
+      expect(field.options?.every(o => o.commits), field.id).toBe(true);
+      expect(field.allowOther, 'an agency AnA does not hold must still be nameable').toBeDefined();
+    }
+  });
+
+  it('offers the same governed twelve for the additional agencies, plus the one that is not a filing', async () => {
+    const additional = (await everyField()).find(f => f.id === 'additional_agencies')!;
+    const values = additional.options!.map(o => o.value);
+    expect(values.slice(0, 12)).toEqual(agencyOptions().map(o => o.value));
+    expect(values, 'dropping WHO prequalification would remove a target some sponsors use').toContain('who');
+    const who = additional.options!.find(o => o.value === 'who')!;
+    expect(who.label).toMatch(/not a national filing/);
+    expect(who.commits).toMatch(/no Module 1 requirements/);
+    // The five the hand-written nine left out.
+    for (const value of ['CH', 'SG', 'KR']) expect(values, value).toContain(value);
+  });
+
+  it('leaves the country questions as free text, because no governed country vocabulary exists', async () => {
+    const countries = (await everyField()).filter(f => f.type === 'country_select');
+    expect(countries.length).toBeGreaterThan(0);
+    for (const field of countries) {
+      expect(
+        field.options,
+        'the platform holds a governed agency list and no governed country list; if one lands, these draw it',
+      ).toBeUndefined();
+    }
+  });
+});
+
+describe('a route to a regulator the project did not name', () => {
+  it('is marked inapplicable, and says how to open it', () => {
+    const state = stateAt('device_classification', { regulatory_targets: { primary_regulatory_agency: 'EU' } });
+    const options = pathwayOptionsOf(advanceFlow(state, 'device_classification', { device_class: 'class_ii' }, CTX).event);
+    const k510 = options.find(o => o.value === 'US_510K')!;
+    expect(k510.caution!.availability).toBe('inapplicable');
+    expect(k510.caution!.reason).toMatch(/You have named EMA/);
+    expect(k510.caution!.reason).toMatch(/name FDA among the agencies/);
+  });
+
+  it('is not marked once that regulator is among the additional agencies', () => {
+    const state = stateAt('device_classification', {
+      regulatory_targets: { primary_regulatory_agency: 'EU', additional_agencies: ['US'] },
+    });
+    const options = pathwayOptionsOf(advanceFlow(state, 'device_classification', { device_class: 'class_ii' }, CTX).event);
+    expect(options.find(o => o.value === 'US_510K')!.caution).toBeUndefined();
   });
 });
 
