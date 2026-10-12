@@ -1,0 +1,16 @@
+Round 14 door 5: the new tests against trunk's client. The three SOURCE files are
+reverted to origin/concept2cure-v2 (ConversationThread.tsx, anaInsertGate.ts,
+fixtures/conversation-thread-data.ts); the tests are not.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+  client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > refuses a draft whose turn the rule does not admit, with the reason as visible text 534ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > fails closed on a turn this page was not told about, and on one that did not finish 196ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > still says what it said before when there is no draft text, as visible text 187ms
+   → expected undefined to be 'There is no draft text to open.' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > blames the empty draft, not the model, when both would refuse 167ms
+   → expected undefined to be 'There is no draft text to open.' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 passed (8)

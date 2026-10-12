@@ -1,0 +1,7 @@
+mutant D5-06: the rule is reported ahead of the host’s own refusals, so an empty draft blames the model
+verdict: KILLED
+Tests  1 failed | 7 passed (8)
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > blames the empty draft, not the model, when both would refuse 170ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)

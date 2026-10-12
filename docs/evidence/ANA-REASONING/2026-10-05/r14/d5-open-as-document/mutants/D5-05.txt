@@ -1,0 +1,8 @@
+mutant D5-05: the drafting turn is not carried onto the card, so no card can ever be admitted
+verdict: KILLED
+Tests  2 failed | 6 passed (8)
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > refuses a draft whose turn the rule does not admit, with the reason as visible text 544ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > offers a draft the rule admits 184ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)

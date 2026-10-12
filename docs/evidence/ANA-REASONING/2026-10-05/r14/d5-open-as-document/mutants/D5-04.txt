@@ -1,0 +1,10 @@
+mutant D5-04: the reason goes back to a title, unreachable by keyboard and invisible on touch
+verdict: KILLED
+Tests  4 failed | 4 passed (8)
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > refuses a draft whose turn the rule does not admit, with the reason as visible text 554ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > fails closed on a turn this page was not told about, and on one that did not finish 160ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > still says what it said before when there is no draft text, as visible text 174ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > blames the empty draft, not the model, when both would refuse 203ms
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 passed (8)

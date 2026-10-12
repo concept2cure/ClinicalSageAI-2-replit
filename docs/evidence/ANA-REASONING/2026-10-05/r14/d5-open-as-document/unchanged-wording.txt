@@ -1,0 +1,11 @@
+Round 11's and round 13's own gate suites, on the tree where the refused ACT became
+a parameter. They assert the exact sentences those rounds settled on, so their
+passing is what proves the default act ('insert') changed no shipped wording.
+
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+  client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts \
+  client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx \
+  client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx
+
+ Test Files  3 passed (3)
+      Tests  24 passed (24)

@@ -1,0 +1,7 @@
+mutant D5-02: the refusal names the insert act, so it claims a thing this control does not do
+verdict: KILLED
+Tests  1 failed | 7 passed (8)
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > refuses a draft whose turn the rule does not admit, with the reason as visible text 516ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)

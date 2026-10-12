@@ -628,6 +628,10 @@ export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] 
       version: d.version,
       content: d.content,
       messageId: m.id,
+      /* The turn that wrote it, so the card applies the governed-write rule
+         before posting rather than taking a refusal from the server. */
+      turnRecord: m.turnRecord ?? null,
+      unfinished: answerUnfinished(m) || undefined,
       prov: { by: 'AnA', evidence: m.groundingSources || [] },
       /* Stated as what is KNOWN, not as a diagnosis. The server withholds
          `artifact_version_saved` for two different reasons — no project to file
@@ -670,6 +674,9 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
      moment a draft acquires a durable id this state is correctly discarded. */
   const [status, setStatus] = useState(art.status);
   const [busy, setBusy] = useState<null | 'docx' | 'review' | 'open'>(null);
+  /* One id per card, above any early return — round 13's defect was a shared
+     id, which described every refused control by the FIRST one's reason. */
+  const openRefusalId = `ct-open-refusal-${React.useId()}`;
 
   /* The '.docx' button used to be wired to an `onAdvance` the one mount passed
      as `() => undefined`, so it downloaded nothing. The endpoint it needed had
@@ -715,11 +722,33 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
     }
   };
 
+  /* Why "Open as document" is off, in the order the person needs to hear it.
+     The host's own two refusals come first — with no draft text or no project
+     there is nothing to file and nowhere to file it, whatever the rule says —
+     and then the governed-write rule, which this door reaches
+     POST /api/authoring/docs/from-draft with (round 14, SEC-A-7 door 5).
+     Before this, the rule was applied at the conversation's "Insert into open
+     section" (`anaInsertRefusal`, above) and NOT here, which was not a decision
+     anyone made: this door creates a whole governed document whose entire
+     content is model prose, so it is the stronger case of the two. The act is
+     'document' because that is what this control does; "inserted" would name
+     an act it does not perform. */
+  const openBlockedBecause = !art.content
+    ? 'There is no draft text to open.'
+    : !isProgramId(projectId)
+      ? 'Open a project first — a document is filed in one.'
+      : anaInsertRefusal(art.turnRecord, art.unfinished === true, 'document');
+
   /* The draft becomes a document in the editor's store and opens beside the
      conversation (draftToDocument.ts). This was "Edit", which went to the
      authoring workspace with no document, so the draft never reached it. */
   const openAsDocument = async () => {
-    if (busy || !onOpenAsDocument) return;
+    /* The refusal is checked again here, not only on the disabled button, as
+       the sibling insert offer does (`if (refusal) return`). The GE-P-3 family
+       is slated to move to `aria-disabled`, which leaves the control clickable;
+       a guard only on `disabled` would then post the very draft the rule
+       refuses. */
+    if (busy || !onOpenAsDocument || openBlockedBecause) return;
     setBusy('open');
     try {
       await onOpenAsDocument();
@@ -727,11 +756,6 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
       setBusy(null);
     }
   };
-  const openBlockedBecause = !art.content
-    ? 'There is no draft text to open.'
-    : isProgramId(projectId)
-      ? null
-      : 'Open a project first — a document is filed in one.';
 
   /* draft → review, through the governed transition route. The server owns the
      rules — VALID_TRANSITIONS and the per-role permission map — so a refusal is
@@ -888,7 +912,11 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
               aria-label={'Open ' + art.title + ' as a document in the editor'}
               onClick={openAsDocument}
               disabled={busy !== null || !onOpenAsDocument || openBlockedBecause !== null}
-              title={openBlockedBecause ?? undefined}
+              /* GE-P-3: the reason is text the control is described by, never a
+                 `title` — unreachable by keyboard, invisible on touch. Round 13
+                 fixed exactly this on the two sibling offers; this card kept
+                 the title. */
+              aria-describedby={openBlockedBecause ? openRefusalId : undefined}
             >
               {I.penLine} {busy === 'open' ? 'Opening…' : 'Open as document'}
             </button>
@@ -918,6 +946,17 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
               </button>
             )}
           </div>
+          {/* Classless with inline values, exactly as the sibling refusal reason
+              above is (`id={refusalId}`): these seven notes across the product
+              are slated to become one `RefusalNote` component, and a one-off
+              class for one of them would make that harder. The values are round
+              13's measured pair — see r14/d5-open-as-document/contrast.txt for
+              this card's own surface. */}
+          {openBlockedBecause && (
+            <p id={openRefusalId} style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-300)' }}>
+              {openBlockedBecause}
+            </p>
+          )}
           {/* Not repeated when the artifact's own note already says it — an
               unsaved draft carries the longer explanation, including what to do
               about it, a few lines above. */}
