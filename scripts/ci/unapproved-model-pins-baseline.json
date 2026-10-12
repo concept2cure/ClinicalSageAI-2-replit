@@ -9,10 +9,6 @@
       "count": 7,
       "reason": "Regulatory digital twin: a CLAUDE.md Rule 2 surface that gets no sessions. Not classified or changed; recorded so a new pin elsewhere cannot hide behind it."
     },
-    "server/routes/agent-swarm.ts": {
-      "count": 7,
-      "reason": "Display metadata on the agent definitions (GET /agents). The model that serves a swarm task is chosen by the gateway from the mapped task type, and drafting and QC tasks map to document_drafting and regulatory_review."
-    },
     "server/routes/c2c/context-intelligence.ts": {
       "count": 2,
       "reason": "/summarize and /extract-decisions write conversation working memory, not a governed document; the governed path in this file (/promote) routes as document_drafting with no pin."

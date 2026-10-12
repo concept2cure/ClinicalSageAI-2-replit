@@ -11,6 +11,8 @@
  * @module server/services/ana-ri/locale-overlays
  */
 
+import { REGULATORY_FACTS } from '../regulatory-currency/currency-registry.js';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Language / Locale Overlays
 // ─────────────────────────────────────────────────────────────────────────────
@@ -449,12 +451,24 @@ J-GCP (clinical), **J-GMP** (manufacturing), GLP (non-clinical safety), **GPSP**
  * Injected by {@link buildAnaRISystemPrompt} only when the EU is in scope, so
  * the token cost lands on the European client base it serves.
  */
+/**
+ * The pharma package's status, read from the dated currency fact
+ * `eu-pharma-package` — the one statement of it. 2026-10-05 (step
+ * g-eu-medicines-dated-facts; finding 45): this prompt carried its own undated
+ * prose ("expected to enter into force from 2026 with a transition period to
+ * ~2028"). Without the fact, the prompt says the status is unrecorded rather
+ * than guessing it.
+ */
+const EU_PHARMA_PACKAGE_STATUS: string =
+  REGULATORY_FACTS.find((f) => f.id === 'eu-pharma-package')?.note ??
+  'its status is not recorded in the regulatory currency registry; current law (Directive 2001/83/EC and Regulation (EC) No 726/2004) governs, and the reform\'s status must be confirmed before advising on it.';
+
 export const EU_REGULATORY_DEEP_DIVE = `## EUROPEAN UNION REGULATORY DEEP DIVE — EMA / EU (dedicated knowledge layer)
 This program engages the European Union market. Reason as a senior EU regulatory affairs specialist. The EU is a multi-country system: a marketing authorisation can be EU-wide or national, and EU approval is distinct from national market access. Keep canonical identifiers (EMA, CHMP, EC, ICH, eCTD) unchanged.
 
 ### 1. Legal framework & institutions
 - Governing law: **Regulation (EC) No 726/2004** (centralised procedure) and **Directive 2001/83/EC** (national / mutual-recognition / decentralised). The **European Medicines Agency (EMA, Amsterdam)** coordinates scientific evaluation; the **European Commission (EC)** grants the legally-binding EU-wide marketing authorisation for centralised procedures. **National Competent Authorities** (e.g. BfArM and PEI in Germany, ANSM in France, AIFA in Italy, AEMPS in Spain) authorise nationally and run MRP/DCP, coordinated through the **HMA** and the **CMDh**.
-- The **EU pharmaceutical legislation reform ("Pharma Package")** — the biggest overhaul in two decades — reached political agreement in December 2025 and is expected to enter into force from 2026 with a transition period to ~2028; track its impact on data/market protection, EMA committee structure and accelerated access.
+- The **EU pharmaceutical legislation reform ("Pharma Package")**: ${EU_PHARMA_PACKAGE_STATUS}
 
 ### 2. Authorisation routes
 - **Centralised procedure (CP):** one application to EMA → **CHMP** opinion → EC decision → a single MA valid across all EU/EEA states. **Mandatory** for biotech-derived products, **ATMPs**, **orphan** medicines, and new active substances for cancer, neurodegenerative disease, diabetes, autoimmune/immune dysfunction and viral disease.
@@ -473,7 +487,7 @@ This program engages the European Union market. Reason as a senior EU regulatory
 
 ### 5. Dossier & data requirements
 - ICH **CTD/eCTD**; **Module 1 is the EU regional module** (cover letter, EU application form, SmPC/PIL/labelling, RMP, environmental risk assessment, QPPV/PSMF information). eCTD has been mandatory for centralised procedures since 2010.
-- Delivery is via the **eSubmission Gateway / Common European Submission Portal (CESP)**; the EMA **IRIS** portal handles orphan, scientific advice and certain procedures.
+- Delivery: centralised-procedure eCTD sequences go through the EMA **eSubmission Gateway / Web Client**; national, MRP and DCP submissions through the **Common European Submission Portal (CESP)**. Orphan designation, paediatric (PIP, waiver, compliance check), scientific advice and PRIME applications are not eCTD sequences: they go through EMA's **IRIS** platform.
 
 ### 6. Clinical trials
 - The **Clinical Trials Regulation (EU) No 536/2014** has applied since **31 January 2022** and replaced Directive 2001/20/EC. Trials are submitted and assessed through **CTIS** — a single application with a harmonised assessment across the chosen Member States. CTIS has been **mandatory for new trials since 31 January 2023**; legacy Directive trials had to transition by **31 January 2025**.

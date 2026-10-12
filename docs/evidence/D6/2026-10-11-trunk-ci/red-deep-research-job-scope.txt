@@ -1,0 +1,11 @@
+ × server/routes/__tests__/deep-research-job-scope.test.ts > GET /api/deep-research/jobs/:id/stream is scoped to one organisation > a request with no resolvable organisation is refused, and reads no job at all 24ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/deep-research-job-scope.test.ts > GET /api/deep-research/jobs/:id/stream is scoped to one organisation > control: with an organisation, another organisation's job id streams as not found 5ms
+ ✓ server/routes/__tests__/deep-research-job-scope.test.ts > GET /api/deep-research/jobs/:id keeps refusing without an organisation > is 400 and reads nothing (unchanged) 5ms
+ × server/routes/__tests__/deep-research-job-scope.test.ts > getJobStatus cannot be called without an organisation > refuses rather than reading every tenant: no statement runs 3ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/deep-research-job-scope.test.ts > GET /api/deep-research/jobs/:id/stream is scoped to one organisation > a request with no resolvable organisation is refused, and reads no job at all
+ FAIL  server/routes/__tests__/deep-research-job-scope.test.ts > getJobStatus cannot be called without an organisation > refuses rather than reading every tenant: no statement runs
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)

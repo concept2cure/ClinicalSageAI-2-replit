@@ -1878,89 +1878,138 @@ registerToolHandler('summarize_onboarding_readiness', async (_input, ctx) => {
   return readiness.summary;
 });
 
-// Search Device Adverse Events — live FDA MAUDE via openFDA passthrough.
-registerToolHandler('search_device_adverse_events', async (input) => {
-  const maxResults = Math.min((input.max_results as number) || 50, 100);
-  try {
-    const reports = await fdaMaudeClient.searchDeviceReports({
-      productCode: (input.product_code as string) || '',
-      deviceName: (input.device_name as string) || '',
-      manufacturer: (input.manufacturer as string) || '',
-      dateFrom: (input.date_from as string) || '',
-      dateTo: (input.date_to as string) || '',
-      limit: maxResults,
-    });
-    const analysis = fdaMaudeClient.analyzeMaudeData(reports);
-    const total = Number(analysis?.total_reports) || 0;
-    const subject = (input.device_name as string) || (input.product_code as string) || 'the device';
-    const provenance = [
-      buildProvenance({
-        sourceId: 'openfda',
-        citation: { title: `MAUDE device adverse-event signal for ${subject} (${total} reports)`, identifier: null, url: null },
-        query: subject,
-        confidence: total > 0 ? 'moderate' : null,
-        extraCaveats: [
-          'MAUDE is passive surveillance — reports are unverified, subject to reporting bias, and do not establish causality or rates.',
-        ],
-      }),
-    ];
-    return JSON.stringify({
-      source: 'FDA MAUDE (openFDA)',
-      summary: analysis,
-      sample: Array.isArray(reports) ? reports.slice(0, 15) : [],
-      provenance,
-    });
-  } catch (e) {
-    return JSON.stringify({
-      source: 'FDA MAUDE (openFDA)',
-      error: e instanceof Error ? e.message : 'MAUDE search failed',
-      summary: { total_reports: 0 },
-      sample: [],
-    });
-  }
-});
+// Search Device Adverse Events / Drug Adverse Events — live FDA MAUDE and
+// FAERS through the openFDA passthrough. One runner: the two registers differ
+// only in their client, their wording and which inputs name the subject.
+/**
+ * An openFDA register (FAERS, MAUDE) that could not be searched. Both handlers
+ * used to answer a failed request as a search that found nothing, "(0
+ * reports)", so AnA told the person a product had no reported adverse events
+ * when the register had not been reached. A failure carries no counts.
+ */
+function openFdaUnavailable(source: string, register: string, reason: string): string {
+  return JSON.stringify({
+    source,
+    status: 'unavailable',
+    error:
+      `${register} could not be searched (${reason}). No reports were retrieved, so this is not ` +
+      'a finding of zero adverse events: say the search could not run.',
+  });
+}
 
-// Search Drug Adverse Events — live FDA FAERS via openFDA passthrough.
-registerToolHandler('search_drug_adverse_events', async (input) => {
-  const maxResults = Math.min((input.max_results as number) || 50, 100);
+/** Whether an openFDA search names anything to search for; the clients return an empty result when it does not. */
+function hasOpenFdaCriteria(input: Record<string, unknown>, keys: readonly string[]): boolean {
+  return keys.some(k => typeof input[k] === 'string' && (input[k] as string).trim() !== '');
+}
+
+/** The first of `keys` the model filled, or `fallback` — what the citation calls the subject. */
+function openFdaSubject(input: Record<string, unknown>, keys: readonly string[], fallback: string): string {
+  for (const k of keys) {
+    const v = input[k];
+    if (typeof v === 'string' && v.trim()) return v;
+  }
+  return fallback;
+}
+
+interface OpenFdaRegister {
+  /** How the answer names the source, e.g. 'FDA FAERS (openFDA)'. */
+  source: string;
+  /** How a refusal names the register, e.g. 'FAERS'. */
+  register: string;
+  /** Inputs that name something to search for; none filled is a refusal, not a blank query. */
+  criteria: readonly string[];
+  /** The refusal when none is filled. */
+  needs: string;
+  /** Inputs that name the subject, best first, and what to call it when none is given. */
+  subjectKeys: readonly string[];
+  subjectFallback: string;
+  /** The citation's opening, e.g. 'FAERS adverse-event signal'. */
+  signal: string;
+  /** What the register's data cannot establish. */
+  caveat: string;
+  search: (input: Record<string, unknown>, limit: number) => Promise<any>;
+  analyze: (reports: any) => any;
+}
+
+async function runOpenFdaSearch(input: Record<string, unknown>, reg: OpenFdaRegister): Promise<string> {
+  if (!hasOpenFdaCriteria(input, reg.criteria)) {
+    return JSON.stringify({ source: reg.source, status: 'needs_parameters', message: reg.needs });
+  }
   try {
-    const reports = await fdaFaersClient.searchAdverseEvents({
-      productNdc: (input.product_ndc as string) || '',
-      productName: (input.product_name as string) || '',
-      manufacturer: (input.manufacturer as string) || '',
-      dateFrom: (input.date_from as string) || '',
-      dateTo: (input.date_to as string) || '',
-      limit: maxResults,
-    });
-    const analysis = fdaFaersClient.analyzeFaersData(reports);
+    const limit = Math.min((input.max_results as number) || 50, 100);
+    const reports = await reg.search(input, limit);
+    // A client may report a failed request in the body rather than throwing.
+    if (reports?.error) return openFdaUnavailable(reg.source, reg.register, String(reports.error));
+    const analysis = reg.analyze(reports);
     const total = Number(analysis?.total_reports) || 0;
-    const subject = (input.product_name as string) || (input.product_ndc as string) || 'the product';
-    const provenance = [
-      buildProvenance({
-        sourceId: 'openfda',
-        citation: { title: `FAERS adverse-event signal for ${subject} (${total} reports)`, identifier: null, url: null },
-        query: subject,
-        confidence: total > 0 ? 'moderate' : null,
-        extraCaveats: [
-          'FAERS is spontaneous reporting — counts have no denominator and do not establish causality, incidence, or rates.',
-        ],
-      }),
-    ];
+    const subject = openFdaSubject(input, reg.subjectKeys, reg.subjectFallback);
     return JSON.stringify({
-      source: 'FDA FAERS (openFDA)',
+      source: reg.source,
       summary: analysis,
       sample: Array.isArray(reports) ? reports.slice(0, 15) : [],
-      provenance,
+      provenance: [
+        buildProvenance({
+          sourceId: 'openfda',
+          citation: { title: `${reg.signal} for ${subject} (${total} reports)`, identifier: null, url: null },
+          query: subject,
+          confidence: total > 0 ? 'moderate' : null,
+          extraCaveats: [reg.caveat],
+        }),
+      ],
     });
   } catch (e) {
-    return JSON.stringify({
-      source: 'FDA FAERS (openFDA)',
-      error: e instanceof Error ? e.message : 'FAERS search failed',
-      summary: { total_reports: 0 },
-      sample: [],
-    });
+    return openFdaUnavailable(reg.source, reg.register, e instanceof Error ? e.message : 'the request failed');
   }
-});
+}
+
+const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+
+const MAUDE_REGISTER: OpenFdaRegister = {
+  source: 'FDA MAUDE (openFDA)',
+  register: 'MAUDE',
+  criteria: ['product_code', 'device_name', 'manufacturer', 'date_from', 'date_to'],
+  needs: 'Name a device (device_name or product_code), a manufacturer or a date range to search MAUDE.',
+  subjectKeys: ['device_name', 'product_code'],
+  subjectFallback: 'the device',
+  signal: 'MAUDE device adverse-event signal',
+  caveat:
+    'MAUDE is passive surveillance — reports are unverified, subject to reporting bias, and do not establish causality or rates.',
+  search: (input, limit) =>
+    fdaMaudeClient.searchDeviceReports({
+      productCode: str(input.product_code),
+      deviceName: str(input.device_name),
+      manufacturer: str(input.manufacturer),
+      dateFrom: str(input.date_from),
+      dateTo: str(input.date_to),
+      limit,
+    }),
+  analyze: reports => fdaMaudeClient.analyzeMaudeData(reports),
+};
+
+const FAERS_REGISTER: OpenFdaRegister = {
+  source: 'FDA FAERS (openFDA)',
+  register: 'FAERS',
+  criteria: ['product_ndc', 'product_name', 'manufacturer', 'date_from', 'date_to'],
+  needs: 'Name a product (product_name or product_ndc), a manufacturer or a date range to search FAERS.',
+  subjectKeys: ['product_name', 'product_ndc'],
+  subjectFallback: 'the product',
+  signal: 'FAERS adverse-event signal',
+  caveat:
+    'FAERS is spontaneous reporting — counts have no denominator and do not establish causality, incidence, or rates.',
+  search: (input, limit) =>
+    fdaFaersClient.searchAdverseEvents({
+      productNdc: str(input.product_ndc),
+      productName: str(input.product_name),
+      manufacturer: str(input.manufacturer),
+      dateFrom: str(input.date_from),
+      dateTo: str(input.date_to),
+      limit,
+    }),
+  analyze: reports => fdaFaersClient.analyzeFaersData(reports),
+};
+
+registerToolHandler('search_device_adverse_events', input => runOpenFdaSearch(input, MAUDE_REGISTER));
+registerToolHandler('search_drug_adverse_events', input => runOpenFdaSearch(input, FAERS_REGISTER));
 
 // Search Literature — live PubMed via the governed E-utilities client.
 registerToolHandler('search_literature', async (input) => {

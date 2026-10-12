@@ -50,14 +50,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { loadReadinessEnv, readinessEnvNotice } from './lib/readiness-env.mjs';
 import { Pool } from 'pg';
-import dotenv from 'dotenv';
 import { AUTHORING_SUBSYSTEM_TABLES, AUTHORING_SUBSYSTEM_FK_CONSTRAINTS } from '../db/authoring-subsystem.mjs';
-
-dotenv.config({ quiet: true });
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
+
+/* Was `dotenv.config({ quiet: true })`. This is the PILOT GO/NO-GO gate: the
+   environment it judges must be the one the pilot will actually open, not the
+   repository's gitignored development .env. The sibling dashboard made the
+   same call and reported the RLS enforcement BLOCKER green off a laptop
+   (see scripts/ops/lib/readiness-env.mjs). Opt-in and labelled now. */
+const readinessEnv = loadReadinessEnv({ repoRoot });
 
 const JWT_SECRET_MIN_LENGTH = 32; // mirrors server/config/environment.ts
 
@@ -602,6 +607,7 @@ function printHeader(db) {
   console.log('╚══════════════════════════════════════════════════════════════════════╝');
   console.log(`  Time:      ${new Date().toISOString()}`);
   console.log(`  NODE_ENV:  ${process.env.NODE_ENV || 'development'}`);
+  console.log(`  Env:       ${readinessEnvNotice(readinessEnv)}`);
   console.log(`  Database:  ${db.ok ? redactDbUrl(db.url) : `UNAVAILABLE — ${db.reason}`}`);
   console.log('');
 }

@@ -1,0 +1,12 @@
+Mutant G04-forced-end-unfinished: an answer the round limit forced to an end is refused as unfinished
+
+--- client/src/concept2cure/v2/editor/anaInsertGate.ts
+- turn.stoppedReason === 'cancelled' ||
++ turn.stoppedReason === 'cancelled' || turn.stoppedReason === 'max_rounds' ||
+
+Tests run: client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/editor/__tests__/anaInsertGate.test.ts > answerUnfinished > a finished answer, and one the loop forced to an end, is whole text (negative control) 6ms
+      Tests  1 failed | 10 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

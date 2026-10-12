@@ -19,6 +19,7 @@
  */
 import express from 'express';
 import request from 'supertest';
+import { runWithTenantScope } from '../../../../db/tenantStore.js';
 
 export type ToolUse = { id: string; name: string; input: Record<string, unknown> };
 /**
@@ -42,6 +43,13 @@ export interface GatewayRequestSeen {
   notesBetweenTools?: boolean;
   /** The messages, copied at the moment of the call. */
   messages: Array<{ role: string; content: unknown; inlineSystem?: boolean }>;
+  /** The names of the tools offered on this call (row 74, S5c). */
+  tools?: string[];
+  /** The run ids and risk the call carried — a sub-agent's own, and its parent's. */
+  runId?: string;
+  parentRunId?: string;
+  organizationId?: unknown;
+  riskTier?: string;
 }
 
 function freshState() {
@@ -58,6 +66,10 @@ function freshState() {
     statuses: [] as Array<string | null>,
     /** Once set, every status read returns this. */
     forced: null as string | null,
+    /** The options each governedToolsetFor call was given (row 74, S5c). */
+    governedOpts: [] as Array<Record<string, unknown> | undefined>,
+    /** Tool names the tenant denies: absent from the governed set. */
+    governedDenies: [] as string[],
     /** What the row does after holdForPerson moves it to paused (then the statuses above). */
     afterManualHold: null as Array<string | null> | null,
     holdForPersonCalls: 0,
@@ -132,6 +144,11 @@ const gateway = {
       thinking: req.thinking,
       notesBetweenTools: req.notesBetweenTools,
       messages: [...req.messages],
+      tools: Array.isArray(req.tools) ? req.tools.map((t: { name?: string }) => t.name) : undefined,
+      runId: req.runId,
+      parentRunId: req.parentRunId,
+      organizationId: req.organizationId,
+      riskTier: req.riskTier,
     });
     const requestId = state.requestIds[state.gatewayCalls - 1];
     const served = { model: 'm', provider: 'p', usage: {}, latencyMs: 1, ...(requestId ? { requestId } : {}) };
@@ -303,9 +320,16 @@ export const mocks = {
     },
   }),
   toolExecutor: () => ({ getToolHandler: (name: string) => handlers[name], servedModelOf }),
+  /* As the real one does: run_agent is offered only when the caller asks to
+     host agents, and a tenant's deny takes any tool out of the set. */
   governedToolset: () => ({
-    governedToolsetFor: async () =>
-      Object.keys(handlers).map(name => ({ name, description: name, input_schema: { type: 'object', properties: {} } })),
+    governedToolsetFor: async (_pool: unknown, _org: unknown, opts?: Record<string, unknown>) => {
+      state.governedOpts.push(opts);
+      return Object.keys(handlers)
+        .filter(name => name !== 'run_agent' || opts?.hostsSubAgents === true)
+        .filter(name => !state.governedDenies.includes(name))
+        .map(name => ({ name, description: name, input_schema: { type: 'object', properties: {} } }));
+    },
   }),
   runControl,
   orchestrator: () => ({ orchestrate: () => orchestrated }),
@@ -338,12 +362,23 @@ export const mocks = {
   anthropicFiles: () => ({ isPdfIntakeEnabled: () => false, readLocalUploadBuffer: async () => null }),
 };
 
-export const harness = { state, handlers };
+export const harness = { state, handlers, gateway };
 
-/** An app with the stream route mounted, signed in as `state.user` in org 7. */
-export function streamApp(mount: (router: express.Router) => void): express.Express {
+/**
+ * An app with the stream route mounted, signed in as `state.user` in org 7.
+ * `tenantScope` opts the request into a tenant scope, as the auth boundary
+ * opens one; without it nothing changes for the suites that came before.
+ */
+export function streamApp(
+  mount: (router: express.Router) => void,
+  options: { tenantScope?: string } = {},
+): express.Express {
   const app = express();
   app.use(express.json());
+  if (options.tenantScope) {
+    const tenantId = options.tenantScope;
+    app.use((_req, _res, next) => runWithTenantScope({ tenantId, source: 'test', caller: 'stream-harness' }, () => next()));
+  }
   app.use((req, _res, next) => {
     (req as any).tenantId = 7;
     (req as any).user = { ...state.user };

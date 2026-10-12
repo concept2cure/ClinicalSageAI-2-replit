@@ -1,0 +1,12 @@
+Mutant P03-toast-unnamed: the success toast does not name the section the text went into
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- `Inserted into ${activeSection.code} as tracked suggestions — review each edit in the editor, then save.`
++ 'Draft inserted as tracked suggestions — review each edit in the canvas, then save.'
+
+Tests run: client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/authoringAnaInsertGate.test.tsx > the pane’s insert follows the governed-write rule > an answer every model of which may write governed content is inserted, naming its turn (negative control) 5441ms
+      Tests  1 failed | 5 passed (6)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

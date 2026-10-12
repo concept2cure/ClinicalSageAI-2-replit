@@ -49,10 +49,18 @@ import {
   type StepTense,
 } from '@shared/ana/step-verbs';
 import { stepPresentationOf } from './tool-authorization.js';
+import { agentResultSummary } from './sub-agent-result.js';
 import { refusalOf } from './tool-trace.js';
 
-/** How a step ended, as the stream knows it. */
-export type StepStatus = 'success' | 'error' | 'not_found' | 'cancelled' | 'not_run';
+/**
+ * How a step ended, as the stream knows it.
+ *
+ * 'incomplete' is a sub-agent (`run_agent`) that stopped at one of its budgets
+ * — rounds, tokens or time (row 74, S5). What it found is usable, so it is
+ * neither a success nor a failure, and the model is not told to try something
+ * else. Only that tool produces it.
+ */
+export type StepStatus = 'success' | 'error' | 'not_found' | 'cancelled' | 'not_run' | 'incomplete';
 
 export interface StepOutcome {
   status: StepStatus;
@@ -327,7 +335,11 @@ export function finishedStep(
   outcome: StepOutcome & { why?: string },
 ) {
   const p = presentStep(call.name, call.input ?? {}, titles, outcome);
-  const message = stepMessage(outcome.status, outcome.heldBack === true, outcome.why, p.doing);
+  // An agent that stopped at a budget says which, in its own words: the
+  // sentence the live frame carries and the one a reopened turn reads come
+  // from the same summary, so the two can never describe the step differently.
+  const why = outcome.status === 'incomplete' && outcome.result ? agentResultSummary(outcome.result) : outcome.why;
+  const message = stepMessage(outcome.status, outcome.heldBack === true, why, p.doing);
   const usedModel = outcome.usedModel ?? null;
   const shown = { source: p.source, preview: p.preview, facts: p.facts, usedModel, ...(message ? { message } : {}) };
   return { label: p.label, doing: p.doing, message, frame: { label: p.label, ...shown }, trace: shown };
@@ -338,6 +350,11 @@ export function finishedStep(
  * step's doing-form label; the sentence reads correctly after the fact, so the
  * live transcript and a reopened record say the same thing. Null for a step
  * that succeeded: it needs no sentence.
+ *
+ * `why` is the run's reason for a held step, and for an agent that stopped at
+ * a budget it is that agent's one-line summary (finishedStep reads it from the
+ * result). An incomplete step is NOT reported as a failure: what it found
+ * stands, and the next round is not told to work around it.
  */
 export function stepMessage(
   status: StepStatus,
@@ -355,6 +372,7 @@ export function stepMessage(
   if (status === 'not_found') return `${Step} isn't available here, so AnA continued without it.`;
   if (status === 'cancelled') return `You stopped ${step} before it finished.`;
   if (status === 'not_run') return `${Step} did not run because the turn stopped first.`;
+  if (status === 'incomplete') return `The agent's result is incomplete: ${why ?? step}.`;
   return null;
 }
 

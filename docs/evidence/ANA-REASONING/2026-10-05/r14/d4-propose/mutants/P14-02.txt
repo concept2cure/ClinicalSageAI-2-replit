@@ -1,0 +1,7 @@
+mutant P14-02: the gate runs AFTER the section and liveness checks, so a wrong section hides the real reason
+verdict: KILLED
+Tests  1 failed | 5 passed (6)
+
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx > EditorBridge.propose — the governed-write rule, as insert applies it (round 14, SEC-A-7) > gives the model as the reason even when the section and the base are wrong too 103ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)

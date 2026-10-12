@@ -106,6 +106,18 @@ const SAVED_AGAIN_AT = '2026-10-01T09:30:00Z';
 let patched: string | null = null;
 const TURN = 'b2e7d9f0-1a3c-4b5d-9e8f-7a6b5c4d3e21';
 const ANA = { id: 'ana', name: 'AnA (AI draft)', sourceRecord: TURN };
+/* The AnA turn these redlines came from, and what RULE 2 says of the model
+   that served it. Required at this door since round 14: `propose` applies the
+   governed-write rule, so a redline of AnA's words with no record is refused
+   `model-not-approved` before the section or the base is looked at. The tests
+   below are about which section and which version of it, so they pass a turn
+   the rule admits; the rule itself is covered in its own describe above. */
+const ADMITS = {
+  status: 'recorded' as const,
+  id: TURN,
+  sha256: 'a'.repeat(64),
+  servedBy: [{ provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'pending' as const }],
+};
 
 const ok = (payload: unknown, status = 200) =>
   ({ ok: status < 400, status, json: async () => payload }) as Response;
@@ -221,6 +233,12 @@ describe('EditorBridge.insert — AnA\u2019s answer goes in only under the gover
     noRedline();
   });
 
+  it('refuses an AnA answer that did not finish, even one the rule admits (round 13)', async () => {
+    const bridge = await openBridge();
+    expect(bridge().insert(TEXT, ANA, { status: 'recorded', id: TURN, sha256: SHA, servedBy: [QUALIFIED] }, true)).toBe(false);
+    noRedline();
+  });
+
   it('inserts an AnA answer it admits, and a person\u2019s text is not its business (negative controls)', async () => {
     const bridge = await openBridge();
     expect(bridge().insert(TEXT, ANA, { status: 'recorded', id: TURN, sha256: SHA, servedBy: [QUALIFIED] })).toBe(true);
@@ -232,7 +250,7 @@ describe('EditorBridge.insert — AnA\u2019s answer goes in only under the gover
 describe('EditorBridge.propose — which section, and which version of it', () => {
   it('redlines the open section when the base hash is the section as loaded', async () => {
     const bridge = await openBridge();
-    await expect(bridge().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA)).resolves.toEqual({ ok: true });
+    await expect(bridge().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, ADMITS)).resolves.toEqual({ ok: true });
     const del = document.querySelector('.dcv-workbench del[data-author-id="ana"]');
     const ins = document.querySelector('.dcv-workbench ins[data-author-id="ana"]');
     expect(del?.textContent).toBe('18 months');
@@ -244,7 +262,7 @@ describe('EditorBridge.propose — which section, and which version of it', () =
     const bridge = await openBridge();
     // The same instant written with milliseconds is the same base.
     await expect(
-      bridge().propose({ ...PROPOSAL, baseUpdatedAt: '2026-09-30T12:00:00.000Z' }, ANA),
+      bridge().propose({ ...PROPOSAL, baseUpdatedAt: '2026-09-30T12:00:00.000Z' }, ANA, ADMITS),
     ).resolves.toEqual({ ok: true });
     expect(document.querySelector('.dcv-workbench del[data-author-id="ana"]')?.textContent).toBe('18 months');
   });
@@ -252,7 +270,7 @@ describe('EditorBridge.propose — which section, and which version of it', () =
   it('refuses stale when the hash AnA read is not the stored content, and changes nothing', async () => {
     const bridge = await openBridge();
     await expect(
-      bridge().propose({ ...PROPOSAL, baseSha256: sha256('<p>An older text.</p>') }, ANA),
+      bridge().propose({ ...PROPOSAL, baseSha256: sha256('<p>An older text.</p>') }, ANA, ADMITS),
     ).resolves.toEqual({ ok: false, reason: 'stale' });
     noRedline();
   });
@@ -260,7 +278,7 @@ describe('EditorBridge.propose — which section, and which version of it', () =
   it('refuses stale when the section was saved after AnA read it, and changes nothing', async () => {
     const bridge = await openBridge();
     await expect(
-      bridge().propose({ ...PROPOSAL, baseUpdatedAt: '2026-09-29T08:00:00Z' }, ANA),
+      bridge().propose({ ...PROPOSAL, baseUpdatedAt: '2026-09-29T08:00:00Z' }, ANA, ADMITS),
     ).resolves.toEqual({ ok: false, reason: 'stale' });
     noRedline();
   });
@@ -268,19 +286,19 @@ describe('EditorBridge.propose — which section, and which version of it', () =
   it('refuses stale when either of two bases differs', async () => {
     const bridge = await openBridge();
     await expect(
-      bridge().propose({ ...PROPOSAL, baseSha256: STORED_SHA, baseUpdatedAt: '2026-09-29T08:00:00Z' }, ANA),
+      bridge().propose({ ...PROPOSAL, baseSha256: STORED_SHA, baseUpdatedAt: '2026-09-29T08:00:00Z' }, ANA, ADMITS),
     ).resolves.toEqual({ ok: false, reason: 'stale' });
     await expect(
-      bridge().propose({ ...PROPOSAL, baseSha256: sha256('other'), baseUpdatedAt: SAVED_AT }, ANA),
+      bridge().propose({ ...PROPOSAL, baseSha256: sha256('other'), baseUpdatedAt: SAVED_AT }, ANA, ADMITS),
     ).resolves.toEqual({ ok: false, reason: 'stale' });
     noRedline();
   });
 
   it('refuses no-base when the proposal names no version of the section', async () => {
     const bridge = await openBridge();
-    await expect(bridge().propose({ ...PROPOSAL }, ANA)).resolves.toEqual({ ok: false, reason: 'no-base' });
+    await expect(bridge().propose({ ...PROPOSAL }, ANA, ADMITS)).resolves.toEqual({ ok: false, reason: 'no-base' });
     await expect(
-      bridge().propose({ ...PROPOSAL, baseSha256: '', baseUpdatedAt: null }, ANA),
+      bridge().propose({ ...PROPOSAL, baseSha256: '', baseUpdatedAt: null }, ANA, ADMITS),
     ).resolves.toEqual({ ok: false, reason: 'no-base' });
     noRedline();
   });
@@ -288,7 +306,7 @@ describe('EditorBridge.propose — which section, and which version of it', () =
   it('refuses wrong-section when the proposal is for a section that is not open', async () => {
     const bridge = await openBridge();
     await expect(
-      bridge().propose({ ...PROPOSAL, sectionId: 'S2', baseSha256: STORED_SHA }, ANA),
+      bridge().propose({ ...PROPOSAL, sectionId: 'S2', baseSha256: STORED_SHA }, ANA, ADMITS),
     ).resolves.toEqual({ ok: false, reason: 'wrong-section' });
     noRedline();
   });
@@ -296,7 +314,7 @@ describe('EditorBridge.propose — which section, and which version of it', () =
   it('passes the editor’s own refusal through, and keeps the existing fields', async () => {
     const bridge = await openBridge();
     await expect(
-      bridge().propose({ ...PROPOSAL, quote: '36 months', baseSha256: STORED_SHA }, ANA),
+      bridge().propose({ ...PROPOSAL, quote: '36 months', baseSha256: STORED_SHA }, ANA, ADMITS),
     ).resolves.toEqual({ ok: false, reason: 'not-found' });
     expect(bridge()).toMatchObject({ docId: DOC, sectionCode: '3.2.P.8.1', editable: true });
     expect(typeof bridge().insert).toBe('function');
@@ -311,12 +329,12 @@ describe('EditorBridge.propose — text the editor cannot strike', () => {
     mockApi('DRAFT', withCode);
     const bridge = await openBridge();
     await expect(
-      bridge().propose({ sectionId: 'S1', quote: 'batch_id', replacement: 'lot_id', baseSha256: sha256(withCode) }, ANA),
+      bridge().propose({ sectionId: 'S1', quote: 'batch_id', replacement: 'lot_id', baseSha256: sha256(withCode) }, ANA, ADMITS),
     ).resolves.toEqual({ ok: false, reason: 'unsupported-content' });
     noRedline();
     // The plain words beside it still take a proposal.
     await expect(
-      bridge().propose({ ...PROPOSAL, baseSha256: sha256(withCode) }, ANA),
+      bridge().propose({ ...PROPOSAL, baseSha256: sha256(withCode) }, ANA, ADMITS),
     ).resolves.toEqual({ ok: true });
   });
 });
@@ -325,7 +343,7 @@ describe('EditorBridge.propose — after a save', () => {
   it('a base read before the save is stale after it, through the old bridge and the new one', async () => {
     const bridge = await openBridge();
     const before = bridge();
-    await expect(before.propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA)).resolves.toEqual({ ok: true });
+    await expect(before.propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, ADMITS)).resolves.toEqual({ ok: true });
 
     // Save the redlined section the way the person does: a reason, then Save.
     fireEvent.change(await screen.findByTestId('change-reason'), {
@@ -340,22 +358,22 @@ describe('EditorBridge.propose — after a save', () => {
 
     const proposal = { sectionId: 'S1', quote: '25 °C', replacement: '30 °C' };
     // The bridge handed out before the save names a section that is no longer the record.
-    await expect(before.propose({ ...proposal, baseSha256: STORED_SHA }, ANA)).resolves.toEqual({
+    await expect(before.propose({ ...proposal, baseSha256: STORED_SHA }, ANA, ADMITS)).resolves.toEqual({
       ok: false,
       reason: 'stale',
     });
     // The new one refuses the old bases, by hash and by updated_at…
-    await expect(bridge().propose({ ...proposal, baseSha256: STORED_SHA }, ANA)).resolves.toEqual({
+    await expect(bridge().propose({ ...proposal, baseSha256: STORED_SHA }, ANA, ADMITS)).resolves.toEqual({
       ok: false,
       reason: 'stale',
     });
-    await expect(bridge().propose({ ...proposal, baseUpdatedAt: SAVED_AT }, ANA)).resolves.toEqual({
+    await expect(bridge().propose({ ...proposal, baseUpdatedAt: SAVED_AT }, ANA, ADMITS)).resolves.toEqual({
       ok: false,
       reason: 'stale',
     });
     // …and takes the bases of what was saved.
     await expect(
-      bridge().propose({ ...proposal, baseSha256: sha256(patched!), baseUpdatedAt: SAVED_AGAIN_AT }, ANA),
+      bridge().propose({ ...proposal, baseSha256: sha256(patched!), baseUpdatedAt: SAVED_AGAIN_AT }, ANA, ADMITS),
     ).resolves.toEqual({ ok: true });
   });
 });
@@ -365,7 +383,7 @@ describe('EditorBridge.propose — a sealed document', () => {
     mockApi('FROZEN');
     const bridge = await openBridge();
     expect(bridge().editable).toBe(false);
-    await expect(bridge().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA)).resolves.toEqual({
+    await expect(bridge().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, ADMITS)).resolves.toEqual({
       ok: false,
       reason: 'not-editable',
     });
@@ -376,13 +394,13 @@ describe('EditorBridge.propose — a sealed document', () => {
     stub.on = true;
     // The control: an open document reaches the (always-editable) editor.
     const open = await openBridge();
-    await expect(open().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA)).resolves.toEqual({ ok: true });
+    await expect(open().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, ADMITS)).resolves.toEqual({ ok: true });
     expect(stub.calls).toBe(1);
     cleanup();
 
     mockApi('FROZEN');
     const sealed = await openBridge();
-    await expect(sealed().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA)).resolves.toEqual({
+    await expect(sealed().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, ADMITS)).resolves.toEqual({
       ok: false,
       reason: 'not-editable',
     });

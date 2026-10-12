@@ -23,6 +23,7 @@ import { MIRROR_TRUNCATED_SEQ, readTimelineEvent, type TimelineControl } from '@
 import { isAnaRunPolicy } from '@shared/ana/run-policy';
 import type { AnaRunPolicy } from '@shared/ana/run-control-limits';
 import { getAuthHeaders } from '../../../utils/authToken';
+import { serverMessage } from '@/lib/queryClient';
 import { readPlanSteps, readTurnRecord } from './anaProgress';
 import type { AnaChatMessage, AnaFollow, AnaPlanStep, AnaTurnRecordStatus } from './useAnaChat.types';
 
@@ -211,7 +212,12 @@ export async function pollRun(
     });
     const body = await res.json().catch(() => null);
     if (res.status === 403) {
-      const message = typeof body?.error === 'string' && body.error ? body.error : "You don't have access to this conversation's live progress.";
+      /* Through the one canonical reader (ci:error-envelope). Reading the
+         envelope's error field by hand skips the two filters serverMessage
+         applies — isErrorCode and looksInternal — so an enum token or a stack
+         line reaches the panel as the reason the viewer is being refused. */
+      const message =
+        serverMessage(body) ?? "You don't have access to this conversation's live progress.";
       return { ok: false, kind: 'forbidden', message };
     }
     if (res.status === 404) return { ok: false, kind: 'gone' };

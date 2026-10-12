@@ -40,7 +40,7 @@ test('plain-node readiness rejects two header-only PASS claims through the canon
   const dir = mkdtempSync(path.join(os.tmpdir(), 'pq-readiness-'));
   try {
     const copy = relative => { const target = path.join(dir, relative); mkdirSync(path.dirname(target), { recursive: true }); copyFileSync(path.join(root, relative), target); };
-    for (const relative of ['scripts/ops/ga-readiness-report.mjs', 'scripts/ops/lib/pq-claim-verification.mjs', 'scripts/ops/verify-pq-claims.ts',
+    for (const relative of ['scripts/ops/ga-readiness-report.mjs', 'scripts/ops/lib/pq-claim-verification.mjs', 'scripts/ops/lib/readiness-env.mjs', 'scripts/ops/verify-pq-claims.ts',
       'server/eval/pq/pq-verdict.ts', 'server/eval/pq/verify-pq-record.ts', 'server/eval/pq/output-integrity.ts', 'server/eval/pq/pq-protocol.json',
       'server/eval/doc-quality/gold-tasks.json', 'server/eval/rag/gold-dataset.json', 'server/eval/rag/guidance-corpus-manifest.json']) copy(relative);
     // Isolated authoritative fixture, never a modification to the live registry.

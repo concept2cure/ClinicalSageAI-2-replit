@@ -14,6 +14,7 @@ import { composeProjectModule3, persistComposedSection } from '../cmc/module3-co
 import { bridgeCompileToArtifact, classifyAndMapArtifactToSource, getModule3BuildStatus } from '../module3-convergence-service';
 import { detectContradictions, deriveImpactTasks } from '../cmc-impact-contradiction-engine';
 import { readContradictionRegisters } from '../cmc/contradiction-registers';
+import { NO_CANONICAL_SOURCES_REMEDY } from '../cmc/link-to-module3';
 import { evaluateFinalExportGate, type FinalExportGateVerdict } from '../cmc/final-export-gate';
 
 interface CommandContext {
@@ -56,7 +57,7 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
          which is the fabricated readiness this codebase forbids. The
          single-section path (module3BuildSection) already refuses on the same
          condition; this is the same answer in the same words. */
-      return { success: false, action: 'module3_build_all', message: 'No canonical source objects for this project — nothing to build from. Upload and classify source documents first.' };
+      return { success: false, action: 'module3_build_all', message: `No canonical source objects for this project — nothing to build from. ${NO_CANONICAL_SOURCES_REMEDY}` };
     }
 
     for (const section of compiled) {
@@ -139,7 +140,7 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
     const { sources, sections: allComposed } = await composeProjectModule3(client, orgId, projectId);
     if (sources.length === 0) {
       await client.query('ROLLBACK');
-      return { success: false, action: 'module3_build_section', message: 'No canonical source objects for this project — nothing to build from. Upload and classify source documents first.' };
+      return { success: false, action: 'module3_build_section', message: `No canonical source objects for this project — nothing to build from. ${NO_CANONICAL_SOURCES_REMEDY}` };
     }
     section = allComposed.find(s => s.sectionKey === sectionKey);
     if (!section) {

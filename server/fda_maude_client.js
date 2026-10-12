@@ -203,8 +203,11 @@ export async function searchDeviceReports({
   } catch (error) {
     console.error('Error searching FDA MAUDE:', error.message);
 
-    // Return an empty array with error information
-    return [];
+    // A failed search is not an empty one. This returned [] with no error,
+    // so every caller read an unreachable MAUDE as "no reports for this
+    // device". Callers catch it: AnA's tool says the search could not run,
+    // and data_integration.js leaves the source out.
+    throw error;
   }
 }
 

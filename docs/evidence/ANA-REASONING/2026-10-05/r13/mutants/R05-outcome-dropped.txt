@@ -1,0 +1,12 @@
+Mutant R05-outcome-dropped: a turn that stopped or failed is not said to have done so
+
+--- client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+- const outcome = typeof s.outcome === 'string' && s.outcome !== 'answered' ? ` That turn ended: ${s.outcome}.` : '';
++ const outcome = '';
+
+Tests run: client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/trackedChangeDecisions.test.ts > describeAuditSource — the AnA turn a decided change came from > a turn that did not answer says so: the rail holds what the gate could only guess at 6ms
+      Tests  1 failed | 34 passed (35)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,52 @@
+ ✓ server/services/cmc/__tests__/contradiction-lifecycle.pglite.test.ts > a re-run of the sweep keeps what people decided > a resolved finding detected again stays resolved 14ms
+ ✓ server/services/cmc/__tests__/contradiction-lifecycle.pglite.test.ts > a re-run of the sweep keeps what people decided > an open finding detected again stays open, once 7ms
+ ✓ server/services/cmc/__tests__/contradiction-lifecycle.pglite.test.ts > a re-run of the sweep keeps what people decided > changed data is a new finding; the resolution does not carry over to it 6ms
+ ✓ server/services/cmc/__tests__/contradiction-lifecycle.pglite.test.ts > a re-run of the sweep keeps what people decided > an open finding the data no longer shows is cleared; another program is untouched 8ms
+ ✓ server/services/cmc/__tests__/contradiction-lifecycle.pglite.test.ts > resolving a finding is a governed act > records the status, the provenance and a chained audit row, under the person who resolved it 11ms
+ ✓ server/services/cmc/__tests__/contradiction-lifecycle.pglite.test.ts > resolving a finding is a governed act > refuses a resolution with no stated reason, and changes nothing 5ms
+ ✓ server/services/cmc/__tests__/contradiction-lifecycle.pglite.test.ts > resolving a finding is a governed act > refuses a critical finding to a resolver without signing authority, and changes nothing 6ms
+ ✓ server/services/cmc/__tests__/contradiction-lifecycle.pglite.test.ts > resolving a finding is a governed act > refuses one already resolved, and another organisation’s 9ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveSignature.test.ts > Module 3 section approval: who may sign, and with what meaning > refuses a signer without signing authority before the password and before any SQL (§11.10(g)) 34ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveSignature.test.ts > Module 3 section approval: who may sign, and with what meaning > refuses an undeclared signature meaning before the password and before any write 6ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveSignature.test.ts > Module 3 section approval: what is signed is current, and is what is filed > freezes the narrative that is filed into the approved version, so the signature covers it 7ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveSignature.test.ts > Module 3 section approval: what is signed is current, and is what is filed > refuses to approve a stale section — 409, rolled back, the stale flag left standing 5ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveSignature.test.ts > drift from the sources: refused at approval and at export > refuses to approve a section whose lineage has drifted from its sources, whoever changed them 5ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveSignature.test.ts > drift from the sources: refused at approval and at export > blocks final export when an approved section drifted from its sources without anyone setting stale 5ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveSignature.test.ts > evidence from the Vault: refused at approval when the linked version was superseded > refuses to approve a section that read a record whose Vault document was since superseded 4ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: the reason is the signer’s > refuses an approval with no stated reason — before the password, before any SQL 39ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: the reason is the signer’s > records exactly the reason the signer stated 5ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: what it depends on is read inside the transaction > locks the section, then reads the blocking contradictions, after BEGIN 5ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: what it depends on is read inside the transaction > refuses when the section was recompiled after the signer read it, and signs nothing 4ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: what it depends on is read inside the transaction > guards the state flip on the hash it read 4ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: the idempotency key is the organisation’s > namespaces the key by organisation on the ledger 3ms
+ ✓ server/api/cmc/__tests__/module3SectionApproveIntegrity.test.ts > section approval: the idempotency key is the organisation’s > a retry with the same key replays the approval it made, and signs nothing new 5ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > returns readiness snapshot from canonical section/contradiction data 21ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > returns section provenance feed 5ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > section approve fails closed with 401 when re-authentication fails — before any DB write 12ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > section approve proceeds past the re-auth gate on success (then honors the contradiction block) 5ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > approves a section atomically and records a hash-chained governed action (§11) 7ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > refuses to approve a section whose own compiled record is incomplete — 409, rolled back, nothing written 4ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > refuses to approve a section that was never scored by the compiler (no completeness at all) 5ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > GET /sections reports each section's compiled completeness and missing inputs 4ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > blocks final export when not all sections approved and critical contradictions open 5ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > blocks final export when an approved section went stale afterwards (isStale gate) 3ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > blocks final export when a section has no recorded source lineage 3ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > readiness is not export-ready when a section has no recorded source lineage 2ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > readiness does not report export-ready when the governed state could not be evaluated 2ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > blocks final export when an approved section compiled incomplete, and names it 3ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > readiness is not export-ready when an approved section compiled incomplete 3ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > GET /sections/:projectId/:sectionKey — what a signature is actually over > serves the narrative, the tables and the markdown that will be filed 3ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > GET /sections/:projectId/:sectionKey — what a signature is actually over > says the tables are UNKNOWN for a row compiled before they were stored 2ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > GET /sections/:projectId/:sectionKey — what a signature is actually over > flags a source that changed since the section was compiled 3ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > GET /sections/:projectId/:sectionKey — what a signature is actually over > 404s a section that was never compiled instead of serving an empty document 2ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > POST /sections/:projectId/:sectionKey/refresh — the record is the composer's, never the body's > ignores a body that claims completeness, writes the composed record, rewrites lineage, records the refresh 10ms
+ ✓ server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts > module3OperatingSystemRoutes > POST /sections/:projectId/:sectionKey/refresh — the record is the composer's, never the body's > refuses to refresh a project with no canonical sources rather than writing an empty section 3ms
+ ✓ server/api/cmc/__tests__/module3GovernedActs.test.ts > placing Module 3 into the IND is a governed act > refuses a viewer before anything is placed 26ms
+ ✓ server/api/cmc/__tests__/module3GovernedActs.test.ts > placing Module 3 into the IND is a governed act > refuses a placement with no stated reason, naming the field 19ms
+ ✓ server/api/cmc/__tests__/module3GovernedActs.test.ts > placing Module 3 into the IND is a governed act > places for an author with a reason, and carries the reason to every leaf 5ms
+ ✓ server/api/cmc/__tests__/module3GovernedActs.test.ts > resolving a contradiction is a governed act > refuses a viewer before anything is resolved 3ms
+ ✓ server/api/cmc/__tests__/module3GovernedActs.test.ts > resolving a contradiction is a governed act > resolves for a member, under their own id, with their note — and says whether they may sign 3ms
+ ✓ server/api/cmc/__tests__/module3GovernedActs.test.ts > resolving a contradiction is a governed act > passes signing authority for a role that holds it (the service requires it for a critical finding) 5ms
+ ✓ server/api/cmc/__tests__/module3GovernedActs.test.ts > resolving a contradiction is a governed act > answers the service’s refusal with its own status and sentence 7ms
+ Test Files  5 passed (5)
+      Tests  50 passed (50)
