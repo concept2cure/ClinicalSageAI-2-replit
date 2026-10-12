@@ -193,7 +193,14 @@ export interface FlowDefinition {
   name: string;
   description: string;
   /** Which client types this flow applies to. Empty = all. */
-  clientTypes: Array<'pharma' | 'biotech' | 'medtech'>;
+  /**
+   * Who the flow is for. 'ivd' is its own value: a diagnostics programme files
+   * 510(k)s and PMAs like a device but classifies and performs like an assay,
+   * and before this it had no value at all — so it was coerced to 'pharma' and
+   * the device flows became unavailable to it (founder's directive, 2026-10-12).
+   * An empty array means no restriction.
+   */
+  clientTypes: Array<'pharma' | 'biotech' | 'medtech' | 'ivd'>;
   /** Starting node id. */
   entryNode: string;
   /** All question nodes in this flow. */
