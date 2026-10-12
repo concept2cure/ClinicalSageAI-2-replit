@@ -63,6 +63,7 @@ import {
   usRegionalHeadingPlacement,
 } from '../ectd/controlled-vocab';
 import { generateStfFiles, type StfLeaf, type StfStudyMeta } from '../ectd/stf-generator';
+import { auditStfCoverage } from '../ectd/ectd4-validator';
 import {
   resolveCrossReferences,
   xrefRequiredFromEnv,
@@ -912,6 +913,38 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   const region = input.region;
   const backboneFileByRegion = REGIONAL_BACKBONE_BY_REGION;
 
+  /* FDA eCTD validation 1789 — every file in a Module 4/5 study section (all
+     but 4.3, 5.2, 5.3.6 and 5.4) must be referenced by a Study Tagging File,
+     so it needs a study id and an STF file-tag. Checked before any byte is
+     read, by the one coverage check (auditStfCoverage, ectd4-validator.ts).
+     A US sequence that breaks it is refused, naming every such file; another
+     region packages and the count is carried on bundle.stf.untagged.
+     2026-10-05 (g-stf-1789-fail-closed): the STF pass below kept only leaves
+     that already had both, so an untagged study report shipped with no STF,
+     `untagged` was always 0 and nothing reported the rejection FDA would
+     issue. */
+  const stfUncovered = input.leaves.flatMap((leaf) =>
+    auditStfCoverage(
+      [{
+        section: leaf.ctdSection, title: `${leaf.title} [${leaf.fileName}]`, operation: leaf.operation,
+        studyId: leaf.studyId, stfFileTag: leaf.stfFileTag,
+      }],
+      { region, fileTagModelled: true },
+    ).map((finding) => ({ leaf, finding })),
+  );
+  const stfRefusals = stfUncovered.filter((u) => u.finding.severity === 'error');
+  if (stfRefusals.length > 0) {
+    throw new ValidationError(
+      `FDA validation 1789 (technical rejection): ${stfRefusals.length} file(s) in Module 4/5 study sections ` +
+        `would be referenced by no Study Tagging File — ` +
+        stfRefusals.map((u) => `${u.leaf.fileName} (section ${u.leaf.ctdSection}, no ${u.finding.code === 'STF_MISSING_FILE_TAG' ? 'file-tag' : 'study id'})`).join('; ') +
+        `. Give each its study id and STF file-tag, or file it under 4.3, 5.2, 5.3.6 or 5.4 if that is where it belongs.`,
+      stfRefusals.map((u) => ({
+        ruleId: 'FDA-TRC-1789', severity: 'error', filePath: u.leaf.fileName, message: u.finding.message,
+      })),
+    );
+  }
+
   const zip = new JSZip();
   const checksums: ChecksumEntry[] = [];
   const grades: LeafGradeRecord[] = [];
@@ -1087,7 +1120,11 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
      and pointed at the PDFs relative to the study folder; the name and the
      doc-content -> index.xml#ID shape now come from stf-generator.ts. */
   const stfSyntheticLeaves: EctdLeaf[] = [];
-  let stfSummary: { studies: number; leaves: number; untagged: number } | undefined;
+  /* `untagged` is the 1789 coverage gap found above (stfUncovered): zero for a
+     US sequence, which is refused otherwise; for another region the files that
+     package with no STF. Absent when the sequence has no study files at all. */
+  let stfSummary: { studies: number; leaves: number; untagged: number } | undefined =
+    stfUncovered.length > 0 ? { studies: 0, leaves: 0, untagged: stfUncovered.length } : undefined;
   {
     const studyPrepared = prepared.filter(
       (p) => p.leaf.studyId && p.leaf.stfFileTag && !isModule1Section(p.leaf.ctdSection),
@@ -1125,7 +1162,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
         }
       }
       const stfResult = generateStfFiles(stfLeaves, input.studyMeta ?? []);
-      stfSummary = stfResult.summary;
+      stfSummary = { studies: stfResult.summary.studies, leaves: stfResult.summary.leaves, untagged: stfUncovered.length };
       for (const file of stfResult.files) {
         const folder = studyFolder.get(file.studyId)!;
         const relPath = `${folder}/${file.fileName}`;

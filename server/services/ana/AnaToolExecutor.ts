@@ -9223,6 +9223,13 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
         ...(typeof l.modified_file === 'string' && l.modified_file.trim()
           ? { modifiedFile: l.modified_file.trim() }
           : {}),
+        /* The study and the STF file-tag, carried as given. FDA validation 1789
+           refuses a Module 4/5 study file that no Study Tagging File references,
+           and the packager refuses the sequence; these are what satisfy it.
+           Nothing here infers either — an absent one stays absent, so the
+           refusal names the file instead of a guess being tagged. */
+        ...(typeof l.study_id === 'string' && l.study_id.trim() ? { studyId: l.study_id.trim() } : {}),
+        ...(typeof l.stf_file_tag === 'string' && l.stf_file_tag.trim() ? { stfFileTag: l.stf_file_tag.trim() } : {}),
       })),
       outputDir,
     });

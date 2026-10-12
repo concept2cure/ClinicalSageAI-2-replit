@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T12:08:49.304Z",
+  "generatedAt": "2026-10-12T13:47:52.733Z",
   "git": {
-    "sha": "122d9ecb84160ce492512ca31bfa51f575a81fef",
+    "sha": "5c18e32f0b479a7cf76bc319152e387b40701b78",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2089,7 +2089,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1133531
+        "bytes": 1134141
       },
       {
         "file": "shared/schema.ts",
@@ -2101,7 +2101,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 375426
+        "bytes": 385994
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2109,7 +2109,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 294863
+        "bytes": 306419
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2172,12 +2172,12 @@
         "bytes": 137175
       },
       {
-        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
-        "bytes": 136488
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "bytes": 137164
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 135450
+        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
+        "bytes": 136488
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2256,8 +2256,12 @@
         "bytes": 112018
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "bytes": 110977
+      },
+      {
         "file": "server/routes/auth.ts",
-        "bytes": 110747
+        "bytes": 110807
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
@@ -2282,10 +2286,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 107943
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "bytes": 107561
       },
       {
         "file": "server/routes/c2c/projects.ts",
@@ -2319,7 +2319,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21826
+        "lines": 21833
       },
       {
         "file": "shared/schema.ts",
@@ -2327,11 +2327,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8265
+        "lines": 8473
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6203
+        "lines": 6413
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2419,11 +2419,11 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 2889
+        "lines": 2890
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2878
+        "lines": 2889
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2554,6 +2554,10 @@
         "lines": 2068
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "lines": 2060
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
         "lines": 2057
       },
@@ -2590,12 +2594,12 @@
         "lines": 2001
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "lines": 2000
-      },
-      {
         "file": "server/routes/ectd-compile.ts",
         "lines": 1989
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+        "lines": 1942
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
@@ -2612,10 +2616,6 @@
       {
         "file": "server/routes/regulatory-digital-twin.ts",
         "lines": 1898
-      },
-      {
-        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
-        "lines": 1889
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",

@@ -5,7 +5,7 @@
  * covering organization and project identity, product and regulatory
  * scope, team and roles, and initial configuration.
  *
- * 11 nodes · 48 fields · 4 sections · 6 issue checks
+ * 12 nodes · 49 fields · 4 sections · 6 issue checks
  *
  * @module server/services/ana/intelligence-questions/flows/project-setup
  */
@@ -52,6 +52,7 @@ export function createProjectSetupFlow(): FlowDefinition {
         nodeIds: [
           'product_details',
           'regulatory_targets',
+          'submission_route',
           'device_classification',
           'medtech_regulatory',
           'multi_country_setup',
@@ -264,6 +265,9 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'vaccine', label: 'Vaccine' },
               { value: 'peptide', label: 'Peptide' },
               { value: 'oligonucleotide', label: 'Oligonucleotide' },
+              /* The frame reasons about therapeutic proteins (CDER, licensed
+                 as biologics, ICH Q5/Q6B) and nothing here could say so. */
+              { value: 'protein', label: 'Therapeutic Protein' },
               { value: 'biosimilar', label: 'Biosimilar' },
               { value: 'medical_device', label: 'Medical Device' },
               { value: 'combination_product', label: 'Drug-Device Combination' },
@@ -335,30 +339,6 @@ export function createProjectSetupFlow(): FlowDefinition {
             allowOther: { prompt: 'Which agency, in your own words?' },
           },
           {
-            id: 'submission_type',
-            /* A device or diagnostics project is asked its route by
-               `device_submission_pathway`, from the governed catalogue. This
-               list is the medicines one; showing both asked the same question
-               twice, in two vocabularies. */
-            visibleWhen: { field: 'product_type', operator: 'not_in', value: ['medical_device', 'diagnostic'] },
-            label: 'Primary Submission Type',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'ind', label: 'IND (Investigational New Drug)' },
-              { value: 'nda', label: 'NDA (New Drug Application)' },
-              { value: 'bla', label: 'BLA (Biologics License Application)' },
-              { value: 'anda', label: 'ANDA (Abbreviated New Drug Application)' },
-              { value: '510k', label: '510(k) Premarket Notification' },
-              { value: 'pma', label: 'PMA (Premarket Approval)' },
-              { value: 'de_novo', label: 'De Novo Classification Request' },
-              { value: 'maa', label: 'MAA (Marketing Authorization Application — EU)' },
-              { value: 'cta', label: 'CTA (Clinical Trial Application — EU/UK)' },
-              { value: 'jnda', label: 'JNDA (Japan New Drug Application)' },
-            ],
-            allowOther: {},
-          },
-          {
             id: 'multi_country_submission',
             label: 'Is This a Multi-Country Submission?',
             type: 'yes_no',
@@ -400,12 +380,42 @@ export function createProjectSetupFlow(): FlowDefinition {
             when: { field: 'product_type', operator: 'in', value: ['medical_device', 'diagnostic'] },
             goto: 'device_classification',
           },
+        ],
+        defaultNext: 'submission_route',
+      },
+
+      /* The route is asked AFTER the agency, and in its own question, for the
+         same reason the device classification is: the routes that exist
+         depend on the regulator, so a list drawn beside the agency question
+         could not know which regulator it belonged to — and a person who
+         chose EMA would have had to pick from FDA's routes to get past a
+         required field (founder's directive, 2026-10-12). */
+      {
+        id: 'submission_route',
+        section: 'product_regulatory',
+        question: 'Which application are you making?',
+        guidance:
+          'The application decides what evidence you owe and whose data you may rely on. These positions are the platform’s own filing registry, annotated with what taking each one commits the programme to and the authority behind it, and narrowed to what the modality frame allows this product — so a monoclonal antibody is offered a biologics licence and not an NDA, and a small molecule is offered 505(b)(1), 505(b)(2) and the ANDA route in the frame’s own order.',
+        fields: [
           {
-            when: { field: 'multi_country_submission', operator: 'eq', value: true },
-            goto: 'multi_country_setup',
+            id: 'submission_type',
+            /* A device or diagnostics project is asked its route by
+               `device_submission_pathway`, from the same governed catalogue.
+               Showing both asked one question twice, in two vocabularies. */
+            visibleWhen: { field: 'product_type', operator: 'not_in', value: ['medical_device', 'diagnostic'] },
+            label: 'Primary Submission Type',
+            type: 'select',
+            required: true,
+            /* No list here either. This was ten hand-written labels — FDA and
+               EU filings mixed, two of them device routes, none saying what it
+               commits the programme to and none carrying an authority — while
+               the governed catalogue held every one of those positions and the
+               modality frame already knew which apply (founder's directive,
+               2026-10-12). */
+            optionsFrom: 'medicine_pathway_positions',
+            allowOther: {},
           },
         ],
-        defaultNext: 'team_assignment',
         issueChecks: [
           {
             id: 'no_regulatory_target',
@@ -416,6 +426,14 @@ export function createProjectSetupFlow(): FlowDefinition {
               'AnA has your wording, but a submission type she does not hold carries no templates, no formatting rules and no validation profile — so nothing she drafts for it can be checked against the agency\u2019s requirements for that submission. Name the closest listed type if one applies, or treat anything drafted here as unvalidated.',
           },
         ],
+
+        branches: [
+          {
+            when: { field: 'multi_country_submission', operator: 'eq', value: true },
+            goto: 'multi_country_setup',
+          },
+        ],
+        defaultNext: 'team_assignment',
       },
 
       /* The classification is asked BEFORE the route, and in its own question,

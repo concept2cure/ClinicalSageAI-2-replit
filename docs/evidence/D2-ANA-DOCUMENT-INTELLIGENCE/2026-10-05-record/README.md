@@ -27,12 +27,12 @@ before it reaches an agency.
 
 | | Steps |
 |---|---|
-| Landed, with evidence on `concept2cure-v2` | **71** |
-| Implemented, awaiting review or commit | 8 |
+| Landed, with evidence on `concept2cure-v2` | **73** |
+| Implemented, awaiting review or commit | 6 |
 | Not started | 110 |
 | **Plan total** | **188** |
 
-Batch 1 is complete (29/29). Batch 2 is at 29/35.
+Batch 1 is complete (29/29). Batch 2 is at 31/35.
 
 Beside the plan, the **clinical figure claim engine** landed on 2026-10-12
 (`896611af`): 9,053 lines over 20 modules, green on all 431 cases of its
@@ -110,6 +110,15 @@ cited source, which a wrong number passes.
 | `896611af` | An SmPC 4.8 per-term frequency is compared with the CSR, so an EU dossier's headline AE rate being wrong by 6 points is reported instead of dropped by role. |
 | `896611af` | "All Grades" and "Any Grade", "Grades 3 or 4" and "Grade 3-4" are one measure each, so an oncology label AE table compares with its CSR at all. |
 | `896611af` | The exposure sentence 21 CFR 201.57(c)(7) uses is read in its three phrasings, so a 612-vs-621 transposition is visible. |
+
+### The record reaches the author, and the author can satisfy what it refuses
+
+| Commit | What is now true |
+|---|---|
+| `bb166714` | A drafted section's figures are set against the figures the documents it cites state for the same frame, at save, on the editor line beside the figure check. The figure check says whether a number is in a source; this says whether it agrees. |
+| `4b77deb8` | The section check tells the author what the record says the section must contain, and no longer emits "Include discussion of stability as required by FDA guidelines" — a word-presence test that cited an agency. |
+| `837a3f65` | The five copies of the ICH E3 structure are one: the DOCX blueprint had ten top-level headings where E3 has sixteen, Introduction numbered 3 instead of 7, and shipped "No deaths occurred during the study." as default text. |
+| (this round) | FDA validation 1789 is refused at packaging — a US sequence whose Module 4/5 study files would be in no Study Tagging File — **and satisfiable**: `submission_leaves` and AnA's packaging tool now carry the study id and the STF file-tag, which nothing on the platform could before. |
 
 ### Fail closed, instead of a false "ready"
 

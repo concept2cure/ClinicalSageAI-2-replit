@@ -40,6 +40,14 @@ export interface CoreLeaf {
   granularity?: string | null;
   /** submission_leaves.document_type (e.g. 'ind_safety_report', 'ind_annual_report'). */
   documentType?: string | null;
+  /** submission_leaves.study_id — the study this leaf belongs to, for its Study
+   *  Tagging File. Null means the leaf names no study; FDA validation 1789
+   *  refuses a Module 4/5 study file that none references (the exempt sections
+   *  are 4.3, 5.2, 5.3.6 and 5.4). */
+  studyId?: string | null;
+  /** submission_leaves.stf_file_tag — the STF file-tag this leaf is referenced
+   *  under. A study id with no tag is still in no STF. */
+  stfFileTag?: string | null;
 }
 
 /**
@@ -57,6 +65,8 @@ export interface SubmissionLeafRow {
   documentUuid: string | null;
   granularity: string | null;
   documentType: string | null;
+  studyId: string | null;
+  stfFileTag: string | null;
 }
 
 /**
@@ -82,6 +92,8 @@ export function coreLeafFromSubmissionLeaf(row: SubmissionLeafRow): CoreLeaf {
     documentUuid: row.documentUuid,
     granularity: row.granularity,
     documentType: row.documentType,
+    studyId: row.studyId,
+    stfFileTag: row.stfFileTag,
   };
   return leaf;
 }
@@ -188,6 +200,12 @@ export function mapCoreLeafToEctdLeaf(leaf: CoreLeaf, resolved: ResolvedFile): E
     // that does not match the shipped bytes. When resolved.md5 is absent, leave
     // md5 undefined; the packager computes it from the actual bytes downstream.
     md5: resolved.md5 ?? undefined,
+    /* The study and the file-tag the leaf names, carried as written. The
+       packager's 1789 check reads them (auditStfCoverage), and the STF
+       generator writes them; neither is inferred here, so a leaf that names
+       neither is refused by name rather than tagged by guess. */
+    ...(leaf.studyId ? { studyId: leaf.studyId } : {}),
+    ...(leaf.stfFileTag ? { stfFileTag: leaf.stfFileTag } : {}),
   };
 }
 

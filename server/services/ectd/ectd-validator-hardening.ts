@@ -18,6 +18,7 @@ import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import {
   validatePackage as validateStructural,
+  auditStfCoverage,
   type ECTDLeaf,
   type ValidationFinding,
   type ValidationResult,
@@ -171,7 +172,7 @@ export async function validateEctdPackageHardened(
   const md5Findings = enforceMd5Checksums(leaves, context.leafBuffers);
 
   // 4) Study-id tagging audit
-  const studyIdFindings = auditStudyIdTagging(leaves);
+  const studyIdFindings = auditStudyIdTagging(leaves, context.region);
 
   // Add MD5 + study-id findings into the structural findings list (they are leaf-level)
   const allStructural: ValidationFinding[] = [
@@ -472,48 +473,30 @@ export function enforceMd5Checksums(
 // ── Study-id tagging audit ──────────────────────────────────────────────────
 
 /**
- * Audit per-leaf @study-id tagging. Required for M4/M5 leaves that contain
- * study data. Without this, the FDA STF (Study Tagging File) cannot resolve
- * the leaf to a CDISC dataset.
+ * Audit per-leaf study tagging for FDA eCTD validation 1789: every file in a
+ * Module 4 or 5 study section (all but 4.3, 5.2, 5.3.6 and 5.4) must be
+ * referenced by a Study Tagging File, which needs the leaf's study id.
+ *
+ * An adapter over the one coverage check, `auditStfCoverage` in
+ * ectd4-validator.ts, which the v3.2.2 packager also calls. The leaf
+ * validator's ECTDLeaf carries no STF file-tag, so only the study id is checked
+ * here; the packager checks both.
+ *
+ * 2026-10-05 (g-stf-1789-fail-closed): this read `studyId || lifecycleOperator`
+ * — any lifecycle operator id passed for a study id — covered a private list of
+ * nine section prefixes that left out 4.1, 5.1 and leaves filed at the 4.2 and
+ * 5.3 headings, and reported a warning citing the STF specification rather than
+ * the rejection criterion. The study id is now `leaf.studyId` alone; the finding is
+ * an error for a US sequence, an unknown region or no region, and a warning
+ * for a region that resolves to anything else.
+ *
+ * @param region the sequence's region in any platform vocabulary ('US', 'fda', 'EU', ...).
  */
-export function auditStudyIdTagging(leaves: ECTDLeaf[]): ValidationFinding[] {
-  const findings: ValidationFinding[] = [];
-  let id = 0;
-
-  // Sections that MUST carry @study-id per ICH M8
-  const studyTaggedSections = [
-    'm4.2.1',  // pharmacology study reports
-    'm4.2.2',  // pharmacokinetic study reports
-    'm4.2.3',  // toxicology study reports
-    'm5.3.1',  // BA / BE study reports
-    'm5.3.2',  // PK study reports
-    'm5.3.3',  // human PK reports
-    'm5.3.4',  // PD study reports
-    'm5.3.5',  // efficacy & safety study reports
-    'm5.3.7',  // case report forms
-  ];
-
-  for (const leaf of leaves) {
-    const requiresStudyId = studyTaggedSections.some(s => leaf.sectionCode.startsWith(s));
-    if (!requiresStudyId) continue;
-
-    // We use lifecycleOperator as the study-id slot per the existing schema —
-    // a real ICH M8 implementation would carry it on a dedicated field.
-    const studyId = (leaf as any).studyId || leaf.lifecycleOperator;
-    if (!studyId) {
-      findings.push({
-        id: `STF${++id}`,
-        severity: 'warning',
-        code: 'STF_MISSING_STUDY_ID',
-        sectionCode: leaf.sectionCode,
-        message: `Leaf "${leaf.title}" in section ${leaf.sectionCode} lacks @study-id`,
-        fix: 'Tag the leaf with the controlling study identifier (matches CDISC ODM / FDA STF)',
-        rule: 'FDA Study Tagging File (STF) Specification v2.6.1',
-      });
-    }
-  }
-
-  return findings;
+export function auditStudyIdTagging(leaves: ECTDLeaf[], region?: string): ValidationFinding[] {
+  return auditStfCoverage(
+    leaves.map((l) => ({ section: l.sectionCode, title: l.title, operation: l.operation, studyId: l.studyId })),
+    { region, fileTagModelled: false },
+  );
 }
 
 // ── Sequence-gap detection ──────────────────────────────────────────────────

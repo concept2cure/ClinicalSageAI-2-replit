@@ -1,0 +1,43 @@
+MEASURED 2026-10-12T16:28:47Z
+
+$ the table's isolation posture on a deploy-shaped database (c2c_dbtest)
+columns: id,source_document_id,target_document_id,citation_type,context,page_number,section_id,confidence,created_at
+rls: OFF
+policies: 0
+
+   (its siblings from the same migration, for contrast)
+knowledge_graph_nodes|organization_id|tenant_isolation_policy
+knowledge_graph_edges|organization_id|tenant_isolation_policy
+
+$ RED — the two new cases on the unfixed route
+  × refuses a request with no resolvable organisation, and reads no citations
+    → expected 200 to be 403
+  × constrains every citation read to documents this organisation can see
+    → the citation read must be constrained by an org-keyed table: expected '\n          SELECT id, source_documen…' to match /knowledge_graph_nodes/i
+
+$ GREEN — with the fix, plus the two existing graphrag suites
+ ✓ server/routes/__tests__/graphrag.pool.test.ts > GraphRAG routes resolve a pool when none is injected on the request > falls back to getPool() instead of 500-ing on an undefined pool 589ms
+ ✓ server/routes/__tests__/graphrag-citation-trace-scope.test.ts > citation-trace is scoped to one organisation > refuses a request with no resolvable organisation, and reads no citations 23ms
+ ✓ server/routes/__tests__/graphrag-citation-trace-scope.test.ts > citation-trace is scoped to one organisation > constrains every citation read to documents this organisation can see 5ms
+ ✓ server/routes/__tests__/graphrag-citation-trace-scope.test.ts > citation-trace is scoped to one organisation > does not return another tenant’s citation context even when the id is guessed 4ms
+ ✓ server/routes/__tests__/graphrag-extraction-provenance.contract.test.ts > extractEntities records how each entity was found > stamps model-extracted entities as extraction: model 4ms
+ ✓ server/routes/__tests__/graphrag-extraction-provenance.contract.test.ts > extractEntities records how each entity was found > stamps lexicon hits as extraction: lexicon when the call throws 5ms
+ ✓ server/routes/__tests__/graphrag-extraction-provenance.contract.test.ts > extractEntities records how each entity was found > falls back rather than reporting an empty extraction on an unusable reply 1ms
+ ✓ server/routes/__tests__/graphrag-extraction-provenance.contract.test.ts > extractEntities records how each entity was found > falls back when the reply parses but carries no entities array 1ms
+ ✓ server/routes/__tests__/graphrag-extraction-provenance.contract.test.ts > extractEntities records how each entity was found > scores a lexicon hit BELOW every model default 1ms
+ ✓ server/routes/__tests__/graphrag-extraction-provenance.contract.test.ts > extractEntities records how each entity was found > accepts a genuinely empty model result without falling back 2ms
+ ✓ server/routes/__tests__/graphrag-extraction-provenance.contract.test.ts > extractEntities records how each entity was found > caps the document text sent to the provider 0ms
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
+
+$ npx tsc --noEmit -p tsconfig.json  ->  exit 0
+
+── MUTATIONS ──────────────────────────────────────────────────────────
+=== MUTATION 1 — drop the org refusal ===
+ × server/routes/__tests__/graphrag-citation-trace-scope.test.ts > citation-trace is scoped to one organisation > refuses a request with no resolvable organisation, and reads no citations 26ms
+      Tests  1 failed | 2 passed (3)
+=== MUTATION 2 — drop the org-keyed EXISTS constraint ===
+ × server/routes/__tests__/graphrag-citation-trace-scope.test.ts > citation-trace is scoped to one organisation > constrains every citation read to documents this organisation can see 9ms
+      Tests  1 failed | 2 passed (3)
+=== restored ===
+      Tests  3 passed (3)

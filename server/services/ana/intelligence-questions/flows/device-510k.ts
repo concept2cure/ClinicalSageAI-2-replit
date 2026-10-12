@@ -11,6 +11,7 @@
  * @module server/services/ana/intelligence-questions/flows/device-510k
  */
 
+import { predicateOptions } from '../../../../../shared/regulatory/predicate-positions.js';
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
 
 export function createDevice510kFlow(): FlowDefinition {
@@ -36,7 +37,7 @@ export function createDevice510kFlow(): FlowDefinition {
       {
         id: 'predicate',
         label: 'Predicate Device',
-        nodeIds: ['predicate_info', 'se_comparison'],
+        nodeIds: ['predicate_strategy', 'predicate_info', 'se_comparison'],
       },
       {
         id: 'testing',
@@ -307,10 +308,54 @@ export function createDevice510kFlow(): FlowDefinition {
             ],
           },
         ],
-        defaultNext: 'predicate_info',
+        defaultNext: 'predicate_strategy',
       },
 
       /* ── 2. Predicate Device ──────────────────────────────────────── */
+
+      /* Which device this submission compares itself to — asked BEFORE its
+         name, number and manufacturer, which are three required text boxes
+         that presuppose the answer. It is also the only place an interview can
+         state that there is NO predicate, which is what closes the 510(k) and
+         opens the De Novo (founder's directive, 2026-10-12). */
+      {
+        id: 'predicate_strategy',
+        section: 'Predicate Device',
+        question: 'What are you comparing this device to?',
+        guidance:
+          'Substantial equivalence is a comparison to a legally marketed device with the same intended use (21 CFR 807.100(b)). More than one predicate is allowed where each has that same intended use; a split predicate — indications from one device and technology from another — is not. A reference device supports a method or a standard and is not a basis for equivalence. Where there is nothing to compare to, or FDA has already found the device not substantially equivalent, the route is a De Novo request rather than another 510(k).',
+        fields: [
+          {
+            id: 'predicate_strategy',
+            label: 'Predicate strategy',
+            type: 'radio',
+            required: true,
+            options: predicateOptions(),
+            allowOther: { prompt: 'What are you comparing to, in your own words?' },
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'split_predicate_not_permitted',
+            condition: { field: 'predicate_strategy', operator: 'eq', value: 'split_predicate' },
+            severity: 'critical',
+            title: 'A split predicate is not a permissible basis',
+            message:
+              'FDA\u2019s 2014 substantial-equivalence guidance states that a split predicate — taking the indications for use from one device and the technological characteristics from another — is not a permissible basis for a 510(k). Expect a Refuse to Accept decision or a finding of not substantially equivalent. If the indications and the technology genuinely come from different devices, the routes are a De Novo request or a 510(k) for the new intended use.',
+            reference: 'FDA, The 510(k) Program: Evaluating Substantial Equivalence (2014)',
+          },
+          {
+            id: 'no_predicate_is_not_a_510k',
+            condition: { field: 'predicate_strategy', operator: 'in', value: ['no_predicate', 'nse_received'] },
+            severity: 'critical',
+            title: 'This is not a 510(k)',
+            message:
+              'A 510(k) is a comparison to a legally marketed device, and you have said there is none to compare to — or that FDA has already found this device not substantially equivalent. Each is one of the two conditions for a De Novo request, which asks FDA to classify the device and to hold it to special controls you propose. AnA will keep answering these questions, but what they produce is not a premarket notification.',
+            reference: 'FD&C Act 513(f)(2)(A); 21 CFR 860.220(a)',
+          },
+        ],
+        defaultNext: 'predicate_info',
+      },
 
       {
         id: 'predicate_info',
@@ -322,12 +367,16 @@ export function createDevice510kFlow(): FlowDefinition {
         fields: [
           {
             id: 'predicate_device_name',
+            /* Not asked where the programme has said there is no predicate. */
+            visibleWhen: { field: 'predicate_strategy', operator: 'not_in', value: ['no_predicate', 'nse_received'] },
             label: 'Predicate Device Name',
             type: 'text',
             required: true,
           },
           {
             id: 'predicate_510k_number',
+            /* Not asked where the programme has said there is no predicate. */
+            visibleWhen: { field: 'predicate_strategy', operator: 'not_in', value: ['no_predicate', 'nse_received'] },
             label: 'Predicate 510(k) Number',
             type: 'text',
             required: true,
@@ -339,6 +388,8 @@ export function createDevice510kFlow(): FlowDefinition {
           },
           {
             id: 'predicate_manufacturer',
+            /* Not asked where the programme has said there is no predicate. */
+            visibleWhen: { field: 'predicate_strategy', operator: 'not_in', value: ['no_predicate', 'nse_received'] },
             label: 'Predicate Manufacturer',
             type: 'text',
             required: true,
@@ -350,6 +401,8 @@ export function createDevice510kFlow(): FlowDefinition {
           },
           {
             id: 'same_intended_use',
+            /* Not asked where the programme has said there is no predicate. */
+            visibleWhen: { field: 'predicate_strategy', operator: 'not_in', value: ['no_predicate', 'nse_received'] },
             label: 'Same Intended Use as Predicate',
             type: 'yes_no',
             required: true,

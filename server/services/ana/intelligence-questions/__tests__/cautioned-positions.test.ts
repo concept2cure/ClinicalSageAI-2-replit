@@ -67,8 +67,21 @@ describe('which answer states which fact', () => {
     expect(programmeFactsFrom({ device_class: 'class_iii' })).toEqual({ deviceClass: 'III' });
     expect(programmeFactsFrom({ device_class: 'class_ii' }), 'iii must not match ii').toEqual({ deviceClass: 'II' });
     expect(programmeFactsFrom({ eu_mdr_class: 'class_iib' })).toEqual({ euMdrClass: 'IIb' });
-    expect(programmeFactsFrom({ predicate_device_name: 'Acme Stent' })).toEqual({ predicateNamed: 'Acme Stent' });
-    expect(programmeFactsFrom({ predicate_device: ' K123456 ' })).toEqual({ predicateNamed: 'K123456' });
+    expect(programmeFactsFrom({ predicate_device_name: 'Acme Stent' })).toEqual({
+      predicateNamed: 'Acme Stent',
+      predicate: 'named',
+    });
+    expect(programmeFactsFrom({ predicate_device: ' K123456 ' })).toEqual({
+      predicateNamed: 'K123456',
+      predicate: 'named',
+    });
+    /* The statement a named predicate cannot make: that there is none. */
+    expect(programmeFactsFrom({ predicate_strategy: 'no_predicate' })).toEqual({ predicate: 'none' });
+    expect(programmeFactsFrom({ predicate_strategy: 'nse_received' })).toEqual({ predicate: 'nse' });
+    expect(
+      programmeFactsFrom({ predicate_strategy: 'reference_device_only' }),
+      'a reference device says a predicate was not claimed, not that none exists',
+    ).toEqual({});
   });
 
   it('states no fact where the person said they do not know, or said nothing', () => {
@@ -132,7 +145,7 @@ describe('the question a person reads', () => {
         {
           value: 'US_510K',
           label: '510(k)',
-          caution: { availability: 'inapplicable' as const, reason: 'stale', authority: 'stale' },
+          caution: { availability: 'inapplicable' as const, reason: 'stale', authority: 'stale', ruleId: 'stale' },
         },
       ],
     };

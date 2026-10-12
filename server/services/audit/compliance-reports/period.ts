@@ -2,10 +2,11 @@
  * The period a compliance report covers, from the request's `from` / `to`.
  *
  * UTC calendar dates, inclusive. `to` defaults to today and `from` to 90 days
- * before `to`. A malformed or impossible date, `from` after `to`, or a span of
- * more than 366 days is refused — never coerced into some other period, which
- * would hand an inspector a report about dates they did not ask for. An as-of
- * report uses `to` alone; `from` is not read.
+ * before `to`. A malformed or impossible date, `from` after `to`, a span of
+ * more than 366 days, or an end date that has not happened yet is refused —
+ * never coerced into some other period, which would hand an inspector a report
+ * about dates they did not ask for. An as-of report uses `to` alone; `from` is
+ * not read.
  *
  * @module server/services/audit/compliance-reports/period
  */
@@ -54,6 +55,25 @@ export function parseReportPeriod(
 ): PeriodParse {
   const to = readDate(query.to) ?? (query.to === undefined ? utcDate(dayOf(now)) : null);
   if (!to) return refused('The end date must be a calendar date written as YYYY-MM-DD.');
+
+  /* A DATE THAT HAS NOT HAPPENED IS NOT A PERIOD.
+     The as-of branch below returned before any comparison against `now`, so
+     "access review as of 2027-01-01" answered with today's membership under a
+     date a year away, and a range ending in the future did the same
+     (HS-1008-6, honest-state review 2026-10-08). The client's note about an
+     as-of date only fires for PAST dates, so nothing anywhere qualified it.
+     Both kinds are refused here, for the reason in this module's own docstring:
+     a period is never coerced into some other period, and presenting today's
+     state under a future date is exactly that. */
+  const today = utcDate(dayOf(now));
+  if (today && to.getTime() > today.getTime()) {
+    return refused(
+      kind === 'as-of'
+        ? `The as-of date has not happened yet. A report is as of today (${dayOf(now)}) or earlier.`
+        : `The end date has not happened yet. A report covers dates up to today (${dayOf(now)}).`,
+    );
+  }
+
   const end = new Date(to.getTime() + DAY_MS).toISOString();
 
   if (kind === 'as-of') {

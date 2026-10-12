@@ -618,11 +618,32 @@ interface RecordRequirements {
   reason?: string;
 }
 
+/**
+ * Whether the open DOCUMENT agrees with itself: the same figure, in the same frame, stated twice in
+ * two sections with two different values (server: authoring/document-figure-consistency.ts). Absent
+ * when the sections could not be read — never an empty result, which would read as "it agrees".
+ */
+interface DocumentFigureConsistency {
+  verdict: 'conflicts_found' | 'no_conflict_among_compared' | 'nothing_compared';
+  compared: number;
+  conflicts: number;
+  comparisons?: Array<{
+    outcome: 'conflict' | 'consistent';
+    measure?: string;
+    arm?: string;
+    a?: { section?: string; values?: string[] };
+    b?: { section?: string; values?: string[] };
+  }>;
+  truncated?: boolean;
+}
+
 interface ScanResults {
   section_id: string;
   section_code?: string;
   /** The record's statement of required content, or its honest absence. */
   record_requirements?: RecordRequirements;
+  /** Whether the open document's own figures agree with each other, across its sections. */
+  document_figure_consistency?: DocumentFigureConsistency;
   quality_score?: number;
   status?: string;
   deficiencies: ScanDeficiency[];
@@ -4794,6 +4815,68 @@ export function DocumentWorkbench({
                               </span>
                             )}
                           </>
+                        )}
+                      </div>
+                    )}
+                    {/* Whether the whole document agrees with itself: the same figure, in the same
+                        frame, stated twice in two sections with two different values. Rendered only
+                        when the server sent it — a failed read of the sections is not "it agrees" —
+                        and it never says the figures are consistent, only that none of the pairs it
+                        compared disagree, with the count it compared beside it. */}
+                    {check.document_figure_consistency && (
+                      <div
+                        data-testid="section-check-consistency"
+                        style={{
+                          display: 'grid',
+                          gap: 4,
+                          marginTop: 2,
+                          paddingTop: 6,
+                          borderTop: '1px solid var(--border)',
+                          fontSize: 12,
+                        }}
+                      >
+                        {check.document_figure_consistency.conflicts > 0 ? (
+                          <>
+                            <span>
+                              <b style={{ fontWeight: 600 }}>
+                                {check.document_figure_consistency.conflicts} of{' '}
+                                {check.document_figure_consistency.compared} figure pair(s) in this
+                                document disagree with each other.
+                              </b>{' '}
+                              Each pair states the same thing twice, in two sections, with two
+                              different values.
+                            </span>
+                            <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 2 }}>
+                              {(check.document_figure_consistency.comparisons ?? [])
+                                .filter((c) => c.outcome === 'conflict')
+                                .map((c, i) => (
+                                  <li key={i}>
+                                    <strong>{(c.a?.values ?? []).join(', ')}</strong>
+                                    {c.a?.section ? ` in ${c.a.section}` : ''}
+                                    {' vs '}
+                                    <strong>{(c.b?.values ?? []).join(', ')}</strong>
+                                    {c.b?.section ? ` in ${c.b.section}` : ''}
+                                    {c.measure ? ` — ${c.measure}` : ''}
+                                    {c.arm ? ` (${c.arm})` : ''}
+                                  </li>
+                                ))}
+                            </ul>
+                            {check.document_figure_consistency.truncated && (
+                              <span style={{ opacity: 0.75 }}>
+                                More were found than the panel lists.
+                              </span>
+                            )}
+                          </>
+                        ) : check.document_figure_consistency.compared > 0 ? (
+                          <span>
+                            {check.document_figure_consistency.compared} figure pair(s) in this
+                            document were set against each other and none disagree.
+                          </span>
+                        ) : (
+                          <span>
+                            No figure in this document could be set against another in a different
+                            section, so nothing was compared.
+                          </span>
                         )}
                       </div>
                     )}

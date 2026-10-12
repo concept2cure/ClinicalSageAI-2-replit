@@ -616,6 +616,12 @@ router.post('/query', async (req: Request, res: Response) => {
   if (!body.query) return res.status(400).json({ error: 'query is required' });
 
   const queryId = uuidv4();
+  /* The graph tables are org-keyed and policied, so the traversal below is
+     scoped by RLS. citation_chains is NOT (no tenant column, RLS off, no
+     policy), so its read states the organisation explicitly — and when none
+     can be resolved the citation enrichment is SKIPPED rather than run
+     unscoped. */
+  const queryOrganizationId = getSecureOrgId(req);
   const weights = body.hybridWeights || {
     vectorSimilarity: 0.4,
     graphTraversal: 0.4,
@@ -673,16 +679,29 @@ router.post('/query', async (req: Request, res: Response) => {
 
     // Step 6: Build citation chains
     const citationChains: CitationChain[] = [];
-    if (body.includeCitationChains) {
+    if (body.includeCitationChains && queryOrganizationId) {
       try {
+        /* These ids come from an org-scoped traversal, so they are already
+           this tenant's — but citation_chains has no tenant column and no
+           policy, so the constraint is stated here too rather than assumed.
+           Same shape as the citation-trace read below. */
         const citResult = await pool.query(
           `
-          SELECT id, source_document_id, target_document_id, citation_type, context, confidence
-          FROM citation_chains
-          WHERE source_document_id = ANY($1::text[]) OR target_document_id = ANY($1::text[])
+          SELECT c.id, c.source_document_id, c.target_document_id, c.citation_type, c.context, c.confidence
+          FROM citation_chains c
+          WHERE (
+                  (c.source_document_id = ANY($1::text[]) AND EXISTS (
+                     SELECT 1 FROM knowledge_graph_nodes n
+                      WHERE n.organization_id = $2::int
+                        AND n.source_document_id = c.source_document_id))
+               OR (c.target_document_id = ANY($1::text[]) AND EXISTS (
+                     SELECT 1 FROM knowledge_graph_nodes n
+                      WHERE n.organization_id = $2::int
+                        AND n.source_document_id = c.target_document_id))
+                )
           LIMIT 50
         `,
-          [traversalResult.entities.filter(e => e.entityType === 'document').map(e => e.id)]
+          [traversalResult.entities.filter(e => e.entityType === 'document').map(e => e.id), queryOrganizationId]
         );
         for (const row of citResult.rows) {
           citationChains.push({
@@ -959,19 +978,60 @@ router.get('/citation-trace/:documentId', async (req: Request, res: Response) =>
   const { documentId } = req.params;
   const depth = parseInt(req.query.depth as string) || 2;
 
+  /* `citation_chains` carries NO tenant column, has RLS OFF and zero policies
+     (verified on a deploy-shaped database, 2026-10-12), and this read was
+     `WHERE source_document_id = ANY($1) OR target_document_id = ANY($1)` with
+     $1 starting as the UNCHECKED path parameter and widening a hop per
+     `?depth=`. This router is mounted behind authenticateToken alone
+     (bootstrap/register-advanced-platform-routes.ts:158), so any authenticated
+     user of any tenant could pass another tenant's document id and walk that
+     tenant's citation graph — the linked ids, the citation type, the `context`
+     (the quoted source text), the page and the section. The write path at :762
+     already resolved an organisation; this read never did, and the sibling
+     tables created by the same migration (knowledge_graph_nodes/_edges) were
+     given organization_id and a policy while this one was not.
+
+     The organisation is required, and traversal may only start from, and step
+     through, documents this organisation can see — proved against
+     knowledge_graph_nodes, which IS org-keyed and policied. A structural fix
+     (organization_id on citation_chains + RLS) needs a backfill whose source
+     is that same table; this closes the read now. */
+  const organizationId = getSecureOrgId(req);
+  if (!organizationId) {
+    return res.status(403).json({
+      success: false,
+      error: 'ORG_REQUIRED',
+      message: 'Organization context required.',
+    });
+  }
+
   try {
     const chains: CitationChain[] = [];
     let currentDocIds = [documentId];
 
     for (let d = 0; d < depth; d++) {
       try {
+        /* The end that matched our frontier must be a document this
+           organisation can see, so a traversal cannot begin at — or step onto —
+           a foreign document. Both arms are needed: a chain is reachable from
+           either of its ends. */
         const result = await pool.query(
           `
-          SELECT id, source_document_id, target_document_id, citation_type, context, page_number, section_id, confidence, created_at
-          FROM citation_chains
-          WHERE source_document_id = ANY($1::text[]) OR target_document_id = ANY($1::text[])
+          SELECT c.id, c.source_document_id, c.target_document_id, c.citation_type, c.context,
+                 c.page_number, c.section_id, c.confidence, c.created_at
+          FROM citation_chains c
+          WHERE (
+                  (c.source_document_id = ANY($1::text[]) AND EXISTS (
+                     SELECT 1 FROM knowledge_graph_nodes n
+                      WHERE n.organization_id = $2::int
+                        AND n.source_document_id = c.source_document_id))
+               OR (c.target_document_id = ANY($1::text[]) AND EXISTS (
+                     SELECT 1 FROM knowledge_graph_nodes n
+                      WHERE n.organization_id = $2::int
+                        AND n.source_document_id = c.target_document_id))
+                )
         `,
-          [currentDocIds]
+          [currentDocIds, organizationId]
         );
 
         const newDocIds: string[] = [];

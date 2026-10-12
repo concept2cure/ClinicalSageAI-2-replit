@@ -1,0 +1,89 @@
+/**
+ * The predicate strategy a 510(k) programme takes (founder's directive,
+ * 2026-10-12).
+ *
+ * The interview asked for a predicate's name, number and manufacturer as three
+ * required text boxes and never asked the question they presuppose. The gap
+ * reached past this flow: the marking rules could say "you have named a
+ * predicate, so a De Novo needs a basis" but not the stronger thing — "you
+ * have said there is none, so a 510(k) is not the route" — because no
+ * interview could state it, and an empty text box is an unanswered question.
+ */
+import { describe, expect, it } from 'vitest';
+
+import {
+  predicateOptions,
+  predicatePositionFor,
+  predicatePositions,
+  predicateStateOf,
+  WITHOUT_PREDICATE,
+} from '../predicate-positions.js';
+
+describe('the positions', () => {
+  it('say what each commits the submission to, with the authority that recognises it', () => {
+    for (const position of predicatePositions()) {
+      expect(position.commits.length, position.value).toBeGreaterThan(40);
+      expect(position.authority.trim(), position.value).not.toBe('');
+      expect(position.commits.toLowerCase(), position.value).not.toBe(position.label.toLowerCase());
+    }
+    expect(predicateOptions().map(o => o.value)).toEqual(predicatePositions().map(p => p.value));
+  });
+
+  it('keeps one predicate apart from several, and says what several widens', () => {
+    expect(predicatePositionFor('single_predicate')!.commits).toMatch(/single legally marketed device/);
+    expect(predicatePositionFor('multiple_predicates')!.commits).toMatch(/same intended use/);
+    expect(predicatePositionFor('multiple_predicates')!.commits).toMatch(/widens what FDA will compare/);
+  });
+
+  it('offers the split predicate and says FDA does not accept it', () => {
+    /* A position that says plainly what taking it costs is worth more than its
+       absence, which teaches nobody anything. */
+    const split = predicatePositionFor('split_predicate')!;
+    expect(split.commits).toMatch(/FDA does not accept this/);
+    expect(split.commits).toMatch(/Refuse to Accept|not substantially equivalent/);
+    expect(split.authority).toMatch(/not permitted/);
+  });
+
+  it('distinguishes a reference device from a predicate', () => {
+    expect(predicatePositionFor('reference_device_only')!.commits).toMatch(/not a basis for substantial equivalence/);
+  });
+
+  it('names the two conditions a De Novo has, which is what these positions are for', () => {
+    expect(predicatePositionFor('no_predicate')!.authority).toMatch(/513\(f\)\(2\)\(A\)\(i\)/);
+    expect(predicatePositionFor('nse_received')!.authority).toMatch(/513\(f\)\(2\)\(A\)\(ii\)/);
+    expect(WITHOUT_PREDICATE).toEqual(['no_predicate', 'nse_received']);
+  });
+
+  it('holds nothing for a value it does not know', () => {
+    expect(predicatePositionFor('whatever')).toBeNull();
+  });
+});
+
+describe('what the answers say about the device being compared to', () => {
+  it('reads a stated strategy', () => {
+    expect(predicateStateOf({ strategy: 'no_predicate' })).toBe('none');
+    expect(predicateStateOf({ strategy: 'nse_received' })).toBe('nse');
+    expect(predicateStateOf({ strategy: 'single_predicate' })).toBe('named');
+    expect(predicateStateOf({ strategy: 'multiple_predicates' })).toBe('named');
+  });
+
+  it('reads a predicate named in any of the places a flow asks for one', () => {
+    expect(predicateStateOf({ named: 'K123456' })).toBe('named');
+    expect(predicateStateOf({ strategy: null, named: ' Acme Stent ' })).toBe('named');
+  });
+
+  it('says nothing where nothing was said, which is not the same as "there is none"', () => {
+    expect(predicateStateOf({})).toBeNull();
+    expect(predicateStateOf({ strategy: '', named: '   ' })).toBeNull();
+    expect(
+      predicateStateOf({ strategy: 'reference_device_only' }),
+      'a reference device says a predicate was not claimed, not that none exists',
+    ).toBeNull();
+  });
+
+  it('prefers the stated strategy over a name left in an earlier box', () => {
+    /* A sponsor who answers "there is no predicate" after typing one has
+       changed their position, and the newer statement is the answer. */
+    expect(predicateStateOf({ strategy: 'no_predicate', named: 'K123456' })).toBe('none');
+  });
+});

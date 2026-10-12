@@ -1,0 +1,8 @@
+# after the fix
+$ npx vitest run server/services/ana/__tests__/intelligence-flow-*.test.ts server/services/ana/intelligence-questions tests/ana-intelligence
+ Test Files  19 passed (19)
+      Tests  422 passed (422)
+
+$ npx vitest run server/services/cmc   # the interview-commit projection reads these answers
+ Test Files  44 passed (44)
+      Tests  1086 passed (1086)

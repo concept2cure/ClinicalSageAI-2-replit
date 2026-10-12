@@ -158,6 +158,7 @@ const CAUTIONED: IntelligenceQuestionEvent = {
               availability: 'needs_basis',
               reason: 'You have named a predicate (K123456), so taking this position means saying why it does not apply.',
               authority: 'FD&C Act 513(f)(2); 21 CFR 860 Subpart D',
+              ruleId: 'de_novo_with_named_predicate',
             },
           },
         ],

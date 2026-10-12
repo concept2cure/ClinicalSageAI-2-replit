@@ -25,7 +25,9 @@
  */
 
 import { regionsNamed } from '../../../../shared/regulatory/agency-positions.js';
-import { cautionFor, type ProgrammeFacts } from '../../../../shared/regulatory/pathway-positions.js';
+import { predicateStateOf } from '../../../../shared/regulatory/predicate-positions.js';
+import { modalityOf } from '../../../../shared/regulatory/product-modality.js';
+import { cautionFor, type ProgrammeFacts } from '../../../../shared/regulatory/pathway-cautions.js';
 import type { DetectedIssue, PositionCaution, QuestionField, QuestionNode, QuestionOption } from './types.js';
 
 /**
@@ -38,15 +40,28 @@ export const AGENCY_FIELDS: readonly string[] = ['primary_regulatory_agency', 'a
 /** Answers that name a predicate device. A non-empty one means a predicate is named. */
 export const PREDICATE_FIELDS: readonly string[] = ['predicate_device', 'predicate_device_name', 'predicate_510k_number'];
 
+/** The answer that states the predicate strategy. */
+export const PREDICATE_STRATEGY_FIELDS: readonly string[] = ['predicate_strategy'];
+
 /** Answers that state the US risk class. */
 export const DEVICE_CLASS_FIELDS: readonly string[] = ['device_class'];
 
 /** Answers that state the EU MDR class. */
 export const EU_MDR_CLASS_FIELDS: readonly string[] = ['eu_mdr_class'];
 
+/** Answers that name the product, which decides which statute governs it. */
+export const PRODUCT_FIELDS: readonly string[] = ['product_type'];
+
 /** Every field this module reads, for the test that holds they still exist. */
 export function factFields(): string[] {
-  return [...AGENCY_FIELDS, ...PREDICATE_FIELDS, ...DEVICE_CLASS_FIELDS, ...EU_MDR_CLASS_FIELDS];
+  return [
+    ...AGENCY_FIELDS,
+    ...PRODUCT_FIELDS,
+    ...PREDICATE_STRATEGY_FIELDS,
+    ...PREDICATE_FIELDS,
+    ...DEVICE_CLASS_FIELDS,
+    ...EU_MDR_CLASS_FIELDS,
+  ];
 }
 
 /* The vocabularies the flows use. An unlisted value — 'not_classified', 'na',
@@ -108,8 +123,15 @@ export function programmeFactsFrom(flat: Record<string, unknown>): ProgrammeFact
      own fact rather than the first of the list. */
   const [primary] = regionsNamed(stated(flat[AGENCY_FIELDS[0]]));
   if (primary) facts.primaryRegion = primary;
+  const modality = modalityOf(firstStated(flat, PRODUCT_FIELDS));
+  if (modality) facts.modality = modality;
   const predicate = firstStated(flat, PREDICATE_FIELDS);
   if (predicate) facts.predicateNamed = predicate;
+  const state = predicateStateOf({
+    strategy: firstStated(flat, PREDICATE_STRATEGY_FIELDS),
+    named: predicate,
+  });
+  if (state) facts.predicate = state;
   const deviceClass = firstStated(flat, DEVICE_CLASS_FIELDS);
   const us = deviceClass ? US_CLASS[deviceClass.toLowerCase()] : undefined;
   if (us) facts.deviceClass = us;

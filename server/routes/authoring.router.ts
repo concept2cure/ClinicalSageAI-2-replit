@@ -59,6 +59,13 @@ import { sectionStructureIssues } from '../../shared/regulatory/section-code';
 import { resolveRequirements } from '../services/ind/ctd/requirements-resolver.js';
 import { resolveSectionBriefSource } from '../services/ind/ctd/section-brief.js';
 import { basisLabel, type RegulatoryBasis } from '../../shared/regulatory/regulatory-basis';
+import { claimDocRoleOf } from '../../shared/ana/clinical-claims-vocabulary';
+import { sectionReadableText } from '../services/authoring/authoring-read-render';
+import {
+  checkDocumentFigureConsistency,
+  type ConsistencySection,
+  type DocumentConsistencyCheck,
+} from '../services/authoring/document-figure-consistency';
 import { serverError } from '../lib/api-response';
 import {
   verifyLedger,
@@ -4350,6 +4357,49 @@ function recordRequirementsFor(code: unknown): RecordRequirements {
   };
 }
 
+/**
+ * Does the open document agree with itself? One engine run over every section of it
+ * (document-figure-consistency.ts): the same figure, in the same frame, stated twice in two
+ * sections with two different values — a synopsis against its own body, an overall paragraph
+ * against its per-study one. It needs no cited sources, so unlike the save-time check in
+ * section-claims-check.ts it reaches a document a person wrote, imported or edited by hand.
+ *
+ * The role is read from the open section's code. Both sides of a within-document pair carry the
+ * same role, so it cancels out of every verdict; reading it from the record keeps it a fact rather
+ * than a guess.
+ *
+ * Null when the read fails — a failed read is never an empty result, which here would read as
+ * "the document agrees with itself".
+ */
+async function documentFigureConsistency(docId: unknown, tenantId: unknown, sectionCode: unknown): Promise<DocumentConsistencyCheck | null> {
+  try {
+    const rows = await pool.query(
+      `SELECT code, title, content FROM authoring_sections
+        WHERE doc_id = $1 AND tenant_id = $2
+        ORDER BY order_index ASC, code ASC`,
+      [docId, tenantId],
+    );
+    const sections: ConsistencySection[] = rows.rows.map((r: { code: string | null; title: string | null; content: string | null }) => ({
+      code: String(r.code ?? ''),
+      title: String(r.title ?? ''),
+      text: sectionReadableText(r.content),
+    }));
+    return checkDocumentFigureConsistency(claimDocRoleOf({ ctdSection: String(sectionCode ?? '') }), sections);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The consistency field, present only when the sections were read. An absent field says nothing;
+ * an empty one would say "the document agrees with itself", which is the one thing a failed read
+ * must never say. A function rather than a ternary in the response literal: the handler is already
+ * at the branch-count ceiling, and a reader of the response should see one named thing here.
+ */
+function consistencyField(check: DocumentConsistencyCheck | null): { document_figure_consistency?: DocumentConsistencyCheck } {
+  return check ? { document_figure_consistency: check } : {};
+}
+
 // POST /api/authoring/sections/:sectionId/ai/deficiency-scan - Scan for deficiencies
 router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res: Response) => {
   try {
@@ -4374,6 +4424,8 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
     }
 
     const section = sectionResult.rows[0];
+    // One engine run over every section of the open document, before the heuristics below.
+    const documentConsistency = await documentFigureConsistency(section.doc_id, tenantId, section.code);
 
     // Perform deficiency analysis
     const deficiencies: Array<Record<string, unknown>> = [];
@@ -4569,6 +4621,11 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
            one thing this must never say. It is not a check and not counted as
            one — see recordRequirementsFor above. */
         record_requirements: recordRequirementsFor(section.code),
+        /* Whether the open DOCUMENT agrees with itself: the same figure stated
+           twice in two sections with two different values. Absent when the
+           sections could not be read — never an empty result, which would read
+           as "it agrees". Not a check and not counted as one. */
+        ...consistencyField(documentConsistency),
         status:
           qualityScore >= 80
             ? 'heuristic_ok'
