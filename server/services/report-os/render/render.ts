@@ -56,22 +56,106 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
  * Pure and deterministic given a fixed `generatedAt`. Sections are built
  * generically so the renderer works for any report type.
  */
-/**
- * Whether a gap evaluation ran for this run. The regional gap evaluation sets
- * `summary.regulatory.missingArtifacts` (orchestrator.ts, project scope with a
- * registry); any other scope has none. An empty list is "no gaps"; no list is
- * "not evaluated", and the two may never print the same sentence.
- */
-export function gapsWereEvaluated(summary: Record<string, unknown> | null | undefined): boolean {
-  const regulatory = asRecord(summary?.regulatory);
-  return Array.isArray(regulatory?.missingArtifacts);
+/** The readiness evaluator's severity vocabulary, in the renderer's. */
+const GAP_SEVERITY: Record<string, 'critical' | 'high' | 'medium' | 'low'> = {
+  critical: 'critical',
+  important: 'high',
+  recommended: 'medium',
+};
+
+/** One gap as the readiness run records it (readinessEvaluator ReadinessGap). */
+interface ReadinessGapLike {
+  code?: unknown;
+  title?: unknown;
+  severity?: unknown;
+  message?: unknown;
 }
 
 /**
- * The gaps section: the evaluation's gaps, "no gaps" when an evaluation ran and
- * found none, or "not evaluated" when none ran.
+ * The readiness run's own gap list, when it carried one.
+ *
+ * `summary.regulatory.gaps` is the full list the evaluator returned: section
+ * gaps, artifact gaps, and the `critical` markers it raises when a half of the
+ * assessment could not run at all. Before this, only
+ * `regulatory.missingArtifacts` reached the gaps section — and that list is
+ * `[]` whenever the filing type has no resolved artifact matrix, which is most
+ * of the registry. The gaps the run *did* find went only into the blockers
+ * section, so the same document listed "Artifact requirements not assessed" as
+ * a blocker and then stated "No gaps detected".
  */
-function gapsSectionFor(summary: Record<string, unknown>, generatedAt: string): ReportSection {
+function readinessGapsOf(summary: Record<string, unknown> | null | undefined): ReadinessGapLike[] | null {
+  const gaps = asRecord(summary?.regulatory)?.gaps;
+  if (!Array.isArray(gaps)) return null;
+  return gaps.filter((gap): gap is ReadinessGapLike => !!gap && typeof gap === 'object');
+}
+
+/**
+ * Whether a gap evaluation ran for this run — the flag the truthfulness gate's
+ * `requireExplicitGaps` reads.
+ *
+ * The old test was `Array.isArray(summary.regulatory.missingArtifacts)`, and
+ * the orchestrator sets that field on every project-scope run. So the flag was
+ * true even when the evaluator had assessed nothing on the artifact side, and
+ * "no gaps" printed and sealed over an unassessed half.
+ *
+ * A gap evaluation ran when the run states gaps it found, or states that the
+ * artifact half was assessed and found nothing. An empty list with no
+ * assessment flag is "cannot tell", which fails closed to false — including
+ * for runs stored before `artifactsAssessed` existed, which is the honest
+ * reading of a record that does not say.
+ */
+export function gapsWereEvaluated(summary: Record<string, unknown> | null | undefined): boolean {
+  const regulatory = asRecord(summary?.regulatory);
+  if (!regulatory) return false;
+  const assessed = regulatory.artifactsAssessed === true;
+  const gaps = readinessGapsOf(summary);
+  if (gaps) return assessed || gaps.length > 0;
+  if (Array.isArray(regulatory.missingArtifacts)) {
+    return assessed || regulatory.missingArtifacts.length > 0;
+  }
+  return false;
+}
+
+/**
+ * The gaps section: every gap the run recorded, "no gaps" only when an
+ * evaluation ran, found none, and the document contradicts it nowhere, or
+ * "not evaluated" when none ran.
+ *
+ * `blockers` is read for one reason: **a document may not state "No gaps
+ * detected" while it also lists blockers.** That rule holds whatever fed the
+ * summary, including provider paths not written yet, which is why it lives
+ * here rather than in each of them. A rendered report is sealed and handed to a
+ * regulator; one that reassures on one page and lists the cause on another is
+ * the failure this renderer exists to make impossible, not a wording choice.
+ */
+function gapsSectionFor(
+  summary: Record<string, unknown>,
+  generatedAt: string,
+  blockers: string[],
+): ReportSection {
+  const readinessGaps = readinessGapsOf(summary);
+  if (readinessGaps && readinessGaps.length > 0) {
+    return {
+      id: 'gaps',
+      title: 'Gaps',
+      blocks: [
+        {
+          kind: 'gap-list',
+          items: readinessGaps.map(gap => {
+            const title = typeof gap.title === 'string' && gap.title.trim()
+              ? gap.title.trim()
+              : String(gap.code ?? 'Gap');
+            const message = typeof gap.message === 'string' && gap.message.trim()
+              ? gap.message.trim()
+              : undefined;
+            const severity = GAP_SEVERITY[String(gap.severity)] ?? 'medium';
+            return message ? { title, severity, message } : { title, severity };
+          }),
+        },
+      ],
+    };
+  }
+
   const missingArtifacts = asRecord(summary.regulatory)?.missingArtifacts;
   if (Array.isArray(missingArtifacts) && missingArtifacts.length > 0) {
     return {
@@ -88,7 +172,8 @@ function gapsSectionFor(summary: Record<string, unknown>, generatedAt: string): 
       ],
     };
   }
-  if (gapsWereEvaluated(summary)) {
+
+  if (gapsWereEvaluated(summary) && blockers.length === 0) {
     return {
       id: 'gaps',
       title: 'Gaps',
@@ -98,6 +183,26 @@ function gapsSectionFor(summary: Record<string, unknown>, generatedAt: string): 
       ],
     };
   }
+
+  /* An evaluation that ran clean in a document that still carries blockers:
+     the blockers are the answer, and the reassurance is withheld rather than
+     printed beside them. */
+  if (gapsWereEvaluated(summary)) {
+    return {
+      id: 'gaps',
+      title: 'Gaps',
+      blocks: [
+        { kind: 'gap-list', items: [] },
+        {
+          kind: 'summary',
+          text:
+            'The gap evaluation recorded none. The blockers listed above are ' +
+            'outstanding, so this is not a clear result.',
+        },
+      ],
+    };
+  }
+
   /* "No gaps detected" printed for every scope no gap evaluation covers (every
      program-scoped canvas report among them), and sealed in final records
      (reporting review 2026-10-01). Nothing was checked; say so. */
@@ -244,7 +349,7 @@ export function renderReport(input: RenderInput): RenderedReport {
   }
 
   // 4. Gaps (always present; supports requireExplicitGaps).
-  sections.push(gapsSectionFor(input.summary, generatedAt));
+  sections.push(gapsSectionFor(input.summary, generatedAt, input.blockers));
 
   const scopeLabel = input.summary.scopeLabel;
   const report: RenderedReport = {

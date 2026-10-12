@@ -548,7 +548,7 @@ async function loadApplicationType(submissionId: number, organizationId: number)
  * The Module 3 headings an original IND must carry, read from the IND profile
  * (required-sections.requiredSectionProfileFor) and never restated here, with
  * their ICH M4 titles. Null for anything that is not a US IND — the scope the
- * CMC launch decision (P-13) ships. Pure + exported for test.
+ * CMC launch decision (P-28) ships. Pure + exported for test.
  */
 export function originalIndModule3Headings(
   applicationType: string | null,

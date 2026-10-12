@@ -19,7 +19,12 @@ vi.mock('../../../utils/logger.js', () => ({ createScopedLogger: () => log }));
 
 import { readLaunchScopeMode, launchScopeEnforced } from '../launch-scope.js';
 import { applyLaunchScope, type NavSurfaceEntitlement } from '../navigation-entitlements.js';
-import { LAUNCH_APPS, LAUNCH_SURFACE_IDS, isLaunchSurface } from '../../../../shared/constants/launch-scope';
+import {
+  LAUNCH_APPS,
+  LAUNCH_MODULE_IDS,
+  LAUNCH_SURFACE_IDS,
+  isLaunchSurface,
+} from '../../../../shared/constants/launch-scope';
 
 const v = (id: string, over: Partial<NavSurfaceEntitlement> = {}): NavSurfaceEntitlement => ({
   id,
@@ -61,9 +66,38 @@ describe('readLaunchScopeMode', () => {
 });
 
 describe('the scope list itself', () => {
-  it('has seven apps and every app surface is in the id set', () => {
-    expect(LAUNCH_APPS).toHaveLength(7);
+  it('has eight apps and every app surface is in the id set', () => {
+    expect(LAUNCH_APPS).toHaveLength(8);
     for (const a of LAUNCH_APPS) for (const s of a.surfaces) expect(isLaunchSurface(s)).toBe(true);
+  });
+  it('CMC / Module 3 is a launch app — decision P-28, 2026-10-12', () => {
+    const cmc = LAUNCH_APPS.find((a) => a.id === 'cmc');
+    expect(cmc?.label).toBe('CMC / Module 3');
+    expect(cmc?.surfaces).toEqual(['cmc']);
+    expect(isLaunchSurface('cmc')).toBe(true);
+    /* The screen was refused to EVERY organisation before this entry,
+       entitled or not: outside the catalog, applyLaunchScope overwrites the
+       verdict with a launch-scope lock whatever the licence said. */
+    const [locked] = applyLaunchScope([v('cmc', { source: 'subscribed' })]);
+    expect(locked.entitled).toBe(true);
+    expect(locked.source).toBe('subscribed');
+  });
+  it('CMC grants NO module, so the professional band still decides who sees it', () => {
+    /* provisionLaunchModules writes an explicit grant for every module id in
+       the list, and a grant outranks tier permanently. Listing 'cmc' would
+       hand the module to every new organisation and overturn the band the
+       product owner set on 2026-08-24, whose grandfather grants already cover
+       everyone entitled then. Pricing is not a side effect of a scope list. */
+    const cmc = LAUNCH_APPS.find((a) => a.id === 'cmc')!;
+    expect(cmc.modules).toEqual([]);
+    expect(LAUNCH_MODULE_IDS).not.toContain('cmc');
+    // And the boundary does not widen it: a tier lock on the surface stands.
+    const [out] = applyLaunchScope([
+      v('cmc', { entitled: false, source: 'tier', requiredTier: 'professional' }),
+    ]);
+    expect(out.entitled).toBe(false);
+    expect(out.source).toBe('tier');
+    expect(out.requiredTier).toBe('professional');
   });
   it('Reporting & analytics is a launch app — founder decision, 2026-09-26', () => {
     const reporting = LAUNCH_APPS.find((a) => a.id === 'reporting');

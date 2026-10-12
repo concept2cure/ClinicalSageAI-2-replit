@@ -10,6 +10,7 @@
 
 import nodemailer, { type Transporter } from 'nodemailer';
 import { createScopedLogger } from '../utils/logger.js';
+import { isEmailConfigured } from './email/smtp-config';
 const log = createScopedLogger('email-service');
 
 // ---------------------------------------------------------------------------
@@ -17,14 +18,16 @@ const log = createScopedLogger('email-service');
 // ---------------------------------------------------------------------------
 
 function getTransporter(): Transporter | null {
+  // The same predicate the sign-up and login refusals read, so "mail is
+  // configured" cannot mean one thing here and another at the door.
+  if (!isEmailConfigured()) {
+    return null;
+  }
+
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT || '465', 10);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
-
-  if (!host || !user || !pass) {
-    return null;
-  }
 
   return nodemailer.createTransport({
     host,
@@ -36,15 +39,12 @@ function getTransporter(): Transporter | null {
 
 const FROM_ADDRESS = process.env.SMTP_FROM || 'noreply@concept2cure.pro';
 
-/**
- * True when SMTP is configured enough to actually deliver mail. Login OTP is
- * the default mandatory 2FA, so when this is false in production NO user can
- * complete a login — callers use this to fail loud at boot rather than let the
- * failure surface silently one tester at a time.
- */
-export function isEmailConfigured(): boolean {
-  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
-}
+/* The predicate now lives in ./email/smtp-config — a leaf with no imports, so
+   `canDeliverLoginCode` and the sign-up refusal can read it without pulling in
+   nodemailer and the templates, and without every mail-service double in the
+   test suite having to restate it. Re-exported here because this is where its
+   callers already import it from. */
+export { isEmailConfigured };
 
 // ---------------------------------------------------------------------------
 // HTML Email Template

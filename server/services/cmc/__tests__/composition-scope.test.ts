@@ -3,7 +3,7 @@
  *
  * ── The defect ────────────────────────────────────────────────────────────────
  * The CMC module composes small-molecule Module 3 for a US IND — the scope the
- * launch decision ships (P-13, 2026-10-05) and the scope the composer was
+ * launch decision ships (P-28, 2026-10-05) and the scope the composer was
  * built and verified against. Everything outside it was composed anyway, with
  * content that is wrong rather than merely incomplete:
  *

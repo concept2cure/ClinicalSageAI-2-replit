@@ -1,6 +1,6 @@
 # The composition boundary: small-molecule Module 3 for a US IND, and a 409 otherwise
 
-Row **D2**. GA plan item 8 (decision 2026-10-05, P-13).
+Row **D2**. GA plan item 8 (decision 2026-10-05, P-28).
 
 ## The defect
 

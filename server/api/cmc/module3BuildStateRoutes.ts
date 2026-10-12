@@ -12,7 +12,7 @@
  * Module 3 build readiness. No separate dashboard needed.
  *
  * GET /section-labels and GET /uploaded-sources/:projectId were deleted on
- * 2026-10-05 with no caller in client/src or server (decision P-13;
+ * 2026-10-05 with no caller in client/src or server (decision P-28;
  * docs/evidence/CMC-M3-GA/2026-10-05/20-cmc-api-allowlist/; kept gone by
  * server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts). Each section
  * GET /build-state/:projectId returns carries its sectionLabel and its

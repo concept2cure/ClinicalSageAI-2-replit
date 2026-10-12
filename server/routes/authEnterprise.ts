@@ -46,6 +46,12 @@ import { requireAccessTokenReason } from '../middleware/tokenType';
 import { authMiddleware } from '../auth';
 import * as emailOtpService from '../services/emailOtpService';
 import { sendLoginOtpEmail } from '../services/emailService';
+import {
+  canDeliverLoginCode,
+  LOGIN_CODE_UNDELIVERABLE_CODE,
+  LOGIN_CODE_UNDELIVERABLE_MESSAGE,
+  LOGIN_CODE_UNDELIVERABLE_REASON,
+} from '../services/auth/login-code-delivery';
 import * as mfaService from '../services/mfaService';
 import { mfaEnrolmentOf } from '../services/mfa-enrolment';
 import { signInLimits } from '../middleware/sign-in-limits';
@@ -408,6 +414,12 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     const hasTotpSetup = mfaEnrolmentOf(user).signInFactor === 'totp';
     let maskedEmail: string | undefined;
 
+    /* The same refusal /api/auth/login makes, for the same reason: with no way
+       to send the emailed code, answering `success: true` with a masked address
+       tells the person a code is on its way to them. See
+       services/auth/login-code-delivery.ts. */
+    const emailOtpUndeliverable = !hasTotpSetup && !canDeliverLoginCode();
+
     // Password verified, second factor requested: the same event /api/auth/login records.
     // Against the organisation the partial token names, which verify-mfa
     // records its events against too: one sign-in, one ledger.
@@ -416,11 +428,23 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       userId: user.id,
       tenantId: organizationId,
       email: user.email,
-      outcome: 'success',
-      reason: hasTotpSetup ? 'mfa_challenge_totp' : 'mfa_challenge_email',
+      outcome: emailOtpUndeliverable ? 'failure' : 'success',
+      reason: emailOtpUndeliverable
+        ? LOGIN_CODE_UNDELIVERABLE_REASON
+        : hasTotpSetup
+          ? 'mfa_challenge_totp'
+          : 'mfa_challenge_email',
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
     });
+
+    if (emailOtpUndeliverable) {
+      console.error('[enterprise-auth] Sign-in refused: e-mail is not configured, so the code cannot be sent');
+      return res.status(503).json({
+        error: LOGIN_CODE_UNDELIVERABLE_CODE,
+        message: LOGIN_CODE_UNDELIVERABLE_MESSAGE,
+      });
+    }
 
     if (!hasTotpSetup) {
       // Email OTP — generate and send

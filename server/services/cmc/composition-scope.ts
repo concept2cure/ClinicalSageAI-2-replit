@@ -5,7 +5,7 @@
  * ## Why a boundary exists at all
  *
  * The CMC module composes **small-molecule Module 3 for a US IND**. That is
- * the scope the launch decision ships (P-13, 2026-10-05), and it is the scope
+ * the scope the launch decision ships (P-28, 2026-10-05), and it is the scope
  * the composer was built and verified against.
  *
  * Everything outside it was being composed anyway, with content that is wrong
