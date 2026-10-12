@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T07:36:43.739Z",
+  "generatedAt": "2026-10-12T08:15:21.076Z",
   "git": {
-    "sha": "b54b9f7e742d672bb6ef37ff59e7b97948ef3e54",
+    "sha": "ec304dc862f88b4bc9ad912b0238a427a6d0be31",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2112,7 +2112,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 150768
+        "bytes": 151972
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2334,7 +2334,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3487
+        "lines": 3509
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
