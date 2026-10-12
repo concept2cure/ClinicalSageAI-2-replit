@@ -121,11 +121,13 @@ a control is for. They now assert only what the fix leaves unchanged
 | `npm run ci:discarded-audit-write` | no new occurrences |
 | `server/services/audit` + the tenant-export attestation + the Part 11 chain-honesty route suite | **34 files / 410 tests passed** |
 
-## The last finding from the 2026-10-08 review
+## The last finding from the 2026-10-08 review — confirmed already closed
 
-**HS-1008-8** (row D5) — `generatedAt` is stamped at each render, so
-re-rendering a stored run yields a different content hash. The finding itself
-says to confirm the pinned-timestamp half before keeping it, and notes the 10-01
-README lists seal re-verification as fixed. That confirmation needs a stored run
-to re-render, which needs a database this container does not have, so it is left
-open and unverified rather than guessed at.
+**HS-1008-8** (row D5) — `generatedAt` stamped at each render, so re-rendering a
+stored run yields a different content hash.
+
+I first wrote here that confirming it needed a database this container does not
+have. That was wrong: it is a static read of the two `renderReport` call sites,
+and I did it. **Both halves were already closed**, on 2026-10-01, in
+`824500920` — a week *before* the review that reported it. See
+`../../D5-REPORT-SEAL-TIMESTAMP/2026-10-12/` for the readings.
