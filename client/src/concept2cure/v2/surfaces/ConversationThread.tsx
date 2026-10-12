@@ -947,7 +947,13 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
             )}
           </div>
           {openBlockedBecause && (
-            <p id={openRefusalId} className="ct-art-refusal" style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-300)' }}>
+            {/* Classless with inline values, exactly as the sibling refusal
+                reason above is (`id={refusalId}`): these seven notes across the
+                product are slated to become one `RefusalNote` component, and a
+                one-off class for one of them would make that harder. The values
+                are round 13's measured pair — see r14/d5-open-as-document/
+                contrast.txt for this card's own surface. */}
+            <p id={openRefusalId} style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-300)' }}>
               {openBlockedBecause}
             </p>
           )}
