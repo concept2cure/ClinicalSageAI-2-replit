@@ -294,6 +294,23 @@ export interface OrchestratorInputs {
   /** Optional: skip validation step */
   skipValidation?: boolean;
   /**
+   * Why this run carries no Module 3, when its program's export gate refused
+   * one (`load-approved-cmc-sources-for-project.ts`, GA plan item 1).
+   *
+   * Without it, `m3.compose` records 'skipped (no inputs)' for two completely
+   * different situations — a program with no CMC data at all, and a program
+   * whose composed Module 3 the gate will not clear for export — and a
+   * reviewer reading the run's steps cannot tell which. The step mechanism
+   * already distinguishes them: `{ skip: reason }` is for a skip that is NOT
+   * want of input.
+   *
+   * Deliberately NOT part of `m3.compose`'s input hash. The material change —
+   * the gate opening or closing — moves `cmcSources` between empty and
+   * non-empty, which the hash already tracks; hashing this string as well
+   * would invalidate every stored step whenever the gate's WORDING changed.
+   */
+  module3ExportRefusal?: string | null;
+  /**
    * When true, run the m3.refine step which calls
    * `buildModule3WithNarrative` with `useAI: true` to refine each composed
    * Module 3 section's narrative through the AI gateway (with hallucination
@@ -1414,7 +1431,12 @@ export async function runOrchestrator(
     // Step: m3.compose (core S/P sections)
     const m3Hash = hashInputs(inputs.cmcSources, inputs.region);
     await runStep('m3.compose', m3Hash, async () => {
-      if (inputs.cmcSources.length === 0) return null;
+      if (inputs.cmcSources.length === 0) {
+        /* A refused export gate is not "no inputs": the program HAS Module 3,
+           and it is not cleared to leave. Say so on the step, where the run's
+           own audit reads it. */
+        return inputs.module3ExportRefusal ? { skip: inputs.module3ExportRefusal } : null;
+      }
       const fullM3 = composeFullModule3(inputs.cmcSources, inputs.region);
       // Split: S/P core go to m3.compose; A/R get split into their own steps for traceability
       const core = fullM3.filter(s => /^3\.[123]|^3\.2\.[SP]/.test(s.sectionKey));

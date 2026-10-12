@@ -65,8 +65,11 @@ import {
   module3BuildAll, module3BuildSection, module3MissingInputs,
   module3StaleSections, module3RefreshStale, module3Readiness,
   module3Contradictions, module3Lineage, module3ClassifySource,
-  cmcStatus, ichCompliance, controlStrategy, variationsClassify,
+  cmcStatus,
 } from './module3-command-handlers.js';
+/* The deterministic CMC quality engines — not Module 3 handlers, and no longer
+   in that module (quality-engine-command-handlers.ts). */
+import { ichCompliance, controlStrategy, variationsClassify } from './quality-engine-command-handlers.js';
 import { MDX_COMMAND_HANDLERS, MDX_COMMAND_METADATA } from './mdx-command-handlers';
 import {
   MDX_COMMAND_HANDLERS_PHASE2,

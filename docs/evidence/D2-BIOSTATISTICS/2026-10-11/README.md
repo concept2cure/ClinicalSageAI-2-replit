@@ -354,6 +354,195 @@ scoring path that no longer exists.
 | Submission Readiness statistical gate | — | **owed** (below) |
 | Reporting & analytics statistical reports | — | **owed** (below) |
 
+### The renderer did not look where the engine put it (2026-10-12)
+
+A follow-on from the survival-curve change, and the reason an adversarial
+re-read of one's own work earns its cost.
+
+`restrictedMeanSurvival` now carries the Kaplan–Meier table it had always
+computed and discarded. In the TWO-ARM case `rmstDifference` embeds each arm's
+whole result, so the curves sit at `treatment.survivalCurve` and
+`control.survivalCurve` — one level down. `scalarRows` in the workbench has
+always descended; `objectTables` did not. So the single-arm call rendered its
+survival table and the two-arm call — the common case, treatment against
+control — rendered **nothing**, while showing "Treatment · Rmst" and the rest
+of that arm's scalars right beside it. Data on the wire and absent from the
+screen reads as "this engine has no curve", not "this renderer did not look".
+
+The alternative was to copy both curves up to the top level of the difference
+result, which is two places holding one table. `objectTables` descends one
+level instead, labelling a nested table with its parent key exactly as the
+scalar rows do — so it is fixed for every engine that nests a table rather than
+for this one. Pinned by
+`client/src/concept2cure/v2/__tests__/workbenchNestedTables.test.tsx` (4 cases,
+2 failed before), including that each arm renders its OWN rows, so one table
+drawn twice under two labels would fail.
+
+Worth naming: the curve-carrying change was pushed before this was found, so
+for one commit the fix was invisible in the case that matters most. Verifying a
+change end to end means through the renderer, not to the edge of the wire.
+
+### Reproducing a filed figure (2026-10-12)
+
+The sweep's last high-severity finding, and the one closest to the point of
+this whole row. Two questions a sponsor is asked under statistical defence:
+
+> *"Reproduce the planned sample size in your SAP from the inputs you filed."*
+> *"Prove this N was not edited after it was computed."*
+
+Both were answerable in principle since 2026-10-08, when `recordComputationRun`
+began storing every sizing run's inputs, outputs and a SHA-256 of each
+(`migrations/20261008f`), precisely so a planned N could be reproduced from a
+record rather than taken on a label. `reproduceComputationRun` is the half that
+checks it — and it was reachable from nothing: no route, no AnA tool, no client
+code. **The records existed and could not be checked, which is the same as not
+having them when a reviewer asks.**
+
+Now `GET /api/biostat-bridge/computation-runs/:runId/reproduce`, reporting four
+facts separately because they fail for different reasons and one verdict would
+hide which:
+
+| | |
+|---|---|
+| `inputsIntact` | the stored inputs still hash to their stored digest |
+| `outputsIntact` | the stored outputs still hash to theirs |
+| `reproduced` | re-running the engine on the stored inputs gives the stored outputs digest |
+| `engineVersionMatches` | the engine is the version that produced it |
+
+A reproduction that fails because the engine moved on is a different event from
+one that fails because a row was edited, and a submission has to be able to say
+which. A figure that does not reproduce is an **answer, not an error** — the
+route still returns 200, because a 500 would tell a sponsor the check broke
+when what it found is that their filed number cannot be reproduced. A run in
+another tenant reads as not found rather than as a failed reproduction.
+
+Pinned by `server/services/stats/__tests__/reproduce-computation-run.test.ts`
+(7 cases, with the row edited in each of the two ways that matter, and a method
+with no registered recompute saying so rather than claiming a reproduction) and
+`server/routes/__tests__/biostat-bridge-reproduce-route.test.ts` (10 cases, all
+10 failing before the route existed).
+
+### Three engines a sponsor could not reach, and the last private CDF (2026-10-12)
+
+The sweep's remaining confirmed findings. Each was declared in
+`server/services/stats/*`, correct, and referenced by no route, no AnA tool and
+no client code.
+
+- **`tippingPointBorrow`** — the BORROWING-WEIGHT sensitivity of an
+  external-control analysis: the design swept over a₀ from 1 to 0, so a
+  reviewer can see at what borrowing weight the conclusion flips. "How much of
+  your result depends on how much you borrowed?" is asked of every
+  external-control filing. `/external-control/sensitivity` already ran
+  `tippingPointBias` — the *other* sensitivity, bias in the historical control
+  — and had every input this one needs, so the sweep joined that response
+  rather than a second endpoint recomputing the same borrow and the same
+  effect.
+- **`mmrmPower`** — the power an MMRM design has at an n the sponsor names. The
+  reverse of `/mmrm/sample-size`, and the question that follows a budget rather
+  than precedes it: *"we can only enrol 90 per arm, what does that buy us?"*
+  Now `POST /api/biostat/mmrm/power`, answering with the n the target power
+  would need beside it, from the same engine so the two cannot disagree.
+- **`accrualHoldoutError`** — the forecast scored against what actually
+  enrolled: per-point error, MAE, RMSE. A forecast never checked against
+  reality is the thing a CRO is measured on, and the platform produced the
+  forecast with no way to say how far off it was. Now
+  `POST /api/biostat/enrollment/backtest`.
+
+Both new routes have calculators, bringing the workbench to **29**. The
+registry-wide contract test picked them up without being touched — which is
+what the registry is for, and is the check that the two halves agree.
+
+**And the thirteenth copy of the normal CDF.** `mmrm-design.ts` carried its own
+Abramowitz & Stegun 7.1.26 CDF behind the comment *"to avoid a circular
+import"*. The reason is false: the module already imported `normalQuantile`
+from `./normal`, and `./normal` imports nothing at all. It was the last of the
+private copies the 2026-10-05 sweep removed from the AnA engine, the adaptive
+service and the trial-statistics knowledge engine — kept alive by a reason
+nobody checked.
+
+What it cost, measured rather than asserted: A&S 7.1.26 is accurate to ~7e-8
+against the canonical Cody form's ~1e-16. `mmrmPower` rounds to six decimals,
+and over a 0.0001 grid on z ∈ [0, 4] the two forms give a **different sixth
+decimal at 4.4% of points** — including, for the reference design in its test,
+the very n the sizing returns (0.900072 against the correct 0.900073). This
+record does not call that a safety defect, because it is not one. It is a
+reproducibility defect, against a provenance stamp that promises the same
+inputs give the same answer.
+
+`tests/biostat/mmrm-power-uses-the-canonical-cdf.test.ts` recomputes the power
+from first principles outside the module — Φ(|δ|/SE − z) with the canonical Φ,
+using the `varianceFactor` the result exposes — and demands an **exact** match
+at six decimals across five values of n. A module with its own 7e-8 CDF cannot
+pass that. It also asserts structurally that no private CDF has been re-added,
+because the numbers alone would not catch one: a re-added copy agrees with the
+canonical form 95.6% of the time.
+
+### A wrong number under a correct-looking label (2026-10-12)
+
+The reachability sweep's most serious finding was not a reachability gap. It
+was live, on the most common phase 3 design there is.
+
+The engine reads `effectSize` for a time-to-event design as the hazard-ratio
+**reduction**: HR = 1 − effectSize. That convention is deliberate, documented
+at `computation-engine.ts hazardRatio`, and named in its own refusal message.
+The workbench's defensibility panel labelled that field **"Hazard ratio"**,
+placeholder **"e.g. 0.7"**.
+
+| What the sponsor typed | What the engine sized | Total N |
+|---|---|---|
+| 0.7, under a field reading "Hazard ratio" | HR 0.300 | **50** |
+| 0.3, the reduction for HR 0.7 | HR 0.700 | **550** |
+
+An oncologist typing the hazard ratio their own protocol states was shown
+**fifty subjects where five hundred and fifty is right** — an eleven-fold
+under-sizing, rendered as "Total N computed" with a verdict chip beside it. A
+missing figure sends a sponsor to SAS; this one sends a 50-patient oncology
+trial to an ethics committee.
+
+Three things had to be true at once for it to survive:
+
+1. **The label contradicted the engine, and the sibling surface did not.**
+   `Biostatistics.tsx` calls the same engine field "HR reduction". Two surfaces
+   disagreed about what one engine input means, and the one that was wrong is
+   the one with the verdict chip. It now reads "Hazard-ratio reduction (1 − HR)"
+   with the placeholder 0.3 and a hint: *"Not the hazard ratio itself. For a
+   protocol stating HR 0.7, enter 0.3."*
+2. **Nothing in the response could contradict it.** The `assessed` payload
+   carried only `sampleSize`, `power` and the judgment. It dropped `method`,
+   `formula` — which prints `HR=0.700` — and `assumptions`, every one of which
+   the sibling surface renders. All three are now carried and rendered, so the
+   hazard ratio the engine actually used is on screen beside the number, and
+   the event rate it defaulted (0.5, which is what turns events into subjects)
+   is named as a default.
+3. **The tool schema a model reads said nothing about it.** `effectSize` was
+   described only as "Standardized effect size (e.g. Cohen's d for
+   continuous)". A model asked for "a hazard ratio of 0.7" had no way to know
+   it must send 0.3, and would make exactly the substitution the label invited.
+   The description now states the convention, the conversion and the
+   consequence.
+
+Found while there: `assessDefensibility` let a `ComputationRefusal` throw
+straight out of the service, so a caller that asked for an assessment got an
+exception. The same defect the ana-biostats routes had until 2026-10-11 — the
+refusal contract only works if every caller reports a refusal as one. It now
+answers `needs_parameters` with the engine's own sentence, which is the
+sentence that names this very convention.
+
+Pinned by `tests/biostat/hazard-ratio-convention-is-stated.test.ts` (7 cases,
+4 failed before) and
+`client/src/concept2cure/v2/__tests__/workbenchHazardRatioLabel.test.tsx`
+(6 cases, 5 failed before; 3 still fail with only the label reverted, which is
+the isolation that matters). The engine's convention itself is asserted
+unchanged in both directions — 0.3 → 550 and 0.7 → 50 — so the next person to
+"fix" the engine instead of the label will be told what they are changing.
+
+**Why no gate caught this.** Every number was right. The engine was right, its
+tests were right, the route was right, and the figure matched its inputs
+exactly. What was wrong was the sentence above the input box. No typecheck, no
+reference suite and no lint rule reads a label against the contract of the
+field it sits on, and the only thing that did was an agent told to compare what
+a UI can express with what the engine accepts.
+
 ### The IVD analytical performance section (2026-10-12)
 
 A reachability sweep found the largest remaining gap, and it was not in the

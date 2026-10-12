@@ -583,7 +583,14 @@ describe('AnA explanation grounding from plan/receipt', () => {
     expect(explanation).toContain('**Blocked**: 1');
     expect(explanation).toContain('active → superseded');
     expect(explanation).toContain('Object is locked');
-    expect(explanation).toContain('readiness truth have been refreshed');
+    /* This asserted "readiness truth have been refreshed", which the narrative
+       said for a write that never happened: the readiness half of the restamp
+       targeted a table that exists nowhere in this repository, inside a
+       swallowing catch (2026-10-12; see
+       server/services/resolution/__tests__/resolution-narrative-honesty.test.ts).
+       The sentence now says what the execution did. */
+    expect(explanation).toContain('have been restamped');
+    expect(explanation).toContain('Readiness is recomputed from the record on each read');
     expect(explanation).toContain('review states updated');
   });
 

@@ -1,0 +1,11 @@
+The suite against the tree with the primitive absent (its import does not resolve).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+  server/services/authoring/__tests__/turn-served-models.pglite.test.ts
+
+7 of 7 cases failed with: TypeError: servedModelsForTurn is not a function.
+The fixtures themselves worked — the turns were filed and the failure is at the
+call — so the red is the missing primitive and not a broken harness.
+
+The eighth case (a record that no longer verifies) was added after the first
+green, when a way to make a record un-intact was found; it is covered by mutant
+R15-04, which it kills.

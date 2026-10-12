@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T07:27:44.412Z",
+  "generatedAt": "2026-10-12T10:17:57.235Z",
   "git": {
-    "sha": "8d5228bc2d8bdab4b42d6a7dead8ca738dde7e63",
+    "sha": "6622c4467a7823ba79e7a5347b091d3d47d7ae7c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2048,7 +2048,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1132038
+        "bytes": 1132021
       },
       {
         "file": "shared/schema.ts",
@@ -2060,7 +2060,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 373147
+        "bytes": 375426
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2072,7 +2072,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 224883
+        "bytes": 225079
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2112,7 +2112,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 150768
+        "bytes": 151972
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2278,7 +2278,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21800
+        "lines": 21801
       },
       {
         "file": "shared/schema.ts",
@@ -2286,7 +2286,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8226
+        "lines": 8265
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2298,7 +2298,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5640
+        "lines": 5643
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2334,7 +2334,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3487
+        "lines": 3509
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2574,7 +2574,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
-        "lines": 1888
+        "lines": 1889
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
@@ -2642,7 +2642,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
-        "lines": 1813
+        "lines": 1814
       },
       {
         "file": "ui_kits/home/Projects.jsx",
@@ -2705,10 +2705,6 @@
         "lines": 1623
       },
       {
-        "file": "server/services/module3-extensions.ts",
-        "lines": 1615
-      },
-      {
         "file": "server/routes/mdx-qms.ts",
         "lines": 1612
       },
@@ -2723,6 +2719,10 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
+      },
+      {
+        "file": "server/services/module3-extensions.ts",
+        "lines": 1592
       },
       {
         "file": "server/services/ana-biostats/computation-engine.ts",

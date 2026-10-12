@@ -18,7 +18,8 @@
  *                    POST /api/coauthor/documents), then             server/routes/submissions.ts:876, :928; server/services/submission-service/submission-service.ts:1842 (:2062)
  *                    PUT /api/submissions/sequences/:id/leaves ×2
  *                    (the filing copy, and the Vault copy)
- *   8 transmit       transition → freeze → dispatch → transmit,      server/routes/submissions.ts:890, :1674, :1690, :1718;
+ *   8 transmit       the original IND's Module 3 by reference, then  server/services/ind-lifecycle/ind-cross-reference-persistence.ts:97;
+ *                    transition → freeze → dispatch → transmit,      server/routes/submissions.ts:890, :1674, :1690, :1718;
  *                    each on a governed Part 11 sign                  server/routes/c2c/actions.ts:777; submission-service.ts:1217 (:1418, :1443);
  *                                                                    server/services/submission-gateways/fda-esg.ts:264-281
  *
@@ -253,6 +254,12 @@ const MIGRATIONS = [
   // Which account a transmit is sent under (b7bf25037, 2026-10-01). The guard
   // resolves it before the wire, and an unreadable choice refuses the send.
   'migrations/20261001g_organization_gateway_accounts.sql',
+  // The Module 1.4 cross-reference register. Since 2026-10-11 (D2, 4ad6118fc)
+  // Submission Readiness asks an ORIGINAL IND for its Module 3 and reads this
+  // register for the files that may stand in for it; a register it cannot read
+  // is reported as unreadable and blocks, so a journey without the table
+  // proves the refusal of a database gap, not of a missing dependency.
+  'migrations/20260614_ind_cross_references.sql',
   // Last: the same-organization project keys (PF-04) over every store above
   // that names a project. After 20260727_prm_program_link, whose unchecked
   // backfill must never run with the key present.

@@ -37,6 +37,7 @@ import {
   commensurateBorrow,
   treatmentEffect,
   tippingPointBias,
+  tippingPointBorrow,
   renderExternalControlMemo,
   type CovariateInput,
 } from '../services/stats/external-control';
@@ -50,6 +51,7 @@ import {
   forecastCompletion,
   forecastEnrollmentByTime,
   forecastRetention,
+  accrualHoldoutError,
   type SiteConfig,
 } from '../services/stats/enrollment-forecast';
 import {
@@ -84,7 +86,7 @@ import {
   type DoseLevelData,
 } from '../services/stats/dose-finding-boin';
 import { rmstDifference, restrictedMeanSurvival } from '../services/stats/rmst';
-import { mmrmSampleSize, type MmrmCovariance } from '../services/stats/mmrm-design';
+import { mmrmPower, mmrmSampleSize, type MmrmCovariance } from '../services/stats/mmrm-design';
 import {
   calculateSpendingBoundaries,
   conditionalPowerScenarios,
@@ -449,6 +451,15 @@ router.post('/external-control/sensitivity', authMiddleware, async (req: Request
     const effect = treatmentEffect(b.meanT, b.seT, control, alpha);
     // The bias tipping-point uses the power-prior path with the active a0.
     const tipping = tippingPointBias({ ...summary, meanT: b.meanT, seT: b.seT, a0, alpha });
+    /* The BORROWING-WEIGHT tipping point: the same design swept over a0 from 1
+       to 0. "How much of your conclusion depends on how much you borrowed?" is
+       the question FDA and EMA ask of every external-control filing, and
+       `tippingPointBorrow` answered it from nowhere — declared in
+       stats/external-control.ts and referenced by no route, tool or client.
+       It takes exactly the inputs this route already has, so it belongs in
+       this response rather than behind a second endpoint computing the same
+       borrow and the same effect again. */
+    const tippingBorrow = tippingPointBorrow({ ...summary, meanT: b.meanT, seT: b.seT, alpha });
     const balance = Array.isArray(b.covariates) && b.covariates.length > 0
       ? covariateBalance(b.covariates as CovariateInput[])
       : undefined;
@@ -463,7 +474,7 @@ router.post('/external-control/sensitivity', authMiddleware, async (req: Request
       tipping,
     });
 
-    res.json({ success: true, data: { control, effect, tipping, balance, memo } });
+    res.json({ success: true, data: { control, effect, tipping, tippingBorrow, balance, memo } });
   } catch (error: any) {
     return res.status(400).json({ success: false, error: error.message });
   }
@@ -602,6 +613,115 @@ function parseInterimLook(b: Record<string, any>): { error: string } | InterimLo
     prior: priorResult.prior,
   };
 }
+
+/**
+ * POST /api/biostat/mmrm/power
+ *
+ * The power an MMRM design has at an n the sponsor names — the reverse of
+ * /mmrm/sample-size, and the question that follows a budget: "we can only
+ * enrol 90 per arm, what does that buy us?"
+ *
+ * `mmrmPower` was declared in stats/mmrm-design.ts and referenced by no route,
+ * tool or client, so the reverse direction could not be asked. Same engine as
+ * the sizing — same variance factor, same monotone-dropout information — so a
+ * power read here and an n read there cannot disagree.
+ *
+ * Body: { visits, covariance, rho, sigma, delta, retention[], nPerArm,
+ *         n2?, alpha?, targetVisit?, allocationRatio? }
+ */
+router.post('/mmrm/power', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    const required = ['visits', 'rho', 'sigma', 'delta', 'nPerArm'];
+    const missing = required.filter((k) => typeof b[k] !== 'number' || !Number.isFinite(b[k]));
+    if (missing.length > 0) {
+      return res.status(400).json({ success: false, error: `${missing.join(', ')} must be finite numbers.` });
+    }
+    if (!Array.isArray(b.retention) || !b.retention.every((r: unknown) => typeof r === 'number')) {
+      return res.status(400).json({ success: false, error: 'retention must be an array of numbers, one per post-baseline visit, monotone non-increasing.' });
+    }
+    if (!['compound_symmetry', 'ar1'].includes(b.covariance)) {
+      return res.status(400).json({ success: false, error: 'covariance must be compound_symmetry or ar1; no other structure is implemented and none is substituted.' });
+    }
+
+    const input = {
+      visits: b.visits,
+      covariance: b.covariance as MmrmCovariance,
+      rho: b.rho,
+      sigma: b.sigma,
+      delta: b.delta,
+      retention: b.retention as number[],
+      nPerArm: b.nPerArm,
+      n2: typeof b.n2 === 'number' ? b.n2 : undefined,
+      alpha: typeof b.alpha === 'number' ? b.alpha : undefined,
+      targetVisit: typeof b.targetVisit === 'number' ? b.targetVisit : undefined,
+      allocationRatio: typeof b.allocationRatio === 'number' ? b.allocationRatio : undefined,
+    };
+
+    const power = mmrmPower(input);
+    /* The sizing beside it, at this design's own target power, so a sponsor
+       can see both the power their budget buys and the n the target needs —
+       from one engine, in one answer. */
+    const sized = mmrmSampleSize({ ...input, power: typeof b.power === 'number' ? b.power : 0.9 });
+
+    res.json({
+      success: true,
+      data: {
+        power,
+        nPerArm: input.nPerArm,
+        n2: input.n2 ?? input.nPerArm,
+        atTargetPower: { power: sized.inputs.power, nPerArm: sized.nPerArm, achievedPower: sized.achievedPower },
+        varianceFactor: sized.varianceFactor,
+        efficiencyVsCompleters: sized.efficiencyVsCompleters,
+        provenance: sized.provenance,
+      },
+    });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/enrollment/backtest
+ *
+ * The forecast scored against what actually enrolled: the per-point error, the
+ * mean absolute error and the RMSE.
+ *
+ * `accrualHoldoutError` was declared in stats/enrollment-forecast.ts and
+ * referenced by no route, tool or client. A forecast that is never scored
+ * against reality is the thing a CRO is measured on and could not show: this
+ * platform produced the forecast and had no way to say how far off it was.
+ *
+ * Body: { sites: SiteConfig[], observed: [{ time, cumulative }] }
+ */
+router.post('/enrollment/backtest', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    resolveOrganizationId(req);
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: error.message });
+  }
+  try {
+    const b = req.body ?? {};
+    if (!Array.isArray(b.sites) || b.sites.length === 0) {
+      return res.status(400).json({ success: false, error: 'sites must be a non-empty array of site configurations.' });
+    }
+    if (!Array.isArray(b.observed) || b.observed.length === 0 ||
+        !b.observed.every((o: unknown) => !!o && typeof (o as any).time === 'number' && typeof (o as any).cumulative === 'number')) {
+      return res.status(400).json({ success: false, error: 'observed must be a non-empty array of { time, cumulative } with finite numbers — the actual cumulative enrolment at each time.' });
+    }
+    res.json({
+      success: true,
+      data: accrualHoldoutError(b.sites as SiteConfig[], b.observed as Array<{ time: number; cumulative: number }>),
+    });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, error: error.message });
+  }
+});
 
 /**
  * POST /api/biostat/adaptive/interim

@@ -1,0 +1,13 @@
+The suite, and every suite that exercises what this changes.
+
+ authoringFromDraftProvenance.pglite.integration      11 passed
+
+Regression, 5 files: governed-write-gate, turn-tool-context,
+authoringFromDraft.pglite.integration (the pre-existing from-draft suite),
+authoringFromDraftProvenance, authoringObjectAuthorization-from-draft
+ Test Files  5 passed (5)
+      Tests  71 passed (71)
+
+Wider: server/services/authoring/__tests__/ plus the from-draft route suite
+ Test Files  30 passed (30)
+      Tests  514 passed (514)

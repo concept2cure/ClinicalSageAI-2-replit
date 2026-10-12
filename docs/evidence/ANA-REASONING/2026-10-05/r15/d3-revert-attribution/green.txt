@@ -1,0 +1,18 @@
+The contract suite on the final tree, after the helper extraction.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+  tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+
+ Test Files  1 passed (1)
+      Tests  37 passed (37)
+
+Lint: server/routes/authoring.router.ts now=23/0 trunk=23/0 (warnings/errors);
+the contract suite 1/0 both sides (its pre-existing max-lines warning, which
+fires once per file and so does not multiply).
+typecheck: npm run -s typecheck:fast -> exit 0
+
+WIDER REGRESSION: landed, and recorded in regression.txt beside this file —
+103 test files, 1359 tests, all passing, over
+server/routes/__tests__/authoring-atomic-mutations.test.ts and the whole
+tests/schema-contract/ directory. regression.txt states which tree that run
+covers and which one the pre-push gates cover, because they are not the same
+commit.

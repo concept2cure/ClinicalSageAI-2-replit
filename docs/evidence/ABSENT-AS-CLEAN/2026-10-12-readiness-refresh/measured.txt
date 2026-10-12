@@ -1,0 +1,31 @@
+MEASURED 2026-10-12T08:39:32Z
+
+$ npm run ci:unbacked-tables:strict   — before
+[ci:unbacked-tables] 1491 tables/views created across migrations, drizzle and runtime DDL; 732 referenced in server SQL; 22 unbacked (strict mode)
+  concept2cure_projects
+      server/services/resolution/contradiction-resolution-orchestrator.ts
+
+$ npm run ci:unbacked-tables:strict   — after
+[ci:unbacked-tables] 1491 tables/views created across migrations, drizzle and runtime DDL; 731 referenced in server SQL; 21 unbacked (strict mode)
+
+
+  (the first attempt still measured 22: the gate reads source TEXT, and the
+   replacement comment quoted the dead statement, which the scanner read as
+   SQL. Naming the table in prose instead is what took it to 21 — a gate
+   doing exactly what it says it does.)
+
+$ the new narrative suite, red on the claim then green:
+  RED  × never claims that preflight or readiness state was refreshed
+       → true: expected '## Contradiction Resolution: EXECUTE…' not to match /readiness truth have been refreshed/i
+  RED  × says what was restamped, and that readiness is recomputed rather than cached
+       → expected '## Contradiction Resolution: EXECUTE…' to match /recomputed/i
+ ✓ server/services/resolution/__tests__/resolution-narrative-honesty.test.ts > the resolution narrative claims only what the execution did > never claims that preflight or readiness state was refreshed 2ms
+ ✓ server/services/resolution/__tests__/resolution-narrative-honesty.test.ts > the resolution narrative claims only what the execution did > says what was restamped, and that readiness is recomputed rather than cached 1ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+
+$ the module's own suites (the one that pinned the false sentence included):
+ Test Files  5 passed (5)
+      Tests  66 passed (66)
+
+$ npx tsc --noEmit -p tsconfig.json  ->  exit 0

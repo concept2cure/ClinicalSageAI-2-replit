@@ -34,6 +34,7 @@ import {
   isApplicationType,
   listBridgeDesigns,
   placementsForApplication,
+  reproduceSizingRun,
 } from '../services/biostatistics-bridge/bridge-service';
 /* The CANONICAL resolvers. This module defined its own pair, reading the same
    places in a different order — and a second answer to "which organization is
@@ -91,6 +92,50 @@ router.get('/designs/:studyId/assessment', async (req: Request, res: Response) =
     return ok(res, assessment);
   } catch (err) {
     return serverError(res, logger, 'assessing the design', err);
+  }
+});
+
+// ─── GET /computation-runs/:runId/reproduce ───────────────────────────────────
+
+/**
+ * GET /api/biostat-bridge/computation-runs/:runId/reproduce
+ *
+ * Re-run a stored computation and report whether it still produces the figure
+ * that was filed.
+ *
+ * The two questions a sponsor gets asked under statistical defence:
+ * *"reproduce the planned sample size in your SAP from the inputs you filed"*
+ * and *"prove this N was not edited after it was computed"*. Both were
+ * answerable in principle since 2026-10-08, when `recordComputationRun` began
+ * storing each run's inputs, outputs and a SHA-256 of each
+ * (migrations/20261008f) — and `reproduceComputationRun`, which checks them,
+ * was reachable from nothing. The records existed and could not be checked.
+ *
+ * Reports four separate facts, because they fail for different reasons and a
+ * single verdict would hide which:
+ *   inputsIntact          the stored inputs still hash to their stored digest
+ *   outputsIntact         the stored outputs still hash to theirs
+ *   reproduced            re-running the engine on the stored inputs gives
+ *                         the stored outputs digest
+ *   engineVersionMatches  the engine is the version that produced it
+ *
+ * A reproduction that fails because the engine moved on is a different event
+ * from one that fails because a row changed, and a submission needs to be able
+ * to say which. A run in another tenant reads as not found.
+ */
+router.get('/computation-runs/:runId/reproduce', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return clientError(res, 401, 'AUTH_REQUIRED');
+  const runId = Number(req.params.runId);
+  if (!Number.isInteger(runId) || runId <= 0) {
+    return clientError(res, 400, 'INVALID_RUN_ID', { message: 'A computation-run id must be a positive integer.' });
+  }
+  try {
+    const result = await reproduceSizingRun(orgId, runId);
+    if (!result.found) return clientError(res, 404, 'NOT_FOUND', { runId });
+    return ok(res, result);
+  } catch (err) {
+    return serverError(res, logger, 'reproducing the computation run', err);
   }
 });
 

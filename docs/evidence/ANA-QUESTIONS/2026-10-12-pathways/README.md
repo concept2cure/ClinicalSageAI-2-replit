@@ -122,3 +122,35 @@ companion-diagnostic routes — not the plain device ones.
   authority, and a record of the choice. See
   `../2026-10-12-availability/README.md`, which also says why withholding was
   rejected.
+
+---
+
+## Follow-up (2026-10-12, a later session): the consistency probe had to learn `allowOther`
+
+The full vitest tier found one failure on trunk after this work landed:
+
+```
+× tests/ana-intelligence/flow-registry-consistency.test.ts
+  > value-vocabulary alignment probe > flow: project_setup
+  → project_setup.therapeutic_area: predicate value "__other__" is not in the
+    field's option values [oncology, immunology, … medical_device]
+```
+
+The code was right and the probe was wrong. `OTHER_POSITION` carries its own
+invariant — *"No listed option may use it; an invariant test over every flow
+holds that"* (`shared/types/intelligence-questions.ts:51-55`) — so a field that
+declares `allowOther` can produce `__other__` **without** it being an option.
+`project_setup.therapeutic_area` declares `allowOther: {}` and raises an info
+issue on `__other__`; the probe only knew about `field.options` and read that
+predicate as a vocabulary mismatch.
+
+The probe now adds `OTHER_POSITION` to a field's producible set **only where
+that field declares `allowOther`**, so a closed list is still held. The loose
+version of this fix — adding it unconditionally — would have made `__other__`
+acceptable on every controlled field, which is what the probe exists to
+prevent, so that case is now a test of its own:
+
+> `still refuses the own-position value on a field whose list is closed`
+
+Measured: 130 → **131 passing, 0 failing**. Mutation: make the addition
+unconditional and the new case fails with `expected true to be false`.

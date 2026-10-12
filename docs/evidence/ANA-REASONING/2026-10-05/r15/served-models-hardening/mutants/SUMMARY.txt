@@ -1,0 +1,13 @@
+Round 15: servedModelsOf hardening.
+Test: server/services/ana/__tests__/turn-record-served-models.test.ts
+
+baseline: Tests  9 passed (9)
+
+SM-01   KILLED    the array guard is dropped: a string calls list invents an unknown author
+        Tests  2 failed | 7 passed (9)
+SM-02   KILLED    a non-object call element throws on the property read
+        Tests  1 failed | 8 passed (9)
+SM-03   KILLED    a string call element is kept and read as an unknown author
+        Tests  1 failed | 8 passed (9)
+SM-04   KILLED    the fallback to the turn’s own model is dropped, so a corrupt list hides a named model
+        Tests  2 failed | 7 passed (9)

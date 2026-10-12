@@ -1,0 +1,24 @@
+GREEN — measured 2026-10-12T08:14:30Z
+
+$ npm run ci:tenant-isolation:strict
+[ci:tenant-isolation] OK — no raw SQL against tenant-scoped tables without a tenant filter (37 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit)
+
+$ the two new suites, plus the sibling route's own suite:
+ ✓ server/routes/__tests__/ana-ri-kernel-metrics-scope.test.ts > GET /api/ana-ri/kernel/metrics > refuses without organization context instead of aggregating every tenant, and reads nothing 28ms
+ ✓ server/routes/__tests__/ana-ri-kernel-metrics-scope.test.ts > GET /api/ana-ri/kernel/metrics > scopes every statement to the caller organization, unconditionally 7ms
+ ✓ server/routes/__tests__/ana-ri-kernel-metrics-scope.test.ts > getKernelMetrics requires an organization at the service boundary > refuses rather than reading every tenant: no statement runs 3ms
+ ✓ server/services/__tests__/kernel-policy-hint-scope.test.ts > getKernelPolicyHint is scoped to one organisation > reads nothing and hints nothing when no organisation is named 3ms
+ ✓ server/services/__tests__/kernel-policy-hint-scope.test.ts > getKernelPolicyHint is scoped to one organisation > scopes the read unconditionally when one is 2ms
+ ✓ server/routes/__tests__/ana-ri-kernel-decisions-scope.test.ts > GET /api/ana-ri/kernel/decisions > 403s without organization context instead of listing every tenant’s decisions 23ms
+ ✓ server/routes/__tests__/ana-ri-kernel-decisions-scope.test.ts > GET /api/ana-ri/kernel/decisions > scopes to the caller organization, unconditionally 5ms
+ ✓ server/services/__tests__/kernel-observability.test.ts > kernel-observability > maps quality scores to expected bands 2ms
+ ✓ server/services/__tests__/kernel-adaptive-policy.test.ts > kernel-adaptive-policy > keeps high quality score near 1 when latency/cost are low 1ms
+ ✓ server/services/__tests__/kernel-adaptive-policy.test.ts > kernel-adaptive-policy > penalizes high latency and high cost 0ms
+ Test Files  5 passed (5)
+      Tests  10 passed (10)
+
+$ every suite that touches the changed modules (server/routes/ana-ri, the chat-upload pair, the kernel services):
+ Test Files  56 passed (56)
+      Tests  529 passed (529)
+
+$ npx tsc --noEmit -p tsconfig.json  ->  exit 0

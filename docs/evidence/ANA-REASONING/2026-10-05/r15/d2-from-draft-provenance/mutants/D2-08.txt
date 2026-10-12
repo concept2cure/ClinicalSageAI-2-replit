@@ -1,0 +1,7 @@
+mutant D2-08: a run naming several records picks whichever sorted first
+verdict: KILLED
+Tests  1 failed | 10 passed (11)
+
+ × server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a run named by more than one record is refused, not guessed at 89ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
