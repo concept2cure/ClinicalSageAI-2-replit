@@ -354,6 +354,34 @@ scoring path that no longer exists.
 | Submission Readiness statistical gate | — | **owed** (below) |
 | Reporting & analytics statistical reports | — | **owed** (below) |
 
+### The renderer did not look where the engine put it (2026-10-12)
+
+A follow-on from the survival-curve change, and the reason an adversarial
+re-read of one's own work earns its cost.
+
+`restrictedMeanSurvival` now carries the Kaplan–Meier table it had always
+computed and discarded. In the TWO-ARM case `rmstDifference` embeds each arm's
+whole result, so the curves sit at `treatment.survivalCurve` and
+`control.survivalCurve` — one level down. `scalarRows` in the workbench has
+always descended; `objectTables` did not. So the single-arm call rendered its
+survival table and the two-arm call — the common case, treatment against
+control — rendered **nothing**, while showing "Treatment · Rmst" and the rest
+of that arm's scalars right beside it. Data on the wire and absent from the
+screen reads as "this engine has no curve", not "this renderer did not look".
+
+The alternative was to copy both curves up to the top level of the difference
+result, which is two places holding one table. `objectTables` descends one
+level instead, labelling a nested table with its parent key exactly as the
+scalar rows do — so it is fixed for every engine that nests a table rather than
+for this one. Pinned by
+`client/src/concept2cure/v2/__tests__/workbenchNestedTables.test.tsx` (4 cases,
+2 failed before), including that each arm renders its OWN rows, so one table
+drawn twice under two labels would fail.
+
+Worth naming: the curve-carrying change was pushed before this was found, so
+for one commit the fix was invisible in the case that matters most. Verifying a
+change end to end means through the renderer, not to the edge of the wire.
+
 ### A wrong number under a correct-looking label (2026-10-12)
 
 The reachability sweep's most serious finding was not a reachability gap. It
