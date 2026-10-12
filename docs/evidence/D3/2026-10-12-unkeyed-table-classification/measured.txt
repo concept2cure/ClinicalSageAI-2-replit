@@ -78,3 +78,43 @@ templates                                      MOUNTED-ROUTE      readers=173 mo
   templates
       server/routes/ana-cortex-ft.ts
       server/routes/submissionCenter.routes.ts
+
+────────────────────────────────────────────────────────────────────────
+THIRD PASS — capa_records and q_submissions policied, measured 2026-10-12T17:26:19Z
+
+$ the two tables before the amendment
+  capa_records   — no policy
+  q_submissions  — no policy
+
+$ psql -f db/migrations/20260813_child_table_parent_scoped_rls.sql   (amended, re-run)
+  WARNING: [child-rls] capa_records → regulatory_programs: key or tenant column type does not fit the
+           integer-tenant predicate — policied by text comparison instead (key_cast=t, tenant_cast=f)
+  NOTICE:  [child-rls] capa_records scoped to regulatory_programs(organization_id)
+  WARNING: [child-rls] q_submissions → … policied by text comparison instead
+  NOTICE:  [child-rls] q_submissions scoped to regulatory_programs(organization_id)
+  (the text-key path this file's own 2026-09-08 amendment added, taken as designed)
+
+  capa_records | tenant_isolation_policy | forced
+  q_submissions | tenant_isolation_policy | forced
+
+$ the isolation probe
+As app_service (NOT a superuser — a superuser bypasses RLS and would prove nothing):
+
+1 · no GUCs set — today's shared-pool readers. Policy must be INERT:
+   rows visible: 2  (PRB-CAPA-A, PRB-CAPA-B)
+
+2 · rls_enforce=on, NO organisation — must admit NOTHING (fail closed):
+   rows visible: 0
+
+3 · rls_enforce=on, organisation 9001 — must see ONLY org A's:
+   rows visible: 1  (PRB-CAPA-A)
+
+4 · rls_enforce=on, organisation 9002 — must see ONLY org B's:
+   rows visible: 1  (PRB-CAPA-B)
+
+$ npm run ci:migration-set-order
+[ci:migration-set-order] OK — 374 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+$ npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 374 migrations, 36 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 18 dynamic DROP(s) in 18 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+
+(probe rows removed afterwards; 0 remain)
