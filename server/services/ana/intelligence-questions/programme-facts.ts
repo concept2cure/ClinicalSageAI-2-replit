@@ -24,11 +24,24 @@
  * @module server/services/ana/intelligence-questions/programme-facts
  */
 
-import { cautionFor, type ProgrammeFacts } from '../../../../shared/regulatory/pathway-positions.js';
+import { regionsNamed } from '../../../../shared/regulatory/agency-positions.js';
+import { predicateStateOf } from '../../../../shared/regulatory/predicate-positions.js';
+import { modalityOf } from '../../../../shared/regulatory/product-modality.js';
+import { cautionFor, type ProgrammeFacts } from '../../../../shared/regulatory/pathway-cautions.js';
 import type { DetectedIssue, PositionCaution, QuestionField, QuestionNode, QuestionOption } from './types.js';
+
+/**
+ * Answers that name a regulator. The primary agency and the additional ones
+ * are read together: a sponsor who named EMA under "additional agencies" is
+ * filing in the EU, and a route there is not a contradiction.
+ */
+export const AGENCY_FIELDS: readonly string[] = ['primary_regulatory_agency', 'additional_agencies'];
 
 /** Answers that name a predicate device. A non-empty one means a predicate is named. */
 export const PREDICATE_FIELDS: readonly string[] = ['predicate_device', 'predicate_device_name', 'predicate_510k_number'];
+
+/** The answer that states the predicate strategy. */
+export const PREDICATE_STRATEGY_FIELDS: readonly string[] = ['predicate_strategy'];
 
 /** Answers that state the US risk class. */
 export const DEVICE_CLASS_FIELDS: readonly string[] = ['device_class'];
@@ -36,9 +49,19 @@ export const DEVICE_CLASS_FIELDS: readonly string[] = ['device_class'];
 /** Answers that state the EU MDR class. */
 export const EU_MDR_CLASS_FIELDS: readonly string[] = ['eu_mdr_class'];
 
+/** Answers that name the product, which decides which statute governs it. */
+export const PRODUCT_FIELDS: readonly string[] = ['product_type'];
+
 /** Every field this module reads, for the test that holds they still exist. */
 export function factFields(): string[] {
-  return [...PREDICATE_FIELDS, ...DEVICE_CLASS_FIELDS, ...EU_MDR_CLASS_FIELDS];
+  return [
+    ...AGENCY_FIELDS,
+    ...PRODUCT_FIELDS,
+    ...PREDICATE_STRATEGY_FIELDS,
+    ...PREDICATE_FIELDS,
+    ...DEVICE_CLASS_FIELDS,
+    ...EU_MDR_CLASS_FIELDS,
+  ];
 }
 
 /* The vocabularies the flows use. An unlisted value — 'not_classified', 'na',
@@ -82,10 +105,33 @@ function firstStated(flat: Record<string, unknown>, fields: readonly string[]): 
  * The facts in a flattened answer set. Absent facts are left absent: a
  * programme that has not been asked contradicts nothing.
  */
+/**
+ * One answer or several, as the list of strings it states. The one reader for
+ * both an answer that names facts and an answer that chose positions, because
+ * a multi-select states several of either.
+ */
+function stated(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
+  return typeof value === 'string' && value.trim() ? [value] : [];
+}
+
 export function programmeFactsFrom(flat: Record<string, unknown>): ProgrammeFacts {
   const facts: ProgrammeFacts = {};
+  const regions = regionsNamed(AGENCY_FIELDS.flatMap(field => stated(flat[field])));
+  if (regions.length) facts.regions = regions;
+  /* The primary agency decides which routes a question offers, so it is its
+     own fact rather than the first of the list. */
+  const [primary] = regionsNamed(stated(flat[AGENCY_FIELDS[0]]));
+  if (primary) facts.primaryRegion = primary;
+  const modality = modalityOf(firstStated(flat, PRODUCT_FIELDS));
+  if (modality) facts.modality = modality;
   const predicate = firstStated(flat, PREDICATE_FIELDS);
   if (predicate) facts.predicateNamed = predicate;
+  const state = predicateStateOf({
+    strategy: firstStated(flat, PREDICATE_STRATEGY_FIELDS),
+    named: predicate,
+  });
+  if (state) facts.predicate = state;
   const deviceClass = firstStated(flat, DEVICE_CLASS_FIELDS);
   const us = deviceClass ? US_CLASS[deviceClass.toLowerCase()] : undefined;
   if (us) facts.deviceClass = us;
@@ -132,11 +178,6 @@ const TITLE: Readonly<Record<PositionCaution['availability'], string>> = {
   needs_basis: 'A position that needs a basis',
 };
 
-function chosenValues(value: unknown): string[] {
-  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
-  return typeof value === 'string' && value ? [value] : [];
-}
-
 /**
  * What the record says about a cautioned position the person took anyway.
  *
@@ -153,7 +194,7 @@ export function cautionedChoiceNotices(
   const out: DetectedIssue[] = [];
   for (const field of node.fields) {
     if (!field.options?.length) continue;
-    for (const value of chosenValues(answers[field.id])) {
+    for (const value of stated(answers[field.id])) {
       const caution = cautionFor(value, facts);
       if (!caution) continue;
       const label = field.options.find(o => o.value === value)?.label ?? value;

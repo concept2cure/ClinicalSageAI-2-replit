@@ -287,8 +287,28 @@ baseline-with-a-written-reason rule.
 
 ---
 
+## 7. What was built on this review's findings
+
+**`REGIONAL-ENGINE.md`** (2026-10-12) answers the half of the founder's note this
+review left open: not "is what we show truthful" but "is there a market-specific
+computation we already hold and do not run". There is exactly one —
+`shared/regulatory/regional-module1.ts`, the FDA/EMA/PMDA Module 1 record with a
+basis per heading — and it computes **four** of the 35 market-named report types.
+The other 31 stay not computed, each for a reason the market itself states, and
+widening that set means adding a regulator's Module 1 tree rather than a case in
+an engine.
+
+That document also records three things worth reading before touching this area:
+the `requireConfidence` question decided on the shipped precedent rather than by
+amending four governed type definitions; the j8 defect found in the **renderer**
+(a market assessment's executive summary read "Submission readiness not
+computed"); and `computedScopes`, which stopped the catalog card claiming a run
+at a scope the engine refuses.
+
 ## Rows informed
 
 D2 (the Reporting app), D5 (governed path), D6 (audit). None turns green from this review
 alone: §2 and the Rule 2 catalog-shape decision are founder calls, and C-1, C-3 to C-8
-remain open.
+remain open. `REGIONAL-ENGINE.md` moves D2 from 43 uncomputed types to 39, with a
+market-specific computation behind each of the four, and does not turn it green
+either.

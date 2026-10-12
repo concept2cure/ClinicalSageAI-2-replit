@@ -5,32 +5,29 @@
  * covering organization and project identity, product and regulatory
  * scope, team and roles, and initial configuration.
  *
- * 11 nodes · 48 fields · 4 sections · 6 issue checks
+ * 12 nodes · 49 fields · 4 sections · 6 issue checks
  *
  * @module server/services/ana/intelligence-questions/flows/project-setup
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
 import { OTHER_POSITION } from '../../../../../shared/types/intelligence-questions.js';
-import { pathwayOptions, type PathwayDomain } from '../../../../../shared/regulatory/pathway-positions.js';
-import type { FlowEngineContext } from '../types.js';
+import { agencyOptions } from '../../../../../shared/regulatory/agency-positions.js';
 
-/** The registry's own segment for this client, so the pathway question matches what they file. */
-function domainFor(clientType: FlowEngineContext['clientType']): PathwayDomain {
-  if (clientType === 'ivd') return 'diagnostics_ivd';
-  if (clientType === 'medtech') return 'medical_devices';
-  return 'pharma_biotech';
-}
-
-export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition {
-  /* The pathway positions come from the governed filing registry, annotated
-     with what each one commits the programme to and the authority behind it
-     (shared/regulatory/pathway-positions.ts). They used to be written here:
-     seven labels that mixed the three 510(k) flavours — which are a question
-     the 510(k) flow itself asks — with distinct pathways, and left out
-     exemption and the 513(g) that clears nothing (founder's directive,
-     2026-10-12). US positions, as this list always was. */
-  const devicePathways = pathwayOptions({ domain: domainFor(ctx?.clientType ?? 'medtech'), region: 'US' });
+/**
+ * The flow takes no context any more: the two questions that used to need it —
+ * which regulator's routes to offer, and whether they are device or IVD routes
+ * — are resolved by the engine from the answers as the question is drawn
+ * (`governed-options.ts`), which is the only place that can know them.
+ */
+export function createProjectSetupFlow(): FlowDefinition {
+  /* The agencies come from the two governed region modules, and the value is
+     the canonical region code the rest of the platform keys on. This question
+     was declared `agency_select`, a type nothing ever rendered, so it reached
+     the person as a free-text box — the one answer that decides the Module 1
+     backbone, the validation profile, the gateway and which filings exist at
+     all was typed prose (founder's directive, 2026-10-12). */
+  const agencies = agencyOptions();
   return {
     id: 'project-setup-v1',
     category: 'project_setup',
@@ -55,6 +52,7 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
         nodeIds: [
           'product_details',
           'regulatory_targets',
+          'submission_route',
           'device_classification',
           'medtech_regulatory',
           'multi_country_setup',
@@ -267,6 +265,9 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
               { value: 'vaccine', label: 'Vaccine' },
               { value: 'peptide', label: 'Peptide' },
               { value: 'oligonucleotide', label: 'Oligonucleotide' },
+              /* The frame reasons about therapeutic proteins (CDER, licensed
+                 as biologics, ICH Q5/Q6B) and nothing here could say so. */
+              { value: 'protein', label: 'Therapeutic Protein' },
               { value: 'biosimilar', label: 'Biosimilar' },
               { value: 'medical_device', label: 'Medical Device' },
               { value: 'combination_product', label: 'Drug-Device Combination' },
@@ -300,16 +301,14 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
             visibleWhen: { field: 'product_type', operator: 'neq', value: 'medical_device' },
           },
         ],
-        branches: [
-          {
-            when: { field: 'organization_type', operator: 'eq', value: 'medtech' },
-            goto: 'device_classification',
-          },
-          {
-            when: { field: 'product_type', operator: 'in', value: ['medical_device', 'diagnostic'] },
-            goto: 'device_classification',
-          },
-        ],
+        /* Every project is asked its regulator. The device branch used to leave
+           from here, which meant a device or diagnostics project never reached
+           the agency question at all: the platform never learned which
+           regulator it was for, and so could not key the Module 1 backbone,
+           the validation profile, the gateway or — once the catalogue became
+           region-aware — the routes it offers. The branch now leaves from
+           `regulatory_targets`, after the agency has been named (founder's
+           directive, 2026-10-12). */
         defaultNext: 'regulatory_targets',
         issueChecks: [
           {
@@ -336,25 +335,8 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
             label: 'Primary Regulatory Agency',
             type: 'agency_select',
             required: true,
-          },
-          {
-            id: 'submission_type',
-            label: 'Primary Submission Type',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'ind', label: 'IND (Investigational New Drug)' },
-              { value: 'nda', label: 'NDA (New Drug Application)' },
-              { value: 'bla', label: 'BLA (Biologics License Application)' },
-              { value: 'anda', label: 'ANDA (Abbreviated New Drug Application)' },
-              { value: '510k', label: '510(k) Premarket Notification' },
-              { value: 'pma', label: 'PMA (Premarket Approval)' },
-              { value: 'de_novo', label: 'De Novo Classification Request' },
-              { value: 'maa', label: 'MAA (Marketing Authorization Application — EU)' },
-              { value: 'cta', label: 'CTA (Clinical Trial Application — EU/UK)' },
-              { value: 'jnda', label: 'JNDA (Japan New Drug Application)' },
-            ],
-            allowOther: {},
+            options: agencies,
+            allowOther: { prompt: 'Which agency, in your own words?' },
           },
           {
             id: 'multi_country_submission',
@@ -367,17 +349,20 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
             label: 'Additional Regulatory Agencies',
             type: 'multi_select',
             visibleWhen: { field: 'multi_country_submission', operator: 'eq', value: true },
+            /* The same governed twelve, plus the one entry that is not a
+               national filing and says so. The hand-written nine this
+               replaced held no Swissmedic, HSA or MFDS, and said nothing about
+               what filing with any of them commits the programme to. */
             options: [
-              { value: 'ema', label: 'EMA (European Medicines Agency)' },
-              { value: 'pmda', label: 'PMDA (Japan)' },
-              { value: 'nmpa', label: 'NMPA (China)' },
-              { value: 'health_canada', label: 'Health Canada' },
-              { value: 'tga', label: 'TGA (Australia)' },
-              { value: 'mhra', label: 'MHRA (United Kingdom)' },
-              { value: 'anvisa', label: 'ANVISA (Brazil)' },
-              { value: 'cdsco', label: 'CDSCO (India)' },
-              { value: 'who', label: 'WHO Prequalification' },
+              ...agencies,
+              {
+                value: 'who',
+                label: 'WHO Prequalification — not a national filing',
+                commits:
+                  'WHO prequalification is an assessment for UN procurement, not a marketing authorisation. AnA holds no Module 1 requirements, no validation profile and no gateway for it, and a national filing is still to be made.',
+              },
             ],
+            allowOther: { prompt: 'Which other agency, in your own words?' },
           },
           {
             id: 'ctd_format',
@@ -388,11 +373,49 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
         ],
         branches: [
           {
-            when: { field: 'multi_country_submission', operator: 'eq', value: true },
-            goto: 'multi_country_setup',
+            when: { field: 'organization_type', operator: 'eq', value: 'medtech' },
+            goto: 'device_classification',
+          },
+          {
+            when: { field: 'product_type', operator: 'in', value: ['medical_device', 'diagnostic'] },
+            goto: 'device_classification',
           },
         ],
-        defaultNext: 'team_assignment',
+        defaultNext: 'submission_route',
+      },
+
+      /* The route is asked AFTER the agency, and in its own question, for the
+         same reason the device classification is: the routes that exist
+         depend on the regulator, so a list drawn beside the agency question
+         could not know which regulator it belonged to — and a person who
+         chose EMA would have had to pick from FDA's routes to get past a
+         required field (founder's directive, 2026-10-12). */
+      {
+        id: 'submission_route',
+        section: 'product_regulatory',
+        question: 'Which application are you making?',
+        guidance:
+          'The application decides what evidence you owe and whose data you may rely on. These positions are the platform’s own filing registry, annotated with what taking each one commits the programme to and the authority behind it, and narrowed to what the modality frame allows this product — so a monoclonal antibody is offered a biologics licence and not an NDA, and a small molecule is offered 505(b)(1), 505(b)(2) and the ANDA route in the frame’s own order.',
+        fields: [
+          {
+            id: 'submission_type',
+            /* A device or diagnostics project is asked its route by
+               `device_submission_pathway`, from the same governed catalogue.
+               Showing both asked one question twice, in two vocabularies. */
+            visibleWhen: { field: 'product_type', operator: 'not_in', value: ['medical_device', 'diagnostic'] },
+            label: 'Primary Submission Type',
+            type: 'select',
+            required: true,
+            /* No list here either. This was ten hand-written labels — FDA and
+               EU filings mixed, two of them device routes, none saying what it
+               commits the programme to and none carrying an authority — while
+               the governed catalogue held every one of those positions and the
+               modality frame already knew which apply (founder's directive,
+               2026-10-12). */
+            optionsFrom: 'medicine_pathway_positions',
+            allowOther: {},
+          },
+        ],
         issueChecks: [
           {
             id: 'no_regulatory_target',
@@ -403,6 +426,14 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
               'AnA has your wording, but a submission type she does not hold carries no templates, no formatting rules and no validation profile — so nothing she drafts for it can be checked against the agency\u2019s requirements for that submission. Name the closest listed type if one applies, or treat anything drafted here as unvalidated.',
           },
         ],
+
+        branches: [
+          {
+            when: { field: 'multi_country_submission', operator: 'eq', value: true },
+            goto: 'multi_country_setup',
+          },
+        ],
+        defaultNext: 'team_assignment',
       },
 
       /* The classification is asked BEFORE the route, and in its own question,
@@ -467,7 +498,13 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
             label: 'Submission Pathway',
             type: 'select',
             required: true,
-            options: devicePathways,
+            /* No list here: the routes that exist depend on the regulator this
+               project named, and the engine resolves the governed catalogue
+               for it as the question is drawn — the same resolution the
+               validator judges the answer against. Written as a static US list
+               until 2026-10-12, which is why a European device programme was
+               offered FDA's routes. */
+            optionsFrom: 'device_pathway_positions',
             allowOther: { prompt: 'Which route are you taking, in your own words?' },
           },
           {

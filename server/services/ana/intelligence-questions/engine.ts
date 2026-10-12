@@ -12,6 +12,7 @@ import type {
   FlowDefinition,
   FlowState,
   FlowCategory,
+  QuestionField,
   QuestionNode,
   DetectedIssue,
   FieldPredicate,
@@ -22,6 +23,7 @@ import { OTHER_POSITION, otherFieldId } from '../../../../shared/types/intellige
 import type { FlowEngineContext, FlowStepResult } from './types.js';
 import { getFlowDefinition } from './flows/index.js';
 import { runIssueChecks, runCrossNodeAnalysis } from './issue-detector.js';
+import { withGovernedOptions } from './governed-options.js';
 import { cautionedChoiceNotices, programmeFactsFrom, withCautions } from './programme-facts.js';
 import { validateAnswers } from './validators.js';
 
@@ -62,7 +64,7 @@ export function startFlow(
     sectionProgress,
   };
 
-  const event = buildQuestionEvent(definition, state, entryNode, undefined, undefined, true);
+  const event = buildQuestionEvent(definition, state, entryNode, ctx, undefined, undefined, true);
 
   return { state, event, completeEvent: null };
 }
@@ -97,7 +99,12 @@ export function advanceFlow(
   // never be submitted: a deadlock), and `eq`/`in` read FALSE, so a required
   // field the renderer SHOWED passed validation blank. Pinned by
   // __tests__/visible-when-deadlock.test.ts.
-  const validationErrors = validateAnswers(currentNode, answers, state.answers);
+  /* Judged against the list the person was actually SHOWN, which is the list
+     resolved from the answers they had already given — not from the answer
+     they are submitting now. */
+  const shownFlat = flattenAnswers(state.answers);
+  const shownNode = resolveNode(currentNode, currentNode.fields, programmeFactsFrom(shownFlat), shownFlat, ctx);
+  const validationErrors = validateAnswers(shownNode, answers, state.answers);
   if (validationErrors.length > 0) {
     // Return the same question with validation errors surfaced as issues
     const validationIssues: DetectedIssue[] = validationErrors.map(err => ({
@@ -109,7 +116,7 @@ export function advanceFlow(
       triggerValues: { [err.fieldId]: answers[err.fieldId] },
     }));
 
-    const event = buildQuestionEvent(definition, state, currentNode, validationIssues, undefined, false);
+    const event = buildQuestionEvent(definition, state, shownNode, ctx, validationIssues, undefined, false);
     return { state, event, completeEvent: null };
   }
 
@@ -135,7 +142,7 @@ export function advanceFlow(
   // Run issue checks (node-level + cross-node cumulative)
   const newIssues = [
     ...ownPositionNotices(currentNode, own, nodeId),
-    ...cautionedChoiceNotices(currentNode, answers, facts),
+    ...cautionedChoiceNotices(shownNode, answers, facts),
     ...runIssueChecks(currentNode, answers),
   ];
   const allIssues = [...state.issues, ...newIssues];
@@ -160,8 +167,19 @@ export function advanceFlow(
     }
   }
 
-  // Resolve next node
-  const nextNodeId = resolveNextNode(currentNode, answers, definition);
+  /* Resolve next node against EVERY answer the interview holds, not just this
+     node's. A branch predicate that reads an earlier node's field — "this is a
+     vaccine", "the device contains software", "the product type is a device" —
+     was evaluated against the current node's answers alone, where that field
+     is absent, so it could never match: 30 of the 63 branch predicates across
+     these flows were unreachable, and with them the oncology and vaccine
+     efficacy questions, the 510(k) software, sterilisation, EMC and implant
+     questions, the PMA software documentation, the cell-therapy and vaccine
+     BLA characterisation, the SaMD and pharma hazard questions and the
+     biologics stability questions. Declared behaviour change: they now match
+     (founder's directive, 2026-10-12). `visibleWhen` and the validator have
+     always read this same flattened view. */
+  const nextNodeId = resolveNextNode(currentNode, { ...shownFlat, ...answers }, definition);
 
   if (!nextNodeId) {
     // Flow complete
@@ -200,6 +218,7 @@ export function advanceFlow(
     definition,
     updatedState,
     nextNode,
+    ctx,
     newIssues.length > 0 ? newIssues : undefined,
     undefined,
     false,
@@ -258,6 +277,27 @@ function ownPositionNotices(
 }
 
 /**
+ * A node as this programme sees it: the catalogues its fields declare resolved
+ * for the answers given, and the positions those answers speak against marked.
+ *
+ * ONE function, because two readers must agree. The question a person is drawn
+ * and the list the validator judges their answer against have to be the same
+ * list: a field whose positions come from a catalogue (`optionsFrom`) carries
+ * no static options, so a validator reading the raw definition would see a
+ * field with no list and accept any string — a closed question that is not
+ * closed (founder's directive, 2026-10-12).
+ */
+function resolveNode(
+  node: QuestionNode,
+  fields: readonly QuestionField[],
+  facts: ReturnType<typeof programmeFactsFrom>,
+  answers: Record<string, unknown>,
+  ctx: FlowEngineContext,
+): QuestionNode {
+  return { ...node, fields: withCautions(withGovernedOptions(fields, { facts, answers, ctx }), facts) };
+}
+
+/**
  * Resume a flow from a persisted state — returns the current question event.
  */
 export function resumeFlow(
@@ -278,7 +318,7 @@ export function resumeFlow(
 
   const isFirst = state.completedNodes.length === 0;
   const isLast = isTerminalNode(node, definition);
-  const event = buildQuestionEvent(definition, state, node, undefined, undefined, isFirst, isLast);
+  const event = buildQuestionEvent(definition, state, node, ctx, undefined, undefined, isFirst, isLast);
 
   return { state, event, completeEvent: null };
 }
@@ -417,6 +457,7 @@ function buildQuestionEvent(
   definition: FlowDefinition,
   state: FlowState,
   node: QuestionNode,
+  ctx: FlowEngineContext,
   newIssues?: DetectedIssue[],
   expertFeedback?: string,
   isFirst = false,
@@ -431,13 +472,17 @@ function buildQuestionEvent(
     return evaluatePredicate(f.visibleWhen, allAnswerValues);
   });
 
-  /* The positions the answers so far speak against are marked here, where the
-     question is drawn, and nothing is removed: an absent option is a question
-     lying by omission (shared/types PositionAvailability). */
-  const nodeWithVisibleFields = {
-    ...node,
-    fields: withCautions(visibleFields, programmeFactsFrom(allAnswerValues)),
-  };
+  /* The catalogues these fields declare are resolved for this programme, and
+     the positions the answers so far speak against are marked. Nothing is
+     removed: an absent option is a question lying by omission (shared/types
+     PositionAvailability). */
+  const nodeWithVisibleFields = resolveNode(
+    node,
+    visibleFields,
+    programmeFactsFrom(allAnswerValues),
+    allAnswerValues,
+    ctx,
+  );
 
   return {
     flowId: definition.id,

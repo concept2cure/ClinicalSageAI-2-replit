@@ -49,8 +49,26 @@ export interface AnaQuestionCardProps {
   busy?: boolean;
 }
 
-/** A field the person picks from, rather than types into. */
-const PICKED: ReadonlySet<QuestionField['type']> = new Set(['select', 'radio', 'multi_select', 'checkbox', 'yes_no']);
+/**
+ * A field the person picks from, rather than types into.
+ *
+ * `agency_select` and `country_select` are here because the engine has always
+ * declared them and no renderer ever implemented them: they fell through to a
+ * text input, so the agency — the answer that decides the Module 1 backbone,
+ * the validation profile and the gateway — was typed prose. A field of either
+ * type still draws as an input where the question carries no positions, which
+ * is what `country_select` does today: the platform holds a governed agency
+ * vocabulary and no governed country one.
+ */
+const PICKED: ReadonlySet<QuestionField['type']> = new Set([
+  'select',
+  'radio',
+  'multi_select',
+  'checkbox',
+  'yes_no',
+  'agency_select',
+  'country_select',
+]);
 
 const YES_NO: QuestionOption[] = [
   { value: 'yes', label: 'Yes' },
@@ -145,6 +163,33 @@ function Position({
   );
 }
 
+/** The box for a position AnA did not offer, in the person's own words. */
+function OwnWords({
+  field,
+  value,
+  onChange,
+}: {
+  field: QuestionField;
+  value: unknown;
+  onChange: (words: string) => void;
+}) {
+  return (
+    <div className="ana-q-own">
+      <label className="ana-q-own-label" htmlFor={`ana-q-own-${field.id}`}>
+        {field.allowOther?.prompt ?? 'Which position are you taking?'}
+      </label>
+      <textarea
+        id={`ana-q-own-${field.id}`}
+        className="ana-q-input"
+        rows={2}
+        maxLength={OWN_POSITION_MAX_CHARS}
+        value={typeof value === 'string' ? value : ''}
+        onChange={e => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
 /** A field with no listed positions: the input the flow asked for. */
 function PlainField({
   field,
@@ -182,6 +227,12 @@ function QuestionFieldRow({
 }) {
   const options = optionsOf(field);
   const picked = PICKED.has(field.type) && options.length > 0;
+  /* A question whose catalogue holds nothing for this programme — AnA has no
+     routes to market for PMDA, and says so in the help text rather than
+     drawing an empty select. Their words ARE the answer, so the box is drawn
+     on its own and the answer still records as a position AnA did not offer
+     rather than as one of hers. */
+  const ownOnly = !picked && PICKED.has(field.type) && Boolean(field.allowOther);
   const own = tookOwnPosition(field, answers);
   const chosen = (value: string) =>
     isMulti(field)
@@ -218,23 +269,24 @@ function QuestionFieldRow({
                 onPick={() => onPick(field, OTHER_POSITION)}
               />
               {own ? (
-                <div className="ana-q-own">
-                  <label className="ana-q-own-label" htmlFor={`ana-q-own-${field.id}`}>
-                    {field.allowOther.prompt ?? 'Which position are you taking?'}
-                  </label>
-                  <textarea
-                    id={`ana-q-own-${field.id}`}
-                    className="ana-q-input"
-                    rows={2}
-                    maxLength={OWN_POSITION_MAX_CHARS}
-                    value={String(answers[otherFieldId(field.id)] ?? '')}
-                    onChange={e => onSet(otherFieldId(field.id), e.target.value)}
-                  />
-                </div>
+                <OwnWords
+                  field={field}
+                  value={answers[otherFieldId(field.id)]}
+                  onChange={words => onSet(otherFieldId(field.id), words)}
+                />
               ) : null}
             </>
           ) : null}
         </div>
+      ) : ownOnly ? (
+        <OwnWords
+          field={field}
+          value={answers[otherFieldId(field.id)]}
+          onChange={words => {
+            onPick(field, OTHER_POSITION);
+            onSet(otherFieldId(field.id), words);
+          }}
+        />
       ) : (
         <PlainField field={field} value={answers[field.id]} onChange={next => onSet(field.id, next)} />
       )}

@@ -1,0 +1,26 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/document-figure-consistency.test.ts [ server/services/authoring/__tests__/document-figure-consistency.test.ts ]
+Error: Cannot find module '../document-figure-consistency' imported from /home/user/ClinicalSageAI-2-replit/server/services/authoring/__tests__/document-figure-consistency.test.ts
+ ❯ server/services/authoring/__tests__/document-figure-consistency.test.ts:20:1
+     18| import { describe, expect, it } from 'vitest';
+     19|
+     20| import { CONSISTENCY_KEPT, checkDocumentFigureConsistency, type Consis…
+       | ^
+     21|
+     22| const section = (code: string, title: string, text: string): Consisten…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  12:32:26
+   Duration  385ms (transform 90ms, setup 93ms, import 0ms, tests 0ms, environment 0ms)
+

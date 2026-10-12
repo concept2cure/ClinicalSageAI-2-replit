@@ -1,0 +1,37 @@
+# 11 mutations, all red
+# driver: scratchpad/mutate8.py + mutate9.py (apply, run the named test, restore)
+# re-run after the catalogue/rules file split, so these are the files as committed
+
+RED       a modality the frame holds is unreachable from the interview
+          test: shared/regulatory/__tests__/product-modality.test.ts
+          first failures: × shared/regulatory/__tests__/product-modality.test.ts > the bridge > reaches every modality the frame holds 12ms
+RED       a product type resolves to a guess instead of nothing
+          test: shared/regulatory/__tests__/product-modality.test.ts
+          first failures: × shared/regulatory/__tests__/product-modality.test.ts > the bridge > resolves a device or a diagnostic to nothing, because the frame has no view of one 4ms | × shared/regulatory/__tests__/product-modality.test.ts > the bridge > resolves what it does not know to nothing, rather than to a guess 1ms
+RED       a bispecific is not read as an antibody
+          test: shared/regulatory/__tests__/product-modality.test.ts
+          first failures: × shared/regulatory/__tests__/product-modality.test.ts > the bridge > reads a sponsor’s words onto the frame’s 7ms
+RED       a biological product is offered a 505 route
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > which statute governs the product > closes a 505 route to a biological product, and says why by date 5ms | × shared/regulatory/__tests__/pathway-availability.test.ts > what every rule must satisfy > can fire: every RULE fires on some fact a flow can state 6ms | × shared/regulatory/__tests__/pathway-availability.test.ts > what every rule must satisfy > names the rule that marked a position, so the record says what judged it 1ms
+RED       a chemical product is offered a biologics licence
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > which statute governs the product > closes a biologics licence to a chemical product 6ms | × shared/regulatory/__tests__/pathway-availability.test.ts > what every rule must satisfy > can fire: every RULE fires on some fact a flow can state 8ms
+RED       the rule gate passes a rule nothing can state
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > what every rule must satisfy > can fire: every RULE fires on some fact a flow can state 11ms
+RED       the modality is not read from the product the sponsor named
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > offers a small molecule the frame’s own list, in the frame’s order 10ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > offers an antibody a biologics licence and nothing under section 505 2ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > offers the European routes to a European filing, and marks the ones the modality contradicts 1ms
+RED       the medicines list ignores the modality frame
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > offers a small molecule the frame’s own list, in the frame’s order 10ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > offers an antibody a biologics licence and nothing under section 505 2ms
+RED       the medicines question writes its own list again
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > offers a small molecule the frame’s own list, in the frame’s order 10ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > offers an antibody a biologics licence and nothing under section 505 2ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > says what each position commits the programme to, and its authority 1ms
+RED       the route is asked beside the agency again, where it cannot know the region
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > offers a small molecule the frame’s own list, in the frame’s order 11ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > offers an antibody a biologics licence and nothing under section 505 2ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > never offers a device route among the medicines ones, as the hand-written ten did 1ms
+RED       a biosimilar taking a standalone licence is not asked to say so (the rule's `when` returns false)
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > which statute governs the product > asks a biosimilar programme to say so when it takes a standalone licence 6ms | × shared/regulatory/__tests__/pathway-availability.test.ts > what every rule must satisfy > can fire: every RULE fires on some fact a flow can state 9ms

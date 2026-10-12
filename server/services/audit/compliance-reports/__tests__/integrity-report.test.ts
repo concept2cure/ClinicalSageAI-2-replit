@@ -61,6 +61,33 @@ describe('audit-trail integrity: the stores', () => {
 });
 
 describe('audit-trail integrity: the verdicts', () => {
+  /* HS-1008-7, honest-state review 2026-10-08. This verdict read "Every one of
+     N rows carries a hash linked to its predecessor" — which reads as the
+     cryptographic linkage the sibling audit_logs verdict genuinely verifies
+     ("re-derives from its predecessor", a chain walk that recomputes). The
+     audit_events check compares stored pointers and never recomputes
+     `record_hash` from the row's content, so a row whose content was altered
+     while its pointers were kept consistent passes it. It is regulator-facing,
+     so the gap between the two had to close from the wording end until the
+     check is migrated onto the re-derivation that already exists in
+     routes/part11-compliance.ts. */
+  it('does not claim to have re-derived row content it only checked pointers for', async () => {
+    const v = await verdicts(ctx({ ok: true, rowsChecked: 5 }, intactLinkage, sealsOk));
+    const detail = String(v['audit_events linkage'].detail);
+    expect(detail, 'the linkage verdict claimed a content re-derivation it never did')
+      .toMatch(/not re-derived/);
+    expect(detail).toMatch(/previous_hash matches its predecessor/);
+    expect(detail).toContain('3');
+  });
+
+  /* The sibling verdict verifies more and must keep saying so: if both read the
+     same, a regulator cannot tell a pointer check from a re-derivation. */
+  it('keeps the audit_logs chain verdict distinguishable from the pointer check', async () => {
+    const v = await verdicts(ctx({ ok: true, rowsChecked: 5 }, intactLinkage, sealsOk));
+    expect(String(v['audit_logs hash chain'].detail)).toMatch(/re-derives from its predecessor/);
+    expect(String(v['audit_events linkage'].detail)).not.toMatch(/re-derives from/);
+  });
+
   it('states three intact checks when all three ran and passed', async () => {
     const v = await verdicts(ctx({ ok: true, rowsChecked: 5 }, intactLinkage, sealsOk));
     expect(v['audit_logs hash chain']).toMatchObject({ store: 'audit_logs', verdict: 'intact', rows_checked: 5 });

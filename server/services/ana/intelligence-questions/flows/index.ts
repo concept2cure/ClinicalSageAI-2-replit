@@ -61,7 +61,7 @@ const FLOW_REGISTRY: Record<string, FlowFactory> = {
   labeling: () => createLabelingFlow(),
   briefing_book: () => createBriefingBookFlow(),
   stability_study: () => createStabilityStudyFlow(),
-  project_setup: (ctx) => createProjectSetupFlow(ctx),
+  project_setup: () => createProjectSetupFlow(),
 };
 
 /**

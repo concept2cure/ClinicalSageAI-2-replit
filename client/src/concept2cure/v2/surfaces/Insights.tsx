@@ -6,6 +6,7 @@ import { downloadBlob, safeFileName } from '../download';
 import { getOrgId } from '@/utils/authToken';
 import { useAuthUser } from '@/services/portal/authService';
 import { canFinalizeReport, canGovernedWrite } from '@shared/constants/permissions';
+import { readinessPredicate, readinessQualifier } from '@shared/regulatory/readiness-statement';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import type { EsigMeaning } from '../../hooks/useEsignature';
@@ -99,6 +100,9 @@ interface ReportType {
   label: string;
   family: string;
   scopes: string[];
+  /** The scopes an engine actually computes it over — a subset of `scopes`
+   *  (server CanvasReportType.computedScopes), empty when none does. */
+  computedScopes: string[];
   segments: string[];
   t: { allowPartial?: boolean; requireBlockers?: boolean; requireConfidence?: boolean; requireExplicitGaps?: boolean; forbidFinal?: boolean; requireDisclosure?: boolean };
   /** An engine computes it over a program; otherwise it is shown as not computed and never run. */
@@ -111,6 +115,7 @@ interface CanvasReportType {
   label: string;
   family: string;
   allowedScopes?: string[];
+  computedScopes?: string[];
   allowedClientSegments?: string[];
   truthfulnessRules?: Record<string, unknown>;
   runnable?: boolean;
@@ -123,6 +128,11 @@ function catalogFrom(rows: CanvasReportType[] | undefined): ReportType[] {
     label: r.label,
     family: r.family,
     scopes: r.allowedScopes ?? [],
+    /* An older server answers no `computedScopes`. The declared scopes are then
+       all that is known, and saying "runs over" of them is the claim this field
+       exists to drop — so with none, the card says nothing about where it runs
+       rather than repeating the declaration. */
+    computedScopes: r.computedScopes ?? [],
     segments: r.allowedClientSegments ?? [],
     t: (r.truthfulnessRules ?? {}) as ReportType['t'],
     runnable: r.runnable === true,
@@ -206,6 +216,10 @@ interface CanvasPortfolio {
 interface CanvasOverview {
   organizationId: number;
   tier: string;
+  /** Whether `tier` was read, or assumed after a failed capability lookup
+   *  (server entitlement-map.ts). Absent on a server that predates the flag,
+   *  which is read as resolved — the flag only ever withdraws a claim. */
+  tierResolved?: boolean;
   segments: string[];
   leadProgram: CanvasLeadProgram | null;
   /** The open program named by `?programId=`, and whether it leads (server
@@ -454,10 +468,20 @@ function roPortfolioFrom(programs: CanvasPortfolioProgram[]): PortfolioRow[] {
    segment. */
 function roSuggestForClient(p: ProgramCtx, seg: string, types: ReportType[]) {
   const preset: Preset | null = roPresetsForSeg(seg, types)[0] ?? null;
+  /* THE WORD "READY" IS NOT THE SERVER'S TO GIVE AWAY.
+     This read `${p.code} is ${p.readiness}% ready` off the score alone. For a
+     filing type with no resolved required-artifact matrix the score is section
+     completion only and the run carries a `critical` gap saying so, so a
+     project with every section drafted arrived as `readiness: 100,
+     criticalBlockerCount: 1, status: 'missing'` and the canvas opened with
+     "BX-204 is 100% ready" (HS-1008-1). That is the refuse-to-accept trap
+     stated as reassurance: the figure was right and the sentence was not.
+     `readinessPredicate` is the one place that decision is made — see
+     shared/regulatory/readiness-statement.ts. */
   const rBit = p.readiness == null
     ? (p.filing ? `${p.code} is in ${p.filing} preparation` : `${p.code}'s submission readiness is not yet computed`)
-    : `${p.code} is ${p.readiness}% ready`;
-  const pduBit = p.pdufa ? ` with a target action date of ${p.pdufa}` : '';
+    : `${p.code} ${readinessPredicate(p)}`;
+  const pduBit = p.pdufa ? ` Its target action date is ${p.pdufa}.` : '';
   /* The third prompt was "Run the audit assurance pack" or "Show the 510(k)
      equivalence matrix", chosen by the shell's segment preference: the 510(k)
      prompt was offered to a biologic program, and neither report has an engine
@@ -465,8 +489,8 @@ function roSuggestForClient(p: ProgramCtx, seg: string, types: ReportType[]) {
   return {
     headline: 'Build any governed report or dashboard — describe what you need.',
     body: preset
-      ? `${rBit}${pduBit}. The ${preset.label} is the standard starting pack for ${SEG_LABEL[seg] || seg} — it is not picked from the readiness figure above.`
-      : `${rBit}${pduBit}.`,
+      ? `${rBit}.${pduBit} The ${preset.label} is the standard starting pack for ${SEG_LABEL[seg] || seg} — it is not picked from the readiness figure above.`
+      : `${rBit}.${pduBit}`,
     preset,
     prompts: [
       ...(preset ? [`Build the ${preset.label}`] : []),
@@ -518,6 +542,58 @@ interface RenderedReport {
   status: string;
   truthfulness: { allowedStatus: string; downgradedFrom: string; reasons: string[] };
   sections: ROSection[];
+}
+
+/**
+ * Why a report is held at its status — the clause after "is held at <status>".
+ *
+ * PURE, and separate from the router so the sentence can be tested without
+ * driving the canvas (the idiom roPortfolioCovers set in this file).
+ *
+ * "Those are the gate's own reasons, verbatim" used to print over an empty
+ * list (HS-1008-3, honest-state review 2026-10-08). A run held at `partial` by
+ * outstanding blockers has `truthfulness.reasons == []`, because the gate
+ * records a reason only when it downgraded a status that was asked for. The
+ * reply read '"X" is held at partial because: . Those are the gate's own
+ * reasons, verbatim.' — naming no cause while claiming to quote one.
+ *
+ * So: quote whichever list the record actually holds, and say which list it is.
+ * When neither holds anything, say that, rather than introducing nothing as a
+ * quotation.
+ */
+export function roHeldBecause(reasons: string[], blockers: string[]): string {
+  const promote = 'Clear them and it can promote toward final; the status gate is deterministic.';
+  if (reasons.length) {
+    return `because: ${reasons.join('; ')}. Those are the gate's own reasons, verbatim. ${promote}`;
+  }
+  if (blockers.length) {
+    return (
+      `while these blockers stand: ${blockers.join('; ')}. The truthfulness gate ` +
+      `recorded no reason of its own — that is the run's blocker list, which is ` +
+      `what holds the status. ${promote}`
+    );
+  }
+  return (
+    'and neither the truthfulness gate nor the run records a cause. Nothing in ' +
+    'the governed record explains this status, so none is offered here.'
+  );
+}
+
+/**
+ * The report's own blockers, read off its rendered blockers section.
+ *
+ * The server builds that section from the run's `blockers` (render.ts), so this
+ * is the document's own list and not a second derivation of it. Absent when the
+ * run had none — the section is only pushed when it is non-empty.
+ */
+function roBlockersOf(rep: RenderedReport): string[] {
+  const section = (rep.sections || []).find(sec => sec.id === 'blockers');
+  if (!section) return [];
+  return (section.blocks || [])
+    .filter(b => b.kind === 'blocker-list')
+    .flatMap(b => (b.items || []).map(item => String(item)))
+    .map(item => item.trim())
+    .filter(Boolean);
 }
 
 
@@ -638,7 +714,8 @@ function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCt
     const rep = c.report;
     if (!rep) return { tool: name, question: true, text: 'Which report? Generate or open one and its blockers are listed here, straight from the server’s truthfulness gate.', chips: [['Executive Readiness Digest', `Generate the executive readiness digest for ${p.code}`]], report: null, dashboard: null };
     const reasons = (rep.truthfulness && rep.truthfulness.reasons) || [];
-    return { tool: name, text: `"${rep.reportTypeLabel}" is held at ${rep.status} because: ${reasons.join('; ')}. Those are the gate's own reasons, verbatim. Clear them and it can promote toward final; the status gate is deterministic.`, report: rep, dashboard: null };
+    const held = roHeldBecause(reasons, roBlockersOf(rep));
+    return { tool: name, text: `"${rep.reportTypeLabel}" is held at ${rep.status} ${held}`, report: rep, dashboard: null };
   }
   /* A forecast or CRL/RTF pre-mortem was the readiness run under a prediction's
      title, behind a Professional lock: no prediction model ran (reporting
@@ -707,10 +784,32 @@ const RO_SEV: Record<string, string> = { critical: 'Critical', high: 'High', med
 
 /* ── Mini charts ── */
 
+/** A spec field as a number, or null when the spec does not carry one.
+ *
+ *  `Number(x) || 0` reads an absent field, a null and a NaN as zero, which is
+ *  how a ring with no value drew an empty ring labelled "0 of 100" — the
+ *  not-computed-as-zero defect the rest of this surface was fixed for. A
+ *  genuine 0 survives this; nothing else does. */
+export function roSpecNum(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  if (!text) return null;
+  const n = Number(text);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** What a chart says when its spec does not carry the series it draws. */
+function ROChartNoData({ label }: { label: string }) {
+  return <div className="ro-svg-cap">{label} — no series data. Connect the live provider.</div>;
+}
+
 function ROChart({ chartType, spec }: { chartType: string; spec: Record<string, unknown> }) {
   const s = spec || {};
   if (chartType === 'readiness_ring') {
-    const v = Math.max(0, Math.min(100, Number(s.value) || 0));
+    const raw = roSpecNum(s.value);
+    if (raw === null) return <ROChartNoData label={(s.label as string) || 'Readiness'} />;
+    const v = Math.max(0, Math.min(100, raw));
     const R = 34;
     const C = 2 * Math.PI * R;
     const off = C * (1 - v / 100);
@@ -728,7 +827,12 @@ function ROChart({ chartType, spec }: { chartType: string; spec: Record<string, 
     );
   }
   if (chartType === 'forecast_band') {
-    const a = Math.max(0, Math.min(100, Number(s.anchor) || 60));
+    /* `Number(s.anchor) || 60` invented an anchor, and the five points below
+       are a fixed shape drawn from it — a trajectory with no measurement behind
+       it, in a governed report (HS-1008-5). No anchor, no band. */
+    const anchor = roSpecNum(s.anchor);
+    if (anchor === null) return <ROChartNoData label={(s.label as string) || 'Trajectory'} />;
+    const a = Math.max(0, Math.min(100, anchor));
     const pts: [number, number][] = [[0, a], [1, a + 3], [2, a - 2], [3, a + 6], [4, a + 2]];
     const x = (i: number) => 14 + i * 62;
     const y = (v: number) => 96 - (v / 100) * 80;
@@ -746,7 +850,14 @@ function ROChart({ chartType, spec }: { chartType: string; spec: Record<string, 
     );
   }
   if (chartType === 'trend') {
-    const d: number[] = Array.isArray(s.points) ? (s.points as number[]) : [62, 66, 64, 70, 73];
+    /* The fallback was the literal series [62, 66, 64, 70, 73]: a rising line
+       drawn for any report whose spec carried no points (HS-1008-5). Fixture
+       data in a governed path is exactly what this repository forbids. */
+    const points = Array.isArray(s.points) ? (s.points as unknown[]).map(roSpecNum) : null;
+    if (!points || points.length < 2 || points.some(n => n === null)) {
+      return <ROChartNoData label={(s.label as string) || 'Trend'} />;
+    }
+    const d = points as number[];
     const x = (i: number) => 14 + i * (252 / (d.length - 1));
     const y = (v: number) => 96 - (v / 100) * 80;
     const line = d.map((v, i) => `${x(i)},${y(v)}`).join(' ');
@@ -959,19 +1070,32 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashb
 
        Readiness is real, so it is stated ONCE, as what it is: a
        programme-level figure. The per-market grid keeps only the rows the
-       governed record could actually fill per market, and they are all empty,
-       which is the honest answer until the regional providers are connected. */
+       governed record could actually fill per market, and they are all empty.
+
+       2026-10-12: the `regional` engine computes a market's Module 1 content
+       gaps (services/report-os/regional/filing-readiness.ts), so the old note
+       here — "connect the live regional providers to populate the deltas" — now
+       names work that is done and still would not fill this grid, which makes
+       it the wrong reason to give a reader. The real reason is structural: a
+       market assessment is of the filing the program is RECORDED for, and a
+       program records one. Assessing this program against a second market would
+       assess a filing that does not exist, which is the refusal that engine
+       exists to make. So the grid stays empty and says why. */
     const tRows: [string, string | null][] = [['Module completeness', null], ['Region-specific gaps', null]];
     return (
       <div className="ro-dash">
         <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Global harmonization</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{m.length} markets</span></div></div></div>
         {prog.readiness != null && (
           <div className="ro-dash-progline">
-            Submission readiness <b>{prog.readiness}%</b> — a programme-level figure, not assessed per market.
+            {/* The bare percentage again (HS-1008-1): the same figure can carry
+                outstanding critical gaps, and a reader comparing markets has no
+                other place here to learn that. */}
+            Submission readiness <b>{prog.readiness}%</b>
+            {readinessQualifier(prog) ? <> — {readinessQualifier(prog)}</> : null} — a programme-level figure, not assessed per market.
           </div>
         )}
         <ROTable columns={['Requirement', ...m]} rows={tRows.map((r) => [r[0], ...m.map(() => r[1] ?? '--')])} />
-        <div className="ro-dash-note">{I.info} No per-market assessment is in the governed record, so every market cell reads "--". Connect the live regional providers to populate the deltas.</div>
+        <div className="ro-dash-note">{I.info} No per-market comparison is in the governed record, so every market cell reads "--". A market assessment is of the filing this program is recorded for, and a program records one — so {prog.code} can be assessed for its own market, not against a second one it is not filing in. Open the report catalog for the market assessment of its recorded filing.</div>
       </div>
     );
   }
@@ -1391,6 +1515,14 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   // "preview on another plan" control (canonical entitlement UX), not persisted.
   const [tierOverride, setTierOverride] = useState<string | null>(null);
   const realTier = data?.tier ?? 'standard';
+  /* HS-1008-4. `requireReportEntitlement` degrades to `standard` when the
+     capability lookup throws, which is right for the gate and was wrong for the
+     screen: an enterprise customer whose lookup failed saw "Plan: Standard" and
+     a wall of locked tiles, with nothing saying their plan had not been read.
+     The locks stay — entitlement still fails closed — but the plan is no longer
+     asserted. Absent (an older server) is read as resolved: the flag only
+     withdraws a claim, never adds one. */
+  const tierResolved = data?.tierResolved !== false;
   const tier = tierOverride ?? realTier;
   const previewing = tierOverride != null && tierOverride !== realTier;
   /* "Find a report": the words in the field stay there after a search, as in
@@ -1546,6 +1678,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
       label: t.label,
       family: t.family,
       scopes: t.scopes,
+      computedScopes: t.computedScopes,
       segments: t.segments,
       runnable: t.runnable,
       entitled: d.entitled,
@@ -1794,8 +1927,22 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
               review 2026-10-01). It says it is one, and names the real plan. */}
           {previewing && (
             <div className="ro-dash-note" role="status" data-testid="rc-tier-preview">
-              {I.info} Previewing {tierLabel(tier)}. Your organization's plan is {tierLabel(realTier)}.{' '}
-              <button type="button" className="rc-chip" onClick={() => setTierOverride(null)}>Back to {tierLabel(realTier)}</button>
+              {I.info} Previewing {tierLabel(tier)}.{' '}
+              {tierResolved
+                ? <>Your organization's plan is {tierLabel(realTier)}.{' '}</>
+                : <>Your organization's plan could not be read, so it is not named here.{' '}</>}
+              <button type="button" className="rc-chip" onClick={() => setTierOverride(null)}>
+                {tierResolved ? <>Back to {tierLabel(realTier)}</> : <>Stop previewing</>}
+              </button>
+            </div>
+          )}
+          {/* Not previewing, and the plan was never read: say so where the plan
+              is shown, so a wall of locks is not read as the plan's doing. */}
+          {!previewing && !tierResolved && (
+            <div className="ro-dash-note" role="status" data-testid="rc-tier-unresolved">
+              {I.alertTriangle} Your organization's plan could not be read just now, so paid
+              capabilities are shown locked. This is not a statement about your plan — try again
+              in a moment, and contact your administrator if it persists.
             </div>
           )}
           <label className="gov-label" htmlFor={fieldId} style={{ display: 'block', marginBottom: 5 }}>Find a report</label>

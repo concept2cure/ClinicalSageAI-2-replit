@@ -58,13 +58,19 @@ handler), `/api/cortex/health`, `/api/claude/health`, `/api/ai-gateway/health`, 
 webhooks, `/api/csp-report`, `/api/billing/dtc-pricing`, `/api/time`, `/api/diag`. Anything else without a token must be
 `401`; that is itself a test.
 
-### 2.2 The six launch apps and their `/api` mounts
+### 2.2 The launch apps and their `/api` mounts
 
 The canonical list is not this table: it is `UI_SURFACES[].apiPrefixes` in `shared/constants/ui-surface-registry.ts`
-for the surfaces `LAUNCH_APPS` names in `shared/constants/launch-scope.ts:43-121`, which `ci:launch-scope-api`
+for the surfaces `LAUNCH_APPS` names in `shared/constants/launch-scope.ts`, which `ci:launch-scope-api`
 (`scripts/ci/check-launch-scope-api.ts`) holds true. The table is that list as computed on 2026-09-26
 (`docs/evidence/D6/2026-09-25-p1/P1-15/launch-api-prefixes.txt`, with the script), each prefix with the mount that
 serves it. Regenerate before kick-off; a prefix that appears in the registry and has no mount is not a target.
+
+**The catalog has grown twice since this snapshot, to eight apps.** CMC / Module 3 joined on 2026-10-12
+(decision P-28) and its row is below, written from the registry at that date. **Reporting & analytics
+(`reporting`, surfaces `insights` and `compliance-reports`, joined 2026-09-30) is still missing from this table**
+and must be added when it is regenerated — it is in scope whether or not this snapshot lists it, because the
+registry is the canonical list.
 
 | App (`LAUNCH_APPS.id`) | Surfaces | API prefixes and mounts |
 |---|---|---|
@@ -74,6 +80,8 @@ serves it. Regenerate before kick-off; a prefix that appears in the registry and
 | **Submission Center** (`submission-center`) | `submission-center`, `dossier-map`, `ectd-compile`, `ectd-coauthor`, `ectd-publishing`, `gateway-transmittals` | `/api/submissions` (`register-governance-routes.ts:65`, the core router `server/routes/submissions.ts`; and `register-document-routes.ts:188`, sign-release `server/routes/submission-sign-release.ts:164`); `/api/submission-orchestrator` (`register-document-routes.ts:173`); `/api/ectd`, `/api/ectd-compile` (`:127,140,105`); `/api/dossier-map` (`register-inline-routes.ts:981`); `/api/content-assembly` (`:1263`); `/api/global-ri` (`:488`); `/api/mdx/gateways` (`:1223`; `server/routes/mdx-submission-gateway.ts:75-458`, transmit at `:195`); `/api/region-profiles` (`register-governance-routes.ts:66`); `/api/510k/estar` (`register-regulatory-routes.ts:88`); `/api/c2c/actions/sign` (`register-inline-routes.ts:345`; `server/routes/c2c/actions.ts`); `/api/c2c/projects`, `/api/rim`, `/api/submission-ops` as above |
 | **Submission Readiness** (`submission-readiness`) | `dispatch-readiness` | `/api/submissions/sequences/:seqId/dispatch-readiness` and the sequence routes beside it (`server/routes/submissions.ts:896-1658`, mounted at `register-governance-routes.ts:65`); the surface also reads `/api/c2c/projects` |
 | **QMS controlled documents** (`qms`) | `quality`, `qmp` | `/api/mdx/qms/*` (`register-inline-routes.ts:1235`; `server/routes/mdx-qms.ts:341-1552`: documents `:341-750`, approve `:595`, revise `:643`, retire `:707`, changes `:1290-1552`, change approve `:1446`, transition `:1389`); `/api/quality` (`register-project-routes.ts:96`); and the **legacy second QMS API** `/api/qms/*` (`register-document-routes.ts:271`; `server/routes/qms.ts:66-222`), in scope because it is mounted and DP-34 is open on it |
+
+| **CMC / Module 3** (`cmc`) | `cmc` | `/api/cmc/*` behind `authenticateToken` and `cmcWriteRoleGate` (`server/bootstrap/register-core-routes.ts:68-72`), serving the 23 register and engine segments the surface claims — `drug-substances`, `drug-products`, `analytical-methods`, `qc-testing`, `stability-studies`, `process-validation`, `change-control`, `comparability-studies`, `container-closures`, `reference-standards`, `impurity-profiles`, `dissolution-profiles`, `material-specs`, `formulation-records`, `manufacturing-processes`, `characterization-studies`, `quality/qbd`, `ich-compliance`, `control-strategy`, `agency-questions` (`server/api/cmc/routes.ts`), `specifications` (`:125`), `batch-records` (`:134`), `module3-board` (`:195`) — and the 10 `module3-os` segments `sections`, `compile`, `contradictions`, `readiness`, `provenance`, `guard`, `place-into-submission`, `build-state`, `build-section`, `source-evidence` (`:141-146`). **Everything else under `/api/cmc` is unclaimed and refused 403 `LAUNCH_SCOPE` in production** — `/api/cmc/variations/classify` and `/api/cmc/projects/:id/process-capability` deliberately so (P-28); confirm the refusal rather than reporting the handlers. Signing acts to aim at: section approve (`module3OperatingSystemRoutes.ts`), specification approve, batch release, shelf-life close-out, QC second-person review, critical-contradiction resolve, and `place-into-submission` (regulatory-author role, reason, gate pass). The composition boundary (`server/services/cmc/composition-scope.ts`) must refuse a biologic, a non-drug product class and a non-US-IND application with 409 and compose nothing. |
 
 ### 2.3 The authentication doors
 

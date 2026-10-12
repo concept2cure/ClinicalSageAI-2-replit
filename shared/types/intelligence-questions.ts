@@ -59,6 +59,14 @@ export interface PositionCaution {
   reason: string;
   /** The part, section or annex the contradiction comes from. */
   authority: string;
+  /**
+   * Which governed rule produced this, named rather than numbered. It goes on
+   * the record with the choice, so a reviewer can see what judged it — and a
+   * gate holds that every rule can actually fire, which a per-position check
+   * cannot: a new rule whose positions another rule already marks would
+   * otherwise pass without ever running.
+   */
+  ruleId: string;
 }
 
 export interface QuestionOption {
@@ -122,6 +130,23 @@ export interface OwnPositionAllowed {
   required?: boolean;
 }
 
+/**
+ * A governed catalogue a question's positions come from, resolved as the
+ * question is drawn rather than written into the flow.
+ *
+ * Some positions depend on an answer the person has already given: which
+ * routes to market exist depends on the regulator they named, and no static
+ * list in a flow file can know it. A field names the catalogue; the engine
+ * resolves it for the facts the interview holds, and the SAME resolution is
+ * what the validator judges the answer against — a question that offers
+ * positions the validator does not enforce is not a closed list at all.
+ */
+export type GovernedOptionSource =
+  /** The routes to market for a device or diagnostics programme, by region. */
+  | 'device_pathway_positions'
+  /** The routes a medicine may take, by region and by the modality's own frame. */
+  | 'medicine_pathway_positions';
+
 export interface QuestionField {
   id: string;
   label: string;
@@ -130,6 +155,14 @@ export interface QuestionField {
   helpText?: string;
   required?: boolean;
   options?: QuestionOption[];
+  /**
+   * The governed catalogue these positions come from, resolved per draw from
+   * the answers already given (see {@link GovernedOptionSource}). A field that
+   * declares it carries no static list: the resolver is the only source, and
+   * where the catalogue holds nothing for this programme the field says so
+   * rather than drawing an empty select.
+   */
+  optionsFrom?: GovernedOptionSource;
   /** The person may take a position this list does not offer (see OwnPositionAllowed). */
   allowOther?: OwnPositionAllowed;
   validation?: FieldValidation;

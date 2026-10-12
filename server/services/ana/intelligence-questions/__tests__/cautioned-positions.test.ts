@@ -21,7 +21,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import type { FlowState, QuestionNode } from '../types.js';
+import { agencyOptions } from '@shared/regulatory/agency-positions';
+import type { FlowState, QuestionField, QuestionNode } from '../types.js';
 import { advanceFlow } from '../engine.js';
 import { cautionedChoiceNotices, factFields, programmeFactsFrom, withCautions } from '../programme-facts.js';
 
@@ -43,12 +44,44 @@ const pathwayOptionsOf = (event: { node: QuestionNode } | null) =>
   event!.node.fields.find(f => f.id === 'device_submission_pathway')!.options!;
 
 describe('which answer states which fact', () => {
+  it('reads every agency the project named, in whichever vocabulary', () => {
+    expect(programmeFactsFrom({ primary_regulatory_agency: 'US' })).toEqual({ regions: ['US'], primaryRegion: 'US' });
+    expect(
+      programmeFactsFrom({ primary_regulatory_agency: 'US', additional_agencies: ['EU', 'who'] }),
+      'WHO prequalification is not a region, and is not read as one',
+    ).toEqual({ regions: ['US', 'EU'], primaryRegion: 'US' });
+    // The nine hand-written values this question used to carry still resolve.
+    expect(programmeFactsFrom({ primary_regulatory_agency: 'ema' })).toEqual({ regions: ['EU'], primaryRegion: 'EU' });
+    expect(programmeFactsFrom({ primary_regulatory_agency: '__other__' }), 'own words name no region').toEqual({});
+  });
+
+  it('keeps the primary agency apart from the others, because it decides what is offered', () => {
+    const facts = programmeFactsFrom({ primary_regulatory_agency: 'EU', additional_agencies: ['US', 'JP'] });
+    expect(facts.primaryRegion, 'the primary agency is the one the routes are offered for').toBe('EU');
+    expect(facts.regions).toEqual(['EU', 'US', 'JP']);
+    // An additional agency alone is not the primary one.
+    expect(programmeFactsFrom({ additional_agencies: ['US'] })).toEqual({ regions: ['US'] });
+  });
+
   it('reads the class and the predicate the flows actually ask for', () => {
     expect(programmeFactsFrom({ device_class: 'class_iii' })).toEqual({ deviceClass: 'III' });
     expect(programmeFactsFrom({ device_class: 'class_ii' }), 'iii must not match ii').toEqual({ deviceClass: 'II' });
     expect(programmeFactsFrom({ eu_mdr_class: 'class_iib' })).toEqual({ euMdrClass: 'IIb' });
-    expect(programmeFactsFrom({ predicate_device_name: 'Acme Stent' })).toEqual({ predicateNamed: 'Acme Stent' });
-    expect(programmeFactsFrom({ predicate_device: ' K123456 ' })).toEqual({ predicateNamed: 'K123456' });
+    expect(programmeFactsFrom({ predicate_device_name: 'Acme Stent' })).toEqual({
+      predicateNamed: 'Acme Stent',
+      predicate: 'named',
+    });
+    expect(programmeFactsFrom({ predicate_device: ' K123456 ' })).toEqual({
+      predicateNamed: 'K123456',
+      predicate: 'named',
+    });
+    /* The statement a named predicate cannot make: that there is none. */
+    expect(programmeFactsFrom({ predicate_strategy: 'no_predicate' })).toEqual({ predicate: 'none' });
+    expect(programmeFactsFrom({ predicate_strategy: 'nse_received' })).toEqual({ predicate: 'nse' });
+    expect(
+      programmeFactsFrom({ predicate_strategy: 'reference_device_only' }),
+      'a reference device says a predicate was not claimed, not that none exists',
+    ).toEqual({});
   });
 
   it('states no fact where the person said they do not know, or said nothing', () => {
@@ -112,12 +145,101 @@ describe('the question a person reads', () => {
         {
           value: 'US_510K',
           label: '510(k)',
-          caution: { availability: 'inapplicable' as const, reason: 'stale', authority: 'stale' },
+          caution: { availability: 'inapplicable' as const, reason: 'stale', authority: 'stale', ruleId: 'stale' },
         },
       ],
     };
     expect(withCautions([field], {})[0].options![0].caution).toBeUndefined();
     expect(withCautions([field], { deviceClass: 'III' })[0].options![0].caution!.availability).toBe('needs_basis');
+  });
+});
+
+describe('the agency question itself', () => {
+  const everyField = async (): Promise<QuestionField[]> => {
+    const { getAvailableFlows, getFlowDefinition } = await import('../flows/index.js');
+    const ctx = { organizationId: 7, userId: 3, projectId: null };
+    return getAvailableFlows(ctx).flatMap(f =>
+      (getFlowDefinition(f.category, ctx)?.nodes ?? []).flatMap(n => n.fields),
+    );
+  };
+
+  it('offers the governed positions wherever a flow asks it, and is not a text box', async () => {
+    /* `agency_select` is a field type the engine has always declared and no
+       renderer ever implemented, so it fell through to a text input. This
+       holds that no flow can ask it bare again. */
+    const asked = (await everyField()).filter(f => f.type === 'agency_select');
+    expect(asked.length, 'a scan that found no agency question proves nothing').toBeGreaterThan(0);
+    for (const field of asked) {
+      expect(field.options?.map(o => o.value), field.id).toEqual(agencyOptions().map(o => o.value));
+      expect(field.options?.every(o => o.commits), field.id).toBe(true);
+      expect(field.allowOther, 'an agency AnA does not hold must still be nameable').toBeDefined();
+    }
+  });
+
+  it('offers the same governed twelve for the additional agencies, plus the one that is not a filing', async () => {
+    const additional = (await everyField()).find(f => f.id === 'additional_agencies')!;
+    const values = additional.options!.map(o => o.value);
+    expect(values.slice(0, 12)).toEqual(agencyOptions().map(o => o.value));
+    expect(values, 'dropping WHO prequalification would remove a target some sponsors use').toContain('who');
+    const who = additional.options!.find(o => o.value === 'who')!;
+    expect(who.label).toMatch(/not a national filing/);
+    expect(who.commits).toMatch(/no Module 1 requirements/);
+    // The five the hand-written nine left out.
+    for (const value of ['CH', 'SG', 'KR']) expect(values, value).toContain(value);
+  });
+
+  it('leaves the country questions as free text, because no governed country vocabulary exists', async () => {
+    const countries = (await everyField()).filter(f => f.type === 'country_select');
+    expect(countries.length).toBeGreaterThan(0);
+    for (const field of countries) {
+      expect(
+        field.options,
+        'the platform holds a governed agency list and no governed country list; if one lands, these draw it',
+      ).toBeUndefined();
+    }
+  });
+});
+
+describe('a route to a regulator the project did not name', () => {
+  it('is not offered at all, which is better than offered and marked', () => {
+    /* Until the list became region-aware this was the caution's job: a project
+       that named EMA was shown the four FDA routes with every one marked
+       inapplicable. The question itself is now right, so there is nothing left
+       to mark — and the catalogue's rule stays as the guard for any caller
+       that resolves positions for a region the project did not name
+       (shared/regulatory/__tests__/pathway-availability.test.ts). */
+    const state = stateAt('device_classification', {
+      regulatory_targets: { primary_regulatory_agency: 'EU', product_type: 'medical_device' },
+    });
+    const options = pathwayOptionsOf(advanceFlow(state, 'device_classification', { device_class: 'class_ii' }, CTX).event);
+    expect(options.map(o => o.value)).not.toContain('US_510K');
+    expect(options.every(o => !o.caution), 'a list of the right regulator’s routes needs no marks').toBe(true);
+  });
+
+  it('is still caught on the record when an answer names one anyway', () => {
+    /* The reachable case: an answer stored before the list was region-aware,
+       or any later question that offers positions across regions. */
+    const notes = cautionedChoiceNotices(
+      {
+        id: 'medtech_regulatory',
+        section: 'S',
+        question: 'Which route?',
+        fields: [
+          {
+            id: 'device_submission_pathway',
+            label: 'Submission Pathway',
+            type: 'select',
+            options: [{ value: 'US_510K', label: '510(k)' }],
+          },
+        ],
+      },
+      { device_submission_pathway: 'US_510K' },
+      programmeFactsFrom({ primary_regulatory_agency: 'EU' }),
+    );
+    expect(notes).toHaveLength(1);
+    expect(notes[0].severity).toBe('critical');
+    expect(notes[0].message).toMatch(/You have named EMA/);
+    expect(notes[0].message).toMatch(/name FDA among the agencies/);
   });
 });
 

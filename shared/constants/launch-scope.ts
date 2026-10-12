@@ -1,10 +1,16 @@
 /**
  * Launch scope — the one list of what ships in the launch catalog.
  *
- * `docs/LAUNCH_DEFINITION_OF_DONE.md` row D2: seven apps on by default for a
- * new organisation (six until 2026-09-30, when the founder made Reporting &
- * analytics a launch app), every other surface behind a flag that is off in
- * production. This file IS that flag's data. It is read by:
+ * `docs/LAUNCH_DEFINITION_OF_DONE.md` row D2: eight apps for a new
+ * organisation (six until 2026-09-30, when the founder made Reporting &
+ * analytics a launch app; seven until 2026-10-12, when CMC / Module 3 joined
+ * under decision P-28), every other surface behind a flag that is off in
+ * production. This file IS that flag's data.
+ *
+ * "On by default" is the modules list, not the app list: a launch app's
+ * SURFACES are inside the boundary, and its MODULES are what a new
+ * organisation is granted. CMC / Module 3 lists surfaces and no modules on
+ * purpose — see its entry. It is read by:
  *
  *   - server/services/entitlements/navigation-entitlements.ts — emits a
  *     `launch-scope` verdict for every surface outside the scope when
@@ -40,7 +46,7 @@ export interface LaunchApp {
   modules: readonly string[];
 }
 
-/** The seven launch apps, in the order the definition of done lists them. */
+/** The eight launch apps, in the order the definition of done lists them. */
 export const LAUNCH_APPS: readonly LaunchApp[] = [
   {
     id: 'projects',
@@ -122,6 +128,35 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // gates and CTQ factors cannot be authored anywhere, and nothing reads them.
     surfaces: ['quality'],
     modules: ['quality'],
+  },
+  {
+    id: 'cmc',
+    label: 'CMC / Module 3',
+    /* Founder's delegation of 2026-10-07, decision P-28 (2026-10-05): the CMC
+       operating system ships in the launch catalog, with a composition
+       boundary — small-molecule Module 3 for a US IND
+       (services/cmc/composition-scope.ts). The one path is compile, approve
+       under Part 11, pass the final-export gate, place into the program's own
+       IND sequence.
+
+       `modules` IS DELIBERATELY EMPTY, and that is not an omission.
+       `provisionLaunchModules` writes an explicit grant for every module id
+       listed here, and a grant outranks tier permanently
+       (navigation-entitlements reads subscription state before tier). Listing
+       'cmc' would therefore hand the module to every new organisation and
+       silently overturn the professional band the product owner set on
+       2026-08-24 (db/migrations/20260824_cmc_professional_tier.sql), whose
+       grandfather grants already cover every organisation entitled then.
+       Pricing is the founder's call, not a side effect of a scope list.
+
+       Listing the SURFACE is what this entry is for, and it is enough:
+       `applyLaunchScope` "never widens anything" — it lifts the
+       'launch-scope' lock and leaves the catalog verdict, so the professional
+       band and any explicit grant still decide who sees it. Until this entry
+       the screen was refused to everyone, entitled or not, and every path
+       under /api/cmc was unattributed. */
+    surfaces: ['cmc'],
+    modules: [],
   },
   {
     id: 'reporting',

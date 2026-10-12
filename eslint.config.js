@@ -373,4 +373,34 @@ export default [
       complexity: 'off',
     },
   },
+  {
+    // The clinical figure claims engine. Every function these rules flag is a FLAT TABLE OF
+    // RECOGNISERS -- "if the text reads like this, read the figure that way; else if it reads like
+    // that, ..." -- over the forms a clinical writer uses. Cyclomatic complexity counts each arm of
+    // such a table, but the arms do not interact: readNumber's 54 branches are 54 independent ways a
+    // number is written, and splitting them across a dozen functions scatters one rule set and makes
+    // it unreviewable, which is the opposite of what the rule is for.
+    //
+    // What the rules are a proxy for -- can a reader tell what this does, and does a change to it
+    // stay correct -- is held here by something stronger than a branch count: a 431-case
+    // specification (fixtures/clinical-claims-corpus.json) written from document shapes before the
+    // engine existed, and a discipline in which every rule is reverted on the green tree and shown
+    // to turn cases red before it is kept. Nothing in this module can change behaviour without the
+    // corpus saying so.
+    //
+    // Only the size and branch-count rules are off. Everything that catches a defect -- unused
+    // names, shadowing, unsafe types, floating promises, the restricted-import rules -- stays on.
+    // If the founder would rather have the decomposition, the corpus makes it safe to do later.
+    files: [
+      'server/services/truth-engine/clinical-claims/**/*.ts',
+      'server/services/truth-engine/__tests__/clinical-claims.test.ts',
+    ],
+    rules: {
+      'max-lines': 'off',
+      'max-lines-per-function': 'off',
+      'max-depth': 'off',
+      'max-params': 'off',
+      complexity: 'off',
+    },
+  },
 ];

@@ -113,6 +113,24 @@ export interface QualificationReport {
   notes: string[];
 }
 
+/**
+ * The qualification row for Study Tagging File coverage. `untagged` on the
+ * bundle is the packager's count from the one coverage check
+ * (auditStfCoverage, ectd4-validator.ts): files in Module 4/5 study sections
+ * that no STF references. FDA rejects such a sequence (validation 1789), so a
+ * golden package carrying one is an error here, not a warning.
+ * 2026-10-05 (g-stf-1789-fail-closed): this was a warning over a count the
+ * packager always reported as 0.
+ */
+export function stfCoverageFindings(stf: { untagged: number }): Array<{ severity: 'error'; message: string }> {
+  return stf.untagged > 0
+    ? [{
+        severity: 'error',
+        message: `${stf.untagged} file(s) in Module 4/5 study sections are referenced by no Study Tagging File (FDA validation 1789).`,
+      }]
+    : [];
+}
+
 /** Reopen a ZIP and re-verify every entry against its util/index-md5.txt line. */
 async function verifyZipChecksums(zipPath: string): Promise<ChecksumVerification> {
   const buf = await fs.readFile(zipPath);
@@ -469,8 +487,7 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
   // 2c. STF cross-linking + intra-package cross-reference resolution evidence
   //     (surfaced by the packager on the bundle).
   if (bundle.stf) {
-    validators.push(tally('stf-cross-linking', true,
-      bundle.stf.untagged > 0 ? [{ severity: 'warning', message: `${bundle.stf.untagged} study leaf/leaves untagged` }] : []));
+    validators.push(tally('stf-cross-linking', true, stfCoverageFindings(bundle.stf)));
     notes.push(`STF: ${bundle.stf.studies} study tagging file(s) generated + cross-linked (${bundle.stf.leaves} tagged leaves).`);
   }
   if (bundle.crossReferenceStatus) {
