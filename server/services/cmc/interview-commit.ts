@@ -363,6 +363,24 @@ function entry(
 }
 
 /**
+ * The flow categories whose answers reach a record.
+ *
+ * `buildInterviewCommitPlan` below produces entries for these and an empty
+ * plan for every other category — so an interview of any other kind can be
+ * started and answered and then commits nothing. One list, read both by the
+ * plan builder and by `start_intelligence_flow`, so the tool cannot offer a
+ * flow the commit path does not take (decision P-28, 2026-10-12: with CMC in
+ * the launch catalog these tools reach production, and an interview that goes
+ * nowhere is an empty result standing in for a refusal).
+ */
+export const COMMITTING_FLOW_CATEGORIES: readonly FlowCategory[] = ['cmc_specification'];
+
+/** Whether a completed interview of this kind can be committed to a record. */
+export function flowCommitsToRecord(flowCategory: FlowCategory): boolean {
+  return COMMITTING_FLOW_CATEGORIES.includes(flowCategory);
+}
+
+/**
  * The projection of a completed cmc_specification interview. Pure: the same
  * answers always produce the same plan.
  */
@@ -370,7 +388,7 @@ export function buildInterviewCommitPlan(flowCategory: FlowCategory, answers: An
   const a = new AnswerReader(answers ?? {}, definitionFor(flowCategory));
   const entries: InterviewCommitPlanEntry[] = [];
 
-  if (flowCategory === 'cmc_specification') {
+  if (flowCommitsToRecord(flowCategory)) {
     /* §3.2.S.1 — the drug substance identity. */
     if (a.reached('substance_identification')) {
       const inn = a.text('substance_identification', 'inn_name');

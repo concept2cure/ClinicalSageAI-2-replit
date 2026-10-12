@@ -16,7 +16,7 @@ const dbQuery = vi.hoisted(() => vi.fn(async () => ({ rows: [] as unknown[] })))
 vi.mock('../../db.js', () => ({ pool: { query: (...a: unknown[]) => dbQuery(...(a as [])) } }));
 /* Surfaces added to the real launch catalog for one describe block, so the
    gate production builds can be asked about an app before the catalog lists it
-   (CMC / Module 3, P-13, below). Empty everywhere else: every other case runs
+   (CMC / Module 3, P-28, below). Empty everywhere else: every other case runs
    against the catalog exactly as shipped. */
 const catalogPlus = vi.hoisted(() => ({ ids: [] as string[] }));
 vi.mock('../../../shared/constants/launch-scope', async (importOriginal) => {
@@ -360,7 +360,7 @@ describe('the real registry, unattributed paths enforced', () => {
   });
 });
 
-/* CMC / Module 3 joins the launch catalog (decision P-13, 2026-10-05: a US FDA
+/* CMC / Module 3 joins the launch catalog (decision P-28, 2026-10-05: a US FDA
    IND for a small molecule, phase 1–2). Attribution is by longest prefix at a
    segment boundary, so while the cmc surface claimed the bare '/api/cmc', the
    flip would have made EVERY path under it answer 'launch': handlers no screen
@@ -370,12 +370,12 @@ describe('the real registry, unattributed paths enforced', () => {
    surface now claims the 33 segment prefixes its screens call, and nothing
    else. Each case is asked of the real registry with the catalog plus cmc, as
    it will stand at the flip. */
-describe('the real registry with CMC / Module 3 in the catalog (P-13)', () => {
+describe('the real registry with CMC / Module 3 in the catalog (P-28)', () => {
   const withCmc: ReadonlySet<string> = new Set([...LAUNCH_SURFACE_IDS, 'cmc']);
   const verdict = (p: string) => launchScopeApiVerdict(p, buildPrefixMap(), NEVER_GATED, withCmc);
 
   /* Deleted 2026-10-05 for want of a caller (docs/evidence/CMC-M3-GA/
-     2026-10-05/20-cmc-api-allowlist/), or withheld by P-13's scope boundary. */
+     2026-10-05/20-cmc-api-allowlist/), or withheld by P-28's scope boundary. */
   const NOT_LAUNCH = [
     '/api/cmc',
     '/api/cmc/insights/take-action',
