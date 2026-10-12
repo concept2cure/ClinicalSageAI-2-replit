@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T17:35:01.227Z",
+  "generatedAt": "2026-10-12T19:16:21.929Z",
   "git": {
-    "sha": "7854bca9d687f511d6a5efea02d7703bd4f50a76",
+    "sha": "267ff29516480898f15bfdaa9f74778392f078fd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2101,7 +2101,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 392271
+        "bytes": 393825
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2285,7 +2285,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
-        "bytes": 107943
+        "bytes": 108308
       },
       {
         "file": "server/routes/c2c/projects.ts",
@@ -2327,7 +2327,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8580
+        "lines": 8604
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2583,7 +2583,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
-        "lines": 2003
+        "lines": 2004
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
