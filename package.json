@@ -182,6 +182,8 @@
     "ci:purge-coverage:selftest": "node scripts/ci/check-purge-coverage.selftest.mjs",
     "ci:purge-coverage:write-baseline": "node scripts/ci/check-purge-coverage.mjs --write-baseline",
     "ci:migration-reachability:write-baseline": "node scripts/ci/check-migration-reachability.mjs --write-baseline",
+    "ci:class-vocabulary": "node scripts/ci/check-class-vocabulary.mjs",
+    "ci:class-vocabulary:selftest": "node scripts/ci/check-class-vocabulary.mjs --selftest",
     "ci:migration-set-order": "node scripts/ci/check-migration-set-order.mjs",
     "ci:migration-guard-order": "node scripts/ci/check-migration-guard-order.mjs",
     "ci:migration-guard-order:selftest": "node scripts/ci/check-migration-guard-order.mjs --selftest",

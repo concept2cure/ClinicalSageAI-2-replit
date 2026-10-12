@@ -15,6 +15,8 @@
  * @module server/services/fda/index
  */
 
+import type { DeviceClass } from '../../../shared/regulatory/device-class.js';
+
 // Re-export primary services
 export * from '../fdaIntegrationService';
 export * from '../FDAComplianceTracker';
@@ -23,7 +25,7 @@ export * from '../FDAFormGenerator';
 // Unified interface
 export interface FDASubmissionConfig {
   submissionType: '510k' | 'PMA' | 'De_Novo' | 'IND' | 'NDA' | 'BLA';
-  deviceClass?: 'I' | 'II' | 'III';
+  deviceClass?: DeviceClass;
   productCode?: string;
   predicateDevice?: string;
 }

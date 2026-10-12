@@ -32,7 +32,7 @@
 
 import type { PositionCaution } from '../types/intelligence-questions.js';
 import { agencyFor } from './agency-positions.js';
-import type { IvdrClass } from './device-class.js';
+import type { DeviceClass, IvdrClass, MdrRuleClass } from './device-class.js';
 import { getApplicationType } from './global-document-registry.js';
 import { MODALITY_FRAME, MODALITY_LABEL, type Modality } from './modality.js';
 import { annotatedPositionIds, positionFor } from './pathway-positions.js';
@@ -71,9 +71,14 @@ export interface ProgrammeFacts {
    */
   predicate?: 'named' | 'none' | 'nse';
   /** The US risk class the sponsor states. 'Not yet classified' is not a fact. */
-  deviceClass?: 'I' | 'II' | 'III';
-  /** The MDR class the sponsor states for the EU. */
-  euMdrClass?: 'I' | 'IIa' | 'IIb' | 'III';
+  deviceClass?: DeviceClass;
+  /**
+   * The MDR class the sponsor states for the EU, read onto the four the Annex
+   * VIII rules YIELD — these rules reason about routes, and Is, Im and Ir take
+   * the Class I route with the notified body involved for that aspect alone.
+   * The RECORD keeps the seven a sponsor declares.
+   */
+  euMdrClass?: MdrRuleClass;
   /**
    * The IVDR class the sponsor states for the EU. Until the classification
    * question landed no interview could state it at all, so the IVDR routes
@@ -136,7 +141,7 @@ const IVDR_POSITION_CLASSES: Readonly<Record<string, readonly IvdrClass[]>> = {
 };
 
 /** The MDR class each class route is the route FOR. */
-const MDR_POSITION_CLASS: Readonly<Record<string, 'I' | 'IIa' | 'IIb' | 'III'>> = {
+const MDR_POSITION_CLASS: Readonly<Record<string, MdrRuleClass>> = {
   EU_MDR_CLASS_I: 'I',
   EU_MDR_CLASS_IIA: 'IIa',
   EU_MDR_CLASS_IIB: 'IIb',

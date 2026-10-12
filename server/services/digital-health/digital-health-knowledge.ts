@@ -43,6 +43,8 @@
  * @module server/services/digital-health/digital-health-knowledge
  */
 
+import type { DeviceClass as UsDeviceClass } from '../../../shared/regulatory/device-class.js';
+
 // ════════════════════════════════════════════════════════════════════════════
 // SECTION 0 — SHARED TYPES
 // ════════════════════════════════════════════════════════════════════════════
@@ -57,7 +59,12 @@ export type InformationSignificance = 'inform' | 'drive' | 'treat-or-diagnose';
 export type SaMDCategory = 'I' | 'II' | 'III' | 'IV';
 
 /** US device class implied by risk (informational mapping, not a 1:1 rule). */
-export type DeviceClass = 'I' | 'II' | 'III' | 'Unclassified/De Novo';
+/**
+ * The US classes, plus the one this module adds for a device FDA has not
+ * classified — which is a statement about the absence of a classification
+ * rather than a fourth class, so it is written as the governed three plus it.
+ */
+export type DeviceClass = UsDeviceClass | 'Unclassified/De Novo';
 
 /** AI/ML algorithm behavior over the device lifecycle. */
 export type AlgorithmType = 'locked' | 'adaptive' | 'hybrid';

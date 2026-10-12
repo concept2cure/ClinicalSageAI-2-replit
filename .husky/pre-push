@@ -175,6 +175,25 @@ if ! npm run --silent ci:migration-drop-safety 2>&1; then
 fi
 echo "   ✅ Replay-safe DROPs passed."
 
+# One vocabulary per class. The US class was enumerated at least fifteen times
+# across the repository (three with a different value set), the MDR class in two
+# irreconcilable shapes, the IVDR class in eight places — and two interviews had
+# drifted out of the fact reader's vocabulary with no test noticing. Promoting
+# one module did not stop the next session writing a ninth list, so this refuses
+# one. It is name-aware, because 'A' | 'B' | 'C' | 'D' is also a cleanroom grade
+# and an FDA meeting type. Cheap: it reads the files.
+echo "   Validating no class vocabulary is restated..."
+if ! npm run --silent ci:class-vocabulary 2>&1; then
+  echo ""
+  echo "🚫 ERROR: A governed class vocabulary is restated."
+  echo "   Import it from shared/regulatory/device-class.ts — DEVICE_CLASSES,"
+  echo "   MDR_DECLARED_CLASSES, MDR_RULE_CLASSES, IVDR_CLASSES — rather than"
+  echo "   writing the values again."
+  echo ""
+  exit 1
+fi
+echo "   ✅ One class vocabulary passed."
+
 # A new migrations/*.sql must be on a deploy path. install-fresh applies the
 # whole tree to a NEW database; deploy-migrate applies only C2C_MIGRATION_FILES,
 # so a file on neither reaches no database already deployed. Cheap: no database.

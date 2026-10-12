@@ -26,7 +26,7 @@
 
 import { regionsNamed } from '../../../../shared/regulatory/agency-positions.js';
 import { predicateStateOf } from '../../../../shared/regulatory/predicate-positions.js';
-import { euDeviceClassOf, IVDR_CLASSES } from '../../../../shared/regulatory/device-class.js';
+import { euDeviceClassOf, IVDR_CLASSES, type MdrRuleClass } from '../../../../shared/regulatory/device-class.js';
 import { modalityOf, statuteOf } from '../../../../shared/regulatory/product-modality.js';
 import { cautionFor, type ProgrammeFacts } from '../../../../shared/regulatory/pathway-cautions.js';
 import { ANNEX_VIII_FIELDS, CLASSIFICATION_RULE_FIELDS, annexViiiReading } from './annex-viii-classification.js';
@@ -97,7 +97,7 @@ const US_CLASS: Readonly<Record<string, 'I' | 'II' | 'III'>> = {
   iii: 'III',
 };
 
-const MDR_CLASS: Readonly<Record<string, 'I' | 'IIa' | 'IIb' | 'III'>> = {
+const MDR_CLASS: Readonly<Record<string, MdrRuleClass>> = {
   class_i: 'I',
   /* Is, Im and Ir ARE Class I devices under the MDR: the notified body is
      involved for the sterile, metrological or reprocessing aspects alone
@@ -206,7 +206,7 @@ function stated(value: unknown): string[] {
  * because the fact it produces may be the DERIVED class, and the derivation
  * must not be judged against itself.
  */
-export function declaredMdrClass(flat: Record<string, unknown>): 'I' | 'IIa' | 'IIb' | 'III' | null {
+export function declaredMdrClass(flat: Record<string, unknown>): MdrRuleClass | null {
   const stated = firstStated(flat, EU_MDR_CLASS_FIELDS);
   return (stated ? MDR_CLASS[stated.toLowerCase()] : undefined) ?? null;
 }
@@ -220,7 +220,7 @@ export function declaredMdrClass(flat: Record<string, unknown>): 'I' | 'IIa' | '
  * A declared class is never overridden. It is the sponsor's position, and the
  * engine's disagreement with it is REPORTED rather than applied.
  */
-function mdrClassOnRecord(flat: Record<string, unknown>): 'I' | 'IIa' | 'IIb' | 'III' | undefined {
+function mdrClassOnRecord(flat: Record<string, unknown>): MdrRuleClass | undefined {
   return declaredMdrClass(flat) ?? annexViiiReading(flat)?.class ?? undefined;
 }
 
