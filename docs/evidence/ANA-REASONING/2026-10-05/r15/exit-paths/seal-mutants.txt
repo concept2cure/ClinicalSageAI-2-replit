@@ -1,0 +1,6 @@
+S1  KILLED    (      Tests  1 failed | 8 skipped (9))
+S2  KILLED    (      Tests  1 failed | 8 skipped (9))
+S3  KILLED    (      Tests  1 failed | 8 skipped (9))
+S4  KILLED    (      Tests  1 failed | 8 skipped (9))
+S5  KILLED    (      Tests  1 failed | 8 skipped (9))
+S6  KILLED    (      Tests  1 failed | 8 skipped (9))

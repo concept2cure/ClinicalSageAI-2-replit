@@ -1957,11 +1957,20 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
      * every write — no new column, no new migration, nothing to keep in sync.
      *
      * OPT-IN, deliberately. A client that sends no `expectedUpdatedAt` keeps
-     * the old behaviour rather than being refused: several callers (the MDX
-     * dossier drawer among them) PATCH sections without having read a
-     * timestamp, and failing those closed would break saving to fix a race
-     * they cannot hit. The editor sends it; anything that does not is exactly
-     * as safe as it was yesterday and no less. */
+     * the old behaviour rather than being refused: a caller that PATCHes a
+     * section without having read a timestamp cannot hit the race, and failing
+     * it closed would break saving to fix nothing. The editor sends it;
+     * anything that does not is exactly as safe as it was yesterday and no
+     * less.
+     *
+     * This comment used to name "the MDX dossier drawer" as one of those
+     * callers. It is not a caller of this route at all: it PATCHes
+     * `/api/c2c/documents/:id/sections/:key` (mdx/hooks/useSectionSave.ts),
+     * the FILING side. Correcting it is not housekeeping — the stale line said
+     * the drawer saved through this door, which is seal-guarded, and so helped
+     * hide that the door it really uses was not (round 15, the exit-path
+     * verification). The other two client PATCHes here carry `track_changes`
+     * or `code`/`title` only. */
     const expectedUpdatedAt = req.body?.expectedUpdatedAt;
     if (typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim()) {
       const current = currentSection.rows[0]?.updated_at;
