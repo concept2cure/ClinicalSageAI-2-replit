@@ -122,6 +122,21 @@ export interface OwnPositionAllowed {
   required?: boolean;
 }
 
+/**
+ * A governed catalogue a question's positions come from, resolved as the
+ * question is drawn rather than written into the flow.
+ *
+ * Some positions depend on an answer the person has already given: which
+ * routes to market exist depends on the regulator they named, and no static
+ * list in a flow file can know it. A field names the catalogue; the engine
+ * resolves it for the facts the interview holds, and the SAME resolution is
+ * what the validator judges the answer against — a question that offers
+ * positions the validator does not enforce is not a closed list at all.
+ */
+export type GovernedOptionSource =
+  /** The routes to market for a device or diagnostics programme, by region. */
+  'device_pathway_positions';
+
 export interface QuestionField {
   id: string;
   label: string;
@@ -130,6 +145,14 @@ export interface QuestionField {
   helpText?: string;
   required?: boolean;
   options?: QuestionOption[];
+  /**
+   * The governed catalogue these positions come from, resolved per draw from
+   * the answers already given (see {@link GovernedOptionSource}). A field that
+   * declares it carries no static list: the resolver is the only source, and
+   * where the catalogue holds nothing for this programme the field says so
+   * rather than drawing an empty select.
+   */
+  optionsFrom?: GovernedOptionSource;
   /** The person may take a position this list does not offer (see OwnPositionAllowed). */
   allowOther?: OwnPositionAllowed;
   validation?: FieldValidation;

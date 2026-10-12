@@ -1,6 +1,6 @@
 /**
- * The pathway question asks the governed catalogue, not its own list
- * (founder's directive, 2026-10-12).
+ * The pathway question asks the governed catalogue, for the regulator the
+ * project named (founder's directive, 2026-10-12).
  *
  * `project-setup` wrote its own seven options for `device_submission_pathway`:
  * they mixed the three 510(k) flavours — which the 510(k) flow asks about
@@ -10,16 +10,21 @@
  * matched neither the registry the platform files against nor the frame it
  * reasons with.
  *
- * It now draws `shared/regulatory/pathway-positions`, which is the registry's
- * own filings annotated with their commitment and authority. This holds that
- * it keeps doing so, that the client's own domain decides the list, and that
- * the person can still take a position the list does not hold.
+ * It then drew `shared/regulatory/pathway-positions` — but for the United
+ * States, whatever agency the project had named, because a flow file is built
+ * before any answer exists. So a European device programme was shown the four
+ * FDA routes with every one marked inapplicable: correct, and the wrong
+ * question. The field now declares the catalogue and the ENGINE resolves it as
+ * the question is drawn, which is the only place that knows the regulator.
+ *
+ * These tests drive the real engine, because what a person is offered is the
+ * drawn question and not what the flow file holds.
  */
 import { describe, expect, it } from 'vitest';
 
 import { pathwayOptions } from '@shared/regulatory/pathway-positions';
-import type { FlowEngineContext } from '../types.js';
-import { createProjectSetupFlow } from '../flows/project-setup.js';
+import type { FlowEngineContext, FlowState, QuestionField } from '../types.js';
+import { advanceFlow } from '../engine.js';
 
 const ctx = (clientType: FlowEngineContext['clientType']): FlowEngineContext => ({
   organizationId: 7,
@@ -28,39 +33,84 @@ const ctx = (clientType: FlowEngineContext['clientType']): FlowEngineContext => 
   clientType,
 });
 
-const pathwayField = (clientType: FlowEngineContext['clientType']) => {
-  const flow = createProjectSetupFlow(ctx(clientType));
-  const node = flow.nodes.find(n => n.id === 'medtech_regulatory')!;
-  return node.fields.find(f => f.id === 'device_submission_pathway')!;
+const stateWith = (answers: Record<string, Record<string, unknown>>): FlowState => ({
+  flowId: 'project-setup-v1',
+  flowCategory: 'project_setup',
+  currentNodeId: 'device_classification',
+  answers,
+  completedNodes: [],
+  issues: [],
+  startedAt: '2026-10-12T00:00:00.000Z',
+  complete: false,
+  sectionProgress: {},
+});
+
+/**
+ * The route question as a person is actually drawn it, for a project that
+ * named this agency and this product type.
+ */
+const drawnRouteField = (
+  agency: string | null,
+  productType = 'medical_device',
+  clientType: FlowEngineContext['clientType'] = 'medtech',
+): QuestionField => {
+  const targets: Record<string, unknown> = { product_type: productType };
+  if (agency) targets.primary_regulatory_agency = agency;
+  const result = advanceFlow(
+    stateWith({ regulatory_targets: targets }),
+    'device_classification',
+    { device_class: 'class_ii' },
+    ctx(clientType),
+  );
+  expect(result.event?.node.id, 'the route question follows the classification').toBe('medtech_regulatory');
+  return result.event!.node.fields.find(f => f.id === 'device_submission_pathway')!;
 };
 
+const valuesOf = (field: QuestionField) => (field.options ?? []).map(o => o.value);
+
 describe('the pathway question', () => {
-  it('offers exactly the catalogue’s positions for a device programme', () => {
-    const field = pathwayField('medtech');
-    expect(field.options).toEqual(pathwayOptions({ domain: 'medical_devices', region: 'US' }));
-    expect(field.options!.length).toBeGreaterThan(5);
+  it('offers exactly the catalogue’s US positions to a project that named FDA', () => {
+    expect(valuesOf(drawnRouteField('US'))).toEqual(
+      pathwayOptions({ domain: 'medical_devices', region: 'US' }).map(o => o.value),
+    );
+    expect(drawnRouteField('US').helpText, 'whose routes these are must be said').toMatch(/These are FDA’s routes/);
   });
 
-  it('offers a diagnostics programme the IVD positions instead', () => {
-    const ivd = pathwayField('ivd').options!.map(o => o.value);
-    expect(ivd).toEqual(pathwayOptions({ domain: 'diagnostics_ivd', region: 'US' }).map(o => o.value));
-    expect(ivd, 'an IVD is not asked about a plain 510(k)').toContain('US_510K_IVD');
-    expect(ivd).toContain('US_CDX_PMA');
-    expect(ivd).not.toEqual(pathwayField('medtech').options!.map(o => o.value));
+  it('offers a project that named EMA the MDR conformity routes instead, not FDA’s marked', () => {
+    const values = valuesOf(drawnRouteField('EU'));
+    expect(values).toEqual(pathwayOptions({ domain: 'medical_devices', region: 'EU' }).map(o => o.value));
+    expect(values, 'the EU class routes').toContain('EU_MDR_CLASS_III');
+    expect(values, 'a 510(k) is not a European route').not.toContain('US_510K');
+    expect(drawnRouteField('EU').helpText).toMatch(/These are EMA’s routes/);
+  });
+
+  it('offers a diagnostics programme the IVD positions, in whichever region', () => {
+    const us = valuesOf(drawnRouteField('US', 'diagnostic'));
+    expect(us).toEqual(pathwayOptions({ domain: 'diagnostics_ivd', region: 'US' }).map(o => o.value));
+    expect(us, 'an IVD is not asked about a plain 510(k)').toContain('US_510K_IVD');
+    expect(us).toContain('US_CDX_PMA');
+    const eu = valuesOf(drawnRouteField('EU', 'diagnostic'));
+    expect(eu).toContain('EU_IVDR_CLASS_CD');
+    expect(eu).not.toEqual(valuesOf(drawnRouteField('EU')));
+  });
+
+  it('reads the diagnostics domain from the client’s segment too, not only the answer', () => {
+    const values = valuesOf(drawnRouteField('US', 'combination_product', 'ivd'));
+    expect(values).toContain('US_510K_IVD');
   });
 
   it('says what each position commits the programme to, and its authority', () => {
-    for (const option of pathwayField('medtech').options!) {
+    for (const option of drawnRouteField('US').options!) {
       expect(option.commits, option.value).toBeTruthy();
       expect(option.authority, option.value).toBeTruthy();
     }
-    const deNovo = pathwayField('medtech').options!.find(o => o.value === 'US_DE_NOVO')!;
+    const deNovo = drawnRouteField('US').options!.find(o => o.value === 'US_DE_NOVO')!;
     expect(deNovo.commits).toMatch(/special controls/i);
     expect(deNovo.authority).toMatch(/513\(f\)\(2\)/);
   });
 
   it('no longer offers the 510(k) flavours as if they were pathways', () => {
-    const values = pathwayField('medtech').options!.map(o => o.value);
+    const values = valuesOf(drawnRouteField('US'));
     expect(values).not.toContain('510k_special');
     expect(values).not.toContain('510k_abbreviated');
     // And the ones it used to omit are present.
@@ -68,14 +118,150 @@ describe('the pathway question', () => {
   });
 
   it('still lets the person take a position the list does not hold', () => {
-    expect(pathwayField('medtech').allowOther).toBeDefined();
+    expect(drawnRouteField('US').allowOther).toBeDefined();
+  });
+
+  it('offers nothing for a regulator the catalogue has no positions for, and says why by name', () => {
+    /* Japan's filings are in the registry; what taking one commits a sponsor
+       to is not written. Offering another regulator's routes would be worse
+       than offering none, and an empty select would be an error drawn as a
+       result. */
+    const field = drawnRouteField('JP');
+    expect(field.options).toBeUndefined();
+    expect(field.helpText).toMatch(/holds no routes to market for PMDA/);
+    expect(field.helpText).toMatch(/record it in your words/);
+    expect(field.allowOther, 'their own words are the answer here').toBeDefined();
+  });
+
+  it('says so when no agency has been named and the list is therefore an assumption', () => {
+    const field = drawnRouteField(null);
+    expect(field.helpText).toMatch(/No primary agency has been named yet, so these are FDA’s routes/);
+    expect(valuesOf(field)).toEqual(pathwayOptions({ domain: 'medical_devices', region: 'US' }).map(o => o.value));
   });
 
   it('asks for the predicate on any 510(k), which is what names one', () => {
-    const flow = createProjectSetupFlow(ctx('medtech'));
-    const node = flow.nodes.find(n => n.id === 'medtech_regulatory')!;
-    const predicate = node.fields.find(f => f.id === 'predicate_device')!;
-    expect(predicate.visibleWhen).toEqual({ field: 'device_submission_pathway', operator: 'eq', value: 'US_510K' });
+    const node = advanceFlow(
+      stateWith({ regulatory_targets: { primary_regulatory_agency: 'US', product_type: 'medical_device' } }),
+      'device_classification',
+      { device_class: 'class_ii' },
+      ctx('medtech'),
+    ).event!.node;
+    const predicate = node.fields.find(f => f.id === 'predicate_device');
+    expect(predicate, 'the predicate question is drawn only once a 510(k) is chosen').toBeUndefined();
+    const full = advanceFlow(
+      stateWith({
+        regulatory_targets: { primary_regulatory_agency: 'US', product_type: 'medical_device' },
+        medtech_regulatory: { device_submission_pathway: 'US_510K' },
+      }),
+      'device_classification',
+      { device_class: 'class_ii' },
+      ctx('medtech'),
+    ).event!.node;
+    expect(full.fields.find(f => f.id === 'predicate_device')).toBeDefined();
+  });
+});
+
+describe('the escape hatch on a catalogue that admits what it does not hold', () => {
+  /* The flows that ask this question declare `allowOther` themselves. The
+     resolver guarantees it anyway, because this catalogue covers the US and
+     the EU only: without it, a required route question for a Japanese
+     programme would have no answer that satisfies it — a deadlock, not a
+     closed list. */
+  const resolved = async (region: string | null) => {
+    const { withGovernedOptions } = await import('../governed-options.js');
+    const { programmeFactsFrom } = await import('../programme-facts.js');
+    const answers = region ? { primary_regulatory_agency: region } : {};
+    return withGovernedOptions(
+      [{ id: 'route', label: 'Route', type: 'select', required: true, optionsFrom: 'device_pathway_positions' }],
+      { facts: programmeFactsFrom(answers), answers, ctx: ctx('medtech') },
+    )[0];
+  };
+
+  it('is added where the flow declared none and the catalogue holds nothing', async () => {
+    const field = await resolved('JP');
+    expect(field.options).toBeUndefined();
+    expect(field.allowOther, 'a required question with no answer is a deadlock').toBeDefined();
+  });
+
+  it('is added where the flow declared none and the catalogue holds positions', async () => {
+    const field = await resolved('US');
+    expect((field.options ?? []).length).toBeGreaterThan(5);
+    expect(field.allowOther, 'the catalogue admits it holds the US and the EU only').toBeDefined();
+  });
+});
+
+describe('the order the questions are asked in', () => {
+  const nextAfter = (nodeId: string, answers: Record<string, unknown>) =>
+    advanceFlow(
+      { ...stateWith({}), currentNodeId: nodeId },
+      nodeId,
+      answers,
+      ctx('medtech'),
+    ).event?.node.id;
+
+  it('asks a device project its regulator BEFORE its route', () => {
+    /* The device branch used to leave from `product_details`, so a device or
+       diagnostics project never reached the agency question at all: the
+       platform never learned its regulator, and the routes it offers could not
+       be keyed to one. */
+    expect(
+      nextAfter('product_details', { product_name: 'Acme Stent', product_type: 'medical_device', therapeutic_area: 'cardiovascular' }),
+      'a device project must still be asked its agency',
+    ).toBe('regulatory_targets');
+    expect(
+      nextAfter('regulatory_targets', { primary_regulatory_agency: 'US', product_type: 'medical_device' }),
+      'and then its classification',
+    ).toBe('device_classification');
+  });
+
+  it('still sends a medicines project straight on, and a multi-country one to its timeline', () => {
+    expect(nextAfter('regulatory_targets', { primary_regulatory_agency: 'US', submission_type: 'ind' })).toBe('team_assignment');
+    expect(
+      nextAfter('regulatory_targets', { primary_regulatory_agency: 'US', submission_type: 'ind', multi_country_submission: true }),
+    ).toBe('multi_country_setup');
+  });
+});
+
+describe('the answer the validator judges', () => {
+  const submit = (agency: string, route: string) =>
+    advanceFlow(
+      stateWith({ regulatory_targets: { primary_regulatory_agency: agency, product_type: 'medical_device' } }),
+      'medtech_regulatory',
+      { device_submission_pathway: route },
+      ctx('medtech'),
+    );
+
+  it('is judged against the list the person was shown, not against no list at all', () => {
+    /* The field carries no static options, so a validator reading the raw flow
+       definition would see a field with no list and accept any string. */
+    const refused = submit('EU', 'US_510K');
+    const errors = (refused.event?.newIssues ?? []).filter(i => i.checkId.startsWith('validation_'));
+    expect(errors.length, 'a route that was never offered was accepted').toBe(1);
+    expect(errors[0].message).toMatch(/not a valid option/i);
+  });
+
+  it('is not invalidated by an agency that arrives in the same answer', () => {
+    /* The person was shown FDA's routes, because no agency had been named when
+       the question was drawn. An agency arriving with their choice must not
+       retroactively refuse it — but the record still catches the
+       contradiction, because the trail is judged against everything known. */
+    const result = advanceFlow(
+      stateWith({}),
+      'medtech_regulatory',
+      { primary_regulatory_agency: 'EU', device_submission_pathway: 'US_510K' },
+      ctx('medtech'),
+    );
+    const issues = result.event?.newIssues ?? result.completeEvent?.issues ?? [];
+    expect(issues.filter(i => i.checkId.startsWith('validation_')), 'judged against a list never shown').toEqual([]);
+    const noted = issues.find(i => i.checkId === 'cautioned_position_device_submission_pathway_US_510K');
+    expect(noted, 'and yet the contradiction must be on the record').toBeDefined();
+    expect(noted!.message).toMatch(/You have named EMA/);
+  });
+
+  it('accepts a route that was on that list', () => {
+    const taken = submit('EU', 'EU_MDR_CLASS_IIB');
+    expect((taken.event?.newIssues ?? []).filter(i => i.checkId.startsWith('validation_'))).toEqual([]);
+    expect(taken.state.answers.medtech_regulatory.device_submission_pathway).toBe('EU_MDR_CLASS_IIB');
   });
 });
 
