@@ -48,9 +48,17 @@ describe('the positions', () => {
     expect(predicatePositionFor('reference_device_only')!.commits).toMatch(/not a basis for substantial equivalence/);
   });
 
-  it('names the two conditions a De Novo has, which is what these positions are for', () => {
-    expect(predicatePositionFor('no_predicate')!.authority).toMatch(/513\(f\)\(2\)\(A\)\(i\)/);
-    expect(predicatePositionFor('nse_received')!.authority).toMatch(/513\(f\)\(2\)\(A\)\(ii\)/);
+  it('names the two conditions a De Novo has, each to ITS OWN subsection', () => {
+    /* These were cited to each other's subsection until a review caught it.
+       (ii) is the direct request, made without filing a 510(k) first; (i) is
+       the route after an NSE determination on one already filed. */
+    expect(predicatePositionFor('no_predicate')!.authority).toMatch(/513\(f\)\(2\)\(A\)\(ii\)/);
+    expect(predicatePositionFor('nse_received')!.authority).toMatch(/513\(f\)\(2\)\(A\)\(i\);/);
+    /* And the regulation at subpart level: 860.220 is the request's content. */
+    for (const value of ['no_predicate', 'nse_received']) {
+      expect(predicatePositionFor(value)!.authority, value).toMatch(/860 Subpart D/);
+      expect(predicatePositionFor(value)!.authority, value).not.toMatch(/860\.220/);
+    }
     expect(WITHOUT_PREDICATE).toEqual(['no_predicate', 'nse_received']);
   });
 

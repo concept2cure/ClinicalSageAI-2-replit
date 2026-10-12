@@ -131,10 +131,10 @@ export function mdrFactsFrom(flat: Record<string, unknown>): MdrDeviceFacts | nu
       facts.duration = 'short_term';
       stated = true;
       break;
-    case 'long_term':
     /* Annex VIII Chapter I § 1.1 defines long term as continuous use for more
-       than thirty days; a permanent device is long term. The engine has three
-       durations and inventing a fourth would be a second vocabulary. */
+       than thirty days, so a permanent device IS long term. The engine has
+       three durations and inventing a fourth would be a second vocabulary. */
+    case 'long_term':
     case 'permanent':
       facts.duration = 'long_term';
       stated = true;
