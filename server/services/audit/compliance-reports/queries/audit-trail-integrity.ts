@@ -111,7 +111,27 @@ function linkageVerdict(s: LinkageSnapshot): VerdictRow {
   const base = { check: 'audit_events linkage', store: 'audit_events', rows_checked: s.hashedEntries ?? null };
   switch (s.status) {
     case 'intact':
-      return { ...base, verdict: 'intact', detail: `Every one of ${s.totalEntries} rows carries a hash linked to its predecessor.` };
+      /* THE SENTENCE WAS STRONGER THAN THE CHECK, and it is regulator-facing
+         (HS-1008-7, honest-state review 2026-10-08). "Carries a hash linked to
+         its predecessor" reads as the cryptographic linkage the sibling
+         audit_logs verdict above genuinely verifies ("re-derives from its
+         predecessor" — a chain walk that recomputes). This check compares
+         stored pointers and never recomputes `record_hash` from the row's
+         content, so a row whose content was altered while its pointers were
+         kept consistent passes it. It now says which of the two it did.
+
+         The full re-derivation exists in this repository, over the same table,
+         in routes/part11-compliance.ts — whose own wording ("Full re-computation
+         of SHA-256 hash chain from database records") is accurate. Until this
+         check is migrated onto it, the report states what this check verified. */
+      return {
+        ...base,
+        verdict: 'intact',
+        detail:
+          `All ${s.totalEntries} rows carry a record_hash and each previous_hash matches its ` +
+          `predecessor. Row content is not re-derived, so this verifies the chain's links and ` +
+          `not the rows' contents.`,
+      };
     case 'broken':
       return { ...base, verdict: 'broken', detail: `${s.brokenLinks} link(s) do not match their predecessor.` };
     case 'unverified':

@@ -102,6 +102,14 @@ export interface LinkageSnapshot {
   totalEntries: number;
   hashedEntries?: number;
   brokenLinks: number;
+  /**
+   * Rows whose `previous_hash` is NULL although their predecessor was hashed —
+   * so the row cannot be placed in the chain, and the link through it was not
+   * checked. The loop used to skip these silently and report 'intact' over
+   * them (HS-1008-7). They are not evidence of tampering, so they are not
+   * `broken`; they are a link that could not be verified.
+   */
+  unlinkedEntries?: number;
   reason?: string;
 }
 
