@@ -47,6 +47,50 @@ export type CorrespondenceType =
   | 'remediation_memo'
   | 'executive_briefing';
 
+/**
+ * The same vocabulary at runtime, so a gate can iterate it. The two assertions
+ * below make tsc the enforcer in BOTH directions: a type added to the union
+ * without this list, or listed here without the union, fails the typecheck.
+ * The response clock's completeness test iterates this
+ * (server/services/regulatory-correspondence/__tests__/response-clock.test.ts),
+ * so a new letter class cannot ship without a decided response window.
+ */
+export const CORRESPONDENCE_TYPES = [
+  'acknowledgment_letter',
+  'filing_communication',
+  'refuse_to_file_letter',
+  'information_request',
+  'discipline_review_question',
+  'hold_letter',
+  'deficiency_letter',
+  'major_objection',
+  'complete_response_letter',
+  'approval_letter',
+  'postmarketing_commitment_letter',
+  'meeting_minutes',
+  'cover_letter',
+  'response_letter',
+  'amendment_letter',
+  'clarification_response',
+  'meeting_materials',
+  'follow_up_correspondence',
+  'triage_memo',
+  'deficiency_summary',
+  'response_plan',
+  'issue_tracker',
+  'remediation_memo',
+  'executive_briefing',
+] as const;
+
+type _CorrespondenceTypesCoverUnion =
+  Exclude<CorrespondenceType, (typeof CORRESPONDENCE_TYPES)[number]> extends never ? true : never;
+type _CorrespondenceTypesHaveNoExtras =
+  Exclude<(typeof CORRESPONDENCE_TYPES)[number], CorrespondenceType> extends never ? true : never;
+const _correspondenceTypesCoverUnion: _CorrespondenceTypesCoverUnion = true;
+const _correspondenceTypesHaveNoExtras: _CorrespondenceTypesHaveNoExtras = true;
+void _correspondenceTypesCoverUnion;
+void _correspondenceTypesHaveNoExtras;
+
 export type CorrespondenceIssueCategory =
   | 'administrative_completeness'
   | 'ectd_technical_formatting'

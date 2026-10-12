@@ -7,17 +7,24 @@
  * q_sub_commitments, cerv2_510k_sections, regulatory_programs,
  * evidence_sufficiency_assessments) and emits MDX-shaped alerts.
  *
- * It does NOT read a correspondence table. This list said
- * `regulatory_correspondence` and the code queried `correspondences`; neither
- * exists in this repository, so the 'correspondence.no_response' alert had
- * never fired. See the note at that producer's former position for where
- * agency correspondence actually lives and what decision the alert needs.
+ * The correspondence alert reads `c2c_correspondence` (joined to
+ * `c2c_submissions` for the application family) through
+ * regulatory-correspondence/response-clock.ts, which holds the response
+ * deadline rule. This list once said `regulatory_correspondence` and the code
+ * queried `correspondences`; neither exists in this repository, so that alert
+ * had never fired, and when it was restored it was restored on the regulation
+ * rather than on the 14-day constant it used to carry (2026-10-12).
  *
  * All queries are tenant-scoped via `regulatory_programs.organization_id`.
  * Read-only. Never mutates.
  */
 
 import type { Pool, PoolClient } from 'pg';
+
+import { correspondenceResponseClock } from '../regulatory-correspondence/response-clock';
+import { createScopedLogger } from '../../utils/logger';
+
+const logger = createScopedLogger('mdx-proactive-signals');
 
 export type MdxAlertSeverity = 'info' | 'warn' | 'critical';
 
@@ -202,32 +209,100 @@ export async function buildMdxProactiveSnapshot(
     // fail-soft (table may not exist on a fresh tenant)
   }
 
-  /* ── correspondence.no_response: declared, and no store backs it ──────────
-     This block queried `FROM correspondences`, a table that exists nowhere in
-     this repository: no migration under migrations/ or db/migrations/, no
-     shared/schema entry, no runtime DDL. Its catch read
-     "fail-soft (correspondences table may have a different name in some
-     tenants)", which is not how this platform works — every table is shared
-     and tenant-scoped by an organization_id column (CLAUDE.md RULE 1). So the
-     query threw 42P01 on every call and was swallowed, and the alert had never
-     once fired. ci:unbacked-tables was naming it: a guarded query against a
-     missing table "degrades to a silent no-op, which is worse: it looks
-     durable and is not".
+  /* ── An inbound agency letter still awaiting our response ────────────────
+     This read `FROM correspondences`, a table that exists nowhere in this
+     repository, inside `catch { // fail-soft … may have a different name in
+     some tenants }` — so it threw 42P01 every call, was swallowed, and the
+     alert had never once fired (2026-10-12). The real store is
+     `c2c_correspondence` (db/migrations/20260331_regulatory_correspondence_os.sql)
+     and carries every column that query selected.
 
-     Agency correspondence DOES live here: the regulatory-correspondence
-     operating layer records each parsed issue as a c2c_project_work_items row
-     with sourceType 'correspondence'
-     (server/services/regulatory-correspondence/operating-layer.ts:214, :227).
-     But "received N days ago with no recorded response" does not map onto a
-     work item's columns without deciding what counts as received, as answered,
-     and as urgent — product semantics, and the founder's call, not a mapping to
-     guess here. A wrong alert about an unanswered FDA letter is worse than a
-     missing one.
+     What is NOT restored is its rule. It compared receipt against a single
+     platform constant of 14 days, which is not a deadline in any of these
+     regimes: a refuse-to-file letter runs 30 days, a complete response letter
+     a year, a device Additional Information hold 180 days or the application is
+     withdrawn, and a drug information request runs on the date FDA wrote in it
+     and no other. The clock is computed by
+     regulatory-correspondence/response-clock.ts, which takes the agency's
+     stated date ahead of any table, falls back to the governed window for the
+     letter class and application family, and reports a letter with neither as
+     exactly that rather than as an invented overdue. Bucketing is the same
+     rule the Regulatory Deadline Radar uses.
 
-     So the dead query is gone and the gap is written down. The
-     'correspondence.no_response' kind stays in the union: it is a declared
-     capability awaiting that decision, not one this change removes.
-     (2026-10-12, docs/evidence/ABSENT-AS-CLEAN/2026-10-12-readiness-refresh/.) */
+     `upcoming` raises nothing: a CRL eleven months out is not something AnA
+     should interrupt anyone about. */
+  try {
+    const { rows } = await client.query(
+      `SELECT c.id, c.subject, c.direction, c.communication_type, c.response_required,
+              c.status, c.received_at, c.due_date, c.urgency, c.project_id, c.submission_id,
+              s.submission_type
+         FROM c2c_correspondence c
+         LEFT JOIN c2c_submissions s
+                ON s.id = c.submission_id AND s.organization_id = c.organization_id
+        WHERE c.organization_id = $1
+          AND c.direction = 'inbound'
+          AND c.response_required
+          AND c.status NOT IN ('responded', 'closed')
+        ORDER BY c.received_at ASC NULLS LAST
+        LIMIT 100`,
+      [organizationId],
+    );
+    for (const r of rows) {
+      const clock = correspondenceResponseClock(
+        {
+          direction: r.direction,
+          communicationType: r.communication_type,
+          responseRequired: r.response_required,
+          status: r.status,
+          receivedAt: r.received_at,
+          dueDate: r.due_date,
+          submissionType: r.submission_type ?? null,
+        },
+        now,
+      );
+      if (clock.state === 'untracked' || (clock.state === 'dated' && clock.bucket === 'upcoming')) continue;
+
+      const subject = String(r.subject ?? 'an agency letter');
+      const message =
+        clock.state === 'dated'
+          ? `${subject} is ${clock.bucket === 'overdue' ? `${Math.abs(clock.daysUntilDue)} day(s) overdue` : `due in ${clock.daysUntilDue} day(s)`}` +
+            (clock.dueDateSource === 'agency_stated'
+              ? ` — the date the agency stated (${clock.dueDate.slice(0, 10)}).`
+              : ` — ${clock.dueDate.slice(0, 10)}, from ${clock.window.citation ?? 'the governed response window'}.`) +
+            (clock.window.consequence ? ` ${clock.window.consequence}` : '')
+          : `${subject} arrived ${clock.daysSinceReceived} day(s) ago and has no recorded response. ` +
+            `No response date is on record and no regulation fixes a window for this class, so nothing here is overdue — ` +
+            `the date the agency set is what governs.` +
+            (clock.window.consequence ? ` ${clock.window.consequence}` : '');
+
+      alerts.push({
+        id: `correspondence-no-response:${r.id}`,
+        kind: 'correspondence.no_response',
+        severity: clock.severity,
+        organizationId,
+        message,
+        suggestedSurface: 'pre-sub',
+        detail: {
+          correspondenceId: r.id,
+          projectId: r.project_id,
+          submissionId: r.submission_id,
+          communicationType: r.communication_type,
+          submissionType: r.submission_type ?? null,
+          status: r.status,
+          receivedAt: r.received_at,
+          urgency: r.urgency,
+          clock,
+        },
+      });
+    }
+  } catch (err) {
+    /* Not swallowed as "nothing to report": a read that could not run is said
+       so, which is the distinction the previous version lost. */
+    logger.warn('correspondence response clock could not be read', {
+      organizationId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   // ── Evidence-sufficiency verdict insufficient + target date < 60d ──
   try {
