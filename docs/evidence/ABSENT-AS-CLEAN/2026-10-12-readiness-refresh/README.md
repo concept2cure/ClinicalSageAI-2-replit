@@ -134,8 +134,13 @@ that holds correspondence today and the decision the alert needs. The
 `correspondence.no_response` kind stays in the union: it is a declared
 capability awaiting that decision, not one this change removes.
 
-**Open for the founder:** what counts as an unanswered agency correspondence,
-over `c2c_project_work_items` rows of source type `correspondence`.
+**Closed the same day, taken as SME:** see
+`docs/evidence/CORRESPONDENCE-RESPONSE-CLOCK/2026-10-12/`. The answer turned
+out to be that this note had the wrong store and the wrong question. The real
+store is `c2c_correspondence`, which carries every column the dead query
+selected — so it was a table-name typo, not a missing capability — and the rule
+that needed deciding was the 14-day constant, which is not a deadline in any
+regime this platform files in.
 
 `ci:unbacked-tables:strict` 21 → **20**. `tsc --noEmit` exit 0; the module's
 suites 79 files / 1175 tests pass.

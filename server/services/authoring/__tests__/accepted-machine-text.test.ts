@@ -21,8 +21,11 @@ import {
 
 describe('acceptedMachineText', () => {
   it('keeps an entry whose author is a known machine author and whose text is non-empty', () => {
+    /* `turnRecordId` is part of every entry since round 15 — null here, because
+       this caller names no turn. The field is what makes the claim checkable;
+       see the describe at the foot of this file. */
     expect(acceptedMachineText([{ authorId: 'ana', text: 'The primary endpoint was met.' }])).toEqual([
-      { authorId: 'ana', text: 'The primary endpoint was met.' },
+      { authorId: 'ana', text: 'The primary endpoint was met.', turnRecordId: null },
     ]);
     expect(Object.keys(MACHINE_AUTHOR_IDS)).toContain('ana');
   });
@@ -73,5 +76,51 @@ describe('acceptedMachineText', () => {
     expect(acceptedMachineText([{ authorId: 'ana', text: huge }])).toEqual([]);
     const atCap = 'x'.repeat(MAX_ACCEPTED_MACHINE_TEXT_CHARS);
     expect(acceptedMachineText([{ authorId: 'ana', text: atCap }])).toHaveLength(1);
+  });
+});
+
+describe('acceptedMachineText carries the turn record the claim names (round 15, SEC-A-7 door 1)', () => {
+  /* Why the id has to travel at all: the save door's whole governance problem
+     is that `acceptedMachineText` is a CLAIM from the request — "a machine
+     wrote these words" — and nothing checks it against the turn record that
+     would prove it. `verifyMachineText` exists and does exactly that check,
+     and it needs a turn record id per claim. Without one every claim is
+     unverifiable by construction, so the save door could only ever strip; the
+     verdict that REFUSES a verified claim from an unqualified model could
+     never fire.
+     The id is available on the client: AnA's suggestion mark carries it as
+     `sourceRecord`, and it rides on SuggestionRange. This parser is the server
+     boundary it has to cross. */
+  const ID = '3f2504e0-4f89-41d3-9a0c-0305e82c3301';
+
+  it('keeps a turn record id that is a uuid', () => {
+    expect(acceptedMachineText([{ authorId: 'ana', text: 'A drafted clause.', turnRecordId: ID }])).toEqual([
+      { authorId: 'ana', text: 'A drafted clause.', turnRecordId: ID },
+    ]);
+  });
+
+  it('carries null when the claim names no turn, rather than dropping the entry', () => {
+    /* An entry with no turn is not a forgery — it is an older bundle, a plain
+       paste, or text typed by hand. It must still reach the gate, where it is
+       recorded as the person's own words with its reason; dropping it here
+       would silently lose the clause instead of attributing it honestly. */
+    expect(acceptedMachineText([{ authorId: 'ana', text: 'A drafted clause.' }])).toEqual([
+      { authorId: 'ana', text: 'A drafted clause.', turnRecordId: null },
+    ]);
+  });
+
+  it('drops a malformed id to null instead of passing it to a uuid column', () => {
+    /* ana_turn_records.id is uuid: a malformed value raises 22P02 and would
+       abort the transaction the save is being written in. The same hazard
+       `resolveTurnRecordSources` and `servedModelsForTurn` both guard. */
+    for (const bad of ['turn_7', '', '   ', 'not-a-uuid', 123, null, {}, ID + 'x']) {
+      const [entry] = acceptedMachineText([{ authorId: 'ana', text: 'A drafted clause.', turnRecordId: bad }]);
+      expect(entry, JSON.stringify(bad)).toEqual({ authorId: 'ana', text: 'A drafted clause.', turnRecordId: null });
+    }
+  });
+
+  it('bounds the id before it is believed, so a long string cannot ride in on it', () => {
+    const [entry] = acceptedMachineText([{ authorId: 'ana', text: 'A drafted clause.', turnRecordId: 'x'.repeat(5000) }]);
+    expect(entry.turnRecordId).toBeNull();
   });
 });
