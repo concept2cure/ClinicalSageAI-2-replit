@@ -45,14 +45,22 @@ const pathwayOptionsOf = (event: { node: QuestionNode } | null) =>
 
 describe('which answer states which fact', () => {
   it('reads every agency the project named, in whichever vocabulary', () => {
-    expect(programmeFactsFrom({ primary_regulatory_agency: 'US' })).toEqual({ regions: ['US'] });
+    expect(programmeFactsFrom({ primary_regulatory_agency: 'US' })).toEqual({ regions: ['US'], primaryRegion: 'US' });
     expect(
       programmeFactsFrom({ primary_regulatory_agency: 'US', additional_agencies: ['EU', 'who'] }),
       'WHO prequalification is not a region, and is not read as one',
-    ).toEqual({ regions: ['US', 'EU'] });
+    ).toEqual({ regions: ['US', 'EU'], primaryRegion: 'US' });
     // The nine hand-written values this question used to carry still resolve.
-    expect(programmeFactsFrom({ primary_regulatory_agency: 'ema' })).toEqual({ regions: ['EU'] });
+    expect(programmeFactsFrom({ primary_regulatory_agency: 'ema' })).toEqual({ regions: ['EU'], primaryRegion: 'EU' });
     expect(programmeFactsFrom({ primary_regulatory_agency: '__other__' }), 'own words name no region').toEqual({});
+  });
+
+  it('keeps the primary agency apart from the others, because it decides what is offered', () => {
+    const facts = programmeFactsFrom({ primary_regulatory_agency: 'EU', additional_agencies: ['US', 'JP'] });
+    expect(facts.primaryRegion, 'the primary agency is the one the routes are offered for').toBe('EU');
+    expect(facts.regions).toEqual(['EU', 'US', 'JP']);
+    // An additional agency alone is not the primary one.
+    expect(programmeFactsFrom({ additional_agencies: ['US'] })).toEqual({ regions: ['US'] });
   });
 
   it('reads the class and the predicate the flows actually ask for', () => {
@@ -180,21 +188,45 @@ describe('the agency question itself', () => {
 });
 
 describe('a route to a regulator the project did not name', () => {
-  it('is marked inapplicable, and says how to open it', () => {
-    const state = stateAt('device_classification', { regulatory_targets: { primary_regulatory_agency: 'EU' } });
-    const options = pathwayOptionsOf(advanceFlow(state, 'device_classification', { device_class: 'class_ii' }, CTX).event);
-    const k510 = options.find(o => o.value === 'US_510K')!;
-    expect(k510.caution!.availability).toBe('inapplicable');
-    expect(k510.caution!.reason).toMatch(/You have named EMA/);
-    expect(k510.caution!.reason).toMatch(/name FDA among the agencies/);
-  });
-
-  it('is not marked once that regulator is among the additional agencies', () => {
+  it('is not offered at all, which is better than offered and marked', () => {
+    /* Until the list became region-aware this was the caution's job: a project
+       that named EMA was shown the four FDA routes with every one marked
+       inapplicable. The question itself is now right, so there is nothing left
+       to mark — and the catalogue's rule stays as the guard for any caller
+       that resolves positions for a region the project did not name
+       (shared/regulatory/__tests__/pathway-availability.test.ts). */
     const state = stateAt('device_classification', {
-      regulatory_targets: { primary_regulatory_agency: 'EU', additional_agencies: ['US'] },
+      regulatory_targets: { primary_regulatory_agency: 'EU', product_type: 'medical_device' },
     });
     const options = pathwayOptionsOf(advanceFlow(state, 'device_classification', { device_class: 'class_ii' }, CTX).event);
-    expect(options.find(o => o.value === 'US_510K')!.caution).toBeUndefined();
+    expect(options.map(o => o.value)).not.toContain('US_510K');
+    expect(options.every(o => !o.caution), 'a list of the right regulator’s routes needs no marks').toBe(true);
+  });
+
+  it('is still caught on the record when an answer names one anyway', () => {
+    /* The reachable case: an answer stored before the list was region-aware,
+       or any later question that offers positions across regions. */
+    const notes = cautionedChoiceNotices(
+      {
+        id: 'medtech_regulatory',
+        section: 'S',
+        question: 'Which route?',
+        fields: [
+          {
+            id: 'device_submission_pathway',
+            label: 'Submission Pathway',
+            type: 'select',
+            options: [{ value: 'US_510K', label: '510(k)' }],
+          },
+        ],
+      },
+      { device_submission_pathway: 'US_510K' },
+      programmeFactsFrom({ primary_regulatory_agency: 'EU' }),
+    );
+    expect(notes).toHaveLength(1);
+    expect(notes[0].severity).toBe('critical');
+    expect(notes[0].message).toMatch(/You have named EMA/);
+    expect(notes[0].message).toMatch(/name FDA among the agencies/);
   });
 });
 

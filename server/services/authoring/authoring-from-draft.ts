@@ -18,6 +18,7 @@ import { programInOrganization } from '../c2c/program-access';
 import { parseDraftSourceReferences, verifyDraftSourceReferences, type DraftSourceReference, type VerifiedDraftSourceReference } from './draft-source-references';
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
 import { checkSectionFigures, type CitedExcerpt, type SectionFigureCheck } from './draft-figure-check';
+import { checkSectionClaims, type ClaimsExcerpt, type SectionClaimsCheck } from './section-claims-check';
 import { sectionReadableText } from './authoring-read-render';
 import crypto from 'crypto';
 import { ANA_MACHINE_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
@@ -51,6 +52,13 @@ export interface DocumentProvenance {
     sectionCode: string; sources: VerifiedDraftSourceReference[]; qualification: 'unassessed'; verification: 'current_at_save';
     /** Each figure of the stored section, found in these excerpts or unverified (S5a, draft-figure-check.ts). */
     figures?: SectionFigureCheck;
+    /**
+     * The stored section's figures set against the figures these same excerpts state for the same
+     * frame: conflict, consistent, or not compared with the slot that differs
+     * (section-claims-check.ts). `figures` answers whether a number is in the source at all;
+     * this answers whether it agrees. Neither is approval or filing readiness.
+     */
+    claims?: SectionClaimsCheck;
   }>;
   source: ProvenanceSource;
   conversationId?: string;
@@ -323,11 +331,15 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
     await lockDocumentDispositionProgram(q, ctx.tenantId, programId);
     const references: NonNullable<DocumentProvenance['projectSourceReferences']> = [];
     for (const section of selected) {
-      const excerpts: CitedExcerpt[] = [];
+      const excerpts: Array<CitedExcerpt & ClaimsExcerpt> = [];
       const sources = await verifyDraftSourceReferences(section.refs, q, ctx.tenantId, programId, excerpts);
-      // Every figure the stored section states, against the excerpts just verified (S5a).
-      const figures = checkSectionFigures(sectionReadableText(section.storedContent), excerpts);
-      references.push({ sectionCode: section.sectionCode, sources, qualification: 'unassessed', verification: 'current_at_save', figures });
+      const sectionText = sectionReadableText(section.storedContent);
+      // Every figure the stored section states, against the excerpts just verified (S5a) — is the
+      // number in the source at all — and then whether it agrees with the source's own figure for
+      // the same frame. One load of the excerpts serves both.
+      const figures = checkSectionFigures(sectionText, excerpts);
+      const claims = checkSectionClaims(section.sectionCode, sectionText, excerpts);
+      references.push({ sectionCode: section.sectionCode, sources, qualification: 'unassessed', verification: 'current_at_save', figures, claims });
     }
     // Keep the same object used by the document and every CREATE audit row.
     provenance.projectSourceReferences = references;

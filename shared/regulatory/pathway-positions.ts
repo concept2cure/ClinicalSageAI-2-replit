@@ -439,6 +439,16 @@ export function pathwayPositionsFor(input: {
   return ids.map(positionFor).filter((p): p is PathwayPosition => p !== null);
 }
 
+/**
+ * The region as this catalogue names it, or null where it holds nothing for
+ * that regulator. The registry holds Japan's, Health Canada's and the rest;
+ * what those positions commit a sponsor to is not written, so a caller must
+ * say so rather than offer another regulator's routes.
+ */
+export function pathwayRegionOf(region: string | null | undefined): PathwayRegion | null {
+  return region === 'US' || region === 'EU' ? region : null;
+}
+
 /** Every position this module offers anywhere, for the gates that check them all. */
 export function allPathwayPositions(): PathwayPosition[] {
   const out: PathwayPosition[] = [];
@@ -471,6 +481,12 @@ export interface ProgrammeFacts {
    * nothing.
    */
   regions?: CanonicalRegion[];
+  /**
+   * The region of the PRIMARY agency, kept apart from the rest because it
+   * decides which routes a question offers, and 'the first of the regions' is
+   * an ordering a reader would have to trust rather than read.
+   */
+  primaryRegion?: CanonicalRegion;
   /** A predicate device the sponsor has named, as they wrote it. */
   predicateNamed?: string;
   /** The US risk class the sponsor states. 'Not yet classified' is not a fact. */

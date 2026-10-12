@@ -18,7 +18,6 @@ import type {
   Comparison,
   Component,
   ComponentResult,
-  DocRole,
   MeasureSummary,
   NotCompared,
   NotComparedSide,

@@ -13,7 +13,9 @@
  *              7    "Clinical data is not required for this submission…"
  *   cer-eu-mdr 3.3  "No clinical investigations were conducted for this device."
  *              6    "The clinical evaluation was performed by qualified personnel…"
- *   csr-ich-e3 8.3  "No deaths occurred during the study."
+ *   csr-ich-e3 8.3  "No deaths occurred during the study."  (until 2026-10-05: that
+ *                   blueprint is now read from the E3 tree, with no defaults —
+ *                   tests/regulatory/csr-e3-overlay.test.ts pins it)
  *
  * Nothing in the product ever asked whether the device contains software, is
  * mains-powered or ships sterile, whether clinical data are required, or who

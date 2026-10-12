@@ -107,7 +107,7 @@ function columnOf(cell: Line, doc: DocInfo): Column {
   else if (/^Randomi[sz]ed\s*\(N\)$/i.test(armText)) col.measure = 'n:randomized';
   else if (/^Patients\s+at\s+risk$/i.test(armText)) col.measure = 'at_risk';
   else if (/EAIR|per\s+100\s+PY/i.test(armText)) col.measure = 'eair';
-  else if (/^Grades?\s+3\s*(?:or|to|through|[-–—\/])\s*4$/i.test(armText)) col.measure = 'grade:grade3-4';
+  else if (/^Grades?\s+3\s*(?:or|to|through|[-–—/])\s*4$/i.test(armText)) col.measure = 'grade:grade3-4';
   else if (/^Grades?\s*(?:>=|≥)\s*3$/i.test(armText)) col.measure = 'grade:grade3+';
   else if (/^(?:HR|Hazard\s+ratio)$/i.test(armText)) {
     col.measure = 'effect';

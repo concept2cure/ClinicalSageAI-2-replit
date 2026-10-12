@@ -104,6 +104,10 @@ export function programmeFactsFrom(flat: Record<string, unknown>): ProgrammeFact
   const facts: ProgrammeFacts = {};
   const regions = regionsNamed(AGENCY_FIELDS.flatMap(field => stated(flat[field])));
   if (regions.length) facts.regions = regions;
+  /* The primary agency decides which routes a question offers, so it is its
+     own fact rather than the first of the list. */
+  const [primary] = regionsNamed(stated(flat[AGENCY_FIELDS[0]]));
+  if (primary) facts.primaryRegion = primary;
   const predicate = firstStated(flat, PREDICATE_FIELDS);
   if (predicate) facts.predicateNamed = predicate;
   const deviceClass = firstStated(flat, DEVICE_CLASS_FIELDS);

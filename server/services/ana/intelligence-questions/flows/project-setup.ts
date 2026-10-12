@@ -13,25 +13,14 @@
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
 import { OTHER_POSITION } from '../../../../../shared/types/intelligence-questions.js';
 import { agencyOptions } from '../../../../../shared/regulatory/agency-positions.js';
-import { pathwayOptions, type PathwayDomain } from '../../../../../shared/regulatory/pathway-positions.js';
-import type { FlowEngineContext } from '../types.js';
 
-/** The registry's own segment for this client, so the pathway question matches what they file. */
-function domainFor(clientType: FlowEngineContext['clientType']): PathwayDomain {
-  if (clientType === 'ivd') return 'diagnostics_ivd';
-  if (clientType === 'medtech') return 'medical_devices';
-  return 'pharma_biotech';
-}
-
-export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition {
-  /* The pathway positions come from the governed filing registry, annotated
-     with what each one commits the programme to and the authority behind it
-     (shared/regulatory/pathway-positions.ts). They used to be written here:
-     seven labels that mixed the three 510(k) flavours — which are a question
-     the 510(k) flow itself asks — with distinct pathways, and left out
-     exemption and the 513(g) that clears nothing (founder's directive,
-     2026-10-12). US positions, as this list always was. */
-  const devicePathways = pathwayOptions({ domain: domainFor(ctx?.clientType ?? 'medtech'), region: 'US' });
+/**
+ * The flow takes no context any more: the two questions that used to need it —
+ * which regulator's routes to offer, and whether they are device or IVD routes
+ * — are resolved by the engine from the answers as the question is drawn
+ * (`governed-options.ts`), which is the only place that can know them.
+ */
+export function createProjectSetupFlow(): FlowDefinition {
   /* The agencies come from the two governed region modules, and the value is
      the canonical region code the rest of the platform keys on. This question
      was declared `agency_select`, a type nothing ever rendered, so it reached
@@ -308,16 +297,14 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
             visibleWhen: { field: 'product_type', operator: 'neq', value: 'medical_device' },
           },
         ],
-        branches: [
-          {
-            when: { field: 'organization_type', operator: 'eq', value: 'medtech' },
-            goto: 'device_classification',
-          },
-          {
-            when: { field: 'product_type', operator: 'in', value: ['medical_device', 'diagnostic'] },
-            goto: 'device_classification',
-          },
-        ],
+        /* Every project is asked its regulator. The device branch used to leave
+           from here, which meant a device or diagnostics project never reached
+           the agency question at all: the platform never learned which
+           regulator it was for, and so could not key the Module 1 backbone,
+           the validation profile, the gateway or — once the catalogue became
+           region-aware — the routes it offers. The branch now leaves from
+           `regulatory_targets`, after the agency has been named (founder's
+           directive, 2026-10-12). */
         defaultNext: 'regulatory_targets',
         issueChecks: [
           {
@@ -349,6 +336,11 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
           },
           {
             id: 'submission_type',
+            /* A device or diagnostics project is asked its route by
+               `device_submission_pathway`, from the governed catalogue. This
+               list is the medicines one; showing both asked the same question
+               twice, in two vocabularies. */
+            visibleWhen: { field: 'product_type', operator: 'not_in', value: ['medical_device', 'diagnostic'] },
             label: 'Primary Submission Type',
             type: 'select',
             required: true,
@@ -400,6 +392,14 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
           },
         ],
         branches: [
+          {
+            when: { field: 'organization_type', operator: 'eq', value: 'medtech' },
+            goto: 'device_classification',
+          },
+          {
+            when: { field: 'product_type', operator: 'in', value: ['medical_device', 'diagnostic'] },
+            goto: 'device_classification',
+          },
           {
             when: { field: 'multi_country_submission', operator: 'eq', value: true },
             goto: 'multi_country_setup',
@@ -480,7 +480,13 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
             label: 'Submission Pathway',
             type: 'select',
             required: true,
-            options: devicePathways,
+            /* No list here: the routes that exist depend on the regulator this
+               project named, and the engine resolves the governed catalogue
+               for it as the question is drawn — the same resolution the
+               validator judges the answer against. Written as a static US list
+               until 2026-10-12, which is why a European device programme was
+               offered FDA's routes. */
+            optionsFrom: 'device_pathway_positions',
             allowOther: { prompt: 'Which route are you taking, in your own words?' },
           },
           {
