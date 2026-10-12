@@ -193,7 +193,7 @@ export const IND_RISK_FACTORS: RiskFactor[] = [
     severity: 'HIGH',
     weight: 0.75,
     detectionMethod: 'AUTOMATED',
-    mitigationGuidance: 'Complete IB per ICH E6(R2) and FDA guidance requirements',
+    mitigationGuidance: "Complete IB per ICH E6(R3) Appendix A (Investigator's Brochure) and FDA guidance requirements",
     dataRequirements: ['ib_document', 'ib_checklist_status']
   },
   {

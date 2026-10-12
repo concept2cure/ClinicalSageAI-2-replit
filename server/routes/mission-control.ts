@@ -18,6 +18,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { createFeatureStore } from '../utils/feature-persistence';
 import { MODALITIES, normalizeModality, frameFor } from '../../shared/regulatory/modality';
+import { soleModule1Placement } from '../../shared/regulatory/regional-module1';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
@@ -1142,6 +1143,26 @@ router.get('/programs/:programId/readiness', async (req: Request, res: Response)
 // AUTO-SCAFFOLD
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * The Investigator's Brochure row of the IND scaffold, from the FDA Module 1 record.
+ *
+ * It read `module: 'module-5'` — the module that holds the CLINICAL STUDY REPORTS. A sponsor
+ * scaffolding an IND here was handed an artifact filed in the wrong backbone node, which is the
+ * failure `shared/regulatory/global-document-registry.ts:271` already names: "an M5 assignment puts
+ * it in the wrong backbone node and the sequence does not validate." The record places it at
+ * 1.14.4.1 (21 CFR 312.23(a)(5)), for an IND only.
+ *
+ * Empty when the record holds no single node for the role: a scaffold that omits a document is
+ * recoverable, one that creates it under the wrong heading is not.
+ */
+export const IND_IB_SCAFFOLD_ROWS: Array<{ title: string; code: string; type: string; module: string; section?: string; level: string }> =
+  (() => {
+    const p = soleModule1Placement('investigators_brochure', 'US', 'ind');
+    if (!p) return [];
+    return [{ title: p.title, code: 'IB', type: 'report', module: `module-${p.code.split('.')[0]}`, section: p.code, level: 'required' }];
+  })();
+
+
 router.post('/programs/:programId/scaffold', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
@@ -1170,7 +1191,7 @@ router.post('/programs/:programId/scaffold', async (req: Request, res: Response)
         { title: 'Module 3.2.P — Drug Product', code: '3.2.P', type: 'section', module: 'module-3', section: '3.2.P', level: 'required' },
         { title: 'Module 4 — Nonclinical Study Reports', code: '4', type: 'module', module: 'module-4', level: 'required' },
         { title: 'Module 5 — Clinical Study Reports', code: '5', type: 'module', module: 'module-5', level: 'required' },
-        { title: "Investigator's Brochure", code: 'IB', type: 'report', module: 'module-5', level: 'required' },
+        ...IND_IB_SCAFFOLD_ROWS,
         { title: 'Clinical Protocol', code: 'PROT', type: 'protocol', module: 'module-5', level: 'required' },
       ],
       '510K': [

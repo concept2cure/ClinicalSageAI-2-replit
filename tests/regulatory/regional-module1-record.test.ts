@@ -278,3 +278,36 @@ describe('requiredModule1: an unknown fact is a gap', () => {
     expect(module1Rows('US', 'nda').map((r) => r.code)).not.toContain('1.20');
   });
 });
+
+/**
+ * `soleModule1Placement` — the record's answer in the shape a caller needs: one code, one title,
+ * the node's basis, or null. Added 2026-10-12 with the Module 1 placement migration; before it,
+ * `placementFor` had no production caller and five copies of Module 1 were hand-kept instead.
+ */
+describe('soleModule1Placement', () => {
+  it('answers the IND documents from the record, with their basis', async () => {
+    const { soleModule1Placement } = await loadRecord();
+    const ib = soleModule1Placement('investigators_brochure', 'US', 'ind');
+    expect(ib?.code).toBe('1.14.4.1');
+    expect(ib?.title).toBe("Investigator's Brochure");
+    expect(ib?.basis.length).toBeGreaterThan(0);
+    expect(soleModule1Placement('cover_letter', 'US', 'ind')?.code).toBe('1.2');
+    expect(soleModule1Placement('application_form', 'US', 'ind')?.code).toBe('1.1');
+  });
+
+  it('answers a marketing application from its own nodes, not the IND ones', async () => {
+    const { soleModule1Placement } = await loadRecord();
+    expect(soleModule1Placement('patent', 'US', 'nda')?.code).toBe('1.3.5');
+    expect(soleModule1Placement('debarment', 'US', 'nda')?.code).toBe('1.3.3');
+    // 1.14.4.1 applies to an IND only, so the kind filter must exclude it here.
+    expect(soleModule1Placement('investigators_brochure', 'US', 'nda')).toBeNull();
+  });
+
+  it('returns null where the record holds no node, and that null is the answer', async () => {
+    const { soleModule1Placement } = await loadRecord();
+    // FDA has REMS (1.16) and risk management that is not a REMS. There is no US "RMP" node, and
+    // the EU's answer must not be carried over. A caller gets null and asks.
+    expect(soleModule1Placement('rmp', 'US', 'ind')).toBeNull();
+    expect(soleModule1Placement('rems', 'US', 'nda')?.code).toBe('1.16');
+  });
+});

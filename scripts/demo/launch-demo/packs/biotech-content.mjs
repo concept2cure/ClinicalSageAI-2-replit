@@ -414,7 +414,8 @@ export const SOPS = [
       scope: 'All SOPs, work instructions, forms, specifications and policies issued under the Concept2Cure Therapeutics quality management system, in every function that supports clinical development and regulatory submissions.',
       responsibilities: 'Document owner: drafts and maintains content. Quality Assurance: controls numbering, formatting, review routing and the master list. Approver: an independent qualified person who is not the author (two-person rule). All staff: use only the effective version.',
       procedure: '1. Request a document number from QA. 2. Draft using the current template. 3. Route for functional review; resolve every comment before approval. 4. Approve by electronic signature with meaning, reason and effective date; the approver must differ from the author. 5. Publish to the controlled register; train affected staff before the effective date. 6. Review at least every 2 years or on change; revise through a new major version; retire with a recorded reason.',
-      references: '21 CFR Part 11; 21 CFR 312.57; ICH E6(R3) §5; ICH Q10 §3.',
+      // E6(R3) Annex 1 ends at §4; records and data are §3.16 (shared/regulatory/ich-e6r3.ts).
+      references: '21 CFR Part 11; 21 CFR 312.57; ICH E6(R3) §3.16; ICH Q10 §3.',
     },
   },
   {

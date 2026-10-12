@@ -1,0 +1,88 @@
+Red first — tests/regulatory/ctd-registry/m1-placement.consistency.test.ts run against the five
+copies BEFORE any production file was changed (2026-10-12).
+
+Note on reproducing this: the committed test file no longer holds these two registry cases. Once
+the copies agreed with the record they were registered in tests/regulatory/ctd-registry-consistency.ts's
+REGISTRIES array, per that file's own convention ("a copy that does NOT agree today gets its own
+file ... written failing first by the step that fixes it"). The readers below adapted each copy to
+{code,title} rows inside the lane file; the registered versions read the exported tables directly,
+which is strictly more coverage. The reproducible red for the committed state is the six
+revert-mutations in ctd-registry-consistency.test.ts, and the live file mutation in
+g-m1-placement-from-the-record-red.live-mutation.txt.
+
+ × the Module 1 placement copies agree with the FDA record > AnA's document router places Module 1 where FDA does
+
+   1.1 "Cover Letter / Form 1571" — cover letter files under 1.2
+   1.2 "Table of Contents" — table of contents (the backbone is the TOC) is not filed as a Module 1 section in FDA eCTD
+   1.3.1 "Form 1572" — FDA transmittal form files under 1.1
+   1.3.3 "Investigator's Brochure" — investigator's brochure files under 1.14.4.1
+
+ × the Module 1 placement copies agree with the FDA record > the CTD ingestion filename detector places Module 1 where FDA does
+
+   1.1 "Cover Letter" — cover letter files under 1.2
+   1.3.1 "Patent Information" — patent information / certification files under 1.3.5
+   1.5.1 "Risk Management Plan" — REMS / risk management files under 1.16
+
+ × the rows that are wrong in a way the contract alone cannot see > a risk-management document is
+   not proposed for the heading that means 'withdrawing the IND'
+   → expected '1.5.1' not to be '1.5.1'
+
+ × the rows that are wrong in a way the contract alone cannot see > the table of contents is not
+   given a Module 1 heading, because the backbone is the table of contents
+   → expected '1.2' not to be '1.2'
+
+ × the rows that are wrong in a way the contract alone cannot see > an uploaded investigator's
+   brochure is not filed where the clinical study reports live
+   → expected "...folder: 'module-5', ctdSection: '5.3' }" not to contain "module-5"
+
+ × the two copies that state a module rather than a Module 1 heading > the Mission Control IND
+   scaffold does not create the IB as a Module 5 artifact
+   AssertionError: expected '{ title: "Investigator\'s Brochure", …' not to contain '\'module-5\''
+   Expected: "'module-5'"
+   Received: "{ title: "Investigator's Brochure", code: 'IB', type: 'report', module: 'module-5', level: 'required' }"
+
+ × the two copies that state a module rather than a Module 1 heading > the IND pyramid binds the IB
+   task to the IB's own heading, not to the study reports
+   AssertionError: expected '5.3.5.4' not to be '5.3.5.4' // Object.is equality
+
+ × the two copies that state a module rather than a Module 1 heading > the IND pyramid cites the IB
+   guideline that is in force, not the one it superseded
+   AssertionError: expected '{"id":"phase5.investigator_brochure",…' not to contain 'E6(R2)'
+
+
+soleModule1Placement was added together with its tests in one command, so it was never seen red.
+Corrected by disabling the export and re-running:
+
+ × the record answers "where does this document file" with one heading or with nothing
+   TypeError: soleModule1Placement is not a function
+
+
+The revert-mutation for the Vault rule — putting the IB back at 5.3 — PASSED when first written,
+and should not have. violationsFor began `if (!isModule1(code)) continue`, so a Module 1 document
+filed OUTSIDE Module 1 was invisible to every Module 1 check:
+
+ × the check is live — each Module 1 placement this step fixed fails if it comes back >
+   Vault body-text filing rules — the IB back at 5.3 (where the clinical study reports live)
+   AssertionError: Vault body-text filing rules: expected '' to match /5\.3 .*contradicts the record|invest…/i
+
+That is the hole the contract's new "Module 1 document filed outside Module 1" rule closes.
+
+
+Registering the WHOLE tables (not only their Module 1 rows) in the shared contract put the
+Module 2–5 contract on them for the first time, and it found two more defects:
+
+ × registered copies agree with the record > AnA's document router (the /draft path)
+   [
+     "1.8.2 \"Risk Management Plan\" — REMS / risk management files under 1.16",
+     "5.3.1 \"Clinical Efficacy Study Reports\" contradicts the record: 5.3.1 is \"Reports of Biopharmaceutic Studies\" (\"Efficac\")",
+   ]
+
+ × registered copies agree with the record > CTD ingestion filename detector
+   [
+     "5.3.3 \"Clinical Pharmacology\" contradicts the record: 5.3.3 is \"Reports of Human Pharmacokinetic (PK) Studies\" (\"Pharmacolog\")",
+   ]
+
+The first of those three is NOT a defect: EU Module 1.8.2 is the Risk Management Plan, and the row
+is honestly tagged module: 'M1-EU'. Reading the router as one US registry applied the FDA contract
+to an EU row. The EU rows are now their own registry entry with region: 'EU', which means its
+Module 1 is unchecked, not held. The other two are real and were fixed.
