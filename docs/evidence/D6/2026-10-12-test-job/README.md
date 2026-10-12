@@ -59,3 +59,43 @@ route that renders and files the LOA leaf (`registers.routes.ts:133`,
 leaf, but `PATCH /cross-references/:id` can set it on its own. Whether the gate
 should require the leaf and not only the flag is a product question for the
 founder, not a lineage-journey change.
+
+---
+
+## Addendum, 18:20 UTC — trunk CI still cannot confirm any of this
+
+Measured, so the gap between "verified locally" and "verified by CI" is on the
+record rather than implied:
+
+```
+$ gh api ".../actions/runs?branch=concept2cure-v2&per_page=100"
+queued / in_progress / pending      56
+in_progress                          1
+oldest queued                        2026-10-12T16:36:21Z  CI  2b023f68c
+completed runs of workflow "CI"      0   (in the newest 100 runs on this branch)
+newest completed run of ANY workflow 18:07, "Repo Health Baseline Refresh", cancelled
+```
+
+The single in-flight job at 18:20 was `Analyze (CodeQL javascript-typescript)`,
+started 17:57. Every workflow in `.github/workflows` is `runs-on:
+ubuntu-latest` — 58 job declarations, no self-hosted pool — so the serialisation
+is the **account's GitHub-hosted concurrency limit**, not anything in this
+repository. One job at a time, against six workflows per push and two sessions
+pushing to the one canonical branch.
+
+Two things this is NOT:
+
+- It is not CI self-cancelling. `ci:required-workflow-concurrency` and its
+  self-test exist precisely to keep a per-commit run on the canonical branch,
+  and they pass. The only cancelled runs are `Repo Health Baseline Refresh`,
+  whose own concurrency group is meant to collapse to the newest commit.
+- It is not something a session can fix by pushing differently. Reducing push
+  frequency reduces the inflow, but the queue drains at one job and the
+  heavyweight scanners (CodeQL ≈45 min, Semgrep, Tier 5 Browser Smoke) sit in
+  the same single slot as `CI`.
+
+Raising the runner concurrency is a billing action on the GitHub organisation
+and therefore the founder's, not a session's. Until it is raised, the honest
+statement about any work from today is "verified locally, on the real gates and
+a deploy-shaped database; not yet confirmed by trunk CI" — which is what the
+evidence files say.
