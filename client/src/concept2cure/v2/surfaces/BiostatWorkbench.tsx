@@ -69,6 +69,14 @@ interface Defensibility {
   engine: 'deterministic';
   sampleSize: number | null;
   power: number | null;
+  /* What the engine says it computed. The payload carried only the N, the
+     power and the judgment, so nothing on screen stated the hazard ratio the
+     sizing used — which is why a mislabelled input could show an 11x
+     under-sizing with a verdict chip beside it and nothing to contradict it.
+     `formula` prints "HR=0.700". */
+  method?: string | null;
+  formula?: string | null;
+  assumptions?: Array<{ parameter: string; value: number | string; source: string; sensitivity: string }>;
   judgment: {
     overallVerdict: JudgedDimension['verdict'];
     overallRisk: 'low' | 'moderate' | 'high' | 'critical';
@@ -196,19 +204,51 @@ function scalarRows(value: unknown, prefix = '', depth = 0, key = ''): Row[] {
   return [];
 }
 
-/** Tabular sub-results (OC grids, decision tables, tipping grids) worth showing as tables. */
-function objectTables(value: unknown): EngineResultTable[] {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+/**
+ * Tabular sub-results (OC grids, decision tables, tipping grids, survival
+ * curves) worth showing as tables.
+ *
+ * Descends ONE level, which `scalarRows` has always done and this did not.
+ * That asymmetry surfaced on 2026-10-12: `restrictedMeanSurvival` began
+ * carrying the Kaplan–Meier table it had always computed and discarded, and in
+ * the two-arm case `rmstDifference` embeds each arm's whole result — so the
+ * curves sit at `treatment.survivalCurve` and `control.survivalCurve`. The
+ * single-arm call rendered its table and the two-arm call, which is the common
+ * case, rendered nothing while showing "Treatment · Rmst" and the rest of that
+ * arm's scalars beside it. Data on the wire and not on the screen reads as
+ * "this engine has no curve" rather than "this renderer did not look".
+ *
+ * Copying the curves up to the top level of the difference result would have
+ * fixed the one case and left two places holding one table. One level of
+ * descent fixes it for every engine that nests a table. Nested labels carry
+ * the parent key, as the scalar rows do, so a reader can tell the arms apart.
+ */
+function objectTables(value: unknown, prefix = '', depth = 0): EngineResultTable[] {
+  if (!isPlainObject(value)) return [];
   const out: EngineResultTable[] = [];
-  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+  for (const [k, v] of Object.entries(value)) {
+    // Provenance is a reproducibility record, not a result; it has its own row.
     if (k === 'provenance') continue;
-    if (Array.isArray(v) && v.length > 0 && v.every(r => r === null || (typeof r === 'object' && !Array.isArray(r)))) {
-      const table: EngineResultTable = { label: humanize(k), rows: v as Array<Record<string, unknown> | null> };
+    const label = prefix ? `${prefix} · ${humanize(k)}` : humanize(k);
+    if (isRowArray(v)) {
+      const table: EngineResultTable = { label, rows: v };
       table.columns = engineResultTableColumns(table).map(({ key }) => ({ key, label: humanize(key) }));
       out.push(table);
+    } else if (depth === 0 && isPlainObject(v)) {
+      out.push(...objectTables(v, label, depth + 1));
     }
   }
   return out;
+}
+
+/** An object worth descending into: not null, not an array. */
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
+/** An array of records, which is what a table is made of. */
+function isRowArray(v: unknown): v is Array<Record<string, unknown> | null> {
+  return Array.isArray(v) && v.length > 0 && v.every((r) => r === null || isPlainObject(r));
 }
 
 function Field({ field, value, error, onChange }: {
@@ -479,6 +519,73 @@ const ENDPOINT_TYPES = ['continuous', 'binary', 'time_to_event'] as const;
 const OBJECTIVES = ['efficacy', 'safety', 'performance', 'bioequivalence'] as const;
 const label = (v: string) => v.replace(/_/g, ' ');
 
+/**
+ * What the defensibility engine computed, and its judgment OF that.
+ *
+ * Its own component since 2026-10-12, when it grew the engine's own statement
+ * of the computation — `method`, `formula` and `assumptions`. Those three were
+ * absent from the payload, so the panel showed a total and a verdict chip with
+ * nothing to check them against; the workbench meanwhile labelled the engine's
+ * `effectSize` "Hazard ratio" when the engine reads it as the hazard-ratio
+ * REDUCTION, and an eleven-fold under-sizing had nothing on screen to
+ * contradict it. `formula` is where the hazard ratio actually used is printed.
+ */
+function DefensibilityResult({ asmtRes }: { asmtRes: Defensibility }) {
+  return (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 10 }}>
+              <div><span className={'rd-chip tone-' + ratingTone(asmtRes.judgment.overallVerdict)}>{label(asmtRes.judgment.overallVerdict)}</span><div style={{ fontSize: 12, color: 'var(--text-300)', marginTop: 4 }}>Verdict</div></div>
+              <div><span className={'rd-chip tone-' + ratingTone(asmtRes.judgment.overallRisk)}>{asmtRes.judgment.overallRisk}</span><div style={{ fontSize: 12, color: 'var(--text-300)', marginTop: 4 }}>Reviewer risk</div></div>
+              <div><span className={'rd-chip tone-' + ratingTone(asmtRes.judgment.actionRecommendation)}>{label(asmtRes.judgment.actionRecommendation)}</span><div style={{ fontSize: 12, color: 'var(--text-300)', marginTop: 4 }}>Recommended action</div></div>
+              {asmtRes.sampleSize != null && <div><div style={{ fontSize: 22, fontWeight: 700 }}>{asmtRes.sampleSize}</div><div style={{ fontSize: 12, color: 'var(--text-300)' }}>Total N computed</div></div>}
+            </div>
+            <table className="ctable" style={{ width: '100%', fontSize: 13 }}>
+              <caption style={{ textAlign: 'left', fontSize: 12, color: 'var(--text-300)', paddingBottom: 4 }}>Judged by dimension</caption>
+              <thead><tr><th scope="col">Dimension</th><th scope="col">Verdict</th><th scope="col">Why</th></tr></thead>
+              <tbody>
+                {asmtRes.judgment.dimensions.map((d) => (
+                  <tr key={d.name}>
+                    <td>{d.name}</td>
+                    <td><span className={'rd-chip tone-' + ratingTone(d.verdict)}>{label(d.verdict)}</span></td>
+                    <td>{d.rationale}{d.flags.length > 0 ? ` — ${d.flags.join('; ')}` : ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {asmtRes.judgment.escalationReasons.length > 0 && (
+              <div style={{ marginTop: 8 }}><div style={{ fontSize: 12, fontWeight: 600 }}>Escalation reasons</div>
+                <ul style={{ margin: '4px 0 0', paddingLeft: 18, fontSize: 13 }}>{asmtRes.judgment.escalationReasons.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
+            )}
+            {/* What the engine computed, in its own words. The verdict above
+                is a judgment OF this; without it a reader cannot check the
+                number against the design in front of them — and the formula
+                is where the hazard ratio actually used is printed. */}
+            {(asmtRes.method || asmtRes.formula) && (
+              <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-300,#6b6963)' }}>
+                {asmtRes.method && <div><b style={{ color: 'var(--text-200,#44423d)' }}>Method:</b> {asmtRes.method}</div>}
+                {asmtRes.formula && <div style={{ fontFamily: 'var(--font-mono, ui-monospace, monospace)', marginTop: 2 }}>{asmtRes.formula}</div>}
+              </div>
+            )}
+            {Array.isArray(asmtRes.assumptions) && asmtRes.assumptions.length > 0 && (
+              <table className="ctable" style={{ width: '100%', fontSize: 13, marginTop: 8 }}>
+                <caption style={{ textAlign: 'left', fontSize: 12, color: 'var(--text-300)', paddingBottom: 4 }}>Assumptions the engine used</caption>
+                <thead><tr><th scope="col">Assumption</th><th scope="col">Value</th><th scope="col">Source</th><th scope="col">Answer turns on it</th></tr></thead>
+                <tbody>
+                  {asmtRes.assumptions.map((a) => (
+                    <tr key={a.parameter}>
+                      <td style={{ whiteSpace: 'nowrap' }}>{a.parameter}</td>
+                      <td style={{ fontFamily: 'var(--font-mono, ui-monospace, monospace)' }}>{String(a.value)}</td>
+                      <td>{a.source === 'user_provided' ? 'from the design' : a.source}</td>
+                      <td><span className={'rd-chip tone-' + (a.sensitivity === 'high' ? 'warn' : 'idle')}>{a.sensitivity}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+  );
+}
+
 export function BiostatWorkbench(_props: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
 
@@ -597,7 +704,24 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
                 <label style={{ fontSize: 12 }}>Treatment rate<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.treatmentRate} onChange={(e) => setAsmt({ ...asmt, treatmentRate: e.target.value })} placeholder="e.g. 0.7" /></label>
               </>
             ) : (
-              <label style={{ fontSize: 12 }}>{asmt.endpointType === 'time_to_event' ? 'Hazard ratio' : 'Effect size (standardized)'}<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.effectSize} onChange={(e) => setAsmt({ ...asmt, effectSize: e.target.value })} placeholder={asmt.endpointType === 'time_to_event' ? 'e.g. 0.7' : 'e.g. 0.5'} /></label>
+              <label style={{ fontSize: 12 }}>
+                {/* The engine reads this field for a time-to-event design as
+                    the hazard-ratio REDUCTION (computation-engine.ts
+                    hazardRatio, HR = 1 − effectSize). It was labelled "Hazard
+                    ratio" with the placeholder 0.7, so an oncologist typing
+                    their protocol's HR sized for HR 0.300: 50 subjects where
+                    550 is right. The sibling surface (Biostatistics.tsx)
+                    already called it a reduction; the label now says it and
+                    the hint states the arithmetic, because a convention a
+                    reader has to infer is one that will be got wrong. */}
+                {asmt.endpointType === 'time_to_event' ? 'Hazard-ratio reduction (1 − HR)' : 'Effect size (standardized)'}
+                <input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.effectSize} onChange={(e) => setAsmt({ ...asmt, effectSize: e.target.value })} placeholder={asmt.endpointType === 'time_to_event' ? 'e.g. 0.3' : 'e.g. 0.5'} />
+                {asmt.endpointType === 'time_to_event' && (
+                  <span style={{ display: 'block', fontSize: 11, color: 'var(--text-300,#6b6963)', marginTop: 2 }}>
+                    Not the hazard ratio itself. For a protocol stating HR 0.7, enter 0.3.
+                  </span>
+                )}
+              </label>
             )}
             {(asmt.studyType === 'non_inferiority' || asmt.studyType === 'equivalence') && (
               <label style={{ fontSize: 12 }}>{asmt.studyType === 'equivalence' ? 'Equivalence margin' : 'Non-inferiority margin'}<input className="c2c-input" style={{ height: 30 }} inputMode="decimal" value={asmt.margin} onChange={(e) => setAsmt({ ...asmt, margin: e.target.value })} /></label>
@@ -609,33 +733,7 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
           </div>
           <button className="btn primary" style={{ height: 32 }} onClick={runAssess} disabled={asmtBusy}>{I.zap} {asmtBusy ? 'Assessing…' : 'Assess defensibility'}</button>
 
-          {asmtRes && (
-            <div style={{ marginTop: 12 }}>
-              <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 10 }}>
-                <div><span className={'rd-chip tone-' + ratingTone(asmtRes.judgment.overallVerdict)}>{label(asmtRes.judgment.overallVerdict)}</span><div style={{ fontSize: 12, color: 'var(--text-300)', marginTop: 4 }}>Verdict</div></div>
-                <div><span className={'rd-chip tone-' + ratingTone(asmtRes.judgment.overallRisk)}>{asmtRes.judgment.overallRisk}</span><div style={{ fontSize: 12, color: 'var(--text-300)', marginTop: 4 }}>Reviewer risk</div></div>
-                <div><span className={'rd-chip tone-' + ratingTone(asmtRes.judgment.actionRecommendation)}>{label(asmtRes.judgment.actionRecommendation)}</span><div style={{ fontSize: 12, color: 'var(--text-300)', marginTop: 4 }}>Recommended action</div></div>
-                {asmtRes.sampleSize != null && <div><div style={{ fontSize: 22, fontWeight: 700 }}>{asmtRes.sampleSize}</div><div style={{ fontSize: 12, color: 'var(--text-300)' }}>Total N computed</div></div>}
-              </div>
-              <table className="ctable" style={{ width: '100%', fontSize: 13 }}>
-                <caption style={{ textAlign: 'left', fontSize: 12, color: 'var(--text-300)', paddingBottom: 4 }}>Judged by dimension</caption>
-                <thead><tr><th scope="col">Dimension</th><th scope="col">Verdict</th><th scope="col">Why</th></tr></thead>
-                <tbody>
-                  {asmtRes.judgment.dimensions.map((d) => (
-                    <tr key={d.name}>
-                      <td>{d.name}</td>
-                      <td><span className={'rd-chip tone-' + ratingTone(d.verdict)}>{label(d.verdict)}</span></td>
-                      <td>{d.rationale}{d.flags.length > 0 ? ` — ${d.flags.join('; ')}` : ''}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {asmtRes.judgment.escalationReasons.length > 0 && (
-                <div style={{ marginTop: 8 }}><div style={{ fontSize: 12, fontWeight: 600 }}>Escalation reasons</div>
-                  <ul style={{ margin: '4px 0 0', paddingLeft: 18, fontSize: 13 }}>{asmtRes.judgment.escalationReasons.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
-              )}
-            </div>
-          )}
+          {asmtRes && <DefensibilityResult asmtRes={asmtRes} />}
         </div>
       </div>
 

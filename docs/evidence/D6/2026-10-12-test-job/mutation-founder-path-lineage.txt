@@ -1,0 +1,13 @@
+MUTATION — the new refusal assertion has teeth. The Drug Master File is recorded
+  BEFORE the refusal is asserted, so the product has nothing left to refuse.
+  Measured 2026-10-12T07:40:54Z on the same tree as the green above.
+
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 156ms
+   → {"id":1,"submissionId":1,"region":"fda","sequenceNumber":"0000","type":"original","status":"validated","validationStatus":"passed","dispatchStatus":null,"frozenAt":null,"organizationId":1,"createdBy":3,"createdAt":"2026-10-12T07:41:15.325Z","updatedAt":"2026-10-12T07:41:15.770Z","deletedAt":null,"auditTrail":{"persisted":true,"chained":true}}: expected 200 to be 422 // Object.is equality
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 14ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal 65ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 111ms
+ × tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"id":1,"submissionId":1,"region":"fda","sequenceNumber":"0000","type":"original","status":"validated","validationStatus":"passed","dispatchStatus":null,"frozenAt":null,"organizationId":1,"createdBy":3,"createdAt":"2026-10-12T07:41:15.325Z","updatedAt":"2026-10-12T07:41:15.770Z","deletedAt":null,"auditTrail":{"persisted":true,"chained":true}}: expected 200 to be 422 // Object.is equality
+      Tests  5 failed | 10 passed (15)

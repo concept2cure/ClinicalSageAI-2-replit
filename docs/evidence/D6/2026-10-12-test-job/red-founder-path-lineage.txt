@@ -1,0 +1,133 @@
+RED — tests/lineage/founder-path-lineage.pglite.test.ts at 8d5228bc2, measured 2026-10-12T07:40:11Z
+  git archive 8d5228bc2 | tar -x -C <scratch>; CI=true NODE_ENV=test npx vitest run tests/lineage/founder-path-lineage.pglite.test.ts
+  (an exported tree, so the measurement is of the commit and not of a working copy)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+AssertionError: {"error":{"code":"VALIDATION_FAILED","message":"Sequence 0000 was not marked Validated: its validation found 2 errors. 3.2.S: There is no 3.2.S Drug Substance leaf in the original IND (sequence 0000), and no cross-reference on record covers 3.2.S with a Letter of Authorization on file. An initial IND carries its chemistry, manufacturing and controls information (21 CFR 312.23(a)(7)), or incorporates it by reference to a file whose holder has authorized it (21 CFR 312.23(b)). To clear this, place Module 3 from the CMC module (CMC / Module 3, \"Place into the submission\"), or record the cross-reference to the Drug Master File that holds 3.2.S, naming 3.2.S among its sections, with its Letter of Authorization on file (Module 1.4.1). The cross-reference register could not be read (Failed query: select \"referenced_file_type\", \"referenced_file_number\", \"authorized_sections\", \"loa_on_file\" from \"ind_cross_references\" where (\"ind_cross_references\".\"organization_id\" = $1 and \"ind_cross_references\".\"submission_id\" = $2)\nparams: 1,1), so no referenced file can be counted for 3.2.S. 3.2.P: There is no 3.2.P Drug Product leaf in the original IND (sequence 0000), and no cross-reference on record covers 3.2.P with a Letter of Authorization on file. An initial IND carries its chemistry, manufacturing and controls information (21 CFR 312.23(a)(7)), or incorporates it by reference to a file whose holder has authorized it (21 CFR 312.23(b)). To clear this, place Module 3 from the CMC module (CMC / Module 3, \"Place into the submission\"), or record the cross-reference to the Drug Master File that holds 3.2.P, naming 3.2.P among its sections, with its Letter of Authorization on file (Module 1.4.1). The cross-reference register could not be read (Failed query: select \"referenced_file_type\", \"referenced_file_number\", \"authorized_sections\", \"loa_on_file\" from \"ind_cross_references\" where (\"ind_cross_references\".\"organization_id\" = $1 and \"ind_cross_references\".\"submission_id\" = $2)\nparams: 1,1), so no referenced file can be counted for 3.2.P."}}: expected 422 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 422
+
+ ❯ freezeDispatchTransmit tests/lineage/founder-path-lineage.hops-filing.ts:177:46
+    175|   for (const status of ['assembling', 'validated']) {
+    176|     const t = await as(3)(request(w.app).post(`/api/submissions/sequen…
+    177|     expect(t.status, JSON.stringify(t.body)).toBe(200);
+       |                                              ^
+    178|   }
+    179|   // Seeded, not run: POST /sequences/:id/shadow-review calls a model …
+ ❯ Module.hopTransmit tests/lineage/founder-path-lineage.hops-filing.ts:227:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+Error: walk-back/transmittal-to-sequence FAILS and is not baselined — the transmittal resolves to exactly one sequence
+    observed 0
+    AssertionError: expected [] to have a length of 1 but got +0
+walk-back/sequence-to-pinned-leaves FAILS and is not baselined — the sequence’s leaves each name a document and pin its digest
+    observed []
+    AssertionError: expected [] to have a length of 2 but got +0
+walk-back/leaves-to-project FAILS and is not baselined — each leaf reaches the project: the filing copy through its alias, the Vault copy through its program
+    observed []
+    AssertionError: expected [] to deeply equal [ Array(1) ]
+walk-back/sequence-to-project FAILS and is not baselined — the sequence’s submission reaches the same project by a column (submissions.program_id), and the project-creation record agrees
+    observed not observed
+    TypeError: Cannot read properties of undefined (reading 'program_id')
+walk-back/filing-copy-leaf-to-seal FAILS and is not baselined — the filing-copy leaf reaches the seal: the copy names it, the seal verifies, the pin still matches the copy
+    observed not observed
+    TypeError: Cannot read properties of undefined (reading 'document_id')
+walk-back/vault-leaf-to-seal is baselined, but it did not fail its assertion — it threw TypeError: Cannot read properties of undefined (reading 'document_uuid'). A baseline entry excuses a recorded gap, never a walk that could not run.
+ ❯ Hop.verdict tests/lineage/founder-path-lineage.world.ts:107:32
+    105|     }
+    106|     console.info(`[founder-path] ${this.id}\n${judged.flatMap((j) => (…
+    107|     if (problems.length) throw new Error(problems.join('\n'));
+       |                                ^
+    108|   }
+    109| }
+ ❯ Module.walkBack tests/lineage/founder-path-lineage.hops-filing.ts:356:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+Error: walk-forward/document-to-transmittal FAILS and is not baselined — from the project’s authoring document: its filing copy and its Vault copy reach the transmitted sequence
+    observed {"leaves":2,"sequences":1,"transmittals":0}
+    AssertionError: expected [] to deeply equal [ undefined ]
+ ❯ Hop.verdict tests/lineage/founder-path-lineage.world.ts:107:32
+    105|     }
+    106|     console.info(`[founder-path] ${this.id}\n${judged.flatMap((j) => (…
+    107|     if (problems.length) throw new Error(problems.join('\n'));
+       |                                ^
+    108|   }
+    109| }
+ ❯ Module.walkForward tests/lineage/founder-path-lineage.hops-filing.ts:437:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+Error: retention/filed-project-not-deleted FAILS and is not baselined — deleting a project that holds filed and transmitted records is refused 409, naming them, and the project stays live
+    observed {"status":409,"holds":["filed","sealed"],"deleted":false}
+    AssertionError: expected [ 'filed', 'sealed' ] to deeply equal { Object ($$typeof, sample, ...) }
+ ❯ Hop.verdict tests/lineage/founder-path-lineage.world.ts:107:32
+    105|     }
+    106|     console.info(`[founder-path] ${this.id}\n${judged.flatMap((j) => (…
+    107|     if (problems.length) throw new Error(problems.join('\n'));
+       |                                ^
+    108|   }
+    109| }
+ ❯ Module.hopRetention tests/lineage/founder-path-lineage.hops-filing.ts:539:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+Error: This journey ran against a database missing 1 relation(s)/column(s) its own subject asked for, and still reached its assertions:
+
+  [42P01] relation "ind_cross_references" does not exist
+      select "referenced_file_type", "referenced_file_number", "authorized_sections", "loa_on_file" from "ind_cross_references" where ("ind_cross_references"."organiz
+
+Add the missing table(s) to this journey's extractTableDdl list, or the missing column(s) via the ALTER the real migration performs. A journey whose database is smaller than the code under test proves less than it says it does.
+ ❯ Module.assertNoSchemaGaps tests/golden-journeys/harness.ts:213:9
+    211|     })
+    212|     .map((g) => `  [${g.code}] ${g.message}\n      ${g.sql}`);
+    213|   throw new Error(
+       |         ^
+    214|     `This journey ran against a database missing ${seen.size} relation…
+    215|       `subject asked for, and still reached its assertions:\n\n${lines…
+ ❯ tests/lineage/founder-path-lineage.pglite.test.ts:303:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+AssertionError: transmit/bytes-retained: no such check ran
+transmit/transmittal-names-sequence: no such check ran
+transmit/transmit-record-names-bundle: no such check ran: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "transmit/bytes-retained: no such check ran",
++   "transmit/transmittal-names-sequence: no such check ran",
++   "transmit/transmit-record-names-bundle: no such check ran",
++ ]
+
+ ❯ tests/lineage/founder-path-lineage.pglite.test.ts:307:43
+    305|   it('the baseline names only real checks, each with its verified find…
+    306|     const problems = baselineProblems();
+    307|     expect(problems, problems.join('\n')).toEqual([]);
+       |                                           ^
+    308|   });
+    309| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 9 passed (15)
+   Start at  07:39:42
+   Duration  22.19s (transform 9.98s, setup 109ms, import 10.88s, tests 10.70s, environment 0ms)
+

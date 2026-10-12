@@ -354,6 +354,100 @@ scoring path that no longer exists.
 | Submission Readiness statistical gate | — | **owed** (below) |
 | Reporting & analytics statistical reports | — | **owed** (below) |
 
+### The renderer did not look where the engine put it (2026-10-12)
+
+A follow-on from the survival-curve change, and the reason an adversarial
+re-read of one's own work earns its cost.
+
+`restrictedMeanSurvival` now carries the Kaplan–Meier table it had always
+computed and discarded. In the TWO-ARM case `rmstDifference` embeds each arm's
+whole result, so the curves sit at `treatment.survivalCurve` and
+`control.survivalCurve` — one level down. `scalarRows` in the workbench has
+always descended; `objectTables` did not. So the single-arm call rendered its
+survival table and the two-arm call — the common case, treatment against
+control — rendered **nothing**, while showing "Treatment · Rmst" and the rest
+of that arm's scalars right beside it. Data on the wire and absent from the
+screen reads as "this engine has no curve", not "this renderer did not look".
+
+The alternative was to copy both curves up to the top level of the difference
+result, which is two places holding one table. `objectTables` descends one
+level instead, labelling a nested table with its parent key exactly as the
+scalar rows do — so it is fixed for every engine that nests a table rather than
+for this one. Pinned by
+`client/src/concept2cure/v2/__tests__/workbenchNestedTables.test.tsx` (4 cases,
+2 failed before), including that each arm renders its OWN rows, so one table
+drawn twice under two labels would fail.
+
+Worth naming: the curve-carrying change was pushed before this was found, so
+for one commit the fix was invisible in the case that matters most. Verifying a
+change end to end means through the renderer, not to the edge of the wire.
+
+### A wrong number under a correct-looking label (2026-10-12)
+
+The reachability sweep's most serious finding was not a reachability gap. It
+was live, on the most common phase 3 design there is.
+
+The engine reads `effectSize` for a time-to-event design as the hazard-ratio
+**reduction**: HR = 1 − effectSize. That convention is deliberate, documented
+at `computation-engine.ts hazardRatio`, and named in its own refusal message.
+The workbench's defensibility panel labelled that field **"Hazard ratio"**,
+placeholder **"e.g. 0.7"**.
+
+| What the sponsor typed | What the engine sized | Total N |
+|---|---|---|
+| 0.7, under a field reading "Hazard ratio" | HR 0.300 | **50** |
+| 0.3, the reduction for HR 0.7 | HR 0.700 | **550** |
+
+An oncologist typing the hazard ratio their own protocol states was shown
+**fifty subjects where five hundred and fifty is right** — an eleven-fold
+under-sizing, rendered as "Total N computed" with a verdict chip beside it. A
+missing figure sends a sponsor to SAS; this one sends a 50-patient oncology
+trial to an ethics committee.
+
+Three things had to be true at once for it to survive:
+
+1. **The label contradicted the engine, and the sibling surface did not.**
+   `Biostatistics.tsx` calls the same engine field "HR reduction". Two surfaces
+   disagreed about what one engine input means, and the one that was wrong is
+   the one with the verdict chip. It now reads "Hazard-ratio reduction (1 − HR)"
+   with the placeholder 0.3 and a hint: *"Not the hazard ratio itself. For a
+   protocol stating HR 0.7, enter 0.3."*
+2. **Nothing in the response could contradict it.** The `assessed` payload
+   carried only `sampleSize`, `power` and the judgment. It dropped `method`,
+   `formula` — which prints `HR=0.700` — and `assumptions`, every one of which
+   the sibling surface renders. All three are now carried and rendered, so the
+   hazard ratio the engine actually used is on screen beside the number, and
+   the event rate it defaulted (0.5, which is what turns events into subjects)
+   is named as a default.
+3. **The tool schema a model reads said nothing about it.** `effectSize` was
+   described only as "Standardized effect size (e.g. Cohen's d for
+   continuous)". A model asked for "a hazard ratio of 0.7" had no way to know
+   it must send 0.3, and would make exactly the substitution the label invited.
+   The description now states the convention, the conversion and the
+   consequence.
+
+Found while there: `assessDefensibility` let a `ComputationRefusal` throw
+straight out of the service, so a caller that asked for an assessment got an
+exception. The same defect the ana-biostats routes had until 2026-10-11 — the
+refusal contract only works if every caller reports a refusal as one. It now
+answers `needs_parameters` with the engine's own sentence, which is the
+sentence that names this very convention.
+
+Pinned by `tests/biostat/hazard-ratio-convention-is-stated.test.ts` (7 cases,
+4 failed before) and
+`client/src/concept2cure/v2/__tests__/workbenchHazardRatioLabel.test.tsx`
+(6 cases, 5 failed before; 3 still fail with only the label reverted, which is
+the isolation that matters). The engine's convention itself is asserted
+unchanged in both directions — 0.3 → 550 and 0.7 → 50 — so the next person to
+"fix" the engine instead of the label will be told what they are changing.
+
+**Why no gate caught this.** Every number was right. The engine was right, its
+tests were right, the route was right, and the figure matched its inputs
+exactly. What was wrong was the sentence above the input box. No typecheck, no
+reference suite and no lint rule reads a label against the contract of the
+field it sits on, and the only thing that did was an agent told to compare what
+a UI can express with what the engine accepts.
+
 ### The IVD analytical performance section (2026-10-12)
 
 A reachability sweep found the largest remaining gap, and it was not in the
