@@ -105,6 +105,59 @@ export const DESIGN_STATS_CALCULATORS: Calculator[] = [
     ],
   },
   {
+    id: 'mmrm-power',
+    title: 'MMRM power at a chosen n',
+    subtitle: 'What the budget buys — the reverse of MMRM sizing',
+    path: '/mmrm/power',
+    about:
+      'The power a repeated-measures design has at an n you name, from the same engine as MMRM sizing — the same variance factor and the same monotone-dropout information — so a power read here and an n read there cannot disagree. This is the question that follows a budget rather than precedes it: "we can only enrol 90 per arm, what does that buy us?" The answer comes with the n the target power would need, beside it.',
+    fields: [
+      { key: 'visits', label: 'Post-baseline visits', kind: 'int', placeholder: '4' },
+      {
+        key: 'covariance', label: 'Covariance structure', kind: 'select',
+        options: [
+          { value: 'compound_symmetry', label: 'Compound symmetry' },
+          { value: 'ar1', label: 'AR(1)' },
+        ],
+        hint: 'CS assumes equal correlation between all visits; AR(1) decays with separation.',
+      },
+      { key: 'rho', label: 'Correlation (ρ)', kind: 'number', placeholder: '0.6', hint: 'Within-subject correlation, in [0, 1).' },
+      { key: 'sigma', label: 'SD (σ)', kind: 'number', placeholder: '2.5' },
+      { key: 'delta', label: 'Treatment difference (δ)', kind: 'number', placeholder: '1' },
+      { key: 'nPerArm', label: 'n per arm you can enrol', kind: 'int', placeholder: '90', hint: 'The constraint, not the target.' },
+      { key: 'retention', label: 'Retention by visit', kind: 'numlist', placeholder: '1, 0.92, 0.86, 0.8', hint: 'Proportion still on study at each visit, monotone non-increasing. One entry per visit.' },
+      { key: 'n2', label: 'n in the other arm', kind: 'int', optional: true, placeholder: '90', hint: 'For an unequal allocation. Defaults to the same as the first arm.' },
+      { key: 'alpha', label: 'Alpha (two-sided)', kind: 'number', optional: true, placeholder: '0.05' },
+      { key: 'power', label: 'Target power to compare against', kind: 'number', optional: true, placeholder: '0.9', hint: 'Only for the "n the target would need" figure beside the answer. Default 0.9.' },
+      { key: 'targetVisit', label: 'Target visit', kind: 'int', optional: true, placeholder: '4', hint: 'The visit the comparison is made at. Defaults to the last.' },
+    ],
+  },
+  {
+    id: 'enrollment-backtest',
+    title: 'Enrollment forecast back-test',
+    subtitle: 'The forecast scored against what actually enrolled',
+    path: '/enrollment/backtest',
+    about:
+      'Scores a site-rate forecast against the enrolment that actually happened: the error at each observed time, the mean absolute error and the RMSE. A forecast that is never checked against reality is the thing a CRO is measured on and cannot show — this platform produced the forecast and, until now, had no way to say how far off it was. Use the same site configuration the forecast was made with, or the comparison measures a different model.',
+    fields: [
+      {
+        key: 'sites', label: 'Sites (as forecast)', kind: 'rows',
+        placeholder: '0.8, 0.3, 0\n1.2, 0.4, 2\n0.5, 0.2, 4',
+        hint: 'One site per line: mean rate, rate CV, activation time — the same configuration the forecast used.',
+      },
+      {
+        key: 'observed', label: 'Observed enrolment (time, cumulative)', kind: 'rows',
+        placeholder: '3 18\n6 47\n9 94\n12 141',
+        hint: 'One line per observation: the calendar time, then the CUMULATIVE number enrolled by then.',
+      },
+    ],
+    parseRows: {
+      sites: (rows) =>
+        rows.map(([meanRate, rateCv, activationTime]) => ({ meanRate, rateCv, activationTime })),
+      observed: (rows) => rows.map(([time, cumulative]) => ({ time, cumulative })),
+    },
+  },
+  {
     id: 'event-projection',
     title: 'Event projection',
     subtitle: 'When will an event-driven trial reach its analyses?',
