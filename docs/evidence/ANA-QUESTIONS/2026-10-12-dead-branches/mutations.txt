@@ -1,0 +1,12 @@
+# 3 mutations, all red
+# driver: scratchpad/mutate7.py (apply, run the named test, restore)
+
+RED       a branch reads only the answers to its own question (the defect, restored)
+          test: server/services/ana/intelligence-questions/__tests__/branch-reads-every-answer.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/branch-reads-every-answer.test.ts > a branch on what the programme already said it is > is taken — it was dead, because the predicate read the current node alone 11ms
+RED       a branch reads only the answers to its own question (the defect, restored) — real flows
+          test: server/services/ana/intelligence-questions/__tests__/dead-branches-are-alive.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/dead-branches-are-alive.test.ts > a 510(k) for a device provided sterile > reaches the sterilisation questions 17ms | × server/services/ana/intelligence-questions/__tests__/dead-branches-are-alive.test.ts > a 510(k) for a device provided sterile > reaches the software classification for a device containing software 3ms | × server/services/ana/intelligence-questions/__tests__/dead-branches-are-alive.test.ts > a 510(k) for a device provided sterile > reaches the EMC testing for an electrically powered device, which the flow puts first 2ms | × server/services/ana/intelligence-questions/__tests__/dead-branches-are-alive.test.ts > a BLA for a vaccine > reaches the lot-release questions 5ms
+RED       this question's answer no longer wins over an earlier one
+          test: server/services/ana/intelligence-questions/__tests__/branch-reads-every-answer.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/branch-reads-every-answer.test.ts > a branch on what the programme already said it is > prefers this question’s answer where both hold the same field 7ms

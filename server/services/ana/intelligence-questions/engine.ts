@@ -167,8 +167,19 @@ export function advanceFlow(
     }
   }
 
-  // Resolve next node
-  const nextNodeId = resolveNextNode(currentNode, answers, definition);
+  /* Resolve next node against EVERY answer the interview holds, not just this
+     node's. A branch predicate that reads an earlier node's field — "this is a
+     vaccine", "the device contains software", "the product type is a device" —
+     was evaluated against the current node's answers alone, where that field
+     is absent, so it could never match: 30 of the 63 branch predicates across
+     these flows were unreachable, and with them the oncology and vaccine
+     efficacy questions, the 510(k) software, sterilisation, EMC and implant
+     questions, the PMA software documentation, the cell-therapy and vaccine
+     BLA characterisation, the SaMD and pharma hazard questions and the
+     biologics stability questions. Declared behaviour change: they now match
+     (founder's directive, 2026-10-12). `visibleWhen` and the validator have
+     always read this same flattened view. */
+  const nextNodeId = resolveNextNode(currentNode, { ...shownFlat, ...answers }, definition);
 
   if (!nextNodeId) {
     // Flow complete
