@@ -22,19 +22,63 @@ import { regulatoryCustomizer } from '../services/ana-biostats/regulatory-custom
 import { documentGenerator } from '../services/ana-biostats/document-generator';
 
 import { createScopedLogger } from '../utils/logger.js';
-import { serverError } from '../lib/api-response';
+import { clientError, orgRequired, serverError } from '../lib/api-response';
 
 const logger = createScopedLogger('ana-biostats');
 
 const router = Router();
+
+/** Thrown by resolveOrganizationId, so the catch can answer 403 not 500. */
+class OrganizationContextRequired extends Error {
+  constructor() {
+    super('Organization context required');
+    this.name = 'OrganizationContextRequired';
+  }
+}
 
 function resolveOrganizationId(req: Request): number {
   const orgId =
     (req as any).organizationId ||
     (req as any).user?.organizationId ||
     (req as any).tenantContext?.organizationId;
-  if (!orgId) throw new Error('Organization context required');
+  if (!orgId) throw new OrganizationContextRequired();
   return orgId;
+}
+
+/**
+ * The one place this router decides what a thrown error IS.
+ *
+ * Every handler here used to send every throw to `serverError`, so the two
+ * states that are not server faults were reported as one:
+ *
+ *   • A `ComputationRefusal` — the engine declining to invent a figure it was
+ *     not given the input for ("Diagnostic-accuracy sizing needs the expected
+ *     sensitivity") — came back as **500 INTERNAL_ERROR, "Something went wrong
+ *     while saving compute. The problem has been logged."** The engine's whole
+ *     refusal contract (computation-engine.ts `ComputationRefusal`, 2026-10-05)
+ *     was built so a caller could tell "I need one more input" from "the
+ *     computation broke", and this router collapsed the distinction on every
+ *     route. The AnA tool handlers had the same defect and were fixed on
+ *     2026-10-11 (`AnaToolExecutor.biostatsRefusal`); the HTTP surface was not,
+ *     so the browser could never show a refusal.
+ *   • A missing tenant was a 500 rather than the 403 `orgRequired` exists for.
+ *
+ * A refusal answers **422** with the engine's own sentence as `error` (free
+ * text, which `client/src/lib/queryClient.ts serverMessage` renders verbatim)
+ * and the machine-readable parts under `details`, so a client can both show the
+ * sentence and branch on the field.
+ */
+function biostatsError(res: Response, where: string, error: unknown): Response {
+  const e = error as { name?: unknown; code?: unknown; field?: unknown; message?: unknown };
+  if (e?.name === 'ComputationRefusal') {
+    return clientError(res, 422, String(e.message), {
+      refusal: true,
+      code: typeof e.code === 'string' ? e.code : 'missing_input',
+      ...(typeof e.field === 'string' ? { field: e.field } : {}),
+    });
+  }
+  if (e?.name === 'OrganizationContextRequired') return orgRequired(res);
+  return serverError(res, logger, where, error);
 }
 
 function resolveUserId(req: Request): number {
@@ -88,7 +132,7 @@ router.post('/workflow', authenticateToken, async (req: Request, res: Response) 
     return res.json(result);
   } catch (error: any) {
     logger.error('Workflow error', { err: error instanceof Error ? error.message : String(error) });
-    return serverError(res, logger, 'saving workflow', error);
+    return biostatsError(res, 'running the workflow', error);
   }
 });
 
@@ -108,7 +152,7 @@ router.post('/compute', authenticateToken, async (req: Request, res: Response) =
     return res.json(result);
   } catch (error: any) {
     logger.error('Compute error', { err: error instanceof Error ? error.message : String(error) });
-    return serverError(res, logger, 'saving compute', error);
+    return biostatsError(res, 'computing the design', error);
   }
 });
 
@@ -141,7 +185,7 @@ router.post('/compare', authenticateToken, async (req: Request, res: Response) =
     return res.json(result);
   } catch (error: any) {
     logger.error('Compare error', { err: error instanceof Error ? error.message : String(error) });
-    return serverError(res, logger, 'saving compare', error);
+    return biostatsError(res, 'comparing the scenarios', error);
   }
 });
 
@@ -160,7 +204,7 @@ router.post('/validate', authenticateToken, async (req: Request, res: Response) 
     return res.json(result);
   } catch (error: any) {
     logger.error('Validation error', { err: error instanceof Error ? error.message : String(error) });
-    return serverError(res, logger, 'validating', error);
+    return biostatsError(res, 'validating', error);
   }
 });
 
@@ -199,7 +243,7 @@ router.post('/document', authenticateToken, async (req: Request, res: Response) 
     return res.json(document);
   } catch (error: any) {
     logger.error('Document generation error', { err: error instanceof Error ? error.message : String(error) });
-    return serverError(res, logger, 'saving document', error);
+    return biostatsError(res, 'generating the document', error);
   }
 });
 
@@ -229,7 +273,7 @@ router.post('/judge', authenticateToken, async (req: Request, res: Response) => 
     return res.json({ judgment, domainAdaptation: domain, regulatoryCustomization: regulatory });
   } catch (error: any) {
     logger.error('Judgment error', { err: error instanceof Error ? error.message : String(error) });
-    return serverError(res, logger, 'saving judge', error);
+    return biostatsError(res, 'judging the design', error);
   }
 });
 
@@ -257,7 +301,7 @@ router.post('/compute-enhanced', authenticateToken, async (req: Request, res: Re
     return res.json({ validation, computation: result });
   } catch (error: any) {
     logger.error('Enhanced compute error', { err: error instanceof Error ? error.message : String(error) });
-    return serverError(res, logger, 'saving compute enhanced', error);
+    return biostatsError(res, 'computing the design', error);
   }
 });
 
@@ -276,7 +320,7 @@ router.post('/multiplicity', authenticateToken, async (req: Request, res: Respon
     return res.json(result);
   } catch (error: any) {
     logger.error('Multiplicity error', { err: error instanceof Error ? error.message : String(error) });
-    return serverError(res, logger, 'saving multiplicity', error);
+    return biostatsError(res, 'computing the multiplicity adjustment', error);
   }
 });
 
@@ -301,7 +345,7 @@ router.post('/missing-data-impact', authenticateToken, async (req: Request, res:
     return res.json(impact);
   } catch (error: any) {
     logger.error('Missing data impact error', { err: error instanceof Error ? error.message : String(error) });
-    return serverError(res, logger, 'saving missing data impact', error);
+    return biostatsError(res, 'computing the missing-data impact', error);
   }
 });
 
@@ -337,7 +381,7 @@ router.post('/sme-route', authenticateToken, async (req: Request, res: Response)
     return res.json(routing);
   } catch (error: any) {
     logger.error('SME routing error', { err: error instanceof Error ? error.message : String(error) });
-    return serverError(res, logger, 'saving sme route', error);
+    return biostatsError(res, 'routing to a specialist', error);
   }
 });
 
@@ -362,7 +406,7 @@ router.get('/sme-agents', authenticateToken, async (req: Request, res: Response)
     return res.json({ agents });
   } catch (error: any) {
     logger.error('SME agents list error', { err: error instanceof Error ? error.message : String(error) });
-    return serverError(res, logger, 'loading sme agents', error);
+    return biostatsError(res, 'loading sme agents', error);
   }
 });
 

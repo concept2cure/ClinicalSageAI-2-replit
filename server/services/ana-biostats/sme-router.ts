@@ -333,7 +333,17 @@ export class SMERouter {
     }
 
     if (sme.id === 'device_diagnostics_performance') {
-      framing.technical = `[Device/IVD Specialist]: ${judgment.roleExplanations.technical} ${comp.diagnosticMetrics ? `Diagnostic metrics: Se=${comp.diagnosticMetrics.sensitivity}, Sp=${comp.diagnosticMetrics.specificity}.` : ''}`;
+      // Only the figures the engine computed. An ROC design has no Se/Sp pair;
+      // before 2026-10-11 they were zeros and this read "Se=0, Sp=0".
+      const d = comp.diagnosticMetrics;
+      const metrics = d
+        ? [
+            typeof d.sensitivity === 'number' ? `Se=${d.sensitivity}` : null,
+            typeof d.specificity === 'number' ? `Sp=${d.specificity}` : null,
+            typeof d.auc === 'number' ? `AUC=${d.auc}` : null,
+          ].filter(Boolean)
+        : [];
+      framing.technical = `[Device/IVD Specialist]: ${judgment.roleExplanations.technical} ${metrics.length ? `Diagnostic metrics: ${metrics.join(', ')}.` : ''}`;
     }
 
     if (sme.id === 'adaptive_sensitivity') {

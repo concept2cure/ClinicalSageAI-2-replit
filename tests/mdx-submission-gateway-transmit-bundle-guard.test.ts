@@ -1164,3 +1164,41 @@ describe('POST transmit — one bundle per filed sequence (sweep F19)', () => {
     expect(transmitManifest()).toMatchObject({ filedSequenceRecorded: false, filedSequenceConflict: CONFLICT });
   });
 });
+
+/**
+ * GET /gateways/transmit-independence — the Transmit form's advance answer to
+ * "may I transmit this package?", from the transmit's own separation-of-duties
+ * check. The acting user is 777; a package's default creator is 4242.
+ */
+describe('GET /api/mdx/gateways/transmit-independence', () => {
+  it('marks the package the caller created, and leaves a colleague\'s package independent', async () => {
+    packages = [
+      { id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: 777 },
+      { id: 6, orgId: CALLER_ORG, bundle: goodDescriptor() },
+      { id: 8, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: null },
+    ];
+    const res = await request(makeApp()).get('/api/mdx/gateways/transmit-independence?packageIds=5,6,8');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ 5: 'author', 6: 'independent', 8: 'no-creator' });
+  });
+
+  it("another tenant's package reads exactly like one that does not exist — nothing disclosed", async () => {
+    packages = [{ id: 5501, orgId: OTHER_ORG, bundle: goodDescriptor(), createdBy: 777 }];
+    const res = await request(makeApp()).get('/api/mdx/gateways/transmit-independence?packageIds=5501,9999');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ 5501: 'no-creator', 9999: 'no-creator' });
+  });
+
+  it('refuses a malformed or unbounded id list (422), never a partial answer', async () => {
+    for (const q of ['', 'abc', '5,-1', '5;6', Array.from({ length: 101 }, (_, i) => i + 1).join(',')]) {
+      const res = await request(makeApp()).get(`/api/mdx/gateways/transmit-independence?packageIds=${q}`);
+      expect(res.status, `packageIds=${q.slice(0, 20)}`).toBe(422);
+    }
+  });
+
+  it('asks nothing of the gateway', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor(), createdBy: 777 }];
+    await request(makeApp()).get('/api/mdx/gateways/transmit-independence?packageIds=5');
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+});

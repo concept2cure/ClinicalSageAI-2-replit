@@ -1330,8 +1330,8 @@ export function createDevice510kFlow(): FlowDefinition {
               { value: 'steam', label: 'Steam (Moist Heat) — ISO 17665' },
               { value: 'dry_heat', label: 'Dry Heat — ISO 20857' },
               { value: 'vhp', label: 'Vaporized Hydrogen Peroxide' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'sal_level',

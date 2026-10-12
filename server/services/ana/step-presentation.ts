@@ -49,16 +49,17 @@ import {
   type StepTense,
 } from '@shared/ana/step-verbs';
 import { stepPresentationOf } from './tool-authorization.js';
-import { agentResultSummary } from './sub-agent-result.js';
+import { agentEndedByHoldExpiry, agentResultSummary } from './sub-agent-result.js';
 import { refusalOf } from './tool-trace.js';
 
 /**
  * How a step ended, as the stream knows it.
  *
- * 'incomplete' is a sub-agent (`run_agent`) that stopped at one of its budgets
- * — rounds, tokens or time (row 74, S5). What it found is usable, so it is
- * neither a success nor a failure, and the model is not told to try something
- * else. Only that tool produces it.
+ * 'incomplete' is a sub-agent (`run_agent`) that stopped before it finished its
+ * brief — at a budget (rounds, tokens, time) or at a step it kept repeating
+ * (row 74, S5). What it found is usable, so it is neither a success nor a
+ * failure, and the model is not told to try something else. Only that tool
+ * produces it.
  */
 export type StepStatus = 'success' | 'error' | 'not_found' | 'cancelled' | 'not_run' | 'incomplete';
 
@@ -335,14 +336,28 @@ export function finishedStep(
   outcome: StepOutcome & { why?: string },
 ) {
   const p = presentStep(call.name, call.input ?? {}, titles, outcome);
-  // An agent that stopped at a budget says which, in its own words: the
-  // sentence the live frame carries and the one a reopened turn reads come
-  // from the same summary, so the two can never describe the step differently.
-  const why = outcome.status === 'incomplete' && outcome.result ? agentResultSummary(outcome.result) : outcome.why;
+  // An agent says in its own words why it stopped: the sentence the live frame
+  // carries and the one a reopened turn reads come from the same result, so the
+  // two can never describe the step differently.
+  const why = agentWhy(outcome) ?? outcome.why;
   const message = stepMessage(outcome.status, outcome.heldBack === true, why, p.doing);
   const usedModel = outcome.usedModel ?? null;
   const shown = { source: p.source, preview: p.preview, facts: p.facts, usedModel, ...(message ? { message } : {}) };
   return { label: p.label, doing: p.doing, message, frame: { label: p.label, ...shown }, trace: shown };
+}
+
+/**
+ * Why an agent step ended, from the agent's own result: the summary for a
+ * budget stop, and the pause ceiling where that, not a person, ended it.
+ * Null for every other step and status.
+ */
+function agentWhy(outcome: StepOutcome & { why?: string }): string | undefined {
+  if (!outcome.result) return undefined;
+  if (outcome.status === 'incomplete') return agentResultSummary(outcome.result);
+  if (outcome.status === 'cancelled' && agentEndedByHoldExpiry(outcome.result)) {
+    return 'the run stayed paused past its limit';
+  }
+  return undefined;
 }
 
 /**
@@ -370,7 +385,9 @@ export function stepMessage(
   }
   if (status === 'error') return `AnA couldn't finish ${step} and continued without it.`;
   if (status === 'not_found') return `${Step} isn't available here, so AnA continued without it.`;
-  if (status === 'cancelled') return `You stopped ${step} before it finished.`;
+  // A cancelled step is the person's Stop unless the caller says what else
+  // ended it: a pause nobody answered is not something they did.
+  if (status === 'cancelled') return why ? `${Step} was ended because ${why}.` : `You stopped ${step} before it finished.`;
   if (status === 'not_run') return `${Step} did not run because the turn stopped first.`;
   if (status === 'incomplete') return `The agent's result is incomplete: ${why ?? step}.`;
   return null;

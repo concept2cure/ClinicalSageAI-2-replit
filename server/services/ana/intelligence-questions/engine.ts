@@ -18,6 +18,7 @@ import type {
   IntelligenceQuestionEvent,
   IntelligenceFlowCompleteEvent,
 } from './types.js';
+import { OTHER_POSITION, otherFieldId } from '../../../../shared/types/intelligence-questions.js';
 import type { FlowEngineContext, FlowStepResult } from './types.js';
 import { getFlowDefinition } from './flows/index.js';
 import { runIssueChecks, runCrossNodeAnalysis } from './issue-detector.js';
@@ -112,10 +113,18 @@ export function advanceFlow(
   }
 
   // Store answers
-  const updatedAnswers = { ...state.answers, [nodeId]: answers };
+  /* Positions the person wrote themselves are split out of the answer and
+     kept under `ownWords`, so nothing reading `answers` can mistake their
+     wording for a position AnA offered; the answer itself stays
+     OTHER_POSITION, which no listed option may be (founder's directive,
+     2026-10-12). */
+  const own = ownPositionsIn(currentNode, answers);
+  const updatedAnswers = { ...state.answers, [nodeId]: withoutOwnWords(answers) };
+  const updatedOwnWords =
+    Object.keys(own).length > 0 ? { ...(state.ownWords ?? {}), [nodeId]: own } : state.ownWords;
 
   // Run issue checks (node-level + cross-node cumulative)
-  const newIssues = runIssueChecks(currentNode, answers);
+  const newIssues = [...ownPositionNotices(currentNode, own, nodeId), ...runIssueChecks(currentNode, answers)];
   const allIssues = [...state.issues, ...newIssues];
 
   // Run cross-node analysis with the updated state
@@ -146,6 +155,7 @@ export function advanceFlow(
     const completeState: FlowState = {
       ...state,
       answers: updatedAnswers,
+      ...(updatedOwnWords ? { ownWords: updatedOwnWords } : {}),
       completedNodes,
       issues: allIssues,
       complete: true,
@@ -165,6 +175,7 @@ export function advanceFlow(
   const updatedState: FlowState = {
     ...state,
     answers: updatedAnswers,
+    ...(updatedOwnWords ? { ownWords: updatedOwnWords } : {}),
     completedNodes,
     issues: allIssues,
     currentNodeId: nextNodeId,
@@ -183,6 +194,54 @@ export function advanceFlow(
   );
 
   return { state: updatedState, event, completeEvent: null };
+}
+
+/** The person's own words for this node, by field, as the answer carried them. */
+function ownPositionsIn(node: QuestionNode, answers: Record<string, unknown>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const field of node.fields) {
+    const value = answers[field.id];
+    const took = value === OTHER_POSITION || (Array.isArray(value) && value.includes(OTHER_POSITION));
+    if (!took || !field.allowOther) continue;
+    const written = answers[otherFieldId(field.id)];
+    if (typeof written === 'string' && written.trim()) out[field.id] = written.trim();
+  }
+  return out;
+}
+
+/** The answer as the record keeps it: the companion text lives under ownWords, not here. */
+function withoutOwnWords(answers: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(answers)) {
+    if (!key.endsWith('__other')) out[key] = value;
+  }
+  return out;
+}
+
+/**
+ * What the record says about a position AnA did not offer. Not a warning:
+ * the person is entitled to their own answer, and the note exists so that
+ * nothing downstream reads it as one of the listed positions, and so a
+ * reviewer can see which answers were in the person's own words.
+ */
+function ownPositionNotices(
+  node: QuestionNode,
+  own: Record<string, string>,
+  nodeId: string,
+): DetectedIssue[] {
+  return Object.entries(own).map(([fieldId, words]) => {
+    const label = node.fields.find(f => f.id === fieldId)?.label ?? fieldId;
+    return {
+      checkId: `own_position_${fieldId}`,
+      severity: 'info' as const,
+      title: 'Your own wording',
+      message:
+        `AnA recorded your own words for ${label} — "${words}" — and has not treated them as one of the positions ` +
+        'she offered. Anything she drafts from this will say so.',
+      questionId: nodeId,
+      triggerValues: { [fieldId]: words },
+    };
+  });
 }
 
 /**
@@ -397,6 +456,7 @@ function buildCompleteEvent(
     flowName: definition.name,
     flowCategory: definition.category,
     answers: state.answers,
+    ...(state.ownWords ? { ownWords: state.ownWords } : {}),
     issues: state.issues,
     summary,
     suggestedActions,

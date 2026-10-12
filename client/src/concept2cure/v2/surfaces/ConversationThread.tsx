@@ -32,6 +32,10 @@ import '../styles/project-home-v2.css';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { AnaMarkdown } from '../AnaMarkdown';
 import { AnaMessageWarnings } from '../AnaMessageWarnings';
+import { AnaQuestionCard } from '../AnaQuestionCard';
+/* The server's own fast path for a structured interview answer (stream.ts):
+   it skips the model entirely and hands the payload to the engine. */
+const INTELLIGENCE_ANSWER_PREFIX = '[INTELLIGENCE_ANSWER]';
 import { CrlPremortemPanel } from '../../components/ana/CrlPremortemPanel';
 import { AnaGrounding } from '../AnaGrounding';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
@@ -108,6 +112,12 @@ function toTurn(m: AnaChatMessage): CtTurn {
      * other place the prompt is drawn, is by definition not on screen.
      */
     warnings: nonEmpty(m.warnings),
+    /* The interview question this turn asked, if it asked one. The engine has
+       emitted these since the flows landed and nothing drew them, so the
+       positions AnA resolved never reached the screen. */
+    question: m.intelligenceQuestion,
+    questionSessionId: m.intelligenceSessionId ?? null,
+    questionFlowState: m.intelligenceFlowState,
     /* Drawn by the right rail until it was deleted, and dropped here: a steer
        AnA accepted, and the pre-mortem the turn assembled. */
     interjections: nonEmpty(m.interjections),
@@ -255,6 +265,28 @@ function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: Insert
   );
 }
 
+/** The interview question this turn asked, drawn as positions (AnaQuestionCard). */
+function TurnQuestion({
+  turn,
+  onAnswer,
+  busy,
+}: {
+  turn: CtTurn;
+  onAnswer?: (payload: Record<string, unknown>) => void;
+  busy?: boolean;
+}) {
+  if (!turn.question || !onAnswer) return null;
+  return (
+    <AnaQuestionCard
+      question={turn.question}
+      sessionId={turn.questionSessionId}
+      flowState={turn.questionFlowState}
+      busy={busy}
+      onAnswer={onAnswer}
+    />
+  );
+}
+
 interface AnaTurnProps {
   turn: CtTurn;
   onRefine: () => void;
@@ -266,6 +298,10 @@ interface AnaTurnProps {
   onContinue?: () => void;
   /** Opens this turn's Summary: the side panel at this turn, or the sheet on a phone (S4). */
   onSummary?: () => void;
+  /** Submits an interview answer by the server's own fast path (AnaQuestionCard). */
+  onAnswer?: (payload: Record<string, unknown>) => void;
+  /** A turn is in flight, so the card's submit waits. */
+  busy?: boolean;
   /** The document canvas beneath this turn, when the turn drafted a document. */
   canvas?: {
     conversationId: string | null;
@@ -321,7 +357,7 @@ function TurnSteersAndPremortem({ turn }: { turn: CtTurn }) {
   );
 }
 
-function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, canvas, insertTarget, after }: AnaTurnProps) {
+function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, onAnswer, busy, canvas, insertTarget, after }: AnaTurnProps) {
   const a = turn.activity;
   return (
     <div className="ct-turn ct-ana">
@@ -381,6 +417,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, ca
         {/* What went wrong around the answer (a failed save, a timeout), as
             the rail shows it: this screen showed none (row 74, ADR-0015 §9). */}
         <AnaMessageWarnings warnings={turn.warnings} />
+        <TurnQuestion turn={turn} onAnswer={onAnswer} busy={busy} />
         <TurnSteersAndPremortem turn={turn} />
         {/* What was checked about the answer, directly under it: the engine's
             check of its specific claims against this turn's sources, then
@@ -1768,6 +1805,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                     onStartDemo={liveDrive?.onStartDemo}
                     onContinue={i === continueAt ? continueTurn : undefined}
                     onSummary={() => openSummary(anaChat.messages[i].id)}
+                    onAnswer={payload => { void sendTurn(`${INTELLIGENCE_ANSWER_PREFIX}${JSON.stringify(payload)}`); }}
+                    busy={anaChat.isStreaming}
                     insertTarget={insertTarget}
                     canvas={t.authoringDoc ? {
                       conversationId,

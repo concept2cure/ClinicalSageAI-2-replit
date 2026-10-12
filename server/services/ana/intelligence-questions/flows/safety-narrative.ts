@@ -315,8 +315,8 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
               { value: 'intramuscular', label: 'Intramuscular' },
               { value: 'topical', label: 'Topical' },
               { value: 'inhaled', label: 'Inhaled' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'duration_of_treatment_before_event',
@@ -361,8 +361,8 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             options: [
               { value: 'male', label: 'Male' },
               { value: 'female', label: 'Female' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'race_ethnicity',

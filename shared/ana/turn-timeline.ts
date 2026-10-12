@@ -31,8 +31,9 @@ import { STEP_FACT_NAMES, STEP_SOURCES } from './step-verbs';
 
 export type SourceKey = StepSource;
 /**
- * 'incomplete' is a sub-agent that stopped at one of its budgets (row 74, S5):
- * neither a success nor a failure, and the only status no other tool produces.
+ * 'incomplete' is a sub-agent that stopped before finishing its brief — at a
+ * budget, or at a step it kept repeating (row 74, S5): neither a success nor a
+ * failure, and the only status no other tool produces.
  */
 export type StepStatus = 'success' | 'error' | 'not_found' | 'cancelled' | 'not_run' | 'incomplete';
 export type Fact = StepFact;

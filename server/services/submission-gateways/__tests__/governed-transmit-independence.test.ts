@@ -27,7 +27,7 @@ vi.mock('../../../db', () => ({
   },
 }));
 
-import { assertTransmitterIndependent } from '../governed-transmit-checks';
+import { assertTransmitterIndependent, transmitIndependenceOf } from '../governed-transmit-checks';
 
 const ORG = 7;
 const PKG = 42;
@@ -94,5 +94,35 @@ describe('assertTransmitterIndependent', () => {
     const [sql, params] = h.calls[0];
     expect(String(sql)).toMatch(/FROM c2c_submission_packages WHERE id = \$1::int AND org_id = \$2/);
     expect(params).toEqual([String(PKG), ORG]);
+  });
+});
+
+/**
+ * transmitIndependenceOf — the same check, asked in advance for the Transmit
+ * form. It must answer what the transmit will do, and never turn "could not
+ * tell" into permission.
+ */
+describe('transmitIndependenceOf — the advance answer is the check\'s own answer', () => {
+  it('a colleague: independent', async () => {
+    h.creator = CREATOR;
+    expect(await transmitIndependenceOf(PKG, ORG, COLLEAGUE)).toBe('independent');
+  });
+
+  it('the creator: author', async () => {
+    h.creator = CREATOR;
+    expect(await transmitIndependenceOf(PKG, ORG, CREATOR)).toBe('author');
+  });
+
+  it('no recorded creator: no-creator', async () => {
+    h.creator = null;
+    expect(await transmitIndependenceOf(PKG, ORG, COLLEAGUE)).toBe('no-creator');
+  });
+
+  it('a failed lookup: unverified — never independent', async () => {
+    h.fail = { code: '08006', message: 'connection reset' };
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const verdict = await transmitIndependenceOf(PKG, ORG, COLLEAGUE);
+    quiet.mockRestore();
+    expect(verdict).toBe('unverified');
   });
 });

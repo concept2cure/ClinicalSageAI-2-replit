@@ -171,16 +171,28 @@ export interface ConditionalPowerScenarios {
   citation: string;
 }
 
+/** Where the caller would have got a design effect, named in the refusal. */
+const PLAN_DESIGN_DRIFT_SOURCE =
+  'the plan (efficacy rule designDrift, or a sample_size_reestimation adaptation effectSize)';
+
 /**
  * Conditional power under each of the three standard assumptions, explicitly
  * labelled. `designDrift` is θ under H1 (the design effect on the drift scale);
  * when it is not on record the H1 figure is null with a reason — never defaulted.
+ *
+ * `designDriftSource` names, in the refusal, where THIS caller would have got
+ * the design effect. The stored-plan path and the stateless interim route
+ * (routes/biostat-design-stats.ts POST /adaptive/interim) take it from
+ * different places, and a reason that names the wrong one sends the reader
+ * looking in the wrong file. It defaults to the plan wording, so the plan
+ * callers are unchanged.
  */
 export function conditionalPowerScenarios(
   testStatistic: number,
   informationFraction: number,
   finalCriticalValue: number,
   designDrift: number | null,
+  designDriftSource: string = PLAN_DESIGN_DRIFT_SOURCE,
 ): ConditionalPowerScenarios {
   const trendDrift = testStatistic / Math.sqrt(informationFraction);
   const hasDesign = designDrift !== null && Number.isFinite(designDrift);
@@ -203,9 +215,7 @@ export function conditionalPowerScenarios(
           label: 'Under H1, the design effect (θ = design drift)',
           drift: null,
           conditionalPower: null,
-          reason:
-            'No design effect is recorded on the plan (efficacy rule designDrift, or a ' +
-            'sample_size_reestimation adaptation effectSize); not computed rather than assumed.',
+          reason: `No design effect is recorded on ${designDriftSource}; not computed rather than assumed.`,
         },
     nullHypothesis: {
       assumption: 'null-hypothesis',

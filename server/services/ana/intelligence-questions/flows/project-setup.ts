@@ -11,6 +11,7 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { OTHER_POSITION } from '../../../../../shared/types/intelligence-questions.js';
 
 export function createProjectSetupFlow(): FlowDefinition {
   return {
@@ -225,8 +226,8 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'gastroenterology', label: 'Gastroenterology' },
               { value: 'gene_cell_therapy', label: 'Gene / Cell Therapy' },
               { value: 'medical_device', label: 'Medical Device' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'product_type',
@@ -247,8 +248,8 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'medical_device', label: 'Medical Device' },
               { value: 'combination_product', label: 'Drug-Device Combination' },
               { value: 'diagnostic', label: 'Diagnostic / IVD' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'indication',
@@ -271,8 +272,8 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'ophthalmic', label: 'Ophthalmic' },
               { value: 'implant', label: 'Implant' },
               { value: 'na_device', label: 'N/A (Device)' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             visibleWhen: { field: 'product_type', operator: 'neq', value: 'medical_device' },
           },
         ],
@@ -290,11 +291,11 @@ export function createProjectSetupFlow(): FlowDefinition {
         issueChecks: [
           {
             id: 'missing_therapeutic_area',
-            condition: { field: 'therapeutic_area', operator: 'eq', value: 'other' },
+            condition: { field: 'therapeutic_area', operator: 'eq', value: OTHER_POSITION },
             severity: 'info',
-            title: 'Therapeutic Area Not Specified',
+            title: 'A therapeutic area in your own words',
             message:
-              'Selecting a specific therapeutic area enables the platform to provide more relevant document templates, regulatory guidance, and competitive intelligence. Consider selecting the most appropriate therapeutic area for your product.',
+              'AnA has your wording and will use it. What she cannot do for an area she does not hold is offer its document templates, its regulatory guidance or its competitive intelligence — those are keyed to the listed areas. If one of them is close enough to work from, say which.',
           },
         ],
       },
@@ -329,8 +330,8 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'maa', label: 'MAA (Marketing Authorization Application — EU)' },
               { value: 'cta', label: 'CTA (Clinical Trial Application — EU/UK)' },
               { value: 'jnda', label: 'JNDA (Japan New Drug Application)' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'multi_country_submission',
@@ -372,11 +373,11 @@ export function createProjectSetupFlow(): FlowDefinition {
         issueChecks: [
           {
             id: 'no_regulatory_target',
-            condition: { field: 'submission_type', operator: 'eq', value: 'other' },
+            condition: { field: 'submission_type', operator: 'eq', value: OTHER_POSITION },
             severity: 'warning',
-            title: 'No Standard Regulatory Target Selected',
+            title: 'A submission type AnA does not hold',
             message:
-              'Selecting a specific submission type enables the platform to provide tailored document templates, formatting requirements, and regulatory intelligence. If your submission type is not listed, contact support for assistance with custom configurations.',
+              'AnA has your wording, but a submission type she does not hold carries no templates, no formatting rules and no validation profile — so nothing she drafts for it can be checked against the agency\u2019s requirements for that submission. Name the closest listed type if one applies, or treat anything drafted here as unvalidated.',
           },
         ],
       },
