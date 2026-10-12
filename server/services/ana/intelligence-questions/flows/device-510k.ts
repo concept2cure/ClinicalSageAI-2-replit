@@ -341,7 +341,7 @@ export function createDevice510kFlow(): FlowDefinition {
             severity: 'critical',
             title: 'A split predicate is not a permissible basis',
             message:
-              'FDA\u2019s 2014 substantial-equivalence guidance states that a split predicate — taking the indications for use from one device and the technological characteristics from another — is not a permissible basis for a 510(k). Expect a Refuse to Accept decision or a finding of not substantially equivalent. If the indications and the technology genuinely come from different devices, the routes are a De Novo request or a 510(k) for the new intended use.',
+              'FDA\u2019s 2014 substantial-equivalence guidance states that a split predicate — taking the indications for use from one device and the technological characteristics from another — is not a permissible basis for a 510(k). A submission resting on one invites a finding of not substantially equivalent. If the indications and the technology genuinely come from different devices, the routes are a De Novo request or a 510(k) for the new intended use.',
             reference: 'FDA, The 510(k) Program: Evaluating Substantial Equivalence (2014)',
           },
           {
