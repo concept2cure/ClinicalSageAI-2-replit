@@ -41,6 +41,8 @@ import { useSurfaceActionHandlers } from '../surfaceActions';
 import {
   CALCULATORS,
   buildRequestBody,
+  calculatorEndpoint,
+  calculatorResultKey,
   initialValues,
   isFieldVisible,
   type Calculator,
@@ -76,14 +78,28 @@ interface Defensibility {
   };
 }
 
-async function readData<T = any>(path: string, body: unknown): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
+/**
+ * POST and read the result out of the envelope the server used.
+ *
+ * `resultKey` exists because the two routers this surface drives answer
+ * differently: `/api/biostat` sends `{success, data}` and
+ * `/api/diagnostics-performance` sends `{result}`. Reading the wrong key
+ * yields null, which this surface renders as "Calculation failed" — a refusal
+ * where a result was returned. One parameter, declared per calculator in
+ * `biostatCalculators.ts`, rather than two copies of this function.
+ */
+async function readData<T = any>(
+  path: string,
+  body: unknown,
+  resultKey: 'data' | 'result' = 'data',
+): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
   try {
     const res = await apiRequest('POST', path, body);
     const parsed = (await res.json().catch(() => null)) as any;
     return {
       ok: res.ok,
       status: res.status,
-      data: (parsed?.data ?? null) as T | null,
+      data: (parsed?.[resultKey] ?? null) as T | null,
       // Servers here report failures as { error } or { message }; surfacing the
       // server's own words beats a generic "calculation failed", because the
       // usual cause is a domain constraint the form cannot check locally (an
@@ -311,7 +327,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
     }
     setBusy(true);
     try {
-      const res = await readData(`/api/biostat${calc.path}`, body);
+      const res = await readData(calculatorEndpoint(calc), body, calculatorResultKey(calc));
       if (generation !== calculationGeneration.current) return;
       if (!res.ok || res.data === null) {
         setResultNotice('Calculation failed. Compute again before inserting a result into a document.');
@@ -513,7 +529,7 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
       summary: `Biostatistics workbench, "${active.title}" selected — ${active.subtitle}.`,
       facts: {
         calculatorId: active.id,
-        endpoint: `/api/biostat${active.path}`,
+        endpoint: calculatorEndpoint(active),
         computes: active.about,
         requiredInputs: active.fields.filter(f => !f.optional).map(f => f.label),
         optionalInputs: active.fields.filter(f => f.optional).map(f => f.label),

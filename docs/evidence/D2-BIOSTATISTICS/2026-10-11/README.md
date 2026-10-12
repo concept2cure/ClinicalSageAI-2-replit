@@ -354,6 +354,69 @@ scoring path that no longer exists.
 | Submission Readiness statistical gate | — | **owed** (below) |
 | Reporting & analytics statistical reports | — | **owed** (below) |
 
+### The IVD analytical performance section (2026-10-12)
+
+A reachability sweep found the largest remaining gap, and it was not in the
+engines. `/api/diagnostics-performance` carries **eleven** CLSI analytical and
+clinical-performance routes — mounted, Zod-validated, role-gated, and
+reference-tested against the CLSI methods — reached by **no client code and no
+AnA tool**. For an IVD sponsor those eleven *are* the analytical performance
+section of a 510(k) or a PMA: the bench data the submission is mostly made of.
+
+| Route | Method | Pinned against |
+|---|---|---|
+| `/analytical/imprecision` | repeatability, between-run, within-lab SD/CV | CLSI EP05, one-way ANOVA |
+| `/analytical/detection-capability` | LoB, LoD | CLSI EP17, with the EP17-A2 bias correction K |
+| `/analytical/linearity` | deviation from linearity | CLSI EP06, polynomial fit |
+| `/analytical/method-comparison` | slope, intercept, decision-level bias | CLSI EP09, with Bland–Altman limits |
+| `/analytical/interference` | percent bias vs an allowable limit | CLSI EP07 |
+| `/analytical/reference-interval` | non-parametric limits with CIs | CLSI EP28, type-7 percentiles |
+| `/analytical/stability` | shelf life where the bound crosses spec | CLSI EP25 |
+| `/analytical/qualitative-dose-response` | C50 / C95 | dose-response fit |
+| `/clinical/accuracy` | sensitivity, specificity, PPV, NPV with CIs | 2×2 with exact intervals |
+| `/clinical/roc` | AUC with its interval | DeLong |
+| `/clinical/weighted-kappa` | ordinal agreement | linear / quadratic weights |
+
+All eleven are now workbench calculators, which took three changes:
+
+- **The registry gained a second router.** `Calculator` has `base` (default
+  `/api/biostat`) and `resultKey`, because that router answers `{result}` where
+  `/api/biostat` answers `{success, data}` — and reading the wrong key yields
+  null, which the workbench renders as "Calculation failed": a refusal shown
+  where a result was returned. `calculatorEndpoint` and `calculatorResultKey`
+  are the one definition; the workbench composed `'/api/biostat' + calc.path`
+  inline in two places before a second router existed.
+- **The registry split in three.** Eleven entries took it past its 500-line
+  budget, so the shared contract is in `biostatCalculatorContract.ts`, the CLSI
+  set in `biostatCalculatorsIvd.ts`, and `biostatCalculators.ts` holds the
+  design-statistics entries and the combined export — re-exporting both, so
+  every existing importer is unchanged. (Same shape as `design-gap.ts` on the
+  server: shared types in their own module, no import cycle.)
+- **Reachability is now proven for every calculator, not assumed.**
+  `server/routes/__tests__/biostat-calculator-contract.test.ts` (64 cases)
+  drives the real registry through the real `buildRequestBody` and posts the
+  result to both real routers. It asserts that every calculator's path is
+  served, that no required field is dropped on the way (a typo'd key vanishes
+  silently and the server then computes from its own defaults — invisible to a
+  screenshot and to a typecheck), and that each result is read out of the
+  envelope its own router used. Run with `resultKey` removed, the envelope case
+  fails: "clsi-imprecision answered 200 but has nothing under data".
+
+  It also caught a wrong assumption of its own: two pairs of calculators share
+  an endpoint (`/dose-finding/boin`, `/diagnostic/sizing`), legitimately,
+  distinguished by a `fixedBody` mode discriminator the server switches on. The
+  assertion is now that a shared endpoint must carry distinct discriminators,
+  which is the property that actually matters.
+
+**A correction to this record's own method.** An earlier pass of this sweep
+reported nine of these CLSI estimators as "reachable only from their own
+tests". That was wrong, and wrong for the second time in two days by the same
+mistake: a `grep | head -3` truncated the match list to three lines from one
+file, so the route that reaches them never appeared. The claim was checked
+again without the truncation before anything was built on it. A reachability
+claim is only as good as the search behind it, and `head` on a grep whose
+output feeds a conclusion is not a search.
+
 ## Owed, and why
 
 - **No pre-dispatch statistical gate.** `ectd/dispatch-readiness.ts` is
@@ -411,18 +474,17 @@ scoring path that no longer exists.
   audit row, so it is deliberately not something the stateless route pretends
   to do. That surface is the next piece of biostatistics work.
 
-  Everything else is reachable: all sixteen `/api/biostat` design-statistics
-  engines have a workbench calculator (only `/region-rules/*`, a regional-rules
-  catalog rather than a statistical method, has none), and the core sizing,
+  Everything else is reachable: **twenty-seven** calculators now cover all
+  sixteen `/api/biostat` design-statistics engines (only `/region-rules/*`, a
+  regional-rules catalog rather than a statistical method, has none) and all
+  eleven CLSI analytical and clinical-performance engines, and the core sizing,
   comparison, judgment, document and missing-data paths are reached from the
   biostatistics surface, the protocol Statistics tab and the AnA tools.
 
   A calculator is reachable only if the body its form builds is the body its
-  route accepts, and `biostatCalculators.ts` is data — so
-  `server/routes/__tests__/biostat-interim-calculator-contract.test.ts` drives
-  the real registry through the real `buildRequestBody` and posts the result to
-  the real router. That failure mode is invisible to a screenshot: the form
-  looks right and the server answers 200 from its own defaults.
+  route accepts, and the registry is data — so
+  `server/routes/__tests__/biostat-calculator-contract.test.ts` proves it for
+  every entry rather than for the ones someone happened to open.
 - **`sap_versions` records no lock time.** The audit trail now says so rather
   than substituting the creation time, but the honest answer is a `locked_at`
   column written by `lockVersion` — a migration-set entry, and under Rule 1 an
