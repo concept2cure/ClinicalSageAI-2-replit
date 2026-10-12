@@ -142,6 +142,45 @@ describe('a manager who may read the trail but not attest to it', () => {
   });
 });
 
+/**
+ * The attestation declares its own method, and the screen shows it (C-22).
+ *
+ * The surface claimed INTACT meant "nothing altered or removed". The service
+ * compares two STORED columns — each row's `previous_hash` against the prior
+ * row's `record_hash` — and never re-derives a hash from a row's fields, so an
+ * entry edited IN PLACE with its stored hashes left alone passes. The copy was
+ * corrected; the module headers on both sides still carried the overclaim, which
+ * is where the next reader starts.
+ *
+ * The scope now travels inside the HMAC-signed body, so it cannot be separated
+ * from the verdict or re-widened by a paraphrase.
+ */
+describe('the declared method', () => {
+  it('shows what the attestation establishes and what it does not', async () => {
+    serve({
+      verifies: {
+        method: 'stored-link-continuity',
+        covers: ['No entry was removed, inserted or reordered.'],
+        doesNotCover: ['The CONTENTS of an entry. No hash is re-derived from a row\u2019s fields.'],
+      },
+    });
+    await runIt();
+    const method = await screen.findByTestId('attestation-method');
+    expect(method.textContent).toMatch(/It establishes/);
+    expect(method.textContent).toMatch(/removed, inserted or reordered/);
+    // The half a reader would otherwise assume away.
+    expect(method.textContent).toMatch(/It does not establish/);
+    expect(method.textContent).toMatch(/CONTENTS of an entry/);
+  });
+
+  it('shows nothing rather than a scope it invented, on a server that sends none', async () => {
+    serve({});
+    await runIt();
+    await screen.findByTestId('attestation-result');
+    expect(screen.queryByTestId('attestation-method')).toBeNull();
+  });
+});
+
 describe('the verdict', () => {
   it('INTACT over a fully hashed trail says the verdict covers the whole trail', async () => {
     serve({});
