@@ -189,6 +189,23 @@ describe('the pathway question', () => {
   });
 });
 
+describe('the stage a device or diagnostics programme is at', () => {
+  it('offers a device or diagnostics programme the filing that permits the study', () => {
+    /* Same gap as the medicines list, in four more places: the catalogue held
+       the US IDE and nothing else, so a European device programme running a
+       clinical investigation, or a European assay running a performance
+       study, had no answer here either (2026-10-12 review). */
+    expect(valuesOf(drawnRouteField('EU')), 'MDR Art 62').toContain('EU_CLIN_INVESTIGATION');
+    expect(valuesOf(drawnRouteField('EU', 'diagnostic')), 'IVDR Art 58').toContain('EU_PERF_STUDY');
+    expect(valuesOf(drawnRouteField('US')), '21 CFR 812').toContain('US_IDE');
+    /* An IVD study runs under the same Part 812 — and is often exempt from it,
+       which the position says before it says anything else. */
+    const ide = drawnRouteField('US', 'diagnostic').options!.find(o => o.value === 'US_IDE')!;
+    expect(ide.label).toMatch(/not a route to market/);
+    expect(ide.commits).toMatch(/exempt from most of Part 812/);
+  });
+});
+
 describe('the medicines route question', () => {
   /**
    * The route question as a medicines project is actually drawn it: the agency
@@ -206,13 +223,42 @@ describe('the medicines route question', () => {
   };
 
   it('offers a small molecule the frame’s own list, in the frame’s order', () => {
-    expect(valuesOf(drawnSubmissionField('US', 'small_molecule'))).toEqual(['US_NDA', 'US_505B2', 'US_ANDA']);
+    expect(valuesOf(drawnSubmissionField('US', 'small_molecule'))).toEqual([
+      'US_NDA',
+      'US_505B2',
+      'US_ANDA',
+      /* And the filing a programme that has not reached an application yet is
+         actually making. The frame holds routes to market only, so before
+         this a phase 1 programme had nothing here to pick (2026-10-12
+         review). */
+      'US_IND',
+    ]);
   });
 
   it('offers an antibody a biologics licence and nothing under section 505', () => {
     const values = valuesOf(drawnSubmissionField('US', 'monoclonal_antibody'));
-    expect(values).toEqual(['US_BLA']);
+    expect(values).toEqual(['US_BLA', 'US_IND']);
     expect(values, 'an antibody is not approved under 505').not.toContain('US_NDA');
+  });
+
+  it('says the IND permits the study and not the sale, where a person reads it', () => {
+    const field = drawnSubmissionField('US', 'monoclonal_antibody');
+    const ind = field.options!.find(o => o.value === 'US_IND')!;
+    expect(ind.label, 'the label says so').toMatch(/not a route to market/);
+    expect(ind.commits).toMatch(/not to market it/);
+    expect(ind.authority).toMatch(/312\.20/);
+    expect(ind.caution, 'a US programme filing an IND is contradicted by nothing').toBeUndefined();
+  });
+
+  it('marks the other regulator’s investigational filing rather than hiding it', () => {
+    /* The regulator rule covers every position the catalogue annotates, so
+       the CTA needed no rule of its own — but a rule that has only been
+       reasoned about has not been seen to fire. */
+    const eu = drawnSubmissionField('EU', 'monoclonal_antibody');
+    const cta = eu.options!.find(o => o.value === 'EU_CTA')!;
+    expect(cta.caution, 'the CTA is the European filing for a European programme').toBeUndefined();
+    const us = drawnSubmissionField('US', 'monoclonal_antibody');
+    expect(us.options!.find(o => o.value === 'EU_CTA'), 'and FDA’s list is not the EU’s').toBeUndefined();
   });
 
   it('never offers a device route among the medicines ones, as the hand-written ten did', () => {
@@ -229,7 +275,7 @@ describe('the medicines route question', () => {
 
   it('offers the European routes to a European filing, and marks the ones the modality contradicts', () => {
     const field = drawnSubmissionField('EU', 'biosimilar');
-    expect(valuesOf(field)).toEqual(['EU_MAA', 'EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP']);
+    expect(valuesOf(field)).toEqual(['EU_MAA', 'EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP', 'EU_CTA']);
     const by = (value: string) => field.options!.find(o => o.value === value)!;
     expect(by('EU_BIOSIMILAR_MAA').caution, 'the route for a biosimilar').toBeUndefined();
     expect(by('EU_MAA').caution!.availability).toBe('needs_basis');

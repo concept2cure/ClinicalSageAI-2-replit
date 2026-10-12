@@ -177,6 +177,15 @@ this landed; these are the findings as reported, and each needs its own slice:
   unmarked, while the same product is honestly refused in the US;
 - the IVDR class option presents a recall-level paraphrase as checked Article
   48 authority, discarding the `basis` the platform keeps for exactly that;
-- `US_IND` is offered to nobody and the escape-hatch warning then says AnA
-  holds nothing for it, which is false;
+- ~~`US_IND` is offered to nobody and the escape-hatch warning then says AnA
+  holds nothing for it, which is false;~~ **repaired** —
+  `2026-10-12-investigational/`. The finding's wording needed a correction of
+  its own: a programme that states only a statute ("Biologic (BLA)") carries no
+  modality, takes the unnarrowed list and WAS offered the IND, so the accurate
+  statement is *a programme that states its modality was never offered it*. The
+  repair went wider than the finding: the catalogue annotated one
+  investigational filing out of five, so the EU CTA, the MDR clinical
+  investigation and the IVDR performance study did not exist as positions
+  either, and the coverage gate did not scan the `clinical_trial` family at
+  all;
 - an EU-only device programme is still required to state a US risk class.
