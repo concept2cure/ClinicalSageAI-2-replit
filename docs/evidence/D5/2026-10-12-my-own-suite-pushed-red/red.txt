@@ -1,0 +1,27 @@
+# At HEAD, after 5abe8101 landed.
+ server/services/__tests__/artifact-signed-target-binding.test.ts
+      Tests  5 failed | 106 passed (111)
+
+AssertionError: Expected values to be strictly equal:
++ actual - expected
++ 'ARTIFACT_ACT_CONTRACT'
+- 'ARTIFACT_CHANGED'
+ at runCase server/services/__tests__/fixtures/artifact-signed-target-harness.cjs:101
+
+# The harness's default expectation:
+#   else assert.equal(error.code,'ARTIFACT_CHANGED');
+#
+# The five cases, identified only after instrumenting the harness to report the
+# case name (the reporter truncates them to 'approved: supplied status update cann...'):
+   approved: null update payload refuses
+   approved: supplied status update cannot change tenant
+   approved: supplied status update cannot inject content
+   locked:   supplied status update cannot change tenant
+   locked:   supplied status update cannot inject content
+
+# NOT affected, and this is the point -- {status:'draft'} is a canonical column
+# with a wrong value, so it is a genuine conflict and still ARTIFACT_CHANGED:
+   approved: supplied status update cannot change status
+   locked:   supplied status update cannot change status
+
+# Found by a full local vitest run, not by CI: 9 files / 48 failures at 265ae17a5.

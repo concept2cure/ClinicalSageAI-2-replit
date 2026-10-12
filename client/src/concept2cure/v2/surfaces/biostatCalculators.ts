@@ -1,91 +1,22 @@
 /**
- * The design-statistics calculators, as data.
+ * Biostatistics workbench — the calculator registry.
  *
- * ── Why a registry and not fourteen forms ────────────────────────────────────
- * `server/routes/biostat-design-stats.ts` mounts fifteen deterministic
- * statistical engines under `/api/biostat`, and until now the workbench reached
- * exactly one of them (assurance). The other fourteen were running, tested and
- * unreachable from the product.
+ * The design-statistics calculators (/api/biostat), plus the combined
+ * `CALCULATORS` the workbench renders. The shared contract is in
+ * `biostatCalculatorContract.ts` and the CLSI analytical and clinical
+ * performance set in `biostatCalculatorsIvd.ts`; this module re-exports both
+ * so every existing importer is unchanged.
  *
- * Hand-writing fourteen more bespoke forms would have been ~1,500 lines of
- * near-duplicate JSX, and adding the sixteenth engine would cost another
- * hundred. Instead each calculator is declared here — endpoint, fields, and how
- * to shape the request — and one generic renderer in `BiostatWorkbench.tsx`
- * draws them all. Adding a calculator is a data change.
- *
- * ── The field names are not invented ─────────────────────────────────────────
- * Every `key` below matches what the route handler actually reads from
- * `req.body`, taken from the handler source rather than from its docstring.
- * Dotted keys (`prior.alpha`, `treatment.times`) build nested objects, which is
- * how those handlers expect them. A field the server ignores is worse than a
- * missing one: it silently implies the number had an effect.
- *
- * ── What is deliberately NOT here ────────────────────────────────────────────
- * `/region-rules/*` is a design-rule catalogue rather than a calculator (it
- * takes a structured design object and returns rule verdicts), so it does not
- * fit the numeric-form shape and is left to its own surface. Nothing else under
- * `/api/biostat` is omitted.
+ * Adding an engine is still a data entry rather than a new form.
  */
+export * from './biostatCalculatorContract';
+export { IVD_CALCULATORS } from './biostatCalculatorsIvd';
 
-export type FieldKind =
-  | 'number'
-  | 'int'
-  | 'select'
-  | 'numlist'
-  | 'text'
-  /** One record per line; the calculator's `parseRows` turns them into objects. */
-  | 'rows';
+import { SPENDING, PROCEDURES, type Calculator, type CalculatorField } from './biostatCalculatorContract';
+import { IVD_CALCULATORS } from './biostatCalculatorsIvd';
 
-export interface CalculatorField {
-  /** Request body key. Dotted paths build nested objects: `prior.alpha`. */
-  key: string;
-  label: string;
-  kind: FieldKind;
-  /** Omitted from the request when left blank. Required fields block submission. */
-  optional?: boolean;
-  placeholder?: string;
-  /** Shown under the input — units, ranges, and what the number means. */
-  hint?: string;
-  options?: Array<{ value: string; label: string }>;
-  /** Only render this field when another field currently holds one of these values. */
-  showWhen?: { key: string; equals: string[] };
-}
-
-export interface Calculator {
-  id: string;
-  title: string;
-  /** One line on what question this answers for a study team. */
-  subtitle: string;
-  /** Path under /api/biostat. */
-  path: string;
-  method?: 'POST' | 'GET';
-  /** Longer framing shown above the form: what it computes and what it assumes. */
-  about: string;
-  fields: CalculatorField[];
-  /**
-   * Extra body keys that are constant for this calculator (e.g. a mode
-   * discriminator the server switches on).
-   */
-  fixedBody?: Record<string, unknown>;
-  /** Turn a `rows` field's parsed number lists into the shape the server wants. */
-  parseRows?: Record<string, (rows: number[][]) => unknown>;
-}
-
-const SPENDING = [
-  { value: 'obrien-fleming', label: "O'Brien–Fleming" },
-  { value: 'pocock', label: 'Pocock' },
-  { value: 'linear', label: 'Linear (Pocock-like)' },
-];
-
-const PROCEDURES = [
-  { value: 'bonferroni', label: 'Bonferroni' },
-  { value: 'holm', label: 'Holm (step-down)' },
-  { value: 'hochberg', label: 'Hochberg (step-up)' },
-  { value: 'fixed-sequence', label: 'Fixed sequence' },
-  { value: 'weighted-bonferroni', label: 'Weighted Bonferroni' },
-];
-
-export const CALCULATORS: Calculator[] = [
+/** The design-statistics engines, under /api/biostat. */
+export const DESIGN_STATS_CALCULATORS: Calculator[] = [
   {
     id: 'assurance',
     title: 'Assurance (Bayesian power)',
@@ -112,6 +43,25 @@ export const CALCULATORS: Calculator[] = [
       { key: 'spendingFunction', label: 'Spending function', kind: 'select', options: SPENDING, hint: "O'Brien–Fleming spends little early; Pocock spends evenly." },
       { key: 'alpha', label: 'Alpha (one-sided)', kind: 'number', optional: true, placeholder: '0.025', hint: 'Default 0.025.' },
       { key: 'driftGrid', label: 'Drift grid', kind: 'numlist', optional: true, placeholder: '0, 1, 2, 3, 4', hint: 'Standardized drift values to evaluate. Default 0–4.' },
+    ],
+  },
+  {
+    id: 'interim-look',
+    title: 'Interim look — boundary and conditional power',
+    subtitle: 'What a DSMB reads at an interim: the boundary, and whether the trial still wins',
+    path: '/adaptive/interim',
+    about:
+      "Solves the Lan–DeMets boundary at the look you name, then — given the z observed there — the probability the trial still succeeds at the final analysis under three explicitly labelled assumptions (the current trend, the design effect, and H0), plus the Bayesian predictive probability. Conditional power is the B-value form: CP(θ) = 1 − Φ((c − Z_t√t − θ(1 − t))/√(1 − t)). Stateless: nothing is recorded, and nothing here is an interim DECISION — a binding look belongs in the adaptive plan with its own ceremony. With no design effect supplied the H1 figure reads 'not computed', with the reason; it is never defaulted.",
+    fields: [
+      { key: 'informationFractions', label: 'Information fractions', kind: 'numlist', placeholder: '0.5, 1', hint: 'The design\u2019s looks. Strictly increasing, and the last must be 1 \u2014 the final analysis, whose critical value both powers are computed against.' },
+      { key: 'lookNumber', label: 'Look number', kind: 'int', placeholder: '1', hint: 'Which look you are reading, 1-based, into the fractions above.' },
+      { key: 'observedZ', label: 'Observed Z at that look', kind: 'number', placeholder: '2.0', hint: 'The z-statistic from the interim analysis, on the one-sided upper scale.' },
+      { key: 'spendingFunction', label: 'Spending function', kind: 'select', options: SPENDING, hint: "O\u2019Brien\u2013Fleming spends little early; Pocock spends evenly." },
+      { key: 'alpha', label: 'Alpha (one-sided)', kind: 'number', optional: true, placeholder: '0.025', hint: 'Default 0.025.' },
+      { key: 'designEffect.standardizedEffect', label: 'Design effect (d)', kind: 'number', optional: true, placeholder: '0.4', hint: 'The effect the study was powered for, as a standardized difference. With n per arm it gives the H1 conditional power; leave both blank and that figure reads \u201cnot computed\u201d rather than being assumed.' },
+      { key: 'designEffect.nPerArm', label: 'n per arm at the final analysis', kind: 'int', optional: true, placeholder: '120', hint: 'Needed with the design effect: \u03b8 = d\u00b7\u221a(n/2).' },
+      { key: 'prior.mean', label: 'Prior mean on \u03b8', kind: 'number', optional: true, placeholder: '2.8', hint: 'Predictive power only. Both prior fields or neither; omitted means a flat prior.' },
+      { key: 'prior.sd', label: 'Prior SD on \u03b8', kind: 'number', optional: true, placeholder: '1.0', hint: 'Must be positive.' },
     ],
   },
   {
@@ -385,6 +335,10 @@ export const CALCULATORS: Calculator[] = [
     },
   },
 ];
+
+/** Every calculator the workbench renders, in the order it renders them. */
+export const CALCULATORS: Calculator[] = [...DESIGN_STATS_CALCULATORS, ...IVD_CALCULATORS];
+
 
 /** Set a possibly-dotted path on an object, creating intermediate objects. */
 export function setPath(target: Record<string, any>, path: string, value: unknown): void {

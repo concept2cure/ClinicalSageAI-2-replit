@@ -1,0 +1,24 @@
+### The suite
+ Test Files  1 passed (1)
+      Tests  111 passed (111)
+
+### The signed-act family
+#  artifact-signed-target-binding, artifact-approval-ceremony.pglite.integration,
+#  artifact-status-lock-covers-approval, ana-signed-artifact-act.pglite.integration,
+#  artifact-approval-review-integrity.pglite
+ Test Files  5 passed (5)
+      Tests  245 passed (245)
+
+### Shown still to bite
+# validatedStatusChanges reverted to ArtifactActConflictError for a wrong
+# column set (the pre-5abe8101 behaviour):
+      Tests  5 failed | 106 passed (111)
+  approved: supplied status update cannot inject content: refusal code
+  approved: supplied status update cannot change tenant: refusal code
+  locked:   supplied status update cannot inject content: refusal code
+  locked:   supplied status update cannot change tenant: refusal code
+  approved: null update payload refuses: refusal code
+# Diagnostic reverted; git diff --stat on artifact-signed-act.ts clean.
+
+### Scope
+# Two test fixtures changed. No production file touched.
