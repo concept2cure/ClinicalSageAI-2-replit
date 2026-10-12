@@ -64,9 +64,17 @@ The plan was written against the 2026-10-05 stream. A read-only sweep
   mount in `register-advanced-platform-routes.ts`, and its 7-pin entry in
   `scripts/ci/unapproved-model-pins-baseline.json`. A retirement note was
   added to `C2C_ROUTE_SURFACE_CALLER_MATRIX.md` §3.6.
-- **History search:** `git log --all --diff-filter=D -- 'server/routes/*swarm*'`
-  returns nothing — no agent-swarm server route was ever deleted and rebuilt.
-  No file under `client/` references `/api/agent-swarm` (asserted by the gate).
+- **History search, and what this clone can prove.** This checkout is a
+  shallow clone: 993 commits, the oldest reachable being 2026-09-28. On that
+  history, `git log --all --diff-filter=D -- 'server/routes/*swarm*'` returns
+  only this change's own deletion, and `git log -S'api/agent-swarm' -- client/`
+  returns nothing. So the working agreement's search finds **no earlier
+  deletion of an agent-swarm server route, and no client caller, within
+  reachable history** — it cannot speak for commits before 2026-09-28. What is
+  established directly, by grep over the tree: no client file, mount, baseline
+  entry or gate references the route today (the gate asserts the client half).
+  Raised by the review as INF-39 and corrected here rather than left as an
+  unfalsifiable claim.
 - **Replacement, named by path, without overclaiming.** The route advertised a
   submission-drafting swarm with human approval. `run_agent` only reads: it
   cannot draft, compile or approve.
@@ -111,7 +119,33 @@ pins the stream's `tool_result` emit by source. Its regex required
 result without its record-only trace and for every other tool is `resultStr`
 itself. The regex accepts either, and says why in place.
 
-## Still not reachable in production
+## Still not reachable in production, and what must hold first
 
-`ANA_ENABLE_SUB_AGENTS` is off in production until the S7 live capture is
-filed (ADR-0015 §2). Outside production this change makes sub-agents live.
+`ANA_ENABLE_SUB_AGENTS` is off in production until **both** of these are done.
+Outside production this change makes sub-agents live.
+
+1. **The S7 live capture and the cost read** (ADR-0015 §2).
+2. **The child rate sub-bucket** (ADR-0015 §5), which is **not built**. Raised
+   by the review as DP-87, and the earlier wording of this section — which
+   named only the capture — was an overclaim. Today a child's gateway calls are
+   charged to the organisation's own 100-per-minute bucket with no sub-bucket:
+   a worst-case turn is 42 child calls plus the parent's, so a burst of agents
+   can exhaust the tenant's bucket and the refusal then lands on the parent's
+   next round and on colleagues in the same organisation. The process-wide live
+   cap (10) and the per-organisation live cap (8) are built, so cross-tenant
+   starvation is bounded; this gap is the tenant's own turn. Nothing mechanical
+   ties the environment variable to this evidence — that is a deploy-time
+   control, named here so it is not forgotten.
+
+## Known, disclosed, and left to S6 (the client's agent rows)
+
+- **A budget-stopped agent is counted and drawn as a failure on the client.**
+  The server says plainly that it is not one, and the row's own sentence is
+  right, but `AnaToolCall.status` has no value for it, so the glyph and the
+  folded line's "N failed" count it as failed. The Summary header says "did
+  not complete", so the two disagree. Reachable outside production now.
+- **A `run_agent` step's source reads "Project"** whatever the child actually
+  read, because `STEP_SOURCES` has no value for an agent; a research agent that
+  searched PubMed, ClinicalTrials.gov and openFDA is counted as a project
+  source. S6 draws the child's own steps, which is where its real sources
+  belong.

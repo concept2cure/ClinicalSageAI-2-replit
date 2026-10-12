@@ -134,8 +134,8 @@ export function createBlaSubmissionFlow(): FlowDefinition {
               { value: 'blood_product', label: 'Blood / Plasma-Derived Product' },
               { value: 'recombinant_protein', label: 'Recombinant Protein' },
               { value: 'enzyme_replacement', label: 'Enzyme Replacement Therapy' },
-              { value: 'other', label: 'Other Biological Product' },
             ],
+            allowOther: { label: 'Other Biological Product' },
           },
           {
             id: 'therapeutic_area',
@@ -150,8 +150,8 @@ export function createBlaSubmissionFlow(): FlowDefinition {
               { value: 'neurology', label: 'Neurology' },
               { value: 'ophthalmology', label: 'Ophthalmology' },
               { value: 'cardiovascular', label: 'Cardiovascular' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'accelerated_pathway',
@@ -327,8 +327,8 @@ export function createBlaSubmissionFlow(): FlowDefinition {
               { value: 'viral_vector', label: 'Viral Vector Production System' },
               { value: 'autologous_cell', label: 'Patient-Derived Cells (Autologous)' },
               { value: 'allogeneic_cell', label: 'Donor-Derived Cells (Allogeneic)' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'cell_line_origin',
@@ -754,8 +754,8 @@ export function createBlaSubmissionFlow(): FlowDefinition {
               { value: 'size_exclusion', label: 'Size Exclusion Chromatography (SEC)' },
               { value: 'viral_filtration', label: 'Virus Filtration (20nm Nanofiltration)' },
               { value: 'uf_df', label: 'Ultrafiltration / Diafiltration (UF/DF)' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'process_related_impurities',
@@ -1027,8 +1027,8 @@ export function createBlaSubmissionFlow(): FlowDefinition {
               { value: 'mouse', label: 'Mouse (wild-type or transgenic)' },
               { value: 'rat', label: 'Rat' },
               { value: 'transgenic', label: 'Transgenic / Humanized Animal Model' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'species_selection_justification',
@@ -1104,8 +1104,8 @@ export function createBlaSubmissionFlow(): FlowDefinition {
               { value: 'rat', label: 'Rat' },
               { value: 'mouse', label: 'Mouse' },
               { value: 'rabbit', label: 'Rabbit' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'repeat_dose_duration',

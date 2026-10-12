@@ -30,7 +30,7 @@ import {
   runPipelineForRole,
 } from '../services/biostatistics-judgment';
 import type { StudyDesignInput, StakeholderRole, StatisticalArtifactType } from '../services/biostatistics-judgment';
-import { serverError } from '../lib/api-response';
+import { clientError, serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
 const collaborativeSapService = new CollaborativeSapService();
@@ -519,7 +519,14 @@ router.post('/sap/:sapVersionId/lock', authMiddleware, async (req: Request, res:
   try {
     const orgId = resolveOrganizationId(req);
     const userId = resolveUserId(req);
+    /* A non-numeric id used to reach the service as NaN and surface as a 500
+       from Postgres (`id = NaN`). `userId` is resolved and not passed: the
+       service records no locker, which is noted beside the route. */
+    void userId;
     const sapVersionId = Number(req.params.sapVersionId);
+    if (!Number.isInteger(sapVersionId) || sapVersionId <= 0) {
+      return clientError(res, 400, 'A SAP version id must be a positive integer.');
+    }
 
     const result = await collaborativeSapService.lockVersion(sapVersionId, orgId);
     res.json({ success: true, data: result });

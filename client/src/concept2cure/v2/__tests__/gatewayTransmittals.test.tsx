@@ -1075,3 +1075,66 @@ describe('GatewayTransmittals — signing authority', () => {
     expect(screen.queryByText(/HTTP 403/)).toBeNull();
   });
 });
+
+/**
+ * Separation of duties, said where the package is chosen. The transmit refuses
+ * the package's creator only after the password is verified, so the picker
+ * marks a package the signer created — from the server's dry-run of that same
+ * check, never a client-side comparison of user ids.
+ */
+describe('GatewayTransmittals — the picker says which packages this signer may not transmit', () => {
+  const PKGS = [
+    { id: 5, packageId: 'p-5', title: 'IND 0000', status: 'locked' },
+    { id: 6, packageId: 'p-6', title: 'IND 0001', status: 'locked' },
+    { id: 8, packageId: 'p-8', title: 'Legacy', status: 'locked' },
+  ];
+  const optionLabels = () =>
+    ((globalThis as any).__c2cFormConfig.fields.find((f: any) => f.key === 'packageId')?.options ?? [])
+      .map((o: any) => String(o.label));
+
+  function serve(independence: unknown, independenceOk = true) {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'GET' && url === '/api/submission-ops/packages') return env(PKGS);
+      if (method === 'GET' && url.startsWith('/api/mdx/gateways/transmit-independence')) {
+        return independenceOk ? env(independence) : ({ ok: false, status: 500, json: async () => ({ error: 'boom' }) } as Response);
+      }
+      return env(null);
+    });
+  }
+
+  it('marks the package the signer created, and the one with no recorded creator', async () => {
+    serve({ 5: 'author', 6: 'independent', 8: 'no-creator' });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    await waitFor(() =>
+      expect(apiRequest.mock.calls.some((c) => String(c[1]).includes('transmit-independence?packageIds=5,6,8'))).toBe(true),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    const labels = optionLabels();
+    expect(labels.find((l: string) => l.startsWith('#5'))).toMatch(/you created this; a colleague must transmit it/);
+    expect(labels.find((l: string) => l.startsWith('#6'))).not.toMatch(/you created|no creator/);
+    expect(labels.find((l: string) => l.startsWith('#8'))).toMatch(/no creator recorded; it cannot be transmitted/);
+  });
+
+  it('marks nothing when the answer could not be read — unknown is not "you cannot"', async () => {
+    serve(null, false);
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    expect(optionLabels().join(' | ')).not.toMatch(/you created|no creator/);
+  });
+
+  it('the assemble form is not marked — only transmitting is refused to the creator', async () => {
+    serve({ 5: 'author', 6: 'independent', 8: 'no-creator' });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    await waitFor(() =>
+      expect(apiRequest.mock.calls.some((c) => String(c[1]).includes('transmit-independence'))).toBe(true),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    expect(optionLabels().join(' | ')).not.toMatch(/you created|no creator/);
+  });
+});
+
