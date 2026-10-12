@@ -30,6 +30,10 @@ import {
 import type { PredictionInput } from '../services/report-os/prediction/types';
 import { runDeficiencyRiskForDraft } from '../services/report-os/prediction/model-adapters';
 import { projectsInOrg, submissionInProject, workspaceIsOrganisations, WORKSPACE_NOT_IN_ORGANIZATION } from '../services/report-os/ownership';
+import {
+  scheduledReportsEntitled,
+  scheduledReportsRefusal,
+} from '../services/report-os/scheduling/entitlement.js';
 import { requireReportEntitlement } from '../services/report-os/entitlement-map';
 import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
 import {
@@ -406,6 +410,17 @@ router.post('/subscriptions', async (req: Request, res: Response) => {
     // organisation's (services/report-os/ownership.ts).
     if (!(await workspaceIsOrganisations(organizationId, parsed.data.clientWorkspaceId))) {
       return res.status(403).json(WORKSPACE_NOT_IN_ORGANIZATION);
+    }
+
+    /* The sweep re-checks this at FIRE time and skips a subscription whose org
+       is not entitled (scheduling/worker.ts planSweep). Nothing checked it at
+       CREATE time, so a standard-plan org could create a schedule the screen
+       showed as Active and the sweep then skipped on every tick, for ever,
+       silently (coverage review C-26a). One predicate answers both, so the two
+       verdicts cannot drift (scheduling/entitlement.ts). */
+    const gate = await scheduledReportsEntitled(organizationId);
+    if (!gate.entitled) {
+      return res.status(403).json(scheduledReportsRefusal(gate));
     }
 
     // Org and creator are bound from the session, never the body.
