@@ -39,12 +39,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import dotenv from 'dotenv';
 import { canonicalPqClaims, supportsPassedPq } from './lib/pq-claim-verification.mjs';
-
-dotenv.config({ quiet: true });
+import { loadReadinessEnv, readinessEnvNotice } from './lib/readiness-env.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+/* This used to be `dotenv.config({ quiet: true })`, which merged the
+   repository's gitignored development .env into process.env before any row was
+   judged. Row `flag-rls` — "RLS enforcement (RLS_ENFORCE=on)", severity
+   blocker, owner "Ops (deploy env)" — therefore read `ready` off a developer's
+   laptop, and the headline moved with the shell's cwd (6/18 from the repo root,
+   5/19 from anywhere else) because dotenv resolves .env from process.cwd().
+   Both contradict this file's own design contract: "Nothing is ever reported
+   ready on the strength of a comment, a doc, or an intention."
+   Local loading is still available, opt-in and labelled. */
+const readinessEnv = loadReadinessEnv({ repoRoot });
 const env = process.env;
 
 const JSON_MODE = process.argv.includes('--json');
@@ -1007,6 +1016,11 @@ const advisories = rows.filter((r) => r.severity === 'advisory' && r.status !== 
 const summary = {
   generatedAt: new Date().toISOString(),
   nodeEnv: env.NODE_ENV || '(unset)',
+  /* Whose environment produced this verdict. A reader comparing two runs must
+     be able to see that one of them included a local file. */
+  localEnvLoaded: readinessEnv.localEnvLoaded,
+  localEnvPath: readinessEnv.localEnvLoaded ? readinessEnv.envPath : null,
+  localEnvKeys: readinessEnv.keys,
   total: rows.length,
   ready: rows.filter((r) => r.status === 'ready').length,
   blocked: rows.filter((r) => r.status === 'blocked').length,
@@ -1021,6 +1035,7 @@ if (JSON_MODE) {
   const mark = (s) => (s === 'ready' ? '[x]' : s === 'unknown' ? '[?]' : '[ ]');
   console.log('GA readiness report — blocker status from env + asset presence');
   console.log(`Generated ${summary.generatedAt}   NODE_ENV=${summary.nodeEnv}`);
+  console.log(readinessEnvNotice(readinessEnv));
   console.log('Runbook: docs/GA_OPS_PROCUREMENT_RUNBOOK_2026-08.md');
   console.log('='.repeat(76));
 

@@ -89,6 +89,75 @@ function assessment(over: Record<string, unknown> = {}) {
 
 const posted: Array<{ path: string; body: any }> = [];
 
+/* The deterministic statistical engine. The surface computes nothing in the
+   browser: it posts the design to /api/ana-biostats/compute and renders the
+   document /api/ana-biostats/document generates from that same result. These
+   two are routed BEFORE `posted` is recorded, so `posted` stays a record of
+   governed WRITES. The figures are deliberately not the bridge assessment's —
+   the bridge panel shows the server's sizing for the persisted design, and the
+   engine panel shows the engine's sizing for what is on screen; they are
+   different reads and must not be confused for one another. */
+const ENGINE_COMPUTE = {
+  validation: { valid: true, normalizedInput: SIZED_INPUT, warnings: [], errors: [], prefilled: [] },
+  computation: {
+    method: 'Two-sample t-test (ANCOVA-adjusted)',
+    sampleSize: { perGroup: 210, total: 420, groups: 2 },
+    power: 0.9012, effectSize: 0.4, alpha: 0.04,
+    adjustedSampleSize: 263, adjustedTotal: 526, attritionAdjusted: true,
+    formula: 'n per group = 2 * sigma^2 * (z_a + z_b)^2 / delta^2',
+    assumptions: [],
+  },
+  judgment: {
+    overallVerdict: 'adequate', overallRisk: 'low', actionRecommendation: 'proceed',
+    confidence: { level: 'high', score: 86, factors: [], limitations: [] },
+    dimensions: [], fragility: { fragilityIndex: 25, category: 'robust', sensitiveParameters: [], narrative: '' },
+    endpointMethodFit: { fit: 'strong', suggestedMethod: 'ANCOVA', currentMethod: 'Two-sample t-test', rationale: '', alternatives: [] },
+    escalationReasons: [], roleExplanations: { technical: '', clinical: '', regulatory: '', executive: '' },
+  },
+  domain: { track: 'biotech_pharma', methodSuggestions: [], designConsiderations: [], endpointGuidance: [], regulatoryNotes: [], riskFactors: [] },
+};
+
+const engineDocument = (type: string) => ({
+  type,
+  title: type,
+  content: '# ' + type + '\n\n## Sample Size Determination\n\n- **Total (adjusted)**: 526\n',
+  version: 1,
+  status: 'draft',
+  provenance: { engineVersion: '1.0.0' },
+});
+
+/** The engine's document for the chosen type is on screen. */
+const engineDocReady = (type: string) =>
+  waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent ?? '').toContain(type));
+
+/** The engine's two routes, or null when this is not one of them. */
+function engineRoute(method: string, path: string, body?: any) {
+  if (method !== 'POST') return null;
+  if (path === '/api/ana-biostats/compute') {
+    return { ok: true, status: 200, json: async () => ENGINE_COMPUTE };
+  }
+  if (path === '/api/ana-biostats/document') {
+    return { ok: true, status: 200, json: async () => engineDocument(String(body?.documentType ?? '')) };
+  }
+  return null;
+}
+
+/** The governed WRITES this surface makes, recorded in `posted` as they go. */
+function writeRoute(path: string, body: any, opts: { applyOk?: boolean }) {
+  posted.push({ path, body });
+  if (path.endsWith('/apply-sample-size')) {
+    return opts.applyOk === false
+      ? { ok: false, status: 422, json: async () => ({ error: 'CANNOT_SIZE', details: { message: 'The design cannot be sized until its blocking gaps are resolved.' } }) }
+      : { ok: true, status: 200, json: async () => ({ data: { studyId: 'STUDY-1', plannedSampleSize: 526, power: 0.9, actionId: 'act_1', auditId: 'aud_1', sha256Chain: 'c' } }) };
+  }
+  if (path.endsWith('/tasks')) {
+    return { ok: true, status: 200, json: async () => ({ data: { created: (body.keys as string[]).map((k: string) => ({ taskId: 'TASK-' + k, key: k })), skipped: [] } }) };
+  }
+  if (path === '/api/authoring/docs') return { ok: true, status: 200, json: async () => ({ document: { id: 'doc-1' } }) };
+  if (path === '/api/authoring/sections') return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-1' } }) };
+  return null;
+}
+
 function route(opts: { assessment?: Record<string, unknown>; applyOk?: boolean } = {}) {
   posted.length = 0;
   apiRequest.mockImplementation(async (method: string, path: string, body?: any) => {
@@ -110,18 +179,11 @@ function route(opts: { assessment?: Record<string, unknown>; applyOk?: boolean }
     if (method === 'GET' && path.startsWith('/api/ana-biostats/governed-documents')) {
       return { ok: true, status: 200, json: async () => ({ success: true, data: [] }) };
     }
+    const engine = engineRoute(method, path, body);
+    if (engine) return engine;
     if (method === 'POST') {
-      posted.push({ path, body });
-      if (path.endsWith('/apply-sample-size')) {
-        return opts.applyOk === false
-          ? { ok: false, status: 422, json: async () => ({ error: 'CANNOT_SIZE', details: { message: 'The design cannot be sized until its blocking gaps are resolved.' } }) }
-          : { ok: true, status: 200, json: async () => ({ data: { studyId: 'STUDY-1', plannedSampleSize: 526, power: 0.9, actionId: 'act_1', auditId: 'aud_1', sha256Chain: 'c' } }) };
-      }
-      if (path.endsWith('/tasks')) {
-        return { ok: true, status: 200, json: async () => ({ data: { created: (body.keys as string[]).map((k) => ({ taskId: 'TASK-' + k, key: k })), skipped: [] } }) };
-      }
-      if (path === '/api/authoring/docs') return { ok: true, status: 200, json: async () => ({ document: { id: 'doc-1' } }) };
-      if (path === '/api/authoring/sections') return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-1' } }) };
+      const write = writeRoute(path, body, opts);
+      if (write) return write;
     }
     return { ok: true, status: 200, json: async () => ({ data: [] }) };
   });
@@ -206,6 +268,7 @@ describe('Biostatistics — study design bridge', () => {
     // not a generator on this surface, so we prove the mapping through the
     // authoring hand-off's `module` on a generator that HAS a placement.)
     fireEvent.click(screen.getByRole('button', { name: /Sample Size Rationale/ }));
+    await engineDocReady('sample_size_rationale');
     fireEvent.click(screen.getAllByRole('button', { name: /File it to the dossier/ })[0]);
     await waitFor(() => expect(posted.some((p) => p.path === '/api/authoring/docs')).toBe(true));
     expect(posted.find((p) => p.path === '/api/authoring/docs')!.body).toMatchObject({ module: 'M5', client_program_id: PROGRAM.id });

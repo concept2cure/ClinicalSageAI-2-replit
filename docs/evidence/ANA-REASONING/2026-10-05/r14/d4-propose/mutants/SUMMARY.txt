@@ -1,0 +1,16 @@
+Round 14, door 4 (EditorBridge.propose). Test: client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx
+
+baseline: Tests  6 passed (6)
+
+P14-01   KILLED    the gate is not applied at all (trunk behaviour)
+         Tests  3 failed | 3 passed (6)
+P14-02   KILLED    the gate runs AFTER the section and liveness checks, so a wrong section hides the real reason
+         Tests  1 failed | 5 passed (6)
+P14-03   KILLED    an absent record is admitted instead of failing closed
+         Tests  1 failed | 5 passed (6)
+P14-04   KILLED    the gate applies to every author, so a person’s own redline is refused too
+         Tests  1 failed | 5 passed (6)
+P14-05   KILLED    the unfinished flag is dropped, so a stopped answer may redline
+         Tests  1 failed | 5 passed (6)
+P14-06   KILLED    the refusal carries no reason text, so a caller must invent its own
+         Tests  1 failed | 5 passed (6)

@@ -46,9 +46,6 @@ async function goHome(page) {
   await sleep(1500);
 }
 
-/** The conversation destination, with or without a thread id of its own. */
-const onConversation = p => p === '/concept2cure/conversation-thread' || p.startsWith('/concept2cure/conversation-thread/');
-
 /**
  * Open AnA from a working screen. The shell used to dock her beside the screen;
  * it now has an "Ask AnA" control that goes to the conversation destination.

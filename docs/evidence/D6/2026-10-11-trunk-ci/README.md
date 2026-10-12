@@ -102,3 +102,69 @@ tests, exit 0.
 This is the third overlap of the day (after `d3e303611` on the scanner gates).
 Two sessions reading the same red CI and fixing the same files is waste; the
 board's claim section is the mechanism for avoiding it.
+
+## `Integration Tests`, step 10 (the real-database tier): one stale toggle test
+
+The job's own log is unreadable (225,000 lines; only the last 5,000 are
+retrievable, and the two failures sit at lines 7,926 and 202,584, with the
+artifacts that name them on a host this environment's egress denies). So the
+tier was reproduced locally instead, provisioned the way that job provisions:
+`install-fresh.mjs` then `deploy-migrate.mjs` as the postgres superuser, with
+`APP_SERVICE_DB_PASSWORD` set at install time, then `npm run test:db` under
+`RLS_ENFORCE=on`.
+
+**A first attempt was worthless and is recorded as a warning.** Provisioned
+against a database whose `app_service` password was set by hand afterwards, the
+tier reported 69 failed files and 452 failed tests, every one an
+`OWNERSHIP_CHECK_FAILED` from missing grants. That was the provisioning, not
+the code. A reproduction that is not deploy-shaped measures nothing.
+
+Done faithfully: **158 of 159 files pass, 1,645 of 1,648 tests**. One file
+fails, with three tests: `tests/db/document-catalog-toggles.dbtest.ts`
+(`red-db-tier-toggles.txt`).
+
+It asserted that the bootstrap creates BOTH toggle rows disabled. `88ab56f67`
+(2026-10-08) changed the catalog row from `false` to `true` and said why in its
+message: *"ana.document_catalog is created ON (founder decision 2026-10-08);
+the embedding row stays off."* The code follows a founder decision; the test
+was not updated.
+
+The test now follows it, and keeps its teeth:
+
+- the creation case asserts the catalog row ON and the embedding row OFF by key,
+  and still that each description says what it does;
+- "the key written is the key read" was proving nothing once the row is created
+  on, so it now drives the row OFF (the capability goes off) and back ON (it
+  returns) — a test that only ever saw `true` could not tell this key from one
+  nobody reads;
+- the per-organization case clears the platform flag first, so what it measures
+  is the per-org list alone.
+
+8 of 8 pass. This was a stale test, not a fail-open defect: `resolveEnabled`
+and `readFeatureState` both fail closed, and the row carrying a per-upload cost
+(`ana.vault_chunking`) still waits for an operator.
+
+## What CI confirmed on `e29154f09` (2026-10-12)
+
+That commit carries this session's purge entry, the ten test fixes and the
+toggle fix. CI on it:
+
+| Job | Before | On `e29154f09` |
+|---|---|---|
+| `Analyze (Semgrep)` | green | **green** — the baseline resolver from `35f688fde` still picks a recent in-history commit, 499+ commits on |
+| `Blank DB Provisioning + Deploy Migration` | red (purge ratchet) | **green** — confirms `stats_computation_runs` in `PURGE_CHILD_TABLES` |
+| `Lint` | red on 5 steps | **red on 1 NEW step only** — all five of 2026-10-11 green; `ci:surface-text-ramp` stale from `0ce0d0bb8`, regenerated here |
+| `Integration Tests` | red on steps 10 and 12 | **step 10 (the real-database tier) green**, step 12 still red |
+| `Coverage (ratchet)` | red | red, and now explained: see `coverage-ratchet-measured.txt` |
+| `Test` | red (10 files) | still running when this was written |
+
+### `Integration Tests` step 12
+
+`npm test` with `RUN_INTEGRATION_TESTS=true` — the same broad suite the `Test`
+job runs, plus the cases that env var un-skips. Those cases are three files
+(`poolInstrumentation.integration`, `rlsPolicy.integration`,
+`tests/integration/innovation-platform`), and they PASS locally against the
+deploy-shaped database: 17 passed, 58 skipped, exit 0. So what remains red in
+step 12 is shared with the `Test` job rather than integration-only, and its own
+log line (205,020) is past the retrievable window. The `Test` job's result on
+this commit will name the files; it had not finished when this was written.

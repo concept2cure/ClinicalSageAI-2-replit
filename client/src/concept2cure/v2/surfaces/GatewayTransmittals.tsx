@@ -113,15 +113,35 @@ interface PackageOption { id: number; packageId?: string; title?: string; status
  * when the list could not be loaded the field falls back to the numeric id and
  * says so — never an empty picker presented as "no packages".
  */
-const PACKAGE_FIELD = (def: string | undefined, packages: PackageOption[] | null): C2CFormField =>
+/**
+ * Separation of duties, said where the package is chosen. `independence` is the
+ * server's dry-run of the transmit's own check (GET
+ * /api/mdx/gateways/transmit-independence), passed by the TRANSMIT form only:
+ * the creator of a package may not transmit it, and that check runs after the
+ * password, so without this the creator learned it by being refused. Unknown
+ * (no entry, or 'unverified') adds nothing — it is not "you cannot".
+ */
+const TRANSMIT_NOTE: Record<string, string> = {
+  author: ' — you created this; a colleague must transmit it',
+  'no-creator': ' — no creator recorded; it cannot be transmitted',
+};
+const PACKAGE_FIELD = (
+  def: string | undefined,
+  packages: PackageOption[] | null,
+  independence?: Record<string, string> | null,
+): C2CFormField =>
   packages && packages.length > 0
     ? {
         key: 'packageId', label: 'Package', type: 'select', required: true, half: true, default: def,
         options: packages.map((p) => ({
           value: String(p.id),
-          label: `#${p.id} · ${p.title ?? p.packageId ?? 'untitled'} · ${p.status ?? 'status unknown'}`,
+          label: `#${p.id} · ${p.title ?? p.packageId ?? 'untitled'} · ${p.status ?? 'status unknown'}${
+            TRANSMIT_NOTE[independence?.[String(p.id)] ?? ''] ?? ''
+          }`,
         })),
-        desc: 'Only a locked package can be assembled and transmitted.',
+        desc: independence && packages.some((p) => independence[String(p.id)] === 'author')
+          ? 'Only a locked package can be transmitted, and not by the person who created it (separation of duties).'
+          : 'Only a locked package can be assembled and transmitted.',
       }
     : {
         key: 'packageId', label: 'Package id', type: 'number', required: true, half: true, default: def,
@@ -232,7 +252,11 @@ async function readData<T = any>(method: 'GET' | 'POST' | 'PUT', path: string, b
     return { ok: false, status: 0, data: null, raw: null };
   }
 }
-const TRANSMIT_FORM = (def: string | undefined, packages: PackageOption[] | null): C2CFormConfig => ({
+const TRANSMIT_FORM = (
+  def: string | undefined,
+  packages: PackageOption[] | null,
+  independence: Record<string, string> | null = null,
+): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · §11 re-authentication',
   title: 'Transmit to agency gateway',
   sub: 'The transmit is gated server-side: your credentials are re-verified, the structural gate runs, and the transmittal is recorded before transport.',
@@ -240,7 +264,7 @@ const TRANSMIT_FORM = (def: string | undefined, packages: PackageOption[] | null
   fields: [
     { key: 'region', label: 'Region', type: 'select', options: REGIONS, default: 'fda', half: true },
     { key: 'gateway', label: 'Gateway', type: 'select', options: GATEWAYS, default: 'esg', half: true },
-    PACKAGE_FIELD(def, packages),
+    PACKAGE_FIELD(def, packages, independence),
     { key: 'submissionType', label: 'Submission type', type: 'text', half: true, placeholder: 'e.g. original' },
     { key: 'reason', label: 'Reason for transmission (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — recorded with the transmittal.' },
     // §11.50: what the signer asserts by transmitting. Recorded on the electronic signature.
@@ -380,6 +404,9 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
   /* The org's submission packages for the picker; null = the list could not be
      loaded (the forms then fall back to the numeric id and say so). */
   const [packages, setPackages] = useState<PackageOption[] | null>(null);
+  /* Per package: would this user's transmit pass separation of duties? From
+     the server's dry-run of the transmit's own check; null = not known. */
+  const [independence, setIndependence] = useState<Record<string, string> | null>(null);
   const [rows, setRows] = useState<Transmittal[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [dialog, setDialog] = useState<'transmit' | 'identifiers' | 'assemble' | { rollback: number } | { rejection: number } | null>(null);
@@ -414,7 +441,17 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     ]);
     // The package list feeds the picker only; its failure must not hide the
     // gateways or the transmittal log, so it degrades to the numeric id.
-    setPackages(p.ok && Array.isArray(p.data) ? p.data : null);
+    const pkgs: PackageOption[] | null = p.ok && Array.isArray(p.data) ? p.data : null;
+    setPackages(pkgs);
+    // Asked after the list, for the packages it holds. A failed read leaves it
+    // null and the picker unmarked; the transmit itself still decides.
+    if (pkgs && pkgs.length > 0) {
+      const ids = pkgs.slice(0, 100).map((x) => x.id).join(',');
+      const ind = await readData<Record<string, string>>('GET', `/api/mdx/gateways/transmit-independence?packageIds=${ids}`);
+      setIndependence(ind.ok && ind.data && typeof ind.data === 'object' ? ind.data : null);
+    } else {
+      setIndependence(null);
+    }
     // Fail to 'error' if EITHER read fails. Previously this required BOTH to
     // fail (&&), so a single failed read (e.g. the transmittal log) rendered its
     // honest-empty copy ("No transmittals yet") as if the org genuinely had
@@ -952,7 +989,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         </div>
       )}
 
-      {dialog === 'transmit' && <C2CForm config={TRANSMIT_FORM(lastPackageId || undefined, packages)} onCancel={() => setDialog(null)} onSubmit={transmit} />}
+      {dialog === 'transmit' && <C2CForm config={TRANSMIT_FORM(lastPackageId || undefined, packages, independence)} onCancel={() => setDialog(null)} onSubmit={transmit} />}
       {dialog === 'identifiers' && <C2CForm config={IDENTIFIERS_FORM(lastPackageId || undefined, packages)} onCancel={() => setDialog(null)} onSubmit={recordIdentifiers} />}
       {dialog === 'assemble' && <C2CForm config={ASSEMBLE_FORM(lastPackageId || undefined, packages)} onCancel={() => setDialog(null)} onSubmit={assemble} />}
       {dialog && typeof dialog === 'object' && 'rollback' in dialog && <C2CForm config={ROLLBACK_FORM(dialog.rollback)} onCancel={() => setDialog(null)} onSubmit={rollback} />}

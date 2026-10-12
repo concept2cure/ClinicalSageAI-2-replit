@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { connected, useLiveRows, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -7,6 +7,7 @@ import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { consumeNavParams } from '../navParams';
@@ -24,15 +25,63 @@ import {
 /* ═══════════════════════════════════════════════════════════════════
    Biostatistics — a document-producing statistical workbench.
 
-   The center of gravity is the DELIVERABLE: AnA generates the actual
-   governed statistical document (real prose), regenerating live as the
-   design changes. Computation engine + document generators ported
-   verbatim from server/services/ana-biostats/*.
+   The center of gravity is the DELIVERABLE: the governed statistical
+   document (real prose), regenerated whenever the design changes.
+
+   ── Nothing on this screen is computed in the browser ──────────────
+   Until 2026-10-11 this file carried `BiostatEngine`, a ~220-line
+   in-browser re-implementation of the server engine — its own normal
+   CDF (Abramowitz & Stegun 7.1.26, error 7.5e-8), its own quantile,
+   its own sizing formulas, a second copy of those formulas in a
+   scenario loop, and a smaller judgment rule set beside the real one.
+   Alongside it sat browser copies of the document generators, the
+   domain adapter and the regulatory customizer.
+
+   It was the engine users actually touched, it was pinned to no
+   published reference value, and it carried every defect the server
+   engine had fixed: a silent HR = 0.5 substitution for any effect
+   reaching 1 (`Math.log(hr > 0 ? hr : 0.5)`), equivalence sized with
+   z(1−α/2)/z(1−β) where TOST needs z(1−α)/z(1−β/2), a hard-coded
+   0.05 diagnostic margin with silent 0.90/0.90/0.50 defaults, and a
+   silent 0.85 device performance goal. Its four copies of the sizing
+   arithmetic did not agree with each other.
+
+   Two divergent implementations of one computation, with the
+   unvalidated one under the user's cursor, is disqualifying under
+   computer-system validation — and the working agreement allows one
+   canonical implementation per capability. The canonical one is
+   server/services/ana-biostats/*, reference-pinned and reachable:
+
+     • POST /api/ana-biostats/compute  → { validation, computation,
+       judgment, domain, regulatory, interpretation }
+     • POST /api/ana-biostats/document → the governed document, built
+       from that same computation and judgment, so the prose and the
+       figures cannot disagree.
+
+   This surface posts the design and renders what comes back. The
+   engine REFUSES rather than assuming (a missing diagnostic margin,
+   a missing AUC target, an effect ≥ 1 for time-to-event, an
+   unsupported agreement design), and a refusal is shown as the
+   engine's own sentence — never as a blank panel, a zero, or a
+   generic failure. BiostatWorkbench.tsx is the house style for that
+   and this follows it.
+
+   WHAT WAS REMOVED FROM THE SCREEN, AND WHERE IT LIVES NOW. The
+   design summary used to carry an "N events" chip, read off the
+   browser copy's `events` field. The server's ComputationResult has
+   no such field — the required event count is part of the sizing
+   formula it returns, which is printed under the summary and again
+   in the document's "Formula" section. A standalone event-count
+   projection is its own deterministic engine, reachable on the
+   Biostatistics workbench surface (client/src/concept2cure/v2/
+   surfaces/BiostatWorkbench.tsx, the `event-projection` calculator
+   declared in biostatCalculators.ts).
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── Types ── */
+/* ── Types: the server's contract (server/services/ana-biostats/types.ts) ── */
 
-interface BiostatInput {
+/** The engine's `StatisticalInput`. This surface's controls write it directly. */
+interface EngineInput {
   clientTrack: string;
   regulatoryBody?: string;
   studyType: string;
@@ -55,6 +104,19 @@ interface BiostatInput {
   interimAnalyses?: number;
   nonInferiorityMargin?: number;
   equivalenceMargin?: number;
+  /* The ROC design (auc_roc): the engine sizes it by the Hanley–McNeil
+     variance. request-input.ts and input-normalizer.ts have carried these
+     since the contract was written; until 2026-10-11 no control wrote them,
+     so the method was unreachable from the product. */
+  aucTarget?: number;
+  aucNull?: number;
+  /* The 2×2 crossover. Same story: on the wire, off the form. */
+  crossoverPeriods?: number;
+  withinSubjectCorrelation?: number;
+  /* An agreement (kappa) design. The engine refuses it, naming the published
+     methods and the inputs it would need — which is the honest answer, and is
+     worth showing rather than leaving the design unexpressible. */
+  agreementTarget?: number;
   comparatorType?: string;
   estimandStrategy?: string;
   missingDataMethod?: string;
@@ -62,102 +124,73 @@ interface BiostatInput {
   phase?: string;
 }
 
-interface Assumption {
+interface InputWarning { field: string; message: string; suggestion?: string }
+interface InputError { field: string; message: string; required: boolean }
+
+interface InputValidationResult {
+  valid: boolean;
+  normalizedInput: EngineInput;
+  warnings: InputWarning[];
+  errors: InputError[];
+  prefilled: string[];
+}
+
+interface ComputationAssumption {
   parameter: string;
-  value: number;
+  /** A string when the engine recorded a refused add-on rather than a figure. */
+  value: number | string;
   source: string;
   sensitivity: string;
 }
 
-interface ScenarioResult {
-  label: string;
-  sampleSize: { perGroup: number; total: number };
-  power: number;
-  delta: string;
-  recommendation: string;
-}
-
-interface DiagnosticMetrics {
-  sensitivity: number;
-  specificity: number;
-  ppv: number;
-  npv: number;
-  nSens: number;
-  nSpec: number;
-}
-
-interface BiostatResult {
+interface ComputationResult {
   method: string;
-  formula: string;
-  testStatistic: string;
-  criticalValue: number;
   sampleSize: { perGroup: number; total: number; groups: number };
   power: number;
-  adjustedTotal: number;
-  adjustedSampleSize: number;
+  effectSize: number;
+  alpha: number;
+  adjustedSampleSize?: number;
+  adjustedTotal?: number;
   attritionAdjusted: boolean;
-  events?: number;
-  diagnosticMetrics?: DiagnosticMetrics;
-  assumptions: Assumption[];
-  scenarios: ScenarioResult[];
+  criticalValue?: number;
+  testStatistic?: string;
+  formula: string;
+  assumptions: ComputationAssumption[];
 }
 
 interface JudgmentDimension {
   name: string;
-  /** 'adequate' | 'marginal' | 'inadequate', or the third state 'not_assessed'
-   *  — this engine had nothing to judge the dimension against. A dimension in
-   *  the third state is excluded from the overall verdict and named in the
-   *  confidence limitations; it is never collapsed into one of the other two. */
   verdict: string;
-  /** `null` when nothing computed a score. A judgment table cell is allowed to
-   *  say "not assessed"; it is not allowed to carry a number no rule produced. */
-  score: number | null;
-  flags: string[];
+  score: number;
   rationale: string;
+  flags: string[];
 }
 
-interface SensitiveParameter {
-  parameter: string;
-  currentValue: number;
-  breakpointValue: number;
-  percentMargin: number;
-}
-
-interface Fragility {
+interface FragilityAssessment {
   fragilityIndex: number;
   category: string;
-  margin: number;
-  sensitiveParameters: SensitiveParameter[];
   narrative: string;
 }
 
-interface EndpointMethodFit {
-  fit: string;
-  currentMethod: string;
-  suggestedMethod: string;
-  rationale: string;
-  alternatives: string[];
-}
-
-interface BiostatJudgment {
+interface JudgmentResult {
   overallVerdict: string;
   overallRisk: string;
   actionRecommendation: string;
   confidence: { level: string; score: number; factors: string[]; limitations: string[] };
   dimensions: JudgmentDimension[];
-  endpointMethodFit: EndpointMethodFit;
-  roleExplanations: Record<string, string>;
+  fragility: FragilityAssessment;
+  endpointMethodFit: { fit: string; suggestedMethod: string; currentMethod: string; rationale: string; alternatives: string[] };
   escalationReasons: string[];
-  fragility: Fragility;
+  roleExplanations: { technical: string; clinical: string; regulatory: string; executive: string };
 }
 
 interface DomainAdaptation {
   track: string;
   methodSuggestions: string[];
   designConsiderations: string[];
-  riskFactors: string[];
   endpointGuidance: string[];
   regulatoryNotes: string[];
+  riskFactors: string[];
 }
 
 interface RegulatoryCustomization {
@@ -167,14 +200,41 @@ interface RegulatoryCustomization {
   riskFramingNotes: string[];
   documentRequirements: string[];
   specificConstraints: string[];
-  templateVariations: Record<string, unknown>;
 }
 
+interface AnaInterpretation {
+  summary: string;
+  suggestedNextSteps: string[];
+  confidenceStatement: string;
+  limitations: string[];
+}
+
+/** POST /api/ana-biostats/compute (orchestrator.quickCompute). */
+interface ComputeResponse {
+  validation: InputValidationResult;
+  computation?: ComputationResult;
+  judgment?: JudgmentResult;
+  domain?: DomainAdaptation;
+  regulatory?: RegulatoryCustomization;
+  interpretation?: AnaInterpretation;
+}
+
+/** POST /api/ana-biostats/document (documentGenerator.generate). */
+interface GovernedDocumentResponse {
+  type: string;
+  title: string;
+  content: string;
+  version?: number;
+  status?: string;
+  provenance?: { generatedAt?: string; engineVersion?: string };
+}
+
+/** A statistical document the engine can generate, as this screen offers it. */
 interface DocDef {
+  /** The engine's own StatisticalDocumentType — sent as `documentType`. */
   id: string;
   label: string;
   group: string;
-  gen: (i: BiostatInput, c: BiostatResult, j: BiostatJudgment, d: DomainAdaptation, r: RegulatoryCustomization | undefined) => string;
   blurb: string;
 }
 
@@ -192,392 +252,127 @@ interface BiostatPlan {
 
 interface Preset {
   label: string;
-  input: BiostatInput;
+  input: EngineInput;
 }
 
-/* ─── Deterministic computation engine (computation-engine.ts) ─── */
+/* ─── Reaching the engine ─────────────────────────────────────────────────────
+   Modelled on BiostatWorkbench's `readData` (the house pattern for a server
+   refusal), with one difference: these two routes answer with the payload
+   itself rather than a `{ data }` envelope, so there is no `.data` to unwrap.
 
-/* Exported for the judgment tests (`__tests__/biostatUnearnedScores.test.tsx`).
-   The surface itself uses it through the module-local binding below; nothing
-   else in the app imports it. */
-export const BiostatEngine = (() => {
-  function normCdf(z: number): number {
-    if (z < -8) return 0; if (z > 8) return 1;
-    const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
-    const sign = z < 0 ? -1 : 1, x = Math.abs(z) / Math.sqrt(2), t = 1 / (1 + p * x);
-    const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-    return 0.5 * (1 + sign * y);
-  }
-  function normQuantile(p: number): number {
-    if (p <= 0) return -Infinity; if (p >= 1) return Infinity; if (p === 0.5) return 0;
-    const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
-    const b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
-    const c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
-    const d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
-    const pLow = 0.02425, pHigh = 1 - pLow; let q: number, r: number;
-    if (p < pLow) { q = Math.sqrt(-2 * Math.log(p)); return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
-    else if (p <= pHigh) { q = p - 0.5; r = q * q; return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1); }
-    else { q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
-  }
-  function buildAssumptions(input: BiostatInput): Assumption[] {
-    const A: Assumption[] = [];
-    A.push({ parameter: 'alpha', value: input.alpha, source: input.alpha === 0.05 ? 'default' : 'user_provided', sensitivity: 'moderate' });
-    A.push({ parameter: 'power', value: input.powerTarget, source: input.powerTarget === 0.80 ? 'default' : 'user_provided', sensitivity: 'high' });
-    A.push({ parameter: 'effect_size', value: input.effectSize, source: 'user_provided', sensitivity: 'high' });
-    if (input.variance !== undefined) A.push({ parameter: 'variance', value: input.variance, source: 'user_provided', sensitivity: 'high' });
-    A.push({ parameter: 'attrition_rate', value: input.attritionRate, source: input.attritionRate === 0.15 ? 'default' : 'user_provided', sensitivity: 'moderate' });
-    A.push({ parameter: 'allocation_ratio', value: input.allocationRatio, source: input.allocationRatio === 1 ? 'default' : 'user_provided', sensitivity: 'low' });
-    if (input.controlRate !== undefined) A.push({ parameter: 'control_rate', value: input.controlRate, source: 'user_provided', sensitivity: 'high' });
-    if (input.treatmentRate !== undefined) A.push({ parameter: 'treatment_rate', value: input.treatmentRate, source: 'user_provided', sensitivity: 'high' });
-    if (input.eventRate !== undefined) A.push({ parameter: 'event_rate', value: input.eventRate, source: 'user_provided', sensitivity: 'high' });
-    if (input.prevalence !== undefined) A.push({ parameter: 'prevalence', value: input.prevalence, source: 'user_provided', sensitivity: 'high' });
-    return A;
-  }
+   `apiRequest` THROWS for every non-OK status except 401, so a real refusal
+   arrives in the catch, not the branch above it. An ApiRequestError carries the
+   status and a message already reduced to a displayable sentence; anything else
+   is a browser-native fetch rejection whose message is not user copy. */
 
-  interface ShapeInput {
-    method: string;
-    formula: string;
-    testStatistic: string;
-    criticalValue: number;
-    perGroup: number;
-    total: number;
-    groups: number;
-    power: number;
-    adjPer: number;
-    adjTotal: number;
-    events?: number;
-    diag?: DiagnosticMetrics;
-    scenarios?: ScenarioResult[];
-  }
+type EngineFailure = { ok: false; status: number; message: string | null };
 
-  function scenarios(input: BiostatInput, type: string): ScenarioResult[] {
-    const out: ScenarioResult[] = []; const mults = [0.75, 1.0, 1.25, 1.5];
-    for (const mult of mults) {
-      const mi = { ...input, effectSize: input.effectSize * mult };
-      const zA = normQuantile(1 - mi.alpha / 2), zB = normQuantile(mi.powerTarget);
-      const sigma = mi.variance ? Math.sqrt(mi.variance) : mi.effectSize; let n: number;
-      if (type === 'binary') { const p1 = mi.controlRate ?? 0.5, p2 = p1 + mi.effectSize, pBar = (p1 + p2) / 2;
-        n = Math.ceil(((zA * Math.sqrt(2 * pBar * (1 - pBar)) + zB * Math.sqrt(p1 * (1 - p1) + p2 * (1 - p2))) ** 2) / ((p2 - p1) ** 2)); }
-      else if (type === 'time_to_event') { const hr = 1 - mi.effectSize, logHR = Math.log(hr > 0 ? hr : 0.5);
-        const events = Math.ceil((zA + zB) ** 2 * 4 / (logHR * logHR)), er = mi.eventRate ?? 0.5; n = Math.ceil(events / er); }
-      else { n = Math.ceil((2 * sigma * sigma * (zA + zB) ** 2) / (mi.effectSize * mi.effectSize)); }
-      const adj = Math.ceil(n / (1 - mi.attritionRate));
-      out.push({ label: mult === 1 ? 'Base case' : mult < 1 ? `Conservative (${(mult * 100) | 0}% effect)` : `Optimistic (${(mult * 100) | 0}% effect)`,
-        sampleSize: { perGroup: Math.ceil(n / 2), total: adj }, power: mi.powerTarget, delta: `Effect = ${mi.effectSize.toFixed(3)}`,
-        recommendation: mult < 1 ? 'Use for conservative planning' : mult > 1.25 ? 'May be overly optimistic' : '' });
+async function postEngine<T>(path: string, body: unknown): Promise<{ ok: true; data: T } | EngineFailure> {
+  try {
+    const r = await apiRequest('POST', path, body);
+    const parsed = (await r.json().catch(() => null)) as unknown;
+    if (!r.ok || parsed === null || typeof parsed !== 'object') {
+      return { ok: false, status: r.status, message: serverMessage(parsed) };
     }
-    return out;
-  }
-  function shape(input: BiostatInput, o: ShapeInput): BiostatResult {
-    return { method: o.method, formula: o.formula, testStatistic: o.testStatistic, criticalValue: o.criticalValue,
-      sampleSize: { perGroup: o.perGroup, total: o.total, groups: o.groups }, power: o.power,
-      adjustedTotal: o.adjTotal, adjustedSampleSize: o.adjPer, attritionAdjusted: input.attritionRate > 0,
-      events: o.events, diagnosticMetrics: o.diag, assumptions: buildAssumptions(input), scenarios: o.scenarios || [] };
-  }
-  function computeContinuous(input: BiostatInput): BiostatResult {
-    const zA = normQuantile(1 - input.alpha / 2), zB = normQuantile(input.powerTarget);
-    const sigma = input.variance ? Math.sqrt(input.variance) : input.effectSize, r = input.allocationRatio;
-    let n: number, method: string, formula: string;
-    if (input.studyType === 'non_inferiority' && input.nonInferiorityMargin) { const delta = input.effectSize - input.nonInferiorityMargin;
-      n = Math.ceil(((1 + 1 / r) * sigma * sigma * (zA + zB) ** 2) / (delta * delta)); method = 'Two-sample t-test (non-inferiority)'; formula = 'n = (1 + 1/r)*s^2*(z_a + z_b)^2 / (d - D_NI)^2'; }
-    else if (input.studyType === 'equivalence' && input.equivalenceMargin) {
-      n = Math.ceil(((1 + 1 / r) * sigma * sigma * (zA + zB) ** 2) / (input.equivalenceMargin * input.equivalenceMargin)); method = 'TOST equivalence test'; formula = 'n = (1 + 1/r)*s^2*(z_a + z_b)^2 / D_eq^2'; }
-    else { n = Math.ceil(((1 + 1 / r) * sigma * sigma * (zA + zB) ** 2) / (input.effectSize * input.effectSize)); method = 'Two-sample t-test (superiority)'; formula = `n = (1 + 1/r)*s^2*(z_a + z_b)^2 / d^2  (s=${sigma.toFixed(2)})`; }
-    const groups = input.numberOfGroups ?? 2, total = n * groups, adjPer = Math.ceil(n / (1 - input.attritionRate)), adjTotal = adjPer * groups;
-    const se = sigma * Math.sqrt(1 / n + 1 / (n * r)); const power = Math.min(normCdf(input.effectSize / se - zA) + normCdf(-input.effectSize / se - zA), 0.9999);
-    return shape(input, { method, perGroup: n, total, groups, power, adjPer, adjTotal, criticalValue: zA, testStatistic: 't-test', formula, scenarios: scenarios(input, 'continuous') });
-  }
-  function computeBinary(input: BiostatInput): BiostatResult {
-    const zA = normQuantile(1 - input.alpha / 2), zB = normQuantile(input.powerTarget), r = input.allocationRatio;
-    const p1 = input.controlRate ?? 0.5, p2 = input.treatmentRate ?? (p1 + input.effectSize), pBar = (p1 + r * p2) / (1 + r);
-    let n: number, method: string, formula: string;
-    if (input.studyType === 'non_inferiority' && input.nonInferiorityMargin) { const delta = (p2 - p1) - input.nonInferiorityMargin, v = p1 * (1 - p1) + p2 * (1 - p2) / r;
-      n = Math.ceil((zA + zB) ** 2 * v / (delta * delta)); method = 'Two-proportion z-test (non-inferiority)'; formula = 'n = (z_a + z_b)^2*[p1(1-p1) + p2(1-p2)/r] / (d - D_NI)^2'; }
-    else { n = Math.ceil(((zA * Math.sqrt((1 + 1 / r) * pBar * (1 - pBar)) + zB * Math.sqrt(p1 * (1 - p1) + p2 * (1 - p2) / r)) ** 2) / ((p2 - p1) ** 2)); method = 'Two-proportion z-test (superiority)'; formula = `n = [z_a*sqrt((1+1/r)*pbar*(1-pbar)) + z_b*sqrt(p1*(1-p1)+p2*(1-p2)/r)]^2 / (p2-p1)^2  (p1=${p1}, p2=${p2.toFixed(2)})`; }
-    const groups = input.numberOfGroups ?? 2, total = n * groups, adjPer = Math.ceil(n / (1 - input.attritionRate)), adjTotal = adjPer * groups;
-    return shape(input, { method, perGroup: n, total, groups, power: input.powerTarget, adjPer, adjTotal, criticalValue: zA, testStatistic: 'z-test', formula, scenarios: scenarios(input, 'binary') });
-  }
-  function computeSurvival(input: BiostatInput): BiostatResult {
-    const zA = normQuantile(1 - input.alpha / 2), zB = normQuantile(input.powerTarget), r = input.allocationRatio;
-    const hr = 1 - input.effectSize, logHR = Math.log(hr > 0 ? hr : 0.5);
-    const events = Math.ceil(((zA + zB) ** 2 * (1 + r) ** 2) / (r * logHR * logHR));
-    const er = input.eventRate ?? 0.5, n = Math.ceil(events / (2 * er));
-    const groups = input.numberOfGroups ?? 2, total = n * groups, adjPer = Math.ceil(n / (1 - input.attritionRate)), adjTotal = adjPer * groups;
-    return shape(input, { method: 'Log-rank test (Schoenfeld formula)', perGroup: n, total, groups, power: input.powerTarget, adjPer, adjTotal, events, criticalValue: zA, testStatistic: 'Log-rank', formula: `Events = (z_a + z_b)^2*(1+r)^2 / (r*ln(HR)^2)  (HR=${hr.toFixed(2)}, events=${events})`, scenarios: scenarios(input, 'time_to_event') });
-  }
-  function computeDevicePerformance(input: BiostatInput): BiostatResult {
-    const zA = normQuantile(1 - input.alpha), zB = normQuantile(input.powerTarget);
-    const pg = input.controlRate ?? 0.85, expected = input.treatmentRate ?? (pg + input.effectSize);
-    const n = Math.ceil((zA * Math.sqrt(pg * (1 - pg)) + zB * Math.sqrt(expected * (1 - expected))) ** 2 / ((expected - pg) ** 2)), adjN = Math.ceil(n / (1 - input.attritionRate));
-    return shape(input, { method: 'Performance goal test (single-arm)', perGroup: n, total: n, groups: 1, power: input.powerTarget, adjPer: adjN, adjTotal: adjN, criticalValue: zA, testStatistic: 'z-test (one-sided)', formula: `n = [z_a*sqrt(PG(1-PG)) + z_b*sqrt(p(1-p))]^2 / (p-PG)^2  (PG=${pg}, p=${expected.toFixed(2)})`, scenarios: scenarios(input, 'binary') });
-  }
-  function computeDiagnostic(input: BiostatInput): BiostatResult {
-    const zA = normQuantile(1 - input.alpha / 2), zB = normQuantile(input.powerTarget);
-    const sens = input.sensitivity ?? 0.90, spec = input.specificity ?? 0.90, prev = input.prevalence ?? 0.50;
-    const nSens = Math.ceil((zA + zB) ** 2 * sens * (1 - sens) / (0.05 ** 2)), nSpec = Math.ceil((zA + zB) ** 2 * spec * (1 - spec) / (0.05 ** 2));
-    const total = Math.ceil(Math.max(nSens / prev, nSpec / (1 - prev))), adjTotal = Math.ceil(total / (1 - input.attritionRate));
-    const ppv = (sens * prev) / (sens * prev + (1 - spec) * (1 - prev)), npv = (spec * (1 - prev)) / (spec * (1 - prev) + (1 - sens) * prev);
-    return shape(input, { method: 'Diagnostic accuracy study (sensitivity/specificity)', perGroup: total, total, groups: 1, power: input.powerTarget, adjPer: adjTotal, adjTotal, criticalValue: zA, testStatistic: 'Exact binomial / Clopper-Pearson', formula: `n_sens = (z_a+z_b)^2*Se(1-Se)/w^2  *  n_spec = (z_a+z_b)^2*Sp(1-Sp)/w^2  (prev=${prev})`, diag: { sensitivity: sens, specificity: spec, ppv: Math.round(ppv * 1e4) / 1e4, npv: Math.round(npv * 1e4) / 1e4, nSens, nSpec } });
-  }
-  function compute(input: BiostatInput): BiostatResult {
-    if (input.clientTrack === 'diagnostics_ivd' && ['diagnostic_accuracy', 'agreement'].includes(input.studyType)) return computeDiagnostic(input);
-    if (input.clientTrack === 'medical_device' && input.studyType === 'performance') return computeDevicePerformance(input);
-    if (input.endpointType === 'binary') return computeBinary(input);
-    if (input.endpointType === 'time_to_event') return computeSurvival(input);
-    return computeContinuous(input);
-  }
-
-  /* Layer-3 judgment -- deterministic, rule-backed */
-  function judge(input: BiostatInput, res: BiostatResult): BiostatJudgment {
-    const dims: JudgmentDimension[] = [];
-    const pv = res.power >= input.powerTarget - 0.005 ? 'adequate' : res.power >= input.powerTarget - 0.05 ? 'marginal' : 'inadequate';
-    dims.push({ name: 'Power adequacy', verdict: pv, score: Math.round(res.power * 100), flags: pv === 'adequate' ? [] : ['Achieved power below target'], rationale: `Achieved power ${(res.power * 100).toFixed(1)}% vs target ${(input.powerTarget * 100) | 0}%.` });
-    /* The effect size is the single most sensitive input, and this surface has
-       no prior-evidence source — no literature, no pilot, no registry — to
-       judge the assumed value against. It used to be pushed unconditionally as
-       `marginal / 60`, which is a verdict and a score for a check that never
-       ran (and, being unconditional, made 'adequate' unreachable overall). What
-       IS computed about the effect size is its fragility margin below, and that
-       is reported there rather than restated here as a /100. */
-    dims.push({ name: 'Effect-size assumption', verdict: 'not_assessed', score: null, flags: ['Not assessed — no prior-evidence source', 'Single most sensitive input'],
-      rationale: `Effect size ${input.effectSize} drives N. Its plausibility is not assessed here — this engine has no prior evidence to compare it against; verify it against literature or pilot data. The design's sensitivity to it is reported under Fragility.` });
-    /* Banded on the attrition-adjusted total, which IS computed. The band is
-       all this is: site capacity, screening ratio and enrollment rate are not
-       inputs to this surface, so operational feasibility is not assessed and
-       the band carries no score. */
-    const fv = res.adjustedTotal <= 300 ? 'adequate' : res.adjustedTotal <= 800 ? 'marginal' : 'inadequate';
-    dims.push({ name: 'Enrollment size band', verdict: fv, score: null, flags: fv === 'inadequate' ? ['Large N — confirm feasibility with sites'] : [],
-      rationale: `${res.adjustedTotal} subjects after ${(input.attritionRate * 100) | 0}% attrition — banded (<=300 / <=800 / above). Site capacity and enrollment rate are not available to this engine, so operational feasibility is not assessed.` });
-    let bp = input.effectSize; for (let f = 1; f > 0.5; f -= 0.01) { const r2 = compute({ ...input, effectSize: input.effectSize * f }); if (r2.sampleSize.total > res.sampleSize.total * 1.15) { bp = input.effectSize * f; break; } }
-    const margin = Math.round((1 - bp / input.effectSize) * 100);
-    const cat = margin >= 20 ? 'robust' : margin >= 12 ? 'moderate' : margin >= 6 ? 'fragile' : 'very_fragile';
-    /* The overall verdict is taken over the dimensions that were ASSESSED. A
-       dimension in the third state neither drags the verdict down (it is not a
-       finding) nor is silently treated as adequate (it is not a pass) — it is
-       named in the limitations below, which the document always prints. */
-    const assessed = dims.filter(d => d.verdict !== 'not_assessed');
-    const notAssessed = dims.filter(d => d.verdict === 'not_assessed');
-    const worst = assessed.length === 0 ? 'not_assessed'
-      : assessed.some(d => d.verdict === 'inadequate') ? 'inadequate'
-      : assessed.some(d => d.verdict === 'marginal') ? 'marginal' : 'adequate';
-    // Fail closed: anything that is not a clean 'adequate'/'marginal' — including
-    // an all-unassessed judgment — recommends revision rather than proceeding.
-    const action = worst === 'adequate' ? 'proceed' : worst === 'marginal' ? 'proceed_with_conditions' : 'revise';
-    const risk = worst === 'adequate' ? 'low' : worst === 'marginal' ? 'moderate' : 'high';
-    // WO-16C #59 follow-up. `fit` was the literal 'acceptable' on every call,
-    // with no branch on any input, and the rationale asserted unconditionally
-    // that the method "is appropriate for" the endpoint. Both print into the
-    // Statistical Risk Memo and both SAP drafts this surface files into the
-    // dossier — a verdict for a comparison that never ran, one section below
-    // the judgment table this work order had just repaired.
-    //
-    // It is NOT repaired by comparing the two strings here. A real assessment
-    // already exists and is canonical: assessEndpointMethodFit in
-    // server/services/ana-biostats/judgment-engine.ts, whose verdict turns on
-    // areMethodsCompatible, a server-side table. Re-deriving it client-side
-    // would be a second implementation of the same capability, which the
-    // working agreement forbids and which is how a fix of this kind entrenches
-    // duplication while resolving the fabrication. This surface has no route to
-    // that assessor, so it says it did not assess the fit — and still shows
-    // both methods, so a reader can see exactly what was not compared.
-    const endpointMethodFit = { fit: 'not_assessed', currentMethod: res.method,
-      suggestedMethod: input.endpointType === 'time_to_event' ? 'Cox proportional hazards (confirmatory)' : input.endpointType === 'binary' ? 'Logistic regression (covariate-adjusted)' : 'ANCOVA (baseline-adjusted)',
-      rationale: `Not assessed. The planned method (${res.method}) and the method this endpoint type usually calls for are both stated above, but this surface did not compare them, and it makes no finding either way for this ${input.endpointType} endpoint in a ${input.studyType} design. That comparison is made by the biostatistics assessment, which this surface does not call. Have a statistician confirm the choice of method, or run that assessment.`,
-      alternatives: input.endpointType === 'time_to_event' ? ['Stratified log-rank', 'RMST difference'] : input.endpointType === 'binary' ? ['Cochran-Mantel-Haenszel', 'Fisher exact (small N)'] : ['MMRM (longitudinal)', 'Rank-based (non-normal)'] };
-    const limitations: string[] = []; if (pv !== 'adequate') limitations.push('Achieved power is below the stated target at the current assumptions.');
-    if (cat === 'fragile' || cat === 'very_fragile') limitations.push('The design is sensitive to the assumed effect size — small overestimation materially reduces power.');
-    if (!input.variance && input.endpointType === 'continuous') limitations.push('Variance was assumed rather than sourced from prior data.');
-    if (fv === 'inadequate') limitations.push('Enrollment target is large; site capacity and timelines should be confirmed.');
-    const escalation: string[] = []; if (worst === 'inadequate') escalation.push('Design is underpowered at current assumptions — revise before finalizing.');
-    if (cat === 'very_fragile') escalation.push('Very fragile to effect-size assumption — add a blinded sample-size re-estimation.');
-    /* Confidence, derived. It used to be one of three literals (86 / 64 / 42)
-       picked by the overall verdict LABEL — a number restating a word, printed
-       as "moderate (64/100)" in the filed document. The rule below is the
-       canonical one, server/services/ana-biostats/judgment-engine.ts
-       assessConfidence(): start at 85 and subtract for what is actually weak —
-       power under the 80% convention, more than two defaulted assumptions, a
-       diagnostic design with no intended-use prevalence. The inputs are this
-       surface's own computed result and assumption provenance. */
-    const cFactors: string[] = ['Deterministic computation', 'Rule-backed judgment'];
-    let cScore = 85;
-    if (res.power >= 0.90) cFactors.push('High power (>=90%)');
-    else if (res.power >= 0.80) cFactors.push('Standard power (>=80%)');
-    else { cScore -= 20; limitations.push(`Achieved power ${(res.power * 100).toFixed(1)}% is below the conventional 80% threshold.`); }
-    const defaulted = res.assumptions.filter(a => a.source === 'default').length;
-    if (defaulted > 2) { cScore -= defaulted * 5; limitations.push(`${defaulted} parameters used default values rather than study-specific ones.`); }
-    else cFactors.push('Most parameters user-specified');
-    if (input.clientTrack === 'diagnostics_ivd' && input.prevalence === undefined) { cScore -= 10; limitations.push('Prevalence not specified — PPV/NPV are estimates at an assumed prevalence.'); }
-    if (notAssessed.length) limitations.push(`Not assessed by this engine: ${notAssessed.map(d => d.name).join(', ')}. The overall verdict covers only the ${assessed.length} dimension${assessed.length === 1 ? '' : 's'} that were assessed.`);
-    cScore = Math.max(0, Math.min(100, cScore));
-    const conf = { level: cScore >= 80 ? 'high' : cScore >= 60 ? 'moderate' : cScore >= 40 ? 'low' : 'very_low', score: cScore, factors: cFactors, limitations };
-    const nm = input.indication || 'the study';
-    const roleExplanations: Record<string, string> = {
-      executive: `The ${input.studyType} design needs about ${res.adjustedTotal} subjects for ${(res.power * 100).toFixed(0)}% power. Overall this design is ${worst}; recommendation is to ${action.replace(/_/g, ' ')}. ${worst !== 'adequate' ? 'A design adjustment now avoids a costly under-powered trial later.' : 'The plan is defensible for ' + (input.regulatoryBody || 'the agency') + '.'}`,
-      clinical: `To detect the expected effect (${input.effectSize}) in ${nm}, enroll ${res.adjustedTotal} subjects (${res.sampleSize.perGroup}/arm). ${res.events ? `This is event-driven — ${res.events} events are required, so follow-up duration matters as much as enrollment.` : ''} Watch the effect-size assumption; it is the biggest lever.`,
-      regulatory: `The sample-size justification uses ${res.method} at a=${input.alpha} (two-sided) with ${(res.power * 100).toFixed(1)}% power, consistent with ${input.regulatoryBody || 'FDA'} expectations. Pre-specify the estimand (ICH E9(R1)) and the missing-data strategy in the SAP before database lock.`,
-      technical: `${res.method}. ${res.formula} Attrition-adjusted total ${res.adjustedTotal}. Fragility ${cat} (index ${100 - margin}); ~${margin}% effect-size margin before N must grow >15% to hold power.`,
+    return { ok: true, data: parsed as T };
+  } catch (e) {
+    const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+    return {
+      ok: false,
+      status: known ? (e as { status: number }).status : 0,
+      message: known && (e as Error).message ? (e as Error).message : null,
     };
-    return { overallVerdict: worst, overallRisk: risk, actionRecommendation: action, confidence: conf, dimensions: dims, endpointMethodFit, roleExplanations, escalationReasons: escalation,
-      fragility: { fragilityIndex: 100 - margin, category: cat, margin, sensitiveParameters: [{ parameter: 'effect_size', currentValue: input.effectSize, breakpointValue: Math.round(bp * 1000) / 1000, percentMargin: margin }],
-        narrative: `The design tolerates about a ${margin}% shrink in the assumed effect before the required N grows more than 15% to preserve power — classified ${cat.replace('_', ' ')}.` } };
   }
-  return { normCdf, normQuantile, compute, judge };
-})();
-
-/* ─── Domain adaptation + regulatory customization (deterministic) ─── */
-function domainAdapt(input: BiostatInput): DomainAdaptation {
-  const T: Record<string, Omit<DomainAdaptation, 'track' | 'endpointGuidance' | 'regulatoryNotes'>> = {
-    biotech_pharma: {
-      methodSuggestions: ['Pre-specify the estimand per ICH E9(R1)', 'Covariate-adjusted primary model (ANCOVA / Cox / logistic)', 'Blinded sample-size re-estimation if variance is uncertain'],
-      designConsiderations: ['Randomization stratified by key prognostic factors', 'ITT as primary population; PP supportive', 'Define a testing hierarchy for key secondary endpoints'],
-      riskFactors: ['Effect-size overestimation from small early studies', 'Higher-than-assumed dropout in long follow-up', 'Multiplicity from multiple endpoints'],
-    },
-    medical_device: {
-      methodSuggestions: ['Performance-goal justification from literature/registry', 'Blinded independent endpoint adjudication where feasible'],
-      designConsiderations: ['Single-arm vs. performance-standard framing', 'Human-factors and use-related risk in the plan'],
-      riskFactors: ['Learning-curve confounding', 'Operator variability'],
-    },
-    diagnostics_ivd: {
-      methodSuggestions: ['Power sensitivity AND specificity independently', 'Report PPV/NPV at the intended-use prevalence', 'Clopper-Pearson exact CIs'],
-      designConsiderations: ['Enrichment for low-prevalence targets', 'Reference-standard definition and adjudication'],
-      riskFactors: ['Spectrum bias', 'Prevalence mismatch vs. intended use'],
-    },
-  };
-  return { track: input.clientTrack, ...(T[input.clientTrack] || T.biotech_pharma), endpointGuidance: [], regulatoryNotes: [] };
-}
-function regCustom(input: BiostatInput): RegulatoryCustomization | undefined {
-  if (!input.regulatoryBody) return undefined;
-  const B: Record<string, Omit<RegulatoryCustomization, 'body' | 'documentRequirements' | 'specificConstraints' | 'templateVariations'>> = {
-    FDA: { statisticalExpectations: ['Pre-specified SAP finalized before unblinding', 'ICH E9(R1) estimand framework', 'Multiplicity control for the confirmatory family', 'Sensitivity analyses for missing data (tipping point)'], guidanceReferences: ['FDA Multiple Endpoints Guidance (2022)', 'ICH E9 / E9(R1)', 'FDA Adaptive Designs Guidance (2019)'], riskFramingNotes: ['Reviewers scrutinize the effect-size basis', 'Non-inferiority margins must be clinically and statistically justified'] },
-    EMA: { statisticalExpectations: ['CHMP points-to-consider on the primary analysis', 'Estimand and intercurrent-event strategy pre-specified', 'Sensitivity/supplementary analyses aligned to the estimand'], guidanceReferences: ['EMA Guideline on Multiplicity (2017)', 'ICH E9(R1)', 'CHMP Points to Consider on adjustment for baseline'], riskFramingNotes: ['Day-120 questions often target the estimand and missing data'] },
-    PMDA: { statisticalExpectations: ['Bridging/consistency considerations for Japanese subpopulation', 'Pre-specified analysis populations'], guidanceReferences: ['ICH E9 / E17', 'PMDA statistical review expectations'], riskFramingNotes: ['Consistency of effect across regions is examined'] },
-  };
-  const b = B[input.regulatoryBody] || B.FDA; return { body: input.regulatoryBody, ...b, documentRequirements: [], specificConstraints: [], templateVariations: {} };
 }
 
-/* ─── Governed document generators (document-generator.ts) ─── */
+/**
+ * What to tell the user when the engine did not answer with a result.
+ *
+ * The engine's own sentence wins wherever it sent one — a `ComputationRefusal`
+ * names the input it will not assume and is the only text that tells a
+ * statistician what to do next. Our own copy is used only where the server sent
+ * none, and never instead of it. The status rides at the END of the sentence,
+ * in parentheses: a message that BEGINS with a raw transport status is stripped
+ * before render (client/src/lib/queryClient.ts, INTERNAL_MARKERS).
+ */
+function engineFailureMessage(f: EngineFailure, subject: string): string {
+  if (f.status === 401) return `Sign in to your tenant to run the statistical engine.`;
+  if (f.message) return f.message;
+  if (f.status === 0) return `The statistical engine could not be reached, so ${subject} was not produced.`;
+  return `The statistical engine did not produce ${subject} (HTTP ${f.status}).`;
+}
 
-const BiostatDocs = (() => {
-  const V = '1.0.0';
-  const foot = () => `\n---\n*Generated by AnA Biostats Engine v${V}. All numeric results are deterministic. Judgment and framing are rule-backed. Review by a qualified biostatistician before regulatory submission.*\n`;
-  const track = (t: string) => t === 'biotech_pharma' ? 'Pharma/Biotech' : t === 'medical_device' ? 'Medical Device' : t === 'diagnostics_ivd' ? 'Diagnostics/IVD' : t;
+/* ─── The statistical documents the engine generates ─────────────────────────
+   Data only. Every `id` is a `StatisticalDocumentType` the server's document
+   generator implements; the label, group and blurb are this screen's copy. The
+   prose itself is generated by the engine from the engine's own result — this
+   file holds no document generator. */
 
-  type GenFn = (i: BiostatInput, c: BiostatResult, j: BiostatJudgment, d: DomainAdaptation, r: RegulatoryCustomization | undefined) => string;
+const DOC_REGISTRY: DocDef[] = [
+  { id: 'sample_size_rationale', label: 'Sample Size Rationale', group: 'Design', blurb: 'The justification reviewers ask for — method, assumptions, result, fragility.' },
+  { id: 'full_statistical_analysis_plan', label: 'Statistical Analysis Plan', group: 'Analysis', blurb: 'The full SAP — populations, sample size, methods, estimand, missing data, interims.' },
+  { id: 'sap_section_draft', label: 'SAP Section Draft', group: 'Analysis', blurb: 'A focused SAP section for the primary analysis.' },
+  { id: 'protocol_statistical_section', label: 'Protocol Statistical Section', group: 'Design', blurb: 'Hypotheses, sample size, primary analysis and populations for the protocol.' },
+  { id: 'statistical_methods_section', label: 'CSR S9.7 Methods', group: 'Reporting', blurb: 'ICH E3 S9.7 statistical methods for the clinical study report.' },
+  { id: 'statistical_risk_memo', label: 'Statistical Risk Memo', group: 'Governance', blurb: 'Executive risk read with role-specific interpretations and escalation items.' },
+  { id: 'design_assumption_note', label: 'Design Assumption Note', group: 'Design', blurb: 'Assumptions and their sensitivity, for the design file.' },
+  { id: 'interim_analysis_plan', label: 'Interim Analysis Plan', group: 'Governance', blurb: 'Timing, alpha spending, stopping rules and governance for interim looks.' },
+  { id: 'dsmb_charter', label: 'DSMB / DMC Charter', group: 'Governance', blurb: 'Independent data monitoring charter — membership, meetings, stopping guidance.' },
+  { id: 'tlf_shell_plan', label: 'TLF Shell Plan', group: 'Reporting', blurb: 'Tables, listings and figures shells by ICH E3 domain.' },
+  { id: 'randomization_plan', label: 'Randomization & Blinding', group: 'Design', blurb: 'Allocation, concealment, blinding and unblinding plan.' },
+];
 
-  const sampleSizeRationale: GenFn = (i, c, j, _d, r) => {
-    const n = c.adjustedTotal ?? c.sampleSize.total, body = (r && r.body) || 'FDA'; let s = `# Sample Size Rationale\n\n## Study Context\n- **Track**: ${track(i.clientTrack)}\n- **Study Type**: ${i.studyType}\n- **Endpoint Type**: ${i.endpointType}\n- **Objective**: ${i.objectiveType}\n`;
-    if (i.indication) s += `- **Indication**: ${i.indication}\n`; if (i.phase) s += `- **Phase**: ${i.phase}\n`; s += `- **Target Regulatory Body**: ${body}\n\n## Sample Size Determination\n\n### Statistical Method\n${c.method}\n\n### Formula\n${c.formula}\n\n### Assumptions\n\n| Parameter | Value | Source | Sensitivity |\n|---|---|---|---|\n`;
-    for (const a of c.assumptions) s += `| ${a.parameter} | ${a.value} | ${a.source} | ${a.sensitivity} |\n`;
-    s += `\n### Result\n\n- **Sample size per group**: ${c.sampleSize.perGroup}\n- **Number of groups**: ${c.sampleSize.groups}\n- **Total (unadjusted)**: ${c.sampleSize.total}\n- **Dropout adjustment**: ${(i.attritionRate * 100).toFixed(0)}%\n- **Total (adjusted)**: ${n}\n- **Achieved power**: ${(c.power * 100).toFixed(1)}%\n- **Significance level**: ${i.alpha} (two-sided)\n\n`;
-    if (c.diagnosticMetrics) { const m = c.diagnosticMetrics; s += `### Diagnostic Performance\n\n- **Sensitivity**: ${(m.sensitivity * 100).toFixed(1)}%\n- **Specificity**: ${(m.specificity * 100).toFixed(1)}%\n- **PPV**: ${(m.ppv * 100).toFixed(1)}%\n- **NPV**: ${(m.npv * 100).toFixed(1)}%\n\n`; }
-    if (c.scenarios && c.scenarios.length) { s += `### Scenario Analysis\n\n| Scenario | Sample Size (total) | Power | Notes |\n|---|---|---|---|\n`; for (const x of c.scenarios) s += `| ${x.label} | ${x.sampleSize.total} | ${(x.power * 100).toFixed(0)}% | ${x.delta} |\n`; s += `\n`; }
-    s += `## Statistical Assessment\n\n- **Overall Verdict**: ${j.overallVerdict}\n- **Action Recommendation**: ${j.actionRecommendation}\n- **Fragility**: ${j.fragility.category} (index: ${j.fragility.fragilityIndex})\n- **Confidence Level**: ${j.confidence.level} (${j.confidence.score}/100)\n\n`;
-    if (j.fragility.sensitiveParameters.length) { s += `### Sensitivity Points\n\n`; for (const sp of j.fragility.sensitiveParameters) s += `- **${sp.parameter}**: current=${sp.currentValue}, breakpoint=${sp.breakpointValue} (${sp.percentMargin}% margin)\n`; s += `\n`; }
-    if (j.confidence.limitations.length) { s += `## Limitations\n\n`; for (const l of j.confidence.limitations) s += `- ${l}\n`; s += `\n`; }
-    if (r && r.statisticalExpectations.length) { s += `## Regulatory Considerations (${body})\n\n`; for (const e of r.statisticalExpectations.slice(0, 5)) s += `- ${e}\n`; s += `\n`; }
-    return s + foot();
-  };
-  const riskMemo: GenFn = (i, c, j, d, r) => { let s = `# Statistical Risk Memo\n\n## Executive Summary\n\n${j.roleExplanations.executive}\n\n## Risk Classification\n\n- **Overall Risk**: ${j.overallRisk}\n- **Action**: ${j.actionRecommendation}\n- **Confidence**: ${j.confidence.level}\n\n## Dimension Analysis\n\n| Dimension | Verdict | Score | Key Flags |\n|---|---|---|---|\n`;
-    // A dimension with no score says so. It must never render as "null/100",
-    // and it must never be given a number to fill the column. "not assessed"
-    // and "not scored" are different: the first had no verdict either, the
-    // second has a real verdict and simply no /100 behind it.
-    for (const dm of j.dimensions) s += `| ${dm.name} | ${dm.verdict === 'not_assessed' ? 'not assessed' : dm.verdict} | ${dm.score === null ? (dm.verdict === 'not_assessed' ? 'not assessed' : 'not scored') : `${dm.score}/100`} | ${dm.flags.join('; ') || 'None'} |\n`;
-    s += `\n## Fragility Assessment\n\n${j.fragility.narrative}\n\n## Endpoint-Method Fit\n\n- **Fit**: ${j.endpointMethodFit.fit === 'not_assessed' ? 'not assessed — the two methods below were not compared' : j.endpointMethodFit.fit}\n- **Current Method**: ${j.endpointMethodFit.currentMethod}\n- **Suggested Method**: ${j.endpointMethodFit.suggestedMethod}\n- **Rationale**: ${j.endpointMethodFit.rationale}\n\n`;
-    if (j.escalationReasons.length) { s += `## Escalation Items\n\n`; for (const e of j.escalationReasons) s += `- ${e}\n`; s += `\n`; }
-    if (d.riskFactors.length) { s += `## Domain-Specific Risks (${track(i.clientTrack)})\n\n`; for (const rf of d.riskFactors) s += `- ${rf}\n`; s += `\n`; }
-    if (r && r.riskFramingNotes.length) { s += `## Regulatory Risk Framing (${r.body})\n\n`; for (const n of r.riskFramingNotes) s += `- ${n}\n`; s += `\n`; }
-    s += `## Role-Specific Interpretations\n\n### For Clinical Team\n${j.roleExplanations.clinical}\n\n### For Regulatory Affairs\n${j.roleExplanations.regulatory}\n\n### For Biostatistics\n${j.roleExplanations.technical}\n\n`;
-    return s + foot();
-  };
-  const sapSection: GenFn = (i, c, j, _d, r) => { const n = c.adjustedTotal ?? c.sampleSize.total; let s = `# Statistical Analysis Plan — Section Draft\n\n## 1. Study Objectives and Endpoints\n\n### Primary Objective\n${i.objectiveType} assessment using ${i.endpointType} endpoint.\n\n### Primary Endpoint\nType: ${i.endpointType}. Study type: ${i.studyType}.\n\n## 2. Study Design\n\n- Design: ${i.studyType}\n- Groups: ${i.numberOfGroups ?? 2}\n- Allocation ratio: ${i.allocationRatio}:1\n- Comparator: ${i.comparatorType ?? 'placebo'}\n\n## 3. Sample Size Determination\n\nA sample size of ${n} subjects (${c.sampleSize.perGroup} per group) provides ${(c.power * 100).toFixed(1)}% power to detect a ${i.effectSize} ${i.endpointType === 'binary' ? 'difference in proportions' : i.endpointType === 'time_to_event' ? 'hazard ratio reduction' : 'effect size'} at a two-sided significance level of ${i.alpha}.\n\n${c.formula}\n\nAn attrition rate of ${(i.attritionRate * 100).toFixed(0)}% is assumed, yielding an adjusted total of ${n} subjects.\n\n## 4. Statistical Methods\n\n### Primary Analysis\n${c.method}\n\n### Endpoint-Method Assessment\n${j.endpointMethodFit.rationale}\n\n### Alternative Methods\n`;
-    for (const a of j.endpointMethodFit.alternatives) s += `- ${a}\n`;
-    s += `\n## 5. Significance Level and Multiplicity\n\nTwo-sided significance level: a = ${i.alpha}.\n\n## 6. Estimand Framework\n\n${i.estimandStrategy ? `### Estimand Strategy: ${i.estimandStrategy}\n\nPer ICH E9(R1): population, variable (${i.endpointType}), intercurrent-event handling (${i.estimandStrategy}), summary measure.` : 'Estimand framework should be defined per ICH E9(R1) prior to study conduct.'}\n\n## 7. Missing Data Handling\n\n${i.missingDataMethod ? `Primary approach: ${i.missingDataMethod}.` : 'Pre-specify the missing-data method (MMRM for longitudinal; multiple imputation otherwise).'}\n\n## 8. Sensitivity Analyses\n\n- Tipping point analysis for missing data\n- ITT vs. PP concordance\n`;
-    if (j.fragility.category !== 'robust') s += `- Effect-size sensitivity (fragility index ${j.fragility.fragilityIndex})\n`;
-    return s + `\n` + foot();
-  };
-  const fullSAP: GenFn = (i, c, j, _d, r) => { const n = c.adjustedTotal ?? c.sampleSize.total, body = (r && r.body) || i.regulatoryBody || 'FDA'; let s = `# Statistical Analysis Plan\n\n*${track(i.clientTrack)} — ${i.studyType} — ${i.objectiveType}*\n\n## 1. Introduction\n\nThis Statistical Analysis Plan (SAP) specifies the analyses for a ${i.studyType} study with a ${i.endpointType} primary endpoint. It is written to ${body} expectations and should be finalized and signed prior to database lock and unblinding.\n\n## 2. Study Objectives and Endpoints\n\n- **Primary objective**: ${i.objectiveType} evaluation via the ${i.endpointType} primary endpoint.\n- **Study type**: ${i.studyType}${i.nonInferiorityMargin ? ` (non-inferiority margin ${i.nonInferiorityMargin})` : ''}${i.equivalenceMargin ? ` (equivalence margin ${i.equivalenceMargin})` : ''}.\n\n## 3. Study Design\n\n- Design: ${i.studyType}\n- Number of groups: ${i.numberOfGroups ?? 2}\n- Allocation ratio: ${i.allocationRatio}:1\n- Comparator: ${i.comparatorType ?? 'placebo'}\n\n## 4. Analysis Populations\n\n- **Intention-to-treat (ITT)**: all randomized subjects, analyzed as randomized. Primary population for efficacy.\n- **Per-protocol (PP)**: subjects without major protocol deviations. ${i.studyType === 'non_inferiority' || i.studyType === 'equivalence' ? 'Co-primary for non-inferiority/equivalence per ICH E9.' : 'Supportive.'}\n- **Safety**: all subjects who received any study intervention, analyzed as treated.\n\n## 5. Sample Size Determination\n\nA total of **${n} subjects** (${c.sampleSize.perGroup} per group) provides **${(c.power * 100).toFixed(1)}% power** at a two-sided a = ${i.alpha} to detect the planned effect (${i.effectSize}).\n\n${c.formula}\n\nAssumed attrition: ${(i.attritionRate * 100).toFixed(0)}%.\n\n## 6. Primary Analysis Method\n\n${c.method}\n\n*Endpoint-method fit*: ${j.endpointMethodFit.rationale}\n\n## 7. Multiplicity\n\nSingle primary endpoint — no multiplicity adjustment required for the primary comparison. Pre-specify a testing hierarchy for key secondary endpoints.\n\n## 8. Estimand (ICH E9(R1))\n\n${i.estimandStrategy ? `Strategy for intercurrent events: **${i.estimandStrategy}**. Define population, variable (${i.endpointType}), intercurrent-event handling, and population-level summary measure explicitly.` : 'Define the estimand (population, variable, intercurrent-event strategy, summary measure) before study conduct per ICH E9(R1).'}\n\n## 9. Missing Data\n\n${i.missingDataMethod ? `Primary approach: **${i.missingDataMethod}**, with a tipping-point sensitivity analysis.` : 'Pre-specify the missing-data approach (e.g. MMRM for longitudinal endpoints, multiple imputation otherwise) and a tipping-point sensitivity analysis.'}\n\n## 10. Sensitivity Analyses\n\n- Tipping-point analysis for missing-data assumptions\n- ITT vs PP concordance\n`;
-    if (j.fragility.category !== 'robust') s += `- Effect-size sensitivity (fragility index ${j.fragility.fragilityIndex})\n`;
-    s += `\n## 11. Interim Analyses\n\n${i.interimAnalyses && i.interimAnalyses > 0 ? `${i.interimAnalyses} planned interim ${i.interimAnalyses === 1 ? 'analysis' : 'analyses'} governed by a pre-specified alpha-spending function (e.g. O'Brien-Fleming). See the Interim Analysis Plan and DSMB Charter.` : 'No interim efficacy analyses planned. Safety monitoring per the DSMB charter, if applicable.'}\n\n## 12. Planned Outputs\n\nTables, listings and figures are specified in the TLF Shell Plan. Disposition, demographics, primary/secondary efficacy, and safety summaries are mandatory.\n\n`;
-    return s + foot();
-  };
-  const protocolSection: GenFn = (i, c, j, _d, _r) => { let s = `# Protocol — Statistical Considerations\n\n## Statistical Hypotheses\n\n`;
-    if (i.studyType === 'superiority') s += `H0: No difference between treatment groups.\nH1: Treatment is superior to control.\n\n`;
-    else if (i.studyType === 'non_inferiority') s += `H0: Treatment is inferior to control by more than the non-inferiority margin (${i.nonInferiorityMargin}).\nH1: Treatment is non-inferior to control.\n\n`;
-    else if (i.studyType === 'equivalence') s += `H0: Treatment and control differ by more than the equivalence margin (+/-${i.equivalenceMargin}).\nH1: Treatment and control are equivalent.\n\n`;
-    else s += `Hypotheses per the study objective (${i.objectiveType}).\n\n`;
-    s += `## Sample Size\n\n${c.adjustedTotal ?? c.sampleSize.total} subjects (${c.sampleSize.perGroup} per group) provide ${(c.power * 100).toFixed(1)}% power at a=${i.alpha} (two-sided) to detect an effect size of ${i.effectSize}.\n\n## Primary Analysis\n\n${c.method}. Significance level: a = ${i.alpha} (two-sided).\n\n## Analysis Populations\n\n- **Full Analysis Set (FAS/ITT)**: All randomized subjects\n- **Per-Protocol (PP)**: Subjects completing without major deviations\n- **Safety Population**: All subjects receiving at least one dose\n\n`;
-    return s + foot();
-  };
-  const csrMethods: GenFn = (i, c, j, _d, _r) => { const n = c.adjustedTotal ?? c.sampleSize.total; let s = `# Statistical Methods (CSR S9.7, ICH E3)\n\n## 9.7.1 Statistical and Analytical Plans\n\nThe study was a ${i.studyType} design with a ${i.endpointType} primary endpoint analyzed by ${c.method}. Analyses followed the pre-specified SAP.\n\n## 9.7.1.1 Analysis Populations\n\nEfficacy was analyzed on the ITT population; the PP population was supportive. Safety was summarized on the as-treated population.\n\n## 9.7.1.2 Primary Endpoint Analysis\n\nThe primary endpoint was compared between arms using ${c.method} at a two-sided a = ${i.alpha}. The point estimate is reported with its ${((1 - i.alpha) * 100).toFixed(0)}% confidence interval.\n\n## 9.7.1.3 Sample Size\n\nThe planned sample size of ${n} (${c.sampleSize.perGroup}/group) provided ${(c.power * 100).toFixed(1)}% power. ${c.formula}\n\n## 9.7.2 Multiplicity\n\nA single primary comparison was performed; secondary endpoints were tested within a pre-specified hierarchy.\n\n## 9.7.3 Handling of Missing Data\n\n${i.missingDataMethod ? `Missing data were handled by ${i.missingDataMethod}, with tipping-point sensitivity analyses.` : 'Missing data were handled per the pre-specified SAP approach with sensitivity analyses.'}\n\n## 9.7.4 Interim Analyses\n\n${i.interimAnalyses && i.interimAnalyses > 0 ? `${i.interimAnalyses} interim ${i.interimAnalyses === 1 ? 'analysis was' : 'analyses were'} conducted under a pre-specified alpha-spending function with DSMB oversight.` : 'No interim efficacy analyses were conducted.'}\n\n`;
-    if (j.fragility.category !== 'robust') s += `## 9.7.5 Robustness\n\nResult robustness was assessed (fragility index ${j.fragility.fragilityIndex}); conclusions were examined under alternative assumptions.\n\n`;
-    return s + foot();
-  };
-  const dsmbCharter: GenFn = (i, c, _j, _d, r) => { let s = `# Data Safety Monitoring Board (DSMB) Charter\n\n## 1. Purpose and Scope\n\nThe DSMB (also DMC) safeguards the safety and interests of subjects in this ${i.studyType} study (target N = ${c.adjustedTotal ?? c.sampleSize.total}) and the integrity of the trial. It operates independently of the sponsor and investigators.\n\n## 2. Membership\n\n- Independent clinician(s) with relevant therapeutic expertise\n- Independent biostatistician\n- A chair with prior DSMB experience\n\nMembers have no competing financial or intellectual interests in the outcome.\n\n## 3. Responsibilities\n\n- Review accumulating safety data at pre-specified intervals\n- Review interim efficacy at planned looks (see Interim Analysis Plan)\n- Recommend continue / modify / pause / stop\n\n## 4. Meetings\n\n- **Organizational** (before first subject)\n- **Periodic safety reviews** (by enrollment/exposure milestones)\n- **Interim analyses**: ${i.interimAnalyses && i.interimAnalyses > 0 ? `${i.interimAnalyses} planned` : 'safety-only unless protocol specifies efficacy looks'}\n\n## 5. Open and Closed Sessions\n\nOpen sessions include the sponsor (blinded). Closed sessions are restricted to voting members and the independent unblinded statistician who presents by-arm data.\n\n## 6. Statistical Support and Stopping Guidance\n\nAn independent unblinded statistician prepares closed reports. Formal efficacy stopping follows the pre-specified group-sequential boundaries; safety stopping is at DSMB discretion.${r ? ` Aligns with ${r.body} expectations for independent data monitoring.` : ''}\n\n## 7. Confidentiality\n\nInterim by-arm results are confidential to the DSMB until the board recommends otherwise, to protect trial integrity.\n\n`;
-    return s + foot();
-  };
-  const interimPlan: GenFn = (i, c, _j, _d, r) => { const k = i.interimAnalyses && i.interimAnalyses > 0 ? i.interimAnalyses : 1, n = c.adjustedTotal ?? c.sampleSize.total; let s = `# Interim Analysis Plan\n\n## 1. Purpose\n\nThis plan governs ${k} planned interim ${k === 1 ? 'analysis' : 'analyses'} for a ${i.studyType} study (target N = ${n}, ${(c.power * 100).toFixed(0)}% power at a = ${i.alpha}). It controls the overall Type I error and defines stopping rules.\n\n## 2. Timing\n\nInterim ${k === 1 ? 'analysis is' : 'analyses are'} planned at approximately ${Array.from({ length: k }, (_, x) => `${Math.round(((x + 1) / (k + 1)) * 100)}%`).join(', ')} of planned information (events/completers).\n\n## 3. Alpha Spending\n\nA group-sequential design with an O'Brien-Fleming-type alpha-spending function is recommended. The cumulative spend at the final analysis equals the study-wide a = ${i.alpha}.\n\n| Look | Information fraction | Indicative two-sided boundary (Z) |\n|---|---|---|\n`;
-    for (let x = 1; x <= k; x++) { const frac = x / (k + 1), z = (2.96 - 0.6 * frac).toFixed(2); s += `| ${x} | ${(frac * 100).toFixed(0)}% | +/-${z} |\n`; }
-    s += `| Final | 100% | +/-1.97 |\n\n*Boundaries are indicative; compute exact boundaries with the chosen spending function (Lan-DeMets) at finalization.*\n\n## 4. Stopping Rules\n\n- **Efficacy**: cross the upper boundary at an interim look.\n- **Futility**: non-binding boundary (e.g. conditional power < 20%).\n- **Safety**: per DSMB charter, independent of efficacy boundaries.\n\n## 5. Governance\n\nInterim analyses are performed by an unblinded independent statistician and reviewed by the DSMB. The sponsor remains blinded.${r ? ` ${r.body} expects pre-specification of all boundaries before the first look.` : ''}\n\n`;
-    return s + foot();
-  };
-  const tlfShell: GenFn = (i, c, _j, _d, _r) => { let s = `# Tables, Listings & Figures (TLF) Shell Plan\n\nPlanned outputs for a ${i.studyType} study (N = ${c.adjustedTotal ?? c.sampleSize.total}). Shells are organized by ICH E3 domain.\n\n## Tables\n\n| ID | Title | Population |\n|---|---|---|\n| 14.1.1 | Subject disposition | All randomized |\n| 14.1.2 | Protocol deviations | All randomized |\n| 14.1.3 | Demographics and baseline characteristics | ITT; Safety |\n| 14.2.1 | Primary endpoint (${i.endpointType}) analysis — ${c.method} | ITT |\n| 14.2.2 | Primary endpoint — PP sensitivity | PP |\n| 14.2.3 | Secondary endpoints | ITT |\n| 14.3.1 | Exposure | Safety |\n| 14.3.2 | Adverse events overview | Safety |\n| 14.3.3 | AEs by SOC/PT | Safety |\n| 14.3.4 | Serious adverse events | Safety |\n| 14.3.5 | Laboratory shifts | Safety |\n\n## Figures\n\n| ID | Title |\n|---|---|\n| F-1 | Subject disposition (CONSORT) |\n`;
-    if (i.endpointType === 'time_to_event') s += `| F-2 | Kaplan-Meier curve, primary endpoint |\n`;
-    s += `| F-3 | Primary endpoint by visit / forest plot of subgroups |\n\n## Listings\n\n| ID | Title |\n|---|---|\n| 16.2.1 | Subject disposition |\n| 16.2.4 | Protocol deviations |\n| 16.2.7 | Adverse events |\n\n`;
-    return s + foot();
-  };
-  const randomization: GenFn = (i, c, _j, _d, _r) => { const g = i.numberOfGroups ?? 2; let s = `# Randomization & Blinding Plan\n\n## 1. Allocation\n\nSubjects are randomized ${i.allocationRatio}:1 across ${g} arm${g === 1 ? '' : 's'} for this ${i.studyType} study (target N = ${c.adjustedTotal ?? c.sampleSize.total}).\n\n## 2. Method\n\nPermuted-block randomization with randomly varying block sizes is recommended to balance arms while protecting allocation concealment. ${i.studyType === 'single_arm' ? 'Single-arm study — randomization not applicable; document enrollment order instead.' : 'Stratify by key prognostic factors (e.g. site, baseline severity) to control confounding.'}\n\n## 3. Allocation Concealment\n\nThe randomization list is generated by an independent statistician and held in a secure IWRS/IRT. Sites obtain assignments at the point of randomization only.\n\n## 4. Blinding\n\n${i.comparatorType === 'placebo' ? 'Double-blind: subjects, investigators, and outcome assessors are masked using matching placebo.' : 'Specify the blinding level (open-label, single-, or double-blind). Where blinding is infeasible, use blinded independent endpoint adjudication.'}\n\n## 5. Unblinding\n\nEmergency unblinding is available via the IWRS for medical necessity and is logged. Planned unblinding occurs only after database lock, except for DSMB closed sessions.\n\n`;
-    return s + foot();
-  };
+const docById = (id: string): DocDef | undefined => DOC_REGISTRY.find((d) => d.id === id);
 
-  const REGISTRY: DocDef[] = [
-    { id: 'sample_size_rationale', label: 'Sample Size Rationale', group: 'Design', gen: sampleSizeRationale, blurb: 'The justification reviewers ask for — method, assumptions, result, fragility.' },
-    { id: 'full_statistical_analysis_plan', label: 'Statistical Analysis Plan', group: 'Analysis', gen: fullSAP, blurb: 'The full SAP — populations, sample size, methods, estimand, missing data, interims.' },
-    { id: 'sap_section_draft', label: 'SAP Section Draft', group: 'Analysis', gen: sapSection, blurb: 'A focused SAP section for the primary analysis.' },
-    { id: 'protocol_statistical_section', label: 'Protocol Statistical Section', group: 'Design', gen: protocolSection, blurb: 'Hypotheses, sample size, primary analysis and populations for the protocol.' },
-    { id: 'statistical_methods_section', label: 'CSR S9.7 Methods', group: 'Reporting', gen: csrMethods, blurb: 'ICH E3 S9.7 statistical methods for the clinical study report.' },
-    { id: 'statistical_risk_memo', label: 'Statistical Risk Memo', group: 'Governance', gen: riskMemo, blurb: 'Executive risk read with role-specific interpretations and escalation items.' },
-    { id: 'design_assumption_note', label: 'Design Assumption Note', group: 'Design', gen: (i, c, j, d, r) => sampleSizeRationale(i, c, j, d, r), blurb: 'Assumptions and their sensitivity, for the design file.' },
-    { id: 'interim_analysis_plan', label: 'Interim Analysis Plan', group: 'Governance', gen: interimPlan, blurb: 'Timing, alpha spending, stopping rules and governance for interim looks.' },
-    { id: 'dsmb_charter', label: 'DSMB / DMC Charter', group: 'Governance', gen: dsmbCharter, blurb: 'Independent data monitoring charter — membership, meetings, stopping guidance.' },
-    { id: 'tlf_shell_plan', label: 'TLF Shell Plan', group: 'Reporting', gen: tlfShell, blurb: 'Tables, listings and figures shells by ICH E3 domain.' },
-    { id: 'randomization_plan', label: 'Randomization & Blinding', group: 'Design', gen: randomization, blurb: 'Allocation, concealment, blinding and unblinding plan.' },
-  ];
-  function byId(id: string): DocDef | undefined { return REGISTRY.find(x => x.id === id); }
-  return { REGISTRY, byId };
-})();
-
-/* ─── Tiny markdown -> HTML for the document canvas ─── */
+/* ─── Markdown -> HTML for the document canvas ─── */
 /* Markdown rendering is `renderSafeMarkdown` (marked + DOMPurify), the
    codebase's one audited markdown-to-HTML path — see
-   components/ana/renderSafeMarkdown.ts.
+   components/ana/renderSafeMarkdown.ts. It runs a real markdown parser and then
+   reduces the result to an explicit tag/attribute allowlist, so `<script>`,
+   inline event handlers and `javascript:` URLs are removed rather than depended
+   upon never to arrive. */
 
-   This file used to carry its own 13-line `mdToHtml`: a regex approximation of
-   markdown whose first act was a hand-rolled `&`/`<`/`>` escape. Two other
-   surfaces carried the same function, two of the three byte-identical. Three
-   copies of an escaper feeding three `dangerouslySetInnerHTML` sinks is three
-   places to get HTML escaping right and three places for one to drift, in a
-   product where the text being rendered is a document the user wrote or
-   uploaded.
-
-   The replacement is not merely deduplication. `renderSafeMarkdown` runs a real
-   markdown parser and then reduces the result to an explicit tag/attribute
-   allowlist, so `<script>`, inline event handlers and `javascript:` URLs are
-   removed rather than depended upon never to arrive — and it is already
-   covered by its own tests, which the hand-rolled copies never were. */
-
-/* ── Design presets (deterministic engine inputs — not stored data) ── */
+/* ── Design presets (engine inputs — not stored data) ── */
 
 const BS_PRESETS: Record<string, Preset> = {
   survival: { label: 'Pivotal OS (survival)', input: { clientTrack: 'biotech_pharma', regulatoryBody: 'FDA', studyType: 'superiority', objectiveType: 'efficacy', endpointType: 'time_to_event', alpha: 0.05, powerTarget: 0.90, effectSize: 0.38, eventRate: 0.55, attritionRate: 0.15, allocationRatio: 1, numberOfGroups: 2, numberOfEndpoints: 1, interimAnalyses: 2, comparatorType: 'placebo', estimandStrategy: 'treatment_policy', missingDataMethod: 'MMRM', indication: 'Oncology', phase: 'Phase III' } },
   binary: { label: 'ORR (binary)', input: { clientTrack: 'biotech_pharma', regulatoryBody: 'FDA', studyType: 'superiority', objectiveType: 'efficacy', endpointType: 'binary', alpha: 0.05, powerTarget: 0.90, effectSize: 0.15, controlRate: 0.30, treatmentRate: 0.45, attritionRate: 0.15, allocationRatio: 1, numberOfGroups: 2, numberOfEndpoints: 1, comparatorType: 'placebo', phase: 'Phase III' } },
   ni: { label: 'Non-inferiority', input: { clientTrack: 'biotech_pharma', regulatoryBody: 'EMA', studyType: 'non_inferiority', objectiveType: 'efficacy', endpointType: 'continuous', alpha: 0.025, powerTarget: 0.90, effectSize: 0.0, nonInferiorityMargin: -0.4, variance: 1, attritionRate: 0.10, allocationRatio: 1, numberOfGroups: 2, comparatorType: 'active', phase: 'Phase III' } },
   ivd: { label: 'Diagnostic accuracy', input: { clientTrack: 'diagnostics_ivd', regulatoryBody: 'FDA', studyType: 'diagnostic_accuracy', objectiveType: 'diagnostic_accuracy', endpointType: 'sensitivity_specificity', alpha: 0.05, powerTarget: 0.90, effectSize: 0.9, sensitivity: 0.90, specificity: 0.92, prevalence: 0.30, attritionRate: 0.10, allocationRatio: 1, numberOfGroups: 1, numberOfEndpoints: 2 } },
+  // Two designs the engine has always sized and no control could ask for.
+  roc: { label: 'ROC / AUC', input: { clientTrack: 'diagnostics_ivd', regulatoryBody: 'FDA', studyType: 'diagnostic_accuracy', objectiveType: 'diagnostic_accuracy', endpointType: 'auc_roc', alpha: 0.05, powerTarget: 0.80, effectSize: 0, aucTarget: 0.85, aucNull: 0.50, attritionRate: 0.10, allocationRatio: 1, numberOfGroups: 2 } },
+  crossover: { label: '2×2 crossover', input: { clientTrack: 'biotech_pharma', regulatoryBody: 'FDA', studyType: 'superiority', objectiveType: 'efficacy', endpointType: 'continuous', alpha: 0.05, powerTarget: 0.80, effectSize: 0.5, variance: 1, crossoverPeriods: 2, withinSubjectCorrelation: 0.5, attritionRate: 0.10, allocationRatio: 1, numberOfGroups: 2 } },
 };
 
 function vf(v: string): number | undefined { return v === undefined || v === null || v === '' ? undefined : parseFloat(v); }
 
-/* ── Inline toast helper ── */
+/* The design is re-sized on the server, so a keystroke is a request. Coalesce
+   the burst a user types into one call; the generation counter below is what
+   keeps a late answer from landing on a newer design. */
+const COMPUTE_DEBOUNCE_MS = 180;
+
+/** What the engine has said about the design currently on screen. */
+type EngineState =
+  | { kind: 'computing' }
+  | {
+      kind: 'ready';
+      /** The engine's NORMALIZED input — what it actually sized, defaults disclosed. */
+      input: EngineInput;
+      computation: ComputationResult;
+      judgment: JudgmentResult;
+      domain: DomainAdaptation;
+      regulatory?: RegulatoryCustomization;
+      interpretation?: AnaInterpretation;
+      warnings: InputWarning[];
+    }
+  | { kind: 'refused'; message: string };
+
+/** The governed document, as the engine generated it. */
+type DocState =
+  | { kind: 'idle' }
+  | { kind: 'generating' }
+  | { kind: 'ready'; markdown: string; title: string; version?: number; status?: string; engineVersion?: string }
+  | { kind: 'failed'; message: string };
 
 /* ════ Biostatistics surface ════ */
 
@@ -585,7 +380,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
   const live = connected();
   const [preset, setPreset] = useState('survival');
-  const [input, setInput] = useState<BiostatInput>(BS_PRESETS.survival.input);
+  const [input, setInput] = useState<EngineInput>(BS_PRESETS.survival.input);
   const [docType, setDocType] = useState('sample_size_rationale');
   const [toast, fireToast] = useToast();
 
@@ -595,8 +390,8 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
      GET /api/biostat-bridge/designs) and seeds itself from the one the person
      picks — or the one the protocol workspace / AnA handed over on the nav
      channel (`studyId`). The seed is the server adapter's translation of the
-     design (with its honest gaps); the numbers on screen are still this
-     surface's deterministic recompute, exactly as for a preset. */
+     design (with its honest gaps); the numbers on screen are the engine's
+     answer for that design, exactly as for a preset. */
   const program = readShellProject();
   const [designReload, setDesignReload] = useState(0);
   const designs = useBridgeDesigns(designReload);
@@ -606,26 +401,19 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   useEffect(() => {
     const seed = loadedDesign?.adapter.input;
     if (!seed) return;
-    // The adapter emits the engine's StatisticalInput; BiostatInput is the same
-    // INPUT vocabulary. That is as far as the correspondence goes: the sizing
-    // math and the document generators are ports, but the Layer-3 judgment in
-    // this file is a smaller browser-side rule set, not a port of
-    // server/services/ana-biostats/judgment-engine.ts — it carries three
-    // dimensions where the server carries a dozen, and its fragility index and
-    // the server's are different quantities. Do not read one's output as the
-    // other's.
-    setInput(seed as unknown as BiostatInput);
+    // The adapter emits the engine's StatisticalInput, which is exactly what
+    // this surface's controls hold and what it posts back to the engine.
+    setInput(seed as unknown as EngineInput);
     setPreset('design');
   }, [loadedDesign]);
 
   // Governed statistical documents — the ONE stored, org-scoped slice of this
-  // surface (the design/document body is computed in-browser deterministically).
-  // GET /api/ana-biostats/governed-documents reads real persisted artifacts
-  // (concept2cure_artifacts, type 'statistical_summary'), org-scoped. Real rows,
-  // an honest empty state, or an honest failed-load state — never a fixture.
-  // Narrowed to the open program when one is open (the route resolves the
-  // program UUID to the artifact store's project id, tenant-scoped); the card's
-  // sub-label says which scope it is showing.
+  // surface. GET /api/ana-biostats/governed-documents reads real persisted
+  // artifacts (concept2cure_artifacts, type 'statistical_summary'), org-scoped.
+  // Real rows, an honest empty state, or an honest failed-load state — never a
+  // fixture. Narrowed to the open program when one is open (the route resolves
+  // the program UUID to the artifact store's project id, tenant-scoped); the
+  // card's sub-label says which scope it is showing.
   const govDocsPath = program
     ? '/api/ana-biostats/governed-documents?programId=' + encodeURIComponent(String(program.id))
     : '/api/ana-biostats/governed-documents';
@@ -633,34 +421,138 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const set = (k: string, v: unknown) => setInput((s) => ({ ...s, [k]: v }));
   const applyPreset = (k: string) => { setPreset(k); setInput(BS_PRESETS[k].input); };
 
-  const res = useMemo(() => { try { return BiostatEngine.compute(input); } catch { return null; } }, [input]);
-  const jud = useMemo(() => { try { return res && BiostatEngine.judge(input, res); } catch { return null; } }, [input, res]);
-  const dom = useMemo(() => domainAdapt(input), [input]);
-  const reg = useMemo(() => regCustom(input), [input]);
-  const docDef = BiostatDocs.byId(docType);
+  /* ── The design, sized by the engine ─────────────────────────────────────
+     One request per settled design. `generation` is bumped on every change, so
+     an answer for a design the user has already edited away from is dropped
+     rather than painted over the newer one. */
+  const [engine, setEngine] = useState<EngineState>({ kind: 'computing' });
+  const generation = useRef(0);
+  /* Bumped by the retry control. A refusal is a property of the design, not of
+     the connection, so "try again" has to be able to ask the identical question
+     again — which a dependency on the design alone cannot express. */
+  const [retryTick, setRetryTick] = useState(0);
+
+  useEffect(() => {
+    const gen = ++generation.current;
+    setEngine({ kind: 'computing' });
+    const timer = setTimeout(async () => {
+      const r = await postEngine<ComputeResponse>('/api/ana-biostats/compute', input);
+      if (gen !== generation.current) return;
+      if (!r.ok) {
+        setEngine({ kind: 'refused', message: engineFailureMessage(r, 'a design') });
+        return;
+      }
+      const { validation, computation, judgment, domain } = r.data;
+      if (!validation?.valid) {
+        /* The normalizer's own sentences, which name the field and what it
+           needs. A list of them beats "invalid input", which tells a
+           statistician nothing they can act on. */
+        const said = (validation?.errors ?? []).map((e) => e.message).filter(Boolean);
+        setEngine({
+          kind: 'refused',
+          message: said.length
+            ? said.join(' ')
+            : 'The statistical engine could not size this design and gave no reason.',
+        });
+        return;
+      }
+      if (!computation || !judgment || !domain) {
+        setEngine({
+          kind: 'refused',
+          message: 'The statistical engine accepted this design but returned no result for it.',
+        });
+        return;
+      }
+      setEngine({
+        kind: 'ready',
+        input: validation.normalizedInput ?? input,
+        computation,
+        judgment,
+        domain,
+        regulatory: r.data.regulatory,
+        interpretation: r.data.interpretation,
+        warnings: validation.warnings ?? [],
+      });
+    }, COMPUTE_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [input, retryTick]);
+
+  const docDef = docById(docType);
+
+  /* ── The document, written by the engine from the engine's own result ──── */
+  const [doc, setDoc] = useState<DocState>({ kind: 'idle' });
+  const docGeneration = useRef(0);
+  const ready = engine.kind === 'ready' ? engine : null;
+
+  useEffect(() => {
+    const gen = ++docGeneration.current;
+    if (!ready || !docDef) { setDoc({ kind: 'idle' }); return; }
+    setDoc({ kind: 'generating' });
+    let cancelled = false;
+    void (async () => {
+      const r = await postEngine<GovernedDocumentResponse>('/api/ana-biostats/document', {
+        documentType: docDef.id,
+        input: ready.input,
+        computation: ready.computation,
+        judgment: ready.judgment,
+        domainAdaptation: ready.domain,
+        regulatoryCustomization: ready.regulatory,
+      });
+      if (cancelled || gen !== docGeneration.current) return;
+      if (!r.ok) {
+        setDoc({ kind: 'failed', message: engineFailureMessage(r, `the ${docDef.label.toLowerCase()}`) });
+        return;
+      }
+      if (typeof r.data.content !== 'string' || !r.data.content.trim()) {
+        setDoc({ kind: 'failed', message: `The engine returned no text for the ${docDef.label.toLowerCase()}.` });
+        return;
+      }
+      setDoc({
+        kind: 'ready',
+        markdown: r.data.content,
+        title: r.data.title,
+        version: r.data.version,
+        status: r.data.status,
+        engineVersion: r.data.provenance?.engineVersion,
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [ready, docDef]);
+
+  const md = doc.kind === 'ready' ? doc.markdown : '';
+  const html = useMemo(() => (md ? renderSafeMarkdown(md) : ''), [md]);
+
+  /* Which controls a design needs is decided by its ENDPOINT, not by the
+     sponsor's track — the same correction the engine took on 2026-10-11. A
+     pharma sponsor running a diagnostic sub-study is sized by the accuracy
+     method, so this form has to let them enter the accuracy targets; before
+     this change those three controls appeared on the diagnostics_ivd track
+     only, and the ROC and crossover controls did not exist at all. */
+  const isAccuracy = input.endpointType === 'sensitivity_specificity' || input.studyType === 'diagnostic_accuracy';
+  const isRoc = input.endpointType === 'auc_roc';
+  const isAgreement = input.endpointType === 'agreement';
+  const isSurv = input.endpointType === 'time_to_event';
+  const isBin = input.endpointType === 'binary';
+  const isCont = input.endpointType === 'continuous';
+  const isNI = input.studyType === 'non_inferiority';
+  const isEquiv = input.studyType === 'equivalence';
+  /* An effect size is not an input to an accuracy, ROC or agreement design. */
+  const usesEffect = !isAccuracy && !isRoc && !isAgreement;
+  const n = ready ? (ready.computation.adjustedTotal || ready.computation.sampleSize.total) : 0;
+
   /* Where THIS document files for the program's application type — from the
      bridge's placement catalog. Null when no design is loaded or the program
      has no filing type; the authoring hand-off then keeps its historical M5. */
   const placement = placementForDoc(loadedDesign, docType);
   const filingModule = placement?.module ?? 'M5';
-  const md = useMemo(() => { try { return res && jud && docDef ? docDef.gen(input, res, jud, dom, reg) : ''; } catch (e: unknown) { return '# Error\n\n' + (e instanceof Error ? e.message : String(e)); } }, [input, res, jud, dom, reg, docType, docDef]);
-  const html = useMemo(() => renderSafeMarkdown(md), [md]);
-
-  const isDiag = input.clientTrack === 'diagnostics_ivd';
-  const isSurv = input.endpointType === 'time_to_event';
-  const isBin = input.endpointType === 'binary';
-  const isNI = input.studyType === 'non_inferiority';
-  const n = res ? (res.adjustedTotal || res.sampleSize.total) : 0;
 
   /*
-   * "Open in editor" — a real handoff, at last.
+   * "Open in editor" — a real handoff.
    *
    * WHAT IT USED TO BE. `localStorage.setItem('c2c_biostat_doc', {title, md})`
    * followed by a navigation. Nothing in this repository has ever read that key
    * — no getItem, in any file, in any commit — so the editor opened on whatever
-   * it would have opened on anyway and the named document never travelled. Two
-   * surfaces also fired "opened in editor" toasts for that non-event; those were
-   * deleted in f018695, leaving a button that navigated and claimed nothing.
+   * it would have opened on anyway and the named document never travelled.
    *
    * WHY IT COULD NOT BE "RECONNECTED". The payload is CONTENT — a title and a
    * markdown body — not an identifier. There is no row to point at, so honouring
@@ -678,8 +570,6 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
    * `d.updated_at DESC` — then it selects the first row and that row's first
    * section. A document created a moment ago IS the most recently updated draft,
    * and the create below sets the same project scope, so the editor lands on it.
-   * Writing a window.C2C_DOC that nothing reads would repeat the exact defect
-   * this replaces.
    *
    * FAILURE. Nothing is announced that did not happen and nothing is lost. If
    * the document create fails we do NOT navigate — the draft stays on screen
@@ -695,7 +585,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const openEditor = async () => {
     if (openingRef.current) return; // a second click must not create a second document
     const title = docDef?.label || 'Statistical document';
-    if (!md.trim()) { fireToast('Nothing to open yet — the document has not been generated.', 'error'); return; }
+    if (!md.trim()) { fireToast('Nothing to open yet — the engine has not returned the document.', 'error'); return; }
     openingRef.current = true; setOpening(true);
     try {
       // Statistical documentation files under Module 5; the server would
@@ -715,56 +605,32 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
   /**
-   * Ask AnA to attach the document — which is what this control does, and now
+   * File the document to the dossier — which is what this control does, and
    * what it says.
    *
    * It used to fire `'<Label> attached to dossier'` with the default 'ok' tone,
    * i.e. the green success tick, SYNCHRONOUSLY and BEFORE `ask(...)` was even
    * called. At the instant that tick painted, not one byte had left the browser.
+   * And nothing was attached even after it did: `ask()` returns void — it
+   * streams a natural-language sentence into the AnA conversation.
    *
-   * And nothing was attached even after it did. `ask()` returns void — it
-   * streams a natural-language sentence into the AnA conversation. The real
-   * path, attachToDossier in
-   * server/services/ana-biostats/workflow-integrator.ts, needs an artifactId and
-   * a dossierSectionId. This control is only reachable once `res && jud &&
-   * docDef`, so the document is GENERATED — but generated is not saved: there is
-   * no artifactId until `openEditor` writes one through saveToAuthoring, and
-   * this surface has no dossier-section picker at all. So there is no success to
-   * report, and no failure path to report one from either.
-   *
-   * `openEditor`, directly above, is this file's own proof of the right pattern:
-   * it awaits the real write and refuses to navigate or announce on anything but
-   * a confirmed `r.ok`. This is the same rule applied to a control whose honest
-   * description is "a request was sent", not "it is done" — so the toast now
-   * follows `ask()` rather than preceding it, and says what AnA still has to do.
-   *
-   * The `!md.trim()` guard mirrors openEditor's and is belt-and-braces for the
-   * same reason its twin is: both controls live in one AnswerLead gated on
-   * `res && jud && docDef`, so it only bites if `docDef.gen()` returns empty.
+   * `saveToAuthoring` is the real filing path and the sibling button beside
+   * this one already uses it: it POSTs /api/authoring/docs with
+   * window.C2C_PROJECT.id as client_program_id, which is what binds the
+   * document to the project's dossier, then writes the content. Same call,
+   * same module, same failure reporting — the only difference from "Open in
+   * editor" is that this one does not navigate away.
    */
   const attach = async () => {
     const label = docDef?.label || 'Document';
     if (!md.trim()) {
-      fireToast('Nothing to attach yet — the document has not been generated.', 'error');
+      fireToast('Nothing to file yet — the engine has not returned the document.', 'error');
       return;
     }
     if (attachingRef.current) return; // a second click must not file a second copy
     attachingRef.current = true;
     setAttaching(true);
     try {
-      /* This used to hand the request to the conversation — `ask('Attach the
-         … to the submission dossier statistical section')` — and then toast
-         that an attachment had been "requested". `ask()` returns void: it
-         streams a sentence into the AnA panel. Nothing was filed, and the user
-         was left waiting for a confirmation that had no producer.
-
-         `saveToAuthoring` is the real filing path and the sibling button beside
-         this one already uses it: it POSTs /api/authoring/docs with
-         window.C2C_PROJECT.id as client_program_id, which is what binds the
-         document to the project's dossier, then writes the content. Same call,
-         same module (statistical documentation files under M5), same failure
-         reporting — the only difference from "Open in editor" is that this one
-         does not navigate away. */
       const r = await saveToAuthoring({
         title: label, module: filingModule, code: docDef?.id || 'statistical_document',
         content: md, subject: 'the document',
@@ -780,14 +646,16 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       setAttaching(false);
     }
   };
-  const groups = BiostatDocs.REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
-  const vTone = (v: string) => v === 'adequate' ? 'ok' : v === 'marginal' ? 'warn' : 'err';
+  const groups = DOC_REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
+  /* 'insufficient_information' is the engine's third state — a dimension it had
+     nothing to judge against. It is a caution, never a pass and never a fail. */
+  const vTone = (v: string) => v === 'adequate' ? 'ok' : (v === 'marginal' || v === 'insufficient_information') ? 'warn' : 'err';
 
-  /* WHAT ANA SEES HERE. The design engine is pure and in-browser, so its
-     numbers are always current; the govDocs read scopes ONLY the
-     persisted-documents claim — its error must never read as zero rows. When
-     the engine itself returns null the screen shows no n/power/verdict, so
-     none is published either. */
+  /* WHAT ANA SEES HERE. Every number published below is one the engine returned
+     for the design on screen; while it is still computing, or when it refused,
+     no n/power/verdict is published because none is on screen. The govDocs read
+     scopes ONLY the persisted-documents claim — its error must never read as
+     zero rows. */
   const anaContext = useMemo(() => {
     const presetLabel = BS_PRESETS[preset]?.label ?? preset;
     const gov = govDocs.loading
@@ -807,39 +675,47 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           documentFilesUnder: placement ? (placement.code ?? 'not filed') : null,
         }
       : { loadedStudyDesign: null, persistedDesignsListed: designs.loading || designs.error ? null : designs.rows.length };
-    if (!res || !jud) {
+    if (engine.kind === 'computing') {
       return {
-        summary:
-          'Biostatistics — the design engine could not compute a result for the current inputs, so no sample size, power or verdict is on screen; ' + gov + '.',
+        summary: 'Biostatistics — the statistical engine is still sizing the design on screen, so no sample size, power or verdict is shown yet; ' + gov + '.',
         facts: { documentType: docDef?.label ?? null, preset: presetLabel, designComputed: false, ...govFacts, ...designFacts },
+      };
+    }
+    if (engine.kind === 'refused') {
+      return {
+        summary: 'Biostatistics — the statistical engine declined to size the design on screen, so no sample size, power or verdict is shown: '
+          + engine.message + ' ' + gov + '.',
+        facts: { documentType: docDef?.label ?? null, preset: presetLabel, designComputed: false, engineRefusal: engine.message, ...govFacts, ...designFacts },
       };
     }
     return {
       summary:
-        'Biostatistics — a ' + (docDef?.label ?? 'statistical document') + ' drafted for a ' + input.studyType.replace(/_/g, ' ')
-        + ' design (' + presetLabel + ' preset): ' + n + ' subjects, ' + (res.power * 100).toFixed(0) + '% power, overall verdict '
-        + jud.overallVerdict + '; ' + gov + '.',
+        'Biostatistics — a ' + (docDef?.label ?? 'statistical document') + ' drafted for a ' + engine.input.studyType.replace(/_/g, ' ')
+        + ' design (' + presetLabel + ' preset): ' + n + ' subjects, ' + (engine.computation.power * 100).toFixed(0) + '% power, overall verdict '
+        + engine.judgment.overallVerdict + '; ' + gov + '.',
       facts: {
         documentType: docDef?.label ?? null,
         preset: presetLabel,
         subjectsN: n,
-        achievedPowerPct: Number((res.power * 100).toFixed(1)),
-        overallVerdict: jud.overallVerdict,
+        achievedPowerPct: Number((engine.computation.power * 100).toFixed(1)),
+        overallVerdict: engine.judgment.overallVerdict,
+        statisticalMethod: engine.computation.method,
+        engineSummary: engine.interpretation?.summary ?? null,
         ...govFacts,
         ...designFacts,
       },
       availableActions: [
         'Load one of the program\'s persisted study designs into the engine',
-        'Adjust any design input or preset — the document rewrites deterministically',
+        'Adjust any design input or preset — the engine re-sizes the design and rewrites the document',
         'Pick a different statistical document type to generate',
         'Refine the document with AnA',
         'Opening in the editor and attaching to the dossier both file a real governed document (genesis revision + Part 11 audit row) — AnA proposes them in conversation, never through screen controls.',
       ],
     };
-  }, [res, jud, docDef, preset, input.studyType, n, govDocs.loading, govDocs.error, govDocs.empty, govDocs.rows, loadedDesign, placement, designs.loading, designs.error, designs.rows.length]);
-  /* Both actions are pure client-side recomputes of a deterministic design —
-     nothing is filed. Opening in the editor and attaching to the dossier stay
-     governed human acts. `applyPreset` is the SAME function the chips call. */
+  }, [engine, docDef, preset, n, govDocs.loading, govDocs.error, govDocs.empty, govDocs.rows, loadedDesign, placement, designs.loading, designs.error, designs.rows.length]);
+  /* Both actions change what the engine is asked, not what is filed. Opening in
+     the editor and attaching to the dossier stay governed human acts.
+     `applyPreset` is the SAME function the chips call. */
   useSurfaceActionHandlers('biostatistics', {
     'biostatistics.load-design': (params) => {
       if (designs.loading) return { ok: false, reason: 'The study designs are still loading.', retry: true };
@@ -848,7 +724,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       if (!r.ok) return { ok: false, reason: r.reason };
       if (selectedStudyId === r.row.studyId) return { ok: true, detail: `Already loaded "${r.row.title}"` };
       setSelectedStudyId(r.row.studyId);
-      return { ok: true, detail: `Loading "${r.row.title}" — the engine recomputes from the design; nothing is filed` };
+      return { ok: true, detail: `Loading "${r.row.title}" — the engine re-sizes from the design; nothing is filed` };
     },
     'biostatistics.set-preset': (params) => {
       const target = String(params.preset ?? '');
@@ -856,15 +732,15 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       if (!meta) return { ok: false, reason: `No design preset named "${params.preset}".` };
       if (preset === target) return { ok: true, detail: `Already on the ${meta.label} preset` };
       applyPreset(target);
-      return { ok: true, detail: `Applied the ${meta.label} preset — the design recomputes on screen; nothing is filed` };
+      return { ok: true, detail: `Applied the ${meta.label} preset — the engine re-sizes the design; nothing is filed` };
     },
     'biostatistics.set-doc-type': (params) => {
       const target = String(params.docType ?? '');
-      const doc = BiostatDocs.REGISTRY.find((d) => d.id === target);
-      if (!doc) return { ok: false, reason: `No statistical document type named "${params.docType}".` };
-      if (docType === target) return { ok: true, detail: `Already drafting the ${doc.label}` };
+      const found = docById(target);
+      if (!found) return { ok: false, reason: `No statistical document type named "${params.docType}".` };
+      if (docType === target) return { ok: true, detail: `Already drafting the ${found.label}` };
       setDocType(target);
-      return { ok: true, detail: `Switched the document to ${doc.label} — filing it stays a human act` };
+      return { ok: true, detail: `Switched the document to ${found.label} — filing it stays a human act` };
     },
   });
   /* The ready signal for the hold above. A design named while the list is
@@ -877,23 +753,25 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
 
   usePublishSurfaceContext('biostatistics', anaContext);
 
+  const retryCompute = useCallback(() => setRetryTick((t) => t + 1), []);
+
   return (
     <div className="bs">
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Specialist — clinical {live ? '-- live' : ''}</div>
           <h1 className="sp-title">Biostatistics</h1>
-          <p className="sp-state">Describe the study once — AnA computes the design deterministically (ICH E9(R1)) and writes the governed statistical document you actually need to file.</p>
+          <p className="sp-state">Describe the study once — the statistical engine sizes and judges the design deterministically (ICH E9(R1)) and writes the governed statistical document you actually need to file. Nothing is computed in the browser.</p>
         </div>
       </div>
 
-      {res && jud && docDef && (
+      {ready && docDef && (
         <AnswerLead
-          tone={jud.overallVerdict === 'inadequate' ? 'urgent' : jud.overallVerdict === 'adequate' ? 'good' : 'calm'}
+          tone={ready.judgment.overallVerdict === 'inadequate' ? 'urgent' : ready.judgment.overallVerdict === 'adequate' ? 'good' : 'calm'}
           eyebrow={'Your ' + docDef.label.toLowerCase() + ' is ready to review'}
-          headline={<>I've drafted the <b>{docDef.label}</b> for your {input.studyType.replace(/_/g, ' ')} design — <b>{n} subjects</b>, {(res.power * 100).toFixed(0)}% power, and the design reads as <b>{jud.overallVerdict}</b>.</>}
-          body={<>Everything below is written, not just calculated — the method, assumptions, and {jud.fragility.category.replace('_', ' ')} fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the document rewrites itself.</>}
-          reassure={jud.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it." : "It's drafted to " + (input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
+          headline={<>I've drafted the <b>{docDef.label}</b> for your {ready.input.studyType.replace(/_/g, ' ')} design — <b>{n} subjects</b>, {(ready.computation.power * 100).toFixed(0)}% power, and the design reads as <b>{ready.judgment.overallVerdict}</b>.</>}
+          body={<>Everything below is written, not just calculated — the method, assumptions, and {ready.judgment.fragility.category.replace(/_/g, ' ')} fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the engine re-sizes it and rewrites the document.</>}
+          reassure={ready.judgment.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it." : "It's drafted to " + (ready.regulatory?.body || input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
           action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: attaching ? 'Filing to the dossier…' : 'File it to the dossier', onClick: () => void attach() } }}
           secondary="Or pick a different document and adjust the design on the left."
         />
@@ -919,34 +797,74 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           </div>
           <div className="pj-card">
-            <div className="pj-card-h"><span className="t">Study design</span><span className="s">document rewrites live</span></div>
+            <div className="pj-card-h"><span className="t">Study design</span><span className="s">the engine re-sizes it live</span></div>
             <div className="pj-card-b" style={{ padding: 12 }}>
               <div className="bs-presets">
-                {loadedDesign && <button className={'bs-preset' + (preset === 'design' ? ' on' : '')} onClick={() => { const seed = loadedDesign.adapter.input; if (seed) { setInput(seed as unknown as BiostatInput); setPreset('design'); } }} disabled={!loadedDesign.adapter.input} title={loadedDesign.adapter.input ? 'The loaded study design' : 'The loaded design cannot be sized until its blocking gaps are resolved'}>{I.sigma} {loadedDesign.title}</button>}
+                {loadedDesign && <button className={'bs-preset' + (preset === 'design' ? ' on' : '')} onClick={() => { const seed = loadedDesign.adapter.input; if (seed) { setInput(seed as unknown as EngineInput); setPreset('design'); } }} disabled={!loadedDesign.adapter.input} title={loadedDesign.adapter.input ? 'The loaded study design' : 'The loaded design cannot be sized until its blocking gaps are resolved'}>{I.sigma} {loadedDesign.title}</button>}
                 {Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} className={'bs-preset' + (preset === k ? ' on' : '')} onClick={() => applyPreset(k)}>{p.label}</button>)}
               </div>
               <div className="bs-fields">
                 <label className="bs-f"><span>Track</span><select value={input.clientTrack} onChange={(e) => set('clientTrack', e.target.value)}>{['biotech_pharma', 'medical_device', 'diagnostics_ivd'].map((x) => <option key={x} value={x}>{x.replace(/_/g, ' / ')}</option>)}</select></label>
                 <label className="bs-f"><span>Agency</span><select value={input.regulatoryBody} onChange={(e) => set('regulatoryBody', e.target.value)}>{['FDA', 'EMA', 'MHRA', 'PMDA', 'NMPA', 'TGA', 'Health_Canada'].map((x) => <option key={x}>{x}</option>)}</select></label>
                 <label className="bs-f"><span>Study type</span><select value={input.studyType} onChange={(e) => set('studyType', e.target.value)}>{['superiority', 'non_inferiority', 'equivalence', 'single_arm', 'performance', 'diagnostic_accuracy'].map((x) => <option key={x} value={x}>{x.replace(/_/g, ' ')}</option>)}</select></label>
-                <label className="bs-f"><span>Endpoint</span><select value={input.endpointType} onChange={(e) => set('endpointType', e.target.value)}>{['continuous', 'binary', 'time_to_event', 'sensitivity_specificity'].map((x) => <option key={x} value={x}>{x.replace(/_/g, ' ')}</option>)}</select></label>
+                <label className="bs-f"><span>Endpoint</span><select value={input.endpointType} onChange={(e) => set('endpointType', e.target.value)}>{['continuous', 'binary', 'time_to_event', 'ordinal', 'count', 'composite', 'sensitivity_specificity', 'auc_roc', 'agreement'].map((x) => <option key={x} value={x}>{x === 'auc_roc' ? 'AUC / ROC' : x.replace(/_/g, ' ')}</option>)}</select></label>
                 <label className="bs-f"><span>Alpha</span><input type="number" step="0.005" value={input.alpha} onChange={(e) => set('alpha', vf(e.target.value) || 0.05)} /></label>
                 <label className="bs-f"><span>Power</span><input type="number" step="0.05" value={input.powerTarget} onChange={(e) => set('powerTarget', vf(e.target.value) || 0.8)} /></label>
-                {!isDiag && <label className="bs-f"><span>{isSurv ? 'HR reduction' : isBin ? 'Delta rate' : 'Effect (d)'}</span><input type="number" step="0.01" value={input.effectSize} onChange={(e) => set('effectSize', vf(e.target.value) || 0)} /></label>}
+                {usesEffect && <label className="bs-f"><span>{isSurv ? 'HR reduction' : isBin ? 'Delta rate' : 'Effect (d)'}</span><input type="number" step="0.01" value={input.effectSize} onChange={(e) => set('effectSize', vf(e.target.value) || 0)} /></label>}
                 {isNI && <label className="bs-f"><span>NI margin</span><input type="number" step="0.05" value={input.nonInferiorityMargin || ''} onChange={(e) => set('nonInferiorityMargin', vf(e.target.value))} /></label>}
-                {input.endpointType === 'continuous' && <label className="bs-f"><span>Variance</span><input type="number" step="0.1" value={input.variance || ''} onChange={(e) => set('variance', vf(e.target.value))} /></label>}
+                {isEquiv && <label className="bs-f"><span>Equivalence margin</span><input type="number" step="0.05" value={input.equivalenceMargin || ''} onChange={(e) => set('equivalenceMargin', vf(e.target.value))} /></label>}
+                {isCont && <label className="bs-f"><span>Variance</span><input type="number" step="0.1" value={input.variance || ''} onChange={(e) => set('variance', vf(e.target.value))} /></label>}
                 {isBin && <label className="bs-f"><span>Control rate</span><input type="number" step="0.05" value={input.controlRate || ''} onChange={(e) => set('controlRate', vf(e.target.value))} /></label>}
                 {isBin && <label className="bs-f"><span>Treatment rate</span><input type="number" step="0.05" value={input.treatmentRate || ''} onChange={(e) => set('treatmentRate', vf(e.target.value))} /></label>}
                 {isSurv && <label className="bs-f"><span>Event rate</span><input type="number" step="0.05" value={input.eventRate || ''} onChange={(e) => set('eventRate', vf(e.target.value))} /></label>}
-                {isDiag && <label className="bs-f"><span>Sensitivity</span><input type="number" step="0.01" value={input.sensitivity || ''} onChange={(e) => set('sensitivity', vf(e.target.value))} /></label>}
-                {isDiag && <label className="bs-f"><span>Specificity</span><input type="number" step="0.01" value={input.specificity || ''} onChange={(e) => set('specificity', vf(e.target.value))} /></label>}
-                {isDiag && <label className="bs-f"><span>Prevalence</span><input type="number" step="0.05" value={input.prevalence || ''} onChange={(e) => set('prevalence', vf(e.target.value))} /></label>}
+                {isAccuracy && <label className="bs-f"><span>Sensitivity</span><input type="number" step="0.01" value={input.sensitivity || ''} onChange={(e) => set('sensitivity', vf(e.target.value))} /></label>}
+                {isAccuracy && <label className="bs-f"><span>Specificity</span><input type="number" step="0.01" value={input.specificity || ''} onChange={(e) => set('specificity', vf(e.target.value))} /></label>}
+                {isAccuracy && <label className="bs-f"><span>Prevalence</span><input type="number" step="0.05" value={input.prevalence || ''} onChange={(e) => set('prevalence', vf(e.target.value))} /></label>}
+                {isRoc && <label className="bs-f"><span>Expected AUC</span><input type="number" step="0.01" value={input.aucTarget || ''} onChange={(e) => set('aucTarget', vf(e.target.value))} /></label>}
+                {isRoc && <label className="bs-f"><span>Null AUC</span><input type="number" step="0.05" value={input.aucNull || ''} onChange={(e) => set('aucNull', vf(e.target.value))} placeholder="0.5" /></label>}
+                {isAgreement && <label className="bs-f"><span>Target kappa</span><input type="number" step="0.05" value={input.agreementTarget || ''} onChange={(e) => set('agreementTarget', vf(e.target.value))} /></label>}
+                {isCont && <label className="bs-f"><span>Crossover periods</span><input type="number" step="1" min="0" value={input.crossoverPeriods || ''} onChange={(e) => set('crossoverPeriods', vf(e.target.value))} placeholder="parallel" /></label>}
+                {isCont && input.crossoverPeriods ? <label className="bs-f"><span>Within-subject ρ</span><input type="number" step="0.05" value={input.withinSubjectCorrelation || ''} onChange={(e) => set('withinSubjectCorrelation', vf(e.target.value))} /></label> : null}
                 <label className="bs-f"><span>Attrition</span><input type="number" step="0.05" value={input.attritionRate} onChange={(e) => set('attritionRate', vf(e.target.value) || 0)} /></label>
                 <label className="bs-f"><span>Interims</span><input type="number" step="1" value={input.interimAnalyses || 0} onChange={(e) => set('interimAnalyses', parseInt(e.target.value) || 0)} /></label>
               </div>
-              {res && jud && <div className="bs-mini">
-                <span><b>{n}</b> subjects</span><span><b>{(res.power * 100).toFixed(0)}%</b> power</span>{res.events ? <span><b>{res.events}</b> events</span> : null}<span className={'rd-chip tone-' + vTone(jud.overallVerdict)}>{jud.overallVerdict}</span>
-              </div>}
+
+              {/* The engine's answer for the design above — or an honest account
+                  of why there is not one. A figure is never shown while the
+                  engine is still running, and never when it refused. */}
+              {engine.kind === 'computing' && (
+                <div role="status" className="scaf-note" style={{ marginTop: 10 }}>Computing the design on the statistical engine…</div>
+              )}
+              {engine.kind === 'refused' && (
+                <div style={{ marginTop: 10 }}>
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="The statistical engine did not size this design"
+                    hint={engine.message}
+                    retry={retryCompute}
+                  />
+                </div>
+              )}
+              {ready && (
+                <>
+                  <div className="bs-mini">
+                    <span><b>{n}</b> subjects</span>
+                    <span><b>{(ready.computation.power * 100).toFixed(0)}%</b> power</span>
+                    <span className={'rd-chip tone-' + vTone(ready.judgment.overallVerdict)}>{ready.judgment.overallVerdict}</span>
+                  </div>
+                  {/* The method and the sizing identity the engine used, in its
+                      own words. The required event count for a time-to-event
+                      design is part of this formula — it replaces the "N events"
+                      chip that used to be read off the deleted browser copy. */}
+                  <div className="bs-doc-prov" style={{ marginTop: 6, display: 'block' }}>{ready.computation.method} — {ready.computation.formula}</div>
+                  {ready.warnings.length > 0 && (
+                    <ul className="scaf-note" style={{ marginTop: 6, paddingLeft: 18 }}>
+                      {ready.warnings.map((w) => <li key={w.field}>{w.message}</li>)}
+                    </ul>
+                  )}
+                </>
+              )}
             </div>
           </div>
           {selectedStudyId && (
@@ -963,23 +881,49 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         {/* Center: the DOCUMENT — the deliverable */}
         <div className="bs-doc">
           <div className="bs-doc-bar">
-            <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{/* Provenance describes where THIS document came from, and that never
-                  varies: `md` is always BiostatDocs.gen() over BiostatEngine.compute(),
-                  both defined in this file and ported verbatim from
-                  server/services/ana-biostats/*. `live` is connected() — a global
-                  API-reachability flag that has no bearing on how the document was
-                  produced — so naming the service there stamped a browser-computed
-                  document with a server origin, on the one line a reviewer reads to
-                  find out exactly that. It also printed an API route into customer
-                  UI, which the work order forbids outright. */}
-                Deterministic engine — v1.0.0 — draft</span>{placement && <span className="bs-doc-prov" style={{ marginLeft: 8 }}><FilingPlacementNote placement={placement} /></span>}</div>
+            <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{/* Provenance describes where THIS document came from. It is
+                  generated by the statistical engine from the engine's own
+                  computation and judgment, and the version and status below are
+                  the ones it stamped on the document — not a literal written
+                  here, and not `connected()`, which is a global API-reachability
+                  flag with no bearing on how the document was produced. */}
+                Deterministic engine{doc.kind === 'ready' && doc.engineVersion ? ' — v' + doc.engineVersion : ''}{doc.kind === 'ready' && doc.status ? ' — ' + doc.status : ''}</span>{placement && <span className="bs-doc-prov" style={{ marginLeft: 8 }}><FilingPlacementNote placement={placement} /></span>}</div>
             <div className="bs-doc-bar-a">
               <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
-              <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
+              <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening || doc.kind !== 'ready'}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
             </div>
           </div>
           <div className="bs-doc-page">
-            <div className="bs-doc-render" dangerouslySetInnerHTML={{ __html: html }} />
+            {doc.kind === 'ready' ? (
+              <div className="bs-doc-render" dangerouslySetInnerHTML={{ __html: html }} />
+            ) : doc.kind === 'failed' ? (
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title={'The engine did not write the ' + (docDef?.label ?? 'document')}
+                hint={doc.message}
+                retry={retryCompute}
+              />
+            ) : engine.kind === 'refused' ? (
+              /* The engine's own sentence is rendered once, beside the design
+                 inputs it refused — repeating it here would put the same
+                 refusal on screen twice. This panel says why there is no
+                 document and points at it. */
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="No document — the design was not sized"
+                hint="The document is generated from the engine’s own computation and judgment, so there is nothing to write until the design sizes. The engine’s reason is beside the design inputs."
+                retry={retryCompute}
+              />
+            ) : (
+              <EmptyState
+                busy
+                icon={I.fileText}
+                title={engine.kind === 'computing' ? 'Waiting for the engine to size the design…' : 'Writing the ' + (docDef?.label ?? 'document') + ' on the statistical engine…'}
+                hint="The document is generated from the engine’s own computation and judgment, so its prose and its figures cannot disagree."
+              />
+            )}
           </div>
         </div>
       </div>
@@ -1008,7 +952,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           ) : (
             <div className="sp-list">
               {govDocs.rows.map((p) => {
-                const def = p.doc ? BiostatDocs.byId(p.doc) : undefined;
+                const def = p.doc ? docById(p.doc) : undefined;
                 return (
                   /* `doc` is null whenever statisticalDocumentType was not
                      recorded on the artifact — a condition this type declares as

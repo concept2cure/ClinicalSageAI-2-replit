@@ -283,3 +283,36 @@ export async function assertTransmitterIndependent(
     throw new GovernedTransmitInternalError('transmit-separation-of-duties', err);
   }
 }
+
+/** What a transmission by this user of this package would meet at the
+ *  separation-of-duties check, asked in advance. */
+export type TransmitIndependence = 'independent' | 'author' | 'no-creator' | 'unverified';
+
+/**
+ * Would assertTransmitterIndependent let this user transmit this package?
+ *
+ * Asked of the enforcing check itself, with a release meaning, so the advance
+ * answer cannot drift from what transmit will do — the client never re-derives
+ * who counts as the author. The check runs after re-authentication, so without
+ * this the package's creator learned the rule only by typing a password and
+ * being refused; the Transmit form now says so when the package is chosen.
+ *
+ * A lookup failure is 'unverified', never 'independent': unknown is not
+ * permission, and the transmit itself still decides.
+ */
+export async function transmitIndependenceOf(
+  packageId: number,
+  organizationId: number,
+  userId: number,
+): Promise<TransmitIndependence> {
+  try {
+    await assertTransmitterIndependent(packageId, organizationId, userId, 'release');
+    return 'independent';
+  } catch (err) {
+    if (err instanceof GovernedTransmitRefusal) {
+      if (err.code === 'SIGNER_IS_AUTHOR') return 'author';
+      if (err.code === 'SIGNER_INDEPENDENCE_UNRESOLVED') return 'no-creator';
+    }
+    return 'unverified';
+  }
+}
