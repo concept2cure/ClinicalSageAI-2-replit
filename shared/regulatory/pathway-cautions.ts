@@ -63,6 +63,12 @@ export interface ProgrammeFacts {
   primaryRegion?: CanonicalRegion;
   /** A predicate device the sponsor has named, as they wrote it. */
   predicateNamed?: string;
+  /**
+   * What the programme says about the device it compares itself to
+   * (`predicate-positions.ts`). 'none' and 'nse' are statements a sponsor has
+   * made, not the absence of an answer — an empty predicate box says nothing.
+   */
+  predicate?: 'named' | 'none' | 'nse';
   /** The US risk class the sponsor states. 'Not yet classified' is not a fact. */
   deviceClass?: 'I' | 'II' | 'III';
   /** The MDR class the sponsor states for the EU. */
@@ -242,6 +248,24 @@ const CAUTION_RULES: readonly CautionRule[] = [
       'A De Novo asks FDA to classify the device into Class I or Class II with special controls. You have said ' +
       'Class III, which is the premarket approval route — so either the classification or the route is in question.',
     authority: 'FD&C Act 513(f)(2); 21 CFR 860.200',
+  },
+
+  /* -- A 510(k) is a comparison, so with nothing to compare to there is no
+        510(k). The fact this rule reads could not be stated by any interview
+        until the predicate-strategy question landed; it is the stronger half
+        of the De Novo pair below. ----------------------------------------- */
+  {
+    id: 'notification_without_predicate',
+    positions: ['US_510K', 'US_510K_IVD', 'US_CDX_510K'],
+    availability: 'inapplicable',
+    when: f => f.predicate === 'none' || f.predicate === 'nse',
+    reason: f =>
+      f.predicate === 'nse'
+        ? 'You have said FDA already found this device not substantially equivalent. That 510(k) is closed, and an NSE ' +
+          'determination is one of the two conditions for a De Novo request rather than a basis for filing again.'
+        : 'You have said there is no legally marketed device to compare to. Substantial equivalence is a comparison, so ' +
+          'there is no 510(k) to make — which is the first condition for a De Novo request.',
+    authority: 'FD&C Act 513(i), 513(f)(2)(A); 21 CFR 807.100(b), 860.220(a)',
   },
 
   /* -- US: a Class III device is a PMA unless it is preamendments --------- */

@@ -36,7 +36,9 @@ const FACT_SETS: ProgrammeFacts[] = [
   { modality: 'biosimilar' },
   { modality: 'small_molecule' },
   { modality: 'mab' },
-  { predicateNamed: 'K123456 — Acme Stent' },
+  { predicateNamed: 'K123456 — Acme Stent', predicate: 'named' },
+  { predicate: 'none' },
+  { predicate: 'nse' },
   { deviceClass: 'I' },
   { deviceClass: 'II' },
   { deviceClass: 'III' },
@@ -96,6 +98,32 @@ describe('the agency the sponsor named', () => {
   it('says nothing where no agency has been named', () => {
     expect(cautionFor('EU_MAA', {})).toBeNull();
     expect(cautionFor('EU_MAA', { regions: [] }), 'an empty list is not a statement').toBeNull();
+  });
+});
+
+describe('a programme with nothing to compare to', () => {
+  it('closes the 510(k), which is the stronger half of the De Novo pair', () => {
+    const caution = cautionFor('US_510K', { predicate: 'none' })!;
+    expect(caution.availability).toBe('inapplicable');
+    expect(caution.reason).toMatch(/no legally marketed device to compare to/);
+    expect(caution.reason).toMatch(/first condition for a De Novo/);
+    expect(caution.authority).toMatch(/860\.220\(a\)/);
+    expect(cautionFor('US_510K_IVD', { predicate: 'none' })!.availability).toBe('inapplicable');
+  });
+
+  it('says the other thing when FDA has already found the device not equivalent', () => {
+    const caution = cautionFor('US_CDX_510K', { predicate: 'nse' })!;
+    expect(caution.reason).toMatch(/already found this device not substantially equivalent/);
+    expect(caution.reason).toMatch(/second of the two conditions|one of the two conditions/);
+  });
+
+  it('leaves the De Novo alone, which is the route it points at', () => {
+    expect(cautionFor('US_DE_NOVO', { predicate: 'none' })).toBeNull();
+    expect(cautionFor('US_DE_NOVO_IVD', { predicate: 'nse' })).toBeNull();
+  });
+
+  it('says nothing where no predicate has been named and none has been ruled out', () => {
+    expect(cautionFor('US_510K', {}), 'an empty predicate box is an unanswered question').toBeNull();
   });
 });
 
