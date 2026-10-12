@@ -1817,6 +1817,13 @@
 .c2c-v2 .ana-q-position-commits{font-size:12px;line-height:1.5;color:var(--text-200);}
 .c2c-v2 .ana-q-position-desc{font-size:12px;line-height:1.5;color:var(--text-300);}
 .c2c-v2 .ana-q-position-authority{font-size:11px;line-height:1.45;color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-q-position.is-needs-basis{border-color:var(--warning);}
+.c2c-v2 .ana-q-position.is-inapplicable{border-color:var(--danger);}
+.c2c-v2 .ana-q-position-caution{display:block;margin-top:4px;font-size:11.5px;line-height:1.5;color:var(--text-200);padding-left:8px;border-left:2px solid var(--warning);}
+.c2c-v2 .ana-q-position-caution.is-inapplicable{border-left-color:var(--danger);}
+.c2c-v2 .ana-q-caution-lead{font-weight:560;color:var(--text-100);}
+.c2c-v2 .ana-q-caution-authority{display:block;font-size:11px;color:var(--text-300);margin-top:2px;font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-q-caution-taken{display:block;font-size:11px;color:var(--text-300);margin-top:2px;}
 .c2c-v2 .ana-q-own{display:flex;flex-direction:column;gap:5px;padding:0 0 0 11px;border-left:2px solid var(--accent-200);}
 .c2c-v2 .ana-q-own-label{font-size:12px;line-height:1.5;color:var(--text-200);}
 .c2c-v2 .ana-q-input{width:100%;font:inherit;font-size:13px;line-height:1.5;color:var(--text-000);background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 10px;}
