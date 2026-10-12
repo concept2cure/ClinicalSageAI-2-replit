@@ -251,3 +251,54 @@ describe('a question whose type the card never implemented', () => {
     expect((screen.getByRole('textbox') as HTMLInputElement).id).toBe('ana-q-headquarters_country');
   });
 });
+
+/**
+ * A question whose governed catalogue holds nothing for this programme: AnA
+ * holds no routes to market for PMDA, so the engine sends the question with no
+ * positions, the reason in its help text, and the escape hatch (2026-10-12).
+ * An empty select would be an error drawn as a result.
+ */
+describe('a question with no positions and the reason in their place', () => {
+  const noPositions: IntelligenceQuestionEvent = {
+    ...QUESTION,
+    node: {
+      ...QUESTION.node,
+      fields: [
+        {
+          id: 'device_submission_pathway',
+          label: 'Submission Pathway',
+          type: 'select',
+          required: true,
+          helpText: 'AnA holds no routes to market for PMDA — describe the route and she will record it in your words.',
+          allowOther: { prompt: 'Which route are you taking, in your own words?' },
+        },
+      ],
+    },
+  };
+
+  it('draws the reason and the box for their own words, and no empty list', () => {
+    render(<AnaQuestionCard question={noPositions} sessionId="sess-1" onAnswer={vi.fn()} />);
+    expect(screen.getByText(/holds no routes to market for PMDA/)).toBeTruthy();
+    expect(screen.queryAllByRole('radio'), 'nothing to pick, so nothing is drawn as pickable').toHaveLength(0);
+    expect(screen.getByLabelText('Which route are you taking, in your own words?')).toBeTruthy();
+  });
+
+  it('records the answer as the person’s own words, not as a position AnA offered', () => {
+    const onAnswer = vi.fn();
+    render(<AnaQuestionCard question={noPositions} sessionId="sess-1" onAnswer={onAnswer} />);
+    const submit = screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement;
+    expect(submit.disabled, 'an empty answer is still no answer').toBe(true);
+    fireEvent.change(screen.getByLabelText('Which route are you taking, in your own words?'), {
+      target: { value: 'Shonin application via a Japanese marketing authorisation holder' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(onAnswer).toHaveBeenCalledWith({
+      node_id: 'pathway',
+      answers: {
+        device_submission_pathway: OTHER_POSITION,
+        [otherFieldId('device_submission_pathway')]: 'Shonin application via a Japanese marketing authorisation holder',
+      },
+      session_id: 'sess-1',
+    });
+  });
+});
