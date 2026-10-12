@@ -44,3 +44,32 @@ export function canFinalizeReport(user: { permissions?: unknown } | null | undef
   const perms = user?.permissions;
   return !Array.isArray(perms) || perms.includes(REPORT_FINALIZE_PERMISSION);
 }
+
+/**
+ * The organisation roles that may pull a signed audit-trail attestation: the
+ * `isAdmin` gate on GET /api/tenant-export/attestation
+ * (server/routes/tenant-export.ts), which admits admin and owner and nothing
+ * else.
+ *
+ * ── THE DEFECT THIS CLOSES (coverage review C-24) ───────────────────────────
+ * The Compliance Reports surface offered "Run attestation" on `canRun`, which
+ * the catalog derives from `canReadAuditTrail` — owner, admin, manager,
+ * approver, or a platform admin. So a MANAGER was offered a control the route
+ * then refused with 403 "Admin role required for attestation". A doomed click,
+ * and the third instance of the same shape: the task board offered a viewer
+ * "New task" (GOVERNED_WRITE_PERMISSION), and the canvas offered Finalize to a
+ * member (REPORT_FINALIZE_PERMISSION).
+ *
+ * Reading the audit trail and ATTESTING to it are different acts and the server
+ * always treated them so — an attestation is an HMAC-signed statement about the
+ * chain, recorded as its own audit event. The client may not mirror either role
+ * list; the server derives the permission and the client reads it.
+ */
+export const AUDIT_ATTEST_ROLES: readonly string[] = withExtendingRoles(['owner', 'admin']);
+export const AUDIT_ATTEST_PERMISSION = 'audit:attest';
+
+/** Whether to offer the attestation to `user`. Unknown permissions offer it, as the two above do; the server decides. */
+export function canAttestAuditTrail(user: { permissions?: unknown } | null | undefined): boolean {
+  const perms = user?.permissions;
+  return !Array.isArray(perms) || perms.includes(AUDIT_ATTEST_PERMISSION);
+}

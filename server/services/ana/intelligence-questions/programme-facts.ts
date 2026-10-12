@@ -26,6 +26,7 @@
 
 import { regionsNamed } from '../../../../shared/regulatory/agency-positions.js';
 import { predicateStateOf } from '../../../../shared/regulatory/predicate-positions.js';
+import { euDeviceClassOf, IVDR_CLASSES } from '../../../../shared/regulatory/device-class.js';
 import { modalityOf, statuteOf } from '../../../../shared/regulatory/product-modality.js';
 import { cautionFor, type ProgrammeFacts } from '../../../../shared/regulatory/pathway-cautions.js';
 import type { DetectedIssue, PositionCaution, QuestionField, QuestionNode, QuestionOption } from './types.js';
@@ -53,6 +54,9 @@ export const DEVICE_CLASS_FIELDS: readonly string[] = ['device_class', 'device_c
 /** Answers that state the EU MDR class. */
 export const EU_MDR_CLASS_FIELDS: readonly string[] = ['eu_mdr_class'];
 
+/** Answers that state the EU IVDR class. */
+export const IVDR_CLASS_FIELDS: readonly string[] = ['ivdr_class'];
+
 /** Answers that name the product, which decides which statute governs it. */
 export const PRODUCT_FIELDS: readonly string[] = ['product_type'];
 
@@ -65,6 +69,7 @@ export function factFields(): string[] {
     ...PREDICATE_FIELDS,
     ...DEVICE_CLASS_FIELDS,
     ...EU_MDR_CLASS_FIELDS,
+    ...IVDR_CLASS_FIELDS,
   ];
 }
 
@@ -209,6 +214,14 @@ export function programmeFactsFrom(flat: Record<string, unknown>): ProgrammeFact
   const euClass = firstStated(flat, EU_MDR_CLASS_FIELDS);
   const eu = euClass ? MDR_CLASS[euClass.toLowerCase()] : undefined;
   if (eu) facts.euMdrClass = eu;
+  /* The IVDR class is read through the shared vocabulary rather than a map of
+     its own: this is the one interview field whose values are the spelling the
+     rest of the platform already stores ('A'…'D'), so 'Class C' and 'c' read
+     as well as 'C' and nothing else reads at all. */
+  const ivdr = euDeviceClassOf(firstStated(flat, IVDR_CLASS_FIELDS));
+  if (ivdr && (IVDR_CLASSES as readonly string[]).includes(ivdr)) {
+    facts.ivdrClass = ivdr as (typeof IVDR_CLASSES)[number];
+  }
   return facts;
 }
 

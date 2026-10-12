@@ -148,7 +148,8 @@ export interface RichSectionEditorHandle {
   /** Current serialized content (unsaved included). */
   getContent: () => string;
   /**
-   * Authors whose insertions were ACCEPTED since the last call, then cleared.
+   * Authors whose insertions have been ACCEPTED and not yet carried in by a
+   * save. READ ONLY — {@link clearAcceptedContributions} is what empties it.
    *
    * Accepting an insertion strips the mark that named its author, so after the
    * click nothing in the content says an AI drafted the words. The host reads
@@ -156,15 +157,36 @@ export interface RichSectionEditorHandle {
    * the accepted text came from instead of attributing it to whoever pressed
    * accept.
    */
-  takeAcceptedAuthors: () => SuggestionAuthor[];
+  peekAcceptedAuthors: () => SuggestionAuthor[];
   /**
-   * The text of every insertion accepted since the last call, with its
-   * author, then cleared — the clause-grain companion of takeAcceptedAuthors.
-   * The save carries it so the lineage gate can record exactly which clauses
-   * were a machine author's, instead of attributing them to whoever pressed
-   * accept.
+   * The text of every such insertion, with its author — the clause-grain
+   * companion of peekAcceptedAuthors, and read the same way. The save carries
+   * it so the lineage gate can record exactly which clauses were a machine
+   * author's, instead of attributing them to whoever pressed accept.
    */
-  takeAcceptedInsertions: () => AcceptedInsertion[];
+  peekAcceptedInsertions: () => AcceptedInsertion[];
+  /**
+   * Forget the accepted contributions a save has CARRIED IN.
+   *
+   * Split from the reads above, which were read-and-clear (AnA reasoning round
+   * 15, SEC-A-7 door 1). The host emptied the store before sending the PATCH,
+   * and `apiRequest` throws on every non-2xx — so any refused save LOST the
+   * attribution, and the retry sent the same words with no claim at all. Five
+   * refusals already reach that point on the save door (a frozen document, no
+   * edit permission, a 409 when a colleague saved the section first, an
+   * unuploaded figure, a lineage failure), and the governed-write refusal is a
+   * sixth. The 409 is the ordinary case — two authors on one CTD section — and
+   * it quietly recorded AnA's clauses as a human's, in an append-only chain.
+   *
+   * Nothing else can recover it: the device cache holds only the serialized
+   * content, and accepting removed the marks, so the client cannot re-derive
+   * the attribution from the document either.
+   *
+   * Calling it twice is harmless, and keeping entries cannot make a claim
+   * stale: `settleAcceptedContributions` drops any whose text the document no
+   * longer holds on every read.
+   */
+  clearAcceptedContributions: () => void;
   /** Select + scroll to a comment's anchored range. False when the annotated
    *  text no longer exists in the current draft. */
   selectCommentAnchor: (commentId: string) => boolean;
@@ -1536,17 +1558,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         },
         getContent: () =>
           boot.mode === 'source' ? sourceText : editor ? serialize(editor) : '',
-        takeAcceptedAuthors: () => {
+        peekAcceptedAuthors: () => acceptedStore()?.acceptedAuthors ?? [],
+        peekAcceptedInsertions: () => acceptedStore()?.acceptedInsertions ?? [],
+        clearAcceptedContributions: () => {
           const store = acceptedStore();
-          const taken = store?.acceptedAuthors ?? [];
           if (store?.acceptedAuthors) store.acceptedAuthors = [];
-          return taken;
-        },
-        takeAcceptedInsertions: () => {
-          const store = acceptedStore();
-          const taken = store?.acceptedInsertions ?? [];
           if (store?.acceptedInsertions) store.acceptedInsertions = [];
-          return taken;
         },
         selectCommentAnchor: (commentId: string) => {
           if (!editor) return false;

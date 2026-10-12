@@ -3,11 +3,18 @@
  *
  * ── WHY THIS SCREEN ─────────────────────────────────────────────────────────
  * `GET /api/tenant-export/attestation` walks the tenant's `audit_events` hash
- * chain, recomputes every row's hash, reports any broken link, and HMAC-signs
- * the result so an external auditor can verify the platform issued it and that
- * it was not edited afterwards (21 CFR Part 11 §11.10(e);
+ * chain, checks that each row's stored `previous_hash` is the prior row's
+ * stored `record_hash`, reports any link that does not join, and HMAC-signs the
+ * result so an external auditor can verify the platform issued it and that it
+ * was not edited afterwards (21 CFR Part 11 §11.10(e);
  * `server/services/tenant-export/attestation-report.service.ts`). Pulling it
  * records its own audit row naming who asked and what verdict came back.
+ *
+ * It does NOT re-derive a hash from any row's contents, so an entry edited in
+ * place with its stored hashes left alone is not detected. This header said
+ * "recomputes every row's hash" until 2026-10-12; the report now declares its
+ * own method in its signed body and this screen renders it, so the scope cannot
+ * be re-widened by a paraphrase (coverage review C-22).
  *
  * It had no caller anywhere in the client. The eight reports beside it on this
  * surface each answer "what happened"; this is the only one that answers
@@ -30,6 +37,9 @@
  */
 import React, { useCallback, useRef, useState } from 'react';
 
+import { canAttestAuditTrail } from '@shared/constants/permissions';
+import { useAuthUser } from '@/services/portal/authService';
+
 import { I } from '../icons';
 import { apiCall, apiErrorText } from '../apiCall';
 import { ErrorState } from '../dataConnect';
@@ -38,6 +48,8 @@ import { downloadBlob, safeFileName } from '../download';
 /** The report body, as `AttestationReport` defines it. */
 export interface AttestationReport {
   schemaVersion: string;
+  /** The method the attestation declares, in its signed body (schemaVersion 1.1). */
+  verifies?: { method: string; covers?: string[]; doesNotCover?: string[] };
   organization: { id: number; slug: string; name: string };
   generatedAt: string;
   windowStart: string | null;
@@ -154,6 +166,47 @@ function Fact({ term, value }: { term: string; value: string }) {
   );
 }
 
+/**
+ * What the verdict is a verdict ABOUT, from the signed body.
+ *
+ * An attestation that does not state its method invites the strongest reading:
+ * this one checks that the stored links JOIN — so no entry was removed,
+ * inserted or reordered — and says nothing about whether an entry's contents
+ * were edited in place, because nothing re-derives a hash from a row's fields.
+ * The surface claimed "nothing altered or removed" once (coverage review C-22);
+ * the scope now travels with the verdict in the HMAC-signed body rather than in
+ * copy beside it, so the two cannot be separated.
+ *
+ * Absent on a pre-1.1 server, and then nothing is shown rather than a scope
+ * this screen invented.
+ */
+function DeclaredMethod({ verifies }: { verifies?: AttestationReport['verifies'] }) {
+  if (!verifies) return null;
+  const covers = verifies.covers ?? [];
+  const doesNot = verifies.doesNotCover ?? [];
+  if (covers.length === 0 && doesNot.length === 0) return null;
+  return (
+    <details style={{ margin: '10px 0 0' }} data-testid="attestation-method">
+      <summary style={{ ...muted, cursor: 'pointer' }}>What this attestation checked</summary>
+      <div style={{ margin: '7px 0 0' }}>
+        {covers.length > 0 && <MethodList title="It establishes" items={covers} />}
+        {doesNot.length > 0 && <MethodList title="It does not establish" items={doesNot} />}
+      </div>
+    </details>
+  );
+}
+
+function MethodList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <>
+      <div style={{ ...muted, fontWeight: 600, margin: '8px 0 0' }}>{title}</div>
+      <ul style={{ ...muted, margin: '3px 0 0', paddingLeft: 18, lineHeight: 1.55 }}>
+        {items.map((c) => <li key={c}>{c}</li>)}
+      </ul>
+    </>
+  );
+}
+
 function Result({ report, onSave }: { report: AttestationReport; onSave: () => void }) {
   const known = Object.prototype.hasOwnProperty.call(ATTESTATION_VERDICT, report.attestation);
   const v = ATTESTATION_VERDICT[report.attestation] ?? {
@@ -180,6 +233,8 @@ function Result({ report, onSave }: { report: AttestationReport; onSave: () => v
       {report.unverifiableReason && (
         <p style={{ ...muted, margin: '7px 0 0', lineHeight: 1.5 }}>{report.unverifiableReason}</p>
       )}
+
+      <DeclaredMethod verifies={report.verifies} />
 
       <dl
         style={{
@@ -241,31 +296,38 @@ function Result({ report, onSave }: { report: AttestationReport; onSave: () => v
  * Not run on mount: it walks the whole chain and records an audit row for every
  * pull, so it is an action a reader takes, not a side effect of opening a page.
  *
- * `canRun` is the catalog's own verdict for this member (owners, admins and
- * managers). A member without it is TOLD rather than offered a control the
- * server will refuse — the same rule the eight reports beside this one follow,
- * and the reason complianceReports.test.tsx asserts no control matching /^Run/
- * appears for a reader. The route's own gate is narrower still (administrators
- * only), so a manager can see the control and be refused; that refusal is
- * rendered as a refusal, not as an outage.
+ * `canRun` is the catalog's reader verdict for this member; the control itself
+ * is gated on the SERVER-DERIVED attestation permission, which is narrower. A
+ * member without it is TOLD rather than offered a control the server will
+ * refuse — the same rule the eight reports beside this one follow, and the
+ * reason complianceReports.test.tsx asserts no control matching /^Run/ appears
+ * for a reader.
  */
 export function AuditAttestation({ canRun }: { canRun: boolean }) {
-  /* WHO SEES THE CONTROL, AND WHY IT IS STILL WIDER THAN THE ROUTE.
-     `canRun` is the catalog's reader verdict — owners, admins, managers,
-     approvers and platform administrators (AUDIT_REPORT_READERS). The
-     attestation route is narrower: `isAdmin` in routes/tenant-export.ts admits
-     admin and owner only. So a manager can press this and be refused.
-     The client cannot close that gap correctly on its own:
-     shared/constants/permissions.ts states the rule — the server derives a
-     permission from the same set its guard reads and "the client mirrors no
-     role list", because mirroring one is how a viewer came to be offered four
-     controls the server refused. Neither GOVERNED_WRITE_PERMISSION nor
-     REPORT_FINALIZE_PERMISSION (owner/admin/manager) matches admin|owner.
-     So until the session derives an attestation permission the same way, the
-     control stays on `canRun`, the copy names the roles that can actually use
-     it, and the 403 is rendered as the role refusal it is rather than an
-     outage. Recorded as B4 in the 2026-10-11 coverage review. */
-  const mayAttest = canRun;
+  /* WHO SEES THE CONTROL (coverage review C-24, closed 2026-10-12).
+     This used to be `const mayAttest = canRun` — the catalog's READER verdict:
+     owners, admins, managers, approvers and platform administrators
+     (AUDIT_REPORT_READERS). The attestation route is narrower: admin and owner
+     only. So a manager was offered this control and got a 403 after the click.
+     The comment that stood here said the client could not close the gap
+     correctly on its own, and that was right: shared/constants/permissions.ts
+     states the rule — the server derives a permission from the same set its
+     guard reads and "the client mirrors no role list", because mirroring one is
+     how a viewer came to be offered four controls the server refused. Neither
+     GOVERNED_WRITE_PERMISSION nor REPORT_FINALIZE_PERMISSION (owner/admin/
+     manager) matches admin|owner, so there was no permission to read.
+     There is now: AUDIT_ATTEST_PERMISSION, derived in
+     `sessionPermissions` from AUDIT_ATTEST_ROLES — the same list
+     routes/tenant-export.ts admits. Reading the audit trail and ATTESTING to it
+     are different acts and the server always treated them so; the client now
+     does too.
+     BOTH are required: `canRun` keeps this screen consistent with the eight
+     reports beside it (a reader is told, not offered), and the permission is the
+     act's own gate. An older session with no `permissions` array offers the
+     control, as the two precedents do — the server still refuses, and
+     withholding a writer's control on a guess is the worse failure. */
+  const authUser = useAuthUser();
+  const mayAttest = canRun && canAttestAuditTrail(authUser);
   const [state, setState] = useState<State>({ k: 'idle' });
   const alive = useRef(true);
   React.useEffect(() => () => { alive.current = false; }, []);

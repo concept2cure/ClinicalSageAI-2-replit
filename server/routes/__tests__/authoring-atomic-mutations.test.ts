@@ -63,7 +63,11 @@ vi.mock('../../services/part11/resolve-signer-role.js', () => ({
 // same transaction. Neither is under test here, so stub them out: the gate is a
 // no-op (coverage satisfied) and the filing commit reports an unbound document.
 vi.mock('../../services/clinical-regulatory-evidence/lineage-gate', () => ({
-  enforceAuthorLineage: vi.fn(async () => {}),
+  /* Its RESULT is read by the save door — `clausesInAcceptedText` decides
+     whether the revision and the filing name a machine contributor (round
+     15, SEC-A-7 door 1) — so a stand-in has to return the shape, not
+     nothing. Zero is right here: these saves accept no machine text. */
+  enforceAuthorLineage: vi.fn(async () => ({ clausesInAcceptedText: 0 })),
 }));
 vi.mock('../../services/c2c/commit-section-to-filing.js', () => ({
   commitSectionToFiling: vi.fn(async () => ({ committed: false, reason: 'unbound' })),

@@ -145,7 +145,9 @@ export type GovernedOptionSource =
   /** The routes to market for a device or diagnostics programme, by region. */
   | 'device_pathway_positions'
   /** The routes a medicine may take, by region and by the modality's own frame. */
-  | 'medicine_pathway_positions';
+  | 'medicine_pathway_positions'
+  /** The IVDR risk classes, each stating the Article 48 route that follows from it. */
+  | 'ivdr_class_positions';
 
 export interface QuestionField {
   id: string;
