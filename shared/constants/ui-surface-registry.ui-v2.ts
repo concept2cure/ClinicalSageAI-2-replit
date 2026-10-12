@@ -853,6 +853,22 @@ export const UI_V2_SURFACES: UiSurface[] = [
     // /api/report-os/portfolio is AnA Command's. The rest stay unmapped, which
     // production refuses, until a screen needs one.
     //
+    // DO NOT CLAIM /api/report-os/portfolio HERE TO GET THE RICHER ROLLUP.
+    // (2026-10-12, coverage review C-11, verified: `ana-command` — the only
+    // surface that claims that prefix, line 37 — and `orchestration` are both
+    // ABSENT from shared/constants/launch-scope.ts, so in production the route
+    // is refused AND its two callers sit on hidden surfaces. That is a
+    // consistent state, not a defect: the route is out of scope because its
+    // surfaces are. This reporting surface therefore reaches the portfolio only
+    // through the reduced /api/insights-canvas/overview projection, which caps
+    // at ORG_ROLLUP_CAP = 100 (report-os/portfolio/fetch.ts:37) and carries no
+    // attention ranking. Both limits are rendered rather than hidden — the cap
+    // as `ro-port-truncated`, and the note says the selection is UNORDERED
+    // because fetchOrgPrograms has no ORDER BY (C-16), so the board cannot read
+    // as "nothing worse than this exists". Widening this row to the richer
+    // route would re-open exactly the breadth the 2026-10-01 review removed,
+    // and would import C-16's unordered `attentionRanked` with it.)
+    //
     // 2026-10-11: two of them now have a screen. The reporting library
     // (surfaces/InsightsLibrary.tsx) adds a Run history, Schedules and Bundles
     // tab to the artifact pane, so the surface claims the two prefixes those

@@ -16,8 +16,8 @@ import Queue from 'bull';
 import { createScopedLogger } from '../../../utils/logger';
 import { resolveCapabilities } from '../../entitlements/resolver';
 import type { Tier } from '../../entitlements/types';
-import { computeInitialRun } from '../orchestrator';
-import { computeDomainRun, computeRegionalRun, reportEngineFor, reportTypeNotComputedMessage } from '../report-engine';
+import { computeRunForType } from '../compute-run';
+import { reportEngineFor, reportTypeNotComputedMessage } from '../report-engine';
 import { decideDelivery } from './delivery';
 import { sweepDueSubscriptions } from './worker';
 import {
@@ -81,18 +81,25 @@ export async function generateAndDeliver(sub: ReportSubscriptionRow): Promise<vo
   if (engine == null) {
     throw new Error(reportTypeNotComputedMessage(sub.reportTypeId));
   }
-  /* A market assessment reads the type's own declared region and dependencies
-     from the deployed registry when, as here, the caller holds no row — so a
-     scheduled market report is exactly as honest as an interactive one, and a
-     market it cannot assess throws like any other compute failure. */
-  const computed =
-    engine === 'domain'
-      ? await computeDomainRun(sub.reportTypeId, sub.organizationId, scopeType, sub.scopeId)
-      : engine === 'regional'
-        ? await computeRegionalRun(sub.reportTypeId, sub.organizationId, scopeType, sub.scopeId)
-        : await computeInitialRun(sub.organizationId, scopeType, sub.scopeId, {
-            explicitRegistryId: sub.reportTypeId,
-          });
+  /* ONE dispatch, shared with POST /runs (services/report-os/compute-run.ts).
+     This was a ternary here and an if-chain there, and they drifted three times
+     — most recently on 2026-10-12, when this one gained a `regional` arm and
+     still had no `lineage` arm, so a document-scoped Evidence & Provenance Trace
+     subscription computed the readiness digest under the trace's name. The
+     shared dispatch matches the engine union exhaustively, so a fifth engine
+     stops the build rather than reaching the digest.
+     No `explicitRegistryId`: the sweep has none, and passing the report type id
+     as one — which `orchestrator.ts` declares and never reads — was the carrier
+     of the j8 defect. A market assessment reads the type's own declared region
+     and dependencies from the deployed registry, so a scheduled market report is
+     exactly as honest as an interactive one. */
+  const { computed } = await computeRunForType({
+    engine,
+    typeId: sub.reportTypeId,
+    organizationId: sub.organizationId,
+    scopeType,
+    scopeId: sub.scopeId,
+  });
   // A freshly computed scheduled run is inherently non-final — sealing/final
   // is a separate governed action (POST /runs/:id/finalize), never automatic.
   // It is 'partial' when the compute succeeded with no critical blockers,

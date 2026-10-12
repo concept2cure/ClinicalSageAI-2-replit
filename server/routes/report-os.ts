@@ -37,6 +37,7 @@ import { renderReport, gapsWereEvaluated, type RenderInput } from '../services/r
 import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
 import { readRunSeal, readSealForExport, readVerifiedSealedDocument } from '../services/report-os/sealing/run-seal';
+import { ReportTypeNotComputed, computeRunForType } from '../services/report-os/compute-run';
 import { buildRunPdf } from '../services/report-os/pdf/run-pdf';
 import { buildBundlePdf } from '../services/report-os/pdf/bundle-pdf';
 import type { SealedRecord } from '../services/report-os/sealing/types';
@@ -66,8 +67,6 @@ import { projectInOrg, projectScopeLabel, projectsInOrg, submissionInProject, wo
 import {
   REPORT_TYPE_NOT_APPLICABLE,
   REPORT_TYPE_NOT_COMPUTED,
-  computeDomainRun,
-  computeRegionalRun,
   reportEngineFor,
   reportTypeApplies,
   reportTypeNotApplicableMessage,
@@ -1554,74 +1553,34 @@ router.post('/runs', async (req: Request, res: Response) => {
     // one program — and each refusal is the type's own reason, returned as
     // REPORT_TYPE_NOT_COMPUTED so the canvas states it where the reader asked
     // (regional/filing-readiness.ts RegionalNotComputed).
+    const governance = (type[0].governanceRequirements ?? {}) as { region?: unknown };
     let computed: Awaited<ReturnType<typeof computeInitialRun>>;
-    if (engine === 'domain') {
-      computed = await computeDomainRun(reportTypeId, orgId, scopeType, scopeId);
-    } else if (engine === 'regional') {
-      const governance = (type[0].governanceRequirements ?? {}) as { region?: unknown };
-      try {
-        computed = await computeRegionalRun(reportTypeId, orgId, scopeType, scopeId, {
-          region: typeof governance.region === 'string' ? governance.region : null,
+    let lineageRendered: RenderedReport | undefined;
+    try {
+      const outcome = await computeRunForType({
+        engine,
+        typeId: reportTypeId,
+        organizationId: orgId,
+        scopeType,
+        scopeId,
+        declared: {
           label: type[0].label,
+          region: typeof governance.region === 'string' ? governance.region : null,
           dataDependencies: (type[0].dataDependencies as string[] | null) ?? null,
-        });
-      } catch (error) {
-        if (error instanceof Error && error.name === 'RegionalNotComputed') {
-          return res.status(422).json({ error: error.message, code: REPORT_TYPE_NOT_COMPUTED });
-        }
-        throw error;
-      }
-    } else {
-      computed = await computeInitialRun(orgId, scopeType, scopeId, {
-        programProjectIds,
-        explicitRegistryId: registryId,
-        explicitSubmissionType: submissionType,
+        },
+        ...(programProjectIds ? { programProjectIds } : {}),
+        ...(registryId ? { explicitRegistryId: registryId } : {}),
+        ...(submissionType ? { explicitSubmissionType: submissionType } : {}),
       });
+      computed = outcome.computed;
+      lineageRendered = outcome.lineageRendered;
+    } catch (error) {
+      if (error instanceof ReportTypeNotComputed) {
+        return res.status(422).json({ error: error.message, code: REPORT_TYPE_NOT_COMPUTED });
+      }
+      throw error;
     }
     if (scopeLabel) computed.summary.scopeLabel = scopeLabel;
-
-    // Document-scoped evidence-trace: source the report body from the EXISTING
-    // per-document lineage dossier (versions/decisions/provenance/reasoning/
-    // data-lineage) mapped into RenderedReport blocks with provenance atoms. Its
-    // confidence is the lineage engine's measured provenance completeness, or
-    // none (P-26; lineageTraceConfidence). Reuses the whole run/seal/
-    // render/finalize pipeline unchanged; the generic project-scope providers do
-    // not apply to a single artifact, so their (spurious) blockers are dropped
-    // for this type. It fell back to the generic run when the dossier was
-    // unavailable — the readiness digest under the trace's title, the defect
-    // report-engine.ts closes (QA 2026-10-08, j8) — so no dossier is now no run.
-    let lineageRendered: RenderedReport | undefined;
-    if (engine === 'lineage') {
-      try {
-        const [{ buildDocumentLineageDossier }, { dossierToRenderedReport, lineageTraceConfidence }] =
-          await Promise.all([
-            import('../services/ana/lineage-dossier.js'),
-            import('../services/report-os/lineage-trace-report.js'),
-          ]);
-        const dossier = await buildDocumentLineageDossier(scopeId, orgId);
-        if (dossier) {
-          computed.confidence = lineageTraceConfidence(dossier);
-          computed.blockers = [];
-          computed.criticalBlockers = [];
-          computed.summary.lineageDocument = dossier.ledger.artifact.artifactId;
-          lineageRendered = dossierToRenderedReport(dossier, {
-            reportTypeId,
-            reportTypeLabel: type[0].label ?? reportTypeId,
-            status: 'partial',
-          });
-        }
-      } catch (err) {
-        logger.warn('lineage dossier unavailable for evidence trace run', {
-          err: err instanceof Error ? err.message : String(err),
-        });
-      }
-      if (!lineageRendered) {
-        return res.status(422).json({
-          error: 'No lineage record was found for this document, so its evidence trace was not run.',
-          code: REPORT_TYPE_NOT_COMPUTED,
-        });
-      }
-    }
 
     const created = await createRunOnChain(
       req,
