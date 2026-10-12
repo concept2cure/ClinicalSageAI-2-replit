@@ -80,7 +80,7 @@ afterEach(() => cleanup());
 
 /** Open the interim calculator and compute it with its defaults filled in. */
 async function computeInterim() {
-  render(<BiostatWorkbench {...(props() as never)} />);
+  render(<BiostatWorkbench {...props()} />);
   fireEvent.click(await screen.findByText(/Interim look/));
 
   const fill = (label: RegExp, value: string) => {
