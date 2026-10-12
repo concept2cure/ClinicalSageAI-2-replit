@@ -73,7 +73,21 @@ export async function draftQualityOverallSummary(
     }
     const { composeProjectModule3 } = await import('../cmc/module3-compile.js');
     const { buildM23QualityOverallSummary } = await import('../m2-summary-builders.js');
-    const { sources, sections } = await composeProjectModule3(pool as never, orgId, programId);
+    const { isCompositionOutOfScope } = await import('../cmc/composition-scope.js');
+    let composed: Awaited<ReturnType<typeof composeProjectModule3>>;
+    try {
+      composed = await composeProjectModule3(pool as never, orgId, programId);
+    } catch (err) {
+      /* Outside the composition scope this platform ships — a biologic
+         substance, an unestablished modality, or a submission that files
+         something other than a US IND. Relayed in the refusal's own words so
+         the assistant repeats the reason and the path that does author it,
+         rather than reporting a tool failure
+         (services/cmc/composition-scope.ts). */
+      if (isCompositionOutOfScope(err)) return JSON.stringify({ error: err.refusal.message });
+      throw err;
+    }
+    const { sources, sections } = composed;
     if (sources.length === 0) {
       return JSON.stringify({
         no_cmc_data:

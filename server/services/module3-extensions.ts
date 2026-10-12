@@ -30,6 +30,7 @@ import {
   isHumanOrAnimalOrigin,
   isReviewRequiredOrigin,
 } from '../../shared/cmc/material-scope';
+import { classifySubstanceModality } from './cmc/substance-modality';
 import {
   isUsClinicalTrialApplication,
   US_IND_REGIONAL_FIELDS,
@@ -185,49 +186,25 @@ const APPENDIX_RULES: AppendixRule[] = [
       const sourceOrganism = val(m, 'sourceOrganism');
       const viralSafety = val(m, 'viralSafetyEvaluation');
       const tseStatus = val(m, 'tseStatus');
-      const modality = val(m, 'modality'); // 'small_molecule' | 'biologic' (preferred explicit signal)
-      const molecularType = val(m, 'molecularType');
-
-      // Detect biological origin. Prefer an explicit 'modality'/'molecularType'
-      // field on the drug substance source; fall back to a heuristic regex only
-      // when no structured signal is present. Regex uses word boundaries and
-      // concrete biologic tokens to avoid false positives on chemical drug
-      // substances whose name or processDescription incidentally mentions
-      // 'tissue' or 'plasma' (e.g. 'tissue paper packaging', 'plasma etching').
-      const explicitSmallMolecule = /^(small[-_ ]?molecule|synthetic|chemical)$/i.test(modality);
-      const explicitBiologic =
-        /^biologic(al)?$/i.test(modality) || /^biologic(al)?$/i.test(molecularType);
-      /* Widened 2026-09-08 in the FAIL-CLOSED direction. The list missed the
-         way an expression system is usually written down: a substance whose
-         recorded route is "CHO cell culture" matched nothing (the pattern asks
-         for cell LINE, not cell culture) and fell through to the branch below,
-         which declared the section not applicable. A false positive here costs
-         a section that asks for viral-safety data it may not need; a false
-         negative files an adventitious-agents all-clear for a cell-culture
-         product. The INN stems are added for the same reason — a substance
-         named "belantezumab" is a monoclonal antibody by its name alone. */
-      const biologicHeuristic =
-        /\b(biologic|recombinant|monoclonal|vaccine|fermentation|mammalian|hybridoma|bioreactor|transgenic|plasmid|viral\s*vector)\b/i.test(
-          `${route} ${processDesc} ${name}`
-        ) ||
-        /\bmAb\b|\bcell[\s-]*(line|culture|bank)\b|\b(human|animal)\s*tissue\b|\bplasma[-\s]derived\b/i.test(
-          `${route} ${processDesc} ${name}`
-        ) ||
-        /\b(cho|hek\s*293|sf9|vero|per\.?c6|e\.?\s?coli|pichia|saccharomyces|baculovirus)\b/i.test(
-          `${route} ${processDesc}`
-        ) ||
-        /(mab|cept|kinra|ase|tide|parin)\b/i.test(String(name).trim().split(/\s+/).pop() || '');
-      const isBiologic =
-        explicitBiologic ||
-        (!explicitSmallMolecule &&
-          !!(
-            biologicalOrigin ||
-            cellLine ||
-            sourceOrganism ||
-            viralSafety ||
-            tseStatus ||
-            biologicHeuristic
-          ));
+      /* ONE modality rule, shared with the composition boundary
+         (services/cmc/substance-modality.ts). Lifted there unchanged so this
+         section and `composition-scope.ts` can never disagree about whether a
+         substance is biologically derived — one saying "chemical synthesis"
+         while the other composed a small-molecule Module 3 is the failure that
+         extraction prevents. */
+      const verdict = classifySubstanceModality({
+        name,
+        manufacturingRoute: route,
+        processDescription: processDesc,
+        biologicalOrigin,
+        cellLine,
+        sourceOrganism,
+        viralSafetyEvaluation: viralSafety,
+        tseStatus,
+        modality: val(m, 'modality'),
+        molecularType: val(m, 'molecularType'),
+      });
+      const isBiologic = verdict.modality === 'biologic';
 
       if (!isBiologic) {
         /* "Not applicable — no animal- or human-derived raw materials, no
@@ -239,9 +216,9 @@ const APPENDIX_RULES: AppendixRule[] = [
            fail-closed branch for exactly this hazard; this section needs the
            same one, and the distinction is between "recorded as a chemical
            synthesis" and "nothing recorded either way". */
-        const statedChemical =
-          explicitSmallMolecule || Boolean(String(route || processDesc || '').trim());
-        if (!statedChemical) {
+        /* `unknown` IS the "nothing recorded either way" case the paragraph
+           above describes — the shared rule draws the same line. */
+        if (verdict.modality === 'unknown') {
           return {
             narrative:
               `Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, ` +
@@ -281,7 +258,7 @@ const APPENDIX_RULES: AppendixRule[] = [
             `bacterial, fungal, mycoplasma, and TSE/BSE safety for biologically-derived materials. ` +
             `\n\nNo biological origin, source organism, cell line or fermentation step is recorded against ` +
             (name ? `${name}` : 'the drug substance') +
-            `, ${recordedBasis(route || processDesc, explicitSmallMolecule)}. ` +
+            `, ${recordedBasis(route || processDesc, verdict.explicit)}. ` +
             `On that record this section does not apply to the drug substance itself. ` +
             `\n\nThis is a statement about the SUBSTANCE, not about every material used to make it: the origin of ` +
             `the raw and starting materials is recorded in §3.2.S.2.3 and that of the excipients in §3.2.P.4 and ` +
