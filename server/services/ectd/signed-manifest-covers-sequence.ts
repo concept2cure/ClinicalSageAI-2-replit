@@ -161,6 +161,67 @@ function nameSome(keys: readonly string[]): string {
   return rest > 0 ? `${head} and ${rest} more` : head;
 }
 
+/** Which leaf identities are on one side and not the other, counting duplicates. */
+function diffIdentities(
+  signed: readonly ComparableLeaf[],
+  live: readonly ComparableLeaf[],
+): { onlySigned: string[]; onlyLive: string[] } {
+  const signedCounts = countIdentities(signed);
+  const liveCounts = countIdentities(live);
+  const onlySigned: string[] = [];
+  const onlyLive: string[] = [];
+  for (const [key, n] of signedCounts) {
+    const m = liveCounts.get(key) ?? 0;
+    for (let i = 0; i < n - m; i++) onlySigned.push(key);
+  }
+  for (const [key, m] of liveCounts) {
+    const n = signedCounts.get(key) ?? 0;
+    for (let i = 0; i < m - n; i++) onlyLive.push(key);
+  }
+  return { onlySigned, onlyLive };
+}
+
+/**
+ * For the identities both sides fingerprinted: how many index-md5 matched, and
+ * which identities carry a signed checksum the live side does not.
+ *
+ * An identity only one side recorded a checksum for is neither corroborated
+ * nor changed — it is simply not evidence about the bytes.
+ */
+function diffChecksums(
+  signed: readonly ComparableLeaf[],
+  live: readonly ComparableLeaf[],
+): { corroborated: number; changed: string[] } {
+  const liveSums = checksumsByIdentity(live);
+  let corroborated = 0;
+  const changed: string[] = [];
+  for (const [key, signedList] of checksumsByIdentity(signed)) {
+    const liveList = liveSums.get(key);
+    if (!liveList) continue;
+    const remaining = [...liveList];
+    for (const sum of signedList) {
+      const at = remaining.indexOf(sum);
+      if (at < 0) continue;
+      remaining.splice(at, 1);
+      corroborated++;
+    }
+    if (remaining.length > 0) changed.push(key);
+  }
+  return { corroborated, changed };
+}
+
+/** The sentence for a manifest whose leaves are not this sequence's. */
+function manifestDiffersDetail(onlySigned: string[], onlyLive: string[]): string {
+  const parts: string[] = [];
+  if (onlyLive.length > 0) {
+    parts.push(`${onlyLive.length} leaf/leaves the sequence now holds were not signed (${nameSome(onlyLive)})`);
+  }
+  if (onlySigned.length > 0) {
+    parts.push(`${onlySigned.length} signed leaf/leaves are no longer in the sequence (${nameSome(onlySigned)})`);
+  }
+  return `the signed package's leaf manifest is not this sequence's: ${parts.join('; ')}`;
+}
+
 /**
  * Does the signed leaf manifest correspond to the sequence's current leaves?
  *
@@ -174,53 +235,13 @@ export function signedManifestCoversLeaves(
   signed: readonly ComparableLeaf[],
   live: readonly ComparableLeaf[],
 ): ManifestCoverage {
-  const signedCounts = countIdentities(signed);
-  const liveCounts = countIdentities(live);
-
-  const onlySigned: string[] = [];
-  const onlyLive: string[] = [];
-  for (const [key, n] of signedCounts) {
-    const m = liveCounts.get(key) ?? 0;
-    for (let i = 0; i < n - m; i++) onlySigned.push(key);
-  }
-  for (const [key, m] of liveCounts) {
-    const n = signedCounts.get(key) ?? 0;
-    for (let i = 0; i < m - n; i++) onlyLive.push(key);
-  }
-
+  const { onlySigned, onlyLive } = diffIdentities(signed, live);
   if (onlySigned.length > 0 || onlyLive.length > 0) {
-    const parts: string[] = [];
-    if (onlyLive.length > 0) {
-      parts.push(`${onlyLive.length} leaf/leaves the sequence now holds were not signed (${nameSome(onlyLive)})`);
-    }
-    if (onlySigned.length > 0) {
-      parts.push(`${onlySigned.length} signed leaf/leaves are no longer in the sequence (${nameSome(onlySigned)})`);
-    }
-    return {
-      covers: false,
-      detail: `the signed package's leaf manifest is not this sequence's: ${parts.join('; ')}`,
-    };
+    return { covers: false, detail: manifestDiffersDetail(onlySigned, onlyLive) };
   }
 
-  // Same leaves. Now the bytes, for every identity both sides fingerprinted.
-  const signedSums = checksumsByIdentity(signed);
-  const liveSums = checksumsByIdentity(live);
-  let corroborated = 0;
-  const changed: string[] = [];
-  for (const [key, signedList] of signedSums) {
-    const liveList = liveSums.get(key);
-    if (!liveList) continue;
-    const remaining = [...liveList];
-    for (const sum of signedList) {
-      const at = remaining.indexOf(sum);
-      if (at >= 0) {
-        remaining.splice(at, 1);
-        corroborated++;
-      }
-    }
-    if (remaining.length > 0) changed.push(key);
-  }
-
+  // Same leaves. Now the bytes.
+  const { corroborated, changed } = diffChecksums(signed, live);
   if (changed.length > 0) {
     return {
       covers: false,

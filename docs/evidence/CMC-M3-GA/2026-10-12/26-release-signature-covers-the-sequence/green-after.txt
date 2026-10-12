@@ -10,11 +10,11 @@
  ✓ signedManifestCoversLeaves — does the signed manifest describe this sequence > covers an empty sequence only when nothing was signed either 0ms
  ✓ readSequenceLeavesForComparison — the rows the dispatch would transmit > reads live rows for this sequence and organisation, ordered as the signing digest is 1ms
  ✓ readSequenceLeavesForComparison — the rows the dispatch would transmit > returns null — not an empty sequence — when the read cannot run 2ms
- ✓ resolveReleaseSignatureStatus — the signature must cover the sequence that ships > clears a signature whose manifest IS this sequence, and says what corroborated it 1ms
+ ✓ resolveReleaseSignatureStatus — the signature must cover the sequence that ships > clears a signature whose manifest IS this sequence, and says what corroborated it 2ms
  ✓ resolveReleaseSignatureStatus — the signature must cover the sequence that ships > does NOT clear a verified signature over content this sequence no longer holds 1ms
- ✓ resolveReleaseSignatureStatus — the signature must cover the sequence that ships > refuses it as an intact signature, not as tampering — so the sequence spine still decides 1ms
+ ✓ resolveReleaseSignatureStatus — the signature must cover the sequence that ships > refuses it as an intact signature, not as tampering — so the sequence spine still decides 0ms
  ✓ resolveReleaseSignatureStatus — the signature must cover the sequence that ships > reports undetermined — never signed — when this sequence’s leaves cannot be read 1ms
- ✓ resolveReleaseSignatureStatus — the signature must cover the sequence that ships > prefers a run that DOES cover this sequence over one that does not 1ms
- ✓ resolveReleaseSignatureStatus — the signature must cover the sequence that ships > says coverage was not checked when the caller names no sequence id 0ms
+ ✓ resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > prefers a run that DOES cover this sequence over one that does not 1ms
+ ✓ resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on > says coverage was not checked when the caller names no sequence id 0ms
  Test Files  1 passed (1)
       Tests  18 passed (18)

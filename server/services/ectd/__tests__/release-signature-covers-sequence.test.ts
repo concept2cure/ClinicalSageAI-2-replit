@@ -337,6 +337,17 @@ describe('resolveReleaseSignatureStatus — the signature must cover the sequenc
     expect(mockSequenceSpine).not.toHaveBeenCalled();
   });
 
+});
+
+describe('resolveReleaseSignatureStatus — picking among runs, and saying what a clear answer rests on', () => {
+  beforeEach(() => {
+    mockResolveSignedPackageForExport.mockReset();
+    mockDbExecute.mockReset();
+    mockSequenceSpine.mockReset();
+    mockPoolQuery.mockReset();
+    mockSequenceSpine.mockResolvedValue({ verdict: 'unsigned', detail: 'no dispatch-intent signature' });
+  });
+
   it('prefers a run that DOES cover this sequence over one that does not', async () => {
     runsAre('run-newest-stale', 'run-covering');
     mockResolveSignedPackageForExport.mockImplementation(async ({ runId }: { runId: string }) =>
