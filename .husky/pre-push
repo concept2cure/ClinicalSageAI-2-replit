@@ -526,6 +526,36 @@ if ! npm run --silent ci:trivyignore-hygiene 2>&1; then
 fi
 echo "   ✅ .trivyignore entries are bounded and owned."
 
+# ── The oversized-file ratchet actually holds now ────────────────────────────
+# WO-12 defers the oversized-file decomposition on three reasons, the third
+# being "The line is held. The ratchet cannot grow now." It was not held: WO-12
+# recorded 95 files over 1,500 lines and the tree reached 114.
+#
+# audit:repo-health:no-regression compares against
+# docs/reports/repo-health-scan-latest.json, and
+# .github/workflows/repo-health-baseline-refresh.yml regenerates and COMMITS
+# that file on every push to concept2cure-v2. Its rationale is that "PRs
+# branched after a merge therefore always see delta 0" — but RULE 0 means this
+# repository has no PRs, every change is a direct push to trunk, so each push's
+# growth is absorbed into the baseline before any later run can see it. The
+# delta is 0 today with the tree 32 files above the strict ceiling.
+#
+# This ceiling is a number in package.json, where the auto-refresh cannot reach
+# it and the "moves DOWN only" convention already applies. It is set at the
+# measured count, so nothing existing is blocked and only new growth fails.
+# Takes ~1.2s (Node builtins, tracked files only).
+echo "   Checking no file crosses the size ceiling (the ratchet the auto-refresh was absorbing)..."
+if ! npm run --silent audit:repo-health:ceiling 2>&1; then
+  echo ""
+  echo "🚫 ERROR: this push puts another file over the size ceiling."
+  echo "   Split it, or reduce another file to make room. The ceiling in"
+  echo "   package.json (audit:repo-health:ceiling) moves DOWN only — see"
+  echo "   docs/work-orders/WO-12-complexity-refactor.md."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No new oversized file."
+
 # ── No 5xx body carries the caught error's text ──────────────────────────────
 #
 # serverError() answers with a static envelope and logs the detail against the
