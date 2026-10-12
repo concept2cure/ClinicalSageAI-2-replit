@@ -1109,10 +1109,25 @@ interface TrackChangesStorage {
   acceptedInsertions: AcceptedInsertion[];
 }
 
-/** One accepted insertion: whose it was, and what it said. */
+/** One accepted insertion: whose it was, what it said, and which turn wrote it. */
 export interface AcceptedInsertion {
   authorId: string;
   text: string;
+  /**
+   * The AnA turn record this text came from, or null when the mark named none
+   * (round 15, SEC-A-7 door 1).
+   *
+   * The id is on the mark already — AnA's suggestion carries it as
+   * `sourceRecord` and it rides on `SuggestionRange` — and it stopped here,
+   * because this type held only the author and the words. So the save could
+   * tell the server WHICH words a machine wrote and never WHICH TURN wrote
+   * them, and the server's own verifier had nothing to hold the claim against.
+   *
+   * Null is not a forgery: a plain paste, an older bundle and text typed by
+   * hand all name no turn. The clause still travels, and the server records it
+   * as the person's own words with the reason.
+   */
+  turnRecordId: string | null;
 }
 
 /** The last recorded decision as an undo and a redo floor. */
@@ -1297,6 +1312,10 @@ export function rememberAcceptedAuthor(
   authorId: string | null,
   authorName: string | null,
   text: string,
+  /* The mark's `sourceRecord`. Per INSERTION, not per author: two AnA drafts
+     from different turns can be accepted in one editing session, and the models
+     that served one turn say nothing about the other. */
+  turnRecordId?: string | null,
 ): void {
   if (kind !== 'insertion' || action !== 'accept') return;
   if (!authorId && !authorName) return;
@@ -1304,7 +1323,7 @@ export function rememberAcceptedAuthor(
   // The text first, per insertion — before the once-per-author return below,
   // or a second accepted draft from the same author would lose its words.
   if (typeof text === 'string' && text.trim().length > 0) {
-    store.acceptedInsertions.push({ authorId: id, text });
+    store.acceptedInsertions.push({ authorId: id, text, turnRecordId: turnRecordId ?? null });
   }
   if (store.acceptedAuthors.some((a) => a.id === id)) return;
   store.acceptedAuthors.push({ id, name: authorName ?? id });
@@ -1599,7 +1618,7 @@ export const TrackChanges = Extension.create<
         (range: SuggestionRange, action: 'accept' | 'reject') =>
         ({ state, tr, dispatch }) => {
           const { insertion, deletion } = state.schema.marks;
-          rememberAcceptedAuthor(this.storage, range.kind, action, range.authorId, range.authorName, range.text);
+          rememberAcceptedAuthor(this.storage, range.kind, action, range.authorId, range.authorName, range.text, range.sourceRecord);
           /* Before the mark is stripped, for the same reason
              rememberAcceptedAuthor is: stripping it erases the text and the
              attribution the decision record is about. */
@@ -1633,7 +1652,7 @@ export const TrackChanges = Extension.create<
           const removedAt: number[] = [];
           // Descending order so earlier positions stay valid as text is removed.
           for (const r of [...ranges].sort((a, b) => b.from - a.from)) {
-            rememberAcceptedAuthor(this.storage, r.kind, action, r.authorId, r.authorName, r.text);
+            rememberAcceptedAuthor(this.storage, r.kind, action, r.authorId, r.authorName, r.text, r.sourceRecord);
             notifyResolved(this.options.onResolve, r, action);
             const keepText = (r.kind === 'insertion') === (action === 'accept');
             if (keepText) {

@@ -1,0 +1,17 @@
+Round 15, SEC-A-7 door 1: the turn id travels from the mark to the server.
+Tests: client/src/concept2cure/v2/__tests__/aiDraftAttribution.test.ts, client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx, server/services/authoring/__tests__/accepted-machine-text.test.ts
+
+baseline: Tests  69 passed (69)
+
+P1-01   KILLED    the store always records "no turn", so no claim can ever be verified
+        Tests  2 failed | 67 passed (69)
+P1-02   KILLED    the single-range accept path drops the turn
+        Tests  1 failed | 68 passed (69)
+P1-03   KILLED    the accept-all path drops the turn
+        Tests  1 failed | 68 passed (69)
+P1-04   KILLED    a malformed id is passed through to a uuid column (22P02 inside the save transaction)
+        Tests  2 failed | 67 passed (69)
+P1-05   KILLED    an entry naming no turn is DROPPED, losing the clause instead of attributing it honestly
+        Tests  5 failed | 64 passed (69)
+P1-06   KILLED    the id is matched unanchored, so a uuid buried in a longer string is believed
+        Tests  1 failed | 68 passed (69)

@@ -1,0 +1,8 @@
+mutant P1-01: the store always records "no turn", so no claim can ever be verified
+verdict: KILLED
+Tests  2 failed | 67 passed (69)
+
+ × client/src/concept2cure/v2/__tests__/aiDraftAttribution.test.ts > an accepted insertion keeps the turn it came from (round 15, SEC-A-7 door 1) > records the turn record the accepted mark named 10ms
+ × client/src/concept2cure/v2/__tests__/aiDraftAttribution.test.ts > an accepted insertion keeps the turn it came from (round 15, SEC-A-7 door 1) > keeps each accepted insertion’s OWN turn, not the first one’s 3ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 67 passed (69)
