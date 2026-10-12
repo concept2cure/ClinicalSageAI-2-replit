@@ -382,6 +382,46 @@ Worth naming: the curve-carrying change was pushed before this was found, so
 for one commit the fix was invisible in the case that matters most. Verifying a
 change end to end means through the renderer, not to the edge of the wire.
 
+### Reproducing a filed figure (2026-10-12)
+
+The sweep's last high-severity finding, and the one closest to the point of
+this whole row. Two questions a sponsor is asked under statistical defence:
+
+> *"Reproduce the planned sample size in your SAP from the inputs you filed."*
+> *"Prove this N was not edited after it was computed."*
+
+Both were answerable in principle since 2026-10-08, when `recordComputationRun`
+began storing every sizing run's inputs, outputs and a SHA-256 of each
+(`migrations/20261008f`), precisely so a planned N could be reproduced from a
+record rather than taken on a label. `reproduceComputationRun` is the half that
+checks it — and it was reachable from nothing: no route, no AnA tool, no client
+code. **The records existed and could not be checked, which is the same as not
+having them when a reviewer asks.**
+
+Now `GET /api/biostat-bridge/computation-runs/:runId/reproduce`, reporting four
+facts separately because they fail for different reasons and one verdict would
+hide which:
+
+| | |
+|---|---|
+| `inputsIntact` | the stored inputs still hash to their stored digest |
+| `outputsIntact` | the stored outputs still hash to theirs |
+| `reproduced` | re-running the engine on the stored inputs gives the stored outputs digest |
+| `engineVersionMatches` | the engine is the version that produced it |
+
+A reproduction that fails because the engine moved on is a different event from
+one that fails because a row was edited, and a submission has to be able to say
+which. A figure that does not reproduce is an **answer, not an error** — the
+route still returns 200, because a 500 would tell a sponsor the check broke
+when what it found is that their filed number cannot be reproduced. A run in
+another tenant reads as not found rather than as a failed reproduction.
+
+Pinned by `server/services/stats/__tests__/reproduce-computation-run.test.ts`
+(7 cases, with the row edited in each of the two ways that matter, and a method
+with no registered recompute saying so rather than claiming a reproduction) and
+`server/routes/__tests__/biostat-bridge-reproduce-route.test.ts` (10 cases, all
+10 failing before the route existed).
+
 ### Three engines a sponsor could not reach, and the last private CDF (2026-10-12)
 
 The sweep's remaining confirmed findings. Each was declared in
