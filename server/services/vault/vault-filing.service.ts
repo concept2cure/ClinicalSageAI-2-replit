@@ -39,6 +39,7 @@ import {
   type VaultDocKind,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { detectCTDSection } from '../ctd-ingestion-service.js';
+import { soleModule1Placement } from '../../../shared/regulatory/regional-module1';
 import { classifyArtifact as classifyTmfArtifact } from '../etmf/etmf-logic.js';
 import { TMF_ZONE_REFS } from '../../../shared/constants/domain/tmf-reference-model.js';
 
@@ -187,9 +188,15 @@ export const FILING_RULES: FilingRule[] = [
 
 // High-signal document-body phrases, consulted ONLY when filename + title match
 // nothing. Bounded scan; a body phrase alone is a medium-confidence signal.
-const TEXT_RULES: Array<{ label: string; pattern: RegExp; kind: VaultDocKind; view: 'ctd' | 'device'; folder: string; ctdSection?: string }> = [
+export const TEXT_RULES: Array<{ label: string; pattern: RegExp; kind: VaultDocKind; view: 'ctd' | 'device'; folder: string; ctdSection?: string }> = [
   { label: 'clinical study report body', pattern: /\bclinical study report\b/i, kind: 'csr', view: 'ctd', folder: 'module-5', ctdSection: '5.3.5' },
-  { label: "investigator's brochure body", pattern: /\binvestigator.?s brochure\b/i, kind: 'clinical', view: 'ctd', folder: 'module-5', ctdSection: '5.3' },
+  /* The IB is a Module 1 document in an FDA eCTD: 1.14.4.1 Investigator's Brochure, under
+     1.14.4 Investigational Drug Labeling (21 CFR 312.23(a)(5)). It used to be filed at
+     module-5 / 5.3, which is where the clinical study reports live — the registry's own comment
+     on this error says "an M5 assignment puts it in the wrong backbone node and the sequence does
+     not validate" (shared/regulatory/global-document-registry.ts). The code comes from the record,
+     not from this line. */
+  { label: "investigator's brochure body", pattern: /\binvestigator.?s brochure\b/i, kind: 'clinical', view: 'ctd', folder: 'module-1', ctdSection: soleModule1Placement('investigators_brochure', 'US', 'ind')?.code },
   { label: 'statistical analysis plan body', pattern: /\bstatistical analysis plan\b/i, kind: 'protocol', view: 'ctd', folder: 'module-5', ctdSection: '5.3.5' },
   { label: 'clinical evaluation report body', pattern: /\bclinical evaluation report\b/i, kind: 'clinical', view: 'device', folder: 'cer' },
   { label: 'instructions-for-use body', pattern: /\binstructions for use\b/i, kind: 'label', view: 'device', folder: 'udi' },
@@ -407,8 +414,12 @@ function classifyByName(input: FilingInput): FilingClassification {
         folderId: rule.folder,
         ctdSection: rule.view === 'ctd' ? rule.ctdSection ?? null : null,
         confidence: 'medium',
-        needsReview: false,
-        rationale: `Document text contains "${rule.label.replace(' body', '')}" — filename alone was not classifiable.`,
+        /* A body phrase is this file's own MEDIUM-confidence signal (see the TEXT_RULES header):
+           the filename and title matched nothing and a sentence in the text decided the placement.
+           It returned needsReview:false, so the rationale read as a settled fact and no human was
+           asked. Medium confidence and "no review needed" cannot both be true. */
+        needsReview: true,
+        rationale: `Document text contains "${rule.label.replace(' body', '')}" — filename alone was not classifiable, so this placement is from the body text and is worth confirming.`,
       };
     }
   }

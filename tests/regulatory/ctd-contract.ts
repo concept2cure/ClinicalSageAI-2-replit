@@ -171,6 +171,20 @@ export function violationsFor(nodes: readonly TreeNode[]): string[] {
   const out: string[] = [];
   for (const n of nodes) {
     const code = normalize(n.code);
+    /* A Module 1 document filed OUTSIDE Module 1. This loop used to skip every non-Module-1 code,
+       so the contract could not see the error the global document registry names in its own
+       comment: "was M5, which is where the CLINICAL STUDY REPORTS live; an M5 assignment puts it
+       in the wrong backbone node and the sequence does not validate"
+       (shared/regulatory/global-document-registry.ts:271). Four copies filed an Investigator's
+       Brochure at 5.3, 5.3.5.4 or module-5 and every Module 1 check passed them, because they were
+       not Module 1 codes. Only rules with a real heading count: a rule whose `under` is null says
+       the document is not a Module 1 section at all (the table of contents), and CTD 2.1 is the
+       Module 2 table of contents, which is right. */
+    if (/^[2-5]\./.test(code) || /^[2-5]$/.test(code)) {
+      for (const rule of PLACEMENT_RULES.filter((r) => r.under !== null && r.title.test(n.title))) {
+        out.push(`${n.code} "${n.title}" — ${rule.label} is a Module 1 document; it files under ${headingsOf(rule).join(' or ')}, not in Module ${code[0]}`);
+      }
+    }
     if (!isModule1(code)) continue;
     if (!isFdaModule1Placement(code)) {
       out.push(`${n.code} "${n.title}" is not an FDA Module 1 heading (nor an ancestor/descendant of one)`);
