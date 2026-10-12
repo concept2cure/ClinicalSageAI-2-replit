@@ -183,6 +183,8 @@
     "ci:purge-coverage:write-baseline": "node scripts/ci/check-purge-coverage.mjs --write-baseline",
     "ci:migration-reachability:write-baseline": "node scripts/ci/check-migration-reachability.mjs --write-baseline",
     "ci:migration-set-order": "node scripts/ci/check-migration-set-order.mjs",
+    "ci:migration-guard-order": "node scripts/ci/check-migration-guard-order.mjs",
+    "ci:migration-guard-order:selftest": "node scripts/ci/check-migration-guard-order.mjs --selftest",
     "ci:coverage-ratchet": "node scripts/ci/check-coverage-ratchet.mjs",
     "ci:migration-drop-safety": "node scripts/ci/check-migration-drop-safety.mjs",
     "ci:migration-drop-safety:selftest": "node scripts/ci/check-migration-drop-safety.selftest.mjs",

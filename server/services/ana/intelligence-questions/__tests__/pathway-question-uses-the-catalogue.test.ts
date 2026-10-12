@@ -81,7 +81,15 @@ describe('the pathway question', () => {
     expect(values).toEqual(pathwayOptions({ domain: 'medical_devices', region: 'EU' }).map(o => o.value));
     expect(values, 'the EU class routes').toContain('EU_MDR_CLASS_III');
     expect(values, 'a 510(k) is not a European route').not.toContain('US_510K');
-    expect(drawnRouteField('EU').helpText).toMatch(/These are EMA’s routes/);
+    /* And it says so in words that are true of a device: the MDR routes are a
+       notified body's assessment, not EMA's — which is what a device project
+       was told until a review caught it. */
+    expect(drawnRouteField('EU').helpText).toMatch(/EU MDR conformity assessment routes/);
+    expect(drawnRouteField('EU').helpText).toMatch(/notified body assesses them/);
+    expect(drawnRouteField('EU', 'diagnostic').helpText, 'an assay is IVDR').toMatch(/EU IVDR conformity/);
+    expect(drawnRouteField('US').helpText, 'FDA regulates both, so its name is right for both').toMatch(
+      /These are FDA’s routes/,
+    );
   });
 
   it('offers a diagnostics programme the IVD positions, in whichever region', () => {

@@ -87,6 +87,17 @@ const FLOW: FlowDefinition = {
       fields: [{ id: 'impurities', label: 'Impurities', type: 'text' }],
       defaultNext: null,
     },
+    {
+      /* A branch onto its own node. Reading every answer woke one of these in
+         a real flow — an emergency IND asked `ind_review` for ever — so the
+         engine refuses the shape (2026-10-12 review). */
+      id: 'loops_on_itself',
+      section: 'S',
+      question: 'A question that branches to itself.',
+      fields: [{ id: 'anything_else', label: 'Anything else', type: 'text' }],
+      branches: [{ when: { field: 'product_class', operator: 'eq', value: 'vaccine' }, goto: 'loops_on_itself' }],
+      defaultNext: null,
+    },
   ],
 };
 
@@ -132,6 +143,19 @@ describe('a branch on what the programme already said it is', () => {
     const node = own.nodes.find(n => n.id === 'common')!;
     expect(node.branches![0].when.field).toBe('anything');
     expect(advanceFlow(atCommon.state, 'common', { anything: 'x' }, CTX).event?.node.id).toBe('small_molecule_only');
+  });
+
+  it('is refused where it targets its own node, because that can only loop', () => {
+    const started = startFlow('cmc_specification', CTX);
+    const stated = advanceFlow(started.state, 'what_is_it', { product_class: 'vaccine' }, CTX);
+    const result = advanceFlow(
+      { ...stated.state, currentNodeId: 'loops_on_itself' },
+      'loops_on_itself',
+      { anything_else: 'x' },
+      CTX,
+    );
+    expect(result.event, 'the next question must not be this one again').toBeNull();
+    expect(result.completeEvent, 'it falls through to the node\u2019s own defaultNext').not.toBeNull();
   });
 
   it('prefers this question’s answer where both hold the same field', () => {

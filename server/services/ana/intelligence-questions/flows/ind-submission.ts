@@ -1231,12 +1231,13 @@ export function createIndSubmissionFlow(): FlowDefinition {
               'Any additional information, concerns, or known regulatory risks for this IND submission...',
           },
         ],
-        branches: [
-          {
-            when: { field: 'ind_type_selection', operator: 'eq', value: 'emergency' },
-            goto: 'ind_review',
-          },
-        ],
+        /* An emergency-IND branch onto this node itself, which can only ask
+           this question again: it was inert while branches read one node's
+           answers, and reading every answer made it a loop. Removed rather
+           than left to loop; the engine now refuses the shape as well. What
+           an emergency shortcut would need is a branch on the node BEFORE
+           review, naming the node an emergency IND should jump TO — which is
+           a flow decision, not a repair (founder's directive, 2026-10-12). */
         defaultNext: 'drug_substance_characterization',
         issueChecks: [
           {

@@ -70,7 +70,14 @@ describe('the agency the sponsor named', () => {
     const caution = cautionFor('EU_MDR_CLASS_III', { regions: ['US'] })!;
     expect(caution.availability).toBe('inapplicable');
     expect(caution.reason).toMatch(/You have named FDA/);
+    /* And it names the filing in words true of it: an MDR class route is a
+       notified body's conformity assessment, not a filing to EMA. */
+    expect(caution.reason).toMatch(/an EU conformity assessment under the MDR/);
     expect(caution.reason, 'the way out must be actionable').toMatch(/name EMA among the agencies/);
+    expect(cautionFor('EU_IVDR_CLASS_B', { regions: ['US'] })!.reason).toMatch(/under the IVDR/);
+    expect(cautionFor('EU_MAA', { regions: ['US'] })!.reason, 'a medicine IS filed to EMA').toMatch(
+      /a filing to EMA/,
+    );
     /* The authority is the statute behind the position itself: what makes an
        MDR route the EU's is the MDR, and that is the position's own citation. */
     expect(caution.authority).toBe(positionFor('EU_MDR_CLASS_III')!.authority);
@@ -111,7 +118,10 @@ describe('a programme with nothing to compare to', () => {
     expect(caution.availability).toBe('inapplicable');
     expect(caution.reason).toMatch(/no legally marketed device to compare to/);
     expect(caution.reason).toMatch(/first condition for a De Novo/);
-    expect(caution.authority).toMatch(/860\.220\(a\)/);
+    /* The regulation is cited at subpart level: 860.220 is the De Novo
+       request's content and format, not who may make one, and this module
+       does not state a section it has not verified. */
+    expect(caution.authority).toMatch(/860 Subpart D/);
     expect(cautionFor('US_510K_IVD', { predicate: 'none' })!.availability).toBe('inapplicable');
   });
 
