@@ -124,6 +124,32 @@ failed"), so this is a dead feature rather than a leak — but the path cannot
 currently carry anything anywhere, which is worth knowing before anyone counts
 it as an exit. Not this lane's to fix.
 
+## One more claim, refuted — with a different, real residual
+
+The by-query angle's closing line was that `useFilingOutline.ts`'s
+`nodeHasDraft` ORs the two stores, "so the outline an author navigates by
+reports a filing section as written when only the working copy holds text — the
+one surface that could have shown the gap hides it."
+
+**Refuted.** The function is named `nodeHasDraft`, not `nodeIsFiled`, and its
+own header states the choice and why: the stores are bound at document level
+and not at section level, "which is exactly why the question has to be asked of
+both … Reading only the authored side would have swapped one blind spot for the
+mirror image of it." It claims a draft exists somewhere, which is true, and its
+one call site renders a dot whose tooltip is `node.status` — the FILING's own
+status. A node with text only in the working copy shows a lit dot reading
+`todo`. The surface does not claim the filing section is written.
+
+**The residual it did not name, and which is real.** That status reaches the
+author through `title` alone — `<span className="ed-dot" data-s="ok"
+title={node.status} />`, with no accessible name and no visible text. This
+lane's own standard from round 13 (GE-P-3) rejects exactly that: a `title` is
+unreachable by keyboard and invisible on touch. So the filing status IS shown
+and IS honest, and is shown in the one way this lane has already decided does
+not count. Recorded for the editor-family work rather than fixed here: it is an
+accessibility defect on a shared surface, not part of the exit-path question,
+and bundling it into this round would hide it inside a commit about seals.
+
 ## Is a signed artefact REQUIRED to equal the filing?
 
 One angle flagged honestly that this rule is written down nowhere in `docs/`,
