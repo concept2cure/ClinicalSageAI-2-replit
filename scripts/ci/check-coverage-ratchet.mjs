@@ -61,8 +61,15 @@ function readSummary() {
   if (!fs.existsSync(summaryPath)) {
     console.error(
       `${TAG} ❌ no coverage summary at coverage/coverage-summary.json.\n\n` +
-        '  This gate reads the report; it does not produce it. Run the suite with\n' +
-        '  --coverage --coverage.reporter=json-summary first.\n',
+        '  This gate reads the report; it does not produce it.\n\n' +
+        '  The usual cause is not a missing flag: vitest writes NO coverage report\n' +
+        '  at all when any test fails, even with --coverage.reporter=json-summary\n' +
+        '  passed (measured on vitest 4.1.7 — a passing run writes the summary and\n' +
+        '  the text table, a run with one failing case writes neither). So when the\n' +
+        '  suite above this step is red, THIS failure is downstream of it and says\n' +
+        '  nothing about coverage. Fix the failing tests and re-run; coverage can\n' +
+        '  only be compared against a suite that passes.\n\n' +
+        '  Otherwise: run the suite with --coverage --coverage.reporter=json-summary.\n',
     );
     process.exit(1);
   }
