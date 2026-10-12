@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T09:49:25.025Z",
+  "generatedAt": "2026-10-12T10:17:57.235Z",
   "git": {
-    "sha": "5d3d960241c57c878d08f7b37ea3a7df715ac778",
+    "sha": "6622c4467a7823ba79e7a5347b091d3d47d7ae7c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2072,7 +2072,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 224883
+        "bytes": 225079
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2298,7 +2298,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5640
+        "lines": 5643
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2705,10 +2705,6 @@
         "lines": 1623
       },
       {
-        "file": "server/services/module3-extensions.ts",
-        "lines": 1615
-      },
-      {
         "file": "server/routes/mdx-qms.ts",
         "lines": 1612
       },
@@ -2723,6 +2719,10 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
+      },
+      {
+        "file": "server/services/module3-extensions.ts",
+        "lines": 1592
       },
       {
         "file": "server/services/ana-biostats/computation-engine.ts",
