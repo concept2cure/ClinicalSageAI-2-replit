@@ -1,0 +1,430 @@
+ RUN  v4.1.7 <repo>
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+{
+  "timestamp": "2026-10-12T16:35:41.890Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+{
+  "timestamp": "2026-10-12T16:35:46.633Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-12T16:35:46.636Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+stderr | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+{
+  "timestamp": "2026-10-12T16:35:46.636Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+✅ Template tables initialized
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts
+{
+  "timestamp": "2026-10-12T16:35:50.314Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 10a05e10-1bc6-402d-841f-810a75190ef3 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > credits the claim the record holds, under a model RULE 2 admits (the honest case)
+{
+  "timestamp": "2026-10-12T16:35:50.366Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc dca140a8-7436-47e4-810b-a335778cb761 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim of words the record does not hold is the saver’s own, not AnA’s
+{
+  "timestamp": "2026-10-12T16:35:50.414Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc b6086a47-0084-484a-a2c9-07bb7922eb89 by a***@canvas.example",
+  "context": {}
+}
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > credits the claim the record holds, under a model RULE 2 admits (the honest case) 53ms
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim of words the record does not hold is the saver’s own, not AnA’s 46ms
+   → expected [ { …(4) } ] to deeply equal []
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim naming no turn record at all is the saver’s own
+{
+  "timestamp": "2026-10-12T16:35:50.452Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 9d20f759-9459-4ac3-aacb-5b2d70376827 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a turn record of another organisation vouches for nothing: an id is not a capability
+{
+  "timestamp": "2026-10-12T16:35:50.510Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 380a0a37-c132-47a2-8822-1ad883096f41 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: an unadmitted model’s text is not machine-authored content > refuses the attribution for a verified claim whose served model the rule does not admit
+{
+  "timestamp": "2026-10-12T16:35:50.559Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 81388f09-d79e-469a-9a96-5fae58d81517 by a***@canvas.example",
+  "context": {}
+}
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim naming no turn record at all is the saver’s own 35ms
+   → expected [ { …(4) } ] to deeply equal []
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a turn record of another organisation vouches for nothing: an id is not a capability 57ms
+   → expected [ { …(4) } ] to deeply equal []
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: an unadmitted model’s text is not machine-authored content > one unadmitted model among several is enough: the whole turn is not credited
+{
+  "timestamp": "2026-10-12T16:35:50.618Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc d4ec62b3-53f8-4d68-9408-0b4d06588f46 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: an unadmitted model’s text is not machine-authored content > a record naming NO model is not approval: an empty list is not a list of admitted models
+{
+  "timestamp": "2026-10-12T16:35:50.661Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc cc714d30-f939-4508-97ad-0f4cdb7648bf by a***@canvas.example",
+  "context": {}
+}
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: an unadmitted model’s text is not machine-authored content > refuses the attribution for a verified claim whose served model the rule does not admit 46ms
+   → expected [ { …(4) } ] to deeply equal []
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: an unadmitted model’s text is not machine-authored content > one unadmitted model among several is enough: the whole turn is not credited 59ms
+   → expected [ { …(4) } ] to deeply equal []
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an accepted-author claim no record vouches for names no contributor and no draft source
+{
+  "timestamp": "2026-10-12T16:35:50.701Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc b56b3899-8ee9-4fef-b074-72200fdc7858 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an author whose every claim failed is not a contributor either
+{
+  "timestamp": "2026-10-12T16:35:50.744Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 0362e146-75d1-47f0-8517-808a5d56a85a by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses a credited claim
+{
+  "timestamp": "2026-10-12T16:35:50.777Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc b00f5747-c9d6-40ae-8cb3-0610ca05104d by a***@canvas.example",
+  "context": {}
+}
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: an unadmitted model’s text is not machine-authored content > a record naming NO model is not approval: an empty list is not a list of admitted models 43ms
+   → expected [ { …(4) } ] to deeply equal []
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an accepted-author claim no record vouches for names no contributor and no draft source 44ms
+   → expected 'ai-draft-accept' to be 'human-edit' // Object.is equality
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an author whose every claim failed is not a contributor either 37ms
+   → expected 'ai-draft-accept' to be 'human-edit' // Object.is equality
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses an unverifiable claim with the reason the record gives
+{
+  "timestamp": "2026-10-12T16:35:50.814Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 02409e36-c1f4-4784-8d78-fb0088b8b5e4 by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses an unadmitted model by name, with RULE 2’s verdict for it
+{
+  "timestamp": "2026-10-12T16:35:50.846Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 36ed5902-5d9a-4285-97aa-a45a6e0f5b1d by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > says nothing about machine text when no claim was made
+{
+  "timestamp": "2026-10-12T16:35:50.878Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc b549672e-897f-4511-9d4f-5c362d8422a9 by a***@canvas.example",
+  "context": {}
+}
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses a credited claim 37ms
+   → expected undefined to deeply equal [ { authorId: 'ana', …(2) } ]
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses an unverifiable claim with the reason the record gives 32ms
+   → expected undefined to deeply equal []
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses an unadmitted model by name, with RULE 2’s verdict for it 35ms
+   → expected undefined to deeply equal [ { authorId: 'ana', …(4) } ]
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > the response names each refused claim and why, so the editor can say so
+{
+  "timestamp": "2026-10-12T16:35:50.912Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 2be9407a-014a-4d48-b597-cdc0b419e7df by a***@canvas.example",
+  "context": {}
+}
+stdout | server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > says nothing when every claim was credited
+{
+  "timestamp": "2026-10-12T16:35:50.947Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 0df1ed2f-5059-45ea-95c2-a1431fd3b6aa by a***@canvas.example",
+  "context": {}
+}
+ ✓ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > says nothing about machine text when no claim was made 29ms
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > the response names each refused claim and why, so the editor can say so 34ms
+   → expected undefined to deeply equal { credited: +0, refused: [ { …(2) } ] }
+ × server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > says nothing when every claim was credited 34ms
+   → expected undefined to deeply equal { credited: 1, refused: [] }
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim of words the record does not hold is the saver’s own, not AnA’s
+AssertionError: expected [ { …(4) } ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "asserted_by": "3",
++     "machine_author_id": "ana",
++     "provenance_kind": "accepted_machine_draft",
++     "span_text_sha256": "c27e849f46bcd50a17ca8e2ebe5326d11bcc3e6de63c0f491460109a2fe9aa31",
++   },
++ ]
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:247:49
+    245|     const saved = await save([{ authorId: 'ana', text: ANA_WORDS, turn…
+    246|     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    247|     expect(await machineSpans(saved.sectionId)).toEqual([]);
+       |                                                 ^
+    248|     /* The clause is not dropped — it is the saver's, which is the who…
+    249|        refusing the attribution must not refuse the words. */
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a claim naming no turn record at all is the saver’s own
+AssertionError: expected [ { …(4) } ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "asserted_by": "3",
++     "machine_author_id": "ana",
++     "provenance_kind": "accepted_machine_draft",
++     "span_text_sha256": "c27e849f46bcd50a17ca8e2ebe5326d11bcc3e6de63c0f491460109a2fe9aa31",
++   },
++ ]
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:257:49
+    255|     const saved = await save([{ authorId: 'ana', text: ANA_WORDS }], {…
+    256|     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    257|     expect(await machineSpans(saved.sectionId)).toEqual([]);
+       |                                                 ^
+    258|     /* The clause is not dropped — it is the saver's, which is the who…
+    259|        refusing the attribution must not refuse the words. */
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > a machine-text claim is credited only when the turn record holds the words > a turn record of another organisation vouches for nothing: an id is not a capability
+AssertionError: expected [ { …(4) } ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "asserted_by": "3",
++     "machine_author_id": "ana",
++     "provenance_kind": "accepted_machine_draft",
++     "span_text_sha256": "c27e849f46bcd50a17ca8e2ebe5326d11bcc3e6de63c0f491460109a2fe9aa31",
++   },
++ ]
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:268:49
+    266|     const saved = await save([{ authorId: 'ana', text: ANA_WORDS, turn…
+    267|     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    268|     expect(await machineSpans(saved.sectionId)).toEqual([]);
+       |                                                 ^
+    269|   }, T);
+    270| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: an unadmitted model’s text is not machine-authored content > refuses the attribution for a verified claim whose served model the rule does not admit
+AssertionError: expected [ { …(4) } ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "asserted_by": "3",
++     "machine_author_id": "ana",
++     "provenance_kind": "accepted_machine_draft",
++     "span_text_sha256": "c27e849f46bcd50a17ca8e2ebe5326d11bcc3e6de63c0f491460109a2fe9aa31",
++   },
++ ]
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:281:49
+    279|        attribution and no reason at all. The ATTRIBUTION is refused. */
+    280|     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    281|     expect(await machineSpans(saved.sectionId)).toEqual([]);
+       |                                                 ^
+    282|     /* The clause is not dropped — it is the saver's, which is the who…
+    283|        refusing the attribution must not refuse the words. */
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: an unadmitted model’s text is not machine-authored content > one unadmitted model among several is enough: the whole turn is not credited
+AssertionError: expected [ { …(4) } ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "asserted_by": "3",
++     "machine_author_id": "ana",
++     "provenance_kind": "accepted_machine_draft",
++     "span_text_sha256": "c27e849f46bcd50a17ca8e2ebe5326d11bcc3e6de63c0f491460109a2fe9aa31",
++   },
++ ]
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:292:49
+    290|     const saved = await save([{ authorId: 'ana', text: ANA_WORDS, turn…
+    291|     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    292|     expect(await machineSpans(saved.sectionId)).toEqual([]);
+       |                                                 ^
+    293|   }, T);
+    294|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > RULE 2 at the save door: an unadmitted model’s text is not machine-authored content > a record naming NO model is not approval: an empty list is not a list of admitted models
+AssertionError: expected [ { …(4) } ] to deeply equal []
+- Expected
++ Received
+- []
++ [
++   {
++     "asserted_by": "3",
++     "machine_author_id": "ana",
++     "provenance_kind": "accepted_machine_draft",
++     "span_text_sha256": "c27e849f46bcd50a17ca8e2ebe5326d11bcc3e6de63c0f491460109a2fe9aa31",
++   },
++ ]
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:299:49
+    297|     const saved = await save([{ authorId: 'ana', text: ANA_WORDS, turn…
+    298|     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    299|     expect(await machineSpans(saved.sectionId)).toEqual([]);
+       |                                                 ^
+    300|   }, T);
+    301| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an accepted-author claim no record vouches for names no contributor and no draft source
+AssertionError: expected 'ai-draft-accept' to be 'human-edit' // Object.is equality
+Expected: "human-edit"
+Received: "ai-draft-accept"
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:311:24
+    309|     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    310|     const rev = await revision(saved.sectionId);
+    311|     expect(rev.origin).toBe('human-edit');
+       |                        ^
+    312|     expect(rev.contributors).toEqual([]);
+    313|   }, T);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > one verdict gates both channels > an author whose every claim failed is not a contributor either
+AssertionError: expected 'ai-draft-accept' to be 'human-edit' // Object.is equality
+Expected: "human-edit"
+Received: "ai-draft-accept"
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:319:24
+    317|     const saved = await save([{ authorId: 'ana', text: ANA_WORDS, turn…
+    318|     const rev = await revision(saved.sectionId);
+    319|     expect(rev.origin).toBe('human-edit');
+       |                        ^
+    320|     expect(rev.contributors).toEqual([]);
+    321|   }, T);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses a credited claim
+AssertionError: expected undefined to deeply equal [ { authorId: 'ana', …(2) } ]
+- Expected:
+[
+  {
+    "authorId": "ana",
+    "chars": 70,
+    "turnRecordId": "50e190cf-fa07-4a86-86ef-da0ec1fe80d6",
+  },
+]
++ Received:
+undefined
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:329:40
+    327|     const saved = await save([{ authorId: 'ana', text: ANA_WORDS, turn…
+    328|     const meta = await trailMetadata(saved.sectionId);
+    329|     expect(meta.machineText?.credited).toEqual([
+       |                                        ^
+    330|       { authorId: 'ana', turnRecordId: turn, chars: ANA_WORDS.length },
+    331|     ]);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses an unverifiable claim with the reason the record gives
+AssertionError: expected undefined to deeply equal []
+- Expected:
+[]
++ Received:
+undefined
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:339:40
+    337|     const saved = await save([{ authorId: 'ana', text: ANA_WORDS, turn…
+    338|     const meta = await trailMetadata(saved.sectionId);
+    339|     expect(meta.machineText?.credited).toEqual([]);
+       |                                        ^
+    340|     expect(meta.machineText?.refused).toEqual([
+    341|       {
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the Part 11 row says a claim was made, and what became of it > discloses an unadmitted model by name, with RULE 2’s verdict for it
+AssertionError: expected undefined to deeply equal [ { authorId: 'ana', …(4) } ]
+- Expected:
+[
+  {
+    "authorId": "ana",
+    "chars": 70,
+    "servedBy": [
+      {
+        "approvedForHighRisk": false,
+        "model": "claude-sonnet-5",
+        "pq": "pending",
+        "provider": "anthropic",
+        "qualified": false,
+      },
+    ],
+    "turnRecordId": "3beb855b-e1a2-41fa-8c32-4ed060831edd",
+    "why": "the turn was served by a model that is not approved for regulatory drafting",
+  },
+]
++ Received:
+undefined
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:355:39
+    353|     const saved = await save([{ authorId: 'ana', text: ANA_WORDS, turn…
+    354|     const meta = await trailMetadata(saved.sectionId);
+    355|     expect(meta.machineText?.refused).toEqual([
+       |                                       ^
+    356|       {
+    357|         authorId: 'ana',
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > the response names each refused claim and why, so the editor can say so
+AssertionError: expected undefined to deeply equal { credited: +0, refused: [ { …(2) } ] }
+- Expected:
+{
+  "credited": 0,
+  "refused": [
+    {
+      "chars": 70,
+      "why": "the turn was served by a model that is not approved for regulatory drafting",
+    },
+  ],
+}
++ Received:
+undefined
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:378:36
+    376|     const turn = await servedTurn(ANA_WORDS, [SONNET]);
+    377|     const saved = await save([{ authorId: 'ana', text: ANA_WORDS, turn…
+    378|     expect(saved.body.machineText).toEqual({
+       |                                    ^
+    379|       credited: 0,
+    380|       refused: [
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+ FAIL  server/routes/__tests__/authoring-save-governed-write.pglite.test.ts > the saver is told what was not credited > says nothing when every claim was credited
+AssertionError: expected undefined to deeply equal { credited: 1, refused: [] }
+- Expected:
+{
+  "credited": 1,
+  "refused": [],
+}
++ Received:
+undefined
+ ❯ server/routes/__tests__/authoring-save-governed-write.pglite.test.ts:389:36
+    387|     const turn = await servedTurn(ANA_WORDS, [OPUS]);
+    388|     const saved = await save([{ authorId: 'ana', text: ANA_WORDS, turn…
+    389|     expect(saved.body.machineText).toEqual({ credited: 1, refused: [] …
+       |                                    ^
+    390|   }, T);
+    391| });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+ Test Files  1 failed (1)
+      Tests  13 failed | 2 passed (15)
+   Start at  16:35:39
+   Duration  11.05s (transform 3.94s, setup 92ms, import 1.75s, tests 9.02s, environment 0ms)

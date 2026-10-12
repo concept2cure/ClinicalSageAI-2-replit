@@ -108,6 +108,15 @@
 -- B's program and under no program at all. Nothing is removed from this file.
 -- Evidence docs/evidence/D3/2026-09-28-drafting-tasks/.
 --
+-- ── AMENDED IN PLACE 2026-10-12 (D3) ────────────────────────────────────────
+-- capa_records and q_submissions join the text-program-id class. Both were
+-- sitting in scripts/ci/unkeyed-request-tables-baseline.json as "unreviewed"
+-- and in no spec, so each was isolated only by its reading route's join. The
+-- note beside their entries records why adding them is inert for today's
+-- shared-pool readers and binding for request-scoped ones, measured rather
+-- than assumed. Nothing is removed from this file.
+-- Evidence docs/evidence/D3/2026-10-12-unkeyed-table-classification/.
+--
 -- Idempotent: guarded on pg_policies and pg_class, safe to re-run every deploy.
 
 BEGIN;
@@ -195,6 +204,31 @@ DECLARE
     -- 2026-09-28 (D3): generated drafts, same shape — see the header note.
     -- A task naming no program is visible to no tenant scope (fail closed).
     ['drafting_tasks',             'project_id',       'regulatory_programs',  'id',       'organization_id'],
+
+    -- 2026-10-12 (D3): the last two members of the text-program-id class,
+    -- found while clearing ci:unkeyed-request-tables:unreviewed to zero. Both
+    -- sat in that baseline unclassified; neither was in this spec, so their
+    -- isolation was the reading route's join and nothing else.
+    --
+    -- capa_records' one reader is already correct and was already repaired
+    -- once: routes/mdx-postmarket.ts joins regulatory_programs INNER and
+    -- filters on p.organization_id, after a LEFT JOIN with
+    -- `OR p.organization_id IS NULL` had returned every orphaned CAPA to every
+    -- tenant. q_submissions is read from more places (q-sub.service, the AnA
+    -- tools, tenant-export, pdev, the mdx handlers), each joining the
+    -- programme itself.
+    --
+    -- Adding them here is defence in depth, and measured to be safe rather
+    -- than assumed: those readers import the SHARED pool (server/db/runtime.ts
+    -- sets no session scope — applySessionScope is called only from
+    -- middleware/establishRequestTenantScope.ts and db/withTenantConnection.ts),
+    -- so `app.rls_enforce` is unset on their connections and this policy's
+    -- first arm admits every row — inert, not breaking. On a request-scoped
+    -- connection it binds, and a scoped connection with no organisation admits
+    -- NOTHING (verified on a deploy-shaped database: unset -> first arm true;
+    -- rls_enforce=on with no org -> org predicate NULL).
+    ['capa_records',               'program_id',       'regulatory_programs',  'id',       'organization_id'],
+    ['q_submissions',              'program_id',       'regulatory_programs',  'id',       'organization_id'],
 
     -- Children with a foreign key into a tenant-keyed parent that had row
     -- security OFF: the output of scripts/db/rls-coverage-check.sql's child rule
