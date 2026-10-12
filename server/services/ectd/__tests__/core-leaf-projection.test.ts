@@ -24,6 +24,13 @@ const row = {
   documentId: null,
   documentUuid: '33333333-3333-4333-8333-333333333333',
   documentType: 'cer',
+  // The study this leaf belongs to and the STF file-tag it is referenced under
+  // (migrations/20261012_submission_leaf_stf_study_tagging.sql): what satisfies
+  // FDA validation 1789. A CER leaf names neither — II.6.1.g is an MDR
+  // technical-file section, not a CTD Module 4/5 study section — and the
+  // projection must carry that absence rather than drop the fields.
+  studyId: null,
+  stfFileTag: null,
   leafGuid: null,
   parentLeafId: null,
   checksum: null,
@@ -52,6 +59,8 @@ describe('coreLeafFromSubmissionLeaf', () => {
       documentUuid: '33333333-3333-4333-8333-333333333333',
       granularity: 'leaf',
       documentType: 'cer',
+      studyId: null,
+      stfFileTag: null,
     };
     expect(coreLeafFromSubmissionLeaf(row)).toEqual(expected);
   });
