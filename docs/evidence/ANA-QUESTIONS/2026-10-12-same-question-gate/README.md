@@ -62,9 +62,14 @@ questions the person could not see.
   field still demanded, and the shared evaluator losing its yes/no coercion so
   the card and the server disagree.
 - Green: **721 tests** across the question engine, both catalogues,
-  `tests/ana-intelligence` and the card; `ci:typecheck:no-regression` 0 errors;
-  the per-change lint ratchet nets zero — the moved function's existing
-  complexity warning travelled with it and did not multiply.
+  `tests/ana-intelligence` and the card; `ci:typecheck:no-regression` 0 errors.
+- **The ratchet refused the move, and it was right to.** `evaluatePredicate`
+  was a nine-case switch with nested ternaries — complexity 22, which the
+  warning ratchet had tolerated where it sat and refused the moment it became a
+  new file's warning. A move is the moment to pay for it, so the switch is now
+  one comparator per operator: a row to add an operator rather than a branch.
+  Behaviour is unchanged and pinned by four test files, and the ratchet reports
+  no file gaining a warning.
 
 ## What this does not fix
 

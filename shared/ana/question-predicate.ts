@@ -49,39 +49,41 @@ function toFiniteNumber(actual: unknown): number | null {
   return null;
 }
 
-export function evaluatePredicate(
-  pred: FieldPredicate,
-  values: Record<string, unknown>,
-): boolean {
-  const actual = values[pred.field];
+/**
+ * One comparator per operator, so adding one is a row rather than a branch.
+ *
+ * It was a nine-case switch with nested ternaries — complexity 22, which the
+ * warning ratchet tolerated in the engine and refused the moment the function
+ * moved to a new file. The ratchet is right: a move is the moment to pay for
+ * it. Behaviour is unchanged, and the cases are pinned by
+ * `predicate-yes-no-coercion`, `numeric-answer-coercion`,
+ * `tests/ana-intelligence/predicate.test.ts` and `same-question-gate`.
+ */
+type Comparator = (actual: unknown, expected: FieldPredicate['value']) => boolean;
 
-  switch (pred.operator) {
-    case 'eq':
-      return typeof pred.value === 'boolean'
-        ? coerceForBooleanPredicate(actual) === pred.value
-        : actual === pred.value;
-    case 'neq':
-      return typeof pred.value === 'boolean'
-        ? coerceForBooleanPredicate(actual) !== pred.value
-        : actual !== pred.value;
-    case 'in':
-      return Array.isArray(pred.value) && pred.value.includes(String(actual));
-    case 'not_in':
-      return Array.isArray(pred.value) && !pred.value.includes(String(actual));
-    case 'gt': {
-      const a = toFiniteNumber(actual);
-      return a !== null && typeof pred.value === 'number' && a > pred.value;
-    }
-    case 'lt': {
-      const a = toFiniteNumber(actual);
-      return a !== null && typeof pred.value === 'number' && a < pred.value;
-    }
-    case 'contains':
-      return typeof actual === 'string' && typeof pred.value === 'string' &&
-        actual.toLowerCase().includes(pred.value.toLowerCase());
-    case 'exists':
-      return actual != null && actual !== '' && !(Array.isArray(actual) && actual.length === 0);
-    default:
-      return false;
-  }
+const COMPARATORS: Readonly<Record<FieldPredicate['operator'], Comparator>> = {
+  eq: (actual, expected) =>
+    typeof expected === 'boolean' ? coerceForBooleanPredicate(actual) === expected : actual === expected,
+  neq: (actual, expected) =>
+    typeof expected === 'boolean' ? coerceForBooleanPredicate(actual) !== expected : actual !== expected,
+  in: (actual, expected) => Array.isArray(expected) && expected.includes(String(actual)),
+  not_in: (actual, expected) => Array.isArray(expected) && !expected.includes(String(actual)),
+  gt: (actual, expected) => {
+    const n = toFiniteNumber(actual);
+    return n !== null && typeof expected === 'number' && n > expected;
+  },
+  lt: (actual, expected) => {
+    const n = toFiniteNumber(actual);
+    return n !== null && typeof expected === 'number' && n < expected;
+  },
+  contains: (actual, expected) =>
+    typeof actual === 'string' && typeof expected === 'string' && actual.toLowerCase().includes(expected.toLowerCase()),
+  exists: actual => actual != null && actual !== '' && !(Array.isArray(actual) && actual.length === 0),
+};
+
+export function evaluatePredicate(pred: FieldPredicate, values: Record<string, unknown>): boolean {
+  /* An operator this module does not hold answers false: a predicate nobody
+     can evaluate must not read as satisfied. */
+  const compare = COMPARATORS[pred.operator];
+  return compare ? compare(values[pred.field], pred.value) : false;
 }
