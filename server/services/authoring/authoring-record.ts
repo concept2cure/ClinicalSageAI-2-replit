@@ -57,6 +57,11 @@ const NOT_VOUCHED: Record<MachineClaimReason, string> = {
   turn_record_not_found: 'no such turn record in this organization',
   record_not_intact: 'the turn record does not verify',
   text_not_in_record: 'the turn record does not hold this text',
+  /* Only reachable where a caller passes `mayVouch` (the section save's
+     governed-write verdict). A decision resolved here passes none, so a
+     decision's source is never refused for its model — it NAMES every model
+     with RULE 2's verdict instead, which is the record a reviewer reads. */
+  model_not_approved: 'the turn was served by a model that is not approved for regulatory drafting',
   too_many_turns: `more AnA turns than one decision verifies (at most ${MAX_TURN_RECORDS_PER_CHECK})`,
 };
 

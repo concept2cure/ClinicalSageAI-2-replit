@@ -37,7 +37,9 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
+import { randomUUID } from 'node:crypto';
 import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
+import { TurnRecorder, writeTurnRecord } from '../../server/services/ana/turn-record';
 
 const JWT_SECRET = 'commit-section-to-filing-contract';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -194,6 +196,15 @@ beforeAll(async () => {
       // no-ops with a NOTICE and the column this whole file is about is
       // silently absent. Same ordering the durable path uses.
       'migrations/20260728_authoring_document_governed_binding.sql',
+      /* The AnA turn-record store, and the audit chain it hashes itself into.
+         The save door's governed-write verdict reads it: a claim that AnA
+         drafted some of the saved text is believed only when a record of this
+         organisation holds the words (round 15, SEC-A-7 door 1). Without the
+         store, every claim is honestly unverifiable and no revision would ever
+         record a machine contributor — so the revert cases below would have
+         nothing to restore and would pass for the wrong reason. */
+      'migrations/20260921_audit_logs_chain_seq.sql',
+      'migrations/20260926_ana_turn_records.sql',
     ],
   });
   h.db = jdb.db;
@@ -1002,13 +1013,39 @@ describe('a revert carries the attribution the restored revision recorded (round
   const SEC = '2.5';
   const ANA_TEXT = 'Exposure was dose-proportional from 10 to 300 mg.';
 
-  /** The save door's AI-accept shape: a validated machine author plus its words. */
-  const saveAsAna = (content: string) =>
+  /**
+   * The save door's AI-accept shape: a machine author, its words, and the AnA
+   * turn record that holds them.
+   *
+   * The turn is real and is written through the recorder, because the door
+   * believes a claim only when a record of this organisation verifies whole
+   * and holds the words, under a model RULE 2 admits (round 15, SEC-A-7 door
+   * 1). Claude Opus 5.5 is the registry's primary high-risk entry, so outside
+   * production the claim is credited and the revision records the contributor
+   * these cases then revert to.
+   */
+  const anaTurn = async (answer: string): Promise<string> => {
+    const r = new TurnRecorder();
+    r.setTurn({
+      organizationId: AUTHOR.organizationId,
+      threadId: `th_${AUTHOR.organizationId}`,
+      runId: randomUUID(),
+      actorUserId: Number(AUTHOR.id),
+      surface: 'conversation',
+    });
+    r.setRequest('Summarise exposure for 2.5', 'Summarise exposure for 2.5');
+    r.setModel({ provider: 'anthropic', model: 'claude-opus-5-5', effort: 'balanced' });
+    r.addServed(1, { provider: 'anthropic', model: 'claude-opus-5-5' });
+    r.setAnswer({ streamed: answer, stored: answer });
+    return (await writeTurnRecord(h.pool as never, r.seal('answered'))).id;
+  };
+
+  const saveAsAna = async (content: string) =>
     as(request(app).patch(`/api/authoring/sections/${sectionIds[SEC]}`)).send({
       content,
       changeReason: 'accepting the AnA draft',
       acceptedAuthors: [{ id: 'ana' }],
-      acceptedMachineText: [{ authorId: 'ana', text: ANA_TEXT }],
+      acceptedMachineText: [{ authorId: 'ana', text: ANA_TEXT, turnRecordId: await anaTurn(ANA_TEXT) }],
     });
 
   const filedSource = async () => {

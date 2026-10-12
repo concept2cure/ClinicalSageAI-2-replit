@@ -102,6 +102,15 @@ import {
   type CreateAuditTrailOptions,
 } from '../services/authoring/authoring-evidence';
 import { loadAuthoringRecord, resolveTurnRecordSources, textSha256, type TurnRecordSource } from '../services/authoring/authoring-record';
+import {
+  creditMachineClaims,
+  contributorsOf,
+  governedSaveRefusal,
+  machineClaimDisclosure,
+  machineClaimReport,
+  refusedForModel,
+  type GovernedClaimVerdict,
+} from '../services/authoring/governed-machine-claims';
 import { evidenceShown, fileFailedDraftTurn, openDraftTurn, type DraftTurn } from '../services/ana/turn-record-draft';
 import { sendAuditedExport, walkTenantChain } from '../services/audit/audited-export';
 import { canReadAuditTrail } from '../services/audit/audit-api-authority';
@@ -1897,17 +1906,22 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
   try {
     const { sectionId } = req.params;
     const { content, track_changes, title, code } = req.body;
-    /* Who authored the accepted suggestions this save carries in. The client
-       reads them off the marks before accepting strips them; the server keeps
-       only the ones it recognises as non-human, because a human co-author is
-       already named by created_by. */
-    const contributors = machineContributors(req.body?.acceptedAuthors);
-    /* And the accepted text itself. `contributors` says who drafted SOME of
-       this save; this says WHICH words, so the lineage gate can record the
-       machine's clauses as the machine's — accepted by this actor — instead
-       of as this actor's own assertion. Same closed vocabulary, same boundary:
-       an author the server does not name is dropped here. */
+    /* WHICH WORDS a machine author wrote, as the client claims it. Read off
+       the marks before accepting strips them; the server keeps only the ids it
+       names itself, and each entry carries the AnA turn record the words came
+       from so the claim can be CHECKED (round 15, SEC-A-7 door 1). Nothing is
+       believed here — `creditMachineClaims` below decides, once, for both
+       channels. */
     const acceptedMachine = acceptedMachineText(req.body?.acceptedMachineText);
+    /* And WHO the save says contributed. No longer a second, unchecked claim:
+       it is disclosed on the Part 11 row, and the contributors the revision
+       and the filing actually record are derived from the verdict on the words
+       (`contributorsOf`). Before round 15 this list alone set the revision's
+       origin to `ai-draft-accept`, wrote the machine into `inputs.contributors`
+       and became the filing's `draft_source` — with no words to check against
+       any record. `settleAcceptedContributions` in the editor sends no author
+       without its text, so the two channels agree for every current client. */
+    const claimedAuthors = machineContributors(req.body?.acceptedAuthors);
     const tenantId = getTenantId(req);
     const updatedByUser = getActorId(req);
     if (!updatedByUser) {
@@ -2125,6 +2139,58 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     // at all; any error rolls the whole thing back and the caller is told. A
     // refused save is recoverable; a document that quietly lost its provenance,
     // its filing commit, or its audit record is not.
+    /* ── THE GOVERNED-WRITE VERDICT, BEFORE THE TRANSACTION OPENS ───────────
+     * One verdict on every machine-text claim this save carries: the record
+     * must hold the words, and CLAUDE.md RULE 2 must admit every model that
+     * served the turn. Only a credited claim is attributed to the machine;
+     * everything else is saved as this person's own assertion, with the claim
+     * and its reason on the Part 11 row and on the response.
+     *
+     * Here rather than inside the transaction because the rows it reads are
+     * append-only — so nothing it sees can change under the write — and
+     * because a failed statement inside the BEGIN would abort the very write
+     * it is checking. Only on a content save: a rename carries no words.
+     *
+     * An unverifiable claim does not refuse the save; a VERIFIED one whose
+     * model RULE 2 does not admit does. governed-machine-claims.ts states why
+     * the two cases differ. */
+    const machineClaims: GovernedClaimVerdict =
+      content !== undefined
+        ? await creditMachineClaims(pool, tenantId, acceptedMachine)
+        : { credited: [], refused: [], recordOccurrences: () => 0 };
+
+    /* ── A VERIFIED CLAIM RULE 2 WILL NOT ADMIT STOPS THE SAVE ──────────────
+     * Not the attribution — the save. The server has checked that the record
+     * verifies whole, that the words are inside what AnA produced, and that a
+     * serving model is one the rule does not admit for regulatory drafting.
+     * Saving it anyway would write a named person as the author of words a
+     * model demonstrably wrote, into a §11.10(e) lineage span and into the
+     * filing itself. Refused before anything is written, and before the
+     * transaction even opens.
+     *
+     * An UNVERIFIABLE claim is not refused — see governed-machine-claims.ts
+     * for why the two cases differ, and why this refusal is only honest
+     * because the editor keeps the claim for the retry. */
+    const notAdmitted = refusedForModel(machineClaims);
+    if (notAdmitted) {
+      const refusal = governedSaveRefusal(notAdmitted);
+      logger.warn('Section save refused: a verified machine claim names a model RULE 2 does not admit', {
+        sectionId, tenantId, servedBy: refusal.servedBy, passages: refusal.passages,
+      });
+      return res.status(403).json({
+        success: false,
+        error: { code: refusal.code, message: refusal.message },
+        servedBy: refusal.servedBy,
+        turnRecordIds: refusal.turnRecordIds,
+      });
+    }
+
+    /* What the Part 11 row and the saver are each told about the claims.
+       Computed once: both are pure functions of the verdict, and calling them
+       inside the object literal that uses them read as two decisions. */
+    const claimDisclosure = machineClaimDisclosure(machineClaims, claimedAuthors);
+    const claimReport = machineClaimReport(machineClaims);
+
     const client = await pool.connect();
     let result: { rows: any[] };
     // Whether the text reached the filing, and when it did not, why. Reported
@@ -2133,6 +2199,52 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     let governedCommit: CommitSectionResult | null = null;
     try {
       await client.query('BEGIN');
+
+      result = await client.query(updateQuery, values);
+
+      // The lineage gate: record an author span per clause and assert coverage,
+      // in this transaction, so content and provenance commit together. Empty /
+      // undefined content (a metadata-only update) is a no-op inside the helper.
+      // req.params is typed `string | string[]`; document_id is the join key
+      // every later read depends on, so coerce rather than let an array
+      // stringify itself into one.
+      const lineage = await enforceAuthorLineage(
+        client,
+        tenantId,
+        { documentTable: 'authoring_sections', documentId: String(sectionId) },
+        content,
+        updatedByUser,
+        {
+          /* Only the claims a record vouched for. An unverifiable claim's
+             clause is not dropped — no accepted-machine text matches it, so
+             the gate records it as this person's own assertion, which is what
+             they did by saving it. */
+          acceptedMachineText: machineClaims.credited.map(({ authorId, text }) => ({ authorId, text })),
+          /* And no clause is credited more times than the crediting records
+             hold it (the batch-draft accept's rule, round 4, DUP). */
+          recordOccurrences: machineClaims.recordOccurrences,
+        },
+      );
+
+      /* ── WHO THE RECORD NAMES: WHAT THE GATE CREDITED, NOT WHAT WAS CLAIMED ──
+       * `clausesInAcceptedText` is the gate's own count, and its contract is
+       * explicit: "A caller that says a save accepted a machine's text says it
+       * only when this is above zero". A verified claim of ONE WORD credits no
+       * clause, and naming AnA on it would make the revision say
+       * `ai-draft-accept`, the filing record `draft_source = 'ana'` and the
+       * snapshot trigger record `author_kind = 'ana'` for a save in which the
+       * lineage credited the machine with nothing — the defect the sibling
+       * batch-draft door was corrected for in round 3, at the door that files
+       * into c2c_documents.
+       *
+       * This is why the lineage gate now runs BEFORE the revision here, as it
+       * already did at the revert (:2494) and at template-apply (:6142): what
+       * a save says about itself has to follow what it credited. The gate
+       * reads and writes span rows only, never the section row, so the order
+       * is free. One machine author exists in the vocabulary today
+       * (MACHINE_AUTHOR_IDS), so one count answers for it; a second id would
+       * need the count per author. */
+      const contributors = lineage.clausesInAcceptedText > 0 ? contributorsOf(machineClaims) : [];
 
       // A revision row means "this content, by this author, as of this time".
       // POST /sections already recorded (new content, author); this makes the
@@ -2152,23 +2264,6 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
           contributors,
         );
       }
-
-      result = await client.query(updateQuery, values);
-
-      // The lineage gate: record an author span per clause and assert coverage,
-      // in this transaction, so content and provenance commit together. Empty /
-      // undefined content (a metadata-only update) is a no-op inside the helper.
-      // req.params is typed `string | string[]`; document_id is the join key
-      // every later read depends on, so coerce rather than let an array
-      // stringify itself into one.
-      await enforceAuthorLineage(
-        client,
-        tenantId,
-        { documentTable: 'authoring_sections', documentId: String(sectionId) },
-        content,
-        updatedByUser,
-        { acceptedMachineText: acceptedMachine },
-      );
 
       // ── Commit the working copy into the filing ─────────────────────────────
       // c2c_documents is the system of record; this store is the editing layer
@@ -2204,7 +2299,15 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
           currentSection.rows[0].content ?? null,
           content ?? null,
           changeReason,
-          { titleChanged: title !== undefined },
+          {
+            titleChanged: title !== undefined,
+            /* §11.10(a)/(e): a claim that AnA wrote some of this text is part
+               of what changed, and until round 15 this row said nothing about
+               one having been made. Credited claims name their turn record;
+               refused ones carry the reason and, for a refused model, the
+               models the record named. Absent when the save claimed nothing. */
+            ...(claimDisclosure ? { machineText: claimDisclosure } : {}),
+          },
           client,
         );
       } else {
@@ -2287,6 +2390,10 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       // Whether the text reached the filing. Present on every content save:
       // an unbound save is legitimate, a silently unbound one is the drift.
       ...(governedCommit ? { filing: filingResponse(governedCommit) } : {}),
+      /* And what became of each machine-authorship claim. The saver has to be
+         told: without it they see an ordinary "Section saved" while the record
+         now says they asserted words they believed were attributed to AnA. */
+      ...(claimReport ? { machineText: claimReport } : {}),
     });
   } catch (error) {
     console.error('Error updating section:', error);
