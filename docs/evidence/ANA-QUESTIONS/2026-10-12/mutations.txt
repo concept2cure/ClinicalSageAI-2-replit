@@ -1,0 +1,44 @@
+## a closed list quietly accepts an unlisted position: RED
+ × server/services/ana/intelligence-questions/__tests__/own-position.test.ts > a question whose list is closed > refuses the escape hatch, and says the list is closed rather than blaming the answer 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)
+
+## the escape hatch is taken with nothing written in it: RED
+ × server/services/ana/intelligence-questions/__tests__/own-position.test.ts > a question that offers an escape hatch > will not take the escape hatch with nothing written in it 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)
+
+## the person's words are not kept: RED
+ × server/services/ana/intelligence-questions/__tests__/own-position.test.ts > a question that offers an escape hatch > takes the person's own position and keeps their words 12ms
+ × server/services/ana/intelligence-questions/__tests__/own-position.test.ts > a question that offers an escape hatch > says so on the record, rather than letting it read as a position AnA offered 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 15 passed (17)
+
+## their words stay in the answers, where they read as a listed position: RED
+ × server/services/ana/intelligence-questions/__tests__/own-position.test.ts > a question that offers an escape hatch > takes the person's own position and keeps their words 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)
+
+## the record says nothing about whose wording it was: RED
+ × server/services/ana/intelligence-questions/__tests__/own-position.test.ts > a question that offers an escape hatch > says so on the record, rather than letting it read as a position AnA offered 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)
+
+## the card offers no escape hatch: RED
+ × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a position the list does not hold > is offered, and says AnA will not treat it as one of hers 155ms
+ × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a position the list does not hold > opens a box for the person’s own words, and will not be sent empty 187ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 15 passed (17)
+
+## the card submits an unexplained escape hatch: GREEN (SURVIVED)
+      Tests  17 passed (17)
+
+## the card sends the person's words under its own key: RED
+ × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a position the list does not hold > opens a box for the person’s own words, and will not be sent empty 82ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)
+
+## a flow hand-rolls an escape hatch again: RED
+ × server/services/ana/intelligence-questions/__tests__/escape-hatch-is-one-mechanism.test.ts > the escape hatch is one mechanism > no flow offers a hand-rolled escape hatch, beyond the one named exception 33ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)

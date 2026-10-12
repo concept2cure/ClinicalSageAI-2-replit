@@ -34,8 +34,8 @@ export const benefitRiskPmcfNodes: QuestionNode[] = [
         options: [
           { value: 'iso_14971_2019', label: 'ISO 14971:2019' },
           { value: 'iso_14971_2007', label: 'ISO 14971:2007' },
-          { value: 'other', label: 'Other' },
         ],
+        allowOther: {},
       },
       {
         id: 'hazard_analysis_summary',
