@@ -233,7 +233,69 @@ const collisions = [...byTable.entries()]
 // The baseline pins table -> exact file set, NOT just the table name. Baselining
 // by name alone would let a table that is already colliding accumulate unlimited
 // new definitions silently — the guard would stay green while the defect grew.
+/**
+ * Regenerate the baseline — PRESERVING every annotation it carries.
+ *
+ * ── Why this is not a plain object literal (fixed 2026-10-12) ───────────────
+ * It was. The block built a fresh `{ $comment, generatedAt, total, entries }`
+ * and wrote it, so every OTHER `$`-prefixed key in the file was destroyed by
+ * any regeneration. On 2026-10-12 that was two entries' worth of pruning and
+ * **28 lines of deletions**: the whole 15-entry `$reasons` map and
+ * `$note_on_the_2026_09_10_jump`, which records that the count went 34 -> 60
+ * -> 27 because the GUARD was fixed rather than because definitions were
+ * added — the one thing that stops a future reader comparing this file to an
+ * older copy and drawing the wrong conclusion.
+ *
+ * Nothing would have reported the loss, either: enforcement reads only
+ * `.entries`. The file would have stayed green, two entries smaller and
+ * entirely unexplained — while its own `$comment` says "an entry without a
+ * reason is the thing that field exists to prevent".
+ *
+ * So the write path now MERGES. It owns `$comment`, `generatedAt`, `total` and
+ * `entries`; every other `$`-prefixed key is carried across untouched. A
+ * `$reasons` map is pruned to the surviving collisions and the dropped names
+ * are printed. And it REFUSES to write when a surviving collision has no
+ * reason, because that is the state the field exists to prevent and a
+ * regeneration is exactly how it would arrive.
+ */
 if (WRITE_BASELINE) {
+  const OWNED = new Set(['$comment', 'generatedAt', 'total', 'entries']);
+  let prior = {};
+  if (fs.existsSync(BASELINE_PATH)) {
+    try {
+      prior = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'));
+    } catch {
+      console.error(
+        `[ci:duplicate-table-ddl] existing baseline unreadable at ${BASELINE_PATH} — ` +
+          'refusing to overwrite it. Fix the JSON, or move it aside deliberately.',
+      );
+      process.exit(1);
+    }
+  }
+
+  const tables = collisions.map((c) => c.table);
+  const surviving = new Set(tables);
+
+  // A surviving collision with no reason is the state $comment forbids. The
+  // only way to get here is a NEW collision, which should have failed CI
+  // before anyone reached for --write-baseline.
+  const priorReasons = prior.$reasons ?? {};
+  const unexplained = tables.filter((t) => !(t in priorReasons));
+  if (Object.keys(priorReasons).length > 0 && unexplained.length > 0) {
+    console.error(
+      '[ci:duplicate-table-ddl] refusing to write: ' +
+        `${unexplained.length} collision(s) would be baselined with no entry in $reasons —\n` +
+        unexplained.map((t) => `  ${t}`).join('\n') +
+        '\n\n  This file\'s own $comment: "an entry without a reason is the thing that\n' +
+        '  field exists to prevent." Classify each one in $reasons first (what the two\n' +
+        '  shapes are, which applier runs which, and whether it is a defect), then\n' +
+        '  re-run. Do not reach for this flag to silence a NEW collision.',
+    );
+    process.exit(1);
+  }
+
+  const dropped = Object.keys(priorReasons).filter((t) => !surviving.has(t));
+
   const baseline = {
     $comment:
       'Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set ' +
@@ -248,8 +310,32 @@ if (WRITE_BASELINE) {
     total: collisions.length,
     entries: Object.fromEntries(collisions.map((c) => [c.table, c.files])),
   };
+
+  // Every other annotation, in the order the file had it, with $reasons pruned
+  // to the surviving set.
+  for (const [key, value] of Object.entries(prior)) {
+    if (OWNED.has(key)) continue;
+    if (key === '$reasons') {
+      baseline.$reasons = Object.fromEntries(
+        Object.entries(value).filter(([table]) => surviving.has(table)),
+      );
+      continue;
+    }
+    baseline[key] = value;
+  }
+
   fs.writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + '\n');
   console.log(`[ci:duplicate-table-ddl] baseline written: ${collisions.length} collisions`);
+  const carried = Object.keys(baseline).filter((k) => k.startsWith('$') && k !== '$comment');
+  if (carried.length > 0) {
+    console.log(`[ci:duplicate-table-ddl] annotations carried over: ${carried.join(', ')}`);
+  }
+  if (dropped.length > 0) {
+    console.log(
+      `[ci:duplicate-table-ddl] $reasons pruned for ${dropped.length} table(s) that no longer ` +
+        `collide: ${dropped.join(', ')}`,
+    );
+  }
   process.exit(0);
 }
 
