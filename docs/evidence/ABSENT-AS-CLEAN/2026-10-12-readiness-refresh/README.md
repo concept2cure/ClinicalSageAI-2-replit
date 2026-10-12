@@ -77,3 +77,65 @@ One detail worth keeping: the first replacement comment quoted the dead
 statement verbatim, and the gate still measured 22 — it reads source **text**,
 so a comment containing the SQL is a reference. Naming the table in prose is
 what took it to 21. A gate doing exactly what it claims.
+
+---
+
+# The second one: an FDA-correspondence alert that had never fired
+
+Same gate, same day, same failure mode, a different surface.
+`server/services/ana-ri/mdx-proactive-signals.ts` — the module that gives AnA
+the alerts it raises without being asked — declared a
+`correspondence.no_response` alert and produced it from:
+
+```sql
+FROM correspondences c
+WHERE c.organization_id = $1 AND COALESCE(c.response_status, 'open') = 'open'
+```
+
+under:
+
+```ts
+} catch {
+  // fail-soft (correspondences table may have a different name in some tenants)
+}
+```
+
+`correspondences` exists nowhere in this repository — no migration under
+`migrations/` or `db/migrations/`, no `shared/schema` entry, no runtime DDL —
+and the stated reason is not how this platform works: every table is shared and
+tenant-scoped by an `organization_id` column (CLAUDE.md RULE 1, "New tables go
+in `public` with `organization_id INTEGER NOT NULL`"). There are no per-tenant
+table names. So the query threw 42P01 on every call, was swallowed, and the
+alert had **never once fired**. The module's own header compounded it by listing
+a third name, `regulatory_correspondence`, which does not exist either.
+
+The module is reachable: `mdx-context-resolver.ts:31` imports it, and that
+resolver feeds AnA's context. So a user asking AnA what needs attention was
+told about deadlines, commitments and stale sections — and silently never about
+an unanswered agency letter.
+
+## Why this was not simply re-pointed
+
+Agency correspondence does live somewhere. The regulatory-correspondence
+operating layer records each parsed issue as a `c2c_project_work_items` row
+with `sourceType: 'correspondence'`
+(`server/services/regulatory-correspondence/operating-layer.ts:214, :227`).
+
+But "received N days ago with no recorded response" does not map onto a work
+item's columns without deciding what counts as received, as answered, and as
+urgent. That is product semantics — the founder's call. **A wrong alert about
+an unanswered FDA letter is worse than a missing one**, and RULE 2 is explicit
+that governed content comes from deterministic engines, not from a mapping a
+session guessed.
+
+So the dead producer is removed, the header's false table list is corrected,
+and the gap is written down at the producer's former position with the store
+that holds correspondence today and the decision the alert needs. The
+`correspondence.no_response` kind stays in the union: it is a declared
+capability awaiting that decision, not one this change removes.
+
+**Open for the founder:** what counts as an unanswered agency correspondence,
+over `c2c_project_work_items` rows of source type `correspondence`.
+
+`ci:unbacked-tables:strict` 21 → **20**. `tsc --noEmit` exit 0; the module's
+suites 79 files / 1175 tests pass.
