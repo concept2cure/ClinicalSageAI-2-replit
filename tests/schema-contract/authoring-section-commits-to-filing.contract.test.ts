@@ -998,6 +998,55 @@ describe('a document whose sections sit under one outline node commits into that
   }, T);
 });
 
+describe('a revert says whether its text reached the filing', () => {
+  /* The save and the AI-draft accept both forward `commitSectionToFiling`'s
+     verdict as `filing` on the response (authoring.router.ts :2392, :4328) —
+     "an unbound save is legitimate, a silently unbound one is how the two
+     stores drifted apart", in the save's own words. The REVERT called the same
+     writer and threw the verdict away, so a revert whose filing commit was
+     refused answered a plain success while the filing kept the pre-revert
+     text. Every store stayed internally consistent and nothing said otherwise
+     — the same shape as the defect the revert's own header describes one layer
+     up (found by the exit-path verification of round 15). */
+  it('an unbound document reverts, and says the text did not reach a filing', async () => {
+    const other = await as(request(app).post('/api/authoring/docs')).send({
+      title: 'Unbound note to revert', module: 'M2', client_program_id: PROJECT,
+    });
+    const s = await as(request(app).post('/api/authoring/sections')).send({
+      doc_id: other.body.document.id, code: '2.5', title: '2.5', content: 'First text.', order_index: 1,
+    });
+    const sectionId = s.body.section.id;
+    expect((await as(request(app).patch(`/api/authoring/sections/${sectionId}`))
+      .send({ content: 'Second text.', changeReason: 'revising the internal note' })).status).toBe(200);
+
+    const [first] = await q<{ id: string }>(
+      `SELECT id FROM doc_revisions WHERE section_id = $1 AND tenant_id = 1 ORDER BY created_at ASC, id ASC LIMIT 1`,
+      [sectionId],
+    );
+    const res = await as(request(app).post(`/api/authoring/sections/${sectionId}/revert`)).send({ rev_id: first.id });
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.filing, 'the revert did not say what became of the filing').toMatchObject({ committed: false });
+    expect(res.body.filing.reason).toMatch(/not bound to a filing/i);
+  }, T);
+
+  it('a bound document reverts, and says the text DID reach the filing', async () => {
+    /* The negative control: the field is not a constant "committed: false". */
+    const SEC = '2.5';
+    expect((await save(SEC, '<p>The text a revert will restore.</p>')).status).toBe(200);
+    expect((await save(SEC, '<p>And the text it will be reverted from.</p>')).status).toBe(200);
+    const [target] = await q<{ id: string }>(
+      `SELECT id FROM doc_revisions WHERE section_id = $1 AND tenant_id = 1
+         AND content LIKE '%a revert will restore%' ORDER BY created_at ASC LIMIT 1`,
+      [sectionIds[SEC]],
+    );
+    const res = await as(request(app).post(`/api/authoring/sections/${sectionIds[SEC]}/revert`))
+      .send({ rev_id: target.id });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.filing).toMatchObject({ committed: true, sectionKey: SEC });
+  }, T);
+});
+
 describe('a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3)', () => {
   /* `doc_revisions` is append-only by trigger and each row records the
      provenance of the state it holds: `origin`, and `inputs.contributors` —
