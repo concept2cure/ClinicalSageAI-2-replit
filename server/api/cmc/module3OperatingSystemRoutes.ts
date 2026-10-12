@@ -35,7 +35,6 @@ import { governedActorId, requireEditorAccess } from '../../middleware/orgMember
 import { clientIpOf } from '../../utils/client-ip';
 import { requireRole } from '../../middleware/auth';
 import { requireGovernedReason } from '../../routes/governed-reason';
-import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 
 /** The §11.50(a)(3) meanings a signature may carry. */
 type SignatureMeaning = (typeof SIGNATURE_MEANINGS)[number];
