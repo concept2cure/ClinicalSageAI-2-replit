@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T00:15:32.552Z",
+  "generatedAt": "2026-10-12T00:23:32.454Z",
   "git": {
-    "sha": "d4eff0ddd1129a0c7c1f835711e0a5651e9ec01d",
+    "sha": "e29154f091b4880d7f9814aa25dec832d2aa0dd0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2505,6 +2505,10 @@
         "lines": 2076
       },
       {
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 2069
+      },
+      {
         "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
         "lines": 2068
       },
@@ -2547,10 +2551,6 @@
       {
         "file": "server/routes/ectd-compile.ts",
         "lines": 1989
-      },
-      {
-        "file": "server/services/combination-products/combination-products-knowledge.ts",
-        "lines": 1973
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
