@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T00:06:13.595Z",
+  "generatedAt": "2026-10-12T00:15:32.552Z",
   "git": {
-    "sha": "b40388014731a97a02d0fc63090543c8eee331fb",
+    "sha": "d4eff0ddd1129a0c7c1f835711e0a5651e9ec01d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2068,7 +2068,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 292728
+        "bytes": 294863
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2289,12 +2289,12 @@
         "lines": 8226
       },
       {
-        "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "lines": 6201
+        "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+        "lines": 6203
       },
       {
-        "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6163
+        "file": "server/services/ind/ctd/authoring-guidance.ts",
+        "lines": 6201
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
