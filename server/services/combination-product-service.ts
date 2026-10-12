@@ -1,27 +1,28 @@
 /**
  * Combination Product Service
  *
- * Handles regulatory classification and requirements for drug/device,
- * biologic/device, and drug/biologic combination products per FDA OCP rules.
+ * Requirements and OCP guidance for drug/device, biologic/device, and
+ * drug/biologic combination products.
+ *
+ * Classification is NOT done here. The primary mode of action and lead Center
+ * come from the canonical engine, determinePrimaryModeOfAction in
+ * server/services/combination-products/combination-products-knowledge.ts; this
+ * service only builds the per-agency requirements for that answer. (Its former
+ * determinePrimaryMode, a fixed per-PMOA table that listed the drug-eluting stent
+ * as CDER-led and cited the PMOA as 21 CFR 3.2(e), was removed on 2026-10-05.)
  *
  * @module server/services/combination-product-service
  */
+
+import type { PmoaResult } from './combination-products/combination-products-knowledge.js';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export interface CombinationClassification {
-  primaryMode: 'drug' | 'device' | 'biologic';
-  leadCenter: string;
-  collaboratingCenter: string;
-  classificationType: string;
-  examples: string[];
-  regulatoryBasis: string;
-}
-
 export interface CombinationRequirements {
-  classification: CombinationClassification;
+  /** The canonical PMOA / lead-Center determination these requirements are for. */
+  classification: PmoaResult;
   agency: string;
   submissionType: string;
   requiredComponents: Array<{
@@ -46,56 +47,8 @@ export interface OCPGuidance {
 // ============================================================================
 
 export class CombinationProductService {
-  determinePrimaryMode(params: {
-    drugComponent: string;
-    deviceComponent: string;
-    primaryAction: 'drug' | 'device' | 'biologic';
-  }): CombinationClassification {
-    const classifications: Record<string, CombinationClassification> = {
-      drug: {
-        primaryMode: 'drug',
-        leadCenter: 'CDER',
-        collaboratingCenter: 'CDRH',
-        classificationType: 'Drug-Device Combination (Drug-led)',
-        examples: [
-          'Drug-eluting stent (drug provides primary therapeutic effect)',
-          'Prefilled syringe/auto-injector with drug',
-          'Transdermal patch with drug',
-          'Metered-dose inhaler with drug formulation',
-        ],
-        regulatoryBasis: '21 CFR 3.2(e): Primary mode of action is attributable to the drug component',
-      },
-      device: {
-        primaryMode: 'device',
-        leadCenter: 'CDRH',
-        collaboratingCenter: 'CDER',
-        classificationType: 'Device-Drug Combination (Device-led)',
-        examples: [
-          'Antimicrobial bone cement (device provides primary structural function)',
-          'Drug-coated balloon catheter',
-          'Wound dressing with antimicrobial agent',
-        ],
-        regulatoryBasis: '21 CFR 3.2(e): Primary mode of action is attributable to the device component',
-      },
-      biologic: {
-        primaryMode: 'biologic',
-        leadCenter: 'CBER',
-        collaboratingCenter: 'CDRH',
-        classificationType: 'Biologic-Device Combination (Biologic-led)',
-        examples: [
-          'Cell-seeded scaffold for tissue regeneration',
-          'Gene therapy delivered via implantable device',
-          'Prefilled syringe with biologic product',
-        ],
-        regulatoryBasis: '21 CFR 3.2(e): Primary mode of action is attributable to the biological product component',
-      },
-    };
-
-    return classifications[params.primaryAction] || classifications.drug;
-  }
-
   getCombinationRequirements(params: {
-    classification: CombinationClassification;
+    classification: PmoaResult;
     targetAgency: string;
   }): CombinationRequirements {
     const agencyReqs = this.getAgencyRequirements(params.classification, params.targetAgency);
@@ -113,7 +66,7 @@ export class CombinationProductService {
   // ============================================================================
 
   private getAgencyRequirements(
-    classification: CombinationClassification,
+    classification: PmoaResult,
     agency: string
   ): CombinationRequirements {
     if (agency === 'FDA') {
@@ -125,7 +78,7 @@ export class CombinationProductService {
     return this.getGenericRequirements(classification, agency);
   }
 
-  private getFDARequirements(classification: CombinationClassification): CombinationRequirements {
+  private getFDARequirements(classification: PmoaResult): CombinationRequirements {
     const drugReqs = {
       component: 'Drug Component',
       requirements: [
@@ -172,7 +125,7 @@ export class CombinationProductService {
     };
 
     const components: Array<{ component: string; requirements: string[]; guidelines: string[] }> = [];
-    if (['drug', 'device'].includes(classification.primaryMode)) {
+    if (classification.pmoaType !== 'biologic') {
       components.push(drugReqs, deviceReqs);
     } else {
       components.push(biologicReqs, deviceReqs);
@@ -203,7 +156,7 @@ export class CombinationProductService {
     };
   }
 
-  private getEMARequirements(classification: CombinationClassification): CombinationRequirements {
+  private getEMARequirements(classification: PmoaResult): CombinationRequirements {
     return {
       classification,
       agency: 'EMA',
@@ -243,7 +196,7 @@ export class CombinationProductService {
   }
 
   private getGenericRequirements(
-    classification: CombinationClassification,
+    classification: PmoaResult,
     agency: string
   ): CombinationRequirements {
     return {
