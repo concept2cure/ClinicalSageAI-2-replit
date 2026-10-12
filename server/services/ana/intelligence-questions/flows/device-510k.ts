@@ -20,7 +20,8 @@ export function createDevice510kFlow(): FlowDefinition {
     name: '510(k) Premarket Notification',
     description:
       'Comprehensive questionnaire for 510(k) premarket notification submissions, covering device information, predicate device comparison, testing requirements, clinical evidence, submission preparation, software documentation (IEC 62304, cybersecurity), sterilization & shelf life, labeling & usability (human factors), and risk management & post-market surveillance.',
-    clientTypes: ['medtech'],
+    // An IVD files a 510(k) too (the registry's US_510K_IVD).
+    clientTypes: ['medtech', 'ivd'],
     entryNode: 'device_basics',
     estimatedMinutes: 60,
 

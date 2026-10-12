@@ -1,0 +1,319 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > the positions are the registry’s own filings > annotates no filing the registry does not hold 3ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > the positions are the registry’s own filings > takes its label from the registry, so the question and the filing agree 1ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > the positions are the registry’s own filings > offers nothing for a filing it has no meaning for 1ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > the positions are the registry’s own filings > covers every US and EU route to market in the segments it claims 1ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > the bridge to the modality frame > every pathway the frame holds resolves to a registry filing 1ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > the bridge to the modality frame > offers a modality only what the frame allows it, in the frame’s order 1ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > the bridge to the modality frame > every modality in the frame resolves to as many positions as the frame holds 1ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > the distinctions a programme turns on > keeps 505(b)(1) apart from 505(b)(2), and 351(a) from 351(k) 1ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > the distinctions a programme turns on > keeps a 510(k) apart from a De Novo 1ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > the distinctions a programme turns on > says plainly where a position is not a route to market 2ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > the distinctions a programme turns on > is honest that the LDT position is unsettled rather than asserting it 0ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > never travels without the authority that makes it one 1ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > says a consequence, not a restatement of its own label 3ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > offers the device and IVD routes the platform already files 2ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > offers the EU class routes, which are what a sponsor chooses between 1ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > what every position must carry > offers the EU medicine routes, so a European filing is not sent FDA’s 0ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > a pair this module holds nothing for > returns nothing, rather than offering another regulator’s routes 0ms
+ ✓ shared/regulatory/__tests__/pathway-positions.test.ts > a pair this module holds nothing for > holds something for every pair it does claim 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > authoring → in_review requires content 3ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > in_review → approved requires a review sign-off 2ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > a review bound to other content, or to no content, does not satisfy the approval gate 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > approved → placed requires an approval signature AND a complete placement 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > fail-closed gates > packaged → submitted requires packaging validation 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > immutability of approved content > approved cannot transition back to authoring (must supersede) 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > immutability of approved content > approved can be superseded 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > immutability of approved content > submitted cannot go back to packaged (terminal-forward) 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > legal back-transitions > in_review can request revision back to authoring 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > placement completeness > requires registryId, module, and section 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > audit event > captures from/to, actor, version, and placement for a transition 3ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > progress + wiring > progress increases monotonically across the forward spine 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > document lifecycle spine > progress + wiring > every stage has a subsystem binding (no orphaned stage) 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > the chain verifier recomputes (VR-03) > an intact trail verifies, and reports that its hashes were recomputed 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > the chain verifier recomputes (VR-03) > an event whose actor was edited with its hashes left in place is broken, at that event 1ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > the chain verifier recomputes (VR-03) > an event with no hash at all is broken when hashes are recomputed 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > the chain verifier recomputes (VR-03) > without a hasher it says so: linkage only, never a claim that hashes were checked 0ms
+ ✓ shared/regulatory/__tests__/document-lifecycle.test.ts > a signature is its own trail event > records the sign-off at the current stage, naming the signer and the signature 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > registry shape > every modality has a frame and a label — the record cannot outgrow the derivation 4ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > registry shape > every named centre is justified, and every pathway names its fee programme 3ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > normalizeModality — variants land, classes do not > refuses inherited object name __proto__ as a modality 1ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > normalizeModality — variants land, classes do not > refuses inherited object name constructor as a modality 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > normalizeModality — variants land, classes do not > refuses inherited object name toString as a modality 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > normalizeModality — variants land, classes do not > refuses inherited object name valueOf as a modality 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > normalizeModality — variants land, classes do not > refuses inherited object name hasOwnProperty as a modality 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > normalizeModality — variants land, classes do not > accepts canonical members, spacing and case variants 1ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > normalizeModality — variants land, classes do not > accepts the live domain spellings 1ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > normalizeModality — variants land, classes do not > refuses to sharpen a class word into a modality 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > mAbs and therapeutic proteins review in CDER — BLA does not imply CBER 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > CBER holds vaccines and cell & gene therapy 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > BsUFA is 351(k) only; an innovator BLA pays PDUFA; an ANDA pays GDUFA 1ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > an ADC carries BOTH CMC cores — Q5E for the antibody, Q3A/Q3B for the payload–linker 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > oligonucleotides are drugs: CDER and NDA, not a BLA 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > a combination product derives no centre — the summary is the Part 3 rule, not a default 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > the FDA facts the frames must never get wrong > frameSummary leads with the centre and the default pathway everywhere else 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > cmcSectionModelFor — modality drives the CMC section model (BP-W2-2) > every modality carries the common Module 3 base 4ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > cmcSectionModelFor — modality drives the CMC section model (BP-W2-2) > a mAb is told about cell banks, potency and Q5E comparability — a small molecule is not 1ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > cmcSectionModelFor — modality drives the CMC section model (BP-W2-2) > a small molecule is told about polymorphism, impurities and dissolution — a mAb is not 1ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > cmcSectionModelFor — modality drives the CMC section model (BP-W2-2) > an ADC carries BOTH the biologic core and payload–linker chemistry 0ms
+ ✓ shared/regulatory/__tests__/modality.test.ts > cmcSectionModelFor — modality drives the CMC section model (BP-W2-2) > a combination product gets the Part 3 per-constituent rule, not a borrowed model 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > one catalog, one count > the catalog is exactly the active registry 3ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > one catalog, one count > segment counts and the tree sum to the same total 2ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > one catalog, one count > client ids are unique and lowercase-canonical 10ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > the Investigator's Brochure is Module 1 for a US IND, not Module 5 2ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > a SUSAR is an E2B transmission, not an eCTD M5 document 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > abbreviated generic pathways carry their BE evidence in Module 5 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > PSP and PIP are separate filings to separate agencies 1ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > a CEP is issued by EDQM and a GMP certificate by a national authority — not EMA 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > MedWatch / FAERS is not a filing type; the two real obligations are 3ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > the corrected metadata is what every surface reads (BP-W1-3 parity) > Module 1 is regional: one row per modeled agency, no combined row 1ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > nothing the retired mirrors offered was lost > every legacy mirror id resolves to a catalog entry 1ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > nothing the retired mirrors offered was lost > device and IVD rows all carry a pathway (a missing key means "US NDA" downstream) 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > BP-W1-4 — every module assignment is traceable to a named authority > no active entry carries a ctdModule without a moduleAuthority 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > W2-1 / W2-2 — the EMA does not assess devices, and a device dossier is not a CTD > no EU device or IVD filing is attributed to the EMA, except the two consultations that are 1ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > W2-1 / W2-2 — the EMA does not assess devices, and a device dossier is not a CTD > keeps the EMA exactly where the Regulations put it 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-unification.test.ts > W2-1 / W2-2 — the EMA does not assess devices, and a device dossier is not a CTD > no device or IVD filing carries a CTD or eCTD dossier standard 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > numeric outline levels > orders 10 after 9 rather than after 1 4ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > numeric outline levels > puts a parent before its children 1ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > numeric outline levels > sorts the same regardless of creation order — the W1-2 complaint 1ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > orders drug substance before drug product, per ICH M4Q 1ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > orders all four parts S, P, A, R 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > is not what alphabetical collation produces — the defect, stated 17ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > keeps the sub-parts of drug substance in numeric order under it 1ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > keeps a numeric level ahead of a named part at the same depth 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > orders an unrecognised letter predictably, behind every known part 1ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > the named parts of CTD Module 3.2 > is case-insensitive 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sortBySectionCode > sorts objects without mutating the input 1ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionInsertIndex > places a new code at its position in an ordered list 1ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionInsertIndex > converges on full code order when sections are created out of order 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionInsertIndex > reads a manual order rather than imposing code order over it 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionInsertSlot > takes a STORED index, so a code after template-spaced sections lands last (QA 2026-10-08, j4) 1ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionInsertSlot > moves rows by id, so rows that share an index keep their order 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > duplicateSectionCodes > finds a code filed twice 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > duplicateSectionCodes > ignores case and surrounding space, and reports nothing when clean 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > reports a document whose stored order disagrees with its codes 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > reports nothing for a document already in order 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > reports a code filed twice 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > does NOT report a skipped number as a gap 0ms
+ ✓ shared/regulatory/__tests__/section-code.test.ts > sectionStructureIssues > reads the order it is given, not a sorted copy of it 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > vocabularyForApplicationType > maps the drug and biologic applications to CTD 2ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > vocabularyForApplicationType > maps the device applications to eSTAR and the EU trial application to CTIS 1ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > vocabularyForApplicationType > maps an IRB submission to the IRB slots 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > vocabularyForApplicationType > is case and whitespace insensitive 1ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > vocabularyForApplicationType > defaults an unknown, empty or absent application type to CTD 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — CTD, unchanged > accepts the codes the gate always accepted 1ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — CTD, unchanged > still refuses a bare module, because a container is not a place a document can go 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — CTD, unchanged > still refuses a path fragment — the defect the gate was written for 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — CTD, unchanged > refuses an eSTAR code on a CTD submission, and names CTD in the refusal 1ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — eSTAR and CTIS, shape only > accepts a hyphenated device section identifier 1ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — eSTAR and CTIS, shape only > refuses a slash, a space or punctuation, because the value becomes a folder 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — eSTAR and CTIS, shape only > accepts a capitalised identifier and canonicalises it 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — eSTAR and CTIS, shape only > does not pretend to know the published eSTAR section list 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — eSTAR and CTIS, shape only > judges CTIS by the same shape rule and says CTIS in the refusal 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — IRB, a closed list > accepts every declared slot 1ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — IRB, a closed list > refuses a misspelled slot and lists the real ones 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — IRB, a closed list > refuses a CTD code on an IRB package 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — IRB, a closed list > carries the slots the design document names 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — shared rules > refuses an empty code in every vocabulary 0ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — shared rules > names the vocabulary that judged the code, in every verdict 1ms
+ ✓ shared/regulatory/__tests__/placement-vocabulary.test.ts > validateSectionCode — shared rules > is deterministic 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — determinism > produces byte-identical output for identical input 2ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — determinism > always emits the universal lifecycle scaffolding 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — determinism > keeps dependsOn edges pointing only at in-plan packages 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — specialization tailoring > gives IVD programs analytical + clinical performance, not bench/clinical-evidence 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — specialization tailoring > gives physical devices bench + clinical evidence, not analytical performance 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — specialization tailoring > adds SaMD software emphasis deliverables 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — specialization tailoring > gives "both" the full evidence spread 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > emits each package id exactly once (no per-filing duplication) 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > emits ONE analytical-performance package unioning all three filings 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > unions applicableMarkets across US (510k/clia) and EU (ivdr) filings 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > unions clinical-performance sections across CLIA and IVDR 0ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — shared-evidence dedupe/merge (dual pathway) > has no duplicate strings within a package section/market list 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — pathway normalization > is tolerant of case/format variants and ignores unknown tokens 1ms
+ ✓ shared/regulatory/__tests__/work-packages.test.ts > compileWorkPackages — pathway normalization > derives US market from a US-only filing when markets are unspecified 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers exactly the catalogue’s positions for a device programme 4ms
+ ✓ server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > offers a diagnostics programme the IVD positions instead 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > says what each position commits the programme to, and its authority 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > no longer offers the 510(k) flavours as if they were pathways 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > still lets the person take a position the list does not hold 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > asks for the predicate on any 510(k), which is what names one 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the client segment an interview runs under > lets a device client reach the 510(k) interview 980ms
+ ✓ server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the client segment an interview runs under > lets a diagnostics client reach the 510(k) and PMA interviews 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the client segment an interview runs under > withholds a device flow from a pharma client, which is the restriction working 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the client segment an interview runs under > withholds nothing when the segment is unknown, rather than guessing pharma 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the client segment an interview runs under > reads a submission type as the segment it implies, and says nothing when it implies none 9ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > offers AFAP and no ALARP option 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > relabels the stale "ISO 14971 Annex D" option to ISO/TR 24971:2020, keeping its stored value 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > does not claim ISO 14971:2019 requires ALARP, and carries the EU policy text 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management flow: acceptability principle > keeps the alarp_demonstration field id but relabels it, and its issue check, without ALARP 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > raises a critical regulatory_alignment finding for an EU program stating ALARP or cost 6ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > flags a legacy ich_q9_alarp acceptability criterion for an EU program 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > does not raise the EU finding for a US-only program, or for clean AFAP text 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > does not raise the EU device finding for a pharmaceutical programme, whose RMF is not under MDR/IVDR 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/risk-management-afap.test.ts > risk-management auditor: EU acceptability language > no auditor text says ALARP is central to EU MDR or justifies stopping on cost-benefit 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/own-position.test.ts > a question that offers an escape hatch > takes the person's own position and keeps their words 6ms
+ ✓ server/services/ana/intelligence-questions/__tests__/own-position.test.ts > a question that offers an escape hatch > says so on the record, rather than letting it read as a position AnA offered 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/own-position.test.ts > a question that offers an escape hatch > will not take the escape hatch with nothing written in it 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/own-position.test.ts > a question that offers an escape hatch > will not take words longer than the field can carry 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/own-position.test.ts > a question that offers an escape hatch > still refuses a value that is neither listed nor the escape hatch 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/own-position.test.ts > a question whose list is closed > refuses the escape hatch, and says the list is closed rather than blaming the answer 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > identity bridges integer and UUID writers > canonical id must be a UUID 3ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > identity bridges integer and UUID writers > normalises an integer native id (unified_documents) to a string ref 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > identity bridges integer and UUID writers > normalises a UUID native id (concept2cure_artifacts) to a string ref 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > identity bridges integer and UUID writers > records the id-kind of every known source system 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > fail-closed invariants > a valid authoring version has no violations 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > fail-closed invariants > rejects a non-UUID canonical id 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > fail-closed invariants > an approved version must be immutable and signed 0ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > fail-closed invariants > a placed version must carry a placement 0ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > fail-closed invariants > a packaged version must carry BOTH md5 and sha256 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > fail-closed invariants > flags two source rows claiming the same facet (the duplication guard) 0ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > convergence map > binds every facet to a single blessed subsystem 1ms
+ ✓ shared/regulatory/__tests__/canonical-document.test.ts > canonical document model > append-only audit chain > accepts a correctly linked chain and rejects a broken link 1ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > agencies — one spelling > accepts the canonical form unchanged 3ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > agencies — one spelling > collapses the case variants that were live in the codebase 1ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > agencies — one spelling > refuses rather than guesses 1ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > agencies — one spelling > does not treat a standards body as an agency 1ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > jurisdictions — territory, not authority > collapses the five spellings of Japan that were in use 1ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > jurisdictions — territory, not authority > collapses the five spellings of Canada 1ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > jurisdictions — territory, not authority > maps every jurisdiction to exactly one agency 4ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > jurisdictions — territory, not authority > refuses the values that are not jurisdictions at all 0ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > scales — an ordinal is not a spelling > ranks by position, which is what string comparison gets wrong 1ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > scales — an ordinal is not a spelling > accepts the historical spellings within a scale 1ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > scales — an ordinal is not a spelling > keeps the scales apart — the same word can mean different ranks 1ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > scales — an ordinal is not a spelling > returns null for a non-member instead of a default rank 0ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > scales — an ordinal is not a spelling > translates across scales proportionally, and says so by being explicit 1ms
+ ✓ shared/regulatory/__tests__/vocabulary.test.ts > scales — an ordinal is not a spelling > every scale is ordered least-severe first 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry versioning > exposes a semver registry version 2ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > is non-empty 1ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > has unique ids 1ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > gives every archetype a label and valid domain 4ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > populates every array facet with non-empty string entries 24ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > scopes applicability to known specializations 2ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > represents both domains 1ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > registry integrity > covers the required device and ivd archetype ids 1ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > listArchetypes > returns copies that cannot mutate the registry 1ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > archetypesForSpecialization > returns the full registry for "both" 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > archetypesForSpecialization > filters device-only queries to applicable archetypes 1ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > archetypesForSpecialization > returns companion-diagnostic archetypes for that specialization 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > archetypesForSpecialization > includes the ivd detection-capability archetype for ivd_diagnostics 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > getArchetype > resolves a known id 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > getArchetype > returns undefined for an unknown id 0ms
+ ✓ shared/regulatory/__tests__/study-archetypes.test.ts > getArchetype > returns a copy, not the registry object 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > Investigator's Brochure is Module 1 for a US IND, not Module 5 4ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > ANDA carries Module 5 — its bioequivalence evidence has to go somewhere 1ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > ANDS (Health Canada) carries Module 5 for the same reason 1ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > PSP and PIP are separate submissions and no longer alias each other 2ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > MedWatch/FAERS is gone as a filing type; the two real obligations replace it 1ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > the ICF is filable — it had no format and no module at all 0ms
+ ✓ shared/regulatory/__tests__/filing-catalog-corrections.test.ts > BP-W1-3 — filing catalog metadata corrections > every corrected module assignment names the specification that decides it 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name IND 4ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name US_IND 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name FDA IND submission 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name Investigational new drug application 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name NDA 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name US_NDA 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name New drug application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name BLA 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name US_BLA 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name Biologics license application 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name ind_submission 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name nda_submission 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > preserves explicit US document name bla_submission 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: marketing application 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: biologic 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: biologics 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: indication summary 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: bladder evaluation 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: standardization report 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not infer a flow from an ambiguous name or word fragment: labelled specimen 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign EU_CTA to a US application interview 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign EU_MAA to a US application interview 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign CA_CTA to a US application interview 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign CA_NDS to a US application interview 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign JP_CTN to a US application interview 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > does not assign JP_MKT_APPROVAL to a US application interview 1ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name EU marketing application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name EMA NDA-equivalent marketing application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name European investigational new drug application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name Canadian new drug application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name Health Canada BLA-equivalent application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name Japanese NDA 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name PMDA biologics license application 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name New drug application (Japan) 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > refuses a US submission flow for the foreign name New drug application for Canada 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Clinical study report for an IND 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Clinical study report summarizing the protocol 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Safety narrative for IND 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for CMC specification for IND 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Standard operating procedure for IND 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Briefing document for BLA 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for Stability study protocol 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for 510(k) submission 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for EU_CTA clinical protocol 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for CA_NDS clinical study report 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > document intake chooses only a matching native flow > selects the most specific document family for JP_MKT_APPROVAL safety narrative 0ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for EU_CTA while retaining shared clinical flows 28ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for EU_MAA while retaining shared clinical flows 13ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for CA_CTA while retaining shared clinical flows 8ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for CA_NDS while retaining shared clinical flows 8ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for JP_CTN while retaining shared clinical flows 9ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for JP_MKT_APPROVAL while retaining shared clinical flows 6ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for MAA while retaining shared clinical flows 6ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for NDS while retaining shared clinical flows 5ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for JNDA while retaining shared clinical flows 5ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for EMA marketing application while retaining shared clinical flows 6ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for Health Canada CTA while retaining shared clinical flows 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > refuses and hides IND/NDA/BLA for PMDA approval application while retaining shared clinical flows 2ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context undefined 12ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context null 5ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context US_IND 5ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context US_NDA 6ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context US_BLA 6ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context IND 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context NDA 3ms
+ ✓ server/services/ana/intelligence-questions/flows/__tests__/regional-intake-routing.test.ts > explicit foreign submission context excludes US application interviews > preserves US application interviews for US or unspecified context BLA 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/escape-hatch-is-one-mechanism.test.ts > the escape hatch is one mechanism > reads every flow (a scan that matches nothing proves nothing) 2ms
+ ✓ server/services/ana/intelligence-questions/__tests__/escape-hatch-is-one-mechanism.test.ts > the escape hatch is one mechanism > no flow offers a hand-rolled escape hatch, beyond the one named exception 16ms
+ ✓ server/services/ana/intelligence-questions/__tests__/escape-hatch-is-one-mechanism.test.ts > the escape hatch is one mechanism > every question that takes an unlisted position declares it 10ms
+ ✓ server/services/ana/intelligence-questions/__tests__/escape-hatch-is-one-mechanism.test.ts > the escape hatch is one mechanism > no predicate keys on the old value, which could never be met again 20ms
+ ✓ server/services/ana/intelligence-questions/__tests__/escape-hatch-is-one-mechanism.test.ts > the escape hatch is one mechanism > no listed position may use the value the engine reserves for an unlisted one 10ms
+ ✓ server/services/ana/intelligence-questions/__tests__/visible-when-deadlock.test.ts > visibleWhen over a prior node’s answer — render and validation agree > a node whose every field is hidden can be passed with an empty answer (no deadlock) 7ms
+ ✓ server/services/ana/intelligence-questions/__tests__/visible-when-deadlock.test.ts > visibleWhen over a prior node’s answer — render and validation agree > a required field the renderer SHOWS because of a prior answer is still validated 2ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > the registry slot list > is namespaced, sorted and closed 5ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > the registry slot list > recognises its own slots and nothing else 1ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > the registry slot list > maps every declared projection module onto a declared slot 2ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > validateSectionCode — registry > accepts a declared slot and canonicalises its case 1ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > validateSectionCode — registry > refuses a code that is not a slot, naming the vocabulary and real slots 1ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > validateSectionCode — registry > refuses an IRB slot and a CTD code, because membership is checked 0ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > validateSectionCode — registry > is in the vocabulary list 1ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > vocabularyForApplicationType — registry types > maps registry-specific application types 1ms
+ ✓ shared/regulatory/__tests__/registry-vocabulary.test.ts > vocabularyForApplicationType — registry types > does not repurpose any existing application type 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > evaluatePredicate — numeric gates fire on string-encoded number answers > a string "7" satisfies `gt 10`? no — but "12" does (the vigilance-report gate fires) 3ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > evaluatePredicate — numeric gates fire on string-encoded number answers > a string "3" satisfies `lt 5` (evaluator-underqualified gate fires) 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > evaluatePredicate — numeric gates fire on string-encoded number answers > the real number path is unchanged 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > evaluatePredicate — numeric gates fire on string-encoded number answers > a non-numeric or empty answer never triggers a numeric gate (no false positive) 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > validateAnswers — min/max is enforced on a number field answered as a string > flags a string "200" as exceeding max 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > validateAnswers — min/max is enforced on a number field answered as a string > flags a string "0" as below min 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > validateAnswers — min/max is enforced on a number field answered as a string > accepts a string "50" within range 0ms
+ ✓ server/services/ana/intelligence-questions/__tests__/numeric-answer-coercion.test.ts > validateAnswers — min/max is enforced on a number field answered as a string > still accepts a real number within range (unchanged path) 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/predicate-yes-no-coercion.test.ts > evaluatePredicate — yes_no answers coerce against boolean predicates > a string "no" satisfies the critical gate `eq false` (gate fires) 3ms
+ ✓ server/services/ana/intelligence-questions/__tests__/predicate-yes-no-coercion.test.ts > evaluatePredicate — yes_no answers coerce against boolean predicates > a string "yes" does NOT satisfy `eq false` (gate does not fire when mapping is done) 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/predicate-yes-no-coercion.test.ts > evaluatePredicate — yes_no answers coerce against boolean predicates > a string "yes" satisfies a visibility predicate `eq true` 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/predicate-yes-no-coercion.test.ts > evaluatePredicate — yes_no answers coerce against boolean predicates > the real boolean path is unchanged (false eq false, true eq true) 1ms
+ ✓ server/services/ana/intelligence-questions/__tests__/predicate-yes-no-coercion.test.ts > evaluatePredicate — yes_no answers coerce against boolean predicates > non-boolean eq predicates keep strict identity (no accidental coercion) 0ms
+ ✓ shared/regulatory/__tests__/filingSectionKey.test.ts > filingSectionKey > a section whose code is an outline key files there, as before 3ms
+ ✓ shared/regulatory/__tests__/filingSectionKey.test.ts > filingSectionKey > a section under an undivided node files into that node — the Clinical Overview’s 2.5.1 … 2.5.8 1ms
+ ✓ shared/regulatory/__tests__/filingSectionKey.test.ts > filingSectionKey > the nearest outline ancestor decides, not the first one 1ms
+ ✓ shared/regulatory/__tests__/filingSectionKey.test.ts > filingSectionKey > a node the outline subdivides is a container: a section under it with no slot of its own files nowhere 1ms
+ ✓ shared/regulatory/__tests__/filingSectionKey.test.ts > filingSectionKey > a bare module never takes a document, and an unrelated code files nowhere 0ms
+ ✓ shared/regulatory/__tests__/filingSectionKey.test.ts > filingSectionKey > a section with no code belongs to no node 0ms
+ ✓ shared/regulatory/__tests__/ind-safety-route.test.ts > FDA IND safety registry — subtype-dependent delivery > cannot promise a universal eCTD Module 5 route for IND safety reports 3ms
+ ✓ shared/regulatory/__tests__/ind-safety-route.test.ts > FDA IND safety registry — subtype-dependent delivery > preserves the parent IND and distinguishes reporting clocks by trigger 1ms
+
+ Test Files  22 passed (22)
+      Tests  310 passed (310)
+   Start at  07:24:30
+   Duration  9.16s (transform 1.75s, setup 659ms, import 1.65s, tests 1.66s, environment 3ms)
+
