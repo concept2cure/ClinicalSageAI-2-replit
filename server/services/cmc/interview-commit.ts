@@ -56,6 +56,7 @@
 
 import type { FlowCategory, FlowDefinition } from '../../../shared/types/intelligence-questions.js';
 import { createCmcSpecificationFlow } from '../ana/intelligence-questions/flows/cmc-specification.js';
+import { projectSetupProgrammeConfiguration } from '../c2c/project-setup-projection.js';
 import {
   loadInterviewSession,
   markInterviewSessionCommitted,
@@ -72,6 +73,12 @@ import {
 /* ─── Registers ──────────────────────────────────────────────────────────── */
 
 export type InterviewRegister =
+  /* Not a CMC register: the programme record itself, which `project_setup`
+     configures (task #15). It is here because there is ONE commit path — the
+     plan shape, the session bookkeeping and the partial-commit reporting are
+     flow-agnostic, and a second engine beside this one would be the parallel
+     path the working agreement forbids. */
+  | 'programme_configuration'
   | 'drug_substance'
   | 'drug_product'
   | 'container_closure'
@@ -90,6 +97,12 @@ export const INTERVIEW_REGISTER_WRITE_PATHS: Record<
   InterviewRegister,
   { path: string; table: string; handler: string }
 > = {
+  programme_configuration: {
+    path: 'PUT /api/510k/device/profile (the device subset of the same write)',
+    table: 'regulatory_programs',
+    handler:
+      'applyProgrammeProfilePatch in server/services/c2c/programme-profile-write.ts — the same function the device-profile endpoint calls',
+  },
   drug_substance: {
     path: '/api/cmc/drug-substances',
     table: 'drug_substances',
@@ -373,7 +386,7 @@ function entry(
  * the launch catalog these tools reach production, and an interview that goes
  * nowhere is an empty result standing in for a refusal).
  */
-export const COMMITTING_FLOW_CATEGORIES: readonly FlowCategory[] = ['cmc_specification'];
+export const COMMITTING_FLOW_CATEGORIES: readonly FlowCategory[] = ['cmc_specification', 'project_setup'];
 
 /** Whether a completed interview of this kind can be committed to a record. */
 export function flowCommitsToRecord(flowCategory: FlowCategory): boolean {
@@ -381,10 +394,40 @@ export function flowCommitsToRecord(flowCategory: FlowCategory): boolean {
 }
 
 /**
+ * The plan a completed `project_setup` interview describes: the programme
+ * record it configures, or nothing.
+ *
+ * It does not run through the `AnswerReader` — that exists to resolve a CMC
+ * flow's option labels, and this projection reports its own unprojected
+ * answers with their reasons. One entry or none: a patch that would set
+ * nothing is not a record, and the commit then refuses with NOTHING_TO_COMMIT
+ * rather than writing an empty update and calling it a configuration.
+ */
+function programmeConfigurationPlanFrom(answers: Answers): InterviewCommitPlan {
+  const projected = projectSetupProgrammeConfiguration(answers ?? {});
+  const unprojected = projected.unprojected.map(u => ({ nodeId: '', fieldId: u.fieldId, reason: u.reason }));
+  const fieldIds = Object.keys(projected.patch);
+  const entries: InterviewCommitPlanEntry[] =
+    fieldIds.length === 0
+      ? []
+      : [
+          {
+            key: 'programme_configuration:project_setup',
+            register: 'programme_configuration',
+            body: projected.patch as Record<string, unknown>,
+            source: { nodeIds: ['project_setup'], fieldIds },
+          },
+        ];
+  return { flowCategory: 'project_setup', entries, unprojected };
+}
+
+/**
  * The projection of a completed cmc_specification interview. Pure: the same
  * answers always produce the same plan.
  */
 export function buildInterviewCommitPlan(flowCategory: FlowCategory, answers: Answers): InterviewCommitPlan {
+  if (flowCategory === 'project_setup') return programmeConfigurationPlanFrom(answers);
+
   const a = new AnswerReader(answers ?? {}, definitionFor(flowCategory));
   const entries: InterviewCommitPlanEntry[] = [];
 
@@ -565,12 +608,51 @@ export interface RegisterWriteResult {
 export type RegisterWriter = (entry: InterviewCommitPlanEntry, scope: RegisterWriteScope) => Promise<RegisterWriteResult>;
 
 /**
+ * The session's actor, or a throw. A governed write is audited against the
+ * person who made it, so a session with no user is refused rather than
+ * recorded against nobody — the write failure is reported like any other.
+ */
+function requireActor(scope: RegisterWriteScope): number {
+  if (scope.userId === null || scope.userId === undefined) {
+    throw new Error('A programme configuration is audited against the person who answered, and this session has no user.');
+  }
+  return scope.userId;
+}
+
+/**
  * The production writer: each plan entry through its register's ONE canonical
  * create, under the session's tenant and project. The project is always the
  * session's — a plan body never names one — so an interview cannot file a
  * record under a program it was not run for.
  */
 export const productionRegisterWriter: RegisterWriter = async (planEntry, scope) => {
+  /* The programme's own record: the SAME write the device-profile endpoint
+     calls, on the shared client (there is no request here), under the
+     session's tenant and programme. The programme id is the session's, never
+     the plan's, so an interview cannot configure a programme it was not run
+     for. */
+  if (planEntry.register === 'programme_configuration') {
+    const [{ applyProgrammeProfilePatch }, { db }, audit] = await Promise.all([
+      import('../c2c/programme-profile-write.js'),
+      import('../../db.js'),
+      import('../auditService.js'),
+    ]);
+    await applyProgrammeProfilePatch(
+      { db, audit: audit.default },
+      {
+        organizationId: scope.organizationId,
+        programId: scope.projectId,
+        /* Part 11 §11.10(e): no actor, no write. The session carries the user
+           who answered; a session without one is refused here rather than
+           audited against an invented actor. */
+        actorId: requireActor(scope),
+        patch: planEntry.body,
+        action: 'PROGRAMME_CONFIGURED_BY_INTERVIEW',
+      },
+    );
+    return { id: scope.projectId };
+  }
+
   const writes = await import('./register-writes.js');
   const body = { ...planEntry.body, projectId: scope.projectId };
   const link = { projectId: scope.projectId };
@@ -621,6 +703,23 @@ export type RegisterValidator = (entry: InterviewCommitPlanEntry, scope: Registe
 
 /** The production validator: each register's own zod body, as its create parses it. */
 export const productionRegisterValidator: RegisterValidator = async (planEntry, scope) => {
+  if (planEntry.register === 'programme_configuration') {
+    const { programmeProfilePatchSchema } = await import('../c2c/programme-profile-write.js');
+    const parsed = programmeProfilePatchSchema.safeParse(planEntry.body);
+    if (!parsed.success) {
+      return `The programme configuration this interview describes is not one the record accepts: ${JSON.stringify(parsed.error.flatten().fieldErrors)}`;
+    }
+    /* The configuration goes onto the PROGRAMME record. A session bound to a
+       legacy `projects` row has no programme to configure, and writing under
+       its id would update nothing while reporting success. */
+    const { programInOrganization } = await import('../c2c/program-access.js');
+    const { getPool } = await import('../../db.js');
+    const isProgramme = await programInOrganization(getPool(), scope.projectId, scope.organizationId);
+    if (!isProgramme) {
+      return 'This interview configures a regulatory programme, and the session is bound to a legacy project rather than to one.';
+    }
+    return null;
+  }
   const { registerBodyRefusal } = await import('./register-writes.js');
   return registerBodyRefusal(planEntry.register, { ...planEntry.body, projectId: scope.projectId });
 };
