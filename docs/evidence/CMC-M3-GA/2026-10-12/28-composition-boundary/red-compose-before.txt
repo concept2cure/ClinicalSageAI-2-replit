@@ -1,0 +1,13 @@
+ ✓ the compose path consults the boundary before it composes > composes a small molecule for a US IND 41ms
+ × the compose path consults the boundary before it composes > refuses the simulation’s monoclonal antibody, and composes nothing 28ms
+   → a mAb composed {"composed":21}: expected false to be true // Object.is equality
+ × the compose path consults the boundary before it composes > refuses the same small molecule when the program files an NDA 20ms
+   → {"composed":21}: expected false to be true // Object.is equality
+ × the compose path consults the boundary before it composes > refuses an NDA program that has no submission row yet 22ms
+   → {"composed":20}: expected false to be true // Object.is equality
+ ✓ the compose path consults the boundary before it composes > composes for an IND program that has no submission row yet 16ms
+ × the compose path consults the boundary before it composes > refuses a program whose substance records no route and no biological origin 21ms
+   → {"composed":21}: expected false to be true // Object.is equality
+ ✓ the compose path consults the boundary before it composes > leaves the caller’s transaction usable after a refusal 22ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 3 passed (7)
