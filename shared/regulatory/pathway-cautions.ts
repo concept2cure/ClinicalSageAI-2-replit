@@ -79,6 +79,12 @@ export interface ProgrammeFacts {
    * it speaks against a route under the other one.
    */
   modality?: Modality;
+  /**
+   * Which statute governs the product, where the answer said that much and no
+   * more — "Biologic (BLA)", "Prescription Drug (NDA)". A modality always
+   * implies its statute, so this is read only when there is no modality.
+   */
+  statute?: 'biologic' | 'chemical';
 }
 
 /** The modalities that are biological products, licensed rather than approved. */
@@ -86,6 +92,24 @@ const BIOLOGICAL: readonly Modality[] = ['protein', 'mab', 'adc', 'vaccine', 'ce
 
 /** The modalities the FD&C Act approves under section 505. */
 const CHEMICAL: readonly Modality[] = ['small_molecule', 'peptide', 'oligonucleotide'];
+
+/**
+ * Which statute the answers put the product under: the modality where one was
+ * named, and otherwise the statute the answer stated on its own. A combination
+ * product sits under neither until its primary mode of action is determined
+ * (21 CFR Part 3), so it resolves to null.
+ */
+function statuteIn(facts: ProgrammeFacts): 'biologic' | 'chemical' | null {
+  if (facts.modality && BIOLOGICAL.includes(facts.modality)) return 'biologic';
+  if (facts.modality && CHEMICAL.includes(facts.modality)) return 'chemical';
+  return facts.statute ?? null;
+}
+
+/** How to name the product in a reason: the modality if one was given, else the statute. */
+function productWords(facts: ProgrammeFacts): string {
+  if (facts.modality) return MODALITY_LABEL[facts.modality].toLowerCase();
+  return facts.statute === 'biologic' ? 'a biological product' : 'a product approved under section 505';
+}
 
 /** The MDR class each class route is the route FOR. */
 const MDR_POSITION_CLASS: Readonly<Record<string, 'I' | 'IIa' | 'IIb' | 'III'>> = {
@@ -175,21 +199,20 @@ const CAUTION_RULES: readonly CautionRule[] = [
     id: 'biological_under_505',
     positions: ['US_NDA', 'US_505B2', 'US_ANDA'],
     availability: 'inapplicable',
-    when: f => Boolean(f.modality && BIOLOGICAL.includes(f.modality)),
+    when: f => statuteIn(f) === 'biologic',
     reason: f =>
-      `You have said this is ${MODALITY_LABEL[f.modality!].toLowerCase()}, which is a biological product: it is ` +
-      'licensed under section 351 of the PHS Act, not approved under section 505 of the FD&C Act. Since the BPCIA ' +
-      'transition of 2020 there is no 505 route for it.',
+      `You have said this is ${productWords(f)}, which is licensed under section 351 of the PHS Act rather than ` +
+      'approved under section 505 of the FD&C Act. Since the BPCIA transition of 2020 there is no 505 route for it.',
     authority: 'PHS Act 351; FD&C Act 505; BPCIA § 7002(e) transition (23 March 2020)',
   },
   {
     id: 'chemical_as_biologic',
     positions: ['US_BLA', 'US_351K', 'EU_BIOSIMILAR_MAA'],
     availability: 'inapplicable',
-    when: f => Boolean(f.modality && CHEMICAL.includes(f.modality)),
+    when: f => statuteIn(f) === 'chemical',
     reason: f =>
-      `You have said this is ${MODALITY_LABEL[f.modality!].toLowerCase()}, which is approved under section 505 of ` +
-      'the FD&C Act rather than licensed as a biological product, so a biologics licence is not the route for it.',
+      `You have said this is ${productWords(f)} — approved under section 505 of the FD&C Act rather than licensed ` +
+      'as a biological product — so a biologics licence is not the route for it.',
     authority: 'FD&C Act 505; PHS Act 351(i) definition of a biological product',
   },
 
@@ -219,11 +242,11 @@ const CAUTION_RULES: readonly CautionRule[] = [
     id: 'biological_as_generic',
     positions: ['EU_GENERIC_DCP'],
     availability: 'inapplicable',
-    when: f => Boolean(f.modality && BIOLOGICAL.includes(f.modality)),
+    when: f => statuteIn(f) === 'biologic',
     reason: f =>
-      `A generic application under Article 10(1) is for a product with the same qualitative and quantitative ` +
-      `composition as the reference: ${MODALITY_LABEL[f.modality!].toLowerCase()} is a biological product, for which ` +
-      'the route is a biosimilar application under Article 10(4).',
+      'A generic application under Article 10(1) is for a product with the same qualitative and quantitative ' +
+      `composition as the reference, and you have said this is ${productWords(f)} — for which the route is a ` +
+      'biosimilar application under Article 10(4).',
     authority: 'Directive 2001/83/EC Art 10(1) against Art 10(4)',
   },
 
@@ -299,8 +322,8 @@ const CAUTION_RULES: readonly CautionRule[] = [
     when: f => f.deviceClass === 'I' || f.deviceClass === 'II',
     reason: f =>
       `Premarket approval is the route for a Class III device, and you have said Class ${f.deviceClass}. A PMA for a ` +
-      'device of a lower class is answerable, but the application has to say why the classification does not decide ' +
-      'the route.',
+      'device of a lower class is answerable — a transitional device, or one reclassified into Class II, for which ' +
+      'FDA has called for premarket approval — but that is a basis the application has to state.',
     authority: 'FD&C Act 515; 21 CFR 814.1(c)',
   },
 ];

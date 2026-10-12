@@ -1,0 +1,39 @@
+# 12 mutations, all red
+# driver: scratchpad/mutate13.py + mutate14.py (apply, run the named test, restore)
+
+RED       the seven MDR classes the CER interview offers are read as four
+          test: server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > every value a fact field offers > is either read as a fact or declared a non-fact, with a reason 1247ms | × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > the two values that had drifted > reads the sterile, measuring and reusable Class I devices as Class I 3ms
+RED       the transitional Class II PMA device states no class
+          test: server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > every value a fact field offers > is either read as a fact or declared a non-fact, with a reason 1231ms | × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > the two values that had drifted > reads the transitional Class II PMA device as Class II, and asks for the basis it asserts 3ms
+RED       the class asked under the second field id is not read
+          test: server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > the two values that had drifted > reads the class asked under the second field id, which two flows use 9ms
+RED       a non-fact passes undeclared, so a miss and a decision look alike
+          test: server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > every value a fact field offers > is either read as a fact or declared a non-fact, with a reason 1499ms | × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > every value a fact field offers > declares a non-fact only where a flow actually offers it 24ms
+RED       a declared non-fact for a value no question offers survives
+          test: server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > every value a fact field offers > declares a non-fact only where a flow actually offers it 25ms
+RED       the statute an answer states on its own is not read
+          test: server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > every value a fact field offers > is either read as a fact or declared a non-fact, with a reason 1208ms | × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > the two values that had drifted > reads an answer that states a statute and no modality 4ms
+RED       a stage of material is read as a product
+          test: server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > the two values that had drifted > reads a stage of material as no product at all 9ms
+RED       an empty select is drawn where the frame holds no route
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > offers nothing for a combination product, and says why in the frame’s own words 8ms
+RED       the frame's own words are replaced by a sentence of ours
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the medicines route question > offers nothing for a combination product, and says why in the frame’s own words 9ms
+RED       the PMA caution drops the basis the transitional answer asserts
+          test: server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > the two values that had drifted > reads the transitional Class II PMA device as Class II, and asks for the basis it asserts 8ms
+RED       the gate reads no flow at all and still reports success
+          test: server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > every value a fact field offers > is either read as a fact or declared a non-fact, with a reason 1150ms | × server/services/ana/intelligence-questions/__tests__/every-offered-value-is-read.test.ts > every value a fact field offers > declares a non-fact only where a flow actually offers it 6ms
+RED       a product type states a modality and a statute at once
+          test: shared/regulatory/__tests__/product-modality.test.ts
+          first failures: × shared/regulatory/__tests__/product-modality.test.ts > the statute an answer states on its own > never states both: the two vocabularies are disjoint 9ms
