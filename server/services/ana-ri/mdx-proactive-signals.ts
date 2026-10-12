@@ -4,9 +4,14 @@
  * Originally a peer of the generic `proactive-commitment-engine` (removed with
  * the formal drop of the staged charter tables — decision register #727,
  * item 10). This module reads the MDX-specific tables (q_submissions,
- * q_sub_commitments, cerv2_510k_sections, regulatory_correspondence,
- * regulatory_programs, evidence_sufficiency_assessments) and emits MDX-shaped
- * alerts.
+ * q_sub_commitments, cerv2_510k_sections, regulatory_programs,
+ * evidence_sufficiency_assessments) and emits MDX-shaped alerts.
+ *
+ * It does NOT read a correspondence table. This list said
+ * `regulatory_correspondence` and the code queried `correspondences`; neither
+ * exists in this repository, so the 'correspondence.no_response' alert had
+ * never fired. See the note at that producer's former position for where
+ * agency correspondence actually lives and what decision the alert needs.
  *
  * All queries are tenant-scoped via `regulatory_programs.organization_id`.
  * Read-only. Never mutates.
@@ -52,7 +57,6 @@ const Q_SUB_DEADLINE_WARN_DAYS = 14;
 const Q_SUB_DEADLINE_CRITICAL_DAYS = 5;
 const TARGET_SUBMISSION_WARN_DAYS = 60;
 const TARGET_SUBMISSION_CRITICAL_DAYS = 30;
-const CORRESPONDENCE_NO_RESPONSE_DAYS = 14;
 
 function daysBetween(a: Date, b: Date): number {
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
@@ -198,46 +202,32 @@ export async function buildMdxProactiveSnapshot(
     // fail-soft (table may not exist on a fresh tenant)
   }
 
-  // ── Ingested correspondence with no response yet ──
-  try {
-    const { rows } = await client.query(
-      `SELECT c.id, c.subject, c.received_at, c.due_date, c.urgency, c.project_id,
-              c.submission_id
-       FROM correspondences c
-       WHERE c.organization_id = $1
-         AND COALESCE(c.response_status, 'open') = 'open'
-         AND c.received_at < NOW() - INTERVAL '${CORRESPONDENCE_NO_RESPONSE_DAYS} days'
-       ORDER BY c.received_at ASC
-       LIMIT 25`,
-      [organizationId],
-    );
-    for (const r of rows) {
-      const days = daysBetween(new Date(r.received_at), now);
-      const severity: MdxAlertSeverity =
-        r.urgency === 'critical' ? 'critical' : r.urgency === 'high' ? 'warn' : 'info';
-      alerts.push({
-        id: `correspondence-no-response:${r.id}`,
-        kind: 'correspondence.no_response',
-        severity,
-        organizationId,
-        message:
-          `FDA correspondence "${r.subject}" was received ${days} days ago and has no ` +
-          `recorded response yet${r.due_date ? ` (due ${new Date(r.due_date).toISOString().slice(0, 10)})` : ''}.`,
-        suggestedSurface: 'pre-sub',
-        detail: {
-          correspondenceId: r.id,
-          projectId: r.project_id,
-          submissionId: r.submission_id,
-          receivedAt: r.received_at,
-          dueDate: r.due_date,
-          urgency: r.urgency,
-          daysSinceReceived: days,
-        },
-      });
-    }
-  } catch {
-    // fail-soft (correspondences table may have a different name in some tenants)
-  }
+  /* ── correspondence.no_response: declared, and no store backs it ──────────
+     This block queried `FROM correspondences`, a table that exists nowhere in
+     this repository: no migration under migrations/ or db/migrations/, no
+     shared/schema entry, no runtime DDL. Its catch read
+     "fail-soft (correspondences table may have a different name in some
+     tenants)", which is not how this platform works — every table is shared
+     and tenant-scoped by an organization_id column (CLAUDE.md RULE 1). So the
+     query threw 42P01 on every call and was swallowed, and the alert had never
+     once fired. ci:unbacked-tables was naming it: a guarded query against a
+     missing table "degrades to a silent no-op, which is worse: it looks
+     durable and is not".
+
+     Agency correspondence DOES live here: the regulatory-correspondence
+     operating layer records each parsed issue as a c2c_project_work_items row
+     with sourceType 'correspondence'
+     (server/services/regulatory-correspondence/operating-layer.ts:214, :227).
+     But "received N days ago with no recorded response" does not map onto a
+     work item's columns without deciding what counts as received, as answered,
+     and as urgent — product semantics, and the founder's call, not a mapping to
+     guess here. A wrong alert about an unanswered FDA letter is worse than a
+     missing one.
+
+     So the dead query is gone and the gap is written down. The
+     'correspondence.no_response' kind stays in the union: it is a declared
+     capability awaiting that decision, not one this change removes.
+     (2026-10-12, docs/evidence/ABSENT-AS-CLEAN/2026-10-12-readiness-refresh/.) */
 
   // ── Evidence-sufficiency verdict insufficient + target date < 60d ──
   try {
