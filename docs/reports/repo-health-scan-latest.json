@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T00:23:32.454Z",
+  "generatedAt": "2026-10-12T05:43:49.646Z",
   "git": {
-    "sha": "e29154f091b4880d7f9814aa25dec832d2aa0dd0",
+    "sha": "fca570f6baa4ddbb956d16a8f9897df02a944cee",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2252,7 +2252,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "bytes": 102128
+        "bytes": 102858
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
@@ -2561,12 +2561,12 @@
         "lines": 1929
       },
       {
-        "file": "server/routes/submissions.ts",
-        "lines": 1911
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "lines": 1913
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "lines": 1903
+        "file": "server/routes/submissions.ts",
+        "lines": 1911
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",

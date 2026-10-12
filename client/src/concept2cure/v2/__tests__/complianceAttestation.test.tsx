@@ -107,7 +107,7 @@ describe('the verdict', () => {
     await runIt();
     const result = await screen.findByTestId('attestation-result');
     expect(result.getAttribute('data-verdict')).toBe('INTACT');
-    expect(result.textContent ?? '').toMatch(/Audit trail: Intact/);
+    expect(result.textContent ?? '').toMatch(/Audit trail: Links intact/);
     expect((await screen.findByTestId('attestation-coverage')).textContent ?? '')
       .toMatch(/All 4,821 entries are hashed, so the verdict covers the whole trail/);
   });
@@ -125,7 +125,7 @@ describe('the verdict', () => {
     expect(result.textContent ?? '').toMatch(/Not verifiable/);
     expect(result.textContent ?? '').toMatch(/not a statement that the trail is intact/);
     // Never the words of a pass.
-    expect(result.textContent ?? '').not.toMatch(/Audit trail: Intact/);
+    expect(result.textContent ?? '').not.toMatch(/Audit trail: Links intact/);
     // And the server's own reason is shown.
     expect(result.textContent ?? '').toMatch(/the hash chain was never applied/);
   });
@@ -136,7 +136,7 @@ describe('the verdict', () => {
     const result = await screen.findByTestId('attestation-result');
     expect(result.textContent ?? '').toMatch(/No entries/);
     expect(result.textContent ?? '').toMatch(/not a statement that the trail is intact/);
-    expect(result.textContent ?? '').not.toMatch(/Audit trail: Intact/);
+    expect(result.textContent ?? '').not.toMatch(/Audit trail: Links intact/);
   });
 
   it('BROKEN names the entries whose link does not recompute', async () => {
@@ -161,7 +161,7 @@ describe('the verdict', () => {
     await runIt();
     const result = await screen.findByTestId('attestation-result');
     expect(result.textContent ?? '').toMatch(/does not recognise/);
-    expect(result.textContent ?? '').not.toMatch(/Audit trail: Intact/);
+    expect(result.textContent ?? '').not.toMatch(/Audit trail: Links intact/);
   });
 
   it('an admin-role refusal is a refusal, not an outage', async () => {
