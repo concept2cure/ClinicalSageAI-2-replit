@@ -56,6 +56,9 @@ import {
   type AuthoringPermissionDecision,
 } from '../services/authoring/authoring-permissions';
 import { sectionStructureIssues } from '../../shared/regulatory/section-code';
+import { resolveRequirements } from '../services/ind/ctd/requirements-resolver.js';
+import { resolveSectionBriefSource } from '../services/ind/ctd/section-brief.js';
+import { basisLabel, type RegulatoryBasis } from '../../shared/regulatory/regulatory-basis';
 import { serverError } from '../lib/api-response';
 import {
   verifyLedger,
@@ -4216,6 +4219,137 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
   }
 });
 
+/* ── What the record says the open section must contain ──────────────────────
+   The scan's section-specific expectations came from `ctdRequiredElements`
+   below: a table of five CMC codes (3.2.S.1/.2/.3/.4/.7) declared inside the
+   handler. For every other code in the CTD — 2.5, 2.7.3, 2.7.4, 4.2.3, 3.2.P,
+   1.14.4.1, 5.3.5.x — the author was shown nothing at all about the section's
+   required content, while server/services/ind/ctd/authoring-guidance.ts has
+   carried `keyContentElements` for all 134 registered codes since the record
+   landed.
+
+   The record's elements are DESCRIPTIONS ("Product development rationale
+   linking unmet need, MOA, and program design (2.5.1)"), so substring-testing
+   content against them would flag essentially every element of every section
+   and bury the author in false deficiencies. A substring test cannot verify a
+   description, and this does not pretend it can: the elements are served as a
+   READ-ONLY statement of what the section must contain, explicitly NOT
+   verified by this scan, and they add no check and move no denominator.
+
+   The resolver answers, not a dictionary lookup, because the record carries
+   leaves and not parents: '4.2.3' and '3.2.P' have no entry of their own, and
+   resolveRequirements / resolveSectionBriefSource handle exact, ancestor and
+   parent. A code the record does not index comes back with the resolver's own
+   reason and reads as "not indexed" — never as "nothing required". */
+
+/** The record's statement about a section, or its honest absence. */
+type RecordRequirements =
+  | {
+      indexed: true;
+      /** Whose entry answered: the section's own, its containing section's, or its children. */
+      source: 'exact' | 'ancestor' | 'parent';
+      /** The code whose entry answered (the section's own code when `source` is 'exact'). */
+      answered_by: string;
+      title: string;
+      /** What the record says must be present. Empty only for a parent code, which has `contains`. */
+      elements: string[];
+      /**
+       * For a parent code: the registered sections it contains, each with its
+       * own requirements, capped at CONTAINS_CAP.
+       */
+      contains?: Array<{ code: string; title: string }>;
+      /** How many contained sections the cap withheld. Zero when all are listed. */
+      contains_omitted?: number;
+      /** Always false: a description cannot be verified by a keyword test. */
+      verified_by_this_check: false;
+      note: string;
+      /** basisLabel() — recall never reads as the regulator's own text. */
+      basis: string;
+    }
+  | { indexed: false; reason: string };
+
+/* The record carries no typed RegulatoryBasis for a CTD section yet —
+   requirements-resolver returns `basis: []` for them and says so in its own
+   RequirementAnswer doc — so the basis is stated as exactly what it is:
+   compiled recall, rendered through basisLabel, which never lets recall read as
+   checked regulator text.
+
+   The record meant here is server/services/ind/ctd/authoring-guidance.ts. That
+   path stays in this comment and in the step's -facts.md: `ref` is rendered
+   verbatim to a regulatory associate, and a repository path is not something
+   the reader of a regulatory statement can act on. */
+const CTD_RECORD_BASIS: RegulatoryBasis = {
+  ref: 'ICH M4 CTD content, as compiled in the platform record',
+  confidence: 'recall',
+  note: 'Compiled drafting guidance, not a verbatim regulator citation for this section.',
+};
+
+/* The panel is a compact note, so a parent code's listing is capped the way
+   the record's own renderer caps the same list — section-brief.ts
+   `LIST_CAPS.children` (12) — and the remainder is carried as a count so the
+   author is told what was withheld rather than shown a silently short list.
+   LIST_CAPS is module-private there; changing that is not this step's file. */
+const CONTAINS_CAP = 12;
+
+function recordRequirementsFor(code: unknown): RecordRequirements {
+  const requested = String(code ?? '').trim();
+  const answer = resolveRequirements({ document: requested });
+
+  if (answer.kind === 'not_indexed') return { indexed: false, reason: answer.reason };
+  if (answer.kind !== 'answer' || answer.source.kind !== 'ctd-section') {
+    return {
+      indexed: false,
+      reason:
+        `The platform's guidance indexes no CTD section entry for "${requested}". ` +
+        'It is not stated here; do not supply requirements from memory as if it were.',
+    };
+  }
+
+  const src = resolveSectionBriefSource(requested);
+  if (!src) {
+    return {
+      indexed: false,
+      reason:
+        `The platform's guidance indexes no CTD section entry for "${requested}". ` +
+        'It is not stated here; do not supply requirements from memory as if it were.',
+    };
+  }
+
+  const basis = basisLabel(CTD_RECORD_BASIS);
+
+  if (src.kind === 'parent') {
+    const children = src.children ?? [];
+    return {
+      indexed: true,
+      source: 'parent',
+      answered_by: src.requested,
+      /* The panel prefixes the code, so the title must not repeat it:
+         `answer.title` is already "4.2.3 — the sections it contains". */
+      title: 'the sections it contains',
+      elements: [],
+      contains: children.slice(0, CONTAINS_CAP).map((c) => ({ code: c.code, title: c.title })),
+      contains_omitted: Math.max(0, children.length - CONTAINS_CAP),
+      verified_by_this_check: false,
+      note:
+        `${src.requested} has no entry of its own in the record; the record carries the requirements of ` +
+        'each section it contains. This check does not verify them.',
+      basis,
+    };
+  }
+
+  const entry = src.entry!;
+  return {
+    indexed: true,
+    source: src.kind,
+    answered_by: entry.code,
+    title: entry.title,
+    elements: [...entry.keyContentElements],
+    verified_by_this_check: false,
+    note: `What the record states section ${entry.code} must contain. This check does not verify these elements.`,
+    basis,
+  };
+}
+
 // POST /api/authoring/sections/:sectionId/ai/deficiency-scan - Scan for deficiencies
 router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res: Response) => {
   try {
@@ -4299,8 +4433,19 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
             deficiencies.push({
               type: 'missing_keyword',
               severity: 'medium',
-              message: `Missing expected regulatory term: "${keyword}"`,
-              recommendation: `Include discussion of ${keyword} as required by ${region} guidelines`,
+              /* 2026-10-11: this recommended "Include discussion of <keyword>
+                 as required by ${region} guidelines" — a keyword-presence
+                 heuristic reported as a requirement of the agency, in the same
+                 response this handler frames as "not a compliance
+                 determination". The check cannot establish that any agency
+                 requires the word, only that the module's keyword profile
+                 expects to see the topic discussed, so that is all it now
+                 claims. The region is still reported on the response; it is no
+                 longer cited as the author of this expectation. */
+              message: `Expected term not found in the saved content: "${keyword}"`,
+              recommendation:
+                `The keyword profile for module ${moduleLabel} expects ${keyword} to be discussed. ` +
+                'This is a word-presence signal from that profile, not an agency requirement.',
               location: 'content',
             });
           }
@@ -4418,6 +4563,12 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
         checks_run: checksRun,
         checks_passed: checksPassed,
         ...(checksSkipped.length ? { checks_skipped: checksSkipped } : {}),
+        /* The record's own statement of what this section must contain, or the
+           resolver's reason when it indexes no entry for the code. Always
+           present: an omitted field reads as "nothing required", which is the
+           one thing this must never say. It is not a check and not counted as
+           one — see recordRequirementsFor above. */
+        record_requirements: recordRequirementsFor(section.code),
         status:
           qualityScore >= 80
             ? 'heuristic_ok'

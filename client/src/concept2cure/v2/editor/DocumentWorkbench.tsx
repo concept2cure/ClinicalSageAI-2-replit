@@ -587,9 +587,41 @@ interface ScanDeficiency {
   recommendation?: string | null;
   location?: string | null;
 }
+/**
+ * What the canonical record says the open section must contain, as the scan
+ * serves it (server/routes/authoring.router.ts, `recordRequirementsFor`).
+ *
+ * READ-ONLY. The record's elements are descriptions ("Product development
+ * rationale linking unmet need, MOA, and program design (2.5.1)"), which no
+ * keyword test can verify — so the scan does not test them and the panel says
+ * so. `indexed: false` carries the resolver's own reason and must read as "not
+ * indexed", never as an empty list and never as "nothing required".
+ */
+interface RecordRequirements {
+  indexed: boolean;
+  /** Whose entry answered: the section's own, its containing section's, or its children. */
+  source?: 'exact' | 'ancestor' | 'parent';
+  /** The code whose entry answered. */
+  answered_by?: string;
+  title?: string;
+  elements?: string[];
+  /** For a parent code: the sections it contains, each with its own requirements. */
+  contains?: Array<{ code?: string; title?: string }>;
+  /** How many contained sections the server's cap withheld, so the list is never silently short. */
+  contains_omitted?: number;
+  verified_by_this_check?: boolean;
+  note?: string;
+  /** basisLabel() from the server — recall never reads as the regulator's text. */
+  basis?: string;
+  /** Present when `indexed` is false: the resolver's own words. */
+  reason?: string;
+}
+
 interface ScanResults {
   section_id: string;
   section_code?: string;
+  /** The record's statement of required content, or its honest absence. */
+  record_requirements?: RecordRequirements;
   quality_score?: number;
   status?: string;
   deficiencies: ScanDeficiency[];
@@ -4669,6 +4701,95 @@ export function DocumentWorkbench({
                             </span>
                           </div>
                         ))
+                    )}
+                    {/* ── What the record says this section must contain ──
+                        The scan's own expectations covered five CMC codes, so
+                        an author drafting 2.5 or 2.7.3 was shown nothing about
+                        required content while the record has carried it all
+                        along. This is the record's statement, read-only: the
+                        elements are descriptions, the scan does not test them,
+                        and the panel says so rather than implying a pass. A
+                        code the record does not index reads as the resolver's
+                        reason — never as an empty list, which would say
+                        "nothing required". Rendered only when the server sent
+                        it; honest silence otherwise. */}
+                    {check.record_requirements && (
+                      <div
+                        data-testid="section-check-record"
+                        style={{
+                          display: 'grid',
+                          gap: 4,
+                          marginTop: 2,
+                          paddingTop: 6,
+                          borderTop: '1px solid var(--border)',
+                          fontSize: 12,
+                        }}
+                      >
+                        {check.record_requirements.indexed === false ? (
+                          <span>
+                            <b style={{ fontWeight: 600 }}>Required content — not indexed.</b>{' '}
+                            {check.record_requirements.reason ??
+                              'The record has no entry for this section code.'}
+                          </span>
+                        ) : (
+                          <>
+                            <span>
+                              <b style={{ fontWeight: 600 }}>
+                                The record on {check.record_requirements.answered_by ?? activeSection.code}
+                                {check.record_requirements.title
+                                  ? ` — ${check.record_requirements.title}`
+                                  : ''}
+                              </b>
+                              {check.record_requirements.note ? ` ${check.record_requirements.note}` : ''}
+                            </span>
+                            {check.record_requirements.source === 'ancestor' && (
+                              <span style={{ opacity: 0.75 }}>
+                                These are the requirements of the containing section{' '}
+                                {check.record_requirements.answered_by};{' '}
+                                {check.section_code ?? activeSection.code} has no entry of its own in
+                                the record.
+                              </span>
+                            )}
+                            {(check.record_requirements.elements ?? []).length > 0 && (
+                              <>
+                                <span style={{ opacity: 0.75 }}>It must contain:</span>
+                                <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 2 }}>
+                                  {(check.record_requirements.elements ?? []).map((el, i) => (
+                                    <li key={i}>{el}</li>
+                                  ))}
+                                </ul>
+                              </>
+                            )}
+                            {(check.record_requirements.contains ?? []).length > 0 && (
+                              <>
+                                <span style={{ opacity: 0.75 }}>
+                                  The sections it contains, each with its own requirements:
+                                </span>
+                                <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 2 }}>
+                                  {(check.record_requirements.contains ?? []).map((c, i) => (
+                                    <li key={i}>
+                                      {c.code}
+                                      {c.title ? ` ${c.title}` : ''}
+                                    </li>
+                                  ))}
+                                </ul>
+                                {/* The server caps the listing; say what it
+                                    withheld rather than show a short list. */}
+                                {(check.record_requirements.contains_omitted ?? 0) > 0 && (
+                                  <span style={{ opacity: 0.75 }}>
+                                    and {check.record_requirements.contains_omitted} more.
+                                  </span>
+                                )}
+                              </>
+                            )}
+                            {check.record_requirements.basis && (
+                              <span style={{ opacity: 0.75 }}>
+                                Basis: {check.record_requirements.basis}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
