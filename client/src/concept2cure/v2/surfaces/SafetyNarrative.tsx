@@ -41,6 +41,9 @@ type LiveSaeCase = SaeCase & {
   reportingOverdue?: boolean;
   reportingBasis?: string;
   reportingUnassessedInputs?: string[];
+  /** Whether a reportability verdict EXISTS — the engine's own Gate 0 answer, not
+   *  `unassessedInputs.length === 0`. Absent on an older server. */
+  reportingDetermined?: boolean;
   /** False = no seriousness assessment is recorded. Absent on an older server. */
   seriousnessAssessed?: boolean;
 };
@@ -145,6 +148,19 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
   const unassessed: readonly string[] = Array.isArray(sel?.reportingUnassessedInputs)
     ? sel.reportingUnassessedInputs
     : [];
+  /* THE ENGINE DECIDES WHETHER THERE IS A VERDICT, not this screen.
+     The first version of this fix inferred it as `unassessed.length > 0`, which
+     is the wrong boundary: decision P-20's follow-up
+     (docs/LAUNCH_DEFINITION_OF_DONE.md) and `classifyIndSafetyReport`'s Gate 0
+     both hold that an event recorded NON-SERIOUS, or not suspected, is not
+     expedited on those stated facts — a determination — even with expectedness
+     still blank. So a decided case was headed "Reportability not determined".
+     `reportabilityDetermined` is now computed once in the clock service and read
+     here. Absent (an older server) falls back to the inference, which is the
+     previous behaviour rather than a guess at a field the server did not send. */
+  const notDetermined = typeof sel?.reportingDetermined === 'boolean'
+    ? !sel.reportingDetermined
+    : unassessed.length > 0;
   const result = useMemo(() => (sel ? composeSafetyNarrative(sel) : null), [sel]);
   const nMissing = result ? result.missingFields.length : 0;
 
@@ -171,20 +187,50 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
       };
     }
     const serious = cases.filter((c) => (c.event?.seriousnessCriteria || []).length).length;
-    const soonest = cases.slice().sort((a, b) => a.dueDays - b.dueDays)[0] ?? null;
+    /* ── WHAT THE NARRATOR IS TOLD ABOUT REPORTABILITY ──────────────────────
+       Under Rule 2 the deterministic engine supplies the figures and the model
+       narrates. This context used to publish `clock` and `dueDays` and nothing
+       else, so for an unassessed case the only reportability fact the model
+       received was the conflated label "No expedited clock" — and `dueDays` is
+       the assembler's SORT SENTINEL, so a case with no clock was handed over as
+       "due in 9999 day(s)". A sentinel is not a figure.
+       The engine's own nullable `daysRemaining` is published instead, the
+       determination state travels with it, and the undetermined cases are
+       counted rather than left for the model to infer. */
+    const daysOf = (c: LiveSaeCase): number | null =>
+      typeof c.reportingDaysRemaining === 'number' ? c.reportingDaysRemaining : null;
+    const undetermined = cases.filter((c) => c.reportingDetermined === false).length;
+    const withClock = cases.filter((c) => daysOf(c) != null);
+    const soonest = withClock.slice().sort((a, b) => (daysOf(a) as number) - (daysOf(b) as number))[0] ?? null;
+    const reportabilityOf = (c: LiveSaeCase) => ({
+      category: c.reportingCategory ?? null,
+      determined: c.reportingDetermined ?? null,
+      unassessedInputs: c.reportingUnassessedInputs ?? [],
+      basis: c.reportingBasis ?? null,
+      daysRemaining: daysOf(c),
+      dueDate: c.reportingDueDate ?? null,
+    });
     return {
       summary:
         `Safety narratives: ${cases.length} SAE case(s), ${serious} meeting a seriousness criterion` +
-        (soonest ? `; soonest reporting clock ${soonest.id} due in ${soonest.dueDays} day(s)` : '') +
+        (undetermined ? `, ${undetermined} with reportability not determined` : '') +
+        (soonest ? `; soonest reporting clock ${soonest.id} due in ${daysOf(soonest)} day(s)` : '') +
         (sel ? `; case ${sel.id} open with ${nMissing} required field(s) still missing` : ''),
       facts: {
         caseCount: cases.length,
         seriousCount: serious,
-        soonestDue: soonest ? { id: soonest.id, dueDays: soonest.dueDays, clock: soonest.clock } : null,
+        reportabilityNotDeterminedCount: undetermined,
+        soonestDue: soonest
+          ? { id: soonest.id, daysRemaining: daysOf(soonest), reportability: reportabilityOf(soonest) }
+          : null,
         selected: sel
           ? {
-              id: sel.id, studyId: sel.studyId ?? null, dueDays: sel.dueDays, clock: sel.clock,
+              id: sel.id, studyId: sel.studyId ?? null,
+              reportability: reportabilityOf(sel),
               seriousnessCriteria: sel.event?.seriousnessCriteria ?? [],
+              /* Published beside the criteria so an empty list cannot read as an
+                 assessment that found none. */
+              seriousnessAssessed: sel.seriousnessAssessed ?? null,
               missingRequiredFields: result ? result.missingFields : [],
             }
           : null,
@@ -467,18 +513,18 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                 {sel.reportingCategory && (
                   <div
                     data-testid="sae-reporting-clock"
-                    data-state={unassessed.length > 0 ? 'not-assessed' : sel.reportingCategory === 'none' ? 'determined-none' : sel.reportingOverdue ? 'overdue' : 'due'}
+                    data-state={notDetermined ? 'not-assessed' : sel.reportingCategory === 'none' ? 'determined-none' : sel.reportingOverdue ? 'overdue' : 'due'}
                     style={{
                       margin: '8px 0 14px', padding: '10px 12px', borderRadius: 8,
                       /* An unassessed case is not a calm neutral box. It is not an
                          error either — nothing is wrong, something is UNDONE — so it
                          takes the caution treatment between the two. */
-                      border: '1px solid ' + (sel.reportingOverdue ? 'var(--error)' : unassessed.length > 0 ? 'var(--warning,#b45309)' : 'var(--border-200,#e2e2e2)'),
-                      background: sel.reportingOverdue ? 'var(--error-muted)' : unassessed.length > 0 ? 'var(--warning-muted,#fffbeb)' : 'var(--bg-100)',
+                      border: '1px solid ' + (sel.reportingOverdue ? 'var(--error)' : notDetermined ? 'var(--warning,#b45309)' : 'var(--border-200,#e2e2e2)'),
+                      background: sel.reportingOverdue ? 'var(--error-muted)' : notDetermined ? 'var(--warning-muted,#fffbeb)' : 'var(--bg-100)',
                       fontSize: 12.5, lineHeight: 1.5,
                     }}
                   >
-                    {sel.reportingCategory === 'none' && unassessed.length > 0 ? (
+                    {sel.reportingCategory === 'none' && notDetermined ? (
                       /* NOT A DETERMINATION. `category: 'none'` carries two different
                          cases and the headline used to be the same sentence for both:
                          "No expedited reporting clock." A reviewer who assessed this

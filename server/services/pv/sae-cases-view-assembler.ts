@@ -86,11 +86,28 @@ export async function assembleOrgSaeCases(orgId: number, now: Date = new Date())
       now,
     );
 
-    // Legacy display fields the surface's queue/urgency use, derived from the live clock
-    // (the blob's static due/clock/due_days columns have no equivalent here).
-    const clockLabel =
-      reporting.category === 'none' ? 'No expedited clock' : `${reporting.category} expedited report`;
-    const dueLabel = reporting.dueDate ?? (reporting.category === 'none' ? '—' : 'awaiting Day 0');
+    /* Legacy display fields the surface's queue/urgency use, derived from the
+       live clock (the blob's static due/clock/due_days columns have no
+       equivalent here).
+       These labels used to read `category === 'none'` alone, so an UNASSESSED
+       case and a case decided non-reportable got byte-identical `clock` and
+       `due` strings — the same two-states-into-one collapse the report box was
+       fixed for on 2026-10-12, surviving in the labels rendered beside it. The
+       mono provenance line one element above the box read "No expedited clock"
+       while the box read "Reportability not determined". They now read the
+       engine's own `reportabilityDetermined`, so every reader of this row says
+       the same thing. */
+    const notDetermined = !reporting.reportabilityDetermined;
+    const clockLabel = notDetermined
+      ? 'Reportability not determined'
+      : reporting.category === 'none'
+        ? 'No expedited clock'
+        : `${reporting.category} expedited report`;
+    const dueLabel =
+      reporting.dueDate ?? (notDetermined ? 'Not determined' : reporting.category === 'none' ? '—' : 'awaiting Day 0');
+    /* A SORT KEY, not a day count. 9999 pushes a case with no clock to the end
+       of a soonest-first queue; it is never rendered and never published (the
+       AnA context used to hand it to the model as "due in 9999 day(s)"). */
     const dueDays = reporting.daysRemaining ?? 9999;
 
     return {
@@ -127,6 +144,8 @@ export async function assembleOrgSaeCases(orgId: number, now: Date = new Date())
       reportingBasis: reporting.basis,
       /** Determination inputs that were never recorded (see the clock). */
       reportingUnassessedInputs: reporting.unassessedInputs,
+      /** Whether there IS a verdict — not the same as "nothing unassessed" (P-20 Gate 0). */
+      reportingDetermined: reporting.reportabilityDetermined,
     };
   });
 }
