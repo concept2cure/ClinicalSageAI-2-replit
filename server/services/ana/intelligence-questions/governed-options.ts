@@ -34,6 +34,7 @@ import { agencyFor } from '../../../../shared/regulatory/agency-positions.js';
 import { IVDR_CLASSES } from '../../../../shared/regulatory/device-class.js';
 import { MODALITY_FRAME, MODALITY_LABEL } from '../../../../shared/regulatory/modality.js';
 import { IVDR_CONFORMITY_ROUTES } from '../../regulatory/ivdr-classification.js';
+import { basisLabel } from '../../../../shared/regulatory/regulatory-basis.js';
 import type { ProgrammeFacts } from '../../../../shared/regulatory/pathway-cautions.js';
 import { AGENCY_FIELDS } from './programme-facts.js';
 import {
@@ -156,7 +157,14 @@ function ivdrClassOptions(): Array<{ value: string; label: string; commits: stri
       value: cls,
       label: `Class ${cls} — ${route.notifiedBodyRequired ? 'notified body' : 'no notified body'}`,
       commits: route.summary,
-      authority: `IVDR (EU) 2017/746 Art 48; ${route.annexes}`,
+      /* The route's OWN basis, rendered by the one renderer that never
+         presents recall as checked regulator text. These routes are a
+         paraphrase from recall, corroborated by secondary extracts and with a
+         verbatim re-read owed — and the citation line said
+         'IVDR Art 48; <annexes>' flat, which reads as checked. The platform
+         keeps a `basis` for exactly this, and discarding it was the defect
+         (2026-10-12 review). */
+      authority: basisLabel(route.basis),
     };
   });
 }

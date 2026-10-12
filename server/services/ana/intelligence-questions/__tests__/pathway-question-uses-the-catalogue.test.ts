@@ -363,7 +363,20 @@ describe('the IVDR class question', () => {
     expect(by('C').commits, 'the companion-diagnostic consultation').toMatch(/consults a medicines authority/);
     expect(by('D').commits, 'the reference laboratory').toMatch(/EU reference laboratory/);
     expect(by('D').commits).toMatch(/common specifications/);
-    for (const option of options) expect(option.authority, option.value).toMatch(/Art 48/);
+    for (const option of options) expect(option.authority, option.value).toMatch(/Article 48/);
+  });
+
+  it('does not present a paraphrase from recall as checked regulator text', () => {
+    /* These routes are a paraphrase from recall, corroborated by secondary
+       extracts, with a verbatim re-read owed — and the citation line said
+       'IVDR Art 48; <annexes>' flat, which reads as checked. The platform
+       keeps a `basis` with its confidence and ONE renderer that never presents
+       recall as checked; discarding it was the defect (2026-10-12 review). */
+    const options = classificationNode('diagnostic').fields.find(f => f.id === 'ivdr_class')!.options!;
+    for (const option of options) {
+      expect(option.authority, option.value).toMatch(/recall — not checked against the regulator's text/);
+      expect(option.authority, option.value).not.toMatch(/checked against the regulator's text on/);
+    }
   });
 
   it('does not ask a diagnostics programme its MDR class, which is the wrong regulation', () => {

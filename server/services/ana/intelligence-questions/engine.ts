@@ -20,7 +20,7 @@ import type {
   IntelligenceFlowCompleteEvent,
 } from './types.js';
 import { OTHER_POSITION, otherFieldId } from '../../../../shared/types/intelligence-questions.js';
-import { evaluatePredicate } from '../../../../shared/ana/question-predicate.js';
+import { evaluatePredicate, predicateFieldIds } from '../../../../shared/ana/question-predicate.js';
 import type { FlowEngineContext, FlowStepResult } from './types.js';
 import { getFlowDefinition } from './flows/index.js';
 import { runIssueChecks, runCrossNodeAnalysis } from './issue-detector.js';
@@ -433,7 +433,9 @@ function buildQuestionEvent(
   const ownFieldIds = new Set(node.fields.map(f => f.id));
   const visibleFields = node.fields.filter(f => {
     if (!f.visibleWhen) return true;
-    if (ownFieldIds.has(f.visibleWhen.field)) return true;
+    /* ANY field of a composite gate in this node is enough: the draw cannot
+       settle it either way, so the field is sent with its predicate. */
+    if (predicateFieldIds(f.visibleWhen).some(id => ownFieldIds.has(id))) return true;
     return evaluatePredicate(f.visibleWhen, allAnswerValues);
   });
 

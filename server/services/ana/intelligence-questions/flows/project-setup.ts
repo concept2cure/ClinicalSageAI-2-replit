@@ -554,7 +554,24 @@ export function createProjectSetupFlow(): FlowDefinition {
             label: 'Notified Body (EU)',
             type: 'text',
             placeholder: 'e.g., BSI, TUV SUD, Dekra',
-            visibleWhen: { field: 'eu_mdr_class', operator: 'neq', value: 'na' },
+            /* Two answers decide this one, and one predicate could not say so.
+               It was gated on `eu_mdr_class neq 'na'` alone: a DIAGNOSTICS
+               programme is not asked its MDR class at all, so the answer was
+               absent, `neq` read TRUE, and the question was asked of every one
+               of them with nothing behind it — while the programme that HAD
+               stated an IVDR class was never asked on that basis
+               (2026-10-12 review). */
+            visibleWhen: {
+              anyOf: [
+                { allOf: [
+                  { field: 'eu_mdr_class', operator: 'exists', value: true },
+                  { field: 'eu_mdr_class', operator: 'neq', value: 'na' },
+                ] },
+                { field: 'ivdr_class', operator: 'exists', value: true },
+              ],
+            },
+            helpText:
+              'A notified body assesses MDR Class IIa, IIb and III and IVDR Class B, C and D. For MDR Class I it is involved only where the device is sterile, has a measuring function or is a reusable surgical instrument, and for IVDR Class A only where the device is sterile — in each case for that aspect alone (MDR Art 52(7); IVDR Art 48(10)).',
           },
         ],
         /* A device project reaches the multi-country timeline too. The
