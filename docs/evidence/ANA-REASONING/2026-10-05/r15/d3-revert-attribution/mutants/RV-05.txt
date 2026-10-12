@@ -1,0 +1,7 @@
+mutant RV-05: an absent origin is guessed as ‘human’, the fabrication 20260822 closed
+verdict: KILLED
+Tests  1 failed | 36 passed (37)
+
+ × tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > a revert to a person’s own revision still states no origin 88ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 36 passed (37)

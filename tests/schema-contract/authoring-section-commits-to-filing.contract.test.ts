@@ -986,3 +986,127 @@ describe('a document whose sections sit under one outline node commits into that
     expect((await governed('3.2.S')) ?? '').not.toContain('Text with no slot');
   }, T);
 });
+
+describe('a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3)', () => {
+  /* `doc_revisions` is append-only by trigger and each row records the
+     provenance of the state it holds: `origin`, and `inputs.contributors` —
+     the machine-author list, written by createRevision from the save door's
+     own MACHINE_AUTHOR_IDS-validated list.
+     The revert door's SELECT asks for neither, and it passes no `draftSource`
+     to commitSectionToFiling, which resolves an absent one to NULL
+     unconditionally. So reverting TO AI-drafted text erased 'ana' from the
+     system of record, and the next save's snapshot would then read
+     `author_kind 'unspecified'` over model prose — the fabrication
+     migrations/20260822_section_version_author_kind_unspecified.sql exists to
+     end. Nothing surfaced it: every store stayed internally consistent. */
+  const SEC = '2.5';
+  const ANA_TEXT = 'Exposure was dose-proportional from 10 to 300 mg.';
+
+  /** The save door's AI-accept shape: a validated machine author plus its words. */
+  const saveAsAna = (content: string) =>
+    as(request(app).patch(`/api/authoring/sections/${sectionIds[SEC]}`)).send({
+      content,
+      changeReason: 'accepting the AnA draft',
+      acceptedAuthors: [{ id: 'ana' }],
+      acceptedMachineText: [{ authorId: 'ana', text: ANA_TEXT }],
+    });
+
+  const filedSource = async () => {
+    const [row] = await q<{ draft_source: string | null }>(
+      `SELECT draft_source FROM c2c_document_sections
+        WHERE document_id = $1 AND section_key = $2`,
+      [DOC, SEC],
+    );
+    return row.draft_source;
+  };
+
+  it('restores draft_source from the revision instead of nulling it', async () => {
+    const ai = await saveAsAna(`<p>${ANA_TEXT}</p>`);
+    expect(ai.status).toBe(200);
+    /* The save door already does this part right, which is what makes the
+       revert's erasure a regression rather than a gap. */
+    expect(await filedSource()).toBe('ana');
+
+    /* A person rewords it. No machine author, so the filing records none. */
+    expect((await save(SEC, '<p>Exposure rose roughly in line with dose.</p>')).status).toBe(200);
+    expect(await filedSource()).toBeNull();
+
+    /* The revision holding AnA's words, found by what it recorded about
+       itself rather than by position. */
+    const [aiRev] = await q<{ id: string; origin: string; inputs: any }>(
+      `SELECT id, origin, inputs FROM doc_revisions
+        WHERE section_id = $1 AND tenant_id = 1
+          AND inputs -> 'contributors' @> '[{"id":"ana"}]'::jsonb
+        ORDER BY created_at ASC LIMIT 1`,
+      [sectionIds[SEC]],
+    );
+    expect(aiRev?.id, 'the AI save recorded no contributors on its revision').toBeTruthy();
+
+    const res = await as(request(app).post(`/api/authoring/sections/${sectionIds[SEC]}/revert`))
+      .send({ rev_id: aiRev.id });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+
+    /* The filing holds AnA's words again, and says so. Before this change it
+       held the words and denied their origin. */
+    const [filed] = await q<{ content: any; draft_source: string | null }>(
+      `SELECT content, draft_source FROM c2c_document_sections
+        WHERE document_id = $1 AND section_key = $2`,
+      [DOC, SEC],
+    );
+    expect(filed.content.text).toContain(ANA_TEXT);
+    expect(filed.draft_source).toBe('ana');
+  }, T);
+
+  it('survives a revert OF the revert: the attribution is recorded again, not spent', async () => {
+    /* The revert writes its own doc_revisions row. If that row recorded no
+       contributors, the attribution would be restored once and lost the next
+       time someone restored THIS state — the same erasure one step later, and
+       harder to see. */
+    expect((await saveAsAna(`<p>${ANA_TEXT}</p>`)).status).toBe(200);
+    expect((await save(SEC, '<p>A reviewer reworded it again.</p>')).status).toBe(200);
+    const [aiRev] = await q<{ id: string }>(
+      `SELECT id FROM doc_revisions
+        WHERE section_id = $1 AND tenant_id = 1
+          AND inputs -> 'contributors' @> '[{"id":"ana"}]'::jsonb
+        ORDER BY created_at DESC LIMIT 1`,
+      [sectionIds[SEC]],
+    );
+    expect((await as(request(app).post(`/api/authoring/sections/${sectionIds[SEC]}/revert`))
+      .send({ rev_id: aiRev.id })).status).toBe(200);
+    expect(await filedSource()).toBe('ana');
+
+    /* The revert's OWN row must now carry the machine author too. */
+    const [revertRev] = await q<{ id: string; origin: string; inputs: any }>(
+      `SELECT id, origin, inputs FROM doc_revisions
+        WHERE section_id = $1 AND tenant_id = 1 AND origin = 'revert'
+        ORDER BY created_at DESC LIMIT 1`,
+      [sectionIds[SEC]],
+    );
+    expect(revertRev.inputs?.contributors).toEqual([{ id: 'ana', name: 'AnA (AI draft)' }]);
+
+    /* And restoring that revert's state keeps it. */
+    expect((await save(SEC, '<p>And reworded once more.</p>')).status).toBe(200);
+    expect(await filedSource()).toBeNull();
+    expect((await as(request(app).post(`/api/authoring/sections/${sectionIds[SEC]}/revert`))
+      .send({ rev_id: revertRev.id })).status).toBe(200);
+    expect(await filedSource()).toBe('ana');
+  }, T);
+
+  it('a revert to a person’s own revision still states no origin', async () => {
+    /* The other direction, and the one that keeps this from being a blanket
+       'ana': a revision with no recorded contributors restores NULL — "origin
+       not stated" — never a guessed 'human'. */
+    const human = await save(SEC, '<p>A reviewer wrote every word of this.</p>');
+    expect(human.status).toBe(200);
+    const [humanRev] = await q<{ id: string }>(
+      `SELECT id FROM doc_revisions
+        WHERE section_id = $1 AND tenant_id = 1 AND inputs -> 'contributors' IS NULL
+        ORDER BY created_at DESC LIMIT 1`,
+      [sectionIds[SEC]],
+    );
+    expect(humanRev?.id).toBeTruthy();
+    expect((await as(request(app).post(`/api/authoring/sections/${sectionIds[SEC]}/revert`))
+      .send({ rev_id: humanRev.id })).status).toBe(200);
+    expect(await filedSource()).toBeNull();
+  }, T);
+});
