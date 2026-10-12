@@ -29,7 +29,7 @@
  *    claim, and it must be shown wherever a schedule is created or listed.
  * 2. A SCHEDULE IS ONLY OFFERED FOR A TYPE AN ENGINE COMPUTES. The sweep calls
  *    `computeInitialRun`, which throws for a type with no engine
- *    (`report-engine.ts` reportEngineFor → null for 43 of the 61 declared
+ *    (`report-engine.ts` reportEngineFor → null for 39 of the 61 declared
  *    types). Scheduling one would create a row that fails every sweep, for
  *    ever, silently. {@link schedulableTypes} is the filter; the caller must
  *    use it rather than the whole catalog.
@@ -286,7 +286,7 @@ export function scheduleInWords(s: ReportSchedule): string {
  * The catalog types a schedule may name.
  *
  * A subscription's sweep calls `computeInitialRun`, which throws for a type no
- * engine computes — so scheduling one of the 43 declared-but-uncomputed types
+ * engine computes — so scheduling one of the 39 declared-but-uncomputed types
  * would persist a row that fails every sweep for ever, and the client would
  * see a schedule that never produces anything. Only a runnable, entitled type
  * is offered. PURE.

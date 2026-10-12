@@ -57,14 +57,41 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
  * generically so the renderer works for any report type.
  */
 /**
- * Whether a gap evaluation ran for this run. The regional gap evaluation sets
- * `summary.regulatory.missingArtifacts` (orchestrator.ts, project scope with a
- * registry); any other scope has none. An empty list is "no gaps"; no list is
- * "not evaluated", and the two may never print the same sentence.
+ * Whether a gap evaluation ran for this run.
+ *
+ * Two evaluations can set it, and each writes its own key:
+ *   - the readiness orchestrator's regional gap evaluation, at project scope
+ *     with a registry context, which sets `summary.regulatory.missingArtifacts`;
+ *   - the market assessment, which sets `summary.module1.missingHeadings` when
+ *     it could match content against the agency's headings — and leaves it null
+ *     when nothing recorded a CTD code, which is exactly "not evaluated"
+ *     (regional/filing-readiness.ts).
+ *
+ * An empty list is "no gaps"; no list is "not evaluated", and the two may never
+ * print the same sentence. A market assessment reached `gapsSectionFor` without
+ * this second case and printed "Gaps were not evaluated for this scope" in the
+ * same document as the section listing the gaps it had just evaluated.
  */
 export function gapsWereEvaluated(summary: Record<string, unknown> | null | undefined): boolean {
   const regulatory = asRecord(summary?.regulatory);
-  return Array.isArray(regulatory?.missingArtifacts);
+  if (Array.isArray(regulatory?.missingArtifacts)) return true;
+  const module1 = asRecord(summary?.module1);
+  return Array.isArray(module1?.missingHeadings);
+}
+
+/** A market assessment's gaps: the required headings with no document. */
+function module1Gaps(summary: Record<string, unknown>): Array<{ title: string; severity: 'high' }> | null {
+  const module1 = asRecord(summary.module1);
+  if (!Array.isArray(module1?.missingHeadings)) return null;
+  return module1.missingHeadings.map((h) => {
+    const row = asRecord(h) ?? {};
+    const code = typeof row.code === 'string' ? row.code : '';
+    const title = typeof row.title === 'string' ? row.title : '';
+    return {
+      title: `Module 1 ${code}${title ? ` ${title}` : ''}: required for this filing, and no document is recorded under it.`,
+      severity: 'high' as const,
+    };
+  });
 }
 
 /**
@@ -72,6 +99,12 @@ export function gapsWereEvaluated(summary: Record<string, unknown> | null | unde
  * found none, or "not evaluated" when none ran.
  */
 function gapsSectionFor(summary: Record<string, unknown>, generatedAt: string): ReportSection {
+  /* A market assessment's gaps are its own: the required Module 1 headings with
+     no document. Read first, because its runs write no `summary.regulatory`. */
+  const m1 = module1Gaps(summary);
+  if (m1 && m1.length > 0) {
+    return { id: 'gaps', title: 'Gaps', blocks: [{ kind: 'gap-list', items: m1 }] };
+  }
   const missingArtifacts = asRecord(summary.regulatory)?.missingArtifacts;
   if (Array.isArray(missingArtifacts) && missingArtifacts.length > 0) {
     return {
@@ -100,7 +133,24 @@ function gapsSectionFor(summary: Record<string, unknown>, generatedAt: string): 
   }
   /* "No gaps detected" printed for every scope no gap evaluation covers (every
      program-scoped canvas report among them), and sealed in final records
-     (reporting review 2026-10-01). Nothing was checked; say so. */
+     (reporting review 2026-10-01). Nothing was checked; say so — and where the
+     run knows WHY nothing could be checked, say that instead of the generic
+     scope sentence. */
+  const module1 = asRecord(summary.module1);
+  if (module1 && module1.assessed === false) {
+    return {
+      id: 'gaps',
+      title: 'Gaps',
+      blocks: [
+        {
+          kind: 'summary',
+          text:
+            'Gaps were not evaluated: no section or governed document of this program records a CTD section ' +
+            'code, so nothing could be matched against this market’s Module 1 headings.',
+        },
+      ],
+    };
+  }
   return {
     id: 'gaps',
     title: 'Gaps',
@@ -160,6 +210,110 @@ function domainSection(domain: Record<string, unknown>): ReportSection {
 }
 
 /**
+ * A market assessment's own content (computeRegionalRun): what the platform can
+ * carry for this filing, and the agency's own Module 1 headings with no document
+ * recorded under them.
+ *
+ * It exists for the same reason `domainSection` does. Without it a market
+ * assessment fell through to `readinessBlocks`, which reads
+ * `summary.regulatory` — a key the regional engine does not write — and would
+ * have printed "Submission readiness not computed." as the executive summary of
+ * a report that computed a market assessment. The heading numbers and titles are
+ * the Module 1 record's, and the section names the specification they come from
+ * so the numbering can be re-audited rather than re-derived.
+ */
+function marketBlocks(market: Record<string, unknown>): ReportBlock[] {
+  const str = (k: string): string | null => (typeof market[k] === 'string' ? (market[k] as string) : null);
+  const blocks: ReportBlock[] = [];
+  const filing = str('filing');
+  const agency = str('agency');
+  if (filing && agency) {
+    blocks.push({ kind: 'summary', text: `Assessed as a ${filing} with ${agency.replace(/_/g, ' ')}.` });
+  }
+  /* The canonical market statement, verbatim: it is the same sentence the market
+     rows, the New submission options and the New project picker show
+     (services/regulatory/market-support.ts), so this report cannot disagree
+     with them. */
+  const line = str('line');
+  if (line) blocks.push({ kind: 'summary', text: line });
+  const offer = asRecord(market.offer);
+  if (offer && typeof offer.reason === 'string') {
+    blocks.push({ kind: 'summary', text: offer.reason });
+  }
+  const spec = str('module1Spec');
+  if (spec) {
+    blocks.push({
+      kind: 'summary',
+      text: `Module 1 heading numbers and titles follow ${spec}.`,
+    });
+  }
+  return blocks;
+}
+
+function marketSection(market: Record<string, unknown>, module1: Record<string, unknown> | null): ReportSection {
+  const blocks: ReportBlock[] = [];
+  const required = typeof module1?.requiredHeadings === 'number' ? module1.requiredHeadings : null;
+  const covered = typeof module1?.coveredHeadings === 'number' ? module1.coveredHeadings : null;
+  const assessed = module1?.assessed === true;
+
+  if (!assessed) {
+    /* Not a zero and not a gap list: nothing in the program recorded a CTD code,
+       so no heading was matched either way (filing-readiness.ts). A count here
+       would read as a measurement. */
+    blocks.push({
+      kind: 'summary',
+      text:
+        'Module 1 coverage was not assessed: no section or governed document of this program records a CTD section code, ' +
+        `so nothing could be matched against the ${required ?? 0} heading(s) this filing requires.`,
+    });
+    blocks.push({ kind: 'metric', label: 'Required Module 1 headings covered', value: null, status: 'missing' });
+  } else {
+    blocks.push({
+      kind: 'metric',
+      label: 'Required Module 1 headings covered',
+      value: covered ?? 0,
+      ...(required != null ? { unit: `of ${required}` } : {}),
+    });
+    const missing = Array.isArray(module1?.missingHeadings) ? module1.missingHeadings : [];
+    blocks.push(
+      missing.length === 0
+        ? { kind: 'summary', text: 'Every required Module 1 heading has a document recorded under it.' }
+        : {
+            kind: 'table',
+            columns: ['Heading', 'Title', 'State'],
+            rows: missing.map((h) => {
+              const row = asRecord(h) ?? {};
+              return [
+                typeof row.code === 'string' ? row.code : null,
+                typeof row.title === 'string' ? row.title : null,
+                'No document recorded',
+              ];
+            }),
+          },
+    );
+  }
+
+  /* A conditional heading whose fact nobody stated is its own line, never
+     "not required" (requiredModule1's contract). */
+  const undetermined = Array.isArray(module1?.undetermined) ? module1.undetermined : [];
+  if (undetermined.length > 0) {
+    blocks.push({
+      kind: 'table',
+      columns: ['Heading', 'Title', 'Required if'],
+      rows: undetermined.map((u) => {
+        const row = asRecord(u) ?? {};
+        return [
+          typeof row.code === 'string' ? row.code : null,
+          typeof row.title === 'string' ? row.title : null,
+          typeof row.condition === 'string' ? row.condition.replace(/_/g, ' ') : null,
+        ];
+      }),
+    });
+  }
+  return { id: 'market-module1', title: 'Module 1 content for this market', blocks };
+}
+
+/**
  * The run's one readiness statement: the evaluated readiness when
  * evaluateReadiness ran, otherwise that it was not computed and why — the same
  * answer the portfolio board and the canvas opener give for the program.
@@ -196,6 +350,8 @@ export function renderReport(input: RenderInput): RenderedReport {
   const generatedAt = input.generatedAt ?? new Date().toISOString();
   const sections: ReportSection[] = [];
   const domain = asRecord(input.summary.domain);
+  const market = asRecord(input.summary.market);
+  const module1 = asRecord(input.summary.module1);
 
   // 1. Executive summary.
   const execBlocks: ReportBlock[] = [];
@@ -216,11 +372,15 @@ export function renderReport(input: RenderInput): RenderedReport {
     kind: 'summary',
     text: `${input.reportTypeLabel} for ${scopeNameOf(input)}. Status: ${input.status}.`,
   });
-  // A register states its own counts; the readiness run states its one readiness.
-  if (!domain) execBlocks.push(...readinessBlocks(input));
+  /* A register states its own counts and a market assessment its own market;
+     only the readiness run states a readiness. A run that computed something
+     else must not print "Submission readiness not computed" as its summary. */
+  if (market) execBlocks.push(...marketBlocks(market));
+  else if (!domain) execBlocks.push(...readinessBlocks(input));
 
   sections.push({ id: 'executive-summary', title: 'Executive summary', blocks: execBlocks });
   if (domain) sections.push(domainSection(domain));
+  if (market) sections.push(marketSection(market, module1 ?? null));
 
   // 2. Provider readiness.
   const providerRows: Array<Array<string | number | null>> = input.providers.map(p => [

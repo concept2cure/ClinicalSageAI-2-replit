@@ -16,13 +16,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const computeInitialRun = vi.hoisted(() => vi.fn());
 const computeDomainRun = vi.hoisted(() => vi.fn());
+const computeRegionalRun = vi.hoisted(() => vi.fn());
 
 vi.mock('../../orchestrator', () => ({
   computeInitialRun: (...a: unknown[]) => computeInitialRun(...a),
 }));
 vi.mock('../../report-engine', async (importOriginal) => {
   const real = await importOriginal<typeof import('../../report-engine')>();
-  return { ...real, computeDomainRun: (...a: unknown[]) => computeDomainRun(...a) };
+  return {
+    ...real,
+    computeDomainRun: (...a: unknown[]) => computeDomainRun(...a),
+    computeRegionalRun: (...a: unknown[]) => computeRegionalRun(...a),
+  };
 });
 vi.mock('../delivery', () => ({
   decideDelivery: () => ({ allowed: true, requiresESignature: false, watermark: false }),
@@ -50,8 +55,10 @@ const noBlockers = { criticalBlockers: [], summary: {} };
 beforeEach(() => {
   computeInitialRun.mockReset();
   computeDomainRun.mockReset();
+  computeRegionalRun.mockReset();
   computeInitialRun.mockResolvedValue(noBlockers);
   computeDomainRun.mockResolvedValue(noBlockers);
+  computeRegionalRun.mockResolvedValue(noBlockers);
 });
 
 describe('a scheduled report runs its own engine', () => {
@@ -73,12 +80,33 @@ describe('a scheduled report runs its own engine', () => {
     expect(computeInitialRun).not.toHaveBeenCalled();
   });
 
+  it.each([
+    'usa_fda.nda_bla_filing_readiness',
+    'ema.maa_readiness_assessment',
+    'japan_pmda.jnda_shonin_readiness',
+  ])('a market assessment (%s) runs the regional engine, not the digest', async (typeId) => {
+    await generateAndDeliver(sub(typeId));
+    expect(computeRegionalRun).toHaveBeenCalledWith(typeId, 3, 'project', '11');
+    // The defect: the digest standing in for a market the program may not even
+    // be filing in. The regional engine refuses that case; the digest cannot.
+    expect(computeInitialRun).not.toHaveBeenCalled();
+  });
+
+  it('a market assessment is not computed above one program, so a program scope throws', async () => {
+    await expect(generateAndDeliver(sub('ema.maa_readiness_assessment', 'program'))).rejects.toThrow(
+      /No engine computes/,
+    );
+    expect(computeRegionalRun).not.toHaveBeenCalled();
+    expect(computeInitialRun).not.toHaveBeenCalled();
+  });
+
   it('a type no engine computes throws, so the sweep fails the item instead of substituting the digest', async () => {
-    await expect(generateAndDeliver(sub('ema.maa_readiness_assessment'))).rejects.toThrow(
+    await expect(generateAndDeliver(sub('ema.rmp_psur_signal_alignment'))).rejects.toThrow(
       /No engine computes/,
     );
     expect(computeInitialRun).not.toHaveBeenCalled();
     expect(computeDomainRun).not.toHaveBeenCalled();
+    expect(computeRegionalRun).not.toHaveBeenCalled();
   });
 
   it('the evidence trace is not computed at project scope, so it throws there too', async () => {

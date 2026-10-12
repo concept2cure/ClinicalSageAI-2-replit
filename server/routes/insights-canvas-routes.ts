@@ -90,6 +90,19 @@ interface CanvasReportType {
   label: string;
   family: string;
   allowedScopes: string[];
+  /**
+   * The declared scopes an engine actually computes this type over — a subset of
+   * `allowedScopes`, and empty for a type no engine computes.
+   *
+   * The two differ. A market filing assessment declares program, project and
+   * submission, and `regional/filing-readiness.ts` computes it over one program
+   * only (project scope); the evidence trace declares three and runs over a
+   * document. The catalog printed `allowedScopes` as "Runs over: program,
+   * project, submission", which is where the type MAY be declared, not where it
+   * runs — so a reader was told a run was available at a scope that answers
+   * REPORT_TYPE_NOT_COMPUTED.
+   */
+  computedScopes: string[];
   allowedClientSegments: string[];
   /** The real seed truthfulness rules, passed through untouched. */
   truthfulnessRules: Record<string, unknown>;
@@ -323,6 +336,7 @@ function catalogFor(segments: ReportSegment[], persona: string | null, tier: Tie
       label: t.label,
       family: t.family,
       allowedScopes: t.allowedScopes,
+      computedScopes: t.allowedScopes.filter((s) => reportEngineFor(t.typeId, s) != null),
       allowedClientSegments: t.allowedClientSegments,
       truthfulnessRules: t.truthfulnessRules,
       entitled: decision.entitled,
