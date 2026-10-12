@@ -39,9 +39,11 @@
  *   refused   the write refuses the column (`PROFILE_WRITE_REFUSALS`): the
  *             programme's name, code, filing type, product class, primary
  *             agency, lifecycle and workflow phase.
- *   no column no column holds the fact — the MDR and IVDR classes, the
- *             notified body, the filing strategy, the partners, the
- *             preferences. THIS is the column work this projection documents.
+ *   no column no column holds the fact — the notified body, the filing
+ *             strategy, the partners, the preferences. THIS is the column work
+ *             this projection documents, and naming it is what got the two
+ *             European classifications their columns
+ *             (migrations/20261012b_regulatory_programs_eu_device_classes.sql).
  *   not a fact a gate ('is this multi-country?'), a confirmation, or a
  *             preference about how AnA behaves rather than about the programme.
  *
@@ -49,6 +51,11 @@
  */
 
 import { agencyFor } from '../../../shared/regulatory/agency-positions.js';
+import {
+  IVDR_CLASSES,
+  MDR_DECLARED_CLASSES,
+  euDeviceClassOf,
+} from '../../../shared/regulatory/device-class.js';
 import { programmeFactsFrom } from '../ana/intelligence-questions/programme-facts.js';
 import type { ProgrammeProfilePatch } from './programme-profile-write.js';
 
@@ -112,6 +119,8 @@ export const PROJECTED_FIELDS: readonly string[] = [
   'indication',
   'project_description',
   'device_class',
+  'eu_mdr_class',
+  'ivdr_class',
   'submission_type',
   'device_submission_pathway',
   'target_submission_date',
@@ -136,8 +145,6 @@ export const NOT_PROJECTED: Readonly<Record<string, string>> = {
     'The development phase (preclinical, phase 1 …) is not the workflow phase (planning … post_market), and the profile write sets neither.',
 
   /* ── No column holds it: the work this projection documents ──────────── */
-  eu_mdr_class: 'No column holds the MDR classification. device_class is the US class and is printed on US forms.',
-  ivdr_class: 'No column holds the IVDR classification either.',
   notified_body: 'No column holds the notified body.',
   predicate_device:
     'The predicate OF RECORD carries the trade name the eSTAR prints beside the submission number, and this question asks only for the identifier. Projecting the identifier as the name would assert one.',
@@ -295,7 +302,43 @@ const projectTeam: Projector = (flat, patch) => {
   if (team.length > 0) patch.teamMembers = team;
 };
 
+/**
+ * The European classifications, each onto its own column and its own
+ * regulation. The declared class, not the rule class: `programmeFactsFrom`
+ * reads Is/Im/Ir onto Class I because the CAUTION rules reason about the four
+ * the Annex VIII rules yield, and the RECORD keeps what the sponsor declared.
+ *
+ * 'Not applicable / No EU filing planned' clears the column rather than
+ * standing in it — the answer says there is no European classification, which
+ * is not a classification.
+ */
+const projectEuClasses: Projector = (flat, patch, say) => {
+  const mdr = text(flat.eu_mdr_class);
+  if (mdr === 'na') patch.euMdrClass = null;
+  else if (mdr) {
+    const declared = euDeviceClassOf(mdr);
+    if (declared && (MDR_DECLARED_CLASSES as readonly string[]).includes(declared)) {
+      patch.euMdrClass = declared as (typeof MDR_DECLARED_CLASSES)[number];
+    } else {
+      say('eu_mdr_class', 'The column holds one of the seven MDR classes a sponsor declares, and this answer is none of them.');
+    }
+  }
+
+  const ivdr = text(flat.ivdr_class);
+  if (!ivdr) return;
+  const cls = euDeviceClassOf(ivdr);
+  if (cls && (IVDR_CLASSES as readonly string[]).includes(cls)) {
+    patch.euIvdrClass = cls as (typeof IVDR_CLASSES)[number];
+    return;
+  }
+  say(
+    'ivdr_class',
+    'The column holds IVDR class A, B, C or D. A class in the person’s own words is kept as their wording on the session, not as a class on the record.',
+  );
+};
+
 const PROJECTORS: readonly Projector[] = [
+  projectEuClasses,
   projectProse,
   projectClass,
   projectPath,

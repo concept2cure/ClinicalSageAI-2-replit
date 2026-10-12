@@ -60,8 +60,15 @@
  * `deviceClass` stays the US 21 CFR 860 class. The column is read by the eSTAR
  * administrative-data projection and the 510(k) surfaces, which print it on a
  * US form, so widening it to the MDR's seven declared classes would put 'IIa'
- * where FDA expects I, II or III. No column holds the MDR or IVDR class yet;
- * a caller that has one reports it unprojected rather than coercing it.
+ * where FDA expects I, II or III.
+ *
+ * `euMdrClass` and `euIvdrClass` are therefore separate columns, for separate
+ * regulations with separate vocabularies — the MDR's seven DECLARED classes
+ * and the IVDR's four
+ * (migrations/20261012b_regulatory_programs_eu_device_classes.sql). Both are
+ * withdrawable by null, because 'Not applicable / No EU filing planned' is an
+ * answer the interview offers and it must leave the column blank rather than
+ * stand as a class.
  *
  * `regulatoryPath` IS widened — to `REGULATORY_PATHS`, the governed six, from
  * the route's hand-written three. `devicePathFor` can already return `hde`,
@@ -77,7 +84,11 @@ import { z } from 'zod';
 import { regulatoryPrograms, type PredicateDevice } from '../../../shared/schema/programs.js';
 import type { RequestDb } from '../../db/requestDb.js';
 import { REGULATORY_PATHS } from '../../../shared/constants/domain/device-classification.js';
-import { DEVICE_CLASSES } from '../../../shared/regulatory/device-class.js';
+import {
+  DEVICE_CLASSES,
+  IVDR_CLASSES,
+  MDR_DECLARED_CLASSES,
+} from '../../../shared/regulatory/device-class.js';
 
 /** A text fact that may be CLEARED: '' or null ⇒ null; absent ⇒ untouched. */
 const clearableText = (max: number) =>
@@ -165,8 +176,16 @@ const teamMemberSchema = z.object({
  */
 const PROFILE_SHAPE = {
   productName: z.string().min(1).max(500).optional(),
-  /* The US class only — see the module note on the two European ones. */
+  /* The US 21 CFR 860 class. The two European ones are separate columns, for
+     separate regulations — see the module note. */
   deviceClass: z.enum(DEVICE_CLASSES).optional(),
+  /* The MDR class AS DECLARED — seven, not the four the rules yield, because
+     Is, Im and Ir are what a sponsor declares and the notified body's
+     involvement for that one aspect follows from them (Art 52(7)).
+     Withdrawable by null: 'no EU filing planned' is an answer the interview
+     offers, and it must leave the column blank rather than stand as a class. */
+  euMdrClass: z.enum(MDR_DECLARED_CLASSES).nullable().optional(),
+  euIvdrClass: z.enum(IVDR_CLASSES).nullable().optional(),
   regulatoryPath: z.enum(REGULATORY_PATHS).optional(),
   productCode: z.string().min(1).max(50).optional(),
   intendedUse: z.string().max(10_000).optional(),

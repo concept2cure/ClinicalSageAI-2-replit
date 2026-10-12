@@ -214,8 +214,35 @@ describe('what it refuses', () => {
     expect(programmeProfilePatchSchema.safeParse({ deviceClass: 'III' }).success).toBe(true);
     expect(
       programmeProfilePatchSchema.safeParse({ deviceClass: 'IIa' }).success,
-      'the MDR class has no column, and must not be coerced into the US one',
+      'the MDR class has its own column, and must not be coerced into the US one',
     ).toBe(false);
+  });
+
+  it('takes each European class on its own column, for its own regulation', () => {
+    /* The MDR's SEVEN declared classes, not the four the rules yield: Is, Im
+       and Ir are what a sponsor declares, and the notified body's involvement
+       for that one aspect follows from them (Art 52(7)). */
+    for (const cls of ['I', 'Is', 'Im', 'Ir', 'IIa', 'IIb', 'III']) {
+      expect(programmeProfilePatchSchema.safeParse({ euMdrClass: cls }).success, cls).toBe(true);
+    }
+    for (const cls of ['A', 'B', 'C', 'D']) {
+      expect(programmeProfilePatchSchema.safeParse({ euIvdrClass: cls }).success, cls).toBe(true);
+    }
+    expect(
+      programmeProfilePatchSchema.safeParse({ euMdrClass: 'C' }).success,
+      'an IVDR class is not an MDR class',
+    ).toBe(false);
+    expect(
+      programmeProfilePatchSchema.safeParse({ euIvdrClass: 'IIb' }).success,
+      'nor the other way about',
+    ).toBe(false);
+  });
+
+  it('lets a European class be withdrawn, because "no EU filing planned" is an answer', async () => {
+    await write({ euMdrClass: null });
+    expect(written().euMdrClass, 'blank, not a stale class').toBeNull();
+    await write({ euIvdrClass: null });
+    expect(written().euIvdrClass).toBeNull();
   });
 
   it('accepts the regulatory paths the platform’s own mapping produces', () => {

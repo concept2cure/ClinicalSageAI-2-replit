@@ -45,7 +45,11 @@ const DEVICE_ANSWERS = {
     additional_agencies: ['EU'],
   },
   device_classification: { device_class: 'class_ii', product_code: 'QAS', eu_mdr_class: 'class_iib' },
-  medtech_regulatory: { device_submission_pathway: 'US_510K', predicate_device: 'K123456' },
+  medtech_regulatory: {
+    device_submission_pathway: 'US_510K',
+    predicate_device: 'K123456',
+    notified_body: 'BSI (2797)',
+  },
   team_assignment: { project_lead: 'R. Okafor', regulatory_lead: 'J. Lindqvist', team_size: 9 },
   project_preferences: { project_timezone: 'Europe/Dublin', enable_ai_assistance: true },
 };
@@ -59,6 +63,7 @@ const reasonFor = (answers: Record<string, Record<string, unknown>>, fieldId: st
 describe('what reaches the programme record', () => {
   it('carries the facts the record has columns for', () => {
     expect(projected(DEVICE_ANSWERS).patch).toEqual({
+      euMdrClass: 'IIb',
       productName: 'BX-204 CGM',
       productCode: 'QAS',
       indication: 'Glycaemic monitoring in adults with type 1 diabetes',
@@ -137,8 +142,8 @@ describe('what it says about the answers it cannot carry', () => {
       'development_phase',
       'product_type',
       'therapeutic_area',
-      'eu_mdr_class',
       'predicate_device',
+      'notified_body',
       'team_size',
       'project_timezone',
       'multi_country_submission',
@@ -161,7 +166,7 @@ describe('what it says about the answers it cannot carry', () => {
     expect(reasonFor(DEVICE_ANSWERS, 'project_name'), 'refused: a rename is its own action').toMatch(
       /own governed action/,
     );
-    expect(reasonFor(DEVICE_ANSWERS, 'eu_mdr_class'), 'no column holds it').toMatch(/No column holds the MDR/);
+    expect(reasonFor(DEVICE_ANSWERS, 'notified_body'), 'no column holds it').toMatch(/No column holds the notified body/);
     expect(reasonFor(DEVICE_ANSWERS, 'multi_country_submission'), 'not a fact of its own').toMatch(/gate/);
   });
 
@@ -175,6 +180,50 @@ describe('what it says about the answers it cannot carry', () => {
 
   it('keeps the development phase away from the workflow phase', () => {
     expect(reasonFor(DEVICE_ANSWERS, 'development_phase')).toMatch(/not the workflow phase/);
+  });
+});
+
+describe('the European classifications, which had no column until 2026-10-12', () => {
+  it('records the class the sponsor DECLARED, not the one the rules yield', () => {
+    /* programmeFactsFrom reads Is/Im/Ir onto Class I, because the caution
+       rules reason about the four the Annex VIII rules yield. The record keeps
+       the seven a sponsor declares: the notified body's involvement for the
+       sterile, metrological or reprocessing aspect follows from them. */
+    for (const [answer, declared] of [
+      ['class_is', 'Is'],
+      ['class_im', 'Im'],
+      ['class_ir', 'Ir'],
+      ['class_iia', 'IIa'],
+      ['class_iii', 'III'],
+    ] as const) {
+      expect(projected({ d: { eu_mdr_class: answer } }).patch.euMdrClass, answer).toBe(declared);
+    }
+  });
+
+  it('clears the column where no EU filing is planned, rather than standing a class in it', () => {
+    const out = projected({ d: { eu_mdr_class: 'na' } });
+    expect(out.patch.euMdrClass, 'null withdraws; undefined would leave a stale class').toBeNull();
+    expect('euMdrClass' in out.patch).toBe(true);
+  });
+
+  it('records the IVDR class on its own column, for its own regulation', () => {
+    for (const cls of ['A', 'B', 'C', 'D'] as const) {
+      expect(projected({ d: { ivdr_class: cls } }).patch.euIvdrClass, cls).toBe(cls);
+    }
+    /* And not onto the MDR column: they are different regulations. */
+    expect(projected({ d: { ivdr_class: 'C' } }).patch.euMdrClass).toBeUndefined();
+    expect(projected({ d: { eu_mdr_class: 'class_iib' } }).patch.euIvdrClass).toBeUndefined();
+  });
+
+  it('keeps a class in the person’s own words off the record as a class', () => {
+    const out = projected({ d: { ivdr_class: '__other__' } });
+    expect(out.patch.euIvdrClass).toBeUndefined();
+    expect(out.unprojected.find(u => u.fieldId === 'ivdr_class')?.reason).toMatch(/own words/);
+  });
+
+  it('never puts a European class in the US column, which is printed on a US form', () => {
+    const out = projected({ d: { eu_mdr_class: 'class_iib', ivdr_class: 'C' } });
+    expect(out.patch.deviceClass, 'the US class is stated by its own question').toBeUndefined();
   });
 });
 
