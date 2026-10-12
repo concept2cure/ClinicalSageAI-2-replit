@@ -27,7 +27,7 @@ import {
   whenText,
   type ReportRunRow,
 } from './insightsLibraryModel';
-import { PanelHead, StatusTag, rowsOf, type LibraryReportType } from './insightsLibraryShared';
+import { PanelHead, StatusTag, isRowList, rowsOf, type LibraryReportType } from './insightsLibraryShared';
 
 /** The filter bar. Every control maps to a parameter the route accepts. */
 function RunFilters({
@@ -153,7 +153,7 @@ export function RunsPanel({
     // the SQL limit, so the window IS the search's reach (see RUNS_WINDOW).
     limit: RUNS_WINDOW,
   });
-  const runs = useLiveData<unknown>(url, [url, attempt]);
+  const runs = useLiveData<unknown>(url, [url, attempt], isRowList);
   const rows = useMemo(() => rowsOf<ReportRunRow>(runs.data), [runs.data]);
   const filtered = Boolean(status || typeId || search.trim());
   /* A truncated search presented as a complete one is a silent cap, so the

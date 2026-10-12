@@ -126,10 +126,21 @@ describe('the portfolio board and the server’s rollup cap', () => {
     expect(meta).toMatch(/first 3 programs/);
   });
 
-  it('the reply above the board also says it is the first N, not all of them', async () => {
+  /* NOT "the highest-ranked": fetchOrgPrograms selects the cap with no ORDER BY,
+     so calling them a top slice would promise a selection the query never makes
+     and read as "nothing worse exists". */
+  it('the reply above the board says there are more, and that these are not ranked', async () => {
     await openBoard(true, 3);
     const result = await screen.findByTestId('rc-find-result');
-    expect(result.textContent ?? '').toMatch(/first 3 programs/);
     expect(result.textContent ?? '').toMatch(/there are more/);
+    expect(result.textContent ?? '').toMatch(/not a ranked selection/);
+    expect(result.textContent ?? '').not.toMatch(/highest-ranked|by the server's ranking/);
+  });
+
+  it('the board note does not claim the shown programs are the worst ones', async () => {
+    await openBoard(true, 3);
+    const note = await screen.findByTestId('ro-port-truncated');
+    expect(note.textContent ?? '').toMatch(/without an ordering/);
+    expect(note.textContent ?? '').not.toMatch(/highest-ranked/);
   });
 });

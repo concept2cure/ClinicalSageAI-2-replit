@@ -112,9 +112,29 @@ export function PanelAlert({ note }: { note: string | null }) {
  * `liveGetOrNull` unwraps the project's `{ data: rows }` envelope, so the hook
  * normally hands over a bare array; a route that answers the envelope
  * unchanged is tolerated rather than rendered as empty.
+ *
+ * THIS IS NOT A SHAPE CHECK, and a caller must not rely on it as one. A 200
+ * whose payload is not a list at all — version skew, a nested envelope, an
+ * error body — returns `[]` here, which a panel would render as "none yet".
+ * Pass {@link isRowList} as `useLiveData`'s guard so a shape mismatch becomes
+ * the panel's error state instead. That is what the guard parameter is for
+ * (dataConnect.tsx), and leaving it off is how a failed read reads as an empty
+ * one (CLAUDE.md: an error is never rendered as an empty result).
  */
 export function rowsOf<T>(data: unknown): T[] {
   if (Array.isArray(data)) return data as T[];
   const inner = (data as { data?: unknown } | null)?.data;
   return Array.isArray(inner) ? (inner as T[]) : [];
+}
+
+/**
+ * `useLiveData` guard for a list read: the payload must be an array, or the
+ * envelope's `data` must be. Anything else is a shape mismatch, which the hook
+ * reports as an error rather than handing over a payload a panel would show as
+ * emptiness.
+ */
+export function isRowList(payload: unknown): payload is unknown[] {
+  if (Array.isArray(payload)) return true;
+  const inner = (payload as { data?: unknown } | null)?.data;
+  return Array.isArray(inner);
 }

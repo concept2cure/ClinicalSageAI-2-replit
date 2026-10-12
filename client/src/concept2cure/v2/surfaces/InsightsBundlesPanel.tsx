@@ -28,7 +28,7 @@ import {
   whenText,
   type BundleRow,
 } from './insightsLibraryModel';
-import { PanelAlert, PanelHead, StatusTag, rowsOf } from './insightsLibraryShared';
+import { PanelAlert, PanelHead, StatusTag, isRowList, rowsOf } from './insightsLibraryShared';
 
 function BundleCard({ bundle, onExport }: { bundle: BundleRow; onExport: () => void }) {
   return (
@@ -107,7 +107,7 @@ export function BundlesPanel({
   onClearPending: () => void;
 }) {
   const [attempt, setAttempt] = useState(0);
-  const bundles = useLiveData<unknown>('/api/report-os/bundles', ['/api/report-os/bundles', attempt]);
+  const bundles = useLiveData<unknown>('/api/report-os/bundles', ['/api/report-os/bundles', attempt], isRowList);
   const rows = useMemo(() => rowsOf<BundleRow>(bundles.data), [bundles.data]);
 
   const [name, setName] = useState('');

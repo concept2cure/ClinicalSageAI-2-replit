@@ -40,6 +40,7 @@ import {
   PanelHead,
   ScheduleTruthNote,
   ViewOnlyNote,
+  isRowList,
   rowsOf,
   type LibraryReportType,
 } from './insightsLibraryShared';
@@ -288,7 +289,7 @@ export function SchedulesPanel({
   onSaved: (msg: string) => void;
 }) {
   const [attempt, setAttempt] = useState(0);
-  const subs = useLiveData<unknown>('/api/insights/subscriptions', ['/api/insights/subscriptions', attempt]);
+  const subs = useLiveData<unknown>('/api/insights/subscriptions', ['/api/insights/subscriptions', attempt], isRowList);
   const rows = useMemo(() => rowsOf<SubscriptionRow>(subs.data), [subs.data]);
   const offerable = useMemo(() => schedulableTypes(types), [types]);
 

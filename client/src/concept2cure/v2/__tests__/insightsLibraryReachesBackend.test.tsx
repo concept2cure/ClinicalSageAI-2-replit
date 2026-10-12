@@ -154,8 +154,11 @@ describe('Run history — GET /api/report-os/runs', () => {
     const table = await screen.findByRole('table');
     expect(within(table).getByText('Executive Readiness Digest')).toBeTruthy();
     expect(within(table).getByText('eTMF Completeness & Gap Pack')).toBeTruthy();
-    // A sealed run says so; "Final" alone would not distinguish it from a draft.
-    expect(within(table).getByText('Final — sealed')).toBeTruthy();
+    /* "Final" and not "Final — sealed": this table never reads /runs/:id/seal,
+       so calling a row sealed would assert a verification this screen has not
+       performed. The run's evidence disclosure is where the seal is checked. */
+    expect(within(table).getByText('Final')).toBeTruthy();
+    expect(table.textContent ?? '').not.toMatch(/Final — sealed/);
   });
 
   it('a run with no measured confidence says so, and never reads as 0%', async () => {
@@ -412,15 +415,27 @@ describe('the run search does not present a truncated answer as a complete one',
     );
   });
 
-  it('says nothing when the window came back unfilled — the search really was complete', async () => {
+  /* THE CASE THE FIRST VERSION OF THIS MITIGATION MISSED. The route filters in
+     memory after the SQL limit and returns only the matches, so a search that
+     matched 2 of the newest 500 runs returns 2 rows. Gating the caveat on
+     `loaded < RUNS_WINDOW` therefore suppressed it exactly when the reader most
+     needed it: two results, and no hint that nothing older had been looked at. */
+  it('still says what the search reached when only a few rows matched', async () => {
     await renderCanvas();
     await openTab(/Run history/);
     await screen.findByRole('table');
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'etmf' } });
-    // Two rows came back, far below the window: every run was searched.
     await waitFor(() =>
       expect(calls('GET', '/api/report-os/runs').some(([, u]) => String(u).includes('search=etmf'))).toBe(true),
     );
+    const caveat = await screen.findByTestId('rl-runs-caveat');
+    expect(caveat.textContent ?? '').toMatch(new RegExp(`${RUNS_WINDOW} most recent runs only`));
+  });
+
+  it('says nothing at all when no search or ordering is in play', async () => {
+    await renderCanvas();
+    await openTab(/Run history/);
+    await screen.findByRole('table');
     expect(screen.queryByTestId('rl-runs-caveat')).toBeNull();
   });
 
@@ -430,7 +445,7 @@ describe('the run search does not present a truncated answer as a complete one',
      worth not leaving behind. The panel alone is the cheapest render that
      still proves the sentence reaches the DOM; runsSearchCaveat's own test
      below covers the boundary logic. */
-  it('says what the search covered when the window came back full', async () => {
+  it('says what the search reached when the window came back full', async () => {
     const many = Array.from({ length: RUNS_WINDOW }, (_, i) => ({ ...RUNS[0], id: 1000 + i }));
     apiRequest.mockImplementation(async () => ok({ data: many }));
     render(
@@ -442,11 +457,16 @@ describe('the run search does not present a truncated answer as a complete one',
     expect(caveat.textContent ?? '').toMatch(/an older run that matches is not shown/);
   });
 
-  it('runsSearchCaveat is silent unless a search or sort could actually be partial', () => {
+  it('runsSearchCaveat speaks whenever a search is bounded, and only then', () => {
+    // No search and no ordering: nothing to qualify.
     expect(runsSearchCaveat(RUNS_WINDOW, { searching: false, sorted: false })).toBeNull();
-    expect(runsSearchCaveat(10, { searching: true, sorted: false })).toBeNull();
+    // THE REGRESSION GUARD: a search matching few rows is still window-bounded.
+    expect(runsSearchCaveat(3, { searching: true, sorted: false })).toMatch(/most recent runs only/);
+    expect(runsSearchCaveat(0, { searching: true, sorted: false })).toMatch(/most recent runs only/);
     expect(runsSearchCaveat(RUNS_WINDOW, { searching: true, sorted: false })).toMatch(/most recent runs only/);
-    expect(runsSearchCaveat(RUNS_WINDOW, { searching: false, sorted: true })).toMatch(/This ordering covers/);
+    expect(runsSearchCaveat(RUNS_WINDOW, { searching: false, sorted: true })).toMatch(/This ordering reaches/);
+    // It reports how many matched inside the window, without implying a total.
+    expect(runsSearchCaveat(3, { searching: true, sorted: false })).toMatch(/3 matched inside it/);
   });
 });
 

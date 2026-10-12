@@ -186,6 +186,21 @@ the bootstrap already listed.
 | C-9 | `attestation-report.service.ts`'s header says every row will report `UNVERIFIABLE` because the hash-chain migration is not in the set. **Stale:** it is in the set (`migration-set.mjs:1590`), so the chain does start. The permanent split it describes still holds for pre-cutover history. | Comment only. |
 | C-11 | `GET /api/report-os/portfolio/org` is **refused in production**. The prefix `/api/report-os/portfolio` is claimed by one surface only (registry line 37, the AnA Command / Orchestration row), and that surface is not in `launch-scope.ts` — nor is `Orchestration.tsx`'s. So both of its callers sit on surfaces hidden in production *and* the route is out-of-scope there. The reporting surface reaches the rollup only through the reduced `/api/insights-canvas/overview` projection. | Open. Correction to this session's own earlier note, which recorded the callers but read them as reachable. |
 | C-12 | `portfolio/fetch.ts:37` caps the org rollup at `ORG_ROLLUP_CAP = 100` and sets `truncated` when there are more. `truncated` is declared in `Insights.tsx:202` and **never rendered anywhere**, so programs beyond 100 are silently excluded from `avgReadiness`, the counts and the blocker totals. A third silent cap, alongside C-1 and C-6. | Open. |
+| C-14 | **The j8 defect survived in the scheduling path.** `scheduling/worker-register.ts` called `computeInitialRun` for every subscription, passing the type as an `explicitRegistryId` that `orchestrator.ts` declares and never reads — exactly what `report-engine.ts`'s header describes closing for `POST /runs`: "a report claiming an analysis nothing performed". So a schedule over any of the sixteen domain registers computed the readiness digest and stamped it with the register's name. The path had no caller until the Schedules screen gave it one, which is how it surfaced. | **Fixed.** The sweep now dispatches on `reportEngineFor` exactly as the route does, and a type no engine computes throws so the item fails rather than substituting the digest. Seven tests; six fail on the old code. |
+| C-15 | The run-search caveat **could not fire when it mattered**. `GET /runs` returns only the matches, so the row count carries no information about the window — and gating the sentence on `loaded < RUNS_WINDOW` suppressed it exactly when a search matched a handful inside a 500-row window. | **Fixed.** The caveat is unconditional while a search is active and reports how many matched inside the window. |
+| C-16 | The portfolio truncation note claimed the shown programmes were "the highest-ranked ones, by the server's ranking". `fetchOrgPrograms` selects `ORG_ROLLUP_CAP + 1` rows with **no `ORDER BY`**; `attentionRanked` sorts only within whatever hundred came back, so the programmes needing most attention can be entirely outside the board. | **Fixed.** It now says the selection is unordered, so it cannot read as "nothing worse than this exists". |
+| C-17 | A failed bundle export got the **success toast** — `fireToast(out.text)` defaults to tone `ok`, drawing a green check beside "No file saved — Exporting this bundle requires the enterprise plan". `toast.tsx`'s own header names this defect, and `exportRep` beside it already passed the tone. | **Fixed.** |
+| C-18 | Four list reads passed no `useLiveData` guard, so `rowsOf` turned any non-list 200 (version skew, a nested envelope, an error body) into `[]` — rendering "No reports have been run yet" for a failed read. | **Fixed** with an `isRowList` guard on all four, so a shape mismatch becomes the panel's error state. |
+| C-19 | Two **invented status vocabularies**. `RUN_STATUS_LABEL` offered queued/running/failed, which nothing writes, and omitted `completed`, which `POST /runs` writes for a clean run — so the filter had four dead options and a clean run rendered as a raw lowercase word. `DEPENDENCY_STATUS_LABEL` was keyed to ok/fresh/stale/blocked/error while the providers emit ready/partial/missing, so every healthy provider rendered raw in the amber draft hue. | **Fixed**, both read off the writers. |
+| C-20 | A run's row read **"Final — sealed"** from `status` alone, in a table that never reads `/runs/:id/seal` — so a final run whose seal mismatches read as sealed. This module's own SECURITY-8 note is against exactly that. | **Fixed:** the table says "Final"; the seal is claimed only where it is checked. |
+| C-21 | §11.50(a)'s three elements (printed name, date and time, meaning) were omitted when the record did not carry them, so a row with a signer and a time but a null `signature_meaning` rendered two lines and read as a complete manifestation. | **Fixed:** on a sealed run all three always render, reading "Not recorded" when absent; non-§11.50 rows are still omitted. |
+| C-22 | The attestation claimed it "recomputes every entry's hash" and that INTACT meant "nothing altered or removed". The service compares **stored** `previous_hash` against the prior row's **stored** `record_hash`; it never re-derives a hash, and the trigger's recipe does not cover before/after values. | **Fixed:** the copy claims chain continuity over `audit_events` and nothing about entry contents. Making the stronger claim true is a backend change — open. |
+| C-23 | The attestation said each pull "is recorded on the audit trail". The route returns the signed report even when that row fails to write, signalling it in an `X-Audit-Trail-Status` header that `apiCall` does not expose. | **Fixed** by not claiming it; exposing the header is open. |
+| C-24 | `canRun` (owners, admins, managers, approvers, platform admins) is wider than the attestation route's `isAdmin` (admin, owner), so a manager gets a 403. | **Partly fixed:** the copy names the right roles and the 403 reads as a role refusal. Removing the doomed click needs a server-derived permission, as `GOVERNED_WRITE_PERMISSION` and `REPORT_FINALIZE_PERMISSION` were done — the client must not mirror a role list. Open. |
+| C-25 | **A tamper verdict was hidden.** `viewOf` sets `sealed` from the run's *current* status, so a run the chain records as finalized whose `report_runs.status` was later rewritten returns `sealed: false` with `verdict: 'mismatch'`. The evidence panel tested `!sealed` first and said the run carried no seal — the opposite of what the server found, in the one case the panel exists to surface. The suite's own fixture (`{...INTACT, sealed: false}`) was a shape the server never returns, which masked it. | **Fixed,** with the real fixtures and a test that fails on the old ordering. |
+| C-26 | Schedules still claim more than the sweep does in several ways beyond C-14: `POST /subscriptions` has no entitlement check and the sweep skips one, so a Standard-plan org can create an "Active" schedule that can never fire; `isDue` anchors a null `lastRunAt` at the epoch, so a new schedule fires on the next sweep whatever its cadence while `nextRunAt` shows a future date; and the sweep persists no run, so a scheduled report never appears in Run history. | Open — these are backend behaviours; the panel's note states what it can. |
+| C-27 | Five reads use fixed "could not be read" copy and never consult `useLiveData`'s `status`, so a 403 or an expired session offers a retry that cannot succeed. | Open. |
+
 | C-13 | `insightsReportsRunWhatTheyName.test.tsx` ("a pack lists only the types an engine computes") fails intermittently **under CPU contention**, not on its own: it passed 3/3 run alone and 195/195 in a clean batch, and failed roughly 1 in 3 full-batch runs on this 4-core container. Its `waitFor(.ro-pack-grid)` is bounded by the global `asyncUtilTimeout: 5000` (`tests/setup.ts:52`) and the canvas render exceeds it when workers compete. Pre-existing fragility rather than a correctness defect; adding suites raises its failure rate, which is how it was noticed. Not "fixed" by inflating a timeout in a test this work does not own. | Open — needs either a cheaper canvas mount in that suite or a per-assertion budget. |
 | C-10 | **37 of 43** `*-metrics.ts` services are dead code — no endpoint and no caller. The apparent "40 metrics services with no UI" is largely not a UI gap. | Open — deletion needs the Working-agreement history search. |
 
@@ -234,6 +249,29 @@ inspection/483 pack (the last four do **not** deploy yet).
 tamper-evidence monitoring log (nothing persisted on success).
 
 ---
+
+## 5a. The second pass, and what reviewing my own work found
+
+The three tranches above were then put through two of the launch definition's own
+lenses — honest state and Part 11 UX — against the diff rather than the surface.
+They returned 14 further findings, C-14 to C-27, **ten of them in the work this
+session had just shipped**. Two are worth naming:
+
+- **C-14** is the most serious thing this review found anywhere. Giving the
+  scheduling path a screen exposed that it still carried the QA 2026-10-08 j8
+  defect the route had been fixed for: a scheduled domain register computed the
+  readiness digest and stamped it with the register's name. A capability with no
+  caller cannot be observed to be wrong, which is the same reason the coverage
+  gap itself went unnoticed — and an argument for closing such gaps rather than
+  leaving routes unreached.
+- **C-25** is the inverse failure in the new evidence panel: the server detects a
+  rewritten `report_runs.status`, and the panel discarded that verdict and said
+  the run carried no seal. Its own test fixture used a shape the server cannot
+  return, so the suite agreed with it.
+
+Both were found by reading the backend against the UI, not by running it. Neither
+would have failed a test, because the tests encoded the same misunderstanding as
+the code.
 
 ## 6. Why this was invisible, and the gate that would have caught it
 
