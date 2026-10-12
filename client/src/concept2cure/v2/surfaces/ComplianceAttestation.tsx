@@ -30,6 +30,9 @@
  */
 import React, { useCallback, useRef, useState } from 'react';
 
+import { canAttestAuditTrail } from '@shared/constants/permissions';
+import { useAuthUser } from '@/services/portal/authService';
+
 import { I } from '../icons';
 import { apiCall, apiErrorText } from '../apiCall';
 import { ErrorState } from '../dataConnect';
@@ -241,31 +244,38 @@ function Result({ report, onSave }: { report: AttestationReport; onSave: () => v
  * Not run on mount: it walks the whole chain and records an audit row for every
  * pull, so it is an action a reader takes, not a side effect of opening a page.
  *
- * `canRun` is the catalog's own verdict for this member (owners, admins and
- * managers). A member without it is TOLD rather than offered a control the
- * server will refuse — the same rule the eight reports beside this one follow,
- * and the reason complianceReports.test.tsx asserts no control matching /^Run/
- * appears for a reader. The route's own gate is narrower still (administrators
- * only), so a manager can see the control and be refused; that refusal is
- * rendered as a refusal, not as an outage.
+ * `canRun` is the catalog's reader verdict for this member; the control itself
+ * is gated on the SERVER-DERIVED attestation permission, which is narrower. A
+ * member without it is TOLD rather than offered a control the server will
+ * refuse — the same rule the eight reports beside this one follow, and the
+ * reason complianceReports.test.tsx asserts no control matching /^Run/ appears
+ * for a reader.
  */
 export function AuditAttestation({ canRun }: { canRun: boolean }) {
-  /* WHO SEES THE CONTROL, AND WHY IT IS STILL WIDER THAN THE ROUTE.
-     `canRun` is the catalog's reader verdict — owners, admins, managers,
-     approvers and platform administrators (AUDIT_REPORT_READERS). The
-     attestation route is narrower: `isAdmin` in routes/tenant-export.ts admits
-     admin and owner only. So a manager can press this and be refused.
-     The client cannot close that gap correctly on its own:
-     shared/constants/permissions.ts states the rule — the server derives a
-     permission from the same set its guard reads and "the client mirrors no
-     role list", because mirroring one is how a viewer came to be offered four
-     controls the server refused. Neither GOVERNED_WRITE_PERMISSION nor
-     REPORT_FINALIZE_PERMISSION (owner/admin/manager) matches admin|owner.
-     So until the session derives an attestation permission the same way, the
-     control stays on `canRun`, the copy names the roles that can actually use
-     it, and the 403 is rendered as the role refusal it is rather than an
-     outage. Recorded as B4 in the 2026-10-11 coverage review. */
-  const mayAttest = canRun;
+  /* WHO SEES THE CONTROL (coverage review C-24, closed 2026-10-12).
+     This used to be `const mayAttest = canRun` — the catalog's READER verdict:
+     owners, admins, managers, approvers and platform administrators
+     (AUDIT_REPORT_READERS). The attestation route is narrower: admin and owner
+     only. So a manager was offered this control and got a 403 after the click.
+     The comment that stood here said the client could not close the gap
+     correctly on its own, and that was right: shared/constants/permissions.ts
+     states the rule — the server derives a permission from the same set its
+     guard reads and "the client mirrors no role list", because mirroring one is
+     how a viewer came to be offered four controls the server refused. Neither
+     GOVERNED_WRITE_PERMISSION nor REPORT_FINALIZE_PERMISSION (owner/admin/
+     manager) matches admin|owner, so there was no permission to read.
+     There is now: AUDIT_ATTEST_PERMISSION, derived in
+     `sessionPermissions` from AUDIT_ATTEST_ROLES — the same list
+     routes/tenant-export.ts admits. Reading the audit trail and ATTESTING to it
+     are different acts and the server always treated them so; the client now
+     does too.
+     BOTH are required: `canRun` keeps this screen consistent with the eight
+     reports beside it (a reader is told, not offered), and the permission is the
+     act's own gate. An older session with no `permissions` array offers the
+     control, as the two precedents do — the server still refuses, and
+     withholding a writer's control on a guess is the worse failure. */
+  const authUser = useAuthUser();
+  const mayAttest = canRun && canAttestAuditTrail(authUser);
   const [state, setState] = useState<State>({ k: 'idle' });
   const alive = useRef(true);
   React.useEffect(() => () => { alive.current = false; }, []);
