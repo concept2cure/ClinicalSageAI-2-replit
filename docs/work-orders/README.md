@@ -771,6 +771,7 @@ unchanged. Re-measure before relying on it for anything finer than that.
 | created by a file already in the set, yet absent | **0** |
 | created by SQL on no applier — *looks* listable | 4 |
 | created by nothing anywhere in the repo | 57 |
+| **D5 / D7 — the package creator learns before signing, on Gateway Transmittals.** The Dispatch tab warns a sequence's creator in advance (2026-10-05); transmit to an agency refuses a package's creator only after the password. The Transmit form's package picker now marks and disables a package this user created or that has no recorded creator, from a dry-run of `assertTransmitterIndependent` itself (no second copy of the rule). `governed-transmit-checks.ts` (a dry-run wrapper only), `mdx-submission-gateway.ts` (one GET route), `C2CForm.tsx` (optional `disabled` on a select option), `GatewayTransmittals.tsx` (the transmit picker), their tests. AnA's create-package creator (`command-executor.ts:1969`) waits for that file's 24 h window (closes 2026-10-12 22:07 UTC) | `…session_01VB8JEGfy93uohAfBxSwmYx` | **claimed** 2026-10-12 — row D5 |
 
 **Do not simply list those 4.** Checked one at a time, none should be:
 
