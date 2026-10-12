@@ -115,6 +115,25 @@ export const CALCULATORS: Calculator[] = [
     ],
   },
   {
+    id: 'interim-look',
+    title: 'Interim look — boundary and conditional power',
+    subtitle: 'What a DSMB reads at an interim: the boundary, and whether the trial still wins',
+    path: '/adaptive/interim',
+    about:
+      "Solves the Lan–DeMets boundary at the look you name, then — given the z observed there — the probability the trial still succeeds at the final analysis under three explicitly labelled assumptions (the current trend, the design effect, and H0), plus the Bayesian predictive probability. Conditional power is the B-value form: CP(θ) = 1 − Φ((c − Z_t√t − θ(1 − t))/√(1 − t)). Stateless: nothing is recorded, and nothing here is an interim DECISION — a binding look belongs in the adaptive plan with its own ceremony. With no design effect supplied the H1 figure reads 'not computed', with the reason; it is never defaulted.",
+    fields: [
+      { key: 'informationFractions', label: 'Information fractions', kind: 'numlist', placeholder: '0.5, 1', hint: 'The design\u2019s looks. Strictly increasing, and the last must be 1 \u2014 the final analysis, whose critical value both powers are computed against.' },
+      { key: 'lookNumber', label: 'Look number', kind: 'int', placeholder: '1', hint: 'Which look you are reading, 1-based, into the fractions above.' },
+      { key: 'observedZ', label: 'Observed Z at that look', kind: 'number', placeholder: '2.0', hint: 'The z-statistic from the interim analysis, on the one-sided upper scale.' },
+      { key: 'spendingFunction', label: 'Spending function', kind: 'select', options: SPENDING, hint: "O\u2019Brien\u2013Fleming spends little early; Pocock spends evenly." },
+      { key: 'alpha', label: 'Alpha (one-sided)', kind: 'number', optional: true, placeholder: '0.025', hint: 'Default 0.025.' },
+      { key: 'designEffect.standardizedEffect', label: 'Design effect (d)', kind: 'number', optional: true, placeholder: '0.4', hint: 'The effect the study was powered for, as a standardized difference. With n per arm it gives the H1 conditional power; leave both blank and that figure reads \u201cnot computed\u201d rather than being assumed.' },
+      { key: 'designEffect.nPerArm', label: 'n per arm at the final analysis', kind: 'int', optional: true, placeholder: '120', hint: 'Needed with the design effect: \u03b8 = d\u00b7\u221a(n/2).' },
+      { key: 'prior.mean', label: 'Prior mean on \u03b8', kind: 'number', optional: true, placeholder: '2.8', hint: 'Predictive power only. Both prior fields or neither; omitted means a flat prior.' },
+      { key: 'prior.sd', label: 'Prior SD on \u03b8', kind: 'number', optional: true, placeholder: '1.0', hint: 'Must be positive.' },
+    ],
+  },
+  {
     id: 'multiplicity',
     title: 'Multiplicity adjustment',
     subtitle: 'Family-wise error control across multiple endpoints',

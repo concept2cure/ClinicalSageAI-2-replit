@@ -136,15 +136,32 @@ function fmt(v: number): string {
 type Row = [string, string];
 
 /**
+ * Keys whose value EXPLAINS AN ABSENCE, and so is rendered whatever its length.
+ *
+ * The 120-character cap below exists to keep a long memo (external-control's
+ * renderExternalControlMemo) out of the row table and in the raw view. That is
+ * right for a memo and wrong for the one kind of string a reader cannot do
+ * without. The interim engine reports conditional power under H1 as
+ * `{drift: null, conditionalPower: null, reason: '<148 characters>'}` when no
+ * design effect was supplied — deliberately, rather than defaulting a drift
+ * nobody chose. The null yielded no row and the sentence was over the cap, so
+ * the H1 figure vanished from the table with no explanation anywhere on
+ * screen: a refusal rendered as nothing, which this product forbids.
+ */
+const EXPLAINS_ABSENCE = new Set(['reason', 'note', 'notAssessedReason', 'notComputedReason']);
+
+/**
  * Flatten a result object into labeled scalar rows, descending into nested
  * objects. Arrays of numbers are joined; anything else is left to the raw view
  * so nothing is quietly dropped.
  */
-function scalarRows(value: unknown, prefix = '', depth = 0): Row[] {
+function scalarRows(value: unknown, prefix = '', depth = 0, key = ''): Row[] {
   if (depth > 3 || value === null || value === undefined) return [];
   if (typeof value === 'number') return [[prefix || 'value', Number.isFinite(value) ? fmt(value) : String(value)]];
   if (typeof value === 'boolean') return [[prefix || 'value', value ? 'yes' : 'no']];
-  if (typeof value === 'string') return value.length <= 120 ? [[prefix || 'value', value]] : [];
+  if (typeof value === 'string') {
+    return value.length <= 120 || EXPLAINS_ABSENCE.has(key) ? [[prefix || 'value', value]] : [];
+  }
   if (Array.isArray(value)) {
     if (value.every(v => typeof v === 'number')) {
       return [[prefix, (value as number[]).map(fmt).join(', ')]];
@@ -156,7 +173,7 @@ function scalarRows(value: unknown, prefix = '', depth = 0): Row[] {
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       // Provenance is a reproducibility record, not a result; it has its own row.
       if (k === 'provenance') continue;
-      out.push(...scalarRows(v, prefix ? `${prefix} · ${humanize(k)}` : humanize(k), depth + 1));
+      out.push(...scalarRows(v, prefix ? `${prefix} · ${humanize(k)}` : humanize(k), depth + 1, k));
     }
     return out;
   }
