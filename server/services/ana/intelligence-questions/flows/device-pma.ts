@@ -582,8 +582,8 @@ export function createDevicePmaFlow(): FlowDefinition {
               { value: 'steam', label: 'Steam (Moist Heat) — ISO 17665' },
               { value: 'dry_heat', label: 'Dry Heat — ISO 20857' },
               { value: 'vhp', label: 'Vaporized Hydrogen Peroxide' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'contract_manufacturers',
@@ -862,8 +862,8 @@ export function createDevicePmaFlow(): FlowDefinition {
               { value: 'iso_5840', label: 'ISO 5840 — Cardiovascular Implants — Heart Valves' },
               { value: 'iso_14243', label: 'ISO 14243 — Wear of Total Knee Joint Prostheses' },
               { value: 'iso_7206', label: 'ISO 7206 — Femoral Stems' },
-              { value: 'other', label: 'Other Device-Specific Standards' },
             ],
+            allowOther: { label: 'Other Device-Specific Standards' },
           },
           {
             id: 'shelf_life_testing',

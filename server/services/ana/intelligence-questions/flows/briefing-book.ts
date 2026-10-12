@@ -161,8 +161,8 @@ export function createBriefingBookFlow(): FlowDefinition {
               { value: 'blood_products', label: 'Blood Products Advisory Committee' },
               { value: 'cdrh_panel', label: 'CDRH Device Panel (specify below)' },
               { value: 'joint', label: 'Joint Advisory Committee Meeting' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'cdrh_panel_name',

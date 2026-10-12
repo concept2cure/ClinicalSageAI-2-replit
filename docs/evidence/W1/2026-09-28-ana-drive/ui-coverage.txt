@@ -1,0 +1,151 @@
+D2 — the launch-catalog screens AnA could reach but not operate
+2026-10-11/12, concept2cure-v2, local PostgreSQL (GA demo seed), headless Chromium
+
+── The question ─────────────────────────────────────────────────────────────
+Earlier passes proved AnA could MOVE: navigation, both demonstrations, a held
+action answered by the screen that holds it. None of them asked the next
+question — once she arrives, can she DO anything there?
+
+── The audit ────────────────────────────────────────────────────────────────
+Read from the source with the TypeScript parser, no model involved. Every
+registered action was resolved to the view the shell actually mounts, through
+the client's own alias resolver, and counted against the shipped catalog.
+
+  surface views in the shell                        123
+  launch-catalog surfaces with a view                29
+    AnA can operate                                  16
+    AnA can reach and not touch                      13
+
+The 13: apps, audit-trail, compliance-reports, conversation-thread,
+dispatch-readiness, ectd-compile, insights, onboarding, onboarding-ingest,
+setup, part11-console, identity-console, gateway-transmittals.
+
+Two of them are demonstration stops, so every demonstration ended on a screen
+AnA could not touch — the audit trail is the training tour's last stop and the
+first place an inspector looks.
+
+Also found, and separate: NO navigation target reaches `ectd-compile` or
+`conversation-thread`. eCTD Compile is a shipped Submission Center screen AnA
+could not get to at all. It is now a navigation target.
+
+The other 94 views are outside this release. AnA refuses them out loud ("not
+in this release"), which `launch-scope-on.txt` already proves under
+production's enforcement setting. Giving them actions would be adding
+capability outside the launch catalog, which CLAUDE.md Rule 2 forbids until
+the launch rows are green.
+
+── Three screens have nothing to operate, honestly ──────────────────────────
+Not every blank is a gap. Each of these was read in full and left empty:
+
+  dispatch-readiness   Submission Readiness is a verdict, not a workspace. The
+                       component imports `React, { useMemo }` and holds no
+                       state at all — no tabs, no filters, no selection. Its
+                       two buttons both call ask(), handing a proposal to AnA
+                       in conversation, and the transmit stays behind a Part 11
+                       e-signature. She already publishes the whole gate as
+                       context, so she can explain every blocker on arrival.
+  part11-console       Same shape: a compliance read-out with no view state.
+  setup                A launcher.
+
+A LATENT TRAP found while checking this, worth writing down: every action id
+is namespaced `<surfaceId>.<verb>`, and GOVERNED_VERB_PATTERN matches
+`dispatch` on a word boundary — which `dispatch-readiness.` satisfies. So
+`dispatch-readiness.anything` is refused as governed work, by
+assertUngovernedActionId at build time and resolveSurfaceAction at runtime.
+Verified against the real exported pattern. A future session that adds a
+control to that screen will hit a build failure, not a review comment; it will
+need the nav target renamed (`submission-readiness.*` passes cleanly) or the
+pattern taught to distinguish a surface prefix from a verb.
+
+── What landed in this pass ─────────────────────────────────────────────────
+The audit trail (5) and the apps catalog (1) — the demonstration stop first.
+
+  audit-trail.filter-entries   the kind segment buttons (AdminSurfaces.tsx:1322)
+  audit-trail.search           the search box (:1314)
+  audit-trail.select-entry     a row click (:1447)
+  audit-trail.set-chain-view   the "Hash chain" header button (:1203)
+  audit-trail.close-entry      the drawer's Close button (:1507)
+  apps.show-admin-controls     the header's admin-controls button (:2097)
+
+Every handler drives the same state the named control drives — no second code
+path. Reading only: the signed audit export and enabling a module for the
+organisation are governed acts and stay human ones.
+
+Honest refusals, as the rest of the bus does them:
+  - held (`retry: true`) while the ledger is in flight, answered by the ready
+    signal when it settles;
+  - a failed read says "the hash-chained ledger could not be read … that is
+    not the same as the trail being empty" — an empty table must never read as
+    an empty ledger;
+  - a filter that matches nothing still applies and reports its real count;
+  - a miss on an entry lists the ids that ARE on screen, so she can retry.
+
+The ready signals are gated on the read settling and nothing else, which the
+existing guard (surfaceReadySignal.test.ts) enforces across every screen.
+
+── Tests, seen failing first ────────────────────────────────────────────────
+client/src/concept2cure/v2/__tests__/anaOperatesAuditTrail.test.tsx, 10 tests,
+mounting the real surfaces. With the handler blocks stashed:
+      Tests  8 failed | 2 passed (10)
+The 2 that pass either way assert the REGISTRY's own enum refusal, which is
+not the handlers' work: an out-of-enum value is refused by
+resolveSurfaceAction before the bus is involved, naming the legal set, so a
+bogus value never reaches the screen at all.
+Restored: 10 passed.
+
+── In the browser ───────────────────────────────────────────────────────────
+The battery's new `coverage` scenario drives the actions the way a person's
+request does — AnA is asked, the bus navigates, the screen answers.
+PASS  audit trail: AnA filters the ledger to one kind of event  — selected: E-sign0 — Act result: action_ready. Screen: no report
+PASS  audit trail: AnA runs the search box  — box: "signature" — Act result: action_ready. Screen: no report
+PASS  audit trail: a kind the screen does not have is refused, not guessed  — Act result: needs_parameters — Param "kind" must be one of: all, esign, authoring, review, submission, vault, validation, admin
+PASS  no uncaught page errors
+4/4 passed
+
+── The harness, against the redesigned shell ────────────────────────────────
+Upstream landed ~2,000 commits between the last pass and this one, including
+the conversation-first shell convergence. Three things moved, and the battery
+was repaired for each (no product defect in any of them):
+  - the persistent AnA rail is gone. A working screen now carries an "Ask AnA"
+    control that goes to the conversation destination; the old `railAsk`
+    scenario is now `askFromScreen`, which checks the entry point exists, the
+    ask still drives the screen, and the answer survives the move. Not every
+    screen carries the control (the audit trail does not), so the harness
+    falls back to the conversation destination.
+  - a conversation now has its own path segment
+    (/concept2cure/conversation-thread/<threadId>), so paths are compared by
+    prefix.
+  - a long demonstration virtualises, so the rendered tail no longer holds
+    every stop. The narration check reads the conversation's saved message —
+    what the person scrolls back to — instead of the visible tail.
+Re-verified on the merged tree: Live Drive navigation reaches Biostatistics in
+2.8 s, and the training demonstration narrates all 14 of its stops (it gained
+two upstream), each in its own paragraph.
+
+Also needed before any of this would run: the local database was 12 days
+stale and login failed outright against it (`public.user_id_for_email` did not
+exist). `npm run db:migrate:deploy` fixed it.
+
+── Still owed ───────────────────────────────────────────────────────────────
+Seven screens are surveyed and specified but NOT yet wired, so their actions
+are deliberately NOT in the registry: a registered action with no handler is a
+dead end — AnA is told she can do it, tries, and the bus refuses. The specs
+(id, params with enums, the exact setter, the control each mirrors, the
+refusals) are ready for the next pass:
+  ectd-compile (3)        set-region, set-submission-type, load-run
+  submission-gateway (2)  show-status, reload-findings
+  compliance-reports (3)  select-report, set-period, reload-catalog
+  insights (3)            find-report, open-pack, preview-plan
+  identity-console (1)    reload-directory
+  onboarding (1)          open-step
+  onboarding-ingest (1)   start-over
+One proposal was rejected on product grounds rather than deferred:
+compliance-reports.show-reviews opens the "Record review" ceremony, and
+beginning a Part 11 signing flow is not view state.
+
+The conversation screen's own document list (open a draft beside the chat, 5
+proposed actions) needs the chat itself to become a navigation target, since
+an action's surface must be one. That is a shell decision taken mid-
+convergence, so it is left to the founder rather than made here.
+
+A real model is still the one thing no local run can supply.

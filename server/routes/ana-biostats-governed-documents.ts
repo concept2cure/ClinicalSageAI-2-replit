@@ -26,7 +26,7 @@
  * Field provenance (regulated product — nothing is fabricated):
  *   id      ← concept2cure_artifacts.artifact_id              (real external id)
  *   doc     ← metadata.statisticalDocumentType                (real; maps 1:1 to
- *             the surface DocDef ids in BiostatDocs.REGISTRY)
+ *             the DOC_REGISTRY ids in surfaces/Biostatistics.tsx)
  *   status  ← concept2cure_artifacts.status                   (real: draft |
  *             review | approved | locked; surface renders approved→ok, else→warn)
  *   study   ← projects.name (joined on project_id)            (real; defensive

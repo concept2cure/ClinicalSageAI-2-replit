@@ -113,6 +113,26 @@ async function completeModule1(sequenceId: number): Promise<void> {
   }
 }
 
+/**
+ * The Module 3 an original IND must carry: 21 CFR 312.23(a)(7) asks the initial
+ * IND for its chemistry, manufacturing and controls information, and 312.23(b)
+ * lets it be incorporated by reference instead. dispatch-readiness.ts requires
+ * the headings 3.2.S and 3.2.P, satisfied by a leaf AT or UNDER each
+ * (`isAtOrUnder`), so a leaf at the heading itself is enough.
+ *
+ * Same reason completeModule1 exists, one regulation later: a sequence meant to
+ * validate cleanly has to carry what the regulation requires of it. Placing
+ * these is not a way around the rule — the case below proves a sequence missing
+ * them is still refused, and names them.
+ */
+const IND_MODULE3 = ['3.2.S', '3.2.P'];
+async function completeModule3(sequenceId: number): Promise<void> {
+  for (const code of IND_MODULE3) {
+    const body = `Module 3 ${code} body.`;
+    await rawLeaf(sequenceId, await doc(body), sha(body), code);
+  }
+}
+
 const place = (sequenceId: number, documentId: number, sectionCode = '2.5') =>
   upsertLeaf(
     { sequenceId, sectionCode, title: 'Clinical Overview', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId, reason: 'Approved overview for this sequence' },
@@ -149,6 +169,7 @@ describe('Validated is reached only through a validation with no errors (finding
   it('refuses Validated while the validation finds an error, names it, and changes nothing', async () => {
     const seq = await sequence('assembling');
     await completeModule1(seq);
+    await completeModule3(seq);
     await rawLeaf(seq, await doc(''), null); // an empty document: it cannot be assembled
 
     const err = await transitionSequence(seq, 'validated', CTX).catch((e) => e);
@@ -164,6 +185,7 @@ describe('Validated is reached only through a validation with no errors (finding
   it('marks a sequence Validated when its validation finds no error, and records the verdict', async () => {
     const seq = await sequence('assembling');
     await completeModule1(seq);
+    await completeModule3(seq);
     await rawLeaf(seq, await doc('Approved clinical overview body.'), sha('Approved clinical overview body.'));
 
     const moved = await transitionSequence(seq, 'validated', CTX);
@@ -184,9 +206,15 @@ describe('Validated is reached only through a validation with no errors (finding
     const err = await transitionSequence(seq, 'validated', CTX).catch((e) => e);
 
     expect(err.code).toBe('VALIDATION_FAILED');
-    expect(err.message).toMatch(/found 7 errors/); // 1.1, 1.2, 1.3, 1.12.14, 1.14.4.1, 1.14.4.2, 1.20
+    // 7 Module 1 (1.1, 1.2, 1.3, 1.12.14, 1.14.4.1, 1.14.4.2, 1.20) + 2 Module 3
+    // (3.2.S, 3.2.P), the latter added when 21 CFR 312.23(a)(7) joined the rule.
+    expect(err.message).toMatch(/found 9 errors/);
     expect(err.message).toContain('1.1: Required section 1.1 has no leaf in this sequence.');
     expect(err.message).toContain('original IND application');
+    // The CMC requirement is named, with the regulation and both ways to clear it.
+    expect(err.message).toContain('3.2.S');
+    expect(err.message).toContain('21 CFR 312.23(a)(7)');
+    expect(err.message).toContain('21 CFR 312.23(b)');
     expect(await row(seq)).toEqual({ status: 'assembling', validation_status: null });
   });
 });
@@ -199,6 +227,7 @@ describe('a document not yet approved: a warning at Validated, a refusal at free
   async function validatedWithDraft(): Promise<number> {
     const seq = await sequence('assembling');
     await completeModule1(seq);
+    await completeModule3(seq);
     await rawLeaf(seq, await doc('Draft overview body.', 'draft'), sha('Draft overview body.'));
     return seq;
   }
@@ -247,6 +276,7 @@ describe('a leaf change returns a Validated sequence to Assembling (finding 3)',
   it('placing a leaf into a Validated sequence reverts it, clears the verdict, and says so', async () => {
     const seq = await sequence('assembling');
     await completeModule1(seq);
+    await completeModule3(seq);
     await rawLeaf(seq, await doc('Body one.'), sha('Body one.'));
     await transitionSequence(seq, 'validated', CTX);
     const second = await doc('Body two.');
@@ -263,6 +293,7 @@ describe('a leaf change returns a Validated sequence to Assembling (finding 3)',
   it('placing the same document again changes nothing, so the sequence stays Validated', async () => {
     const seq = await sequence('assembling');
     await completeModule1(seq);
+    await completeModule3(seq);
     const d = await doc('Body three.');
     await place(seq, d);
     await transitionSequence(seq, 'validated', CTX);
@@ -277,6 +308,7 @@ describe('a leaf change returns a Validated sequence to Assembling (finding 3)',
   it('removing a leaf from a Validated sequence reverts it, and the removal records its reason (finding 5)', async () => {
     const seq = await sequence('assembling');
     await completeModule1(seq);
+    await completeModule3(seq);
     const keep = await place(seq, await doc('Body four.'));
     const extra = await place(seq, await doc('Body five.'), '2.7.2');
     await transitionSequence(seq, 'validated', CTX);
@@ -297,6 +329,7 @@ describe('a governed step is asked before it is signed (finding 1)', () => {
   it('the freeze precheck answers the gate refusal without any signature', async () => {
     const seq = await sequence('assembling');
     await completeModule1(seq);
+    await completeModule3(seq);
     await rawLeaf(seq, await doc('Body six.'), sha('Body six.'));
     await transitionSequence(seq, 'validated', CTX);
 
@@ -332,13 +365,17 @@ describe('a stored Validated stage is checked against the current validation (fi
 
     const a = await assessSequenceDispatchReadiness({ sequenceId: seq, organizationId: CTX.organizationId });
 
-    expect(a.validatedStage).toMatchObject({ holds: false, verdictRecorded: false, errors: 7 });
-    expect(a.validatedStage && !a.validatedStage.holds && a.validatedStage.reason).toMatch(/recorded as Validated, but its validation now finds 7 errors/);
+    // 9: the 7 Module 1 sections plus 3.2.S and 3.2.P, this sequence carrying
+    // only a 2.5 leaf. The count is the point of the case -- the stored stage
+    // does not hold, and the reason says by how much -- so it tracks the rule.
+    expect(a.validatedStage).toMatchObject({ holds: false, verdictRecorded: false, errors: 9 });
+    expect(a.validatedStage && !a.validatedStage.holds && a.validatedStage.reason).toMatch(/recorded as Validated, but its validation now finds 9 errors/);
   });
 
   it('a sequence Validated through the validation holds', async () => {
     const seq = await sequence('assembling');
     await completeModule1(seq);
+    await completeModule3(seq);
     await transitionSequence(seq, 'validated', CTX);
 
     const a = await assessSequenceDispatchReadiness({ sequenceId: seq, organizationId: CTX.organizationId });

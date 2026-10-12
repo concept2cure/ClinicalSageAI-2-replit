@@ -1,0 +1,28 @@
+Why the Coverage (ratchet) job failed, measured rather than inferred
+(2026-10-12, vitest 4.1.7, @vitest/coverage-v8 4.1.7 — the versions CI pins).
+
+Both runs used the flags the CI job uses:
+  npx vitest run --config vitest.config.ts <files> --coverage \
+    --coverage.reporter=json-summary --coverage.reporter=text-summary \
+    --coverage.thresholds.{lines,functions,branches,statements}=0
+
+1. Suite PASSES (one file):
+     exit=0
+     coverage/coverage-summary.json   written (1,239 bytes)
+     text table printed: "Statements : 60.67% ( 54/89 )"
+
+2. Same run plus ONE deliberately failing case:
+     exit=1
+     Test Files  1 failed | 1 passed (2)
+     coverage/coverage-summary.json   NOT written
+     no text table printed
+
+So vitest writes no coverage report at all when any test fails. The ratchet's
+"no coverage summary" failure on 2026-10-11 was downstream of the 25 failing
+tests in the same job, and said nothing about coverage. The gate's own message
+now says this, so the next person does not repeat the investigation.
+
+The gate's logic is unchanged and still discriminates:
+  healthy numbers (53.30/52.70/54.50/46.20)  -> OK
+  lines dropped to 40.00                      -> FAIL, "never re-pin merely to
+                                                 turn a build green"

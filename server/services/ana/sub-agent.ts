@@ -49,6 +49,7 @@ import { notifyObserver } from './agentic-tool-dispatch.js';
 import type { LoopStopDirective } from './agentic-loop.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { RunHoldAnnounce, RunHoldOutcome } from './run-hold.js';
+import { refusalOf } from './tool-trace.js';
 import {
   HARNESS_CHECKS,
   aggregateVerdict,
@@ -403,7 +404,13 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
     callerModule: 'ana-sub-agent',
   };
   const { executeAgenticLoop } = await import('./AnaToolExecutor.js');
-  return executeAgenticLoop(request, {
+  const { runWithRunScope } = await import('../ai-gateway/run-scope.js');
+  /* The child's own run, named as the parent's child. A tool's gateway calls
+     carry no run id of their own (an embedding is one), so the gateway reads
+     the ambient scope: without this the child's embeddings were ledgered as
+     the PARENT's, with no parent link, and the cost read by parent_run_id
+     that ADR-0015 §2 requires before production would have missed them. */
+  return runWithRunScope({ runId, parentRunId: h.parentRunId }, () => executeAgenticLoop(request, {
     maxRounds: CHILD_MAX_ROUNDS,
     progressExtension: 0,
     toolContext: childCtx,
@@ -414,7 +421,13 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
     stopWhen: childStopWhen(run),
     checkpoint: async () => ((await holdFor(run)) ? 'continue' : 'abort'),
     onToolEvent: (e: AgenticToolEvent) => {
-      const ok = !e.errorMessage;
+      /* A handler that cannot do the thing RETURNS `{error}`; it does not
+         throw, and the dispatch sets `errorMessage` only for a throw, a tool
+         that was not offered, or lost input. Judging a step by that alone
+         recorded a failed read as a good one, and the stream then offered it
+         as evidence the answer had been checked against. `refusalOf` is the
+         one judgment of a refusal, and the parent's own path uses it. */
+      const ok = !e.errorMessage && refusalOf(e.result ?? '') === null;
       if (e.phase === 'end') run.steps.push({ round: e.round, tool: e.call.name, input: e.call.input, result: e.result ?? '', ok });
       run.emit({ phase: 'step', runId, step: e.phase, tool: e.call.name, round: e.round, ...(e.phase === 'end' ? { ok } : {}) });
     },
@@ -424,7 +437,7 @@ async function runChildLoop(run: AgentRun, childCtx: ToolContext, readings: Chec
       run.usage.outputTokens += response.usage?.outputTokens ?? 0;
       run.models.push(recordModel(response));
     },
-  });
+  }));
 }
 
 /** Wait out a pause, run the checks (verify), run the child loop, and shape what it did. */

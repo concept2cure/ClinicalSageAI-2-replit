@@ -8,6 +8,11 @@
  * @module server/services/ana/intelligence-questions/validators
  */
 
+import {
+  OTHER_POSITION,
+  OWN_POSITION_MAX_CHARS,
+  otherFieldId,
+} from '../../../../shared/types/intelligence-questions.js';
 import type { QuestionNode, QuestionField } from './types.js';
 import { evaluatePredicate } from './engine.js';
 
@@ -38,6 +43,16 @@ export function validateAnswers(
         errors.push({ fieldId: field.id, message: `${field.label} is required.` });
         continue;
       }
+    }
+
+    /* A position the list did not offer. Judged before the option check, which
+       would otherwise call the person's own answer invalid (founder's
+       directive, 2026-10-12). */
+    const ownPosition = takesOwnPosition(field, value);
+    if (ownPosition) {
+      const own = ownPositionError(field, answers);
+      if (own) errors.push(own);
+      continue;
     }
 
     if (value == null || value === '') continue;
@@ -249,4 +264,51 @@ function flattenAnswers(answers: Record<string, Record<string, unknown>>): Recor
     Object.assign(flat, nodeAnswers);
   }
   return flat;
+}
+
+/** Whether this answer is the person taking a position of their own. */
+function takesOwnPosition(field: QuestionField, value: unknown): boolean {
+  if (value === OTHER_POSITION) return true;
+  return Array.isArray(value) && value.includes(OTHER_POSITION);
+}
+
+/**
+ * Why AnA cannot take this as the person's own position, or null when she can.
+ *
+ * A field with no `allowOther` has a closed list, and the refusal says so:
+ * "not a valid option" would blame the person for an answer the question never
+ * invited. A field that does allow one needs the words, or it records nothing
+ * but the fact that the list was wrong.
+ */
+function ownPositionError(
+  field: QuestionField,
+  answers: Record<string, unknown>,
+): ValidationError | null {
+  if (!field.allowOther) {
+    const listed = (field.options ?? []).map(o => o.label).join(', ');
+    return {
+      fieldId: field.id,
+      message:
+        `${field.label}: ${listed ? `${listed} are` : 'the listed values are'} the only positions this question accepts. ` +
+        'Tell AnA what applies instead and she will take it up as a change to the question.',
+    };
+  }
+  const written = answers[otherFieldId(field.id)];
+  const text = typeof written === 'string' ? written.trim() : '';
+  if (!text) {
+    if (field.allowOther.required === false) return null;
+    return {
+      fieldId: otherFieldId(field.id),
+      message: field.allowOther.prompt
+        ? `${field.allowOther.prompt}`
+        : `${field.label}: say which position you are taking, in your own words.`,
+    };
+  }
+  if (text.length > OWN_POSITION_MAX_CHARS) {
+    return {
+      fieldId: otherFieldId(field.id),
+      message: `${field.label}: ${OWN_POSITION_MAX_CHARS} characters at most here — put the detail in the document, not the answer.`,
+    };
+  }
+  return null;
 }

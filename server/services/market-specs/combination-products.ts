@@ -15,14 +15,29 @@
  * PMOA is not established it recommends a Request for Designation (RFD) rather than
  * guessing — the agency's designation is the authority, not this module.
  *
+ * ONE ENGINE: whether the product is a combination product (21 CFR 3.2(e)) and
+ * which Center leads it (21 CFR 3.2(m), 3.4) are read from the canonical engine,
+ * server/services/combination-products/combination-products-knowledge.ts
+ * (classifyCombinationProduct, determinePrimaryModeOfAction). This module adapts
+ * those answers to the assessment shape served by AnA's assess_combination_product
+ * and the submissions route; it holds no PMOA → Center map of its own.
+ *
  * PURE + DETERMINISTIC: no DB, no network, no LLM.
  *
  * @module server/services/market-specs/combination-products
  */
 
-export type ComponentType = 'drug' | 'biologic' | 'device';
+import {
+  classifyCombinationProduct,
+  determinePrimaryModeOfAction,
+  type ClassifyParams,
+  type ConstituentType,
+  type FdaCenter,
+} from '../combination-products/combination-products-knowledge';
+
+export type ComponentType = ConstituentType;
 export type CombinationType = 'single_entity' | 'co_packaged' | 'cross_labeled';
-export type FdaLeadCenter = 'CDER' | 'CBER' | 'CDRH';
+export type FdaLeadCenter = FdaCenter;
 
 export interface CombinationProductInput {
   /** The constituent component types (e.g. ['drug','device']). */
@@ -31,12 +46,6 @@ export interface CombinationProductInput {
   primaryModeOfAction?: ComponentType;
   combinationType?: CombinationType;
 }
-
-const PMOA_TO_CENTER: Record<ComponentType, FdaLeadCenter> = {
-  drug: 'CDER',
-  biologic: 'CBER',
-  device: 'CDRH',
-};
 
 const CENTER_LABEL: Record<FdaLeadCenter, string> = {
   CDER: 'CDER (Center for Drug Evaluation and Research)',
@@ -71,13 +80,24 @@ function euConsideration(components: Set<ComponentType>): string {
   return 'EU: single-framework product — assessed under the applicable medicines or MDR/IVDR framework for its type.';
 }
 
+/** The canonical engine's 3.2(e) relationship for this module's combination type. */
+function relationshipOf(type: CombinationType | undefined): Pick<ClassifyParams, 'relationship' | 'crossLabeled'> {
+  if (type === 'co_packaged') return { relationship: 'co-packaged' };
+  if (type === 'cross_labeled') return { relationship: 'separately-marketed', crossLabeled: true };
+  return { relationship: 'physically-combined' };
+}
+
 /**
- * Assess a (possible) combination product. Deterministic: ≥2 distinct component
- * types → combination; PMOA → lead center; otherwise recommend an RFD.
+ * Assess a (possible) combination product. Deterministic: combination status from
+ * the canonical 21 CFR 3.2(e) classifier (two or more different article types);
+ * a PMOA that is one of the components → the canonical lead Center; otherwise an RFD.
  */
 export function assessCombinationProduct(input: CombinationProductInput): CombinationProductAssessment {
   const distinct = [...new Set(input.components ?? [])];
-  const isCombination = distinct.length >= 2;
+  const { isCombinationProduct: isCombination } = classifyCombinationProduct({
+    constituentTypes: distinct,
+    ...relationshipOf(input.combinationType),
+  });
   const componentsSet = new Set(distinct);
 
   const considerations: string[] = [];
@@ -89,7 +109,10 @@ export function assessCombinationProduct(input: CombinationProductInput): Combin
       considerations.push('Co-packaged / cross-labeled: each constituent part may also retain its own marketing application; coordinate labeling for combined use.');
     }
     if (input.primaryModeOfAction && componentsSet.has(input.primaryModeOfAction)) {
-      fdaLeadCenter = PMOA_TO_CENTER[input.primaryModeOfAction];
+      fdaLeadCenter = determinePrimaryModeOfAction({
+        constituents: distinct.map((type) => ({ type })),
+        assertedPmoaType: input.primaryModeOfAction,
+      }).leadCenter;
       considerations.push(`PMOA is the ${input.primaryModeOfAction} constituent → ${CENTER_LABEL[fdaLeadCenter]} leads; the other center(s) consult.`);
     } else {
       considerations.push('PMOA not established → file a Request for Designation (RFD, 21 CFR 3.7) so OCP assigns the lead center.');

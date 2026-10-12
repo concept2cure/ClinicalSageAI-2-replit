@@ -42,6 +42,7 @@ import {
   BUNDLE_FORMAT_SET,
 } from '../services/submission-gateways/governed-transmit';
 import { transmitOutcomeNotices } from '../services/submission-gateways/transmit-notices';
+import { transmitIndependenceOf } from '../services/submission-gateways/governed-transmit-checks';
 import {
   recordFiledSequenceRejection,
   FiledSequenceRejectionRefusal,
@@ -139,6 +140,36 @@ router.get('/gateways', async (req: Request, res: Response) => {
     );
   } catch (err) {
     return serverError(res, log, 'list-gateways', err);
+  }
+});
+
+/* ─── GET /api/mdx/gateways/transmit-independence?packageIds=1,2 ──── */
+/**
+ * For each named package: would THIS user's transmission of it pass separation
+ * of duties? Asked of the enforcing check (transmitIndependenceOf), so the
+ * Transmit form can mark a package the user created when it is chosen, instead
+ * of the user learning it after re-authenticating. Informational only — the
+ * transmit route still decides. The lookup is scoped to the caller's
+ * organization, so another tenant's id reads as 'no-creator', exactly like an
+ * id that does not exist: nothing about it is disclosed.
+ */
+const MAX_INDEPENDENCE_IDS = 100;
+router.get('/gateways/transmit-independence', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const userId = getUserId(req);
+  if (userId === null) return orgRequired(res);
+  const raw = typeof req.query.packageIds === 'string' ? req.query.packageIds : '';
+  const ids = [...new Set(raw.split(',').map((x) => x.trim()).filter(Boolean))];
+  if (ids.length === 0 || ids.length > MAX_INDEPENDENCE_IDS || !ids.every((x) => /^\d{1,9}$/.test(x))) {
+    return clientError(res, 422, `packageIds must be 1–${MAX_INDEPENDENCE_IDS} comma-separated package ids`);
+  }
+  try {
+    const verdicts: Record<string, string> = {};
+    for (const id of ids) verdicts[id] = await transmitIndependenceOf(Number(id), orgId, userId);
+    return ok(res, verdicts);
+  } catch (err) {
+    return serverError(res, log, 'transmit-independence', err);
   }
 });
 

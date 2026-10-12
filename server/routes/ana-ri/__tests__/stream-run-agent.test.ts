@@ -288,11 +288,13 @@ describe("(j)-(l) an agent's own outcome", () => {
     expect(r.message).toBe("The agent's result is incomplete: agent: incomplete (round limit).");
     expect(JSON.stringify(h.state.requests[1].messages)).not.toContain('[Adaptation note]');
   });
-  it('(k) an incomplete agent keeps its provenance, and its telemetry row says the call ran', async () => {
+  it('(k) an incomplete agent keeps its provenance, and the ledger says it was cut short', async () => {
     answer = incomplete();
     await turn();
     expect(h.state.post.collectedProvenance).toEqual([{ source: 'pubmed', id: '11111111' }]);
-    expect(h.state.toolRunLogs.find(l => l.toolName === 'run_agent')?.status).toBe('success');
+    // Not rounded to 'success': the ledger and the record the person can open
+    // must say the same thing (review 2026-10-11).
+    expect(h.state.toolRunLogs.find(l => l.toolName === 'run_agent')?.status).toBe('incomplete');
   });
   it('(l) a completed verify is a success whatever its verdict', async () => {
     answer = agentResult({ agent: { runId: 'a', role: 'verify', objective: 'x' }, verdict: 'inconclusive' });

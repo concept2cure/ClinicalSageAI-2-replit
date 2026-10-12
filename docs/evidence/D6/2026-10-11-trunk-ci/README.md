@@ -143,3 +143,28 @@ The test now follows it, and keeps its teeth:
 8 of 8 pass. This was a stale test, not a fail-open defect: `resolveEnabled`
 and `readFeatureState` both fail closed, and the row carrying a per-upload cost
 (`ana.vault_chunking`) still waits for an operator.
+
+## What CI confirmed on `e29154f09` (2026-10-12)
+
+That commit carries this session's purge entry, the ten test fixes and the
+toggle fix. CI on it:
+
+| Job | Before | On `e29154f09` |
+|---|---|---|
+| `Analyze (Semgrep)` | green | **green** — the baseline resolver from `35f688fde` still picks a recent in-history commit, 499+ commits on |
+| `Blank DB Provisioning + Deploy Migration` | red (purge ratchet) | **green** — confirms `stats_computation_runs` in `PURGE_CHILD_TABLES` |
+| `Lint` | red on 5 steps | **red on 1 NEW step only** — all five of 2026-10-11 green; `ci:surface-text-ramp` stale from `0ce0d0bb8`, regenerated here |
+| `Integration Tests` | red on steps 10 and 12 | **step 10 (the real-database tier) green**, step 12 still red |
+| `Coverage (ratchet)` | red | red, and now explained: see `coverage-ratchet-measured.txt` |
+| `Test` | red (10 files) | still running when this was written |
+
+### `Integration Tests` step 12
+
+`npm test` with `RUN_INTEGRATION_TESTS=true` — the same broad suite the `Test`
+job runs, plus the cases that env var un-skips. Those cases are three files
+(`poolInstrumentation.integration`, `rlsPolicy.integration`,
+`tests/integration/innovation-platform`), and they PASS locally against the
+deploy-shaped database: 17 passed, 58 skipped, exit 0. So what remains red in
+step 12 is shared with the `Test` job rather than integration-only, and its own
+log line (205,020) is past the retrievable window. The `Test` job's result on
+this commit will name the files; it had not finished when this was written.

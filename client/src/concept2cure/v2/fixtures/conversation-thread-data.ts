@@ -64,6 +64,14 @@ export interface CtTurn {
   contextUsed?: string[];
   /** What went wrong around the answer (a failed save, a timeout), shown under it. */
   warnings?: string[];
+  /**
+   * The question AnA is asking, when this turn asked one: the interview
+   * engine's own node, with the positions it resolved for this programme
+   * (founder's directive, 2026-10-12). Drawn by AnaQuestionCard.
+   */
+  question?: import('@shared/types/intelligence-questions').IntelligenceQuestionEvent;
+  questionSessionId?: string | null;
+  questionFlowState?: unknown;
   /** The steers the person sent mid-run that AnA accepted, in order, shown under the answer they shaped. */
   interjections?: string[];
   /** The CRL/RTF pre-mortem artifact, when the turn assembled one (CrlPremortemPanel). */
