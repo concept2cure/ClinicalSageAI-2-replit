@@ -68,17 +68,17 @@ export const ATTESTATION_VERDICT: Readonly<
   Record<string, { label: string; meaning: string; assuring: boolean }>
 > = {
   INTACT: {
-    label: 'Intact',
+    label: 'Links intact',
     meaning:
-      'Every audit entry in the attested period carries a hash, and every link in the chain recomputes to ' +
-      'the value recorded before it. Nothing in that period has been altered or removed.',
+      'Every audit entry in the attested period carries a hash, and each one names the hash of the entry ' +
+      'before it, with no link out of step.',
     assuring: true,
   },
   BROKEN: {
-    label: 'Broken',
+    label: 'Links broken',
     meaning:
-      'At least one link in the hash chain does not recompute to the value recorded before it. The trail ' +
-      'has been altered, or the records are corrupt. The affected entries are listed below.',
+      'At least one entry does not name the hash of the entry before it. The chain has been altered, or ' +
+      'the records are corrupt. The affected entries are listed below.',
     assuring: false,
   },
   EMPTY: {
@@ -225,9 +225,11 @@ function Result({ report, onSave }: { report: AttestationReport; onSave: () => v
         </button>
       </div>
       <p style={{ ...muted, marginTop: 8, lineHeight: 1.5 }}>
-        The saved file is signed over every field but the signature itself, so an auditor can confirm the
-        platform issued it and that it has not been edited since. Pulling this report is recorded on the audit
-        trail with the verdict it returned.
+        The saved file carries a platform seal over every field but the seal itself — an HMAC the platform
+        holds the key to, so it is verified by the platform operator on request, not independently by a
+        recipient. Each pull is meant to leave a record on the audit trail naming who asked and the verdict
+        returned; this screen cannot confirm that the record was written, so check the audit trail itself if
+        the pull has to be evidenced.
       </p>
     </div>
   );
@@ -248,6 +250,22 @@ function Result({ report, onSave }: { report: AttestationReport; onSave: () => v
  * rendered as a refusal, not as an outage.
  */
 export function AuditAttestation({ canRun }: { canRun: boolean }) {
+  /* WHO SEES THE CONTROL, AND WHY IT IS STILL WIDER THAN THE ROUTE.
+     `canRun` is the catalog's reader verdict — owners, admins, managers,
+     approvers and platform administrators (AUDIT_REPORT_READERS). The
+     attestation route is narrower: `isAdmin` in routes/tenant-export.ts admits
+     admin and owner only. So a manager can press this and be refused.
+     The client cannot close that gap correctly on its own:
+     shared/constants/permissions.ts states the rule — the server derives a
+     permission from the same set its guard reads and "the client mirrors no
+     role list", because mirroring one is how a viewer came to be offered four
+     controls the server refused. Neither GOVERNED_WRITE_PERMISSION nor
+     REPORT_FINALIZE_PERMISSION (owner/admin/manager) matches admin|owner.
+     So until the session derives an attestation permission the same way, the
+     control stays on `canRun`, the copy names the roles that can actually use
+     it, and the 403 is rendered as the role refusal it is rather than an
+     outage. Recorded as B4 in the 2026-10-11 coverage review. */
+  const mayAttest = canRun;
   const [state, setState] = useState<State>({ k: 'idle' });
   const alive = useRef(true);
   React.useEffect(() => () => { alive.current = false; }, []);
@@ -279,18 +297,20 @@ export function AuditAttestation({ canRun }: { canRun: boolean }) {
         Audit trail attestation
       </h3>
       <p style={{ fontSize: 12.5, color: 'var(--text-300)', lineHeight: 1.55, margin: '6px 0 0' }}>
-        Walks this organisation's audit chain, recomputes every entry's hash and reports any link that does
-        not check out. The result is signed so an external auditor can verify the platform issued it.
-        Requires an administrator.
+        Walks this organisation's <code>audit_events</code> store in sequence and checks that each entry names
+        the hash of the entry before it, reporting any link out of step. It compares the recorded hashes; it
+        does not re-derive a hash from each entry's contents, so it evidences the chain's continuity rather
+        than the contents of any single entry. The governed-action store is covered separately by the audit
+        trail integrity report above. Requires an organisation administrator or owner.
       </p>
 
-      {!canRun && (
+      {!mayAttest && (
         <p style={{ ...muted, marginTop: 10 }} data-testid="attestation-readers">
-          {I.lock} Producing an attestation is recorded against your account and is available to
-          organisation administrators.
+          {I.lock} Producing an attestation is recorded against your account and is available to organisation
+          administrators and owners. Other roles can run the reports above.
         </p>
       )}
-      {canRun && state.k === 'idle' && (
+      {mayAttest && state.k === 'idle' && (
         <button type="button" className="btn primary" style={{ marginTop: 12 }} onClick={() => void run()}>
           {I.shieldCheck} Run attestation
         </button>

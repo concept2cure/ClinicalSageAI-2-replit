@@ -40,11 +40,13 @@ import {
   SEAL_CHECK_LABEL,
   SEAL_VERDICT,
   sealFactRows,
+  signatureAbsent,
+  signatureIsVerifiedAgainstSeal,
   whenText,
   type RunDependencyRow,
   type RunSealView,
 } from './insightsLibraryModel';
-import { rowsOf } from './insightsLibraryShared';
+import { isRowList, readFailureOf, rowsOf } from './insightsLibraryShared';
 
 /** The seal's four checks, each with the server's own written reason. */
 function SealChecks({ view }: { view: RunSealView }) {
@@ -69,16 +71,39 @@ function SealChecks({ view }: { view: RunSealView }) {
 /** The signature manifestation (21 CFR 11.50) as it was recorded. */
 function SignatureBlock({ view }: { view: RunSealView }) {
   const rows = sealFactRows(view);
-  if (rows.length === 0) return null;
+  const absent = signatureAbsent(view);
+  const verified = signatureIsVerifiedAgainstSeal(view);
+  if (rows.length === 0 && !absent) return null;
   return (
-    <dl className="rl-ev-dl">
-      {rows.map((r) => (
-        <React.Fragment key={r.term}>
-          <dt>{r.term}</dt>
-          <dd className={r.mono ? 'rl-ev-hash' : undefined}>{r.value}</dd>
-        </React.Fragment>
-      ))}
-    </dl>
+    <>
+      {/* No row at all is a different statement from a row with gaps, and the
+          server knows which: it returns `signature: null` only after looking
+          for a live row on a final run. */}
+      {absent && (
+        <p className="rl-sub" data-testid="rl-seal-no-signature">
+          No electronic signature is recorded for this finalization.
+        </p>
+      )}
+      {rows.length > 0 && (
+        <dl className="rl-ev-dl">
+          {rows.map((r) => (
+            <React.Fragment key={r.term}>
+              <dt>{r.term}</dt>
+              <dd className={r.mono ? 'rl-ev-hash' : undefined}>{r.value}</dd>
+            </React.Fragment>
+          ))}
+        </dl>
+      )}
+      {/* Only one thing is bound: that the signature manifest names the hash
+          the chain recorded. The signer, time and meaning are separate columns
+          that no check ties to the chain row, so an unverified seal must not
+          let them read as a verified binding. */}
+      {!absent && !verified && rows.length > 0 && (
+        <p className="rl-sub" data-testid="rl-seal-sig-unverified">
+          Shown as recorded. These values have not been verified against this seal.
+        </p>
+      )}
+    </>
   );
 }
 
@@ -93,16 +118,30 @@ function SealSection({ runId }: { runId: number }) {
     return <p className="rl-sub">Reading the sealing record…</p>;
   }
   if (seal.error || !view) {
+    const f = readFailureOf(seal, 'the sealing record');
     return (
       <ErrorState
-        title="Couldn't read the sealing record"
-        message="The seal and its audit-chain record could not be read, so nothing is claimed about them."
-        retry={() => setAttempt((n) => n + 1)}
+        title={f.title}
+        message={`${f.message} Nothing is claimed about the seal either way.`}
+        {...(f.retryable ? { retry: () => setAttempt((n) => n + 1) } : {})}
         testId="rl-seal-error"
       />
     );
   }
-  if (!view.sealed) {
+  /* ORDER MATTERS, and the first draft of this panel got it wrong.
+     `viewOf` sets `sealed` from the run's CURRENT status, so a run the audit
+     chain records as finalized whose `report_runs.status` was later rewritten
+     comes back `sealed: false` — with `verdict: 'mismatch'` and the check "The
+     audit chain records this run as finalized, but the run is now marked X"
+     (run-seal.ts readRunSeal). Testing `!sealed` first threw that away and
+     said the run carries no seal, which is the opposite of what the server
+     found: the chain holds a finalization and a signature row exists. That is
+     the one case this panel exists to surface. So a verdict that is not
+     `not-verifiable` is rendered before the unsealed branch is considered. */
+  const verdictNow = view.verification?.verdict ?? 'not-verifiable';
+  const chainSaysFinalized = !view.sealed && verdictNow === 'mismatch';
+
+  if (!view.sealed && !chainSaysFinalized) {
     return (
       <p className="rl-sub" data-testid="rl-seal-unsealed">
         This run is not final, so it carries no seal and no electronic signature. Only a finalized run is
@@ -111,7 +150,7 @@ function SealSection({ runId }: { runId: number }) {
     );
   }
 
-  const verdict = view.verification?.verdict ?? 'not-verifiable';
+  const verdict = verdictNow;
   const words = SEAL_VERDICT[verdict] ?? SEAL_VERDICT['not-verifiable'];
   return (
     <div data-testid="rl-seal" data-verdict={verdict}>
@@ -119,6 +158,15 @@ function SealSection({ runId }: { runId: number }) {
         {verdict === 'intact' ? I.shieldCheck : I.shieldAlert} {words.label}
       </div>
       <p className="rl-sub">{words.meaning}</p>
+      {/* The specific contradiction, named: the chain holds a finalization for
+          a run that no longer says it is final. Stating only the generic
+          mismatch sentence would leave the reader to guess which record moved. */}
+      {chainSaysFinalized && (
+        <p className="rl-sub" data-testid="rl-seal-status-contradicts">
+          The audit chain records this run as finalized, but the run itself is no longer marked final. The
+          finalization record and the run disagree, and this panel does not choose between them.
+        </p>
+      )}
       <SealChecks view={view} />
       <SignatureBlock view={view} />
     </div>
@@ -129,16 +177,17 @@ function SealSection({ runId }: { runId: number }) {
 function DependencySection({ runId }: { runId: number }) {
   const [attempt, setAttempt] = useState(0);
   const url = `/api/report-os/runs/${runId}/dependencies`;
-  const deps = useLiveData<unknown>(url, [url, attempt]);
+  const deps = useLiveData<unknown>(url, [url, attempt], isRowList);
   const rows = rowsOf<RunDependencyRow>(deps.data);
 
   if (deps.loading) return <p className="rl-sub">Reading the run's sources…</p>;
   if (deps.error) {
+    const f = readFailureOf(deps, "the run's sources");
     return (
       <ErrorState
-        title="Couldn't read the run's sources"
-        message="The providers this run recorded could not be read. Nothing is shown in their place."
-        retry={() => setAttempt((n) => n + 1)}
+        title={f.title}
+        message={f.message}
+        {...(f.retryable ? { retry: () => setAttempt((n) => n + 1) } : {})}
         testId="rl-deps-error"
       />
     );
@@ -146,8 +195,8 @@ function DependencySection({ runId }: { runId: number }) {
   if (rows.length === 0) {
     return (
       <p className="rl-sub" data-testid="rl-deps-empty">
-        This run recorded no provider observations, so there is nothing to show. That is not the same as the
-        run having read nothing: runs finalized before provider recording began carry none.
+        This run recorded no provider observations, so there is nothing to show here. That is not the same as
+        the run having read nothing — it is the absence of a record of what it read.
       </p>
     );
   }
@@ -168,7 +217,9 @@ function DependencySection({ runId }: { runId: number }) {
           <tr key={d.id}>
             <td>{d.provider}</td>
             <td>
-              <span className="rl-tag" data-status={d.status === 'ok' || d.status === 'fresh' ? 'final' : 'draft'}>
+              {/* `ready` is the providers' healthy state; anything else is not a
+                  pass, and an unknown value stays neutral rather than green. */}
+              <span className="rl-tag" data-status={d.status === 'ready' ? 'final' : d.status === 'missing' ? 'failed' : 'draft'}>
                 {DEPENDENCY_STATUS_LABEL[d.status] ?? d.status}
               </span>
               {/* The engine's own blocker sentence, never paraphrased. */}

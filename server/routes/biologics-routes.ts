@@ -11,6 +11,10 @@ import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../auth.js';
 import { biologicsIntelligence } from '../services/biologics-intelligence-service.js';
 import { combinationProductService } from '../services/combination-product-service.js';
+import {
+  determinePrimaryModeOfAction,
+  isConstituentType,
+} from '../services/combination-products/combination-products-knowledge.js';
 
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -133,18 +137,27 @@ router.get('/comparability', (req: Request, res: Response) => {
 // GET /api/combination-products/classify
 // ============================================================================
 
+// The lead Center comes from the canonical engine, determinePrimaryModeOfAction
+// (server/services/combination-products/combination-products-knowledge.ts).
 router.get('/combination-products/classify', (req: Request, res: Response) => {
   try {
     const { drugComponent, deviceComponent, primaryAction } = req.query;
 
-    if (!primaryAction) {
+    if (!isConstituentType(primaryAction)) {
       return res.status(400).json({ error: 'Required: primaryAction (drug, device, or biologic)' });
     }
 
-    const result = combinationProductService.determinePrimaryMode({
-      drugComponent: (drugComponent as string) || '',
-      deviceComponent: (deviceComponent as string) || '',
-      primaryAction: primaryAction as 'drug' | 'device' | 'biologic',
+    // The component descriptions are recorded as the product description; their
+    // article types are not inferred from the parameter names.
+    const productDescription = [drugComponent, deviceComponent]
+      .filter((c): c is string => typeof c === 'string' && c.trim() !== '')
+      .map((c) => c.trim())
+      .join(' + ');
+
+    const result = determinePrimaryModeOfAction({
+      productDescription: productDescription || undefined,
+      constituents: [],
+      assertedPmoaType: primaryAction,
     });
 
     return res.json(result);
@@ -163,15 +176,11 @@ router.get('/combination-products/requirements', (req: Request, res: Response) =
   try {
     const { primaryAction, targetAgency } = req.query;
 
-    if (!primaryAction || !targetAgency) {
-      return res.status(400).json({ error: 'Required: primaryAction, targetAgency' });
+    if (!isConstituentType(primaryAction) || !targetAgency) {
+      return res.status(400).json({ error: 'Required: primaryAction (drug, device, or biologic), targetAgency' });
     }
 
-    const classification = combinationProductService.determinePrimaryMode({
-      drugComponent: '',
-      deviceComponent: '',
-      primaryAction: primaryAction as 'drug' | 'device' | 'biologic',
-    });
+    const classification = determinePrimaryModeOfAction({ constituents: [], assertedPmoaType: primaryAction });
 
     const result = combinationProductService.getCombinationRequirements({
       classification,

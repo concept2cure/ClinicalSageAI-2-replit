@@ -71,20 +71,36 @@ export interface ReportRunRow {
   agency?: string | null;
 }
 
-/** The statuses a run can hold, in lifecycle order. */
-export const RUN_STATUSES = ['queued', 'running', 'draft', 'partial', 'final', 'failed'] as const;
+/**
+ * The statuses a run can actually hold.
+ *
+ * Read off the writers, not guessed: `POST /runs` writes `'partial'` or
+ * `'completed'` (report-os.ts) and finalize writes `'final'`. Nothing in the
+ * codebase writes queued, running or failed, and the schema's `'queued'`
+ * default is overwritten in the same transaction. An earlier version of this
+ * list offered four states that could never match and omitted `'completed'` —
+ * the commonest clean one — so the filter had four dead options and a clean run
+ * rendered as a raw lowercase word.
+ */
+export const RUN_STATUSES = ['partial', 'completed', 'final'] as const;
 
 /**
- * How a run's status reads to a client. A sealed `final` is the only one that
- * is evidence; everything else is explicitly not, so a reader never mistakes a
- * draft for a filing-grade artifact.
+ * How a run's status reads to a client.
+ *
+ * `final` says "final" and nothing about the seal. The list that shows these
+ * does not read `/runs/:id/seal`, so calling it "sealed" here would assert a
+ * verification this screen has not performed — the run's evidence disclosure
+ * is where the seal is actually checked, and a final run whose seal mismatches
+ * must not read as sealed in a table (the SECURITY-8 rule in this module).
  */
 export const RUN_STATUS_LABEL: Readonly<Record<string, string>> = {
-  queued: 'Queued',
-  running: 'Running',
-  draft: 'Draft',
   partial: 'Partial',
-  final: 'Final — sealed',
+  completed: 'Computed',
+  final: 'Final',
+  // Kept because the column is free text and an older or future writer may use
+  // them; an unknown value still renders raw on a neutral tag rather than
+  // falling through to anything reassuring.
+  draft: 'Draft',
   failed: 'Failed',
 };
 
@@ -115,25 +131,38 @@ export interface RunQuery {
 export const RUNS_WINDOW = 500;
 
 /**
- * What a reader must be told when a search or a non-default sort is in play,
- * or null when the answer is complete.
+ * What a reader must be told whenever a search is in play.
  *
- * `loaded` is how many rows came back. When it is below the window the route
- * returned everything it had, so the search really did cover every run and
- * there is nothing to qualify. When it equals the window, older runs exist
- * that were never searched — and saying nothing would present a truncated
- * answer as the whole one (CLAUDE.md: no silent caps).
+ * ── WHY THIS IS UNCONDITIONAL, after a first version that was not ───────────
+ * The first version compared the ROWS RETURNED against the window and said
+ * nothing when fewer came back, reasoning that the route had returned
+ * everything it had. That is wrong for this route, and it made the caveat fire
+ * only in the one case where it barely mattered.
+ *
+ * `GET /runs` fetches `limit` rows in SQL and THEN filters them in memory, so
+ * it returns only the matches. A search that matched 3 of the newest 500 runs
+ * returns 3 rows — below the window — and the old test `loaded < RUNS_WINDOW`
+ * suppressed the caveat exactly then. The reader saw three results and no
+ * indication that nothing older than the 500th run had been looked at.
+ *
+ * The row count carries no information about the window, so it cannot gate the
+ * sentence. A search is bounded by the window whether it matched three rows or
+ * none, so the sentence is shown whenever a search is active. `loaded` is kept
+ * only to say how many matched inside it.
  */
 export function runsSearchCaveat(
   loaded: number,
   opts: { searching: boolean; sorted: boolean },
 ): string | null {
   if (!opts.searching && !opts.sorted) return null;
-  if (loaded < RUNS_WINDOW) return null;
-  const what = opts.searching && opts.sorted ? 'This search and ordering cover' : opts.searching ? 'This search covers' : 'This ordering covers';
+  const what = opts.searching && opts.sorted
+    ? 'This search and ordering reach'
+    : opts.searching ? 'This search reaches' : 'This ordering reaches';
+  const found = opts.searching ? ` ${loaded} matched inside it.` : '';
   return (
-    `${what} the ${RUNS_WINDOW} most recent runs only. The report engine filters and orders within that ` +
-    'window, so an older run that matches is not shown. Narrow by status or report type to bring it inside.'
+    `${what} the ${RUNS_WINDOW} most recent runs only — the report engine filters and orders within that ` +
+    `window, so an older run that matches is not shown.${found} Narrow by status or report type to bring ` +
+    'older runs inside the window.'
   );
 }
 
@@ -335,34 +364,96 @@ export interface SealFactRow {
   mono?: boolean;
 }
 
+/** The seal's algorithm, hash and atom count as one line, or '' when unsealed. */
+function sealHashText(seal: RunSealView['seal']): string {
+  if (!seal?.contentHash) return '';
+  const algorithm = seal.algorithm ?? 'sha256';
+  const atoms = seal.atomCount == null ? '' : `${seal.atomCount} provenance atoms`;
+  return [`${algorithm} ${seal.contentHash}`, atoms].filter(Boolean).join(' · ');
+}
+
+/**
+ * The rows that are NOT §11.50 elements: the reason, the chain's own record of
+ * the meaning and prior status, the seal, and the two times. Omitted when the
+ * record does not carry them — a row of dashes claims nothing.
+ */
+function sealExtraRows(view: RunSealView, sealText: string): SealFactRow[] {
+  const fin = view.finalization;
+  const sealedAt = view.seal?.sealedAt;
+  const rows: SealFactRow[] = [
+    { term: 'Reason given', value: fin?.reason ?? '' },
+    { term: 'Chain records the meaning as', value: fin?.meaning ?? '' },
+    { term: 'Status before finalizing', value: fin?.priorStatus ?? '' },
+    { term: 'Seal', value: sealText, mono: true },
+    { term: 'Sealed at', value: sealedAt ? whenText(sealedAt) : '' },
+    { term: 'Recorded on the chain', value: view.finalizedAt ? whenText(view.finalizedAt) : '' },
+  ];
+  return rows.filter((r) => r.value.length > 0);
+}
+
+/** A §11.50(a) element's value, or the fact that the record does not carry it. */
+function orNotRecorded(value: string | null | undefined | false): string {
+  return value ? value : 'Not recorded';
+}
+
 /**
  * The signature manifestation's recorded fields, in reading order.
  *
- * PURE, and the reason this is not inline JSX: a field the record does not
- * carry is OMITTED, never rendered empty and never given a stand-in, and that
- * rule is worth testing without a DOM. 21 CFR 11.50 requires the signer, the
- * date and time, and the meaning; where the platform holds no value for one,
- * saying nothing is correct and inventing one is not.
+ * PURE, and the reason this is not inline JSX: which fields may be omitted is a
+ * 21 CFR 11.50 question worth testing without a DOM.
+ *
+ * TWO CLASSES OF FIELD, and the first draft treated them alike. §11.50(a)
+ * requires the signer's printed name, the date and time of execution, and the
+ * MEANING of the signature. For those three, absence is itself a record fact an
+ * inspector needs: a row carrying a signer and a time but a null
+ * `signature_meaning` (a nullable column) rendered two lines and no third, which
+ * reads as a complete manifestation under a green banner. So on a SEALED run
+ * those three are always present, reading "Not recorded" when the record does
+ * not carry them.
+ *
+ * The rest — the reason given, the seal hash, the chain time — are not §11.50
+ * elements. They are omitted when absent, because a row of dashes is noise and
+ * nothing is being claimed by their absence.
+ *
+ * `signatureAbsent` distinguishes "no signature row exists" from "a row exists
+ * with gaps": the server returns `signature: null` for the former, and the seal
+ * checks say whether the signature was examined at all.
  */
 export function sealFactRows(view: RunSealView): SealFactRow[] {
   const sig = view.signature;
-  const fin = view.finalization;
-  const seal = view.seal;
-  const sealText = seal?.contentHash
-    ? [`${seal.algorithm ?? 'sha256'} ${seal.contentHash}`, seal.atomCount != null ? `${seal.atomCount} provenance atoms` : '']
-        .filter(Boolean)
-        .join(' · ')
-    : '';
-  return (
-    [
-      { term: 'Signed by', value: sig?.signerName ?? '' },
-      { term: 'Signed at', value: sig?.signedAt ? whenText(sig.signedAt) : '' },
-      { term: 'Meaning', value: sig?.meaning ?? '' },
-      { term: 'Reason given', value: fin?.reason ?? '' },
-      { term: 'Seal', value: sealText, mono: true },
-      { term: 'Recorded on the chain', value: view.finalizedAt ? whenText(view.finalizedAt) : '' },
-    ] as SealFactRow[]
-  ).filter((r) => r.value.length > 0);
+  const sealText = sealHashText(view.seal);
+  /* §11.50(a): shown on a sealed run whether or not the record carries them. */
+  const manifestation: SealFactRow[] = [
+    { term: 'Signed by', value: orNotRecorded(sig?.signerName) },
+    { term: 'Signed at', value: orNotRecorded(sig?.signedAt && whenText(sig.signedAt)) },
+    { term: 'Meaning', value: orNotRecorded(sig?.meaning) },
+  ];
+  return [...(view.sealed ? manifestation : []), ...sealExtraRows(view, sealText)];
+}
+
+/**
+ * Whether the record holds no electronic signature at all, as distinct from
+ * holding one with gaps. The server returns `signature: null` only after
+ * looking for a live row on a final run (`run-seal.ts` readSealRecord).
+ */
+export function signatureAbsent(view: RunSealView): boolean {
+  return view.sealed && view.signature == null;
+}
+
+/**
+ * Whether the displayed signer, time and meaning have been tied to THIS seal.
+ *
+ * `run-seal.ts` binds exactly one thing: that the signature manifest's
+ * `act.sealHash` equals the hash the chain recorded. The name, time and meaning
+ * come from separate columns and no check ties them to the chain row's actor or
+ * meaning. So when the seal does not verify — or the signature check itself did
+ * not pass — the block must say it is the record as stored rather than a
+ * verified binding.
+ */
+export function signatureIsVerifiedAgainstSeal(view: RunSealView): boolean {
+  if (view.verification?.verdict !== 'intact') return false;
+  const sigCheck = (view.verification.checks ?? []).find((c) => c.check === 'signature');
+  return sigCheck?.ok === true;
 }
 
 /** The four checks, in the order a reader follows them. */
@@ -378,12 +469,13 @@ export const SEAL_CHECK_LABEL: Readonly<Record<string, string>> = {
  * when there is one, so nothing here paraphrases a reason the engine gave.
  */
 export const DEPENDENCY_STATUS_LABEL: Readonly<Record<string, string>> = {
-  ok: 'Read',
-  fresh: 'Read',
-  stale: 'Stale',
+  // The vocabulary the providers actually emit (providers/types.ts): ready,
+  // partial, missing. An earlier version of this map was keyed to ok/fresh/
+  // stale/blocked/error — invented words — so every healthy provider rendered
+  // as a raw lowercase "ready" in the amber hue meant for a draft.
+  ready: 'Read',
+  partial: 'Partly read',
   missing: 'Not available',
-  blocked: 'Blocked',
-  error: 'Failed',
 };
 
 /* ══════════════════════════════════════════════════════════════════

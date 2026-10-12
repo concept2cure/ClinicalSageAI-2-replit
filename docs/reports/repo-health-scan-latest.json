@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-11T23:42:15.481Z",
+  "generatedAt": "2026-10-12T05:43:49.646Z",
   "git": {
-    "sha": "29f4cb435ca17e21159ee07d946a8a8c84918add",
+    "sha": "fca570f6baa4ddbb956d16a8f9897df02a944cee",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,7 +15,7 @@
     "duplicateBasenames": 217,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 56,
+    "largeFilesByBytes": 57,
     "largeFilesByLines": 113
   },
   "findings": {
@@ -2068,7 +2068,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 292728
+        "bytes": 294863
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2251,6 +2251,10 @@
         "bytes": 103227
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "bytes": 102858
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
         "bytes": 101535
       },
@@ -2285,12 +2289,12 @@
         "lines": 8226
       },
       {
-        "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "lines": 6201
+        "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+        "lines": 6203
       },
       {
-        "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6163
+        "file": "server/services/ind/ctd/authoring-guidance.ts",
+        "lines": 6201
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2501,6 +2505,10 @@
         "lines": 2076
       },
       {
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 2069
+      },
+      {
         "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
         "lines": 2068
       },
@@ -2545,16 +2553,16 @@
         "lines": 1989
       },
       {
-        "file": "server/services/combination-products/combination-products-knowledge.ts",
-        "lines": 1973
-      },
-      {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
         "lines": 1936
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1929
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "lines": 1913
       },
       {
         "file": "server/routes/submissions.ts",
@@ -2677,10 +2685,6 @@
         "lines": 1650
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "lines": 1637
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
         "lines": 1631
       },
@@ -2743,7 +2747,7 @@
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
-      "largeByBytes": 10,
+      "largeByBytes": 11,
       "largeByLines": 17
     },
     {
