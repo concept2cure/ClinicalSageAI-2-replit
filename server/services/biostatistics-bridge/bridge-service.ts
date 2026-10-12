@@ -32,7 +32,8 @@ import { computationEngine, ComputationRefusal } from '../ana-biostats/computati
 import { judgmentEngine } from '../ana-biostats/judgment-engine';
 import type { ComputationResult, JudgmentResult, StatisticalDocumentType, StatisticalInput } from '../ana-biostats/types';
 import { STATS_ENGINE, STATS_ENGINE_VERSION, hashInputs } from '../stats/computation-provenance';
-import { recordComputationRun, SAMPLE_SIZE_METHOD } from '../stats/computation-runs';
+import { recordComputationRun, reproduceComputationRun, SAMPLE_SIZE_METHOD } from '../stats/computation-runs';
+import type { ReproductionResult } from '../stats/computation-runs';
 import {
   isUuid,
   loadStudyDesign,
@@ -272,6 +273,35 @@ function computeFor(adapter: DesignAdapterResult): {
  * design lacks, where its deliverables file, and which tasks that implies.
  * Nothing is written.
  */
+/**
+ * Re-run a stored computation and say whether it still produces what was filed.
+ *
+ * `reproduceComputationRun` (stats/computation-runs.ts) re-executes the engine
+ * on a run's STORED inputs and compares the hash of the result with the hash
+ * stored at the time, plus the integrity of the stored inputs and outputs
+ * against their own hashes. It answers the two questions a sponsor gets asked
+ * under statistical defence — *"reproduce the planned sample size in your SAP
+ * from the inputs you filed"* and *"prove this N was not edited after it was
+ * computed"* — and it was reachable from nothing: no route, no tool, no client.
+ * `recordComputationRun` has been writing those rows since 2026-10-08
+ * (migrations/20261008f), so the records existed and could not be checked.
+ *
+ * Tenant-scoped: the run id is matched against the caller's organization in
+ * the query, so a run in another tenant reads as not found rather than as a
+ * failed reproduction.
+ */
+export async function reproduceSizingRun(
+  organizationId: number,
+  runId: number,
+): Promise<ReproductionResult> {
+  const client = await pool.connect();
+  try {
+    return await reproduceComputationRun(client, organizationId, runId);
+  } finally {
+    client.release();
+  }
+}
+
 export async function assessDesign(organizationId: number, studyId: string): Promise<DesignAssessment | null> {
   const loaded = await loadStudyDesign(studyId, organizationId);
   if (!loaded) return null;
