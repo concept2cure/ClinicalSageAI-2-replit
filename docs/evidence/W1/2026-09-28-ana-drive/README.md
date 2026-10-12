@@ -240,8 +240,23 @@ With it on, the whole battery passed 23/23:
 
 No defect (`launch-scope-on.txt`).
 
+## Every read tool, called for real
+
+A register AnA could not reach was reporting zero. All 145 tools the register
+classes `read` were called through their real handlers against the local
+database. 115 answered cleanly, 29 refused honestly, 1 threw.
+
+The one wrong answer was the worst kind. FAERS and MAUDE — the drug and device
+adverse-event registers — answered a FAILED request as a search that found
+nothing: "Analysis of undefined FDA FAERS reports found undefined serious
+reports (0%)", with provenance reading "(0 reports)". Nobody had reached the
+register. A tool that cannot ask now says so and carries no counts, and a call
+naming nothing to search for is refused rather than sent (`tool-honesty.txt`).
+
 ## Evidence
 
+- `tool-honesty.txt`, `harness/read-tool-smoke.mts`: every read tool called,
+  what each answered, and the openFDA fix.
 - `launch-scope-on.txt`: the whole battery with launch scope enforced, as
   production runs it.
 
