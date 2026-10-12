@@ -8,9 +8,6 @@
 
 import type { ReportSchedule } from './types';
 
-/** A sentinel "distant past" used when there is no recorded last run. */
-const DISTANT_PAST = new Date(0);
-
 /** Clamp a monthly day-of-month into the 1..28 range valid in every month. */
 function clampDayOfMonth(day: number | undefined): number {
   if (typeof day !== 'number' || Number.isNaN(day)) return 1;
@@ -81,17 +78,35 @@ export function computeNextRun(schedule: ReportSchedule, from: Date): Date {
 }
 
 /**
- * Whether the schedule is due to run at `now`, given the last run time.
+ * Whether the schedule is due to run at `now`, counting from `anchor`.
  *
- * True when `now` is at or past the next run computed from `lastRunAt`
- * (or from a distant past when there has been no prior run).
+ * `anchor` is the last run, or — for a subscription that has never run — its
+ * CREATION time. It is deliberately non-nullable.
+ *
+ * ── THE DEFECT THIS SIGNATURE CLOSES (coverage review C-26b) ────────────────
+ * It used to take `lastRunAt: Date | null` and substitute `new Date(0)` for a
+ * null. Every next-run computed from the epoch is in 1970, so `now >= next` was
+ * true for EVERY never-run subscription whatever its cadence: a monthly
+ * schedule created at 14:00 fired on the sweep ten minutes later. Worse, it
+ * disagreed with the row it is supposed to agree with — `createSubscription`
+ * stores `nextRunAt = computeNextRun(schedule, now)`, so the screen showed a
+ * date weeks away while the sweep fired immediately.
+ *
+ * Anchoring on `createdAt` makes the predicate and the column converge BY
+ * CONSTRUCTION rather than by coincidence: `createSubscription` computes
+ * `nextRunAt` from `new Date()` in the same call that the database stamps
+ * `createdAt` with `defaultNow()`, so `computeNextRun(schedule, createdAt)` is
+ * the stored `nextRunAt`. `scheduling.test.ts` asserts that convergence rather
+ * than trusting it.
+ *
+ * A non-nullable parameter is the point: a sentinel cannot be reintroduced by
+ * passing a null, because there is no null to pass.
  */
 export function isDue(
   schedule: ReportSchedule,
-  lastRunAt: Date | null,
+  anchor: Date,
   now: Date,
 ): boolean {
-  const anchor = lastRunAt ?? DISTANT_PAST;
   const next = computeNextRun(schedule, anchor);
   return now.getTime() >= next.getTime();
 }

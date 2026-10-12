@@ -1,0 +1,39 @@
+MEASURED 2026-10-12T16:50:38Z
+
+The last completed CI run on trunk (65bb71d87, 08:42) failed Lint on two steps.
+The text-ramp step that was failing at 06:16 is gone — this morning's fix held.
+
+$ npm run ci:biostat-calculator-keys   — before
+check-biostat-calculator-keys: FAILED
+  • interim-look.informationFractions: the handler for /adaptive/interim never reads "informationFractions".
+  • interim-look.designEffect.standardizedEffect  • interim-look.designEffect.nPerArm
+  • interim-look.prior.mean  • interim-look.prior.sd
+  5 problem(s) across 18 calculators.
+
+$ npm run ci:biostat-calculator-keys   — after
+check-biostat-calculator-keys: 128 field keys across 18 calculators, all read by their handlers.
+
+$ npm run ci:token-cascade   — before
+  FAIL client/src/concept2cure/v2/styles/app-v2.css    56/57    --danger
+[token-cascade] FAIL — 1 unresolved var() reference(s) across 39 stylesheets.
+
+$ npm run ci:token-cascade   — after
+[token-cascade] PASS — all 39 stylesheets resolve cleanly.
+
+$ the other CSS gates, unaffected
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+── MUTATIONS ─────────────────────────────────────────────────────────
+MUTATION A — a key no handler reads (a typo of a real one)
+  • interim-look.lookNumbr: the handler for /adaptive/interim never reads "lookNumbr". The form will collect it, the request will succeed, and the value will be ignored.
+
+1 problem(s) across 18 calculators.
+Fix the key in client/src/concept2cure/v2/surfaces/biostatCalculators.ts to match what the handler reads, or make the handler read it.
+
+MUTATION B — a validator that no longer reads a field
+check-biostat-calculator-keys: 128 field keys across 18 calculators, all read by their handlers.
+
+MUTATION — reintroduce one unresolved token
+  FAIL client/src/concept2cure/v2/styles/app-v2.css                                     57/58    --nonexistent-token
+[token-cascade] FAIL — 1 unresolved var() reference(s) across 39 stylesheets.

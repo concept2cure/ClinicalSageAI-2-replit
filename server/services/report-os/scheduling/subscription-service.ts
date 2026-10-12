@@ -179,8 +179,12 @@ export async function markRun(
 
 /**
  * Enabled subscriptions whose schedule is due at `now` (per {@link isDue},
- * anchored on each subscription's `lastRunAt`). Cross-org by design: the
- * scheduler scans the whole platform.
+ * anchored on each subscription's `lastRunAt`, or on its CREATION time when it
+ * has never run). Cross-org by design: the scheduler scans the whole platform.
+ *
+ * `createdAt` is NOT NULL (shared/schema/report-os.ts), so there is no null case
+ * left and no sentinel to get wrong — see `isDue`'s header for the epoch-anchor
+ * defect this closes (coverage review C-26b).
  */
 export async function listDueSubscriptions(
   now: Date,
@@ -191,7 +195,7 @@ export async function listDueSubscriptions(
       .from(reportSubscriptions)
       .where(eq(reportSubscriptions.enabled, true));
     return enabled.filter(sub =>
-      isDue(toSchedule(sub), sub.lastRunAt, now),
+      isDue(toSchedule(sub), sub.lastRunAt ?? sub.createdAt, now),
     );
   } catch (err) {
     throw new Error(

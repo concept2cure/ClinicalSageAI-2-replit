@@ -216,6 +216,17 @@ describe('the medicines route question', () => {
     expect(biosimilar.caution!.reason).toMatch(/section 505/);
   });
 
+  it('offers nothing for a combination product, and says why in the frame’s own words', () => {
+    /* The modality frame holds no pathways for a combination product, because
+       the lead centre is assigned by primary mode of action. An empty select
+       would say "choose one of none". */
+    const field = drawnSubmissionField('US', 'combination_product');
+    expect(field.options).toBeUndefined();
+    expect(field.helpText).toMatch(/holds no route for combination/i);
+    expect(field.helpText, 'the reason is the frame\u2019s own').toMatch(/primary mode of action under 21 CFR Part 3/);
+    expect(field.allowOther).toBeDefined();
+  });
+
   it('is not asked of a device project at all', () => {
     /* A device project is routed past it — and if it ever reached the node,
        the field is hidden rather than asking a device its NDA type. */

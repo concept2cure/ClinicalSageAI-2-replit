@@ -10,7 +10,40 @@
 import { describe, expect, it } from 'vitest';
 
 import { MODALITIES } from '../modality.js';
-import { bridgedProductTypes, modalityOf, NON_MEDICINE_PRODUCT_TYPES } from '../product-modality.js';
+import {
+  bridgedProductTypes,
+  modalityOf,
+  NON_MEDICINE_PRODUCT_TYPES,
+  statuteOf,
+  statuteOnlyProductTypes,
+} from '../product-modality.js';
+
+describe('the statute an answer states on its own', () => {
+  it('is read where the answer names a statute and no modality', () => {
+    expect(statuteOf('biologic')).toBe('biologic');
+    expect(statuteOf('other_biologic')).toBe('biologic');
+    expect(statuteOf('rx_drug')).toBe('chemical');
+    expect(statuteOf('otc_drug')).toBe('chemical');
+  });
+
+  it('never states both: the two vocabularies are disjoint', () => {
+    /* A product type that resolved to a modality AND to a statute could put
+       two different statutes on the record for one answer. Holding them
+       disjoint is what lets the reader take each as it comes, with no
+       precedence rule to get wrong. */
+    const both = statuteOnlyProductTypes().filter(t => modalityOf(t) !== null);
+    expect(both, 'a product type that states a modality and a statute').toEqual([]);
+    const reverse = bridgedProductTypes().filter(t => statuteOf(t) !== null);
+    expect(reverse, 'the same, from the other side').toEqual([]);
+  });
+
+  it('says nothing for a product it does not recognise, or a stage of material', () => {
+    for (const value of ['drug_substance', 'drug_product', 'intermediate', 'medical_device', '', 'whatever']) {
+      expect(statuteOf(value), value).toBeNull();
+    }
+    expect(statuteOf(null)).toBeNull();
+  });
+});
 
 describe('the bridge', () => {
   it('reaches every modality the frame holds', () => {

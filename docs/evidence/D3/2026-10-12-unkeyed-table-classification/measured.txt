@@ -36,3 +36,45 @@ pdev_program_activities|policy|rls|forced
 pdev_readiness_snapshots|policy|rls|forced
 program_milestones|policy|rls|forced
 vigilance_events|policy|rls|forced
+
+────────────────────────────────────────────────────────────────────────
+SECOND PASS — all 105 entries decided, measured 2026-10-12T16:41:32Z
+
+$ npm run ci:unkeyed-request-tables:unreviewed
+[ci:unkeyed-request-tables] 1082 tables created; 594 read by a per-request path; 105 of those carry NO tenant column; 105 baselined, 0 still unreviewed
+[ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
+  exit 0
+
+$ npm run ci:unkeyed-request-tables   (the per-PR sibling)
+[ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
+
+$ node scripts/ci/check-unkeyed-request-tables.selftest.mjs
+
+
+$ the eight nightly zero-baseline gates, after this change
+  fail  ci:duplicate-table-ddl:strict
+  fail  ci:migration-prefix-collisions:strict
+  fail  ci:unbacked-tables:strict
+  PASS  ci:tenant-isolation:strict
+  fail  ci:unreferenced-modules:strict
+  PASS  ci:proof-tier:strict
+  fail  ci:unkeyed-request-tables:strict
+  PASS  ci:unkeyed-request-tables:unreviewed
+
+── THE REACHABILITY SWEEP over the final 57 ──────────────────────────
+For each table: every reader under server/, which of those are router files
+the bootstrap/startup code actually mounts, and whether any such mounted
+reader contains no tenant key at all.
+
+revoked_tokens                                 service-only       readers=5 mounted=0 orgless_mounted=0
+specification_audit_log                        route-not-mounted  readers=2 mounted=0 orgless_mounted=0
+templates                                      MOUNTED-ROUTE      readers=173 mounted=29 orgless_mounted=2
+
+==== MOUNTED READERS WITH NO TENANT KEY ANYWHERE IN THE FILE ====
+  assembly_audit_logs
+      server/routes/test-assembly.ts
+  assembly_docs
+      server/routes/test-assembly.ts
+  templates
+      server/routes/ana-cortex-ft.ts
+      server/routes/submissionCenter.routes.ts

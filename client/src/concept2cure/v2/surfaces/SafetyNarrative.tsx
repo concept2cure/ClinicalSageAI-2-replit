@@ -45,6 +45,25 @@ type LiveSaeCase = SaeCase & {
   seriousnessAssessed?: boolean;
 };
 
+/**
+ * The inputs the expedited clock could not assess, as a sentence.
+ *
+ * `pv/expedited-reporting-clock.ts` returns `unassessedInputs` — any of
+ * seriousness, expectedness, causality that carries no recorded assessment. An
+ * ABSENT seriousness-criteria list is "not assessed"; a recorded EMPTY list is
+ * "assessed, no criterion met". Both produce `category: 'none'`, and only one of
+ * them is a determination, which is why this list exists.
+ */
+function unassessedLabel(inputs: readonly string[]): string {
+  const names = inputs.map((i) => i.replace(/_/g, ' '));
+  if (names.length === 0) return '';
+  if (names.length === 1) return capitalize(names[0]);
+  const last = names[names.length - 1];
+  return capitalize(`${names.slice(0, -1).join(', ')} and ${last}`);
+}
+
+const capitalize = (s: string): string => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
 /* Stable empty seed for the local editable store while the live worklist is
    loading or on error — useLiveRows synthesizes a fresh [] every render in those
    states, which would otherwise thrash the re-seed effect into a render loop. */
@@ -119,6 +138,13 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
   }, [live.loading]);
 
   const sel = cases.find((c) => c.id === selId) || cases[0];
+  /* Which of the clock's three inputs carry no assessment. An older server that
+     does not return the field answers [] — which renders the case as a
+     determination, the pre-2026-10-12 behaviour, rather than inventing a
+     not-assessed state the server did not report. */
+  const unassessed: readonly string[] = Array.isArray(sel?.reportingUnassessedInputs)
+    ? sel.reportingUnassessedInputs
+    : [];
   const result = useMemo(() => (sel ? composeSafetyNarrative(sel) : null), [sel]);
   const nMissing = result ? result.missingFields.length : 0;
 
@@ -440,14 +466,39 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                     returned on every real case row. The static clock line above is the stored label. */}
                 {sel.reportingCategory && (
                   <div
+                    data-testid="sae-reporting-clock"
+                    data-state={unassessed.length > 0 ? 'not-assessed' : sel.reportingCategory === 'none' ? 'determined-none' : sel.reportingOverdue ? 'overdue' : 'due'}
                     style={{
                       margin: '8px 0 14px', padding: '10px 12px', borderRadius: 8,
-                      border: '1px solid ' + (sel.reportingOverdue ? 'var(--error)' : 'var(--border-200,#e2e2e2)'),
-                      background: sel.reportingOverdue ? 'var(--error-muted)' : 'var(--bg-100)',
+                      /* An unassessed case is not a calm neutral box. It is not an
+                         error either — nothing is wrong, something is UNDONE — so it
+                         takes the caution treatment between the two. */
+                      border: '1px solid ' + (sel.reportingOverdue ? 'var(--error)' : unassessed.length > 0 ? 'var(--warning,#b45309)' : 'var(--border-200,#e2e2e2)'),
+                      background: sel.reportingOverdue ? 'var(--error-muted)' : unassessed.length > 0 ? 'var(--warning-muted,#fffbeb)' : 'var(--bg-100)',
                       fontSize: 12.5, lineHeight: 1.5,
                     }}
                   >
-                    {sel.reportingCategory === 'none' ? (
+                    {sel.reportingCategory === 'none' && unassessed.length > 0 ? (
+                      /* NOT A DETERMINATION. `category: 'none'` carries two different
+                         cases and the headline used to be the same sentence for both:
+                         "No expedited reporting clock." A reviewer who assessed this
+                         case and found it non-reportable, and a case nobody has looked
+                         at, read identically down to the border colour — the only thing
+                         separating them was the smaller continuation sentence.
+                         `reportingUnassessedInputs` is carried from the clock service
+                         (pv/expedited-reporting-clock.ts) for exactly this distinction
+                         and was declared on the row and read nowhere.
+                         A false "non-reportable" on a 7/15-calendar-day IND safety
+                         report (21 CFR 312.32(c)(1)(i)) is a reportability miss, so the
+                         headline states the absence of a determination, never a
+                         determination of absence. */
+                      <div>
+                        <strong>Reportability not determined.</strong> {unassessedLabel(unassessed)}{' '}
+                        {unassessed.length === 1 ? 'has' : 'have'} not been assessed, so no expedited-reporting
+                        determination has been made for this case — it is not a finding that no report is required.
+                        <div style={{ color: 'var(--text-400)', marginTop: 3 }}>{sel.reportingBasis}</div>
+                      </div>
+                    ) : sel.reportingCategory === 'none' ? (
                       <div><strong>No expedited reporting clock.</strong> {sel.reportingBasis}</div>
                     ) : sel.reportingDueDate ? (
                       <div>
