@@ -70,6 +70,25 @@ export interface RmstResult {
   tau: number;
   /** True when τ exceeds the largest observed time (the tail is extrapolated flat). */
   tauBeyondData: boolean;
+  /**
+   * The Kaplan–Meier table this RMST was integrated from: every event time
+   * with its risk set, event count and survival estimate.
+   *
+   * Carried since 2026-10-12. It was computed here all along — the
+   * integration and the Greenwood-type variance both walk it — and then
+   * discarded, so a sponsor who posted survival data to
+   * /api/biostat/survival/rmst got the restricted mean and could not get the
+   * curve behind it. Those four columns are the survival table every oncology
+   * CSR §14 and every Module 2.7 carries, and `kaplanMeier` is exported, so
+   * the alternative was a second route recomputing what this one already has.
+   *
+   * Every step is included, not only those below τ: the integration stops at
+   * the restriction point, but a reader must be able to see what happened
+   * after the point they chose. No confidence band — a Greenwood band per step
+   * is new math and belongs with its own reference values, not added in
+   * passing here.
+   */
+  survivalCurve: KaplanMeierStep[];
 }
 
 /**
@@ -117,6 +136,7 @@ export function restrictedMeanSurvival(times: number[], events: number[], tau: n
     se: Math.sqrt(variance),
     tau,
     tauBeyondData: tau > maxTime,
+    survivalCurve: steps,
   };
 }
 
