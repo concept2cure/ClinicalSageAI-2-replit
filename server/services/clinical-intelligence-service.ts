@@ -11,6 +11,7 @@ import {
 } from '../openai-service';
 import { SQL } from 'drizzle-orm/sql';
 import { createScopedLogger } from '../utils/logger.js';
+import { ICH_E3_GUIDANCE } from './ind/ctd/csr-e3-guidance.js';
 
 const log = createScopedLogger('clinical-intelligence');
 
@@ -20,173 +21,10 @@ const log = createScopedLogger('clinical-intelligence');
  */
 const SEMANTIC_MODELS = {
   csr: {
-    ichE3Framework: {
-      // ICH E3 - Primary international guideline for CSR structure and content
-      sections: [
-        { id: '1', name: 'Title Page', required: true, level: 1 },
-        { id: '2', name: 'Synopsis', required: true, level: 1 },
-        { id: '3', name: 'Table of Contents', required: true, level: 1 },
-        { id: '4', name: 'List of Abbreviations and Definitions', required: true, level: 1 },
-        { id: '5', name: 'Ethics', required: true, level: 1 },
-        {
-          id: '6',
-          name: 'Investigators and Study Administrative Structure',
-          required: true,
-          level: 1,
-        },
-        { id: '7', name: 'Introduction', required: true, level: 1 },
-        { id: '8', name: 'Study Objectives', required: true, level: 1 },
-        { id: '9', name: 'Investigational Plan', required: true, level: 1 },
-        { id: '9.1', name: 'Overall Study Design and Plan', required: true, level: 2 },
-        { id: '9.2', name: 'Discussion of Study Design', required: true, level: 2 },
-        { id: '9.3', name: 'Selection of Study Population', required: true, level: 2 },
-        { id: '9.3.1', name: 'Inclusion Criteria', required: true, level: 3 },
-        { id: '9.3.2', name: 'Exclusion Criteria', required: true, level: 3 },
-        { id: '9.4', name: 'Treatments', required: true, level: 2 },
-        { id: '9.4.1', name: 'Treatments Administered', required: true, level: 3 },
-        { id: '9.4.2', name: 'Identity of Investigational Products', required: true, level: 3 },
-        {
-          id: '9.4.3',
-          name: 'Method of Assigning Patients to Treatment Groups',
-          required: true,
-          level: 3,
-        },
-        { id: '9.4.4', name: 'Selection of Doses in the Study', required: true, level: 3 },
-        {
-          id: '9.4.5',
-          name: 'Selection and Timing of Dose for Each Patient',
-          required: true,
-          level: 3,
-        },
-        { id: '9.4.6', name: 'Blinding', required: true, level: 3 },
-        { id: '9.4.7', name: 'Prior and Concomitant Therapy', required: true, level: 3 },
-        { id: '9.4.8', name: 'Treatment Compliance', required: true, level: 3 },
-        { id: '9.5', name: 'Efficacy and Safety Variables', required: true, level: 2 },
-        {
-          id: '9.5.1',
-          name: 'Efficacy and Safety Measurements Assessed',
-          required: true,
-          level: 3,
-        },
-        { id: '9.5.2', name: 'Appropriateness of Measurements', required: true, level: 3 },
-        { id: '9.5.3', name: 'Primary Efficacy Variable', required: true, level: 3 },
-        { id: '9.5.4', name: 'Drug Concentration Measurements', required: false, level: 3 },
-        { id: '9.6', name: 'Data Quality Assurance', required: true, level: 2 },
-        {
-          id: '9.7',
-          name: 'Statistical Methods Planned in the Protocol',
-          required: true,
-          level: 2,
-        },
-        { id: '9.7.1', name: 'Statistical and Analytical Plans', required: true, level: 3 },
-        { id: '9.8', name: 'Changes in the Conduct of the Study', required: true, level: 2 },
-        { id: '10', name: 'Study Patients', required: true, level: 1 },
-        { id: '10.1', name: 'Disposition of Patients', required: true, level: 2 },
-        { id: '10.2', name: 'Protocol Deviations', required: true, level: 2 },
-        { id: '11', name: 'Efficacy Evaluation', required: true, level: 1 },
-        { id: '11.1', name: 'Data Sets Analyzed', required: true, level: 2 },
-        {
-          id: '11.2',
-          name: 'Demographic and Other Baseline Characteristics',
-          required: true,
-          level: 2,
-        },
-        { id: '11.3', name: 'Measurements of Treatment Compliance', required: true, level: 2 },
-        {
-          id: '11.4',
-          name: 'Efficacy Results and Tabulations of Individual Patient Data',
-          required: true,
-          level: 2,
-        },
-        { id: '11.4.1', name: 'Analysis of Efficacy', required: true, level: 3 },
-        { id: '11.4.2', name: 'Statistical Analysis', required: true, level: 3 },
-        { id: '11.4.3', name: 'Tabulation of Individual Response Data', required: true, level: 3 },
-        {
-          id: '11.4.4',
-          name: 'Drug Dose, Drug Concentration, and Relationships to Response',
-          required: false,
-          level: 3,
-        },
-        {
-          id: '11.4.5',
-          name: 'Drug-Drug and Drug-Disease Interactions',
-          required: false,
-          level: 3,
-        },
-        { id: '11.4.6', name: 'By-Patient Displays', required: true, level: 3 },
-        { id: '11.4.7', name: 'Efficacy Conclusions', required: true, level: 3 },
-        { id: '12', name: 'Safety Evaluation', required: true, level: 1 },
-        { id: '12.1', name: 'Extent of Exposure', required: true, level: 2 },
-        { id: '12.2', name: 'Adverse Events', required: true, level: 2 },
-        { id: '12.2.1', name: 'Brief Summary of Adverse Events', required: true, level: 3 },
-        { id: '12.2.2', name: 'Display of Adverse Events', required: true, level: 3 },
-        { id: '12.2.3', name: 'Analysis of Adverse Events', required: true, level: 3 },
-        { id: '12.2.4', name: 'Listing of Adverse Events by Patient', required: true, level: 3 },
-        {
-          id: '12.3',
-          name: 'Deaths, Other Serious Adverse Events, and Other Significant Adverse Events',
-          required: true,
-          level: 2,
-        },
-        {
-          id: '12.3.1',
-          name: 'Listing of Deaths, Other Serious Adverse Events, and Other Significant Adverse Events',
-          required: true,
-          level: 3,
-        },
-        {
-          id: '12.3.2',
-          name: 'Narratives of Deaths, Other Serious Adverse Events, and Other Significant Adverse Events',
-          required: true,
-          level: 3,
-        },
-        {
-          id: '12.3.3',
-          name: 'Analysis and Discussion of Deaths, Other Serious Adverse Events, and Other Significant Adverse Events',
-          required: true,
-          level: 3,
-        },
-        { id: '12.4', name: 'Clinical Laboratory Evaluation', required: true, level: 2 },
-        {
-          id: '12.4.1',
-          name: 'Listing of Individual Laboratory Measurements by Patient',
-          required: true,
-          level: 3,
-        },
-        { id: '12.4.2', name: 'Evaluation of Each Laboratory Parameter', required: true, level: 3 },
-        {
-          id: '12.5',
-          name: 'Vital Signs, Physical Findings, and Other Observations Related to Safety',
-          required: true,
-          level: 2,
-        },
-        { id: '12.6', name: 'Safety Conclusions', required: true, level: 2 },
-        { id: '13', name: 'Discussion and Overall Conclusions', required: true, level: 1 },
-        {
-          id: '14',
-          name: 'Tables, Figures, and Graphs Referenced but not Included in the Text',
-          required: false,
-          level: 1,
-        },
-        { id: '15', name: 'Reference List', required: true, level: 1 },
-        { id: '16', name: 'Appendices', required: false, level: 1 },
-      ],
-      criticalElements: [
-        'study_objectives',
-        'study_design',
-        'patient_population',
-        'inclusion_criteria',
-        'exclusion_criteria',
-        'primary_endpoint',
-        'secondary_endpoints',
-        'statistical_methods',
-        'efficacy_results',
-        'safety_results',
-        'adverse_events',
-        'serious_adverse_events',
-        'conclusions',
-      ],
-    },
+    // The ICH E3 outline is not kept here: it is the canonical E3 tree,
+    // server/services/ind/ctd/csr-e3-guidance.ts (ICH_E3_GUIDANCE), pinned by
+    // tests/regulatory/csr-e3-overlay.test.ts. The hand copy that stood here
+    // (2026-10-05, g-csr-copies-onto-e3) was read only by a log line.
     cdiscModels: {
       // CDISC Standards for clinical trial data
       sdtm: {
@@ -623,7 +461,7 @@ class ClinicalIntelligenceService {
       'Initializing Clinical Intelligence Service with comprehensive semantic frameworks'
     );
     log.debug(
-      `Loaded ${SEMANTIC_MODELS.csr.ichE3Framework.sections.length} ICH E3 sections for CSR analysis`
+      `Loaded ${ICH_E3_GUIDANCE.length} ICH E3 headings for CSR analysis`
     );
     log.debug(
       `Loaded ${SEMANTIC_MODELS.cer.meddevFramework.sections.length} MEDDEV sections for CER analysis`

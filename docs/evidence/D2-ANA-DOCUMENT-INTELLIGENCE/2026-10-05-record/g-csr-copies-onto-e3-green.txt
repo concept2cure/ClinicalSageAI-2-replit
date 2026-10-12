@@ -1,0 +1,208 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-05T13:57:50.525Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T13:57:50.526Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-05T13:57:50.526Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > carries exactly the headings E3 numbers, in report order 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading sits under a heading that exists 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.1 has its 12 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.3 has its 2 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §14.3 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §11.4.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.2 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.3.1 has its 3 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.4 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.5 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading cites its own E3 number; every checked source names its URL and date 5ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > a heading that names data sources says they are practice, not a requirement 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > E3 §16.2.7 and §12.2.4 name both the preferred and the investigator’s term; §16.3.1 names 314.50(f)(2) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > resolves a number however it is written, and answers nothing for one E3 does not have 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > csr-builder's ICH_E3_STRUCTURE uses E3's numbers and headings 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR scaffold behind get_csr_template carries every E3 heading 2ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt covers §1–§16 with E3's headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the medical-writing base outlines the CSR with E3's sixteen headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the stream's 5.3.5 playbook lists E3's sixteen headings 5ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt says, under each heading, what the E3 tree says (one summary helper) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the market-specs CSR spine (get_document_template) is E3’s sixteen headings, each with the tree’s summary 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the DOCX blueprint csr-ich-e3 numbers and titles every heading as E3 does, to E3’s depth 9ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > clinical-intelligence-service keeps no hand copy of the E3 outline 1ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > e3SectionSummary — the one statement of what a heading carries > is the purpose, else what it carries, else the headings under it, else its title — never empty 8ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the market-specs Investigator's Brochure cites ICH E6(R3) Appendix A, not E6(R2) §7 > names E6(R3) Appendix A, carries a structured basis, and shows recall as recall 0ms
+
+ Test Files  1 passed (1)
+      Tests  26 passed (26)
+   Start at  13:57:46
+   Duration  5.24s (transform 3.19s, setup 163ms, import 4.35s, tests 47ms, environment 0ms)
+
+
+=== Mutation: a defaultText re-added at 12.3.1.1 in the DOCX blueprint (reverted after) ===
+ × tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the DOCX blueprint csr-ich-e3 numbers and titles every heading as E3 does, to E3’s depth 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: 12.3.1.1: expected 'No deaths occurred during the study.' to be undefined
+      Tests  1 failed | 25 passed (26)
+
+=== Importer tests (31 files) ===
+ Test Files  31 passed (31)
+      Tests  692 passed (692)
+ ✓ server/services/__tests__/csr-builder-e3-brief.test.ts
+ ✓ server/services/ana-ri/__tests__/document-templates-safety-narrative.test.ts
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts
+ ✓ server/services/ana/__tests__/document-template-description.test.ts
+ ✓ server/services/ana/__tests__/in-text-references.test.ts
+ ✓ server/services/ana/__tests__/labeling-authoring-qrd.test.ts
+ ✓ server/services/ana/__tests__/regulatory-knowledge-tools.test.ts
+ ✓ server/services/authoring/__tests__/section-generation-requirements.test.ts
+ ✓ server/services/docx/__tests__/template-default-text.test.ts
+ ✓ server/services/ind/ctd/__tests__/basis-constants-one-home.test.ts
+ ✓ server/services/ind/ctd/__tests__/document-reference.test.ts
+ ✓ server/services/market-specs/__tests__/document-template-library.test.ts
+ ✓ server/services/market-specs/__tests__/submission-requirements.test.ts
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts
+ ✓ tests/regulatory/chain-vault-evidence.test.ts
+ ✓ tests/regulatory/citation-accuracy.test.ts
+ ✓ tests/regulatory/csr-e3-overlay.test.ts
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts
+ ✓ tests/regulatory/ctd-guidance-correctness.test.ts
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts
+ ✓ tests/regulatory/ctd-registry-consistency.test.ts
+ ✓ tests/regulatory/document-outline-render.test.ts
+ ✓ tests/regulatory/fda-safety-presentation.test.ts
+ ✓ tests/regulatory/ind-generation-prompt.test.ts
+ ✓ tests/regulatory/meetings-and-dsur-truth.test.ts
+ ✓ tests/regulatory/post-filing-citations.test.ts
+ ✓ tests/regulatory/regional-module1-record.test.ts
+ ✓ tests/regulatory/requirements-resolver.test.ts
+ ✓ tests/regulatory/submission-chain.test.ts
+ ✓ tests/regulatory/template-library-truth.test.ts
+ ✓ tests/schema-contract/one-normalize-ctd-code.contract.test.ts
+
+
+════════════════════════════════════════════════════════════════════════════
+FIX ROUND 1 — re-land review, 2026-10-11
+════════════════════════════════════════════════════════════════════════════
+
+What changed in this round
+  1. BLOCKING (reviewer): the step turned tests/regulatory/ich-e6r3-citations.
+     test.ts red. That gate (added on trunk 2026-10-08) refuses any mention of
+     the superseded GCP revision without a qualifier within ±160 characters,
+     and the step's dated header comment carried two unqualified mentions.
+     The comment no longer names the superseded revision at all: `grep -n
+     'E6(R2)' server/services/market-specs/document-template-library.ts`
+     returns nothing (exit 1).
+  2. BLOCKING (reviewer, drift/duplication): trunk had already relabelled the
+     Investigator's Brochure entry and minted the one E6(R3) record
+     shared/regulatory/ich-e6r3.ts. The step no longer hand-writes a second
+     E6(R3) citation. IB_BASIS is now built by citeE6R3({kind:'appendix',
+     id:'A'}) plus FDA's hosted url, so the ref text, the `recall` confidence
+     and the currency factId all come from that record.
+  3. BLOCKING (reviewer): the three evidence files are in the repository at
+     docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/ (they were
+     only in the restore staging area). The facts file now carries a
+     "Re-checked 2026-10-11" line and separates the three E6(R3) milestones
+     (Principles+Annex 1 Step 4 2025-01-06, which carries Appendix A; Annex 2
+     Step 4 2026-06-03; consolidated PDF 2026-06-16; EU effect 2025-07-23 and,
+     for Annex 2, 2027-01-15 — not yet in effect) — all recall, no checked date.
+  4. MINOR (reviewer): with all 119 E3 nodes in the DOCX blueprint, two pairs
+     share a title (§10.2/§16.2.2 "Protocol Deviations", §14.1/§16.2.4
+     "Demographic Data"), and mergeWithTemplate's byTitle fallback wrote one
+     caller's prose under both numbers. An ambiguous title is now matched by
+     sectionCode alone. New red → green case recorded in -red.txt.
+
+The rendered basis a client sees (tsx probe of getDocumentTemplate):
+
+  regulatoryBasis: "ICH E6(R3) Appendix A (Investigator's Brochure)
+                    (recall — not checked against the regulator's text)"
+  basis.ref:        "ICH E6(R3) Appendix A (Investigator's Brochure)"
+  basis.confidence: "recall"
+  basis.factId:     "ich-e6r3-gcp-step4"
+  basis.url:        "https://www.fda.gov/media/169090/download"
+  basisProblems():  []
+
+$ npx vitest run tests/regulatory/csr-e3-overlay.test.ts \
+                 tests/regulatory/ich-e6r3-citations.test.ts
+ Test Files  2 passed (2)
+      Tests  33 passed (33)
+
+$ npx vitest run tests/regulatory
+ Test Files  70 passed (70)
+      Tests  1412 passed (1412)
+
+  (the reviewer measured 1 failed / 1410 passed with the step as restored; the
+   failure was the E6(R2) gate, and the count is +1 for the new collision case)
+
+$ npx vitest run <every test file that imports a changed module>
+   server/services/__tests__/csr-builder-e3-brief.test.ts
+   server/services/ana/__tests__/document-template-description.test.ts
+   server/services/ana/__tests__/in-text-references.test.ts
+   server/services/ana/__tests__/labeling-authoring-qrd.test.ts
+   server/services/docx/__tests__/template-default-text.test.ts
+   server/services/regulatory/__tests__/section-blueprint-consistency.test.ts
+   server/services/market-specs/__tests__/document-template-library.test.ts
+   tests/regulatory/document-outline-render.test.ts
+   tests/regulatory/requirements-resolver.test.ts
+   tests/regulatory/template-library-truth.test.ts
+   tests/schema-contract/c2c-rule-pack-outlines.contract.test.ts
+ Test Files  11 passed (11)
+      Tests  216 passed (216)
+
+$ flock -w 3600 …/tsc.lock npx tsc --noEmit -p . | grep -E '<the seven files>'
+  (no output — no type error in any file of this step)
+
+eslint warnings, working copy vs the same file at HEAD:
+  server/services/ind/ctd/csr-e3-guidance.ts                 0 → 0
+  server/services/ana-ri/document-templates.ts               1 → 1
+  server/services/market-specs/document-template-library.ts  0 → 0
+  server/services/docx/templateRegistry.ts                   1 → 0
+  server/services/clinical-intelligence-service.ts           3 → 3
+  server/services/docx/__tests__/template-default-text.test.ts 0 → 0
+  tests/regulatory/csr-e3-overlay.test.ts                    0 → 0
+
+Left for elsewhere (not in this step's file list — see needs_elsewhere):
+  - server/services/ind/ctd/index.ts: e3SectionSummary is not re-exported from
+    the ind/ctd barrel, so the three consumers deep-import csr-e3-guidance.js.
+    (Deep-importing that module is already the repository's pattern —
+    csr-builder.ts, clinical-intelligence-service.ts and
+    clinicalDocumentBlueprints.ts all do it — so nothing is broken; the barrel
+    simply does not list the helper.)
+  - server/services/regulatory/registry/blueprints/clinicalDocumentBlueprints.ts
+    :22-26 carries a FOURTH hand copy of the same summary rule (purpose →
+    contains → children), without e3SectionSummary's final title fallback, so a
+    heading E3 describes by title alone would render "Covers .". No such heading
+    exists in e3TopLevel() today, so it is latent; it should call
+    e3SectionSummary.
