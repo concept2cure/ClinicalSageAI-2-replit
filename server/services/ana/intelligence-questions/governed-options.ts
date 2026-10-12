@@ -30,11 +30,11 @@
  */
 
 import { agencyFor } from '../../../../shared/regulatory/agency-positions.js';
+import type { ProgrammeFacts } from '../../../../shared/regulatory/pathway-cautions.js';
 import {
   pathwayOptions,
   pathwayRegionOf,
   type PathwayDomain,
-  type ProgrammeFacts,
 } from '../../../../shared/regulatory/pathway-positions.js';
 import type { FlowEngineContext, QuestionField } from './types.js';
 
@@ -81,6 +81,19 @@ function whoseRoutes(facts: ProgrammeFacts): { region: 'US' | 'EU' | null; note:
 }
 
 /**
+ * The routes a medicine may take: the modality frame narrows and orders the US
+ * list (default first), and for the EU — where the frame holds nothing — all
+ * four positions are offered and the stated modality MARKS the ones it
+ * contradicts. That asymmetry is deliberate: the frame is the governed source
+ * for which US pathways a modality may take, nothing holds its European
+ * equivalent, and inventing a second frame would be worse than offering the
+ * four and saying which the answers speak against.
+ */
+function medicineOptions(input: GovernedOptionInput, region: 'US' | 'EU') {
+  return pathwayOptions({ domain: 'pharma_biotech', region, modality: input.facts.modality ?? null });
+}
+
+/**
  * One field, with the catalogue it declared resolved for this programme.
  *
  * The escape hatch is guaranteed, not merely preserved: this catalogue holds
@@ -90,7 +103,7 @@ function whoseRoutes(facts: ProgrammeFacts): { region: 'US' | 'EU' | null; note:
  * is a deadlock rather than a closed list.
  */
 function resolveField(field: QuestionField, input: GovernedOptionInput): QuestionField {
-  if (field.optionsFrom !== 'device_pathway_positions') return field;
+  if (!field.optionsFrom) return field;
   const { region, note } = whoseRoutes(input.facts);
   const helpText = field.helpText ? `${field.helpText} ${note}` : note;
   if (!region) {
@@ -101,10 +114,14 @@ function resolveField(field: QuestionField, input: GovernedOptionInput): Questio
     bare.allowOther = field.allowOther ?? { prompt: 'Which route are you taking, in your own words?' };
     return bare;
   }
+  const options =
+    field.optionsFrom === 'medicine_pathway_positions'
+      ? medicineOptions(input, region)
+      : pathwayOptions({ domain: deviceDomainOf(input), region });
   return {
     ...field,
     helpText,
-    options: pathwayOptions({ domain: deviceDomainOf(input), region }),
+    options,
     allowOther: field.allowOther ?? { prompt: 'Which route are you taking, in your own words?' },
   };
 }

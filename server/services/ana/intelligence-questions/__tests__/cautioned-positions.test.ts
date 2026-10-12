@@ -132,7 +132,7 @@ describe('the question a person reads', () => {
         {
           value: 'US_510K',
           label: '510(k)',
-          caution: { availability: 'inapplicable' as const, reason: 'stale', authority: 'stale' },
+          caution: { availability: 'inapplicable' as const, reason: 'stale', authority: 'stale', ruleId: 'stale' },
         },
       ],
     };

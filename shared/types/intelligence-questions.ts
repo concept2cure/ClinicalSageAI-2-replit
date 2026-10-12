@@ -59,6 +59,14 @@ export interface PositionCaution {
   reason: string;
   /** The part, section or annex the contradiction comes from. */
   authority: string;
+  /**
+   * Which governed rule produced this, named rather than numbered. It goes on
+   * the record with the choice, so a reviewer can see what judged it — and a
+   * gate holds that every rule can actually fire, which a per-position check
+   * cannot: a new rule whose positions another rule already marks would
+   * otherwise pass without ever running.
+   */
+  ruleId: string;
 }
 
 export interface QuestionOption {
@@ -135,7 +143,9 @@ export interface OwnPositionAllowed {
  */
 export type GovernedOptionSource =
   /** The routes to market for a device or diagnostics programme, by region. */
-  'device_pathway_positions';
+  | 'device_pathway_positions'
+  /** The routes a medicine may take, by region and by the modality's own frame. */
+  | 'medicine_pathway_positions';
 
 export interface QuestionField {
   id: string;
