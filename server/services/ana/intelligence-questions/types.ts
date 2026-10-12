@@ -10,6 +10,8 @@
 export type {
   QuestionFieldType,
   QuestionOption,
+  PositionAvailability,
+  PositionCaution,
   QuestionField,
   FieldValidation,
   FieldPredicate,

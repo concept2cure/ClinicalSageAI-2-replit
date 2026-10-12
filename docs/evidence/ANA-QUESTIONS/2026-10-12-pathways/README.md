@@ -114,8 +114,11 @@ companion-diagnostic routes — not the plain device ones.
 - `APPLICATION_TYPES` in `types/submission-constants.ts` is still a fifth list
   with nine bare labels. It is used by surfaces outside the interview, so
   migrating it is its own change with its own callers to check.
-- **Withholding a position that cannot apply** — offering De Novo against a
-  clear predicate, or a 351(k) with no reference product — is a product
-  decision the founder has not yet made, and is deliberately not implemented:
-  the catalogue offers what the registry and frame allow, and the person
-  chooses.
+- **A position that cannot apply** — De Novo against a clear predicate, a
+  510(k) for a device just called Class III — was left open here as a product
+  decision. It was decided the same day, on the founder's instruction to take
+  it as subject-matter expert, and the answer is neither of the two this file
+  posed: the position is **marked and still offered**, with the reason, the
+  authority, and a record of the choice. See
+  `../2026-10-12-availability/README.md`, which also says why withholding was
+  rejected.
