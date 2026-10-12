@@ -677,7 +677,8 @@ router.post('/login', signInLimits.login, async (req: Request, res: Response) =>
        address whether or not the server could send it, so a tester waited on a
        screen telling them a code had been sent to them. See
        services/auth/login-code-delivery.ts; the sign-up handler in this same
-       file already refuses on this condition. */
+       file already refuses on this condition, "rather than create an account
+       nobody can activate". */
     const emailOtpUndeliverable = !hasTotpSetup && !canDeliverLoginCode();
 
     // Audit: password verified, MFA challenge issued. Recorded as a
