@@ -391,6 +391,26 @@ scoring path that no longer exists.
   both passing. There was no defect left to repair. The session that set out
   to fix it reported blocked rather than re-adding the method to satisfy its
   own brief, which is the right outcome.
+- **The adaptive plan's RUN-TIME path has no UI.** Design-time operating
+  characteristics are reachable (the workbench's group-sequential calculator on
+  `/adaptive/oc-exact`, the exact recursive-integration engine). What a DSMB
+  actually needs is not: `POST /adaptive/plan`,
+  `/adaptive/:planId/interim-snapshot`, `/adaptive/:planId/evaluate/:snapshotId`,
+  `/adaptive/:planId/ssr/:snapshotId`, `/adaptive/:planId/decision` and
+  `/adaptive/:planId/idmc-report/:lookNumber` are mounted, tested, and reached
+  by no client code — `grep` over `client/src` for any of them returns nothing.
+  That is where the repaired conditional power (0.185 → 0.8903), predictive
+  power (0.247 → 0.8074) and the spending boundaries at a real interim live.
+  They are correct, reference-pinned against gsDesign, and a sponsor cannot get
+  at them. Building that surface is a plan lifecycle with stored snapshots and a
+  governed decision ceremony — the next piece of biostatistics work, and not a
+  line change.
+
+  Everything else is reachable: all fifteen `/api/biostat` design-statistics
+  engines have a workbench calculator (only `/region-rules/*`, a regional-rules
+  catalog rather than a statistical method, has none), and the core sizing,
+  comparison, judgment, document and missing-data paths are reached from the
+  biostatistics surface, the protocol Statistics tab and the AnA tools.
 - **`sap_versions` records no lock time.** The audit trail now says so rather
   than substituting the creation time, but the honest answer is a `locked_at`
   column written by `lockVersion` — a migration-set entry, and under Rule 1 an
