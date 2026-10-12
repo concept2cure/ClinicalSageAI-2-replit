@@ -151,3 +151,56 @@ export function describeFigureCheck(raw: unknown): FigureCheckSummary | null {
   for (const ref of checked) addSection(summary, ref.sectionCode, ref.figures as Record<string, unknown>);
   return checked.length > 0 ? summary : null;
 }
+
+/**
+ * What the save found when it set a drafted section's figures against the figures the documents it
+ * cites state for the same frame (authoring/section-claims-check.ts). A different question from
+ * the figure check above: that one says whether a number is in a source at all, this one says
+ * whether it agrees.
+ */
+export interface ClaimsCheckSummary {
+  /** Pairs of figures actually compared, across every section that cited a source. */
+  compared: number;
+  conflicts: number;
+  /** Figures, or pairs of figures, the engine did not compare, each with a reason it recorded. */
+  notCompared: number;
+  /** Each disagreement, with both values as written. */
+  conflictItems: Array<{ section: string; measure: string; arm?: string; sectionValue: string; sourceValue: string }>;
+  /** The record kept fewer entries than it counted. */
+  truncated: boolean;
+}
+
+/** One section's recorded claims check, added into the summary. */
+function addClaimsSection(summary: ClaimsCheckSummary, sectionCode: unknown, c: Record<string, unknown>): void {
+  summary.compared += Number(c.compared) || 0;
+  summary.conflicts += Number(c.conflicts) || 0;
+  summary.notCompared += Array.isArray(c.notCompared) ? c.notCompared.length : 0;
+  summary.truncated ||= c.truncated === true;
+  const rows = Array.isArray(c.comparisons) ? (c.comparisons as Array<Record<string, unknown>>) : [];
+  for (const row of rows.filter((r) => r?.outcome === 'conflict')) {
+    const section = row.section as Record<string, unknown> | undefined;
+    const source = row.source as Record<string, unknown> | undefined;
+    const first = (v: unknown) => (Array.isArray(v) && v.length > 0 ? String(v[0]) : '');
+    summary.conflictItems.push({
+      section: String(sectionCode ?? ''),
+      measure: String(row.measure ?? ''),
+      ...(row.arm ? { arm: String(row.arm) } : {}),
+      sectionValue: first(section?.values),
+      sourceValue: first(source?.values),
+    });
+  }
+}
+
+/**
+ * The cross-document claims check the save recorded in `projectSourceReferences`. Null when nothing
+ * was checked (no section cited a source, or the document predates the check), so the editor says
+ * nothing rather than "0 conflicts", which would read as agreement nobody established.
+ */
+export function describeClaimsCheck(raw: unknown): ClaimsCheckSummary | null {
+  const refs = raw && typeof raw === 'object' ? (raw as Record<string, unknown>).projectSourceReferences : null;
+  if (!Array.isArray(refs)) return null;
+  const summary: ClaimsCheckSummary = { compared: 0, conflicts: 0, notCompared: 0, conflictItems: [], truncated: false };
+  const checked = (refs as Array<Record<string, unknown>>).filter((r) => r?.claims && typeof r.claims === 'object');
+  for (const ref of checked) addClaimsSection(summary, ref.sectionCode, ref.claims as Record<string, unknown>);
+  return checked.length > 0 ? summary : null;
+}

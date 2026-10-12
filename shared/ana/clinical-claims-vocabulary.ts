@@ -107,3 +107,71 @@ export const CLAIM_REASON_COPY = {
 
 export type ClaimReasonCode = keyof typeof CLAIM_REASON_COPY;
 export const CLAIM_REASON_CODES = Object.keys(CLAIM_REASON_COPY) as ClaimReasonCode[];
+
+/**
+ * The part a document plays, which is what makes two figures the same measure or not. The engine
+ * uses it for exactly two conventions: C5, which keeps adverse reactions apart from adverse events
+ * except in the registers a product label presents as the trial incidence, and the label registers
+ * themselves. Every other comparison is settled by what the text says, not by what kind of document
+ * it is.
+ */
+export const CLAIM_DOC_ROLES = [
+  'csr',
+  'csr_synopsis',
+  'm2_5',
+  'm2_7_3',
+  'm2_7_4',
+  'm2_7_6',
+  'iss',
+  'ise',
+  'uspi',
+  'smpc',
+  'other',
+] as const;
+export type ClaimDocRole = (typeof CLAIM_DOC_ROLES)[number];
+
+/**
+ * A CTD location, longest first, so 5.3.5.3 is read as the integrated summary and not as a study
+ * report. 1.14.1.1 is the US proposed labeling text; 1.3.1 is the EU product information.
+ */
+const ROLE_BY_CTD: ReadonlyArray<readonly [RegExp, ClaimDocRole]> = [
+  [/^5\.3\.5\.3(?:\.|$)/, 'iss'],
+  [/^5\.3\.5(?:\.[12])?(?:\.|$)/, 'csr'],
+  [/^2\.7\.3(?:\.|$)/, 'm2_7_3'],
+  [/^2\.7\.4(?:\.|$)/, 'm2_7_4'],
+  [/^2\.7\.6(?:\.|$)/, 'm2_7_6'],
+  [/^2\.5(?:\.|$)/, 'm2_5'],
+  [/^1\.14\.1(?:\.|$)/, 'uspi'],
+  [/^1\.3\.1(?:\.|$)/, 'smpc'],
+];
+
+/**
+ * A catalogued document type, in the words the catalog uses. "Integrated summary" is matched before
+ * "summary", and the label registers before either.
+ */
+const ROLE_BY_TYPE: ReadonlyArray<readonly [RegExp, ClaimDocRole]> = [
+  [/\b(?:synopsis)\b/i, 'csr_synopsis'],
+  [/integrated\s+(?:summary|analysis)\s+of\s+safety|\bISS\b/i, 'iss'],
+  [/integrated\s+(?:summary|analysis)\s+of\s+efficacy|\bISE\b/i, 'ise'],
+  [/summary\s+of\s+product\s+characteristics|\bSmPC\b|\bSPC\b/i, 'smpc'],
+  [/prescribing\s+information|package\s+insert|\bUSPI\b|\bPI\b/i, 'uspi'],
+  [/clinical\s+overview/i, 'm2_5'],
+  [/summary\s+of\s+clinical\s+efficacy/i, 'm2_7_3'],
+  [/summary\s+of\s+clinical\s+safety/i, 'm2_7_4'],
+  [/clinical\s+study\s+report|\bCSR\b/i, 'csr'],
+];
+
+/**
+ * The role of a document or an authoring section, from the identifiers the platform already holds:
+ * its CTD location first, because a filed location is a stronger fact than a type somebody chose on
+ * upload, then its catalogued type. Anything unrecognised is `other`, which makes no role convention
+ * bind — the engine then compares on what the texts say and nothing else. Never guessed from a file
+ * name or a title.
+ */
+export function claimDocRoleOf(doc: { ctdSection?: string | null; documentType?: string | null }): ClaimDocRole {
+  const ctd = (doc.ctdSection ?? '').trim();
+  if (ctd) for (const [re, role] of ROLE_BY_CTD) if (re.test(ctd)) return role;
+  const type = (doc.documentType ?? '').trim();
+  if (type) for (const [re, role] of ROLE_BY_TYPE) if (re.test(type)) return role;
+  return 'other';
+}
