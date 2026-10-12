@@ -5,7 +5,7 @@
  * covering organization and project identity, product and regulatory
  * scope, team and roles, and initial configuration.
  *
- * 10 nodes · 48 fields · 4 sections · 6 issue checks
+ * 11 nodes · 48 fields · 4 sections · 6 issue checks
  *
  * @module server/services/ana/intelligence-questions/flows/project-setup
  */
@@ -52,7 +52,13 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
       {
         id: 'product_regulatory',
         label: 'Product & Regulatory Scope',
-        nodeIds: ['product_details', 'regulatory_targets', 'medtech_regulatory', 'multi_country_setup'],
+        nodeIds: [
+          'product_details',
+          'regulatory_targets',
+          'device_classification',
+          'medtech_regulatory',
+          'multi_country_setup',
+        ],
       },
       {
         id: 'team_roles',
@@ -297,11 +303,11 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
         branches: [
           {
             when: { field: 'organization_type', operator: 'eq', value: 'medtech' },
-            goto: 'medtech_regulatory',
+            goto: 'device_classification',
           },
           {
             when: { field: 'product_type', operator: 'in', value: ['medical_device', 'diagnostic'] },
-            goto: 'medtech_regulatory',
+            goto: 'device_classification',
           },
         ],
         defaultNext: 'regulatory_targets',
@@ -399,13 +405,20 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
         ],
       },
 
+      /* The classification is asked BEFORE the route, and in its own question,
+         for two reasons: it is the order the regulation works in — the class
+         decides which conformity or premarket route is open — and it is what
+         lets AnA mark a route the stated class speaks against before the
+         person picks it rather than after (founder's decision, 2026-10-12).
+         Asked together in one question, as they were, the caution could only
+         ever arrive once the answer was already given. */
       {
-        id: 'medtech_regulatory',
+        id: 'device_classification',
         section: 'product_regulatory',
         question:
-          'This is a medical device project. Provide device-specific regulatory information.',
+          'This is a medical device project. How is the device classified?',
         guidance:
-          'Medical device submissions follow distinct pathways: 510(k) for substantial equivalence to a predicate device (21 CFR 807), PMA for Class III devices (21 CFR 814), and De Novo for novel low-to-moderate risk devices (21 CFR 860). Device classification determines the regulatory pathway and required documentation. In the EU, the Medical Device Regulation (EU 2017/745) applies with Notified Body assessment.',
+          'Classification comes before the route, because it decides which routes are open. In the US the class follows from the classification regulation and the product code (21 CFR 860): Class I is general controls and is usually exempt from premarket notification, Class II adds special controls and is normally a 510(k), and Class III needs premarket approval unless it is a preamendments type. In the EU the MDR classification rules (Annex VIII) decide the conformity assessment route and whether a Notified Body is involved at all.',
         fields: [
           {
             id: 'device_class',
@@ -418,24 +431,6 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
               { value: 'class_iii', label: 'Class III — Premarket Approval Required' },
               { value: 'not_classified', label: 'Not Yet Classified' },
             ],
-          },
-          {
-            id: 'device_submission_pathway',
-            label: 'Submission Pathway',
-            type: 'select',
-            required: true,
-            options: devicePathways,
-            allowOther: { prompt: 'Which route are you taking, in your own words?' },
-          },
-          {
-            id: 'predicate_device',
-            label: 'Predicate Device (for 510(k))',
-            type: 'text',
-            placeholder: 'e.g., K123456 — Brand Name by Manufacturer',
-            /* Every 510(k) names a predicate — Traditional, Special and
-               Abbreviated alike — so this is gated on the pathway, and the
-               flavour is the 510(k) flow's own question. */
-            visibleWhen: { field: 'device_submission_pathway', operator: 'eq', value: 'US_510K' },
           },
           {
             id: 'product_code',
@@ -454,6 +449,36 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
               { value: 'class_iii', label: 'Class III' },
               { value: 'na', label: 'Not applicable / No EU filing planned' },
             ],
+          },
+        ],
+        defaultNext: 'medtech_regulatory',
+      },
+
+      {
+        id: 'medtech_regulatory',
+        section: 'product_regulatory',
+        question:
+          'Which route are you taking to market, and against what?',
+        guidance:
+          'Medical device submissions follow distinct pathways: 510(k) for substantial equivalence to a predicate device (21 CFR 807), PMA for Class III devices (21 CFR 814), and De Novo for novel low-to-moderate risk devices (21 CFR 860). Each position says what it commits the programme to. Where the classification you have just given speaks against a route, AnA marks it and still offers it — the choice is yours, and she records the basis you take it on.',
+        fields: [
+          {
+            id: 'device_submission_pathway',
+            label: 'Submission Pathway',
+            type: 'select',
+            required: true,
+            options: devicePathways,
+            allowOther: { prompt: 'Which route are you taking, in your own words?' },
+          },
+          {
+            id: 'predicate_device',
+            label: 'Predicate Device (for 510(k))',
+            type: 'text',
+            placeholder: 'e.g., K123456 — Brand Name by Manufacturer',
+            /* Every 510(k) names a predicate — Traditional, Special and
+               Abbreviated alike — so this is gated on the pathway, and the
+               flavour is the 510(k) flow's own question. */
+            visibleWhen: { field: 'device_submission_pathway', operator: 'eq', value: 'US_510K' },
           },
           {
             id: 'notified_body',

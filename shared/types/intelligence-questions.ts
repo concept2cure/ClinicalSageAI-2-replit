@@ -25,6 +25,42 @@ export type QuestionFieldType =
   | 'country_select'
   | 'agency_select';
 
+/**
+ * Whether a position is one this programme can actually take, judged against
+ * the answers the programme itself has given (founder's decision, 2026-10-12).
+ *
+ * A regulated platform must not quietly drop a position a sponsor may have
+ * reasons to want: an absent option is a question lying by omission, and this
+ * engine has already been bitten once by hidden options — a wrong client
+ * segment silently removed whole interviews. Nor may it offer a position the
+ * sponsor's own answers contradict as though it were neutral; that invites a
+ * filing on a basis they cannot support.
+ *
+ * So every position stays selectable and the contradicted ones are MARKED:
+ *   'available'     nothing in the answers speaks against it (the default,
+ *                   and what an unknown fact means — not knowing is not a
+ *                   contradiction);
+ *   'needs_basis'   it remains open, but only with a justification the
+ *                   answers do not yet contain;
+ *   'inapplicable'  the answers contradict it outright.
+ *
+ * Marking, not hiding: the person keeps the choice, and taking a marked
+ * position is recorded on the interview's issue trail.
+ */
+export type PositionAvailability = 'available' | 'needs_basis' | 'inapplicable';
+
+/**
+ * Why a position is marked. Written in a governed catalogue, never by a
+ * model, and never without the authority that makes the contradiction one.
+ */
+export interface PositionCaution {
+  availability: Exclude<PositionAvailability, 'available'>;
+  /** The contradiction, naming the answer that creates it. One or two sentences. */
+  reason: string;
+  /** The part, section or annex the contradiction comes from. */
+  authority: string;
+}
+
 export interface QuestionOption {
   value: string;
   label: string;
@@ -45,6 +81,12 @@ export interface QuestionOption {
    * paraphrase — these are written in the flow or the governed catalogue.
    */
   authority?: string;
+  /**
+   * Set where the programme's own answers speak against this position. The
+   * option is still offered — see {@link PositionAvailability} for why — and
+   * the engine records the choice of a cautioned position on the issue trail.
+   */
+  caution?: PositionCaution;
 }
 
 /**
