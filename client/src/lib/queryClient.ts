@@ -221,6 +221,15 @@ export function serverMessage(payload: unknown): string | null {
     // one thing a reviewer must NOT be told when the real answer is "you may
     // not sign your own work".
     usable(p.detail) ??
+    // `{ error: CODE, details: { message: '<sentence>' } }` is the
+    // api-response `clientError(res, status, code, details)` envelope. The
+    // biostatistics bridge refuses with `{ error: 'CANNOT_SIZE', details: {
+    // message: "<the engine's own sentence>" } }`; because CANNOT_SIZE IS
+    // enum-shaped, `usable(err)` below rejects it and the refusal degraded to
+    // "Couldn't complete that request. Try again." — generic copy, and
+    // "try again" is the wrong advice for a design the engine will refuse
+    // every time until an input changes.
+    usable((p.details as Record<string, unknown> | undefined)?.message) ??
     // A bare `error` string is copy only when it passes the same two filters.
     usable(err);
   return message === null ? null : withQuotedReference(message, p.correlationId ?? err?.correlationId);

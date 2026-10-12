@@ -140,6 +140,162 @@ deletion names its replacement by path in its commit, and
 `git log --all --diff-filter=D` confirms none had been deleted and rebuilt
 before.
 
+### The method a design actually got
+
+A reference suite pins a formula. It does not prove anything *reaches* that
+formula. Three defects lived in exactly that gap — the engine function correct
+and reference-pinned, nothing routing a design to it — and a fourth was
+introduced by the repair above and caught the same way.
+
+| Design | What a caller read | What it reads now |
+|---|---|---|
+| 2×2 crossover (d 0.5, ρ 0.5) | `sampleSize` = 128, `method` = "Two-sample t-test (superiority)" | 32 subjects in 2 sequences, method naming Julious 2004 |
+| ROC / AUC endpoint, any track | refused: `missing_input`, field `sensitivity` | 10 diseased + 10 non-diseased, method naming Hanley–McNeil |
+| Protocol declaring `structuralDesign: 'crossover'` | adapted as two parallel groups, no gap raised | adapted as a crossover, or refused for want of ρ |
+| Protocol declaring factorial / umbrella / MAMS | sized as two parallel groups, silently | same figure, with the caveat recorded as a gap |
+
+- **The crossover N was computed and then set aside.** `computeEnhanced`
+  attached `crossoverResult.withinSubjectN` (32, correct) while leaving
+  `sampleSize.total` holding the parallel-group figure (128) and `method`
+  reading "Two-sample t-test". Every surface and the bridge read
+  `sampleSize.total`. A crossover trial was therefore sized at four times the
+  subjects it needs, on the headline figure, with nothing saying the declared
+  design had been ignored. `compute()` now chooses the crossover before the
+  track, because a crossover is the design, not an add-on to one.
+- **An ROC design was refused for a field it does not have.** The 2026-10-11
+  change that stopped six endpoint types being silently sized as continuous
+  routed `auc_roc` to `computeDiagnostic`, which requires sensitivity,
+  specificity and prevalence. So a *complete* AUC design (aucTarget 0.85,
+  aucNull 0.5) threw `missing_input` naming `sensitivity`. That is this
+  session's own defect: it replaced a wrong number with a wrong refusal, and
+  `computeAUCComparison` stayed reachable from its test only. `auc_roc` is
+  now sized by the AUC method on every track — the same
+  endpoint-not-track principle the kappa gate needed.
+- **`DiagnosticComputationResult.sensitivity` and `.specificity` are now
+  optional.** They were required, so the AUC path filled them with zeros and
+  `document-generator.ts` printed "**Sensitivity**: 0.0%" into a generated SAP
+  section — a fabricated figure in a governed document. Both the document
+  generator and the SME router now print only the figures the engine computed.
+- **The bridge dropped the structural design entirely.** `studyTypeFor` maps
+  five `StructuralDesign` members; the other five fell through to
+  `superiority`, and nothing else in `design-adapter.ts` read the field. A
+  crossover protocol was adapted into a parallel-group input and sized as one.
+  It now maps `crossoverPeriods: 2`, takes ρ from the plan's MMRM assumptions
+  **with that substitution disclosed as a `defaulted` gap**, and blocks when no
+  correlation is recorded rather than producing the parallel figure. Factorial,
+  umbrella and MAMS still get the two-group figure — a defensible
+  per-comparison starting point — with a `defaulted` gap that says so.
+
+## What the UI can now ask for
+
+The directive of 2026-10-11 was that every use case be *there*, not merely
+implemented. Three places were short of that.
+
+- **The sizing form offered four endpoint types; the engine sizes nine.**
+  `surfaces/Biostatistics.tsx` let a user choose continuous, binary,
+  time-to-event and sensitivity/specificity. Ordinal, count, composite,
+  AUC/ROC and agreement could not be asked for at all, and there was no
+  crossover control — although `request-input.ts` and `input-normalizer.ts`
+  have carried `aucTarget`, `aucNull`, `crossoverPeriods`,
+  `withinSubjectCorrelation` and `agreementTarget` on the wire since the
+  contract was written. All nine endpoint types are now selectable, each with
+  the controls its method needs, plus two presets (ROC / AUC, 2×2 crossover).
+  The agreement endpoint is selectable *because* the engine refuses it: the
+  refusal names the published methods and the inputs they need, which is a
+  better answer than a design a client cannot express.
+- **The accuracy controls were gated by the sponsor's track.** Sensitivity,
+  specificity and prevalence appeared on the `diagnostics_ivd` track only, so a
+  pharma sponsor running a diagnostic sub-study could not enter them — the same
+  track-instead-of-endpoint mistake as the engine's. They are now gated by the
+  endpoint, matching how the engine chooses the method.
+- **Two client segments had no biostatistics surface at all.** `medtech` and
+  `diagnostics` carried neither `biostatistics` nor `biostat-workbench` in
+  their catalogs, while the engines built for them — diagnostic accuracy
+  sizing, co-primary sensitivity/specificity, MRMC reader studies, Bayesian
+  device sizing, AUC comparison — were running and reachable only from the two
+  pharma segments. `health` carried only the surface
+  `docs/SURFACE_DECISIONS_2026-10-08.md` scraps as a place. The workbench is
+  now in all three catalogs. (It stays behind the launch flag; this makes it
+  reachable for the segments that need it when the flag opens, rather than
+  leaving a device or IVD sponsor with no statistical surface in the catalog
+  at all.)
+- **The browser's own statistics engine is gone.** `surfaces/Biostatistics.tsx`
+  carried a ~520-line copy of the server engine — its own Abramowitz & Stegun
+  CDF, the silent HR = 0.5, a survival N halved by dividing events by 2, the
+  TOST error, the hard-coded diagnostic margin — and no reference test. Users
+  touched that copy, not the tested server engine. It is deleted; the surface
+  calls `/api/ana-biostats/compute` and `/document`, so the prose and the
+  figures come from one result and cannot disagree. The module now exports
+  exactly `['Biostatistics']`.
+
+### Defects found by adversarially verifying this session's own work
+
+Each repair lane was checked by a second agent told to refute it. They found
+six live defects in the lanes' own output and in the code around it — none of
+which any test caught, and three of which made the honest-refusal work above
+invisible or crashed the pane that renders it. All six are fixed.
+
+1. **Every route turned a refusal into a 500.** `server/routes/ana-biostats.ts`
+   sent every throw to `serverError`, so a `ComputationRefusal` reached the
+   browser as `500 INTERNAL_ERROR, "Something went wrong while saving compute.
+   The problem has been logged."` The refusal contract was built on 2026-10-05
+   and the tool path was fixed on 2026-10-11; the HTTP surface was not, so the
+   browser could never show a refusal however honestly the engine phrased one.
+   A refusal is now **422** with the engine's sentence as `error` and
+   `{refusal, code, field}` under `details`, through one mapper used by all
+   eleven handlers. A missing tenant is **403**, not 500. Pinned by
+   `server/routes/__tests__/ana-biostats-refusal-is-422.test.ts` (8 cases; 5 read
+   500 before the fix).
+2. **The bridge's read path did the same.** `bridge-service.ts computeFor` called
+   `computationEngine.compute` with no catch, so a refusal propagated through
+   `assessDesign` into `serverError`: "Something went wrong while assessing the
+   design." The assessment now carries `refusal: {code, message, field}` and
+   the panel prints the engine's own sentence.
+3. **The client lost the sentence anyway.** `serverMessage` (queryClient.ts)
+   read `error.message`, `message`, `detail` and a bare non-enum `error` — but
+   the bridge refuses with `{error: 'CANNOT_SIZE', details: {message: '<the
+   sentence>'}}`, and `CANNOT_SIZE` is enum-shaped, so the refusal degraded to
+   "Couldn't complete that request. Try again." — generic copy, and the wrong
+   advice for a design that will be refused every time until an input changes.
+   It now reads `details.message`, which is the `clientError` envelope the whole
+   server uses.
+4. **A non-array `assumptions` unmounted the whole result pane.**
+   `biostatEngineResult.tsx` guarded `adapter.gaps`, `readiness.checks`,
+   `provenance`, `judgment.dimensions` and `escalationReasons` with
+   `Array.isArray` and left `computation.assumptions` and `dimension.flags`
+   undefended, so `assumptions.map is not a function` rendered an error as
+   nothing — against the file's own stated discipline.
+5. **A figure was drawn beside a blocking gap, and the governed write stayed
+   enabled.** The invariant "no number for a design the bridge says is
+   incomplete" lived only in `design-adapter.ts` (`input: blocking ? null :
+   input`). One bad response or one stale cached assessment was enough. It is
+   now enforced where the figure is rendered as well (`engineFigureIsUsable`),
+   and `sampleSize.total: 0` reads as absent rather than as "0 subjects" — the
+   same file's "never a zero standing in for an absent figure", which it was
+   not keeping. Pinned by
+   `client/src/concept2cure/v2/__tests__/engineResultNeverFabricates.test.tsx`
+   (12 cases; 8 failed before).
+6. **Two false statements in a Part 11 audit trail.**
+   `collaborative-sap-service.getAuditTrail` stamped `version_locked` at
+   `v.createdAt` — `sap_versions` has no `locked_at` column, so the trail
+   asserted every locked version was locked the instant it was created, and the
+   sort then placed the lock before the creation it followed. And it rendered a
+   legacy `signatureId`/`approvedBy` pair as a `version_signed` event, although
+   no writer has set those since `505f71263` removed the route that took the
+   signer from the request body and verified nothing. The lock entry now
+   carries `timestamp: null` and says the time is not recorded, sorting last
+   for its version; the legacy entry is marked `unverified` with what it
+   actually is. Pinned by
+   `server/services/__tests__/sap-audit-trail-no-false-times.test.ts`
+   (8 cases; 5 failed before). **Recording the lock time properly needs a
+   `locked_at` column** — a migration-set entry under Rule 1 — which is owed,
+   below.
+
+Also fixed from the same reports: `Number(req.params.sapVersionId)` reached the
+service as `NaN` with no guard (now 400); `biostatBridge.tsx` carried a third
+inline copy of `computedTotalN` (now calls it); and the `where` strings on the
+pure-compute routes said "saving compute" in a 500 sentence about arithmetic.
+
 ## Verification
 
 Every repair was shown failing first. Four new reference suites pin the
@@ -151,8 +307,20 @@ engines to published values:
 | `tests/biostat/ana-sizing-reference.test.ts` | 25 | 22 failed |
 | `tests/biostat/adaptive-and-spending-reference.test.ts` | 15 | 14 failed (the 15th could not run — the function was not exported) |
 | `tests/biostat/study-design-and-fragility-reference.test.ts` | 15 | 15 failed |
+| `tests/biostat/design-dispatch-reaches-its-method.test.ts` | 13 | 11 failed |
+| `server/services/biostatistics-bridge/__tests__/structural-design-reaches-the-engine.test.ts` | 9 | 8 failed |
+| `server/routes/__tests__/ana-biostats-refusal-is-422.test.ts` | 8 | 5 failed |
+| `client/src/concept2cure/v2/__tests__/engineResultNeverFabricates.test.tsx` | 12 | 8 failed |
+| `client/src/concept2cure/v2/__tests__/biostatEveryEndpointAskable.test.tsx` | 22 | 16 failed |
+| `server/services/__tests__/sap-audit-trail-no-false-times.test.ts` | 8 | 5 failed |
 
-`tests/biostat` as a whole: **342 tests pass across 15 files.** The adaptive
+The last two were written for the dispatch defects above, and they close the
+gap a reference suite leaves: they assert what `compute()` and the design
+adapter *return*, not what the formulas compute. Both were run against the
+previous code first — 11 of 13 and 8 of 9 failing — and the cases that passed
+either way are named in each file as the guards they are.
+
+`tests/biostat` as a whole: **355 tests pass across 16 files.** The adaptive
 lane additionally re-broke its own code six ways and confirmed the tests caught
 each; where a deliberate break initially passed, it added the check that
 catches it. `npm run typecheck`: 0 errors. `ci:unreferenced-modules`: 81,
@@ -178,7 +346,11 @@ scoring path that no longer exists.
 | Interim design, conditional and predictive power | canonical exact engine | boundaries match gsDesign |
 | CSR §9.7 / §11.x statistics | guarded | a model-stated figure is not stored |
 | Module 2.5 / 2.7 statistics | bound to CSR records | model-supplied figures ignored |
-| Device / IVD accuracy sizing | engine | refuses without the accuracy targets; the design schema records none, and the bridge reports that as a blocking gap |
+| Device / IVD accuracy sizing | engine; workbench; biostatistics surface | refuses without the accuracy targets; the design schema records none, and the bridge reports that as a blocking gap. The device and diagnostics segments can now reach the workbench |
+| ROC / AUC sizing | engine; biostatistics surface (ROC preset) | Hanley–McNeil, on every track. Not expressible in a protocol: the design schema's `EndpointType` has no ROC member, and the bridge says so |
+| 2×2 crossover sizing | engine; biostatistics surface (crossover preset); protocol bridge | Julious 2004 on the headline figure; the bridge maps a crossover protocol or refuses for want of ρ |
+| Agreement (kappa) sizing | engine refuses | selectable, and the refusal names Donner & Eliasziw / Flack and the inputs the contract lacks |
+| Ordinal / count / composite endpoints | engine | continuous approximation, disclosed in the method and in the assumptions |
 | Submission Readiness statistical gate | — | **owed** (below) |
 | Reporting & analytics statistical reports | — | **owed** (below) |
 
@@ -200,15 +372,32 @@ scoring path that no longer exists.
   table above (its own Abramowitz & Stegun CDF, the silent HR = 0.5, a
   survival N halved by dividing events by 2, the TOST error, the hard-coded
   diagnostic margin) and no reference test at all. Users touched that copy,
-  not the tested server engine. Removing it is in flight in this session as
-  its own change.
-- **The governed SAP lifecycle has no UI.** Its routes exist; nothing reaches
-  them, and its `signVersion` writes a caller-supplied signer name, title and
-  timestamp verbatim, with a "Part 11 compliance" check that only asserts the
-  fields are non-empty — so a caller can sign as anyone, and nothing binds the
-  signature to the content (§11.100(a), §11.200(a)(1)(i), §11.70). Repairing
-  it through the platform's one re-verification ceremony is in flight in this
-  session; wiring or deleting the surface area is a product call.
+  not the tested server engine. That copy is now deleted and the surface calls
+  the server (see "What the UI can now ask for" above); removing the surface
+  itself remains the scheduled change.
+- **The governed SAP lifecycle has no UI.** Its routes exist and nothing
+  reaches them. Wiring or deleting that surface area is a product call.
+
+  **Correction (same day).** An earlier draft of this line said `signVersion`
+  writes a caller-supplied signer name with a Part 11 check that only asserts
+  the fields are non-empty, and that repairing it was in flight. That was read
+  off a stale working copy: both `CollaborativeSapService.signVersion` and
+  `POST /api/biostat/sap/:sapVersionId/sign` were **already removed** on
+  2026-10-08 in `505f71263` (P-25 follow-up), which `git merge-base
+  --is-ancestor 505f71263 HEAD` confirms. `server/routes/biostatPlatform.ts`
+  carries the tombstone naming the replacement by path
+  (`services/part11/reverify-signer.ts`), and
+  `tests/biostat-sap-sign-route-removed.test.ts` pins the removal — 2 tests,
+  both passing. There was no defect left to repair. The session that set out
+  to fix it reported blocked rather than re-adding the method to satisfy its
+  own brief, which is the right outcome.
+- **`sap_versions` records no lock time.** The audit trail now says so rather
+  than substituting the creation time, but the honest answer is a `locked_at`
+  column written by `lockVersion` — a migration-set entry, and under Rule 1 an
+  additive one, not squeezed into this change. `lockVersion` also records no
+  locker: `biostatPlatform.ts` resolves a `userId` the service never receives.
+  Giving that act the platform's signing ceremony is the product call the SAP
+  item above names.
 - **No statistical qualification package.** The engines are now pinned to
   published reference values, which is the input to such a package, not the
   package itself: there is no IQ/OQ/PQ for them and no traceability matrix.
