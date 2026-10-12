@@ -192,3 +192,62 @@ describe('a position the answers contradict', () => {
     expect(screen.queryAllByText(/needs a basis|contradict/)).toHaveLength(1);
   });
 });
+
+/**
+ * The agency question (founder's directive, 2026-10-12). `agency_select` is a
+ * field type the engine has always declared and no renderer ever implemented,
+ * so it fell through to a text input: the answer that decides the Module 1
+ * backbone, the validation profile and the gateway was typed prose.
+ */
+describe('a question whose type the card never implemented', () => {
+  const agencyQuestion = (fields: IntelligenceQuestionEvent['node']['fields']): IntelligenceQuestionEvent => ({
+    ...QUESTION,
+    node: { ...QUESTION.node, question: 'Which agency is this project filing with?', fields },
+  });
+
+  it('draws an agency as positions, with what filing there commits the programme to', () => {
+    const onAnswer = vi.fn();
+    render(
+      <AnaQuestionCard
+        question={agencyQuestion([
+          {
+            id: 'primary_regulatory_agency',
+            label: 'Primary Regulatory Agency',
+            type: 'agency_select',
+            required: true,
+            options: [
+              { value: 'US', label: 'FDA — United States', commits: 'Food and Drug Administration. Submissions are eCTD.' },
+              { value: 'SG', label: 'HSA — Singapore', commits: 'Health Sciences Authority. AnA holds no Module 1 checklist for this agency.' },
+            ],
+            allowOther: { prompt: 'Which agency, in your own words?' },
+          },
+        ])}
+        sessionId="sess-1"
+        onAnswer={onAnswer}
+      />,
+    );
+    expect(screen.getByRole('radio', { name: /FDA — United States/ }), 'an agency is picked, not typed').toBeTruthy();
+    expect(screen.getByText(/AnA holds no Module 1 checklist for this agency/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: /HSA — Singapore/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(onAnswer).toHaveBeenCalledWith({
+      node_id: 'pathway',
+      answers: { primary_regulatory_agency: 'SG' },
+      session_id: 'sess-1',
+    });
+  });
+
+  it('still draws an input where the question carries no positions, as country does today', () => {
+    render(
+      <AnaQuestionCard
+        question={agencyQuestion([
+          { id: 'headquarters_country', label: 'Headquarters Country', type: 'country_select', required: true },
+        ])}
+        sessionId="sess-1"
+        onAnswer={vi.fn()}
+      />,
+    );
+    expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    expect((screen.getByRole('textbox') as HTMLInputElement).id).toBe('ana-q-headquarters_country');
+  });
+});

@@ -12,6 +12,7 @@
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
 import { OTHER_POSITION } from '../../../../../shared/types/intelligence-questions.js';
+import { agencyOptions } from '../../../../../shared/regulatory/agency-positions.js';
 import { pathwayOptions, type PathwayDomain } from '../../../../../shared/regulatory/pathway-positions.js';
 import type { FlowEngineContext } from '../types.js';
 
@@ -31,6 +32,13 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
      exemption and the 513(g) that clears nothing (founder's directive,
      2026-10-12). US positions, as this list always was. */
   const devicePathways = pathwayOptions({ domain: domainFor(ctx?.clientType ?? 'medtech'), region: 'US' });
+  /* The agencies come from the two governed region modules, and the value is
+     the canonical region code the rest of the platform keys on. This question
+     was declared `agency_select`, a type nothing ever rendered, so it reached
+     the person as a free-text box — the one answer that decides the Module 1
+     backbone, the validation profile, the gateway and which filings exist at
+     all was typed prose (founder's directive, 2026-10-12). */
+  const agencies = agencyOptions();
   return {
     id: 'project-setup-v1',
     category: 'project_setup',
@@ -336,6 +344,8 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
             label: 'Primary Regulatory Agency',
             type: 'agency_select',
             required: true,
+            options: agencies,
+            allowOther: { prompt: 'Which agency, in your own words?' },
           },
           {
             id: 'submission_type',
@@ -367,17 +377,20 @@ export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition 
             label: 'Additional Regulatory Agencies',
             type: 'multi_select',
             visibleWhen: { field: 'multi_country_submission', operator: 'eq', value: true },
+            /* The same governed twelve, plus the one entry that is not a
+               national filing and says so. The hand-written nine this
+               replaced held no Swissmedic, HSA or MFDS, and said nothing about
+               what filing with any of them commits the programme to. */
             options: [
-              { value: 'ema', label: 'EMA (European Medicines Agency)' },
-              { value: 'pmda', label: 'PMDA (Japan)' },
-              { value: 'nmpa', label: 'NMPA (China)' },
-              { value: 'health_canada', label: 'Health Canada' },
-              { value: 'tga', label: 'TGA (Australia)' },
-              { value: 'mhra', label: 'MHRA (United Kingdom)' },
-              { value: 'anvisa', label: 'ANVISA (Brazil)' },
-              { value: 'cdsco', label: 'CDSCO (India)' },
-              { value: 'who', label: 'WHO Prequalification' },
+              ...agencies,
+              {
+                value: 'who',
+                label: 'WHO Prequalification — not a national filing',
+                commits:
+                  'WHO prequalification is an assessment for UN procurement, not a marketing authorisation. AnA holds no Module 1 requirements, no validation profile and no gateway for it, and a national filing is still to be made.',
+              },
             ],
+            allowOther: { prompt: 'Which other agency, in your own words?' },
           },
           {
             id: 'ctd_format',

@@ -1,0 +1,8 @@
+# the question engine, the governed catalogues and the wider intelligence tier
+$ npx vitest run server/services/ana/intelligence-questions shared/regulatory/__tests__ tests/ana-intelligence
+ Test Files  30 passed (30)
+      Tests  574 passed (574)
+
+$ npx vitest run <the 11 v2 client suites that mount the card or the thread>
+ Test Files  11 passed (11)
+      Tests  89 passed (89)

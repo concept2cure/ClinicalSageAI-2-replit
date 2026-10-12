@@ -49,8 +49,26 @@ export interface AnaQuestionCardProps {
   busy?: boolean;
 }
 
-/** A field the person picks from, rather than types into. */
-const PICKED: ReadonlySet<QuestionField['type']> = new Set(['select', 'radio', 'multi_select', 'checkbox', 'yes_no']);
+/**
+ * A field the person picks from, rather than types into.
+ *
+ * `agency_select` and `country_select` are here because the engine has always
+ * declared them and no renderer ever implemented them: they fell through to a
+ * text input, so the agency — the answer that decides the Module 1 backbone,
+ * the validation profile and the gateway — was typed prose. A field of either
+ * type still draws as an input where the question carries no positions, which
+ * is what `country_select` does today: the platform holds a governed agency
+ * vocabulary and no governed country one.
+ */
+const PICKED: ReadonlySet<QuestionField['type']> = new Set([
+  'select',
+  'radio',
+  'multi_select',
+  'checkbox',
+  'yes_no',
+  'agency_select',
+  'country_select',
+]);
 
 const YES_NO: QuestionOption[] = [
   { value: 'yes', label: 'Yes' },

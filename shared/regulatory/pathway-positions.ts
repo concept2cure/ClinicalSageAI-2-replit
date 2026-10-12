@@ -68,7 +68,9 @@
  */
 
 import type { PositionCaution } from '../types/intelligence-questions.js';
+import { agencyFor } from './agency-positions.js';
 import { getApplicationType } from './global-document-registry.js';
+import { canonicalRegionOf, type CanonicalRegion } from './region-identity.js';
 import { MODALITIES, MODALITY_FRAME, type Modality } from './modality.js';
 
 /** The regulator a position is taken in front of. */
@@ -463,6 +465,12 @@ export function allPathwayPositions(): PathwayPosition[] {
  * reach is worse than no rule: it reads as a check that passes.
  */
 export interface ProgrammeFacts {
+  /**
+   * Every region the sponsor has named an agency for — the primary one and any
+   * others. Empty or absent means they have not said, which speaks against
+   * nothing.
+   */
+  regions?: CanonicalRegion[];
   /** A predicate device the sponsor has named, as they wrote it. */
   predicateNamed?: string;
   /** The US risk class the sponsor states. 'Not yet classified' is not a fact. */
@@ -485,7 +493,21 @@ interface CautionRule {
   availability: PositionCaution['availability'];
   when: (facts: ProgrammeFacts, positionId: string) => boolean;
   reason: (facts: ProgrammeFacts, positionId: string) => string;
-  authority: string;
+  /** A citation, or one read off the position itself where that IS the authority. */
+  authority: string | ((positionId: string) => string);
+}
+
+/** The region a position is taken in, from the registry entry behind it. */
+function regionOfPosition(positionId: string): CanonicalRegion | null {
+  const entry = getApplicationType(positionId);
+  return (entry && canonicalRegionOf(String(entry.region))) || null;
+}
+
+/** 'FDA', 'FDA and EMA', 'FDA, EMA and PMDA' — the agencies as a person wrote them. */
+function listed(regions: readonly CanonicalRegion[]): string {
+  const names = regions.map(agencyFor);
+  if (names.length <= 1) return names.join('');
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
 /**
@@ -494,6 +516,31 @@ interface CautionRule {
  * written by a model.
  */
 const CAUTION_RULES: readonly CautionRule[] = [
+  /* -- The regulator comes first: a filing is made to one, or it is not made.
+        Derived from the registry entry's own region, so every position this
+        module annotates is covered by this one rule and a filing the registry
+        gains is covered the day it is annotated. -------------------------- */
+  {
+    positions: Object.keys(POSITION_MEANING),
+    availability: 'inapplicable',
+    when: (f, id) => {
+      if (!f.regions?.length) return false;
+      const region = regionOfPosition(id);
+      return region !== null && !f.regions.includes(region);
+    },
+    reason: (f, id) => {
+      const region = regionOfPosition(id)!;
+      const them = listed(f.regions ?? []);
+      return (
+        `You have named ${them} for this project, and this is a filing to ${agencyFor(region)}. ` +
+        `If you are filing there as well, name ${agencyFor(region)} among the agencies and this route is open.`
+      );
+    },
+    /* What makes a 510(k) FDA's and an MDR route the EU's is the statute behind
+       the position itself; there is no separate citation to give. */
+    authority: id => POSITION_MEANING[id].authority,
+  },
+
   /* -- EU: the class decides the route, so a different class closes it ---- */
   {
     positions: Object.keys(MDR_POSITION_CLASS),
@@ -570,7 +617,8 @@ export function cautionFor(positionId: string, facts: ProgrammeFacts): PositionC
   for (const rule of CAUTION_RULES) {
     if (!rule.positions.includes(positionId)) continue;
     if (!rule.when(facts, positionId)) continue;
-    return { availability: rule.availability, reason: rule.reason(facts, positionId), authority: rule.authority };
+    const authority = typeof rule.authority === 'string' ? rule.authority : rule.authority(positionId);
+    return { availability: rule.availability, reason: rule.reason(facts, positionId), authority };
   }
   return null;
 }
