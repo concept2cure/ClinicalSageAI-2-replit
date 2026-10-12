@@ -61,8 +61,27 @@ function deviceDomainOf(input: GovernedOptionInput): PathwayDomain {
   return 'medical_devices';
 }
 
+/**
+ * Whose routes a list belongs to, in the words that are true of it.
+ *
+ * For a medicine the regulator IS the agency: EMA grants a marketing
+ * authorisation. For a device or a diagnostic in the EU it is not — the MDR
+ * and IVDR routes are assessed by a notified body, and EMA has no part in
+ * them beyond the companion-diagnostic consultation. Saying "these are EMA's
+ * routes" over the MDR class routes is a deterministic sentence that is
+ * simply false, which a review caught (founder's directive, 2026-10-12).
+ */
+function euRoutesAre(domain: PathwayDomain): string {
+  if (domain === 'pharma_biotech') return `These are ${agencyFor('EU')}’s routes.`;
+  const regulation = domain === 'diagnostics_ivd' ? 'IVDR' : 'MDR';
+  return (
+    `These are the EU ${regulation} conformity assessment routes. A notified body assesses them — ` +
+    `${agencyFor('EU')} has no part in them, beyond the companion-diagnostic consultation.`
+  );
+}
+
 /** Whose routes a list belongs to, said plainly, including when it was assumed. */
-function whoseRoutes(facts: ProgrammeFacts): { region: 'US' | 'EU' | null; note: string } {
+function whoseRoutes(facts: ProgrammeFacts, domain: PathwayDomain): { region: 'US' | 'EU' | null; note: string } {
   const named = facts.primaryRegion;
   if (!named) {
     return {
@@ -80,7 +99,9 @@ function whoseRoutes(facts: ProgrammeFacts): { region: 'US' | 'EU' | null; note:
         'Describe the route you are taking and she will record it in your words.',
     };
   }
-  return { region, note: `These are ${agencyFor(named)}’s routes.` };
+  /* FDA regulates medicines and devices alike, so its name is right for both;
+     only the EU splits the two. */
+  return { region, note: region === 'EU' ? euRoutesAre(domain) : `These are ${agencyFor(named)}’s routes.` };
 }
 
 /**
@@ -165,7 +186,9 @@ function resolveField(field: QuestionField, input: GovernedOptionInput): Questio
   if (field.optionsFrom === 'ivdr_class_positions') {
     return { ...field, options: ivdrClassOptions() };
   }
-  const { region, note } = whoseRoutes(input.facts);
+  const domain: PathwayDomain =
+    field.optionsFrom === 'medicine_pathway_positions' ? 'pharma_biotech' : deviceDomainOf(input);
+  const { region, note } = whoseRoutes(input.facts, domain);
   const said = (reason: string) => (field.helpText ? `${field.helpText} ${reason}` : reason);
   /* No positions, and the reason in their place. The escape hatch is the
      answer here, so it is never dropped. */
@@ -173,7 +196,7 @@ function resolveField(field: QuestionField, input: GovernedOptionInput): Questio
   const options =
     field.optionsFrom === 'medicine_pathway_positions'
       ? medicineOptions(input, region)
-      : pathwayOptions({ domain: deviceDomainOf(input), region });
+      : pathwayOptions({ domain, region });
   /* A regulator this catalogue covers, and still nothing for this programme —
      an empty select would say "choose one of none". */
   if (options.length === 0) return withoutOptions(field, said(nothingToOffer(input)));

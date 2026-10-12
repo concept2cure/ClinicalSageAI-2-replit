@@ -547,6 +547,17 @@ export function createProjectSetupFlow(): FlowDefinition {
             visibleWhen: { field: 'eu_mdr_class', operator: 'neq', value: 'na' },
           },
         ],
+        /* A device project reaches the multi-country timeline too. The
+           2026-10-12 region slice said it did and it did not: the only branch
+           to that node was on `submission_route`, which a device project
+           skips, so a device programme that had just said its filing was
+           multi-country was never asked about it. */
+        branches: [
+          {
+            when: { field: 'multi_country_submission', operator: 'eq', value: true },
+            goto: 'multi_country_setup',
+          },
+        ],
         defaultNext: 'team_assignment',
       },
 

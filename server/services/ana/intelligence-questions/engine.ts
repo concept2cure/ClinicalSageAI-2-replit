@@ -23,8 +23,9 @@ import { OTHER_POSITION, otherFieldId } from '../../../../shared/types/intellige
 import type { FlowEngineContext, FlowStepResult } from './types.js';
 import { getFlowDefinition } from './flows/index.js';
 import { runIssueChecks, runCrossNodeAnalysis } from './issue-detector.js';
+import { annexViiiNotices } from './annex-viii-classification.js';
 import { withGovernedOptions } from './governed-options.js';
-import { cautionedChoiceNotices, programmeFactsFrom, withCautions } from './programme-facts.js';
+import { cautionedChoiceNotices, declaredMdrClass, programmeFactsFrom, withCautions } from './programme-facts.js';
 import { validateAnswers } from './validators.js';
 
 /* ─── Public API ─────────────────────────────────────────────────────── */
@@ -143,7 +144,15 @@ export function advanceFlow(
   const newIssues = [
     ...ownPositionNotices(currentNode, own, nodeId),
     ...cautionedChoiceNotices(shownNode, answers, facts),
-    ...runIssueChecks(currentNode, answers),
+    /* What the Annex VIII rules make of the answers, against what the sponsor
+       declared. The verdict is the engine's; the sentences only report it. */
+    ...annexViiiNotices(nodeId, { ...shownFlat, ...answers }, declaredMdrClass({ ...shownFlat, ...answers })),
+    /* Issue checks read every answer too. Of the 233 checks across these
+       flows exactly one reads an earlier node's field — cer_report's critical
+       "a Class III device with no clinical investigation" check — and it could
+       never fire while this passed the current node's answers alone. The other
+       232 are unaffected: their own field comes from `answers` either way. */
+    ...runIssueChecks(currentNode, { ...shownFlat, ...answers }),
   ];
   const allIssues = [...state.issues, ...newIssues];
 
@@ -347,9 +356,15 @@ function resolveNextNode(
   // Evaluate branch rules top-to-bottom
   if (currentNode.branches) {
     for (const branch of currentNode.branches) {
-      if (evaluatePredicate(branch.when, answers)) {
-        return branch.goto;
-      }
+      if (!evaluatePredicate(branch.when, answers)) continue;
+      /* A branch onto its own node can only ask the same question again, for
+         ever. It was unreachable while branches read the current node's
+         answers alone (df8e5200), and reading every answer brought one such
+         branch to life — an emergency IND looped on `ind_review`. The flow's
+         own branch is gone, and this refuses the shape rather than trusting
+         seventeen flows not to grow another. */
+      if (branch.goto === currentNode.id) continue;
+      return branch.goto;
     }
   }
 

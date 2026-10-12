@@ -1,0 +1,42 @@
+# 13 mutations, all red
+# driver: scratchpad/mutate16.py + mutate17.py + mutate18.py (apply, run the named test, restore)
+
+RED       the class is guessed instead of ruled on
+          test: server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts > what the record says > quotes the facts the rules would need, where they do not decide 9ms
+RED       a declared class is overwritten by the derived one
+          test: server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts > the verdict > never overwrites a class the sponsor declared 8ms
+RED       the derivation is judged against itself, so no mismatch can fire
+          test: server/services/ana/intelligence-questions/__tests__/annex-viii-in-the-cer-interview.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/annex-viii-in-the-cer-interview.test.ts > a CER programme that answers the classification facts > is told the class the rules reach, and which rule reached it 11ms
+RED       a permanent device states no duration at all
+          test: server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts > the facts the interview states > reads a permanent device as long term, which is what Annex VIII means by it 10ms
+RED       a contact site is read as the Rule 4 claim
+          test: server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts > the facts the interview states > reads the contact site only where it IS a fact the rules hold 9ms
+RED       the facts the rules need are summarised instead of quoted
+          test: server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts > what the record says > quotes the facts the rules would need, where they do not decide 7ms
+RED       an engine that refuses a fact takes the question down with it
+          test: server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts
+          first failures: 
+RED       a mismatch between the declaration and the rules passes unrecorded
+          test: server/services/ana/intelligence-questions/__tests__/annex-viii-in-the-cer-interview.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/annex-viii-in-the-cer-interview.test.ts > a CER programme that answers the classification facts > is told when the class it declared earlier disagrees with its own answers 5ms
+RED       the rule a sponsor cited is never checked against the one that decides
+          test: server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts > what the record says > reads the rule a sponsor cited, and says when it is not the one that decides 7ms
+RED       a rule number outside Annex VIII is read as a citation
+          test: server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts > what the record says > reads the rule a sponsor cited, and says when it is not the one that decides 11ms
+RED       the notice fires for a programme that gave no classification facts
+          test: server/services/ana/intelligence-questions/__tests__/annex-viii-in-the-cer-interview.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/annex-viii-in-the-cer-interview.test.ts > a CER programme that answers the classification facts > says nothing to a node whose answers state no classification fact 13ms
+RED       an Annex VIII field is renamed in the flow and the engine stops reaching it
+          test: server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/cautioned-positions.test.ts > which answer states which fact > is still asked by a flow — a renamed field would leave the rules firing on nothing 24ms
+RED       the implantable answer the first node asks is not read
+          test: server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/annex-viii-classification.test.ts > the facts the interview states > reads the implantable answer on its own, which the CER flow asks four nodes earlier 10ms

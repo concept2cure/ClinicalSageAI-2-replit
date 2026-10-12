@@ -161,6 +161,21 @@ function regionOfPosition(positionId: string): CanonicalRegion | null {
   return (entry && canonicalRegionOf(String(entry.region))) || null;
 }
 
+/**
+ * What the filing IS, in words true of it. For a medicine the regulator is the
+ * agency: EMA grants a marketing authorisation. For a device or a diagnostic
+ * in the EU it is not — the MDR and IVDR routes are a notified body's
+ * assessment — so naming EMA over an MDR class route is a sentence that is
+ * simply false (a review caught it, 2026-10-12).
+ */
+function filingIs(positionId: string, region: CanonicalRegion): string {
+  const segment = String(getApplicationType(positionId)?.segment ?? '');
+  if (region === 'EU' && (segment === 'medical_devices' || segment === 'diagnostics_ivd')) {
+    return `an EU conformity assessment under the ${segment === 'diagnostics_ivd' ? 'IVDR' : 'MDR'}`;
+  }
+  return `a filing to ${agencyFor(region)}`;
+}
+
 /** 'FDA', 'FDA and EMA', 'FDA, EMA and PMDA' — the agencies as a person wrote them. */
 function listed(regions: readonly CanonicalRegion[]): string {
   const names = regions.map(agencyFor);
@@ -191,7 +206,7 @@ const CAUTION_RULES: readonly CautionRule[] = [
       const region = regionOfPosition(id)!;
       const them = listed(f.regions ?? []);
       return (
-        `You have named ${them} for this project, and this is a filing to ${agencyFor(region)}. ` +
+        `You have named ${them} for this project, and this is ${filingIs(id, region)}. ` +
         `If you are filing there as well, name ${agencyFor(region)} among the agencies and this route is open.`
       );
     },
@@ -330,7 +345,7 @@ const CAUTION_RULES: readonly CautionRule[] = [
           'determination is one of the two conditions for a De Novo request rather than a basis for filing again.'
         : 'You have said there is no legally marketed device to compare to. Substantial equivalence is a comparison, so ' +
           'there is no 510(k) to make — which is the first condition for a De Novo request.',
-    authority: 'FD&C Act 513(i), 513(f)(2)(A); 21 CFR 807.100(b), 860.220(a)',
+    authority: 'FD&C Act 513(i), 513(f)(2)(A); 21 CFR 807.100(b), 860 Subpart D',
   },
 
   /* -- US: a Class III device is a PMA unless it is preamendments --------- */
@@ -353,7 +368,10 @@ const CAUTION_RULES: readonly CautionRule[] = [
     reason: () =>
       'You have said Class I. Most Class I devices are exempt from premarket notification by their own ' +
       'classification regulation, so check the exemption and the limitations on it before filing one.',
-    authority: '21 CFR 807.85; the classification part’s own § .9 limitations of exemption',
+    /* The exemption is granted by the device's own classification regulation
+       and limited by that part's § .9; 21 CFR 807.85 is a different exemption
+       (custom devices and relabellers) and was the wrong citation. */
+    authority: '21 CFR 862–892 — the classification regulation and its own § .9 limitations of exemption',
   },
 
   /* -- US: a PMA is the Class III route ----------------------------------- */
