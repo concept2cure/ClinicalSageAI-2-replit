@@ -303,3 +303,70 @@ describe('a question with no positions and the reason in their place', () => {
     });
   });
 });
+
+/**
+ * A field gated on an answer in its OWN question (2026-10-12 review).
+ *
+ * The server decides every gate an earlier question answered. It cannot decide
+ * one that depends on an answer the person has not given yet, so it sends the
+ * field with its predicate and the card decides it live. Before this, such a
+ * field was dropped at draw time and demanded at validation — an unanswerable
+ * question — and `additional_agencies`, gated on a yes/no in its own node, was
+ * never drawn at all.
+ */
+describe('a field gated on an answer in the same question', () => {
+  const gated: IntelligenceQuestionEvent = {
+    ...QUESTION,
+    node: {
+      ...QUESTION.node,
+      fields: [
+        {
+          id: 'multi_country_submission',
+          label: 'Is this a multi-country submission?',
+          type: 'yes_no',
+          required: true,
+        },
+        {
+          id: 'additional_agencies',
+          label: 'Additional Regulatory Agencies',
+          type: 'multi_select',
+          required: true,
+          visibleWhen: { field: 'multi_country_submission', operator: 'eq', value: true },
+          options: [
+            { value: 'EU', label: 'EMA — European Union' },
+            { value: 'JP', label: 'PMDA — Japan' },
+          ],
+        },
+      ],
+    },
+  };
+
+  it('is not drawn until the answer it depends on is given', () => {
+    render(<AnaQuestionCard question={gated} sessionId="sess-1" onAnswer={vi.fn()} />);
+    expect(screen.queryByText('Additional Regulatory Agencies')).toBeNull();
+  });
+
+  it('appears the moment it applies, and is not required while it is hidden', () => {
+    const onAnswer = vi.fn();
+    render(<AnaQuestionCard question={gated} sessionId="sess-1" onAnswer={onAnswer} />);
+    /* Hidden and required: the submit must not be blocked by a question the
+       person cannot see. */
+    fireEvent.click(screen.getByRole('radio', { name: 'No' }));
+    expect((screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement).disabled).toBe(false);
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Yes' }));
+    expect(screen.getByText('Additional Regulatory Agencies')).toBeTruthy();
+    expect(
+      (screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement).disabled,
+      'now it applies, so it is required',
+    ).toBe(true);
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /PMDA/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(onAnswer).toHaveBeenCalledWith({
+      node_id: 'pathway',
+      answers: { multi_country_submission: 'yes', additional_agencies: ['JP'] },
+      session_id: 'sess-1',
+    });
+  });
+});

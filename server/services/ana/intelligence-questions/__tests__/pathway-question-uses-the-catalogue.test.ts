@@ -147,25 +147,45 @@ describe('the pathway question', () => {
     expect(valuesOf(field)).toEqual(pathwayOptions({ domain: 'medical_devices', region: 'US' }).map(o => o.value));
   });
 
-  it('asks for the predicate on any 510(k), which is what names one', () => {
+  it('sends the predicate question with its gate, for the card to decide', () => {
+    /* `predicate_device` is gated on the route — a field in its OWN question —
+       so the server cannot decide it: the person has not chosen a route yet
+       when the question is drawn. It is sent with its predicate and the card
+       shows it the moment a 510(k) is picked. Until the 2026-10-12 review this
+       node dropped it, so a person choosing a 510(k) was never asked for the
+       predicate at all. */
     const node = advanceFlow(
       stateWith({ regulatory_targets: { primary_regulatory_agency: 'US', product_type: 'medical_device' } }),
       'device_classification',
       { device_class: 'class_ii' },
       ctx('medtech'),
     ).event!.node;
-    const predicate = node.fields.find(f => f.id === 'predicate_device');
-    expect(predicate, 'the predicate question is drawn only once a 510(k) is chosen').toBeUndefined();
-    const full = advanceFlow(
-      stateWith({
-        regulatory_targets: { primary_regulatory_agency: 'US', product_type: 'medical_device' },
-        medtech_regulatory: { device_submission_pathway: 'US_510K' },
-      }),
+    const predicate = node.fields.find(f => f.id === 'predicate_device')!;
+    expect(predicate, 'the question a 510(k) turns on must reach the person').toBeDefined();
+    expect(predicate.visibleWhen).toEqual({
+      field: 'device_submission_pathway',
+      operator: 'eq',
+      value: 'US_510K',
+    });
+  });
+
+  it('still decides a gate that an EARLIER question answered', () => {
+    /* The notified-body question is gated on the EU class, asked in the
+       previous node, so the server decides it as it always did. */
+    const withoutEu = advanceFlow(
+      stateWith({ regulatory_targets: { primary_regulatory_agency: 'US', product_type: 'medical_device' } }),
       'device_classification',
-      { device_class: 'class_ii' },
+      { device_class: 'class_ii', eu_mdr_class: 'na' },
       ctx('medtech'),
     ).event!.node;
-    expect(full.fields.find(f => f.id === 'predicate_device')).toBeDefined();
+    expect(withoutEu.fields.find(f => f.id === 'notified_body'), 'no EU filing planned').toBeUndefined();
+    const withEu = advanceFlow(
+      stateWith({ regulatory_targets: { primary_regulatory_agency: 'EU', product_type: 'medical_device' } }),
+      'device_classification',
+      { device_class: 'class_ii', eu_mdr_class: 'class_iib' },
+      ctx('medtech'),
+    ).event!.node;
+    expect(withEu.fields.find(f => f.id === 'notified_body')).toBeDefined();
   });
 });
 

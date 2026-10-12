@@ -189,13 +189,16 @@ const POSITION_MEANING: Readonly<Record<string, PositionMeaning>> = {
   US_513G: {
     commits:
       'FDA’s view on how the device is classified and what applies to it. It clears nothing and approves nothing: a marketing route is still to be chosen afterwards.',
-    authority: 'FD&C Act 513(g); 21 CFR 860.123',
+    /* 21 CFR 860.123 is the reclassification petition, not a 513(g)
+       request: the request rests on the statute and FDA's own procedures. */
+    authority: 'FD&C Act 513(g); FDA, FDA and Industry Procedures for Section 513(g) Requests for Information',
     marketingRoute: false,
   },
   US_QSUB: {
     commits:
       'FDA’s written feedback before you file — on a predicate, a protocol or a test plan. Advice, not agreement: it binds neither side, though departing from it invites the question why.',
-    authority: 'FD&C Act 515B/513(a); the Q-Submission Program guidance',
+    /* 515B is the Breakthrough Devices Program, which a Q-Sub is not. */
+    authority: 'FDA, Requests for Feedback and Meetings for Medical Device Submissions: The Q-Submission Program',
     marketingRoute: false,
   },
 
@@ -244,7 +247,7 @@ const POSITION_MEANING: Readonly<Record<string, PositionMeaning>> = {
   },
   US_LDT: {
     commits:
-      'A test designed, manufactured and used within one certified high-complexity laboratory. FDA’s enforcement position on these changed in 2024 and has been challenged, so treat the premarket obligation as unsettled and confirm it before relying on this route.',
+      'A test designed, manufactured and used within one certified high-complexity laboratory. FDA’s 2024 rule bringing these under premarket review was vacated by a federal court in 2025; whether that is where the position now rests is not something AnA tracks, so treat the premarket obligation as unsettled and confirm it before relying on this route.',
     authority: '21 CFR 809; 42 CFR 493 (CLIA)',
     marketingRoute: true,
   },
@@ -285,13 +288,13 @@ const POSITION_MEANING: Readonly<Record<string, PositionMeaning>> = {
   },
   EU_MDR_CLASS_IIA: {
     commits:
-      'A notified body audits the quality management system and assesses the technical documentation of at least one representative device per category (Annex IX), or examines the type and verifies production instead (Annex X with XI).',
-    authority: 'MDR Art 52(6), Annexes IX to XI',
+      'A notified body audits the quality management system and assesses the technical documentation of at least one representative device per category (Annex IX), or verifies conformity by production quality assurance or product verification instead (Annex XI). The Annex X type-examination is not open to Class IIa.',
+    authority: 'MDR Art 52(6), Annexes IX and XI',
     marketingRoute: true,
   },
   EU_MDR_CLASS_IIB: {
     commits:
-      'As Class IIa, but technical documentation is assessed per generic device group, and implantable Class IIb devices are assessed device by device.',
+      'As Class IIa with the type-examination route open as well (Annex X with XI), and the technical documentation assessed per generic device group. An implantable Class IIb device is assessed device by device, apart from the sutures, staples, dental fillings and the rest of the list Article 52(4) carves out.',
     authority: 'MDR Art 52(4) to (5), Annexes IX to XI',
     marketingRoute: true,
   },
@@ -312,31 +315,34 @@ const POSITION_MEANING: Readonly<Record<string, PositionMeaning>> = {
   EU_IVDR_CLASS_B: {
     commits:
       'A notified body audits the quality management system and assesses the technical documentation of at least one device per category, with the performance evaluation carrying the claim.',
-    authority: 'IVDR Art 48(7), Annex IX',
+    /* The paragraph of Article 48 that carries each class is not cited: the
+       article is, and the annex is — a citation precise enough to be wrong is
+       worse than one broad enough to be right (2026-10-12 review). */
+    authority: 'IVDR Art 48, Annex IX',
     marketingRoute: true,
   },
   EU_IVDR_CLASS_CD: {
     commits:
       'Technical documentation assessed per generic device group, and for Class D an EU reference laboratory verifies performance against common specifications with batch verification - the longest route to market under the IVDR.',
-    authority: 'IVDR Art 48(3) to (6), Art 49, Annex IX Section 4.4',
+    authority: 'IVDR Art 48, Art 49, Art 100, Annex IX',
     marketingRoute: true,
   },
   EU_CDX_IVDR_D: {
     commits:
-      'A companion diagnostic is Class C or D under the IVDR, and its notified body must consult the EMA or the medicine\u2019s competent authority on the suitability of the test for the therapy.',
-    authority: 'IVDR Annex VIII Rule 3(f); Art 48(6)',
+      'Annex VIII Rule 3(f) puts a companion diagnostic in Class C \u2014 another rule may put a particular assay in Class D \u2014 and its notified body must consult the EMA or the medicine\u2019s competent authority on the suitability of the test for the therapy.',
+    authority: 'IVDR Annex VIII Rule 3(f); Art 48',
     marketingRoute: true,
   },
   EU_IVDR_ART48_CONSULT: {
     commits:
       'The consultation a companion diagnostic\u2019s notified body must run with the medicines authority. It is a step inside the IVDR route, not a route of its own.',
-    authority: 'IVDR Art 48(6)',
+    authority: 'IVDR Art 48, Annex IX',
     marketingRoute: false,
   },
   EU_REF_LAB: {
     commits:
       'A Class D consultation: the reference laboratory verifies performance against common specifications. It is a step inside the IVDR route, not a route of its own.',
-    authority: 'IVDR Art 48(3)–(6), Art 100; Annex IX Section 4.4',
+    authority: 'IVDR Art 48, Art 100; Annex IX',
     marketingRoute: false,
   },
 };

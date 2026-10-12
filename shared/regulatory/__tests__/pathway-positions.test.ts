@@ -171,6 +171,53 @@ describe('what every position must carry', () => {
     expect(ivd).toContain('US_DE_NOVO_IVD');
   });
 
+  it('cites a paragraph only where it has been verified, and an article otherwise', () => {
+    /* A review of 2026-10-12 found several paragraph-level citations wrong:
+       the IVDR Class B route cited Art 48(7), which carries Class C; the
+       companion-diagnostic consultation cited Art 48(6), which is the Class D
+       expert-panel paragraph; the Class D reference-laboratory verification
+       cited Annex IX § 4.4. A citation precise enough to be wrong is worse
+       than one broad enough to be right, so these name the article and the
+       annex. */
+    for (const id of ['EU_IVDR_CLASS_B', 'EU_IVDR_CLASS_CD', 'EU_CDX_IVDR_D', 'EU_IVDR_ART48_CONSULT', 'EU_REF_LAB']) {
+      const authority = positionFor(id)!.authority;
+      expect(authority, id).toMatch(/IVDR/);
+      expect(authority, `${id} cites a paragraph of Article 48`).not.toMatch(/Art 48\(/);
+      expect(authority, `${id} cites a section of Annex IX`).not.toMatch(/Annex IX Section/);
+    }
+    expect(positionFor('EU_REF_LAB')!.authority, 'the reference laboratory is Article 100').toMatch(/Art 100/);
+  });
+
+  it('does not offer a Class IIa device a route Article 52(6) withholds', () => {
+    /* The Annex X type-examination is open to Class IIb and III, not IIa. */
+    const iia = positionFor('EU_MDR_CLASS_IIA')!;
+    expect(iia.commits).toMatch(/Annex X type-examination is not open to Class IIa/);
+    expect(iia.authority).toBe('MDR Art 52(6), Annexes IX and XI');
+    expect(positionFor('EU_MDR_CLASS_IIB')!.commits, 'IIb does have it').toMatch(/type-examination route open/);
+  });
+
+  it('puts a companion diagnostic in the class Rule 3(f) puts it in', () => {
+    const cdx = positionFor('EU_CDX_IVDR_D')!;
+    expect(cdx.commits, 'Rule 3(f) yields Class C').toMatch(/Rule 3\(f\) puts a companion diagnostic in Class C/);
+    expect(cdx.commits, 'and another rule may reach D').toMatch(/Class D/);
+  });
+
+  it('cites the 513(g) and Q-submission procedures rather than a neighbouring section', () => {
+    /* 21 CFR 860.123 is the reclassification petition; 515B is the
+       Breakthrough Devices Program. Neither is what these are. */
+    expect(positionFor('US_513G')!.authority).not.toMatch(/860\.123/);
+    expect(positionFor('US_513G')!.authority).toMatch(/513\(g\)/);
+    expect(positionFor('US_QSUB')!.authority).not.toMatch(/515B/);
+    expect(positionFor('US_QSUB')!.authority).toMatch(/Q-Submission Program/);
+  });
+
+  it('says where the LDT position stands, and that AnA does not track it', () => {
+    const ldt = positionFor('US_LDT')!.commits;
+    expect(ldt).toMatch(/vacated by a federal court in 2025/);
+    expect(ldt, 'and does not claim to know where it rests now').toMatch(/not something AnA tracks/);
+    expect(ldt).toMatch(/unsettled/);
+  });
+
   it('offers the EU class routes, which are what a sponsor chooses between', () => {
     expect(pathwayPositionsFor({ domain: 'medical_devices', region: 'EU' }).map(p => p.value)).toEqual([
       'EU_MDR_CLASS_I',
