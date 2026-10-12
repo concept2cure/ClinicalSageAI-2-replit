@@ -113,32 +113,37 @@ function asDate(v: Date | string | null): Date | null {
  * this is a pure function of its inputs; `windowDays` is the due-soon lead time
  * the radar uses.
  */
+/**
+ * Why this letter is on no clock at all, or null when it is on one. Steps 1-2
+ * of the rule: only an inbound letter that asks for something, is not already
+ * answered, and belongs to a class with a response window can start a clock.
+ */
+function untrackedReason(row: CorrespondenceClockInput, window: ResponseWindow | null): UntrackedReason | null {
+  if ((row.direction ?? '').toLowerCase() !== 'inbound') return 'not_inbound';
+  if (row.responseRequired === false) return 'no_response_required';
+  if (ANSWERED_STATUSES.has((row.status ?? '').toLowerCase())) return 'already_answered';
+  if (window === null || window.basis === 'none') return 'class_asks_nothing';
+  return null;
+}
+
+/** The governed window for this row's class and family, or null if the class is not an agency letter. */
+function windowFor(row: CorrespondenceClockInput): ResponseWindow | null {
+  const letterClass = row.communicationType ?? '';
+  if (!isAgencyLetterClass(letterClass)) return null;
+  const family = row.submissionType
+    ? getSubmissionTypeContext(row.submissionType)?.applicationFamily ?? null
+    : null;
+  return responseWindowFor(letterClass, family);
+}
+
 export function correspondenceResponseClock(
   row: CorrespondenceClockInput,
   now: Date,
   windowDays = 30,
 ): CorrespondenceClock {
-  // 1 · Only a letter FROM an agency can put us on a clock.
-  if ((row.direction ?? '').toLowerCase() !== 'inbound') {
-    return { state: 'untracked', reason: 'not_inbound' };
-  }
-  if (row.responseRequired === false) {
-    return { state: 'untracked', reason: 'no_response_required' };
-  }
-  if (ANSWERED_STATUSES.has((row.status ?? '').toLowerCase())) {
-    return { state: 'untracked', reason: 'already_answered' };
-  }
-
-  // 2 · A class outside the agency-letter vocabulary, or one that asks nothing.
-  const letterClass = row.communicationType ?? '';
-  if (!isAgencyLetterClass(letterClass)) {
-    return { state: 'untracked', reason: 'class_asks_nothing' };
-  }
-  const family = row.submissionType ? getSubmissionTypeContext(row.submissionType)?.applicationFamily ?? null : null;
-  const window = responseWindowFor(letterClass, family);
-  if (window.basis === 'none') {
-    return { state: 'untracked', reason: 'class_asks_nothing' };
-  }
+  const window = windowFor(row);
+  const untracked = untrackedReason(row, window);
+  if (untracked || !window) return { state: 'untracked', reason: untracked ?? 'class_asks_nothing' };
 
   // 3 · The date the agency stated beats every table.
   const stated = asDate(row.dueDate);
