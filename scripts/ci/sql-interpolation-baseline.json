@@ -61,7 +61,7 @@
   "server/services/ai-gateway/providers/org-placement-writer.ts": 2,
   "server/services/ana-ri/command-executor.ts": 6,
   "server/services/ana-ri/context-enrichment.ts": 4,
-  "server/services/ana-ri/mdx-proactive-signals.ts": 4,
+  "server/services/ana-ri/mdx-proactive-signals.ts": 3,
   "server/services/ana/AnaToolExecutor.ts": 12,
   "server/services/ana/authoring-plan-generator.ts": 4,
   "server/services/ana/citation-engine.ts": 2,

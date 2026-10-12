@@ -72,3 +72,46 @@ describe('qualifyServedModels: RULE 2, per model', () => {
     expect(qualifyServedModels(served, { NODE_ENV: 'production' }).map((m) => m.qualified)).toEqual([false, false, false, false]);
   });
 });
+
+describe('servedModelsOf: a malformed record body yields a verdict, never a fault', () => {
+  /* Round 15 made this function load-bearing on a WRITE path: the three server
+     doors of SEC-A-7 read it through servedModelsForTurn to decide whether
+     RULE 2 admits a document's prose, and authoring-record.ts's own comments
+     say that path must not fault — a failed statement aborts the transaction
+     the write is being checked for, and an unhandled throw is a 500 instead of
+     a recorded verdict.
+     A record body is written by our own writer and hash-checked by a table
+     CHECK, so these shapes mean a corrupt or hand-written row. The point is
+     not that they are likely; it is that the answer to one must be a verdict
+     the doors can refuse on. Each of these threw or invented an entry. */
+  it('tolerates a `calls` that is not an array', () => {
+    expect(servedModelsOf({ calls: 'anthropic' } as never)).toEqual([]);
+    expect(servedModelsOf({ calls: { length: 2 } } as never)).toEqual([]);
+    expect(servedModelsOf({ calls: 42 } as never)).toEqual([]);
+  });
+
+  it('falls back to the turn’s own model when `calls` is unusable', () => {
+    /* The shape that matters: a body whose call list is corrupt but which does
+       name the model that served the turn. Dropping to [] there would make the
+       doors refuse a turn the record can still speak for. */
+    expect(servedModelsOf({ calls: 'bad', provider: 'anthropic', model: 'claude-opus-5-5' } as never)).toEqual([
+      { provider: 'anthropic', model: 'claude-opus-5-5' },
+    ]);
+  });
+
+  it('skips a call that is not an object instead of throwing on it', () => {
+    expect(servedModelsOf({ calls: [null] } as never)).toEqual([]);
+    expect(servedModelsOf({ calls: ['claude-opus-5-5'] } as never)).toEqual([]);
+    expect(servedModelsOf({ calls: [null, { provider: 'anthropic', model: 'claude-opus-5-5' }] } as never)).toEqual([
+      { provider: 'anthropic', model: 'claude-opus-5-5' },
+    ]);
+  });
+
+  it('a call whose model the gateway did not report still counts as an unknown author', () => {
+    /* Not a malformed shape — the documented case, and it must keep working:
+       an unknown author is what the doors refuse on. */
+    expect(servedModelsOf({ calls: [{ provider: 'anthropic' }] } as never)).toEqual([
+      { provider: 'anthropic', model: null },
+    ]);
+  });
+});

@@ -1,0 +1,8 @@
+mutant R15-03: the models are returned unqualified, so no caller sees RULE 2 verdict
+verdict: KILLED
+Tests  2 failed | 6 passed (8)
+
+ × server/services/authoring/__tests__/turn-served-models.pglite.test.ts > servedModelsForTurn — the model half of the record check > names every model that served the turn, each with RULE 2’s verdict 43ms
+ × server/services/authoring/__tests__/turn-served-models.pglite.test.ts > servedModelsForTurn — the model half of the record check > admits a turn every one of whose models the rule allows (negative control) 15ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)

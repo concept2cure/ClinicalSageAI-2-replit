@@ -190,8 +190,11 @@ router.get(
 /**
  * GET /api/concept2cure/projects/:projectId/linked
  * Returns all typed link relationships for a project (both directions).
- * Joins with concept2cure_projects for name/type/status of the other project.
- * If the table doesn't exist yet (pre-migration deploy), returns [].
+ * Joins `projects` for name/type/status of the other project — the integer
+ * spine these links are keyed to. (This said "concept2cure_projects", a table
+ * that exists nowhere in this repository; the SQL below has always joined
+ * `projects`.) If concept2cure_project_links does not exist yet (pre-migration
+ * deploy), returns [].
  */
 router.get('/projects/:projectId/linked', async (req: Request, res: Response) => {
   try {

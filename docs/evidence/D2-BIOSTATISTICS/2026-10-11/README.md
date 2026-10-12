@@ -382,6 +382,101 @@ Worth naming: the curve-carrying change was pushed before this was found, so
 for one commit the fix was invisible in the case that matters most. Verifying a
 change end to end means through the renderer, not to the edge of the wire.
 
+### Reproducing a filed figure (2026-10-12)
+
+The sweep's last high-severity finding, and the one closest to the point of
+this whole row. Two questions a sponsor is asked under statistical defence:
+
+> *"Reproduce the planned sample size in your SAP from the inputs you filed."*
+> *"Prove this N was not edited after it was computed."*
+
+Both were answerable in principle since 2026-10-08, when `recordComputationRun`
+began storing every sizing run's inputs, outputs and a SHA-256 of each
+(`migrations/20261008f`), precisely so a planned N could be reproduced from a
+record rather than taken on a label. `reproduceComputationRun` is the half that
+checks it — and it was reachable from nothing: no route, no AnA tool, no client
+code. **The records existed and could not be checked, which is the same as not
+having them when a reviewer asks.**
+
+Now `GET /api/biostat-bridge/computation-runs/:runId/reproduce`, reporting four
+facts separately because they fail for different reasons and one verdict would
+hide which:
+
+| | |
+|---|---|
+| `inputsIntact` | the stored inputs still hash to their stored digest |
+| `outputsIntact` | the stored outputs still hash to theirs |
+| `reproduced` | re-running the engine on the stored inputs gives the stored outputs digest |
+| `engineVersionMatches` | the engine is the version that produced it |
+
+A reproduction that fails because the engine moved on is a different event from
+one that fails because a row was edited, and a submission has to be able to say
+which. A figure that does not reproduce is an **answer, not an error** — the
+route still returns 200, because a 500 would tell a sponsor the check broke
+when what it found is that their filed number cannot be reproduced. A run in
+another tenant reads as not found rather than as a failed reproduction.
+
+Pinned by `server/services/stats/__tests__/reproduce-computation-run.test.ts`
+(7 cases, with the row edited in each of the two ways that matter, and a method
+with no registered recompute saying so rather than claiming a reproduction) and
+`server/routes/__tests__/biostat-bridge-reproduce-route.test.ts` (10 cases, all
+10 failing before the route existed).
+
+### Three engines a sponsor could not reach, and the last private CDF (2026-10-12)
+
+The sweep's remaining confirmed findings. Each was declared in
+`server/services/stats/*`, correct, and referenced by no route, no AnA tool and
+no client code.
+
+- **`tippingPointBorrow`** — the BORROWING-WEIGHT sensitivity of an
+  external-control analysis: the design swept over a₀ from 1 to 0, so a
+  reviewer can see at what borrowing weight the conclusion flips. "How much of
+  your result depends on how much you borrowed?" is asked of every
+  external-control filing. `/external-control/sensitivity` already ran
+  `tippingPointBias` — the *other* sensitivity, bias in the historical control
+  — and had every input this one needs, so the sweep joined that response
+  rather than a second endpoint recomputing the same borrow and the same
+  effect.
+- **`mmrmPower`** — the power an MMRM design has at an n the sponsor names. The
+  reverse of `/mmrm/sample-size`, and the question that follows a budget rather
+  than precedes it: *"we can only enrol 90 per arm, what does that buy us?"*
+  Now `POST /api/biostat/mmrm/power`, answering with the n the target power
+  would need beside it, from the same engine so the two cannot disagree.
+- **`accrualHoldoutError`** — the forecast scored against what actually
+  enrolled: per-point error, MAE, RMSE. A forecast never checked against
+  reality is the thing a CRO is measured on, and the platform produced the
+  forecast with no way to say how far off it was. Now
+  `POST /api/biostat/enrollment/backtest`.
+
+Both new routes have calculators, bringing the workbench to **29**. The
+registry-wide contract test picked them up without being touched — which is
+what the registry is for, and is the check that the two halves agree.
+
+**And the thirteenth copy of the normal CDF.** `mmrm-design.ts` carried its own
+Abramowitz & Stegun 7.1.26 CDF behind the comment *"to avoid a circular
+import"*. The reason is false: the module already imported `normalQuantile`
+from `./normal`, and `./normal` imports nothing at all. It was the last of the
+private copies the 2026-10-05 sweep removed from the AnA engine, the adaptive
+service and the trial-statistics knowledge engine — kept alive by a reason
+nobody checked.
+
+What it cost, measured rather than asserted: A&S 7.1.26 is accurate to ~7e-8
+against the canonical Cody form's ~1e-16. `mmrmPower` rounds to six decimals,
+and over a 0.0001 grid on z ∈ [0, 4] the two forms give a **different sixth
+decimal at 4.4% of points** — including, for the reference design in its test,
+the very n the sizing returns (0.900072 against the correct 0.900073). This
+record does not call that a safety defect, because it is not one. It is a
+reproducibility defect, against a provenance stamp that promises the same
+inputs give the same answer.
+
+`tests/biostat/mmrm-power-uses-the-canonical-cdf.test.ts` recomputes the power
+from first principles outside the module — Φ(|δ|/SE − z) with the canonical Φ,
+using the `varianceFactor` the result exposes — and demands an **exact** match
+at six decimals across five values of n. A module with its own 7e-8 CDF cannot
+pass that. It also asserts structurally that no private CDF has been re-added,
+because the numbers alone would not catch one: a re-added copy agrees with the
+canonical form 95.6% of the time.
+
 ### A wrong number under a correct-looking label (2026-10-12)
 
 The reachability sweep's most serious finding was not a reachability gap. It

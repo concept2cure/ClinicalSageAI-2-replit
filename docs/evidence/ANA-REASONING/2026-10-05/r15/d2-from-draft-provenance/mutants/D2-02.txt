@@ -1,0 +1,8 @@
+mutant D2-02: the record does not set the model, so the document names none
+verdict: KILLED
+Tests  2 failed | 9 passed (11)
+
+ × server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a caller cannot name the model: the stored model is the turn record’s 184ms
+ × server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > resolves the AnA tool’s turnId, which is a RUN id, not a record id 85ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)

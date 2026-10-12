@@ -286,6 +286,7 @@ export function readAccessRequestQueue(scope: AccessRequestQueueScope) {
       // organization; only the `all` mount lifts the predicate.
       const orgFilter = scope === 'all' ? null : actor.organizationId;
 
+      // tenant-isolation-safe: the null is the MOUNT's own scope, not the request's — `scope` is a compile-time argument to readAccessRequestQueue and only the `all` mount passes it, behind denyQueueRead(actor, 'all'), which requires the owner grant and does not admit platform staff. Every other mount passes actor.organizationId. This is the distinction the detector cannot see: a null from a mount constant behind an owner grant, not a null from an unresolvable request org (the hole repaired in kernel-observability.ts and kernel-adaptive-policy.ts on 2026-10-12).
       const rows = await pool.query(
         `${SELECT_REQUEST}
           WHERE ($1::int IS NULL OR r.organization_id = $1)

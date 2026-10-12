@@ -19,10 +19,11 @@ import {
   getFlowDefinition,
   getAvailableFlows,
 } from '../../server/services/ana/intelligence-questions/flows/index';
-import type {
-  FlowDefinition,
-  QuestionNode,
-  FieldPredicate,
+import {
+  OTHER_POSITION,
+  type FlowDefinition,
+  type QuestionNode,
+  type FieldPredicate,
 } from '../../shared/types/intelligence-questions';
 import type { FlowEngineContext } from '../../server/services/ana/intelligence-questions/types';
 
@@ -148,6 +149,15 @@ function probeFlow(def: FlowDefinition): VocabProbe {
       if (TARGET_FIELDS.includes(field.id)) {
         const set = (optionValues[field.id] ??= new Set());
         for (const opt of field.options ?? []) set.add(opt.value);
+        /* A field that declares `allowOther` can also produce OTHER_POSITION —
+           the value it carries when the person took a position the list did not
+           offer. No listed option may use it (that is OTHER_POSITION's own
+           invariant), so it is producible WITHOUT being an option, which is the
+           case this probe did not know: project_setup.therapeutic_area declares
+           `allowOther: {}` and raises an info issue on `__other__`, and the
+           probe read the predicate as a vocabulary mismatch (2026-10-12).
+           Scoped to fields that declare it, so a closed list is still held. */
+        if (field.allowOther) set.add(OTHER_POSITION);
       }
     }
     for (const pred of nodePredicates(node)) {
@@ -182,6 +192,38 @@ describe('value-vocabulary alignment probe', () => {
         }
       }
     });
+  });
+
+  /* The rule above now admits OTHER_POSITION where a field declares
+     `allowOther`. This is the case it must still catch: the same predicate on a
+     field whose list is CLOSED. Without this, the fix for
+     project_setup.therapeutic_area would have made `__other__` acceptable
+     everywhere, which is exactly what the probe exists to prevent. */
+  it('still refuses the own-position value on a field whose list is closed', () => {
+    const closed = probeFlow({
+      category: 'synthetic_closed_list',
+      nodes: [
+        {
+          id: 'n1',
+          fields: [
+            {
+              id: 'therapeutic_area',
+              label: 'Therapeutic Area',
+              type: 'select',
+              options: [{ value: 'oncology', label: 'Oncology' }],
+              // no allowOther: the list is closed
+            },
+          ],
+          issueChecks: [
+            { id: 'ic1', condition: { field: 'therapeutic_area', operator: 'eq', value: OTHER_POSITION }, severity: 'info', title: 't', message: 'm' },
+          ],
+          defaultNext: null,
+        },
+      ],
+    } as unknown as FlowDefinition);
+
+    expect(closed.optionValues.therapeutic_area.has(OTHER_POSITION)).toBe(false);
+    expect(closed.predicateValues.therapeutic_area.has(OTHER_POSITION)).toBe(true);
   });
 
   it('documents the current per-flow vocabularies (informational snapshot)', () => {
