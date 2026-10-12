@@ -391,26 +391,38 @@ scoring path that no longer exists.
   both passing. There was no defect left to repair. The session that set out
   to fix it reported blocked rather than re-adding the method to satisfy its
   own brief, which is the right outcome.
-- **The adaptive plan's RUN-TIME path has no UI.** Design-time operating
-  characteristics are reachable (the workbench's group-sequential calculator on
-  `/adaptive/oc-exact`, the exact recursive-integration engine). What a DSMB
-  actually needs is not: `POST /adaptive/plan`,
+- **The adaptive plan's STORED lifecycle has no UI.** *(Partly closed
+  2026-10-12 — see below.)* Design-time operating characteristics are reachable
+  (the workbench's group-sequential calculator on `/adaptive/oc-exact`), and so
+  now is the interim look itself: `POST /api/biostat/adaptive/interim` takes the
+  design and the observed z and returns the Lan–DeMets boundary at that look,
+  conditional power under the current trend / the design effect / H0, and the
+  predictive power — with a sixteenth workbench calculator rendering it. That
+  route is **stateless**, and says so in its provenance note, because a
+  computation must not read as a recorded interim decision.
+
+  What remains owed is the stored lifecycle: `POST /adaptive/plan`,
   `/adaptive/:planId/interim-snapshot`, `/adaptive/:planId/evaluate/:snapshotId`,
   `/adaptive/:planId/ssr/:snapshotId`, `/adaptive/:planId/decision` and
   `/adaptive/:planId/idmc-report/:lookNumber` are mounted, tested, and reached
-  by no client code — `grep` over `client/src` for any of them returns nothing.
-  That is where the repaired conditional power (0.185 → 0.8903), predictive
-  power (0.247 → 0.8074) and the spending boundaries at a real interim live.
-  They are correct, reference-pinned against gsDesign, and a sponsor cannot get
-  at them. Building that surface is a plan lifecycle with stored snapshots and a
-  governed decision ceremony — the next piece of biostatistics work, and not a
-  line change.
+  by no client code. A sponsor can now *compute* an interim look; they cannot
+  yet *record* one — no stored plan, no snapshot history, no IDMC report, and no
+  governed decision. A binding interim decision needs a signing ceremony and an
+  audit row, so it is deliberately not something the stateless route pretends
+  to do. That surface is the next piece of biostatistics work.
 
-  Everything else is reachable: all fifteen `/api/biostat` design-statistics
+  Everything else is reachable: all sixteen `/api/biostat` design-statistics
   engines have a workbench calculator (only `/region-rules/*`, a regional-rules
   catalog rather than a statistical method, has none), and the core sizing,
   comparison, judgment, document and missing-data paths are reached from the
   biostatistics surface, the protocol Statistics tab and the AnA tools.
+
+  A calculator is reachable only if the body its form builds is the body its
+  route accepts, and `biostatCalculators.ts` is data — so
+  `server/routes/__tests__/biostat-interim-calculator-contract.test.ts` drives
+  the real registry through the real `buildRequestBody` and posts the result to
+  the real router. That failure mode is invisible to a screenshot: the form
+  looks right and the server answers 200 from its own defaults.
 - **`sap_versions` records no lock time.** The audit trail now says so rather
   than substituting the creation time, but the honest answer is a `locked_at`
   column written by `lockVersion` — a migration-set entry, and under Rule 1 an
