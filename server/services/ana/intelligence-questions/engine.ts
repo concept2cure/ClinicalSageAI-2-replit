@@ -23,8 +23,9 @@ import { OTHER_POSITION, otherFieldId } from '../../../../shared/types/intellige
 import type { FlowEngineContext, FlowStepResult } from './types.js';
 import { getFlowDefinition } from './flows/index.js';
 import { runIssueChecks, runCrossNodeAnalysis } from './issue-detector.js';
+import { annexViiiNotices } from './annex-viii-classification.js';
 import { withGovernedOptions } from './governed-options.js';
-import { cautionedChoiceNotices, programmeFactsFrom, withCautions } from './programme-facts.js';
+import { cautionedChoiceNotices, declaredMdrClass, programmeFactsFrom, withCautions } from './programme-facts.js';
 import { validateAnswers } from './validators.js';
 
 /* ─── Public API ─────────────────────────────────────────────────────── */
@@ -143,6 +144,9 @@ export function advanceFlow(
   const newIssues = [
     ...ownPositionNotices(currentNode, own, nodeId),
     ...cautionedChoiceNotices(shownNode, answers, facts),
+    /* What the Annex VIII rules make of the answers, against what the sponsor
+       declared. The verdict is the engine's; the sentences only report it. */
+    ...annexViiiNotices(nodeId, { ...shownFlat, ...answers }, declaredMdrClass({ ...shownFlat, ...answers })),
     ...runIssueChecks(currentNode, answers),
   ];
   const allIssues = [...state.issues, ...newIssues];

@@ -29,6 +29,7 @@ import { predicateStateOf } from '../../../../shared/regulatory/predicate-positi
 import { euDeviceClassOf, IVDR_CLASSES } from '../../../../shared/regulatory/device-class.js';
 import { modalityOf, statuteOf } from '../../../../shared/regulatory/product-modality.js';
 import { cautionFor, type ProgrammeFacts } from '../../../../shared/regulatory/pathway-cautions.js';
+import { ANNEX_VIII_FIELDS, CLASSIFICATION_RULE_FIELDS, annexViiiReading } from './annex-viii-classification.js';
 import type { DetectedIssue, PositionCaution, QuestionField, QuestionNode, QuestionOption } from './types.js';
 
 /**
@@ -70,6 +71,10 @@ export function factFields(): string[] {
     ...DEVICE_CLASS_FIELDS,
     ...EU_MDR_CLASS_FIELDS,
     ...IVDR_CLASS_FIELDS,
+    /* The Annex VIII facts are read by the engine rather than into a fact of
+       their own, and a rename would silently stop the rules reaching it. */
+    ...ANNEX_VIII_FIELDS,
+    ...CLASSIFICATION_RULE_FIELDS,
   ];
 }
 
@@ -143,6 +148,16 @@ export const DECLARED_NON_FACTS: Readonly<Record<string, Readonly<Record<string,
     who:
       'WHO prequalification is an assessment for UN procurement, not a national filing, so it names no region. The option itself says so.',
   },
+  body_contact_type: {
+    skin:
+      'Where a device touches is not one of the Annex VIII facts. The engine\u2019s nearest fact is the CLAIM a Rule 4 device makes — a mechanical barrier, a breached dermis with secondary intent — and mapping a contact site onto it would assert a claim the sponsor never made. Only \'cns\' and \'cardiovascular\' are read, because those ARE a fact the rules hold.',
+    mucosal: 'As skin: a contact site, not the Rule 4 claim.',
+    breached_skin: 'As skin: a contact site, not the Rule 4 claim.',
+    blood_path: 'As skin: a contact site. Rule 8\u2019s Class III exception is the CENTRAL circulatory system, which an indirect blood path does not state.',
+    tissue_bone: 'As skin: a contact site, not the Rule 4 claim.',
+    blood_direct:
+      'Direct blood contact is not the same as direct contact with the heart or the central circulatory system, which is what Rule 8\u2019s Class III exception names. Reading it as that would raise a class on a fact the sponsor did not give.',
+  },
   product_type: {
     medical_device:
       'It states that the product is not a medicine. The modality frame has no view of a device, and the governed-options resolver reads this same answer to decide whether to offer the device or the IVD routes.',
@@ -183,6 +198,30 @@ function stated(value: unknown): string[] {
   return typeof value === 'string' && value.trim() ? [value] : [];
 }
 
+/**
+ * The MDR class the sponsor DECLARED, read onto the four the Annex VIII rules
+ * yield, or null where they declared none. Kept apart from `programmeFactsFrom`
+ * because the fact it produces may be the DERIVED class, and the derivation
+ * must not be judged against itself.
+ */
+export function declaredMdrClass(flat: Record<string, unknown>): 'I' | 'IIa' | 'IIb' | 'III' | null {
+  const stated = firstStated(flat, EU_MDR_CLASS_FIELDS);
+  return (stated ? MDR_CLASS[stated.toLowerCase()] : undefined) ?? null;
+}
+
+/**
+ * The MDR class the record holds: the sponsor's declaration where they made
+ * one, and otherwise the class the Annex VIII rules reach from the facts the
+ * interview already asked — a class is a verdict, and a verdict comes from the
+ * engine (`annex-viii-classification.ts`).
+ *
+ * A declared class is never overridden. It is the sponsor's position, and the
+ * engine's disagreement with it is REPORTED rather than applied.
+ */
+function mdrClassOnRecord(flat: Record<string, unknown>): 'I' | 'IIa' | 'IIb' | 'III' | undefined {
+  return declaredMdrClass(flat) ?? annexViiiReading(flat)?.class ?? undefined;
+}
+
 export function programmeFactsFrom(flat: Record<string, unknown>): ProgrammeFacts {
   const facts: ProgrammeFacts = {};
   const regions = regionsNamed(AGENCY_FIELDS.flatMap(field => stated(flat[field])));
@@ -211,8 +250,7 @@ export function programmeFactsFrom(flat: Record<string, unknown>): ProgrammeFact
   const deviceClass = firstStated(flat, DEVICE_CLASS_FIELDS);
   const us = deviceClass ? US_CLASS[deviceClass.toLowerCase()] : undefined;
   if (us) facts.deviceClass = us;
-  const euClass = firstStated(flat, EU_MDR_CLASS_FIELDS);
-  const eu = euClass ? MDR_CLASS[euClass.toLowerCase()] : undefined;
+  const eu = mdrClassOnRecord(flat);
   if (eu) facts.euMdrClass = eu;
   /* The IVDR class is read through the shared vocabulary rather than a map of
      its own: this is the one interview field whose values are the spelling the

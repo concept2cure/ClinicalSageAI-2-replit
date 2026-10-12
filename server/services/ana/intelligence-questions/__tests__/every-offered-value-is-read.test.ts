@@ -25,11 +25,8 @@
 import { describe, expect, it } from 'vitest';
 
 import type { FlowEngineContext, QuestionField } from '../types.js';
-import {
-  DECLARED_NON_FACTS,
-  factFields,
-  programmeFactsFrom,
-} from '../programme-facts.js';
+import { mdrFactsFrom } from '../annex-viii-classification.js';
+import { DECLARED_NON_FACTS, factFields, programmeFactsFrom } from '../programme-facts.js';
 
 const CTX: FlowEngineContext = { organizationId: 7, userId: 3, projectId: null };
 
@@ -45,9 +42,14 @@ const everyField = async (): Promise<Array<{ flow: string; node: string; field: 
   return out;
 };
 
-/** Whether this value changes what the reader holds, for this field. */
-const statesAFact = (fieldId: string, value: string): boolean =>
-  Object.keys(programmeFactsFrom({ [fieldId]: value })).length > 0;
+/**
+ * Whether SOME reader takes this value. Two do: the fact reader, and the
+ * Annex VIII fact bridge — whose values reach the rule engine rather than a
+ * fact of their own, so a classification fact can be read without deciding a
+ * class on its own.
+ */
+const isRead = (fieldId: string, value: string): boolean =>
+  Object.keys(programmeFactsFrom({ [fieldId]: value })).length > 0 || mdrFactsFrom({ [fieldId]: value }) !== null;
 
 describe('every value a fact field offers', () => {
   it('is either read as a fact or declared a non-fact, with a reason', async () => {
@@ -58,7 +60,7 @@ describe('every value a fact field offers', () => {
       if (!fact.has(field.id) || !field.options?.length) continue;
       for (const option of field.options) {
         checked += 1;
-        if (statesAFact(field.id, option.value)) continue;
+        if (isRead(field.id, option.value)) continue;
         const reason = DECLARED_NON_FACTS[field.id]?.[option.value];
         if (reason && reason.trim().length > 20) continue;
         unread.push(`${flow}.${node}.${field.id} offers "${option.value}" (${option.label}) — read as nothing`);
