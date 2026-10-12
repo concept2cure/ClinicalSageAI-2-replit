@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T06:44:11.120Z",
+  "generatedAt": "2026-10-12T07:27:44.412Z",
   "git": {
-    "sha": "f8389536311921b2e480b070c1a16e1030325816",
+    "sha": "8d5228bc2d8bdab4b42d6a7dead8ca738dde7e63",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2215,6 +2215,10 @@
         "bytes": 112018
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "bytes": 109470
+      },
+      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 109447
       },
@@ -2241,10 +2245,6 @@
       {
         "file": "server/routes/c2c/projects.ts",
         "bytes": 107300
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 106835
       },
       {
         "file": "server/api/cmc/routes.ts",
@@ -2465,6 +2465,10 @@
         "lines": 2186
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 2184
+      },
+      {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
         "lines": 2175
       },
@@ -2475,10 +2479,6 @@
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 2145
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
