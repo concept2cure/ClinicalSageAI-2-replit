@@ -83,11 +83,18 @@ describe('AnA biotech workflows — actual launch pool and streaming selection b
     expect(selected.every(tool => pool.includes(tool))).toBe(true);
   });
 
+  /* These three were refused at launch because the CMC surface was outside the
+     catalog. It joined it on 2026-10-12 (decision P-28), so they are offered
+     now — each reads the programme's own recorded stability or batch data
+     through a deterministic estimator. What they must NOT become is a pool
+     that answers a prompt about them with something else. */
   it.each(['estimate_recorded_shelf_life', 'assess_recorded_stability_trend', 'assess_recorded_batch_poolability'])(
-    'preserves the existing launch refusal for %s', name => {
+    'is in the launch pool now that the CMC surface is — %s', name => {
       expect(ALL_ANA_TOOLS.some(tool => tool.name === name)).toBe(true);
-      expect(pool.some(tool => tool.name === name)).toBe(false);
-      expect(offered(name, { pinned: [...SELF_DRIVE_TOOLS, name], carriedTools: [name] }).map(tool => tool.name)).not.toContain(name);
+      expect(pool.some(tool => tool.name === name), 'the CMC tool is not in the launch pool').toBe(true);
+      expect(
+        offered(name, { pinned: [...SELF_DRIVE_TOOLS, name], carriedTools: [name] }).map(tool => tool.name),
+      ).toContain(name);
     },
   );
 

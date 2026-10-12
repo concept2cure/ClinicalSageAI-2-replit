@@ -21,7 +21,7 @@ export interface CmcConvergenceEntry {
  *
  * Handlers are resolved the same way inside a file that stays. When the cmc
  * surface's API claim was narrowed to the 33 prefixes its screens call
- * (2026-10-05, decision P-13), seven uncalled handlers in the routers below
+ * (2026-10-05, decision P-28), seven uncalled handlers in the routers below
  * were deleted rather than claimed: routes.ts POST /insights/take-action,
  * /compliance/check-rules and /generate-enhanced-blueprint;
  * module3ConvergenceRoutes.ts POST /classify-artifact and GET /source-lineage;

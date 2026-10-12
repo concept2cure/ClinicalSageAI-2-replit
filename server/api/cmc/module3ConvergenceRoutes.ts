@@ -7,7 +7,7 @@
  *  POST /build-section/:projectId/:sectionKey — Compile + bridge a specific section
  *
  * Deleted 2026-10-05, with no caller in client/src or server, when the cmc
- * surface's API claim was narrowed to what its screens call (decision P-13;
+ * surface's API claim was narrowed to what its screens call (decision P-28;
  * docs/evidence/CMC-M3-GA/2026-10-05/20-cmc-api-allowlist/), and kept gone by
  * server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts:
  *  POST /classify-artifact/:projectId — an upload is classified into a

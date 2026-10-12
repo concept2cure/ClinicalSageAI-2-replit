@@ -23,7 +23,7 @@
  * docs/evidence/CMC-M3-GA/2026-10-05/15-retired-cmc-routers/README.md.
  *
  * The same day, narrowing the cmc surface's API claim from the bare '/api/cmc'
- * to the 33 prefixes its screens call (decision P-13) found seven more
+ * to the 33 prefixes its screens call (decision P-28) found seven more
  * uncalled handlers inside the LIVE routers, and they were deleted too
  * (docs/evidence/CMC-M3-GA/2026-10-05/20-cmc-api-allowlist/):
  *   - routes.ts POST /insights/take-action: a task assigned to a hard-coded

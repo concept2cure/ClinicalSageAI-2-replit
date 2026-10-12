@@ -2,7 +2,7 @@
 
 Row **D2**. GA plan item 0 — the blocker three review lenses named
 independently, and the last thing standing between the code and the catalog
-flip (decision P-13).
+flip (decision P-28).
 
 ## The defect
 
@@ -25,7 +25,7 @@ At the flip, that would have made **every** path under `/api/cmc` answer
 | `GET /module3-os/uploaded-sources/:p` | — |
 | `GET /module3-os/section-labels` | — |
 
-…and routes deliberately withheld by P-13's scope boundary
+…and routes deliberately withheld by P-28's scope boundary
 (`/variations/classify`, `/projects/:id/process-capability`).
 
 ## The fix
