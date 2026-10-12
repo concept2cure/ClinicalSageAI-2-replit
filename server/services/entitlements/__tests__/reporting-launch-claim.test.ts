@@ -16,27 +16,31 @@ import { launchScopeApiVerdict } from '../launch-scope-api';
 const prefixMap = buildPrefixMap();
 const verdict = (path: string) => launchScopeApiVerdict(path, prefixMap, NEVER_GATED);
 
-/** Every reporting path a launch screen calls: Insights.tsx. (AnaCommand.tsx and
- *  Orchestration.tsx, which read the portfolio rollup, are locked since
- *  2026-10-08; docs/SURFACE_DECISIONS_2026-10-08.md.) */
+/** Every reporting path a launch screen calls: Insights.tsx, and since
+ *  0ce0d0bb8 (2026-10-11, "Give the reporting library its screens") the
+ *  library's own screens — insightsLibraryModel.ts and
+ *  InsightsSchedulesPanel.tsx. (AnaCommand.tsx and Orchestration.tsx, which
+ *  read the portfolio rollup, are locked since 2026-10-08;
+ *  docs/SURFACE_DECISIONS_2026-10-08.md.) */
 const CALLED = [
   '/api/insights-canvas/overview',
   '/api/report-os/runs',
   '/api/report-os/runs/41/rendered',
   '/api/report-os/runs/41/finalize',
   '/api/report-os/runs/41/export.pdf',
+  // The reporting library's screens, each with the call site that reaches it:
+  '/api/insights/subscriptions', //        InsightsSchedulesPanel.tsx:294 (GET), insightsLibraryModel.ts (POST)
+  '/api/insights/subscriptions/3', //      insightsLibraryModel.ts:562 (PATCH enabled)
+  '/api/report-os/bundles', //             insightsLibraryModel.ts:579 (POST), and the catalog's listing
+  '/api/report-os/bundles/b-1/export.pdf', // Insights.tsx:1155
 ];
 
 /** Routes the reporting routers mount that no launch screen calls. */
 const UNCALLED = [
   '/api/insights/predictions/run',
   '/api/insights/predictions',
-  '/api/insights/subscriptions',
-  '/api/insights/subscriptions/3',
   '/api/insights/quality',
   '/api/report-os/deliveries',
-  '/api/report-os/bundles',
-  '/api/report-os/bundles/b-1/export.pdf',
   '/api/report-os/program-groups',
   '/api/report-os/program-groups/2/snapshots',
   '/api/report-os/health',
