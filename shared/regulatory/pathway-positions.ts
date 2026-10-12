@@ -50,7 +50,7 @@
  *
  * ── Marking, not hiding ─────────────────────────────────────────────────────
  * A position the programme's own answers contradict is MARKED and still
- * offered (`cautionFor`, {@link ProgrammeFacts}). The reasoning is in
+ * offered (`pathway-cautions.ts`). The reasoning is in
  * `PositionAvailability`; the line this module draws is:
  *
  *   the DOMAIN decides which positions exist — a monoclonal antibody is
@@ -67,10 +67,7 @@
  * @module shared/regulatory/pathway-positions
  */
 
-import type { PositionCaution } from '../types/intelligence-questions.js';
-import { agencyFor } from './agency-positions.js';
 import { getApplicationType } from './global-document-registry.js';
-import { canonicalRegionOf, type CanonicalRegion } from './region-identity.js';
 import { MODALITIES, MODALITY_FRAME, type Modality } from './modality.js';
 
 /** The regulator a position is taken in front of. */
@@ -461,215 +458,25 @@ export function allPathwayPositions(): PathwayPosition[] {
   return out;
 }
 
-/* ── Marking a position the programme's own answers contradict ─────────── */
-
-/**
- * The facts an interview holds that can speak against a position. Every field
- * is optional and an ABSENT fact means nothing: not knowing is not a
- * contradiction, so a rule fires only on something the person has said.
- *
- * Only facts the flows can actually state are here. Notably absent: an
- * explicit "there is no predicate", which would make a 510(k) inapplicable
- * outright rather than merely unsupported — no flow asks it yet, and the
- * predicate-strategy question is where it will come from. A rule nothing can
- * reach is worse than no rule: it reads as a check that passes.
- */
-export interface ProgrammeFacts {
-  /**
-   * Every region the sponsor has named an agency for — the primary one and any
-   * others. Empty or absent means they have not said, which speaks against
-   * nothing.
-   */
-  regions?: CanonicalRegion[];
-  /**
-   * The region of the PRIMARY agency, kept apart from the rest because it
-   * decides which routes a question offers, and 'the first of the regions' is
-   * an ordering a reader would have to trust rather than read.
-   */
-  primaryRegion?: CanonicalRegion;
-  /** A predicate device the sponsor has named, as they wrote it. */
-  predicateNamed?: string;
-  /** The US risk class the sponsor states. 'Not yet classified' is not a fact. */
-  deviceClass?: 'I' | 'II' | 'III';
-  /** The MDR class the sponsor states for the EU. */
-  euMdrClass?: 'I' | 'IIa' | 'IIb' | 'III';
-}
-
-/** The MDR class each class route is the route FOR. */
-const MDR_POSITION_CLASS: Readonly<Record<string, 'I' | 'IIa' | 'IIb' | 'III'>> = {
-  EU_MDR_CLASS_I: 'I',
-  EU_MDR_CLASS_IIA: 'IIa',
-  EU_MDR_CLASS_IIB: 'IIb',
-  EU_MDR_CLASS_III: 'III',
-};
-
-interface CautionRule {
-  /** The positions this rule can mark. Every one must be a position this module offers. */
-  positions: readonly string[];
-  availability: PositionCaution['availability'];
-  when: (facts: ProgrammeFacts, positionId: string) => boolean;
-  reason: (facts: ProgrammeFacts, positionId: string) => string;
-  /** A citation, or one read off the position itself where that IS the authority. */
-  authority: string | ((positionId: string) => string);
-}
-
-/** The region a position is taken in, from the registry entry behind it. */
-function regionOfPosition(positionId: string): CanonicalRegion | null {
-  const entry = getApplicationType(positionId);
-  return (entry && canonicalRegionOf(String(entry.region))) || null;
-}
-
-/** 'FDA', 'FDA and EMA', 'FDA, EMA and PMDA' — the agencies as a person wrote them. */
-function listed(regions: readonly CanonicalRegion[]): string {
-  const names = regions.map(agencyFor);
-  if (names.length <= 1) return names.join('');
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
-}
-
-/**
- * What the programme's own answers can say against a position. First match
- * wins, so the order here is the order of severity, and nothing here is
- * written by a model.
- */
-const CAUTION_RULES: readonly CautionRule[] = [
-  /* -- The regulator comes first: a filing is made to one, or it is not made.
-        Derived from the registry entry's own region, so every position this
-        module annotates is covered by this one rule and a filing the registry
-        gains is covered the day it is annotated. -------------------------- */
-  {
-    positions: Object.keys(POSITION_MEANING),
-    availability: 'inapplicable',
-    when: (f, id) => {
-      if (!f.regions?.length) return false;
-      const region = regionOfPosition(id);
-      return region !== null && !f.regions.includes(region);
-    },
-    reason: (f, id) => {
-      const region = regionOfPosition(id)!;
-      const them = listed(f.regions ?? []);
-      return (
-        `You have named ${them} for this project, and this is a filing to ${agencyFor(region)}. ` +
-        `If you are filing there as well, name ${agencyFor(region)} among the agencies and this route is open.`
-      );
-    },
-    /* What makes a 510(k) FDA's and an MDR route the EU's is the statute behind
-       the position itself; there is no separate citation to give. */
-    authority: id => POSITION_MEANING[id].authority,
-  },
-
-  /* -- EU: the class decides the route, so a different class closes it ---- */
-  {
-    positions: Object.keys(MDR_POSITION_CLASS),
-    availability: 'inapplicable',
-    when: (f, id) => Boolean(f.euMdrClass) && f.euMdrClass !== MDR_POSITION_CLASS[id],
-    reason: (f, id) =>
-      `You have said this device is Class ${f.euMdrClass} under the MDR. The conformity assessment route follows ` +
-      `from the classification rules rather than from a choice, so the Class ${MDR_POSITION_CLASS[id]} route is not ` +
-      'open to it unless the classification itself changes.',
-    authority: 'MDR (EU) 2017/745 Art 51, Art 52, Annex VIII',
-  },
-
-  /* -- US: a De Novo is for a device with no predicate -------------------- */
-  {
-    positions: ['US_DE_NOVO', 'US_DE_NOVO_IVD'],
-    availability: 'needs_basis',
-    when: f => Boolean(f.predicateNamed),
-    reason: f =>
-      'A De Novo has two entry conditions: no legally marketed device to compare to, or an NSE determination on a ' +
-      `510(k) you have already filed. You have named a predicate (${f.predicateNamed}), so taking this position ` +
-      'means saying which of those two applies.',
-    authority: 'FD&C Act 513(f)(2); 21 CFR 860 Subpart D',
-  },
-  {
-    positions: ['US_DE_NOVO', 'US_DE_NOVO_IVD'],
-    availability: 'needs_basis',
-    when: f => f.deviceClass === 'III',
-    reason: () =>
-      'A De Novo asks FDA to classify the device into Class I or Class II with special controls. You have said ' +
-      'Class III, which is the premarket approval route — so either the classification or the route is in question.',
-    authority: 'FD&C Act 513(f)(2); 21 CFR 860.200',
-  },
-
-  /* -- US: a Class III device is a PMA unless it is preamendments --------- */
-  {
-    positions: ['US_510K', 'US_510K_IVD', 'US_CDX_510K'],
-    availability: 'needs_basis',
-    when: f => f.deviceClass === 'III',
-    reason: () =>
-      'You have said Class III. A Class III device needs premarket approval unless it is a preamendments type, or a ' +
-      'post-amendments device found substantially equivalent to one, for which FDA has not yet called for PMAs — ' +
-      'that is the basis a 510(k) here has to state.',
-    authority: 'FD&C Act 515(a); 21 CFR 814.1(c)',
-  },
-  {
-    positions: ['US_510K', 'US_510K_IVD', 'US_CDX_510K'],
-    availability: 'needs_basis',
-    when: f => f.deviceClass === 'I',
-    reason: () =>
-      'You have said Class I. Most Class I devices are exempt from premarket notification by their own ' +
-      'classification regulation, so check the exemption and the limitations on it before filing one.',
-    authority: '21 CFR 807.85; the classification part’s own § .9 limitations of exemption',
-  },
-
-  /* -- US: a PMA is the Class III route ----------------------------------- */
-  {
-    positions: ['US_PMA', 'US_PMA_IVD', 'US_CDX_PMA'],
-    availability: 'needs_basis',
-    when: f => f.deviceClass === 'I' || f.deviceClass === 'II',
-    reason: f =>
-      `Premarket approval is the route for a Class III device, and you have said Class ${f.deviceClass}. A PMA for a ` +
-      'device of a lower class is answerable, but the application has to say why the classification does not decide ' +
-      'the route.',
-    authority: 'FD&C Act 515; 21 CFR 814.1(c)',
-  },
-];
-
-/**
- * What this programme's own answers say against a position, or null where they
- * say nothing. Deterministic, and never a model's judgment: the reason and the
- * authority are written above.
- */
-export function cautionFor(positionId: string, facts: ProgrammeFacts): PositionCaution | null {
-  for (const rule of CAUTION_RULES) {
-    if (!rule.positions.includes(positionId)) continue;
-    if (!rule.when(facts, positionId)) continue;
-    const authority = typeof rule.authority === 'string' ? rule.authority : rule.authority(positionId);
-    return { availability: rule.availability, reason: rule.reason(facts, positionId), authority };
-  }
-  return null;
-}
-
-/** Every position any rule can mark, for the gate that checks they are all offered. */
-export function cautionablePositionIds(): string[] {
-  const out: string[] = [];
-  for (const rule of CAUTION_RULES) for (const id of rule.positions) if (!out.includes(id)) out.push(id);
-  return out;
-}
-
 /**
  * The positions as a question's options — the shape a flow puts in a field, so
  * it states what each position commits to by referring here instead of writing
  * its own list.
  *
- * `facts` marks the positions the programme's own answers speak against. It
- * removes none of them: the caution travels on the option, and the person
- * still chooses (see `PositionAvailability`).
+ * Marking a position the programme's answers contradict is the other
+ * module's half (`pathway-cautions.ts`), and the engine composes the two
+ * (`programme-facts.ts`): the catalogue lists, the rules mark, and nothing is
+ * ever removed.
  */
 export function pathwayOptions(input: {
   domain: PathwayDomain;
   region: PathwayRegion;
   modality?: Modality | null;
-  facts?: ProgrammeFacts;
-}): Array<{ value: string; label: string; commits: string; authority: string; caution?: PositionCaution }> {
-  const facts = input.facts;
-  return pathwayPositionsFor(input).map(position => {
-    const caution = facts ? cautionFor(position.value, facts) : null;
-    return {
-      value: position.value,
-      label: position.marketingRoute ? position.label : `${position.label} — not a route to market`,
-      commits: position.commits,
-      authority: position.authority,
-      ...(caution ? { caution } : {}),
-    };
-  });
+}): Array<{ value: string; label: string; commits: string; authority: string }> {
+  return pathwayPositionsFor(input).map(position => ({
+    value: position.value,
+    label: position.marketingRoute ? position.label : `${position.label} — not a route to market`,
+    commits: position.commits,
+    authority: position.authority,
+  }));
 }

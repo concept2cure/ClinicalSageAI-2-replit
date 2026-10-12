@@ -161,6 +161,81 @@ describe('the pathway question', () => {
   });
 });
 
+describe('the medicines route question', () => {
+  /**
+   * The route question as a medicines project is actually drawn it: the agency
+   * is answered first, and the question that follows is the route.
+   */
+  const drawnSubmissionField = (agency: string, productType: string): QuestionField => {
+    const result = advanceFlow(
+      { ...stateWith({ product_details: { product_type: productType } }), currentNodeId: 'regulatory_targets' },
+      'regulatory_targets',
+      { primary_regulatory_agency: agency },
+      ctx('pharma'),
+    );
+    expect(result.event?.node.id, 'the route question follows the agency').toBe('submission_route');
+    return result.event!.node.fields.find(f => f.id === 'submission_type')!;
+  };
+
+  it('offers a small molecule the frame’s own list, in the frame’s order', () => {
+    expect(valuesOf(drawnSubmissionField('US', 'small_molecule'))).toEqual(['US_NDA', 'US_505B2', 'US_ANDA']);
+  });
+
+  it('offers an antibody a biologics licence and nothing under section 505', () => {
+    const values = valuesOf(drawnSubmissionField('US', 'monoclonal_antibody'));
+    expect(values).toEqual(['US_BLA']);
+    expect(values, 'an antibody is not approved under 505').not.toContain('US_NDA');
+  });
+
+  it('never offers a device route among the medicines ones, as the hand-written ten did', () => {
+    const values = valuesOf(drawnSubmissionField('US', 'small_molecule'));
+    for (const device of ['US_510K', 'US_PMA', 'US_DE_NOVO']) expect(values, device).not.toContain(device);
+  });
+
+  it('says what each position commits the programme to, and its authority', () => {
+    for (const option of drawnSubmissionField('US', 'small_molecule').options!) {
+      expect(option.commits, option.value).toBeTruthy();
+      expect(option.authority, option.value).toBeTruthy();
+    }
+  });
+
+  it('offers the European routes to a European filing, and marks the ones the modality contradicts', () => {
+    const field = drawnSubmissionField('EU', 'biosimilar');
+    expect(valuesOf(field)).toEqual(['EU_MAA', 'EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP']);
+    const by = (value: string) => field.options!.find(o => o.value === value)!;
+    expect(by('EU_BIOSIMILAR_MAA').caution, 'the route for a biosimilar').toBeUndefined();
+    expect(by('EU_MAA').caution!.availability).toBe('needs_basis');
+    expect(by('EU_GENERIC_DCP').caution!.availability).toBe('inapplicable');
+    expect(by('EU_GENERIC_DCP').caution!.ruleId).toBe('biological_as_generic');
+  });
+
+  it('marks a biosimilar application for a chemical product', () => {
+    const field = drawnSubmissionField('EU', 'small_molecule');
+    const biosimilar = field.options!.find(o => o.value === 'EU_BIOSIMILAR_MAA')!;
+    expect(biosimilar.caution!.availability).toBe('inapplicable');
+    expect(biosimilar.caution!.reason).toMatch(/section 505/);
+  });
+
+  it('is not asked of a device project at all', () => {
+    /* A device project is routed past it — and if it ever reached the node,
+       the field is hidden rather than asking a device its NDA type. */
+    const routed = advanceFlow(
+      { ...stateWith({ product_details: { product_type: 'medical_device' } }), currentNodeId: 'regulatory_targets' },
+      'regulatory_targets',
+      { primary_regulatory_agency: 'US' },
+      ctx('medtech'),
+    );
+    expect(routed.event?.node.id).toBe('device_classification');
+    const reachedAnyway = advanceFlow(
+      { ...stateWith({ product_details: { product_type: 'medical_device' } }), currentNodeId: 'submission_route' },
+      'submission_route',
+      {},
+      ctx('medtech'),
+    );
+    expect(reachedAnyway.state.answers.submission_route, 'nothing demanded of a device here').toEqual({});
+  });
+});
+
 describe('the escape hatch on a catalogue that admits what it does not hold', () => {
   /* The flows that ask this question declare `allowOther` themselves. The
      resolver guarantees it anyway, because this catalogue covers the US and
@@ -215,9 +290,10 @@ describe('the order the questions are asked in', () => {
   });
 
   it('still sends a medicines project straight on, and a multi-country one to its timeline', () => {
-    expect(nextAfter('regulatory_targets', { primary_regulatory_agency: 'US', submission_type: 'ind' })).toBe('team_assignment');
+    expect(nextAfter('regulatory_targets', { primary_regulatory_agency: 'US' })).toBe('submission_route');
+    expect(nextAfter('submission_route', { submission_type: 'US_IND' })).toBe('team_assignment');
     expect(
-      nextAfter('regulatory_targets', { primary_regulatory_agency: 'US', submission_type: 'ind', multi_country_submission: true }),
+      nextAfter('submission_route', { submission_type: 'US_IND', multi_country_submission: true }),
     ).toBe('multi_country_setup');
   });
 });
