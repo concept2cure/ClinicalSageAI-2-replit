@@ -7,14 +7,28 @@
 
 ## The defect, as a tester meets it
 
-`scripts/ops/pilot-go-no-go.mjs` returns **NO-GO** on this deployment, and its
-decisive line is:
+`scripts/ops/pilot-go-no-go.mjs` names one hard failure above all the others:
 
 > SMTP_HOST + SMTP_USER + SMTP_PASS MISSING — `getTransporter()` returns null,
 > so login OTP emails are never sent and NO tester can complete a login.
 
-That is a configuration gap, and setting those three variables is not something
-code can do. What code *was* doing made it far worse: all three login routes
+**Correction on what that reading proves.** The probe judges the environment it
+runs in — that is the point of the `--include-local-env` flag, and of the D3
+change that stopped it reading the repository's dev `.env` as deployment truth
+(`docs/evidence/D3-READINESS-ENV-HONESTY/2026-10-11/`). Run from this container
+it reports 0/7 gates passing and four hard failures, because no secrets are set
+here at all; the repository's `.env` supplies seven names and none of them is an
+SMTP variable. So **I cannot observe this deployment's SMTP state from here**,
+and an earlier reading in this session that I reported as the deployment's
+posture was a reading of a development machine. Whether the deployed environment
+has those three variables set is an operator question.
+
+That does not soften the defect, because the defect never depended on the
+answer: the routes claimed delivery without ever asking whether delivery was
+possible, so the claim was wrong on every deployment where it was not. Setting
+three variables is an operator action; not lying about them is not.
+
+What the code *was* doing: all three login routes
 minted a verification code, fired `sendLoginOtpEmail` **without awaiting it**,
 and answered `success: true` with the masked address — unconditionally.
 
@@ -151,12 +165,23 @@ green because the predicate moved to a module nothing mocks.
 
 ## What this does not fix
 
-**SMTP is still unset.** This change makes the failure honest and auditable; it
-does not make login work. `pilot-go-no-go` will still return NO-GO on the mail
-gate until `SMTP_HOST`, `SMTP_USER` and `SMTP_PASS` are set in the deployment
-environment — which is a founder/operator action, not a code change. The
-difference is that a tester now gets a sentence telling them to contact an
-administrator, instead of a screen that waits forever.
+**It does not make login work.** This change makes the failure honest and
+auditable. If the deployment has no SMTP credentials, `pilot-go-no-go` will
+still fail the mail gate until `SMTP_HOST`, `SMTP_USER` and `SMTP_PASS` are set
+there — an operator action, not a code change. The difference is that a tester
+now gets a sentence telling them to contact an administrator instead of a screen
+that waits forever.
 
-The other two hard gates `pilot-go-no-go` reports (schema 0/4 core tables, the
-demo-admin check erroring) are untouched here.
+**Configuration present is not mail delivered**, and the probe says so itself:
+wrong credentials, a rejected sender domain or spam filtering all still block
+login with all three variables set. `npm run pilot:verify-otp -- <address>` is
+the end-to-end proof, and it has not been run — it needs a deployment with
+credentials, which this container is not.
+
+**The probe's other gates are not judged here.** From this container gates 1, 2
+and 3 fail for one reason — `DATABASE_URL` is not set — so they say nothing
+about a deployment's schema or whether a known-password demo admin exists.
+Earlier in this session I reported "schema 0/4 core tables" and "demo-admin
+check erroring" as findings; those came from a run against a development
+machine's database and are withdrawn as statements about the deployment. They
+need re-measuring from an environment that has the deployment's secrets.
