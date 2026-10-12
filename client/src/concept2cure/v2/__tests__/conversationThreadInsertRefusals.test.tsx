@@ -108,6 +108,96 @@ async function offers(): Promise<HTMLButtonElement[]> {
 }
 const reasonOf = (el: HTMLElement) => document.getElementById(el.getAttribute('aria-describedby') ?? '');
 
+/* A draft the server did NOT file as an authoring document, so it shows as a
+   side-panel card with its own "Open as document" control. That control reaches
+   POST /api/authoring/docs/from-draft, which creates a whole governed document
+   whose entire content is model prose. */
+const CARD_DRAFT = { title: 'Module 2.7.4 Clinical Safety', content: '<p>No new safety signal was identified.</p>', documentType: 'clinical_safety' };
+const carded = (id: string, over: Partial<AnaChatMessage>) =>
+  ({ id, role: 'assistant', text: 'I drafted the safety summary.', generatedDraft: CARD_DRAFT, ...over }) as AnaChatMessage;
+
+/** Render the conversation, expand the draft card, return its "Open as document" button. */
+async function openAsDocument(): Promise<HTMLButtonElement> {
+  render(<ConversationThread {...PROPS} />);
+  /* The card's actions exist only once it is expanded; `.ct-art-head` is its
+     toggle. Queried by class, because the turn above it also names the draft. */
+  await vi.waitFor(() => expect(document.querySelector('.ct-art .ct-art-head')).toBeTruthy(), { timeout: 4000 });
+  (document.querySelector('.ct-art .ct-art-head') as HTMLButtonElement).click();
+  return (await screen.findByRole('button', { name: /Open .* as a document in the editor/i }, { timeout: 4000 })) as HTMLButtonElement;
+}
+
+describe('the conversation\u2019s "Open as document" applies the same rule (round 14, SEC-A-7 door 5)', () => {
+  /* A document is filed in a project, so the card refuses without one. This
+     describe opens one, to measure the rule rather than that pre-existing
+     refusal; the last case below covers the pre-existing ones. */
+  const PROGRAM = '7c1f55aa-93c6-4a2e-9f2f-2b7a01d9c5e4';
+  beforeEach(() => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PROGRAM, title: 'C2C-101', code: 'C2C-101' };
+  });
+  afterEach(() => {
+    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+  });
+
+  it('refuses a draft whose turn the rule does not admit, with the reason as visible text', async () => {
+    chatMessages.current = [USER, carded('c1', { turnRecord: { status: 'recorded', id: 'rec-10', sha256: SHA, servedBy: [SONNET] } as AnaChatMessage['turnRecord'] })];
+    const open = await openAsDocument();
+    expect(open.disabled).toBe(true);
+    /* GE-P-3: the reason is text the control is described by, not a `title` —
+       which is unreachable by keyboard and invisible on touch, the defect round
+       13 fixed on the two sibling offers. */
+    expect(open.getAttribute('title')).toBeNull();
+    const reason = document.getElementById(open.getAttribute('aria-describedby') ?? '');
+    expect(reason?.textContent).toContain('claude-sonnet-5');
+    /* This door files a document; it does not insert. The sentence must say so,
+       or it names an act the control does not perform. */
+    expect(reason?.textContent).toContain('filed as a document');
+    expect(reason?.textContent).not.toContain('inserted');
+    expect(apiRequest).not.toHaveBeenCalledWith('POST', '/api/authoring/docs/from-draft', expect.anything());
+  });
+
+  it('fails closed on a turn this page was not told about, and on one that did not finish', async () => {
+    for (const over of [
+      {},
+      { turnRecord: { status: 'recorded', id: 'rec-11', sha256: SHA } as AnaChatMessage['turnRecord'] },
+      { interrupted: true, turnRecord: { status: 'recorded', id: 'rec-12', sha256: SHA, servedBy: [OPUS] } as AnaChatMessage['turnRecord'] },
+    ]) {
+      cleanup();
+      chatMessages.current = [USER, carded('c2', over as Partial<AnaChatMessage>)];
+      const open = await openAsDocument();
+      expect(open.disabled).toBe(true);
+      expect(document.getElementById(open.getAttribute('aria-describedby') ?? '')?.textContent).toBeTruthy();
+    }
+  });
+
+  it('offers a draft the rule admits', async () => {
+    chatMessages.current = [USER, carded('c3', { turnRecord: { status: 'recorded', id: 'rec-13', sha256: SHA, servedBy: [OPUS] } as AnaChatMessage['turnRecord'] })];
+    const open = await openAsDocument();
+    expect(open.disabled).toBe(false);
+    expect(open.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('still says what it said before when there is no draft text, as visible text', async () => {
+    chatMessages.current = [USER, carded('c4', { generatedDraft: { ...CARD_DRAFT, content: '' }, turnRecord: { status: 'recorded', id: 'rec-14', sha256: SHA, servedBy: [OPUS] } } as Partial<AnaChatMessage>)];
+    const open = await openAsDocument();
+    expect(open.disabled).toBe(true);
+    expect(document.getElementById(open.getAttribute('aria-describedby') ?? '')?.textContent).toBe('There is no draft text to open.');
+  });
+
+  it('blames the empty draft, not the model, when both would refuse', async () => {
+    /* Order matters only when more than one refusal applies, which is the case
+       this pins: an empty draft served by a model the rule does not admit must
+       say there is nothing to open. "Written by X, which is not approved" is
+       true but useless — there is no draft either way, and naming the model
+       sends the person to ask again when the draft is simply empty. */
+    chatMessages.current = [USER, carded('c5', { generatedDraft: { ...CARD_DRAFT, content: '' }, turnRecord: { status: 'recorded', id: 'rec-15', sha256: SHA, servedBy: [SONNET] } } as Partial<AnaChatMessage>)];
+    const open = await openAsDocument();
+    expect(open.disabled).toBe(true);
+    const reason = document.getElementById(open.getAttribute('aria-describedby') ?? '');
+    expect(reason?.textContent).toBe('There is no draft text to open.');
+    expect(reason?.textContent).not.toContain('claude-sonnet-5');
+  });
+});
+
 describe('the conversation’s refused inserts', () => {
   it('each refused offer is described by its own reason: one element id per offer', async () => {
     const turns = [

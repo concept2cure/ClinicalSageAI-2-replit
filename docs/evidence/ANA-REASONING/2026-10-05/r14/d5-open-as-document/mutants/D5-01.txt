@@ -1,0 +1,8 @@
+mutant D5-01: the governed-write rule is not applied at this door (trunk behaviour)
+verdict: KILLED
+Tests  2 failed | 6 passed (8)
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > refuses a draft whose turn the rule does not admit, with the reason as visible text 483ms
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > fails closed on a turn this page was not told about, and on one that did not finish 175ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
