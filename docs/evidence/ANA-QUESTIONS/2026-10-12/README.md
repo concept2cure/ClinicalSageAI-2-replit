@@ -111,9 +111,21 @@ question the server sent.
 - `mutations.txt`: **9 mutations, all red.** One survived the first pass — the
   disabled button hid the unexplained-submit path — and the test now exercises
   the form submit directly.
+- `green.txt`: the whole question engine plus the card, **9 files, 109 tests**.
+  An earlier, wider run over every v2 client suite was killed by its own
+  timeout before finishing, so it is not quoted here: it showed no failure,
+  but an unfinished run is not a green one.
 - `npx tsc --noEmit`: 0 errors. `ci:undefined-css-classes`, `ci:design-system`
   and `ci:internals-in-copy` pass; `ci:surface-text-ramp` needed the generated
   sheet regenerated, because the card adds a tinted-surface rule (5 lines).
+- The push was refused twice, by gates doing their job, and both causes were
+  real: the typecheck gate ran out of heap on this 4-CPU box (raised with
+  `TYPECHECK_HEAP_MB`, as its own message says), and the lint ratchet refused
+  4 warnings this change had added — the card's function past 100 lines, a
+  wrong `useMemo` dependency, and the turn component pushed over its length
+  and complexity limits by the card's mount. Fixed by splitting the card into
+  a field row, making the own-position check a pure function, and extracting
+  the mount; no baseline was widened.
 
 ## What this does not yet do
 
