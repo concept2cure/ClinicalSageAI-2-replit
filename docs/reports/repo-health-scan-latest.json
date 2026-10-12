@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T08:15:21.076Z",
+  "generatedAt": "2026-10-12T09:49:25.025Z",
   "git": {
-    "sha": "ec304dc862f88b4bc9ad912b0238a427a6d0be31",
+    "sha": "5d3d960241c57c878d08f7b37ea3a7df715ac778",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2060,7 +2060,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 373147
+        "bytes": 375426
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2286,7 +2286,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 8226
+        "lines": 8265
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
