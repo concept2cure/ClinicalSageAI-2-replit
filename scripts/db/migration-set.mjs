@@ -3043,6 +3043,19 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-pma-pack-software-doc-level-*.
   'migrations/20261005b_pma_fda_outline_v1_1_software_documentation_level.sql',
 
+  // ── The 510(k) and De Novo outlines carry the user fee and risk management (2026-10-05, D2)
+  // k510:fda fda-estar-510k-v1.1 (v1.0 + A9 MDUFA user fee / Form FDA 3601,
+  // mandatory; + D6 Benefits, Risks and Mitigation Measures, optional — eSTAR
+  // v7.0 shows it for a Special 510(k) only) and denovo:fda
+  // fda-estar-denovo-v1.1 (v1.0 + A7 user fee). v1.0 had no section for two
+  // slots the eSTAR mapper requires, so a fully authored governed 510(k) could
+  // never score complete. ON CONFLICT DO NOTHING, provenance UPDATE after
+  // 20260810c, supersede of exactly v1.0, an exact-tree / node-count / one-live
+  // RAISE; no DROP, 20260901b not edited. Documents bound to v1.0 keep their
+  // outline (decision 6).
+  // Evidence docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-k510-denovo-pack-v1-1-*.
+  'migrations/20261005c_k510_denovo_estar_outline_v1_1.sql',
+
   // W2/D2 + D5: append-only typed logical file/extracted-data dispositions.
   // Source/Vault/lineage rows and physical retention remain intact. Before the
   // final RLS sweeps because this is public + organization_id INTEGER.

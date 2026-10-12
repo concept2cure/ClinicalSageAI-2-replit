@@ -1,21 +1,47 @@
 /**
- * Device Submission Registry — Section structures for FDA device submissions.
+ * Device Submission Registry — section outlines for device submissions.
  *
- * Covers: 510(k), PMA, De Novo, CER (EU MDR)
+ * Covers: 510(k), PMA, De Novo, and the EU CER (MDR) and PER (IVDR).
  * Same pattern as IND Section Registry.
+ *
+ * The CER and PER outlines are NOT held here. They are projections of the
+ * canonical records (record step g-device-chat-cer-per-projection, 2026-10-05):
+ *  - CER → CER_SECTIONS, server/services/market-specs/cer-structure.ts;
+ *  - IVDR → PER_SECTIONS, server/services/market-specs/per-structure.ts.
+ * Before, this file kept its own 8-section SECTIONS_CER (no equivalence,
+ * appraisal, evaluator qualification or references, and the PMCF plan filed as
+ * CER section 8), and 'IVDR' had no outline at all. That list is deleted.
+ *
+ * A projected section's code is keyed on the record's section id
+ * (`CER.appraisal`, `PER.analytical_performance`), not its number: the retired
+ * codes CER.1–CER.8 named different sections, and an artifact saved under one
+ * of them must not be read as a drafted section of this outline.
  *
  * @module server/services/device/device-section-registry
  */
 
+import { CER_SECTIONS } from '../market-specs/cer-structure.js';
+import { PER_SECTIONS } from '../market-specs/per-structure.js';
+
+export const DEVICE_SUBMISSION_TYPES = ['510K', 'PMA', 'DE_NOVO', 'CER', 'IVDR'] as const;
+export type DeviceSubmissionType = (typeof DEVICE_SUBMISSION_TYPES)[number];
+
+export function isDeviceSubmissionType(value: unknown): value is DeviceSubmissionType {
+  return typeof value === 'string' && (DEVICE_SUBMISSION_TYPES as readonly string[]).includes(value);
+}
+
 export interface DeviceSection {
   code: string;
   title: string;
-  submissionType: '510K' | 'PMA' | 'DE_NOVO' | 'CER';
+  submissionType: DeviceSubmissionType;
   required: boolean;
-  contentType: 'narrative' | 'table' | 'form' | 'data' | 'list' | 'mixed';
+  /** Absent for the CER/PER projections: the canonical records do not say. */
+  contentType?: 'narrative' | 'table' | 'form' | 'data' | 'list' | 'mixed';
   guidance: string;
   generationPrompt: string;
   wordCountRange?: [number, number];
+  /** The condition under which a non-required section applies (e.g. equivalence claimed). */
+  appliesWhen?: string;
 }
 
 const SECTIONS_510K: DeviceSection[] = [
@@ -42,17 +68,6 @@ const SECTIONS_PMA: DeviceSection[] = [
   { code: 'PMA.8', title: 'Summary of Safety and Effectiveness', submissionType: 'PMA', required: true, contentType: 'narrative', guidance: '21 CFR 814.20(b)(3)', generationPrompt: 'Draft SSED for {{DEVICE_NAME}} PMA. Include device description, indications, contraindications, adverse events, and benefit-risk.', wordCountRange: [3000, 8000] },
 ];
 
-const SECTIONS_CER: DeviceSection[] = [
-  { code: 'CER.1', title: 'Executive Summary', submissionType: 'CER', required: true, contentType: 'narrative', guidance: 'MEDDEV 2.7/1 Rev 4', generationPrompt: 'Draft CER executive summary for {{DEVICE_NAME}}.', wordCountRange: [500, 1500] },
-  { code: 'CER.2', title: 'Scope of Clinical Evaluation', submissionType: 'CER', required: true, contentType: 'narrative', guidance: 'MEDDEV 2.7/1 Rev 4', generationPrompt: 'Draft CER scope for {{DEVICE_NAME}}. Include intended purpose, patient population, and clinical claims.', wordCountRange: [1000, 3000] },
-  { code: 'CER.3', title: 'Clinical Background', submissionType: 'CER', required: true, contentType: 'narrative', guidance: 'MEDDEV 2.7/1 Rev 4', generationPrompt: 'Draft clinical background for {{DEVICE_NAME}} CER. Include disease overview and state of the art.', wordCountRange: [2000, 5000] },
-  { code: 'CER.4', title: 'Literature Review', submissionType: 'CER', required: true, contentType: 'mixed', guidance: 'MEDDEV 2.7/1 Rev 4', generationPrompt: 'Draft literature review for {{DEVICE_NAME}} CER. Include search strategy, PRISMA, and appraisal.', wordCountRange: [3000, 10000] },
-  { code: 'CER.5', title: 'Clinical Investigations', submissionType: 'CER', required: false, contentType: 'mixed', guidance: 'MEDDEV 2.7/1 Rev 4', generationPrompt: 'Draft clinical investigation evidence for {{DEVICE_NAME}} CER.', wordCountRange: [2000, 8000] },
-  { code: 'CER.6', title: 'Benefit-Risk Analysis', submissionType: 'CER', required: true, contentType: 'narrative', guidance: 'EU MDR 2017/745 Article 61', generationPrompt: 'Draft benefit-risk analysis for {{DEVICE_NAME}} CER per EU MDR.', wordCountRange: [2000, 5000] },
-  { code: 'CER.7', title: 'Conclusions', submissionType: 'CER', required: true, contentType: 'narrative', guidance: 'MEDDEV 2.7/1 Rev 4', generationPrompt: 'Draft CER conclusions for {{DEVICE_NAME}}. Include GSPR conformity and PMCF requirements.', wordCountRange: [500, 1500] },
-  { code: 'CER.8', title: 'PMCF Plan', submissionType: 'CER', required: true, contentType: 'mixed', guidance: 'EU MDR Annex XIV Part B', generationPrompt: 'Draft PMCF plan for {{DEVICE_NAME}}. Include objectives, activities, acceptance criteria, and timelines.', wordCountRange: [1500, 4000] },
-];
-
 const SECTIONS_DE_NOVO: DeviceSection[] = [
   { code: 'DN.1', title: 'Cover Letter', submissionType: 'DE_NOVO', required: true, contentType: 'narrative', guidance: '21 CFR 860.260', generationPrompt: 'Generate De Novo cover letter for {{DEVICE_NAME}}.', wordCountRange: [500, 1000] },
   { code: 'DN.2', title: 'Device Description', submissionType: 'DE_NOVO', required: true, contentType: 'mixed', guidance: '21 CFR 860.260(b)', generationPrompt: 'Draft device description for {{DEVICE_NAME}} De Novo. Explain why no predicate exists.', wordCountRange: [1500, 4000] },
@@ -62,12 +77,68 @@ const SECTIONS_DE_NOVO: DeviceSection[] = [
   { code: 'DN.6', title: 'Labeling', submissionType: 'DE_NOVO', required: true, contentType: 'mixed', guidance: '21 CFR 801', generationPrompt: 'Draft labeling for {{DEVICE_NAME}} De Novo.', wordCountRange: [1000, 3000] },
 ];
 
+/** CER_SECTIONS projected into the DeviceSection shape. Nothing is restated. */
+const CER_PROJECTION: DeviceSection[] = CER_SECTIONS.map((s) => ({
+  code: `CER.${s.id}`,
+  title: s.title,
+  submissionType: 'CER',
+  required: s.required,
+  guidance: s.purpose,
+  generationPrompt: `Draft the "${s.title}" section of the Clinical Evaluation Report for {{DEVICE_NAME}}. ${s.purpose}`,
+  ...(s.equivalenceOnly ? { appliesWhen: 'only when equivalence is claimed' } : {}),
+}));
+
+/** PER_SECTIONS projected into the DeviceSection shape. Nothing is restated. */
+const PER_PROJECTION: DeviceSection[] = PER_SECTIONS.map((s) => ({
+  code: `PER.${s.id}`,
+  title: s.title,
+  submissionType: 'IVDR',
+  required: s.required,
+  guidance: s.purpose,
+  generationPrompt: `Draft the "${s.title}" section of the Performance Evaluation Report for {{DEVICE_NAME}}. ${s.purpose}`,
+}));
+
 export const ALL_DEVICE_SECTIONS: DeviceSection[] = [
-  ...SECTIONS_510K, ...SECTIONS_PMA, ...SECTIONS_CER, ...SECTIONS_DE_NOVO,
+  ...SECTIONS_510K, ...SECTIONS_PMA, ...CER_PROJECTION, ...PER_PROJECTION, ...SECTIONS_DE_NOVO,
 ];
 
-export function getDeviceSections(type: '510K' | 'PMA' | 'DE_NOVO' | 'CER'): DeviceSection[] {
+export function getDeviceSections(type: DeviceSubmissionType): DeviceSection[] {
   return ALL_DEVICE_SECTIONS.filter(s => s.submissionType === type);
+}
+
+/**
+ * What each type's outline is. CER and IVDR are single documents of a larger
+ * technical file, and the chat block says so rather than calling them the
+ * whole submission.
+ */
+const OUTLINE_INTRO: Record<DeviceSubmissionType, string> = {
+  '510K': 'This is a 510K medical device submission project.',
+  PMA: 'This is a PMA medical device submission project.',
+  DE_NOVO: 'This is a DE_NOVO medical device submission project.',
+  CER:
+    'This is an EU MDR clinical evaluation project. The outline below is the clinical evaluation report (CER); it is not the full MDR technical documentation.',
+  IVDR:
+    'This is an EU IVDR performance evaluation project. The outline below is the performance evaluation report (PER); it is not the full IVDR technical documentation.',
+};
+
+function sectionStatusLabel(s: DeviceSection): string {
+  if (s.appliesWhen) return s.appliesWhen;
+  return s.required ? 'required' : 'optional';
+}
+
+/**
+ * The device block injected into AnA's chat prompt (send-message.ts). Empty for
+ * a type this registry has no outline for.
+ */
+export function renderDeviceContextBlock(type: string, ctx: { activeProject?: string } = {}): string {
+  if (!isDeviceSubmissionType(type)) return '';
+  const sections = getDeviceSections(type);
+  if (sections.length === 0) return '';
+  const sectionList = sections
+    .map((s) => `- ${s.code} ${s.title} (${sectionStatusLabel(s)}) — ${s.guidance}`)
+    .join('\n');
+  const requiredCount = sections.filter((s) => s.required).length;
+  return `\n\n## ${type} Submission Context\n${OUTLINE_INTRO[type]}\n${ctx.activeProject ? `Project: ${ctx.activeProject}` : ''}\n\nRequired sections (${requiredCount} required, ${sections.length} total):\n${sectionList}\n\nUse the generate_document tool to draft any section. Guide the user through the submission systematically.\n`;
 }
 
 export function getDeviceSectionByCode(code: string): DeviceSection | undefined {

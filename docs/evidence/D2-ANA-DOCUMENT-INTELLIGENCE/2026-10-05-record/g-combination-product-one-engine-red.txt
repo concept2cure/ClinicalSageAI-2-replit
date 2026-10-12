@@ -1,0 +1,856 @@
+# g-combination-product-one-engine — RED: new test on the code at HEAD 9852637b, before the change
+# RE-LAND NOTE, 2026-10-11: this red output was recorded on 2026-10-05 at HEAD 9852637b.
+# Trunk is now at 6cee2d4f, 553 commits later. Verified that this red still represents
+# today's HEAD for the code under test:
+#   git log --oneline 9852637b..HEAD -- <the five step files>   -> 0 commits
+# The only commit in that range touching anything the test imports is c3163b5c, which adds
+# 'canada.ca' to REGULATOR_HOSTS in shared/regulatory/regulatory-basis.ts; ecfr.gov was
+# already present, so basisProblems() behaves identically for every assertion below.
+# Red was 13 failed / 6 passed (19). Green after the change: 19/19 — see
+# g-combination-product-one-engine-green.txt.
+# npx vitest run server/services/combination-products/__tests__/combination-one-engine.test.ts
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/combination-products/__tests__/combination-one-engine.test.ts > parity: every engine gives the fixture the Center FDA gives > drug-eluting coronary stent → CDRH 33ms
+ ✓ server/services/combination-products/__tests__/combination-one-engine.test.ts > parity: every engine gives the fixture the Center FDA gives > prefilled syringe (small-molecule drug) → CDER 5ms
+ ✓ server/services/combination-products/__tests__/combination-one-engine.test.ts > parity: every engine gives the fixture the Center FDA gives > transdermal patch → CDER 14ms
+ ✓ server/services/combination-products/__tests__/combination-one-engine.test.ts > parity: every engine gives the fixture the Center FDA gives > autoinjector (small-molecule drug) → CDER 10ms
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > parity: every engine gives the fixture the Center FDA gives > no /classify answer names a fixture product under a Center FDA does not give it 21ms
+   → expected [ …(2) ] to deeply equal []
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > PMOA is cited to 21 CFR 3.2(m) and assigned under 3.4 > /classify cites 3.2(m) and 3.4, and never 3.2(e) for the primary mode of action 7ms
+   → expected '{"primaryMode":"device","leadCenter":…' not to match /3\.2\(e\)[^"]*primary mode of action/i
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > PMOA is cited to 21 CFR 3.2(m) and assigned under 3.4 > the canonical engine cites mode of action to 3.2(k) and PMOA to 3.2(m) 1ms
+   → expected 'Mode of action (21 CFR 3.2(m)) is the…' to match /Mode of action \(21 CFR 3\.2\(k\)\)/
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > PMOA is cited to 21 CFR 3.2(m) and assigned under 3.4 > the Part 3 citations carry a well-formed eCFR basis 1ms
+   → 21 CFR 3.2(e): expected undefined to be defined
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > Request for Designation: every engine recommends it and cites 21 CFR 3.7 > canonical: an indeterminate PMOA recommends an RFD under 3.7 and the letter under 3.8 1ms
+   → expected 'A drug-device or biologic-device PMOA…' to match /letter of designation \(21 CFR 3\.8\)/i
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > Request for Designation: every engine recommends it and cites 21 CFR 3.7 > global-ri: no PMOA → OCP (RFD), citing 3.7 1ms
+   → expected 'File a Request for Designation (RFD) …' to match /21 CFR 3\.7/
+ ✓ server/services/combination-products/__tests__/combination-one-engine.test.ts > Request for Designation: every engine recommends it and cites 21 CFR 3.7 > market-specs: no PMOA → no Center, an RFD citing 3.7 0ms
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > 21 CFR 3.2(e): one type of article is not a combination product > two devices co-packaged are not a combination product, in either engine 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/combination-products/__tests__/combination-one-engine.test.ts > 21 CFR 3.2(e): one type of article is not a combination product > a drug co-packaged with a device is a 3.2(e)(2) combination product, in both 0ms
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > fail closed on an unknown mode of action > /classify and /requirements refuse an unknown primaryAction instead of answering "drug" 9ms
+   → expected 200 to be 400 // Object.is equality
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > fail closed on an unknown mode of action > the global-ri classifier refuses an unknown PMOA instead of returning no Center 2ms
+   → expected [Function] to throw an error
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > fail closed on an unknown mode of action > the canonical engine refuses an unknown constituent type instead of assigning CDRH 1ms
+   → expected [Function] to throw an error
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > /requirements reads its Center from the canonical engine > device PMOA → CDRH and a device application 8ms
+   → Cannot read properties of undefined (reading 'map')
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > one engine: the other three delegate, and the parallel copy is gone > global-ri and market-specs import the canonical engine and keep no PMOA→Center map 1ms
+   → server/services/global-ri/combination-product-classification.ts: expected '/**\n * Combination-product / drug-de…' to match /from ['"][./]*…/]*combination-products\
+ × server/services/combination-products/__tests__/combination-one-engine.test.ts > one engine: the other three delegate, and the parallel copy is gone > combination-product-service has no determinePrimaryMode, and the routes call the canonical engine 1ms
+   → expected '/**\n * Combination Product Service\n…' not to match /determinePrimaryMode\s*\(/
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > parity: every engine gives the fixture the Center FDA gives > no /classify answer names a fixture product under a Center FDA does not give it
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "drug: drug-eluting coronary stent listed under CDER, FDA: CDRH",
++   "biologic: prefilled syringe (small-molecule drug) listed under CBER, FDA: CDER",
++ ]
+
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:165:19
+    163|       }
+    164|     }
+    165|     expect(wrong).toEqual([]);
+       |                   ^
+    166|   });
+    167| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > PMOA is cited to 21 CFR 3.2(m) and assigned under 3.4 > /classify cites 3.2(m) and 3.4, and never 3.2(e) for the primary mode of action
+AssertionError: expected '{"primaryMode":"device","leadCenter":…' not to match /3\.2\(e\)[^"]*primary mode of action/i
+
+- Expected:
+/3\.2\(e\)[^"]*primary mode of action/i
+
++ Received:
+"{\"primaryMode\":\"device\",\"leadCenter\":\"CDRH\",\"collaboratingCenter\":\"CDER\",\"classificationType\":\"Device-Drug Combination (Device-led)\",\"examples\":[\"Antimicrobial bone cement (device provides primary structural function)\",\"Drug-coated balloon catheter\",\"Wound dressing with antimicrobial agent\"],\"regulatoryBasis\":\"21 CFR 3.2(e): Primary mode of action is attributable to the device component\"}"
+
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:173:22
+    171|     const res = await request(app()).get('/api/biologics/combination-p…
+    172|     const text = JSON.stringify(res.body);
+    173|     expect(text).not.toMatch(/3\.2\(e\)[^"]*primary mode of action/i);
+       |                      ^
+    174|     const ids = (res.body.citations ?? []).map((c: { id: string }) => …
+    175|     expect(ids).toEqual(expect.arrayContaining(['21 CFR 3.2(m)', '21 C…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > PMOA is cited to 21 CFR 3.2(m) and assigned under 3.4 > the canonical engine cites mode of action to 3.2(k) and PMOA to 3.2(m)
+AssertionError: expected 'Mode of action (21 CFR 3.2(m)) is the…' to match /Mode of action \(21 CFR 3\.2\(k\)\)/
+
+- Expected:
+/Mode of action \(21 CFR 3\.2\(k\)\)/
+
++ Received:
+"Mode of action (21 CFR 3.2(m)) is the means by which a constituent part achieves its intended therapeutic effect or action.
+Primary mode of action (PMOA, 21 USC 353(g)(1); 21 CFR 3.4(a)) is the single mode of action expected to make the GREATEST contribution to the overall intended therapeutic effects of the combination product.
+Exactly one constituent (device) is identified as providing the primary therapeutic action; its mode of action is the PMOA.
+The PMOA constituent type (device) places primary jurisdiction with CDRH (21 CFR 3.4(a))."
+
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:181:18
+    179|     const r = determinePrimaryModeOfAction({ constituents: [{ type: 'd…
+    180|     const text = r.rationale.join('\n');
+    181|     expect(text).toMatch(/Mode of action \(21 CFR 3\.2\(k\)\)/);
+       |                  ^
+    182|     expect(text).toMatch(/Primary mode of action \(PMOA, 21 CFR 3\.2\(…
+    183|     expect(text).not.toMatch(/Mode of action \(21 CFR 3\.2\(m\)\)/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > PMOA is cited to 21 CFR 3.2(m) and assigned under 3.4 > the Part 3 citations carry a well-formed eCFR basis
+AssertionError: 21 CFR 3.2(e): expected undefined to be defined
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:191:28
+    189|       const c = byId.get(id);
+    190|       expect(c, id).toBeDefined();
+    191|       expect(c?.basis, id).toBeDefined();
+       |                            ^
+    192|       expect(basisProblems(c!.basis!), id).toEqual([]);
+    193|       expect(c!.basis!.url, id).toMatch(/^https:\/\/www\.ecfr\.gov\//);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > Request for Designation: every engine recommends it and cites 21 CFR 3.7 > canonical: an indeterminate PMOA recommends an RFD under 3.7 and the letter under 3.8
+AssertionError: expected 'A drug-device or biologic-device PMOA…' to match /letter of designation \(21 CFR 3\.8\)/i
+
+- Expected:
+/letter of designation \(21 CFR 3\.8\)/i
+
++ Received:
+"A drug-device or biologic-device PMOA determination does NOT change which constituent is a drug vs a device; it only sets the lead Center and the review program for the whole product.
+CDER took over most therapeutic-biologic review in 2003, so a \"biologic PMOA\" therapeutic protein may in practice be led by CDER even though the article is a 351 biologic; confirm with OCP.
+Because the assignment is not unambiguous, submit a Request for Designation (RFD) under 21 CFR 3.5 to obtain a binding FDA letter of designation (21 CFR 3.7), or request a Pre-RFD informal feedback meeting with OCP."
+
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:209:19
+    207|     const notes = r.notes.join('\n');
+    208|     expect(notes).toMatch(/21 CFR 3\.7/);
+    209|     expect(notes).toMatch(/letter of designation \(21 CFR 3\.8\)/i);
+       |                   ^
+    210|     expect(notes).not.toMatch(RFD_AT_3_5);
+    211|     const cat = classifyCategory({ constituentTypes: ['drug', 'device'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > Request for Designation: every engine recommends it and cites 21 CFR 3.7 > global-ri: no PMOA → OCP (RFD), citing 3.7
+AssertionError: expected 'File a Request for Designation (RFD) …' to match /21 CFR 3\.7/
+
+- Expected:
+/21 CFR 3\.7/
+
++ Received:
+"File a Request for Designation (RFD) with the Office of Combination Products (OCP) to obtain the lead-center assignment (21 CFR Part 3).
+Indicative classification only — the final classification rests with the agency (FDA Office of Combination Products via an RFD / EU competent authority together with a Notified Body)."
+
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:219:32
+    217|     const r = classifyRegion({ region: 'FDA' }) as FdaCombinationClass…
+    218|     expect(r.leadCenter).toBe('OCP (RFD)');
+    219|     expect(r.notes.join('\n')).toMatch(/21 CFR 3\.7/);
+       |                                ^
+    220|     expect(r.citation).toMatch(/3\.2\(m\)/);
+    221|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > 21 CFR 3.2(e): one type of article is not a combination product > two devices co-packaged are not a combination product, in either engine
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:233:38
+    231|   it('two devices co-packaged are not a combination product, in either…
+    232|     const cat = classifyCategory({ constituentTypes: ['device', 'devic…
+    233|     expect(cat.isCombinationProduct).toBe(false);
+       |                                      ^
+    234|     const m = assessCombinationProduct({ components: ['device', 'devic…
+    235|     expect(m.isCombination).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > fail closed on an unknown mode of action > /classify and /requirements refuse an unknown primaryAction instead of answering "drug"
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:249:22
+    247|   it('/classify and /requirements refuse an unknown primaryAction inst…
+    248|     const a = await request(app()).get('/api/biologics/combination-pro…
+    249|     expect(a.status).toBe(400);
+       |                      ^
+    250|     const b = await request(app()).get('/api/biologics/combination-pro…
+    251|     expect(b.status).toBe(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > fail closed on an unknown mode of action > the global-ri classifier refuses an unknown PMOA instead of returning no Center
+AssertionError: expected [Function] to throw an error
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:255:95
+    253|
+    254|   it('the global-ri classifier refuses an unknown PMOA instead of retu…
+    255|     expect(() => classifyRegion({ region: 'FDA', primaryModeOfAction: …
+       |                                                                                               ^
+    256|   });
+    257|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > fail closed on an unknown mode of action > the canonical engine refuses an unknown constituent type instead of assigning CDRH
+AssertionError: expected [Function] to throw an error
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:259:109
+    257|
+    258|   it('the canonical engine refuses an unknown constituent type instead…
+    259|     expect(() => determinePrimaryModeOfAction({ constituents: [], asse…
+       |                                                                                                             ^
+    260|   });
+    261| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > /requirements reads its Center from the canonical engine > device PMOA → CDRH and a device application
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:268:46
+    266|     expect(res.status).toBe(200);
+    267|     expect(res.body.classification.leadCenter).toBe('CDRH');
+    268|     expect(res.body.classification.citations.map((c: { id: string }) =…
+       |                                              ^
+    269|     expect(res.body.submissionType).toMatch(/PMA|510\(k\)/);
+    270|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > one engine: the other three delegate, and the parallel copy is gone > global-ri and market-specs import the canonical engine and keep no PMOA→Center map
+AssertionError: server/services/global-ri/combination-product-classification.ts: expected '/**\n * Combination-product / drug-de…' to match /from ['"][./]*…/]*combination-products\
+
+- Expected:
+/from ['"][./]*combination-products\/combination-products-knowledge(\.js)?['"]/
+
++ Received:
+"/**
+ * Combination-product / drug-device classification expert — FDA & EU.
+ *
+ * A drug-device (or biologic-device) combination must be slotted into the right
+ * regulatory framework before anything else: in the US that means identifying
+ * the lead FDA Center by Primary Mode of Action (PMOA); in the EU it means
+ * deciding whether the combination is a single integral medicinal product
+ * (regulated as a medicine, with the device part evidenced by a Notified Body
+ * Opinion under MDR Article 117) or a non-integral combination (the device
+ * CE-marked separately). This is the judgement an RA lead makes at program
+ * inception and defends with the agency.
+ *
+ * This service classifies a combination product into that framework per region,
+ * returning the lead authority / regulatory route, the deciding factor, and the
+ * governing citation — deterministically.
+ *
+ * Regions: FDA (US), EU.
+ *
+ * Pure / deterministic — no DB, no IO. The classification is an indicative
+ * reference aid; the binding classification rests with the agency (FDA Office of
+ * Combination Products via a Request for Designation, or the EU competent
+ * authority together with a Notified Body).
+ *
+ * References:
+ *  - FDA: 21 CFR Part 3 — combination-product definition 21 CFR 3.2(e); lead
+ *    center assignment by PMOA 21 CFR 3.4 (drug→CDER, biologic→CBER,
+ *    device→CDRH); Request for Designation to the Office of Combination Products
+ *    (OCP) when the PMOA is unclear (21 CFR Part 3); statutory basis 21 USC
+ *    353(g).
+ *  - EU: MDR (EU) 2017/745 Article 117 (Notified Body Opinion on the device part
+ *    of a single integral drug-device combination), which amended Annex I of
+ *    Directive 2001/83/EC; device General Safety and Performance Requirements
+ *    (GSPR) under the MDR.
+ *
+ * @module server/services/global-ri/combination-product-classification
+ */
+
+export type CombinationRegion = 'FDA' | 'EU';
+
+/** Primary Mode of Action of the combination product (drives FDA lead center). */
+export type PrimaryModeOfAction = 'drug' | 'biologic' | 'device';
+
+/** FDA lead center, or OCP (RFD) when the PMOA is unclear. */
+export type FdaLeadCenter = 'CDER' | 'CBER' | 'CDRH' | 'OCP (RFD)';
+
+/** EU regulatory route for a drug-device combination. */
+export type EuRegulatoryRoute =
+  | 'Medicinal product (integral, MDR Art 117 NBOp)'
+  | 'Medicinal product + separately CE-marked device (non-integral)';
+
+export interface CombinationFramework {
+  region: CombinationRegion;
+  /** The legal basis of the regional framework. */
+  basis: string;
+  /** Whether the region uses a single \"lead authority/center\" concept, and how. */
+  leadAuthorityConcept: string;
+  /** The factor that decides the classification in this region. */
+  decisionFactor: string;
+  /** How the other authority/center (or Notified Body) is engaged. */
+  consultationMechanism: string;
+  citation: string;
+  notes: string[];
+}
+
+const FRAMEWORKS: Record<CombinationRegion, CombinationFramework> = {
+  FDA: {
+    region: 'FDA',
+    basis: 'A combination product (21 CFR 3.2(e)) is assigned to a lead FDA Center by its Primary Mode of Action (PMOA) per 21 CFR 3.4.',
+    leadAuthorityConcept: 'Single lead Center (CDER, CBER, or CDRH) determined by PMOA; a single marketing application is generally submitted to the lead center.',
+    decisionFactor: 'Primary Mode of Action (PMOA): drug → CDER, biological product → CBER, device → CDRH.',
+    consultationMechanism: 'The lead center has primary jurisdiction; the other center consults on the secondary mode of action. If the PMOA is unclear, the sponsor may file a Request for Designation (RFD) to the Office of Combination Products (OCP), which assigns the lead center.',
+    citation: '21 CFR Part 3 (3.2(e), 3.4); 21 USC 353(g)',
+    notes: [
+      'When the PMOA is not reasonably certain, file a Request for Designation (RFD) with the Office of Combination Products (OCP) per 21 CFR Part 3.',
+      'Final classification and lead-center assignment rest with FDA (the Office of Combination Products).',
+    ],
+  },
+  EU: {
+    region: 'EU',
+    basis: 'The EU has no \"combination product lead center\" concept. A single integral drug-device combination is regulated as a MEDICINAL product; the device part must meet the relevant MDR General Safety and Performance Requirements (GSPR).',
+    leadAuthorityConcept: 'No single lead-center concept. Classification turns on whether the device is integral to (a single product with) the medicinal product or supplied separately.',
+    decisionFactor: 'Whether the device is integral / forms a single integral product (e.g. prefilled syringe, pen injector) versus non-integral (co-packaged or separately supplied).',
+    consultationMechanism: 'For an integral combination, a Notified Body issues an Opinion (NBOp) on the device part\\'s conformity with the relevant GSPR under MDR Article 117 (which amended Annex I of Directive 2001/83/EC); the medicinal product is authorised under the medicines framework. For a non-integral combination, the device is CE-marked separately under the MDR.',
+    citation: 'MDR (EU) 2017/745 Art 117; Directive 2001/83/EC Annex I',
+    notes: [
+      'Integral (single integral product) → regulated as a medicine; device part evidenced by a Notified Body Opinion under MDR Article 117.',
+      'Non-integral (co-packaged / separately supplied) → device CE-marked separately under the MDR; medicinal product authorised under the medicines framework.',
+      'Final classification rests with the EU competent authority together with the Notified Body.',
+    ],
+  },
+};
+
+const AGENCY_CAVEAT =
+  'Indicative classification only — the final classification rests with the agency (FDA Office of Combination Products via an RFD / EU competent authority together with a Notified Body).';
+
+/**
+ * Return the modeled combination-product framework for a region.
+ * Pure / deterministic. Throws for an unmodeled region.
+ */
+export function getCombinationFramework(region: CombinationRegion): CombinationFramework {
+  const framework = FRAMEWORKS[region];
+  if (!framework) throw new Error(`No combination-product framework modeled for region \"${region}\".`);
+  return framework;
+}
+
+export interface CombinationClassificationInput {
+  region: CombinationRegion;
+  /** FDA: the Primary Mode of Action. Omitted/unclear → OCP (RFD). */
+  primaryModeOfAction?: PrimaryModeOfAction;
+  /** EU: whether the device is integral to the medicinal product. Defaults to true. */
+  integral?: boolean;
+}
+
+export interface FdaCombinationClassification {
+  region: 'FDA';
+  /** The assigned lead FDA center, or OCP (RFD) when the PMOA is unclear. */
+  leadCenter: FdaLeadCenter;
+  /** The marketing-application route. */
+  route: string;
+  /** Why this center / route applies. */
+  rationale: string;
+  citation: string;
+  notes: string[];
+}
+
+export interface EuCombinationClassification {
+  region: 'EU';
+  /** The EU regulatory route for the combination. */
+  regulatoryRoute: EuRegulatoryRoute;
+  /** The obligation on the device part. */
+  deviceObligation: string;
+  citation: string;
+  notes: string[];
+}
+
+export type CombinationClassification =
+  | FdaCombinationClassification
+  | EuCombinationClassification;
+
+const FDA_PMOA_CENTER: Record<PrimaryModeOfAction, FdaLeadCenter> = {
+  drug: 'CDER',
+  biologic: 'CBER',
+  device: 'CDRH',
+};
+
+function classifyFda(input: CombinationClassificationInput): FdaCombinationClassification {
+  const pmoa = input.primaryModeOfAction;
+  const citation = '21 CFR Part 3 (3.2(e), 3.4); 21 USC 353(g)';
+
+  if (!pmoa) {
+    return {
+      region: 'FDA',
+      leadCenter: 'OCP (RFD)',
+      route: 'Request for Designation (RFD) to the Office of Combination Products to determine the lead center.',
+      rationale: 'The Primary Mode of Action is unclear; under 21 CFR Part 3 the sponsor may submit an RFD to OCP, which assigns the lead center.',
+      citation,
+      notes: [
+        'File a Request for Designation (RFD) with the Office of Combination Products (OCP) to obtain the lead-center assignment (21 CFR Part 3).',
+        AGENCY_CAVEAT,
+      ],
+    };
+  }
+
+  const leadCenter = FDA_PMOA_CENTER[pmoa];
+  const pmoaLabel = pmoa === 'biologic' ? 'biological product' : pmoa;
+  return {
+    region: 'FDA',
+    leadCenter,
+    route: `Single marketing application to the lead center (${leadCenter}); the other center consults on the secondary mode of action.`,
+    rationale: `The Primary Mode of Action is ${pmoaLabel}, so the lead center is ${leadCenter} per 21 CFR 3.4.`,
+    citation,
+    notes: [
+      'Lead-center assignment follows the Primary Mode of Action (21 CFR 3.4); the secondary center consults.',
+      'If the PMOA were not reasonably certain, a Request for Designation (RFD) to OCP would resolve the assignment.',
+      AGENCY_CAVEAT,
+    ],
+  };
+}
+
+function classifyEu(input: CombinationClassificationInput): EuCombinationClassification {
+  const integral = input.integral ?? true;
+  const citation = 'MDR (EU) 2017/745 Art 117; Directive 2001/83/EC Annex I';
+
+  if (integral) {
+    return {
+      region: 'EU',
+      regulatoryRoute: 'Medicinal product (integral, MDR Art 117 NBOp)',
+      deviceObligation:
+        'The device part must meet the relevant MDR General Safety and Performance Requirements (GSPR), evidenced by a Notified Body Opinion (NBOp) under MDR Article 117; the product is authorised under the medicines framework.',
+      citation,
+      notes: [
+        'A single integral drug-device combination (e.g. prefilled syringe, pen injector) is regulated as a medicinal product.',
+        'MDR Article 117 amended Annex I of Directive 2001/83/EC to require a Notified Body Opinion on the device part for an integral combination.',
+        AGENCY_CAVEAT,
+      ],
+    };
+  }
+
+  return {
+    region: 'EU',
+    regulatoryRoute: 'Medicinal product + separately CE-marked device (non-integral)',
+    deviceObligation:
+      'The device is CE-marked separately under the MDR (full device conformity assessment); the medicinal product is authorised under the medicines framework.',
+    citation,
+    notes: [
+      'A non-integral combination (co-packaged or separately supplied device) keeps the device and the medicine on separate regulatory tracks.',
+      'The device follows the full MDR conformity-assessment / CE-marking route in its own right.',
+      AGENCY_CAVEAT,
+    ],
+  };
+}
+
+/**
+ * Classify a combination product into its regional regulatory framework.
+ * Pure / deterministic. Throws for an unmodeled region.
+ */
+export function classifyCombinationProduct(
+  input: CombinationClassificationInput,
+): CombinationClassification {
+  if (input.region === 'FDA') return classifyFda(input);
+  if (input.region === 'EU') return classifyEu(input);
+  throw new Error(`No combination-product classification modeled for region \"${input.region}\".`);
+}
+
+/** The set of modeled regions. */
+export const COMBINATION_REGIONS: CombinationRegion[] = ['FDA', 'EU'];
+"
+
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:280:20
+    278|     for (const p of ['server/services/global-ri/combination-product-cl…
+    279|       const s = src(p);
+    280|       expect(s, p).toMatch(KNOWLEDGE);
+       |                    ^
+    281|       expect(s, p).not.toMatch(OWN_CENTER_MAP);
+    282|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  server/services/combination-products/__tests__/combination-one-engine.test.ts > one engine: the other three delegate, and the parallel copy is gone > combination-product-service has no determinePrimaryMode, and the routes call the canonical engine
+AssertionError: expected '/**\n * Combination Product Service\n…' not to match /determinePrimaryMode\s*\(/
+
+- Expected:
+/determinePrimaryMode\s*\(/
+
++ Received:
+"/**
+ * Combination Product Service
+ *
+ * Handles regulatory classification and requirements for drug/device,
+ * biologic/device, and drug/biologic combination products per FDA OCP rules.
+ *
+ * @module server/services/combination-product-service
+ */
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface CombinationClassification {
+  primaryMode: 'drug' | 'device' | 'biologic';
+  leadCenter: string;
+  collaboratingCenter: string;
+  classificationType: string;
+  examples: string[];
+  regulatoryBasis: string;
+}
+
+export interface CombinationRequirements {
+  classification: CombinationClassification;
+  agency: string;
+  submissionType: string;
+  requiredComponents: Array<{
+    component: string;
+    requirements: string[];
+    guidelines: string[];
+  }>;
+  gmPRequirements: string[];
+  labelingConsiderations: string[];
+}
+
+export interface OCPGuidance {
+  title: string;
+  category: string;
+  description: string;
+  applicableTo: string[];
+  keyRequirements: string[];
+}
+
+// ============================================================================
+// CLASSIFICATION SERVICE
+// ============================================================================
+
+export class CombinationProductService {
+  determinePrimaryMode(params: {
+    drugComponent: string;
+    deviceComponent: string;
+    primaryAction: 'drug' | 'device' | 'biologic';
+  }): CombinationClassification {
+    const classifications: Record<string, CombinationClassification> = {
+      drug: {
+        primaryMode: 'drug',
+        leadCenter: 'CDER',
+        collaboratingCenter: 'CDRH',
+        classificationType: 'Drug-Device Combination (Drug-led)',
+        examples: [
+          'Drug-eluting stent (drug provides primary therapeutic effect)',
+          'Prefilled syringe/auto-injector with drug',
+          'Transdermal patch with drug',
+          'Metered-dose inhaler with drug formulation',
+        ],
+        regulatoryBasis: '21 CFR 3.2(e): Primary mode of action is attributable to the drug component',
+      },
+      device: {
+        primaryMode: 'device',
+        leadCenter: 'CDRH',
+        collaboratingCenter: 'CDER',
+        classificationType: 'Device-Drug Combination (Device-led)',
+        examples: [
+          'Antimicrobial bone cement (device provides primary structural function)',
+          'Drug-coated balloon catheter',
+          'Wound dressing with antimicrobial agent',
+        ],
+        regulatoryBasis: '21 CFR 3.2(e): Primary mode of action is attributable to the device component',
+      },
+      biologic: {
+        primaryMode: 'biologic',
+        leadCenter: 'CBER',
+        collaboratingCenter: 'CDRH',
+        classificationType: 'Biologic-Device Combination (Biologic-led)',
+        examples: [
+          'Cell-seeded scaffold for tissue regeneration',
+          'Gene therapy delivered via implantable device',
+          'Prefilled syringe with biologic product',
+        ],
+        regulatoryBasis: '21 CFR 3.2(e): Primary mode of action is attributable to the biological product component',
+      },
+    };
+
+    return classifications[params.primaryAction] || classifications.drug;
+  }
+
+  getCombinationRequirements(params: {
+    classification: CombinationClassification;
+    targetAgency: string;
+  }): CombinationRequirements {
+    const agencyReqs = this.getAgencyRequirements(params.classification, params.targetAgency);
+    return agencyReqs;
+  }
+
+  getOCPGuidance(productType: string): OCPGuidance[] {
+    return OCP_GUIDANCE.filter(
+      (g) => g.applicableTo.includes(productType) || g.applicableTo.includes('all')
+    );
+  }
+
+  // ============================================================================
+  // PRIVATE
+  // ============================================================================
+
+  private getAgencyRequirements(
+    classification: CombinationClassification,
+    agency: string
+  ): CombinationRequirements {
+    if (agency === 'FDA') {
+      return this.getFDARequirements(classification);
+    }
+    if (agency === 'EMA') {
+      return this.getEMARequirements(classification);
+    }
+    return this.getGenericRequirements(classification, agency);
+  }
+
+  private getFDARequirements(classification: CombinationClassification): CombinationRequirements {
+    const drugReqs = {
+      component: 'Drug Component',
+      requirements: [
+        'Full CMC data (drug substance and drug product)',
+        'Nonclinical pharmacology and toxicology',
+        'Clinical efficacy and safety data',
+        'Stability data for drug in combination context',
+        'Extractables and leachables from device component',
+      ],
+      guidelines: [
+        'FDA Guidance: Current Good Manufacturing Practice for Combination Products (2017)',
+        'FDA Guidance: Human Factors Studies and Related Clinical Study Considerations (2016)',
+      ],
+    };
+
+    const deviceReqs = {
+      component: 'Device Component',
+      requirements: [
+        'Design controls per 21 CFR 820',
+        'Biocompatibility testing (ISO 10993)',
+        'Performance/bench testing',
+        'Sterilization validation (if applicable)',
+        'Software validation (if applicable)',
+        'Human factors / usability engineering (IEC 62366)',
+      ],
+      guidelines: [
+        'FDA Guidance: Applying Human Factors to Medical Devices (2016)',
+        'FDA Guidance: Design Considerations for Devices Intended for Home Use (2014)',
+      ],
+    };
+
+    const biologicReqs = {
+      component: 'Biologic Component',
+      requirements: [
+        'Full characterization of biological product',
+        'Cell line/vector characterization',
+        'Process validation and comparability',
+        'Potency assay development',
+        'Immunogenicity assessment',
+      ],
+      guidelines: [
+        'FDA Guidance: Quality, Non-Clinical, and Clinical Considerations for Gene Therapy Products',
+      ],
+    };
+
+    const components: Array<{ component: string; requirements: string[]; guidelines: string[] }> = [];
+    if (['drug', 'device'].includes(classification.primaryMode)) {
+      components.push(drugReqs, deviceReqs);
+    } else {
+      components.push(biologicReqs, deviceReqs);
+    }
+
+    return {
+      classification,
+      agency: 'FDA',
+      submissionType: classification.leadCenter === 'CDER'
+        ? 'NDA (with device constituent part)'
+        : classification.leadCenter === 'CBER'
+        ? 'BLA (with device constituent part)'
+        : 'PMA or 510(k) (with drug/biologic constituent part)',
+      requiredComponents: components,
+      gmPRequirements: [
+        'cGMP for both drug/biologic AND device components (21 CFR 4)',
+        'Quality system must address both 21 CFR 211 (drug) and 21 CFR 820 (device)',
+        'Single quality system may be used if it satisfies both sets of requirements',
+        'Design controls required for device constituent part regardless of lead center',
+      ],
+      labelingConsiderations: [
+        'Single labeling for the combination product',
+        'Must address both drug and device aspects',
+        'Instructions for Use (IFU) required for device component',
+        'Patient/user training materials as needed',
+        'Medication guide if required for drug component',
+      ],
+    };
+  }
+
+  private getEMARequirements(classification: CombinationClassification): CombinationRequirements {
+    return {
+      classification,
+      agency: 'EMA',
+      submissionType: 'MAA + MDR CE Marking (integral combination)',
+      requiredComponents: [
+        {
+          component: 'Medicinal Product',
+          requirements: [
+            'Full Module 3 (Quality), Module 4 (Nonclinical), Module 5 (Clinical)',
+            'Device component addressed in Module 3.2.P',
+            'Notified Body opinion on device conformity (MDR Article 117)',
+          ],
+          guidelines: ['MDR 2017/745 Article 1(8) and Annex I'],
+        },
+        {
+          component: 'Device Component',
+          requirements: [
+            'Technical documentation per MDR Annex II and III',
+            'Essential requirements conformity (MDR Annex I)',
+            'Clinical evaluation per MDR Article 61',
+            'Notified Body assessment for Class III/IIb devices',
+          ],
+          guidelines: ['MDCG 2021-22: Guidance on Combination Products'],
+        },
+      ],
+      gmPRequirements: [
+        'EU GMP Annex 1 (if sterile)',
+        'ISO 13485 for device manufacturing',
+        'Compliance with both pharmaceutical and device quality systems',
+      ],
+      labelingConsiderations: [
+        'SmPC must address both drug and device aspects',
+        'Package leaflet requirements for both components',
+        'CE marking on outer packaging (if device is integral)',
+      ],
+    };
+  }
+
+  private getGenericRequirements(
+    classification: CombinationClassification,
+    agency: string
+  ): CombinationRequirements {
+    return {
+      classification,
+      agency,
+      submissionType: 'Combination Product Application (agency-specific)',
+      requiredComponents: [
+        {
+          component: 'Primary Component',
+          requirements: [
+            'Full data package for primary mode of action component',
+            'Compatibility/interaction data between components',
+            'Combined product stability data',
+          ],
+          guidelines: ['Consult agency-specific combination product guidance'],
+        },
+        {
+          component: 'Secondary Component',
+          requirements: [
+            'Relevant quality data',
+            'Safety data in combination context',
+            'Performance/functional data',
+          ],
+          guidelines: ['Consult agency-specific guidance'],
+        },
+      ],
+      gmPRequirements: ['Quality system covering both component types'],
+      labelingConsiderations: ['Combined labeling addressing both components'],
+    };
+  }
+}
+
+// ============================================================================
+// OCP GUIDANCE DATABASE
+// ============================================================================
+
+const OCP_GUIDANCE: OCPGuidance[] = [
+  {
+    title: 'Classification of Products as Drugs and Devices',
+    category: 'Classification',
+    description: 'Framework for determining whether a product is a drug, device, biologic, or combination product.',
+    applicableTo: ['all'],
+    keyRequirements: [
+      'Determine primary mode of action (PMOA)',
+      'Request for Designation (RFD) to OCP if uncertain',
+      'PMOA determines lead FDA center',
+    ],
+  },
+  {
+    title: 'Current Good Manufacturing Practice for Combination Products',
+    category: 'Manufacturing',
+    description: 'GMP requirements under 21 CFR Part 4 for combination products.',
+    applicableTo: ['all'],
+    keyRequirements: [
+      'Demonstrate compliance with both drug/biologic cGMP and device QSR',
+      'Streamlined approach: single quality system may satisfy both',
+      'Design controls required for device constituent parts',
+    ],
+  },
+  {
+    title: 'Human Factors Studies for Combination Products',
+    category: 'Usability',
+    description: 'Human factors and usability engineering for drug-device combinations.',
+    applicableTo: ['drug', 'biologic'],
+    keyRequirements: [
+      'Formative and summative usability studies',
+      'Simulated-use and actual-use studies',
+      'Assessment of critical tasks and use errors',
+      'Labeling comprehension studies',
+    ],
+  },
+  {
+    title: 'Postmarket Safety Reporting for Combination Products',
+    category: 'Post-market',
+    description: 'Adverse event reporting requirements per 21 CFR Part 4 Subpart B.',
+    applicableTo: ['all'],
+    keyRequirements: [
+      'Report under regulations applicable to lead center application type',
+      'MedWatch (drug/biologic) or MDR (device) as applicable',
+      '15-day alert reports for serious, unexpected events',
+    ],
+  },
+  {
+    title: 'Prefilled Syringes and Auto-injectors',
+    category: 'Drug-Device',
+    description: 'Specific considerations for container closure / delivery device combinations.',
+    applicableTo: ['drug', 'biologic'],
+    keyRequirements: [
+      'Container closure integrity testing',
+      'Extractables and leachables assessment',
+      'Dose delivery accuracy and precision',
+      'Needle safety mechanism evaluation',
+      'Drop/impact resistance testing',
+    ],
+  },
+];
+
+// Singleton export
+export const combinationProductService = new CombinationProductService();
+"
+
+ ❯ server/services/combination-products/__tests__/combination-one-engine.test.ts:286:71
+    284|
+    285|   it('combination-product-service has no determinePrimaryMode, and the…
+    286|     expect(src('server/services/combination-product-service.ts')).not.…
+       |                                                                       ^
+    287|     const routes = src('server/routes/biologics-routes.ts');
+    288|     expect(routes).toMatch(/determinePrimaryModeOfAction/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 6 passed (19)
+   Start at  13:58:16
+   Duration  2.00s (transform 457ms, setup 148ms, import 760ms, tests 129ms, environment 0ms)
+

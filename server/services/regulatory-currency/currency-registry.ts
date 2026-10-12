@@ -32,6 +32,10 @@ export type Jurisdiction = 'US' | 'EU' | 'JP' | 'UK' | 'CA' | 'ICH' | 'GLOBAL';
  * Lifecycle status of a dated fact, in rough decreasing order of "live authority".
  *   - in_force          : currently effective and binding.
  *   - mandatory_upcoming : adopted with a future hard effective/mandatory date.
+ *   - proposed          : not adopted law — a proposal, political agreement or
+ *                          one institution's position. Never in force and never
+ *                          promoted; current law governs. Founder decision 25
+ *                          (DECISIONS.md, 2026-10-05).
  *   - vacated           : struck down by a court (no longer has legal effect).
  *   - rescinded         : formally withdrawn by the issuing authority.
  *   - superseded        : replaced by a newer instrument (see `supersedes`).
@@ -41,6 +45,7 @@ export type Jurisdiction = 'US' | 'EU' | 'JP' | 'UK' | 'CA' | 'ICH' | 'GLOBAL';
 export type CurrencyStatus =
   | 'in_force'
   | 'mandatory_upcoming'
+  | 'proposed'
   | 'vacated'
   | 'rescinded'
   | 'superseded'
@@ -54,7 +59,14 @@ export interface RegulatoryFact {
   topic: string;
   jurisdiction: Jurisdiction;
   status: CurrencyStatus;
-  /** ISO date the status took/takes effect (effective, mandatory, or vacatur date). */
+  /**
+   * ISO date the status took/takes effect (effective, mandatory, or vacatur
+   * date) — or {@link EFFECTIVE_DATE_NOT_FIXED} for a change whose date no
+   * official text has fixed yet (e.g. a `proposed` act not yet adopted or
+   * published in the Official Journal). Read it through {@link hasFixedEffectiveDate}: an unfixed
+   * date is never promoted ({@link statusAsOf}) and never assumed to predate a
+   * document ({@link changeRadar}).
+   */
   effectiveDate: string;
   /** ISO date this fact was last verified against `sourceUrl`. */
   lastVerified: string;
@@ -76,6 +88,14 @@ export interface RegulatoryFact {
   /** Retrieval keywords. */
   keywords: string[];
 }
+
+/**
+ * The `effectiveDate` of a fact whose date is not fixed yet. A marker, not a
+ * date: nothing compares it, and {@link hasFixedEffectiveDate} is false for it.
+ * Founder decision 25 (DECISIONS.md, 2026-10-05): a change with no Official
+ * Journal date is never presented as in force; current law governs until then.
+ */
+export const EFFECTIVE_DATE_NOT_FIXED = 'not_fixed';
 
 /**
  * The seed registry. Every entry was verified against the cited official/primary
@@ -109,7 +129,7 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
     appliesTo: ['pharma', 'biotech'],
     supersedes: 'E6(R2)',
     note:
-      'ICH E6(R3) Good Clinical Practice (Principles + Annex 1) reached Step 4 on 2025-01-06, modernising GCP around quality-by-design and varied trial types; it supersedes E6(R2). Annex 2 (non-traditional/decentralised trials, RWD) reached Step 4 on 2026-06-03 — see ich-e6r3-annex2-step4.',
+      'ICH E6(R3) Good Clinical Practice (Principles + Annex 1) reached Step 4 on 2025-01-06, modernising GCP around quality-by-design and varied trial types; it supersedes E6(R2). Annex 2 (non-traditional/decentralised trials, RWD) reached Step 4 on 2026-06-03 — see ich-e6r3-annex2-step4. Step 4 is ICH adoption; regional effect differs — EU: in effect from 2025-07-23, see eu-e6r3-effective.',
     keywords: ['E6(R3)', 'GCP', 'good clinical practice', 'step 4', 'ICH', 'quality by design'],
   },
   {
@@ -122,7 +142,7 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
     sourceUrl: 'https://database.ich.org/sites/default/files/ICH_E6(R3)_Annex%202_Guideline_Step%204_2026_0603_0.pdf',
     appliesTo: ['pharma', 'biotech'],
     note:
-      'ICH E6(R3) Annex 2 (additional considerations for non-traditional interventional trials — decentralised/pragmatic designs and real-world data) reached Step 4 on 2026-06-03, completing the E6(R3) package.',
+      'ICH E6(R3) Annex 2 (additional considerations for non-traditional interventional trials — decentralised/pragmatic designs and real-world data) reached Step 4 on 2026-06-03, completing the E6(R3) package. Step 4 is ICH adoption; regional effect differs — EU: not in effect until 2027-01-15, see eu-e6r3-annex2-effective.',
     keywords: ['E6(R3)', 'annex 2', 'GCP', 'decentralised', 'DCT', 'real-world data', 'step 4'],
   },
   {
@@ -268,6 +288,100 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
        question (21 CFR 210/211) must not be answered with the device QMSR. */
     keywords: ['QMSR', 'QSR', '21 CFR 820', 'ISO 13485', 'design controls', '820.30', 'quality management system'],
   },
+  /* EU medicines dates (D2 record, step g-eu-medicines-dated-facts, 2026-10-05).
+     Basis for each: docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/
+     g-eu-medicines-dated-facts-facts.md. An ICH Step 4 fact is ICH adoption; an
+     EU sponsor's date is EMA's, so each EU effect is its own fact. The EU E6(R3)
+     facts carry no `supersedes`: "E6(R2)" stays on the ICH fact, and the
+     freshness check answers an EU citation of E6(R2) with the EU fact. */
+  {
+    id: 'eu-e6r3-effective',
+    topic: 'EU — ICH E6(R3) GCP (Principles + Annex 1) in effect',
+    jurisdiction: 'EU',
+    status: 'in_force',
+    effectiveDate: '2025-07-23',
+    lastVerified: '2026-10-05',
+    sourceUrl: 'https://www.ema.europa.eu/en/ich-e6-good-clinical-practice-scientific-guideline',
+    appliesTo: ['pharma', 'biotech'],
+    note:
+      'In the EU, ICH E6(R3) Good Clinical Practice — the Principles and Annex 1 — came into effect on 2025-07-23 (EMA), superseding E6(R2) for EU trials. That is the EU date; the ICH Step 4 date (2025-01-06, ich-e6r3-gcp-step4) is ICH adoption, not EU effect. Annex 2 has its own EU date: see eu-e6r3-annex2-effective.',
+    keywords: ['E6(R3)', 'GCP', 'good clinical practice', 'EMA', 'quality by design'],
+  },
+  {
+    id: 'eu-e6r3-annex2-effective',
+    topic: 'EU — ICH E6(R3) GCP Annex 2 comes into effect',
+    jurisdiction: 'EU',
+    status: 'mandatory_upcoming',
+    effectiveDate: '2027-01-15',
+    lastVerified: '2026-10-05',
+    sourceUrl:
+      'https://www.ema.europa.eu/en/documents/scientific-guideline/ich-e6r3-guideline-good-clinical-practice-annex-2-step-5_en.pdf',
+    appliesTo: ['pharma', 'biotech'],
+    note:
+      'ICH E6(R3) Annex 2 (non-traditional interventional trials: decentralised and pragmatic designs, real-world data sources) was adopted by ICH on 2026-06-03 and by the CHMP on 2026-06-25, and comes into effect in the EU on 2027-01-15 (EMA/CHMP/ICH/495903/2024). Until then it is not in effect for EU trials: do not tell an EU sponsor it already applies. The ICH Step 4 fact is ich-e6r3-annex2-step4.',
+    keywords: ['E6(R3)', 'annex 2', 'GCP', 'decentralised', 'DCT', 'real-world data', 'EMA'],
+  },
+  {
+    id: 'ema-ectd-v4-cp-optional',
+    topic: 'EMA eCTD v4.0 — optional for new centralised MAAs',
+    jurisdiction: 'EU',
+    status: 'in_force',
+    effectiveDate: '2025-12-22',
+    lastVerified: '2026-10-05',
+    sourceUrl: 'https://ec.europa.eu/newsroom/ema/items/918307/en',
+    appliesTo: ['pharma', 'biotech'],
+    /* The mandatory date is a planned quarter, not a day, so it is stated in
+       the note and never minted as a second, dated fact. */
+    note:
+      'Since 2025-12-22 EMA accepts eCTD v4.0 for new centrally authorised product (CAP) marketing authorisation applications. Use is OPTIONAL: eCTD v3.2.2 continues to be accepted, and an applicant must contact EMA (ectd4consultation@ema.europa.eu) before its first v4.0 submission. EMA plans v4.0 as strongly recommended from Q1 2027 and mandatory for new CAP MAAs from Q1 2028 — planned quarters, not adopted dates. Do not tell an EU sponsor v4.0 is required today.',
+    aliases: ['eCTD v4.0', 'eCTD 4.0'],
+    keywords: ['eCTD', 'v4.0', 'EMA', 'centralised procedure', 'CAP', 'MAA', 'electronic submission', 'v3.2.2'],
+  },
+  {
+    id: 'eu-ectd-m1-v311-vc-v82',
+    topic: 'EU eCTD Module 1 specification v3.1.1 and validation criteria v8.2 — mandatory',
+    jurisdiction: 'EU',
+    status: 'in_force',
+    effectiveDate: '2025-12-01',
+    lastVerified: '2026-10-05',
+    sourceUrl:
+      'https://www.bfarm.de/EN/Medicinal-products/Licensing/Issues-relevant-for-licensing/eSubmission/eSubmission_eCTD_EU_Module_1_validation_criteria.html',
+    appliesTo: ['pharma', 'biotech'],
+    supersedes: 'EU M1 v3.1 / validation criteria v8.1',
+    note:
+      'The EU eCTD Module 1 specification v3.1.1 and the EU eCTD validation criteria v8.2 are mandatory for all EU eCTD submissions from 2025-12-01. Both were accepted from 2025-10-01, alongside v3.1 / v8.1, until 2025-11-30. Validate EU sequences against v8.2; the specification and criteria are published on EMA\'s eSubmission website.',
+    aliases: [
+      'EU M1 v3.1.1',
+      'EU Module 1 v3.1.1',
+      'EU Module 1 Specification v3.1.1',
+      'validation criteria v8.2',
+      'EU validation criteria v8.2',
+    ],
+    keywords: ['eCTD', 'EU M1', 'Module 1', 'validation criteria', 'v3.1.1', 'v8.2', 'EMA'],
+  },
+  {
+    id: 'eu-pharma-package',
+    topic: 'EU pharma package — new Directive and Regulation on medicinal products (proposed, not adopted)',
+    jurisdiction: 'EU',
+    status: 'proposed',
+    effectiveDate: EFFECTIVE_DATE_NOT_FIXED,
+    lastVerified: '2026-10-05',
+    sourceUrl: 'https://www.consilium.europa.eu/en/policies/pharma-pack/',
+    appliesTo: ['pharma', 'biotech'],
+    note:
+      'The EU pharma package — a new Directive (the Union code for medicinal products for human use) and a new Regulation (authorisation procedures and the EMA) — is a proposal, not law. The Council and the Parliament reached political agreement on 2025-12-11. On 2026-09-28 the Council adopted its position at first reading under an early second-reading agreement; the European Parliament\'s approval at second reading is pending. Neither act is adopted or published in the Official Journal, and no application date is fixed. Until the acts are adopted, published and applicable, Directive 2001/83/EC and Regulation (EC) No 726/2004 govern, including today\'s regulatory data and market protection. Do not advise the package\'s new protection periods (eight years of data protection plus market protection under the new rules) or the transferable exclusivity voucher for priority antimicrobials as current law.',
+    aliases: ['pharma package', 'EU pharmaceutical package', 'EU pharmaceutical reform'],
+    keywords: [
+      'pharma package',
+      'pharmaceutical legislation',
+      'pharmaceutical reform',
+      '2001/83/EC',
+      '726/2004',
+      'regulatory data protection',
+      'market protection',
+      'transferable exclusivity voucher',
+    ],
+  },
 ];
 
 /** Severity used by the change-radar, in increasing order of urgency. */
@@ -312,7 +426,7 @@ export function severityRank(severity: DriftSeverity): number {
  */
 export function statusAsOf(fact: RegulatoryFact, asOf: string): CurrencyStatus {
   if (fact.status !== 'mandatory_upcoming') return fact.status;
-  if (!ISO_DATE_RE.test(asOf) || !ISO_DATE_RE.test(fact.effectiveDate)) return fact.status;
+  if (!ISO_DATE_RE.test(asOf) || !hasFixedEffectiveDate(fact)) return fact.status;
   /* Lexicographic comparison is exact for zero-padded ISO dates and
      avoids timezone drift entirely — parsing to Date would shift the
      boundary by up to a day depending on the runtime's zone. */
@@ -320,6 +434,15 @@ export function statusAsOf(fact: RegulatoryFact, asOf: string): CurrencyStatus {
 }
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Whether `fact` carries a real ISO effective date. False for
+ * {@link EFFECTIVE_DATE_NOT_FIXED} and for anything malformed: a date nobody
+ * can read is treated as not fixed, never as arrived.
+ */
+export function hasFixedEffectiveDate(fact: RegulatoryFact): boolean {
+  return ISO_DATE_RE.test(fact.effectiveDate);
+}
 
 /* ── Verification freshness ───────────────────────────────────────────
    `lastVerified` is the load-bearing honesty claim in this module: it
@@ -390,7 +513,9 @@ export function factAsOf(fact: RegulatoryFact, asOf: string): RegulatoryFact {
 /**
  * Map a fact's status to a drift severity. A VOID rule (vacated/rescinded/void) is
  * the most dangerous — the platform may still "know" it. Future mandatory changes
- * are second. Everything else is informational.
+ * are second. Everything else is informational — including `proposed`: a
+ * proposal imposes no obligation and no date, so it is something to watch, not
+ * a change a document must reflect (founder decision 25, DECISIONS.md).
  */
 export function severityForStatus(status: CurrencyStatus): DriftSeverity {
   if (status === 'void' || status === 'vacated' || status === 'rescinded') return 'void_rule';
@@ -488,6 +613,10 @@ function isoTime(iso: string | undefined): number {
  * returns ALL current facts as potential drift. Results are sorted most-urgent first
  * (void_rule > mandatory_change > info), then by most-recent effective date. Pure;
  * an unparseable `draftedOn` is treated as "no cutoff" (returns all matches).
+ *
+ * A fact whose date is not fixed ({@link hasFixedEffectiveDate} false) is always
+ * drift — it cannot be shown to predate the draft — and sorts after the dated
+ * facts of its severity, in registry order.
  */
 export function changeRadar(query: RadarQuery = {}): FactDrift[] {
   const { topics, jurisdictions, draftedOn } = query;
@@ -500,14 +629,17 @@ export function changeRadar(query: RadarQuery = {}): FactDrift[] {
     if (jurSet && !jurSet.has(fact.jurisdiction)) continue;
     if (topicList.length > 0 && !topicList.some((t) => matchesTopic(fact, t))) continue;
     // With a valid cutoff, only facts that took effect AFTER it are drift.
-    if (!Number.isNaN(cutoff) && isoTime(fact.effectiveDate) <= cutoff) continue;
+    if (!Number.isNaN(cutoff) && hasFixedEffectiveDate(fact) && isoTime(fact.effectiveDate) <= cutoff) continue;
     const severity = severityForStatus(fact.status);
     drifts.push({ fact, severity, severityRank: severityRank(severity) });
   }
 
   drifts.sort((a, b) => {
     if (b.severityRank !== a.severityRank) return b.severityRank - a.severityRank;
-    return isoTime(b.fact.effectiveDate) - isoTime(a.fact.effectiveDate);
+    const ta = hasFixedEffectiveDate(a.fact) ? isoTime(a.fact.effectiveDate) : NaN;
+    const tb = hasFixedEffectiveDate(b.fact) ? isoTime(b.fact.effectiveDate) : NaN;
+    if (Number.isNaN(ta) || Number.isNaN(tb)) return Number(Number.isNaN(ta)) - Number(Number.isNaN(tb));
+    return tb - ta;
   });
   return drifts;
 }

@@ -1,0 +1,8 @@
+Lint, against origin/concept2cure-v2. now=errors/warnings, trunk=the same file on trunk.
+
+client/src/concept2cure/v2/editor/DocumentWorkbench.tsx                                              now=14/0     trunk=14/0
+client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx                             now=1/0      trunk=0/0
+
+(the new suite: 0 warnings, as a new file must be)
+
+typecheck: npm run -s typecheck:fast -> exit 0

@@ -13,8 +13,11 @@
  * switched off, a feature that could not be discovered.
  *
  * ── What this pins, against a real database ─────────────────────────────────
- *   1. the bootstrap CREATES both rows where there were none, disabled, each
- *      carrying a description that says what it does;
+ *   1. the bootstrap CREATES both rows where there were none, each carrying a
+ *      description that says what it does — the catalog ON and the embedding
+ *      row OFF, the founder's decision of 2026-10-08 (88ab56f67): a person
+ *      confirms or corrects AnA's catalog record, and embedding carries a
+ *      per-upload cost, so only that one waits for an operator;
  *   2. it is idempotent — a second boot does not duplicate them;
  *   3. it does not re-disable a row an operator has enabled, which is the one
  *      way a "refresh the description" bootstrap could destroy a deliberate
@@ -84,11 +87,13 @@ describe('the toggle rows the deployment never had', () => {
     const created = await rows();
     expect(created.map(r => r.feature_key)).toEqual(KEYS.slice().sort());
     for (const r of created) {
-      expect(r.enabled).toBe(false);
       expect((r.description ?? '').length).toBeGreaterThan(30);
     }
-    // And the state it reports back matches: off, by toggle, not by env.
-    expect(state.catalog).toEqual({ enabled: false, source: 'off' });
+    // The catalog ON, the embedding row OFF (88ab56f67, founder 2026-10-08).
+    const byKey = Object.fromEntries(created.map(r => [r.feature_key, r.enabled]));
+    expect(byKey).toEqual({ 'ana.document_catalog': true, 'ana.vault_chunking': false });
+    // And the state it reports back matches: by toggle, not by env.
+    expect(state.catalog).toEqual({ enabled: true, source: 'toggle' });
     expect(state.chunking).toEqual({ enabled: false, source: 'off' });
   });
 
@@ -172,7 +177,14 @@ describe('the key written is the key read', () => {
     const { isDocumentCatalogEnabled } = await import(
       '../../server/services/vault/document-catalog.service'
     );
-    // Fails closed while the row is off — the state every deployment was in.
+    /* The bootstrap creates this row ON, so the proof that the key written is
+       the key read runs the other way: turn the row OFF and the capability goes
+       off, turn it back on and it returns. A test that only ever saw `true`
+       could not tell this key from one nobody reads. */
+    await owner.query(
+      `UPDATE feature_toggles SET enabled = FALSE WHERE feature_key = $1`,
+      ['ana.document_catalog'],
+    );
     expect(await isDocumentCatalogEnabled(orgId)).toBe(false);
 
     await owner.query(
@@ -187,8 +199,10 @@ describe('the key written is the key read', () => {
     const { isDocumentCatalogEnabled } = await import(
       '../../server/services/vault/document-catalog.service'
     );
+    // The platform flag off, so what is measured is the per-organization list
+    // alone (the bootstrap leaves the flag on since 88ab56f67).
     await owner.query(
-      `UPDATE feature_toggles SET enabled_for_organization_ids = $2::jsonb
+      `UPDATE feature_toggles SET enabled = FALSE, enabled_for_organization_ids = $2::jsonb
          WHERE feature_key = $1`,
       ['ana.document_catalog', JSON.stringify([orgId])],
     );

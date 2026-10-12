@@ -15,7 +15,7 @@
  * @module server/services/regulatory-currency/guidance-ingestion-service
  */
 
-import { REGULATORY_FACTS, factAsOf, type RegulatoryFact } from './currency-registry.js';
+import { REGULATORY_FACTS, factAsOf, hasFixedEffectiveDate, type RegulatoryFact } from './currency-registry.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -263,9 +263,43 @@ function pickFamilyMember(family: RegulatoryFact[], code: string, title: string)
   return family.reduce((best, f) => (score(f) > score(best) ? f : best), family[0]);
 }
 
+/**
+ * The members of an ICH-code family a citation is answered from: those of the
+ * cited jurisdiction first, then the ICH members. An ICH Step 4 fact is ICH
+ * adoption, not regional effect — EU E6(R3) Annex 2 is ICH Step 4 on
+ * 2026-06-03 but in effect in the EU only from 2027-01-15 — so an EU citation
+ * is answered by the EU fact whenever one exists. With no jurisdiction cited,
+ * the ICH members answer: the title names an ICH code. Choosing the tier
+ * before the member also keeps a keyword such as "annex 2", carried by both
+ * the ICH and the EU Annex 2 facts, unique within the tier pickFamilyMember
+ * scores.
+ */
+function preferredMembers(family: RegulatoryFact[], jurisdiction: string | undefined): RegulatoryFact[] {
+  const own = jurisdiction ? family.filter((f) => norm(f.jurisdiction) === norm(jurisdiction)) : [];
+  if (own.length > 0) return own;
+  const ich = family.filter((f) => f.jurisdiction === 'ICH');
+  return ich.length > 0 ? ich : family;
+}
+
+/**
+ * The cited jurisdiction's own fact for what `successor` (an ICH fact) is
+ * keyed by, or `successor` itself. "E6(R2)" is superseded on the ICH fact
+ * only; an EU citation of it is dated by the EU fact (2025-07-23), not by ICH
+ * Step 4 (2025-01-06). The base entry — listed first — answers.
+ */
+function regionalSuccessor(successor: RegulatoryFact, jurisdiction: string | undefined): RegulatoryFact {
+  if (!jurisdiction || norm(successor.jurisdiction) === norm(jurisdiction)) return successor;
+  const codes = factCodes(successor);
+  const own = REGULATORY_FACTS.find(
+    (f) => norm(f.jurisdiction) === norm(jurisdiction) && factCodes(f).some((c) => codes.includes(c)),
+  );
+  return own ?? successor;
+}
+
 function identifyByCode(
   title: string,
   codes: string[],
+  jurisdiction: string | undefined,
   inJurisdiction: (f: RegulatoryFact) => boolean,
 ): Identified | null {
   for (const code of codes) {
@@ -275,17 +309,21 @@ function identifyByCode(
     // A title that also names the successor ("E6(R3) … replaces E6(R2)") is
     // about the successor, not a citation of what it replaced.
     if (successor && !factCodes(successor).some((c) => codes.includes(c))) {
-      return { kind: 'superseded', code, successor };
+      return { kind: 'superseded', code, successor: regionalSuccessor(successor, jurisdiction) };
     }
   }
   for (const code of codes) {
-    const family = REGULATORY_FACTS.filter((f) => inJurisdiction(f) && factCodes(f).includes(code));
+    const family = preferredMembers(
+      REGULATORY_FACTS.filter((f) => inJurisdiction(f) && factCodes(f).includes(code)),
+      jurisdiction,
+    );
     if (family.length > 0) return { kind: 'fact', fact: pickFamilyMember(family, code, title) };
     const entry = ICH_GUIDELINES.find((g) => g.code === code);
     if (entry) return { kind: 'ich', entry };
   }
   // A named ICH code the registries do not hold. Falling back to word
-  // matching is how E9(R1) used to be dated as E6(R3).
+  // matching is how E9(R1) used to be dated as E6(R3); the caller falls back
+  // to identifiers only (what a fact supersedes, its names, its id).
   return null;
 }
 
@@ -303,7 +341,12 @@ function identify(title: string, jurisdiction: string | undefined): Identified |
     !jurisdiction || f.jurisdiction === 'ICH' || norm(f.jurisdiction) === norm(jurisdiction);
 
   const codes = ichCodesIn(title);
-  if (codes.length > 0) return identifyByCode(title, codes, inJurisdiction);
+  if (codes.length > 0) {
+    const byCode = identifyByCode(title, codes, jurisdiction, inJurisdiction);
+    if (byCode) return byCode;
+    /* "EU M1 v3.1.1" reads as the ICH code M1, which no registry holds. Only
+       identifiers are tried after that — never a retrieval keyword. */
+  }
 
   const superseding = REGULATORY_FACTS.filter(
     (f) =>
@@ -330,6 +373,44 @@ function factBasis(fact: RegulatoryFact): NonNullable<FreshnessResultItem['basis
     id: fact.id,
     sourceUrl: fact.sourceUrl,
     lastVerified: fact.lastVerified,
+  };
+}
+
+type CitedGuidance = FreshnessOpts['citedGuidances'][number];
+
+/** The verdict on a citation identified as one dated fact (its status already resolved as at `asOf`). */
+function factVerdict(cited: CitedGuidance, fact: RegulatoryFact): FreshnessResultItem {
+  const dated = hasFixedEffectiveDate(fact);
+  /* Deliberately excludes 'proposed': a proposal is not current law, so a
+     citation of it is never reported current (founder decision 25). */
+  const isCurrent = fact.status === 'in_force' || fact.status === 'mandatory_upcoming';
+  /* Upcoming as at `asOf`: adopted, not yet in effect. The citation names the
+     latest text, so it is current — but it does not apply yet, and a document
+     dated before a date still to come is not stale. */
+  const notYetInEffect = fact.status === 'mandatory_upcoming';
+  const isStale =
+    fact.status === 'in_force' && dated && cited.citedDate ? cited.citedDate < fact.effectiveDate : false;
+  let warning: string | undefined;
+  if (fact.status === 'proposed') {
+    /* A proposal is not law (founder decision 25): not current, never "adopted",
+       never stale against a date it does not have. */
+    warning = `Proposed, not law (${fact.jurisdiction}): current law governs until it is adopted and applies. ${fact.note}`;
+  } else if (!isCurrent) {
+    warning = `This guidance has status '${fact.status}' — it may no longer be in force. ${fact.note}`;
+  } else if (notYetInEffect) {
+    warning =
+      `Adopted but not yet in effect (${fact.jurisdiction}): ` +
+      `${dated ? `applies from ${fact.effectiveDate}` : 'no effective date is fixed yet'}. ${fact.note}`;
+  } else if (isStale) {
+    warning = `Cited date (${cited.citedDate}) predates the latest effective date (${fact.effectiveDate}). Review for updates.`;
+  }
+  return {
+    title: cited.title,
+    current: isCurrent && !isStale,
+    verification: 'identified',
+    latestKnownDate: dated ? fact.effectiveDate : undefined,
+    warning,
+    basis: factBasis(fact),
   };
 }
 
@@ -362,35 +443,21 @@ export function checkGuidanceFreshness(
 
     if (found.kind === 'superseded') {
       const successor = factAsOf(found.successor, asOf);
+      const dated = hasFixedEffectiveDate(successor);
       return {
         title: cited.title,
         current: false,
         verification: 'identified',
-        latestKnownDate: successor.effectiveDate,
+        latestKnownDate: dated ? successor.effectiveDate : undefined,
         warning:
-          `${found.code} is superseded by ${successor.topic} (effective ${successor.effectiveDate}). ` +
+          `${found.code} is superseded by ${successor.topic} ` +
+          `(${dated ? `effective ${successor.effectiveDate}` : 'no effective date fixed yet'}). ` +
           successor.note,
         basis: factBasis(successor),
       };
     }
 
-    if (found.kind === 'fact') {
-      const fact = factAsOf(found.fact, asOf);
-      const isCurrent = fact.status === 'in_force' || fact.status === 'mandatory_upcoming';
-      const isStale = cited.citedDate ? cited.citedDate < fact.effectiveDate : false;
-      return {
-        title: cited.title,
-        current: isCurrent && !isStale,
-        verification: 'identified',
-        latestKnownDate: fact.effectiveDate,
-        warning: !isCurrent
-          ? `This guidance has status '${fact.status}' — it may no longer be in force. ${fact.note}`
-          : isStale
-            ? `Cited date (${cited.citedDate}) predates the latest effective date (${fact.effectiveDate}). Review for updates.`
-            : undefined,
-        basis: factBasis(fact),
-      };
-    }
+    if (found.kind === 'fact') return factVerdict(cited, factAsOf(found.fact, asOf));
 
     const { entry } = found;
     const isStale = cited.citedDate ? cited.citedDate < entry.stepDate : false;

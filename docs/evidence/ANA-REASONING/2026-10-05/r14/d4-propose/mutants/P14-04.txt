@@ -1,0 +1,7 @@
+mutant P14-04: the gate applies to every author, so a person’s own redline is refused too
+verdict: KILLED
+Tests  1 failed | 5 passed (6)
+
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgeProposeGate.test.tsx > EditorBridge.propose — the governed-write rule, as insert applies it (round 14, SEC-A-7) > does not gate a person’s own redline, which the rule is not about 102ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
