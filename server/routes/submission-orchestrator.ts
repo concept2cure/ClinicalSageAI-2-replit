@@ -6,7 +6,6 @@
  *   GET    /api/submission-orchestrator/runs/:runId               — get run state
  *   GET    /api/submission-orchestrator/runs/:runId/audit         — append-only step audit
  *   POST   /api/submission-orchestrator/runs/:runId/regenerate    — regenerate stale steps
- *   POST   /api/submission-orchestrator/m2/qos                    — build M2.3 QOS standalone
  *   POST   /api/submission-orchestrator/m2/nonclinical            — build M2.4 standalone
  *   POST   /api/submission-orchestrator/m2/clinical               — build M2.7 standalone
  *   POST   /api/submission-orchestrator/csr/tabulate              — build CSR §10–§12 tables
@@ -31,7 +30,6 @@ import {
   type StepKey,
 } from '../services/submission-package-orchestrator.js';
 import {
-  buildM23QualityOverallSummary,
   buildM24NonclinicalOverview,
   buildM25ClinicalOverview,
   buildM27ClinicalSummary,
@@ -41,12 +39,13 @@ import {
   validateEctdPackageHardened,
   flattenFindings,
 } from '../services/ectd/ectd-validator-hardening.js';
-import { loadCmcSourcesForProject } from '../services/cmc/load-cmc-sources-for-project.js';
+import { loadApprovedCmcSourcesForProject } from '../services/cmc/load-approved-cmc-sources-for-project.js';
 import { loadCsrInputsForProject } from '../services/csr/load-csr-inputs-for-project.js';
 import { loadNonclinicalStudiesForProject } from '../services/preclinical/load-nonclinical-studies-for-project.js';
 import { pool } from '../db.js';
 import auditService from '../services/auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { config } from '../config/environment.js';
 import { serverError } from '../lib/api-response';
 
 const log = createScopedLogger('submission-orchestrator');
@@ -55,8 +54,8 @@ const log = createScopedLogger('submission-orchestrator');
  * Fire-and-forget audit for standalone-builder + validator access. 21 CFR
  * Part 11 §11.10(e) requires every view / build of regulated submission
  * content to be logged with attribution. The standalone routes
- * (/m2/qos, /m2/nonclinical, /m2/clinical, /m2/clinical-overview,
- * /csr/tabulate, /validate/hardened) are pure transforms with no DB
+ * (/m2/nonclinical, /m2/clinical, /m2/clinical-overview, /csr/tabulate,
+ * /validate/hardened) are pure transforms with no DB
  * writes, but the *act of generating regulated content* still has to be
  * attributable to a tenant + user. Non-fatal on failure — the response
  * stream is the user value, the audit row is the regulator value.
@@ -65,7 +64,6 @@ async function auditOrchestratorAccess(
   req: Request,
   organizationId: number,
   action:
-    | 'orchestrator_m23_built'
     | 'orchestrator_m24_built'
     | 'orchestrator_m25_built'
     | 'orchestrator_m27_built'
@@ -321,6 +319,16 @@ const RunModeASchema = RunCommonSchema.extend({
 
 // Mode B — backward-compat. Existing programmatic callers supply
 // pre-assembled OrchestratorInputs arrays in the body. No loader is invoked.
+//
+// GA plan item 1 (decision 2026-10-05): `cmcSources` here is refused outside
+// development. Module 3 reaches a submission through one governed path —
+// compile, approve under Part 11, pass evaluateFinalExportGate, place — and a
+// hand-built array in a request body is a second one that skips every step of
+// it. The composed sections become the run's leaf manifest
+// (package.assemble derives one leaf per section) and package.sign signs them,
+// so the body could put a release signature over Module 3 content that exists
+// in no record and nobody approved. The other two arrays are not CMC and are
+// not judged here; they belong to their own lanes.
 const RunModeBSchema = RunCommonSchema.extend({
   cmcSources: z.array(CanonicalSourceSchema).default([]),
   nonclinicalStudies: z.array(NonclinicalStudySchema).default([]),
@@ -346,6 +354,36 @@ function buildRunSchema<T extends z.ZodRawShape>(extraShape: T) {
 }
 
 const RunSchema = buildRunSchema({});
+
+/**
+ * Module 3 comes from the record, not from the request.
+ *
+ * Checked on the RAW body, so the refusal cannot depend on which schema branch
+ * matched, and before any read or write. Applied to every route that accepts
+ * run inputs — `/runs` and `/runs/:runId/regenerate` — because a regenerate
+ * carries the same arrays and would otherwise be the same door one level down.
+ *
+ * Development keeps the array, for fixtures and the orchestrator's own
+ * integration tests; nothing in a deployed environment composes Module 3 from
+ * a request body.
+ *
+ * @returns true when the request was refused and the response already sent.
+ */
+function refusedInlineCmcSources(rawBody: any, res: Response, organizationId: number): boolean {
+  if (config.isDevelopment) return false;
+  if (!Array.isArray(rawBody?.cmcSources) || rawBody.cmcSources.length === 0) return false;
+  log.warn('Inline cmcSources refused outside development', { organizationId });
+  res.status(400).json({
+    error: 'INLINE_CMC_SOURCES_REFUSED',
+    field: 'cmcSources',
+    message:
+      'CMC data cannot be supplied in the request. Module 3 reaches a submission through the CMC module: ' +
+      'compile the sections (POST /api/cmc/module3-os/compile/:projectId), approve each one, then place them ' +
+      '(POST /api/cmc/module3-os/place-into-submission/:projectId). Send cmcProjectId instead and the run ' +
+      'reads that program\u2019s approved Module 3.',
+  });
+  return true;
+}
 
 // ── Routes ──────────────────────────────────────────────────────────────────
 
@@ -385,6 +423,8 @@ router.post('/runs', async (req: Request, res: Response) => {
     });
   }
 
+  if (refusedInlineCmcSources(rawBody, res, organizationId)) return;
+
   const parsed = RunSchema.safeParse(rawBody);
   if (!parsed.success) {
     // Same PHI-protection rationale as charters.ts: don't echo parsed.error
@@ -394,6 +434,8 @@ router.post('/runs', async (req: Request, res: Response) => {
   }
 
   let orchestratorInputs: Omit<OrchestratorInputs, 'organizationId'>;
+  /** Why this run carries no Module 3, when a gate refused it. */
+  let module3Refusal: string | null = null;
   try {
     if (parsed.data.mode === 'project') {
       // ── Mode A: server-side input assembly ──────────────────────────────
@@ -415,15 +457,25 @@ router.post('/runs', async (req: Request, res: Response) => {
       // Individual failures surface clearly via the named promise rejection
       // — a single loader failure does NOT produce a half-assembled
       // OrchestratorInputs (the catch below short-circuits).
-      const [cmcSources, nonclinicalStudies, csrInputs] = await Promise.all([
+      /* Module 3 only from a program whose export gate is OPEN
+         (load-approved-cmc-sources-for-project.ts, GA plan item 1). The gate
+         is not re-interpreted here: when it refuses, the run carries no
+         Module 3 and the reason is recorded and returned. */
+      const [governedCmc, nonclinicalStudies, csrInputs] = await Promise.all([
         parsed.data.cmcProjectId
-          ? loadCmcSourcesForProject(organizationId, parsed.data.cmcProjectId)
-          : Promise.resolve([]),
+          ? loadApprovedCmcSourcesForProject(
+              organizationId,
+              parsed.data.cmcProjectId,
+              String((req as any).user?.id ?? 'unknown'),
+            )
+          : Promise.resolve({ gate: 'open' as const, sources: [], approvedSections: 0 }),
         parsed.data.ctdProgramId
           ? loadNonclinicalStudiesForProject(organizationId, parsed.data.ctdProgramId)
           : Promise.resolve([]),
         loadCsrInputsForProject(organizationId, parsed.data.projectId),
       ]);
+      const cmcSources = governedCmc.sources;
+      module3Refusal = governedCmc.gate === 'open' ? null : governedCmc.reason;
 
       // 21 CFR Part 11 §11.10(e) audit attribution. Log COUNTS only — never
       // the payload bodies (PHI / sponsor-confidential data lives there).
@@ -440,6 +492,11 @@ router.post('/runs', async (req: Request, res: Response) => {
             cmcProjectId: parsed.data.cmcProjectId,
             ctdProgramId: parsed.data.ctdProgramId,
             cmcSourceCount: cmcSources.length,
+            /* Why a run carries no Module 3 is the governed fact here: a
+               closed gate, an unreadable one, and a program with no CMC data
+               are three different states and the audit row tells them apart. */
+            cmcExportGate: governedCmc.gate,
+            cmcExportGateReason: module3Refusal ?? undefined,
             nonclinicalStudyCount: nonclinicalStudies.length,
             csrInputCount: csrInputs.length,
           },
@@ -471,6 +528,8 @@ router.post('/runs', async (req: Request, res: Response) => {
         drugProductName: parsed.data.drugProductName,
         indication: parsed.data.indication,
         skipValidation: parsed.data.skipValidation,
+        // So m3.compose records WHY it carried none, not just that it did.
+        module3ExportRefusal: module3Refusal,
       };
     } else {
       // ── Mode B: backward-compat inline inputs ───────────────────────────
@@ -526,6 +585,10 @@ router.post('/runs', async (req: Request, res: Response) => {
       }),
       outputs: {
         m3SectionCount: result.outputs.module3Sections.length,
+        /* Null when Module 3 was carried. Otherwise the gate's own words, so a
+           run that composed none says why rather than reading as a program
+           with no CMC data. */
+        m3Refusal: module3Refusal,
         csrTableSets: result.outputs.csrTables.length,
         m23: result.outputs.m23
           ? {
@@ -629,6 +692,8 @@ router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
   }
   if (!previousRun) return res.status(404).json({ error: 'run_not_found' });
 
+  if (refusedInlineCmcSources(req.body ?? {}, res, organizationId)) return;
+
   const RegenSchema = buildRunSchema({
     changedStep: z.string().optional(),
   });
@@ -661,40 +726,34 @@ router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * Build M2.3 QOS standalone (does not require a full orchestrator run).
- *
- * SECURITY: this route performs no DB writes, but a §11.10(e)-attributed
- * audit row is still required because the response IS regulated
- * submission content. Gated by requireTenant so unauthenticated /
- * unscoped callers cannot generate uncovered content.
- */
-router.post('/m2/qos', async (req: Request, res: Response) => {
-  const organizationId = requireTenant(req, res);
-  if (organizationId == null) return;
+/* POST /m2/qos is retired (GA plan item 1, decision 2026-10-05).
+   ────────────────────────────────────────────────────────────────────────────
+   It composed a Module 2.3 Quality Overall Summary from a `module3Sections`
+   array in the REQUEST BODY — regulated submission content built from whatever
+   the caller sent, backed by no record and approved by nobody. It is the same
+   defect `cmc-quality-summary-tool.ts` was rewritten to remove on 2026-10-04,
+   surviving on an HTTP route: that tool's own header says the model "required
+   … `cmcSources[]` … Every figure in it was model-authored, which CLAUDE.md
+   Rule 2 forbids".
 
-  const Schema = z.object({
-    module3Sections: z.array(z.unknown()),
-    drugSubstanceName: z.string().optional(),
-    drugProductName: z.string().optional(),
-  });
-  const parsed = Schema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
-  }
-  try {
-    const summary = buildM23QualityOverallSummary(
-      parsed.data as Parameters<typeof buildM23QualityOverallSummary>[0]
-    );
-    await auditOrchestratorAccess(req, organizationId, 'orchestrator_m23_built', {
-      sectionCount: parsed.data.module3Sections.length,
-      completeness: summary.completeness,
-    });
-    return res.json(summary);
-  } catch (err) {
-    return serverError(res, log, 'saving qos', err);
-  }
-});
+   The replacements, by path:
+     • the record-composed QOS — AnA's `draft_quality_overall_summary_m2_3`
+       (services/ana/cmc-quality-summary-tool.ts), which takes NO CMC data,
+       resolves the open program, composes through `composeProjectModule3` and
+       refuses a call that carries `cmcSources`;
+     • the Module 3 it summarizes —
+       `POST /api/cmc/module3-os/compile/:projectId`, then approval, then
+       `POST /api/cmc/module3-os/place-into-submission/:projectId`
+       (services/cmc/place-module3-into-submission.ts) and the submissions
+       spine's export;
+     • inside a run — the `m2.3.qos` step, which now reads only the Module 3 of
+       a program whose export gate is open
+       (services/cmc/load-approved-cmc-sources-for-project.ts).
+
+   No caller existed in client/src, in server code, in scripts or in the staff
+   simulation. History search (`git log --all --diff-filter=D --
+   'server/routes/submission-orchestrator*'`): no earlier generation of this
+   handler was removed and rebuilt. */
 
 router.post('/m2/nonclinical', async (req: Request, res: Response) => {
   const organizationId = requireTenant(req, res);

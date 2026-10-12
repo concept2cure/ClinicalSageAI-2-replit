@@ -204,19 +204,51 @@ function scalarRows(value: unknown, prefix = '', depth = 0, key = ''): Row[] {
   return [];
 }
 
-/** Tabular sub-results (OC grids, decision tables, tipping grids) worth showing as tables. */
-function objectTables(value: unknown): EngineResultTable[] {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+/**
+ * Tabular sub-results (OC grids, decision tables, tipping grids, survival
+ * curves) worth showing as tables.
+ *
+ * Descends ONE level, which `scalarRows` has always done and this did not.
+ * That asymmetry surfaced on 2026-10-12: `restrictedMeanSurvival` began
+ * carrying the Kaplan–Meier table it had always computed and discarded, and in
+ * the two-arm case `rmstDifference` embeds each arm's whole result — so the
+ * curves sit at `treatment.survivalCurve` and `control.survivalCurve`. The
+ * single-arm call rendered its table and the two-arm call, which is the common
+ * case, rendered nothing while showing "Treatment · Rmst" and the rest of that
+ * arm's scalars beside it. Data on the wire and not on the screen reads as
+ * "this engine has no curve" rather than "this renderer did not look".
+ *
+ * Copying the curves up to the top level of the difference result would have
+ * fixed the one case and left two places holding one table. One level of
+ * descent fixes it for every engine that nests a table. Nested labels carry
+ * the parent key, as the scalar rows do, so a reader can tell the arms apart.
+ */
+function objectTables(value: unknown, prefix = '', depth = 0): EngineResultTable[] {
+  if (!isPlainObject(value)) return [];
   const out: EngineResultTable[] = [];
-  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+  for (const [k, v] of Object.entries(value)) {
+    // Provenance is a reproducibility record, not a result; it has its own row.
     if (k === 'provenance') continue;
-    if (Array.isArray(v) && v.length > 0 && v.every(r => r === null || (typeof r === 'object' && !Array.isArray(r)))) {
-      const table: EngineResultTable = { label: humanize(k), rows: v as Array<Record<string, unknown> | null> };
+    const label = prefix ? `${prefix} · ${humanize(k)}` : humanize(k);
+    if (isRowArray(v)) {
+      const table: EngineResultTable = { label, rows: v };
       table.columns = engineResultTableColumns(table).map(({ key }) => ({ key, label: humanize(key) }));
       out.push(table);
+    } else if (depth === 0 && isPlainObject(v)) {
+      out.push(...objectTables(v, label, depth + 1));
     }
   }
   return out;
+}
+
+/** An object worth descending into: not null, not an array. */
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
+/** An array of records, which is what a table is made of. */
+function isRowArray(v: unknown): v is Array<Record<string, unknown> | null> {
+  return Array.isArray(v) && v.length > 0 && v.every((r) => r === null || isPlainObject(r));
 }
 
 function Field({ field, value, error, onChange }: {

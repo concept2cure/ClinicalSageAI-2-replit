@@ -1,0 +1,16 @@
+ ✓ Validated is reached only through a validation with no errors (finding 2) > refuses Validated while the validation finds an error, names it, and changes nothing 105ms
+ ✓ Validated is reached only through a validation with no errors (finding 2) > marks a sequence Validated when its validation finds no error, and records the verdict 80ms
+ ✓ Validated is reached only through a validation with no errors (finding 2) > an original IND missing a section the regulation requires is not Validated, and the refusal names it 27ms
+ ✓ a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22) > Validated records the sequence and counts the document as not yet approved 49ms
+ ✓ a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22) > the freeze and dispatch prechecks refuse it by name, before any signature 101ms
+ ✓ a document not yet approved: a warning at Validated, a refusal at freeze, dispatch and transmit (P-22) > transmit refuses a dispatched sequence that still carries it 44ms
+ ✓ a leaf change returns a Validated sequence to Assembling (finding 3) > placing a leaf into a Validated sequence reverts it, clears the verdict, and says so 74ms
+ ✓ a leaf change returns a Validated sequence to Assembling (finding 3) > placing the same document again changes nothing, so the sequence stays Validated 78ms
+ ✓ a leaf change returns a Validated sequence to Assembling (finding 3) > removing a leaf from a Validated sequence reverts it, and the removal records its reason (finding 5) 89ms
+ ✓ a governed step is asked before it is signed (finding 1) > the freeze precheck answers the gate refusal without any signature 61ms
+ ✓ a governed step is asked before it is signed (finding 1) > a step the state map does not allow is refused by the precheck, not thrown 3ms
+ ✓ a governed step is asked before it is signed (finding 1) > the transmit precheck refuses a sequence that is not dispatched, before anything is signed 17ms
+ ✓ a stored Validated stage is checked against the current validation (finding 20) > a sequence stored as Validated with no verdict, whose validation finds errors, does not hold — and says why 15ms
+ ✓ a stored Validated stage is checked against the current validation (finding 20) > a sequence Validated through the validation holds 49ms
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
