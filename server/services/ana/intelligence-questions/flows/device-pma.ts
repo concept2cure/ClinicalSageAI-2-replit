@@ -23,7 +23,8 @@ export function createDevicePmaFlow(): FlowDefinition {
     name: 'PMA (Premarket Approval)',
     description:
       'Comprehensive questionnaire for Premarket Approval (PMA) submissions per 21 CFR 814, covering device overview, classification, design controls, manufacturing, preclinical testing (biocompatibility, bench performance, animal studies), clinical evidence, software & cybersecurity documentation, labeling, human factors engineering, and post-market surveillance planning.',
-    clientTypes: ['medtech'],
+    // A Class III assay files a PMA (the registry's US_PMA_IVD).
+    clientTypes: ['medtech', 'ivd'],
     entryNode: 'device_basics',
     estimatedMinutes: 90,
 

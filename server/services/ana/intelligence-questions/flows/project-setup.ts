@@ -12,8 +12,25 @@
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
 import { OTHER_POSITION } from '../../../../../shared/types/intelligence-questions.js';
+import { pathwayOptions, type PathwayDomain } from '../../../../../shared/regulatory/pathway-positions.js';
+import type { FlowEngineContext } from '../types.js';
 
-export function createProjectSetupFlow(): FlowDefinition {
+/** The registry's own segment for this client, so the pathway question matches what they file. */
+function domainFor(clientType: FlowEngineContext['clientType']): PathwayDomain {
+  if (clientType === 'ivd') return 'diagnostics_ivd';
+  if (clientType === 'medtech') return 'medical_devices';
+  return 'pharma_biotech';
+}
+
+export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition {
+  /* The pathway positions come from the governed filing registry, annotated
+     with what each one commits the programme to and the authority behind it
+     (shared/regulatory/pathway-positions.ts). They used to be written here:
+     seven labels that mixed the three 510(k) flavours — which are a question
+     the 510(k) flow itself asks — with distinct pathways, and left out
+     exemption and the 513(g) that clears nothing (founder's directive,
+     2026-10-12). US positions, as this list always was. */
+  const devicePathways = pathwayOptions({ domain: domainFor(ctx?.clientType ?? 'medtech'), region: 'US' });
   return {
     id: 'project-setup-v1',
     category: 'project_setup',
@@ -407,22 +424,18 @@ export function createProjectSetupFlow(): FlowDefinition {
             label: 'Submission Pathway',
             type: 'select',
             required: true,
-            options: [
-              { value: '510k_traditional', label: '510(k) — Traditional' },
-              { value: '510k_special', label: '510(k) — Special' },
-              { value: '510k_abbreviated', label: '510(k) — Abbreviated' },
-              { value: 'pma', label: 'PMA (Premarket Approval)' },
-              { value: 'de_novo', label: 'De Novo Classification Request' },
-              { value: 'hde', label: 'HDE (Humanitarian Device Exemption)' },
-              { value: 'eua', label: 'Emergency Use Authorization (EUA)' },
-            ],
+            options: devicePathways,
+            allowOther: { prompt: 'Which route are you taking, in your own words?' },
           },
           {
             id: 'predicate_device',
             label: 'Predicate Device (for 510(k))',
             type: 'text',
             placeholder: 'e.g., K123456 — Brand Name by Manufacturer',
-            visibleWhen: { field: 'device_submission_pathway', operator: 'in', value: ['510k_traditional', '510k_special', '510k_abbreviated'] },
+            /* Every 510(k) names a predicate — Traditional, Special and
+               Abbreviated alike — so this is gated on the pathway, and the
+               flavour is the 510(k) flow's own question. */
+            visibleWhen: { field: 'device_submission_pathway', operator: 'eq', value: 'US_510K' },
           },
           {
             id: 'product_code',
