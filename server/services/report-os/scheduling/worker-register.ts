@@ -17,7 +17,7 @@ import { createScopedLogger } from '../../../utils/logger';
 import { resolveCapabilities } from '../../entitlements/resolver';
 import type { Tier } from '../../entitlements/types';
 import { computeInitialRun } from '../orchestrator';
-import { computeDomainRun, reportEngineFor, reportTypeNotComputedMessage } from '../report-engine';
+import { computeDomainRun, computeRegionalRun, reportEngineFor, reportTypeNotComputedMessage } from '../report-engine';
 import { decideDelivery } from './delivery';
 import { sweepDueSubscriptions } from './worker';
 import {
@@ -81,12 +81,18 @@ export async function generateAndDeliver(sub: ReportSubscriptionRow): Promise<vo
   if (engine == null) {
     throw new Error(reportTypeNotComputedMessage(sub.reportTypeId));
   }
+  /* A market assessment reads the type's own declared region and dependencies
+     from the deployed registry when, as here, the caller holds no row — so a
+     scheduled market report is exactly as honest as an interactive one, and a
+     market it cannot assess throws like any other compute failure. */
   const computed =
     engine === 'domain'
       ? await computeDomainRun(sub.reportTypeId, sub.organizationId, scopeType, sub.scopeId)
-      : await computeInitialRun(sub.organizationId, scopeType, sub.scopeId, {
-          explicitRegistryId: sub.reportTypeId,
-        });
+      : engine === 'regional'
+        ? await computeRegionalRun(sub.reportTypeId, sub.organizationId, scopeType, sub.scopeId)
+        : await computeInitialRun(sub.organizationId, scopeType, sub.scopeId, {
+            explicitRegistryId: sub.reportTypeId,
+          });
   // A freshly computed scheduled run is inherently non-final — sealing/final
   // is a separate governed action (POST /runs/:id/finalize), never automatic.
   // It is 'partial' when the compute succeeded with no critical blockers,

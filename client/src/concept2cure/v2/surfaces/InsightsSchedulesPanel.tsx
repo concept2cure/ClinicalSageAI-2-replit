@@ -14,7 +14,7 @@
  *    `ScheduleTruthNote` is the only claim allowed, and the suite fails if the
  *    panel implies more.
  * 2. It only offers a type an engine computes. The sweep calls
- *    `computeInitialRun`, which throws for the 43 declared-but-uncomputed
+ *    `computeInitialRun`, which throws for the 39 declared-but-uncomputed
  *    types, so scheduling one would persist a row that fails every sweep for
  *    ever and tell the client nothing.
  *

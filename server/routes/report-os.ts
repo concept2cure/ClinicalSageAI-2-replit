@@ -67,6 +67,7 @@ import {
   REPORT_TYPE_NOT_APPLICABLE,
   REPORT_TYPE_NOT_COMPUTED,
   computeDomainRun,
+  computeRegionalRun,
   reportEngineFor,
   reportTypeApplies,
   reportTypeNotApplicableMessage,
@@ -1544,16 +1545,39 @@ router.post('/runs', async (req: Request, res: Response) => {
       programProjectIds = memberships.map(m => m.projectId);
     }
 
-    // A register is its own provider's run and nothing of the readiness digest;
-    // a failure to compute it is a failed run, never the digest in its place.
-    const computed =
-      engine === 'domain'
-        ? await computeDomainRun(reportTypeId, orgId, scopeType, scopeId)
-        : await computeInitialRun(orgId, scopeType, scopeId, {
-            programProjectIds,
-            explicitRegistryId: registryId,
-            explicitSubmissionType: submissionType,
-          });
+    // A register or a market assessment is its own engine's run and nothing of
+    // the readiness digest; a failure to compute it is a failed run, never the
+    // digest in its place.
+    //
+    // The market assessment refuses rather than guesses — a program with no
+    // registry context, a program filing in another market, a scope that is not
+    // one program — and each refusal is the type's own reason, returned as
+    // REPORT_TYPE_NOT_COMPUTED so the canvas states it where the reader asked
+    // (regional/filing-readiness.ts RegionalNotComputed).
+    let computed: Awaited<ReturnType<typeof computeInitialRun>>;
+    if (engine === 'domain') {
+      computed = await computeDomainRun(reportTypeId, orgId, scopeType, scopeId);
+    } else if (engine === 'regional') {
+      const governance = (type[0].governanceRequirements ?? {}) as { region?: unknown };
+      try {
+        computed = await computeRegionalRun(reportTypeId, orgId, scopeType, scopeId, {
+          region: typeof governance.region === 'string' ? governance.region : null,
+          label: type[0].label,
+          dataDependencies: (type[0].dataDependencies as string[] | null) ?? null,
+        });
+      } catch (error) {
+        if (error instanceof Error && error.name === 'RegionalNotComputed') {
+          return res.status(422).json({ error: error.message, code: REPORT_TYPE_NOT_COMPUTED });
+        }
+        throw error;
+      }
+    } else {
+      computed = await computeInitialRun(orgId, scopeType, scopeId, {
+        programProjectIds,
+        explicitRegistryId: registryId,
+        explicitSubmissionType: submissionType,
+      });
+    }
     if (scopeLabel) computed.summary.scopeLabel = scopeLabel;
 
     // Document-scoped evidence-trace: source the report body from the EXISTING
