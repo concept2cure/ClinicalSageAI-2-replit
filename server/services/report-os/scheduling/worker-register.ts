@@ -17,6 +17,7 @@ import { createScopedLogger } from '../../../utils/logger';
 import { resolveCapabilities } from '../../entitlements/resolver';
 import type { Tier } from '../../entitlements/types';
 import { computeInitialRun } from '../orchestrator';
+import { computeDomainRun, reportEngineFor, reportTypeNotComputedMessage } from '../report-engine';
 import { decideDelivery } from './delivery';
 import { sweepDueSubscriptions } from './worker';
 import {
@@ -50,14 +51,42 @@ async function resolveTier(organizationId: number): Promise<Tier> {
  * the delivery decision (e-signature / watermark) is honored and recorded.
  * Throws on compute failure so the sweep marks the item failed and does NOT
  * advance the cursor.
+ *
+ * ── THE ENGINE IS CHOSEN BY TYPE, as POST /runs chooses it ───────────────────
+ * This called `computeInitialRun` for every subscription, passing the type as
+ * an `explicitRegistryId` that `orchestrator.ts` declares and never reads. That
+ * is precisely the QA 2026-10-08 j8 defect `report-engine.ts` was written to
+ * close: "POST /runs called the readiness orchestrator for every reportTypeId
+ * […] So 'EMA RMP / PSUR Signal Alignment', 'NMPA CTD Module Gap Analysis' and
+ * 'Compliance & Audit Assurance' were the Executive Readiness Digest with
+ * another heading — a report claiming an analysis nothing performed."
+ *
+ * The route was fixed; this path was not, so a schedule over any of the sixteen
+ * domain registers computed the readiness digest and stamped it with the
+ * register's name and the time it ran. It had no caller until the Schedules
+ * screen gave it one (2026-10-11 coverage review), which is how it surfaced.
+ *
+ * The dispatch below mirrors `report-os.ts` exactly: a register is its own
+ * provider's run and nothing of the digest. A type no engine computes now
+ * THROWS, so the sweep marks the item failed and does not advance its cursor —
+ * rather than silently substituting the digest. That also makes the client's
+ * `schedulableTypes` filter true rather than merely prudent.
+ *
+ * Exported for its test, as `sweepDueSubscriptions` is: the engine choice is
+ * the part worth pinning, and the sweep's own registration needs Redis.
  */
-async function generateAndDeliver(sub: ReportSubscriptionRow): Promise<void> {
-  const computed = await computeInitialRun(
-    sub.organizationId,
-    sub.scopeType as ReportScope,
-    sub.scopeId,
-    { explicitRegistryId: sub.reportTypeId },
-  );
+export async function generateAndDeliver(sub: ReportSubscriptionRow): Promise<void> {
+  const scopeType = sub.scopeType as ReportScope;
+  const engine = reportEngineFor(sub.reportTypeId, scopeType);
+  if (engine == null) {
+    throw new Error(reportTypeNotComputedMessage(sub.reportTypeId));
+  }
+  const computed =
+    engine === 'domain'
+      ? await computeDomainRun(sub.reportTypeId, sub.organizationId, scopeType, sub.scopeId)
+      : await computeInitialRun(sub.organizationId, scopeType, sub.scopeId, {
+          explicitRegistryId: sub.reportTypeId,
+        });
   // A freshly computed scheduled run is inherently non-final — sealing/final
   // is a separate governed action (POST /runs/:id/finalize), never automatic.
   // It is 'partial' when the compute succeeded with no critical blockers,
