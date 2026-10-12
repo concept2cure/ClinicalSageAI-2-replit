@@ -1,7 +1,7 @@
 # WO-19 — GraphRAG reads return zero rows and report success
 
 **To:** JM Smith · **From:** Claude Code · **Date:** 12 October 2026
-**Status:** OPEN — needs a product decision, not a fix
+**Status:** OPEN — needs a product decision, not a fix (two sections: §1 GraphRAG reads, §2 knowledge_documents)
 **Row:** D3 (the isolation half is CLOSED; this is the honest-state half)
 
 ---
@@ -111,3 +111,93 @@ and the same unconditional policy as its siblings, backfilled from
 organisation and left NULL, visible to nobody, where it does not.
 Evidence: `docs/evidence/D3/2026-10-12-citation-chains-tenant-key/` and
 `docs/evidence/D3/2026-10-12-graphrag-citation-trace/`.
+
+---
+
+# §2 — `knowledge_documents`: a dead table with a dead reader
+
+**Added** 12 October 2026. Same migration
+(`db/migrations/20260730_graphrag_knowledge_tables.sql`), same decision class,
+different shape — so it belongs here rather than in a work order of its own.
+
+## What it is
+
+`knowledge_documents` is the fourth table that migration creates. The other
+three were keyed and policied by
+`db/migrations/20260813_knowledge_graph_tenant_keys.sql` — two in 2026-08,
+`citation_chains` today. This one was not, and the baseline entry for it reads
+"exempt — the unscoped search over it is not reachable", with a note that the
+day the search is mounted it must be org-scoped.
+
+That entry is accurate. It is also not the most useful thing that is true,
+because measurement changes what this table IS:
+
+| | |
+|---|---|
+| writers anywhere | **none** — one PGlite test fixture, nothing else |
+| seeds in any migration | **none**, so under RULE 1 nothing can reach a deployed database |
+| drizzle model | **none** |
+| rows on a deploy-shaped database | **0** |
+| readers | `getKnowledgeDocuments` in `server/sage-plus-service.ts` — **imported by nothing** |
+| tenant column / RLS / policy | none / off / none |
+
+So this is not a latent disclosure waiting for a mount. There is nothing to
+disclose. It is a table nothing fills, read by a function nothing calls.
+
+## Why it was not simply keyed
+
+Giving it `organization_id` and the siblings' unconditional policy would have
+been the symmetrical move, and it would have been wrong in two ways. There is
+no attribution source to backfill from — `citation_chains` could be attributed
+through `knowledge_graph_nodes`, and this has no equivalent — so every row
+would be NULL and invisible. And the shape (`id, title, content, category,
+status, created_at, updated_at`: no author, no project, no organisation) is a
+**global reference catalogue**, which the baseline's own vocabulary has a
+category for. A tenant key on shared reference data makes it unreadable, not
+isolated.
+
+Deciding whether it is global reference data or per-customer content is a
+product question, and nothing in the repository answers it, because nothing
+writes it.
+
+## What was fixed anyway
+
+Two fabrications on that unreachable path, both safe to change precisely
+because there is no caller, and both now honest for whoever the first caller
+turns out to be:
+
+- **`getKnowledgeDocuments`** returned a SYNTHESIZED document row when `pool`
+  was null — `{ id: 'fallback-1', title: 'Database connection required',
+  status: 'active' }` — to a caller asking for knowledge-base documents. It
+  throws now. CLAUDE.md: *"Fail closed, never fabricate … An error is never
+  rendered as an empty result"*, and a fabricated row is worse than an empty
+  one: `status: 'active'` presents an infrastructure failure as a published
+  document.
+- **`getComplianceStatus`** returned `{ status: 'pending', issues: [] }` for an
+  absent row AND for a missing pool — a compliance verdict with an empty issue
+  list, synthesized by a service. "No issues" is the most dangerous possible
+  default for a compliance read. A missing pool throws now; an absent row
+  returns `null`, so a caller can tell "never assessed" from "assessed and
+  clear".
+
+`csrReports` and `csrDetails` in the same file are string maps shaped like
+schema, exported "for compatibility" and imported by nothing. Left alone:
+removing them is the deletion-discipline question below.
+
+## Three options, same as §1
+
+1. **Delete** `getKnowledgeDocuments`, the two schema-shaped constants, and the
+   table. The working agreement requires naming the reachable replacement by
+   path before removing a capability — there is none, because there is no
+   capability, which is exactly the case the agreement says is *"a product
+   decision for the founder, not a cleanup"*.
+2. **Build it.** If a global regulatory knowledge base is wanted, it needs a
+   seed inside `C2C_MIGRATION_FILES` (the only path to a deployed database), a
+   row-count assertion in that seed, a mounted route, and a decision recorded
+   as global rather than tenant-scoped.
+3. **Leave it, now that it no longer fabricates.** The honest status quo: a
+   table with no rows and a reader with no callers, both of which now fail
+   closed. Costs nothing and hides nothing.
+
+Option 3 is where this change leaves it. Option 1 is cheap and needs one word
+from the founder.
