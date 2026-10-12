@@ -39,6 +39,8 @@ import type {
   Endpoint,
 } from '../study-design/study-design-types';
 import { primaryEndpoints } from '../study-design/study-design-types';
+import type { DesignGap } from './design-gap';
+import { mapStructuralDesign } from './structural-design';
 import type {
   ClientTrack,
   ComputationResult,
@@ -51,22 +53,10 @@ import type {
 
 // ─── Gap reporting ───────────────────────────────────────────────────────────
 
-/** Why the adapter could not take a value from the design, and what it did instead. */
-export interface DesignGap {
-  /** The engine input this concerns (e.g. "effectSize"). */
-  field: keyof StatisticalInput | 'primaryEndpoint' | 'estimand';
-  /** Sentence for a person: what was missing and what was assumed, if anything. */
-  message: string;
-  /**
-   * `blocking` — no defensible default exists; the computation must not run.
-   * `defaulted` — the engine's documented default was applied; the person
-   *               should confirm it before anything is filed.
-   * `note` — a lossy translation the reader should know about.
-   */
-  severity: 'blocking' | 'defaulted' | 'note';
-  /** Where in the design object the value belongs, for the fix-it link. */
-  designPath: string;
-}
+/* DesignGap lives in ./design-gap so structural-design.ts can produce gaps
+   without importing this module (which imports it). Re-exported here so every
+   existing importer is unchanged. */
+export type { DesignGap } from './design-gap';
 
 export interface DesignAdapterResult {
   /** Engine input, or null when a blocking gap makes computation meaningless. */
@@ -233,8 +223,8 @@ export function studyDesignToStatisticalInput(design: StudyDesign): DesignAdapte
   if (primary && (primary.type === 'ordinal' || primary.type === 'count' || primary.type === 'composite')) {
     gaps.push({
       field: 'endpointType',
-      message: `The engine has no closed-form for a ${primary.type} endpoint and will fall back to a continuous approximation. Treat the result as indicative only.`,
-      severity: 'note',
+      message: `The engine has no closed-form for a ${primary.type} endpoint and sizes it by the continuous normal approximation. The result is indicative: it ignores the endpoint's distribution. The computation says so in its method and assumptions too (computation-engine.ts approximatedAsContinuous), so the caveat travels with the number wherever it is rendered.`,
+      severity: 'defaulted',
       designPath: `endpoints["${primary.name}"].type`,
     });
   }
@@ -413,6 +403,28 @@ export function studyDesignToStatisticalInput(design: StudyDesign): DesignAdapte
   const interimAnalyses = (plan.interim?.informationFractions ?? []).filter((f) => f > 0 && f < 1).length;
   const keySecondaries = (design.endpoints ?? []).filter((e) => e.role === 'key_secondary').length;
 
+  /* The structural design (framework.structuralDesign) — crossover periods,
+     the within-subject correlation, and the gaps each translation costs.
+     See structural-design.ts for what was dropped before 2026-10-11. */
+  const structuralMapping = mapStructuralDesign(design, endpointType, primary);
+  gaps.push(...structuralMapping.gaps);
+  mapped.push(...structuralMapping.mapped);
+  const { crossoverPeriods, withinSubjectCorrelation } = structuralMapping;
+
+  /* An IVD design's endpoint is forced to the accuracy pair above, because the
+     design schema's EndpointType has no ROC member. The engine sizes an ROC
+     design by the AUC (Hanley & McNeil) and that method is now reachable from
+     the workbench and the biostatistics surface — but not from a protocol,
+     because the protocol cannot say its endpoint is an AUC. */
+  if (clientTrack === 'diagnostics_ivd' && primary && DESIGN_ENDPOINT_TO_ENGINE[primary.type] !== 'binary') {
+    gaps.push({
+      field: 'endpointType',
+      message: `This IVD design is sized against sensitivity and specificity targets, because the design schema cannot record an ROC/AUC endpoint (its primary endpoint reads "${primary.type}"). If the study's primary analysis is the AUC, size it in the biostatistics workbench, which runs the AUC method directly.`,
+      severity: 'note',
+      designPath: `endpoints["${primary.name}"].type`,
+    });
+  }
+
   const blocking = gaps.some((g) => g.severity === 'blocking');
 
   const input: StatisticalInput = {
@@ -438,6 +450,8 @@ export function studyDesignToStatisticalInput(design: StudyDesign): DesignAdapte
     numberOfGroups: Math.max(1, design.arms?.length ?? 2),
     numberOfEndpoints: 1 + keySecondaries,
     interimAnalyses: interimAnalyses > 0 ? interimAnalyses : undefined,
+    crossoverPeriods,
+    withinSubjectCorrelation,
     multiplicityMethod: multiplicityFor(plan),
     estimandStrategy: primaryEstimand?.strategy,
     missingDataMethod: missingDataFor(plan.missingDataStrategy),
