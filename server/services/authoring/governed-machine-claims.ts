@@ -83,7 +83,7 @@
 
 import { qualifyServedModels, type QualifiedServedModel } from '../ai-governance/approved-models';
 import type { ServedModel } from '../ana/turn-record-models';
-import { verifyMachineText, type MachineClaimReason } from './machine-claim-verify';
+import { MAX_TURN_RECORDS_PER_CHECK, verifyMachineText, type MachineClaimReason } from './machine-claim-verify';
 import { MACHINE_AUTHOR_IDS, type AcceptedMachineTextEntry, type MachineContributor } from './revision-ledger';
 
 type Queryable = { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> };
@@ -96,7 +96,12 @@ const NOT_CREDITED: Record<MachineClaimReason, string> = {
   record_not_intact: 'the turn record does not verify',
   text_not_in_record: 'the turn record does not hold this text',
   model_not_approved: 'the turn was served by a model that is not approved for regulatory drafting',
-  too_many_turns: 'more AnA turns than one save verifies',
+  /* The number, because it is the one reason the saver can act on: accepted
+     text from more than this many distinct AnA turns in one save loses its
+     attribution on the extras, and saving more often keeps it. The bound is
+     on RECORD READS — each is a full load of every text a record references —
+     not on how many insertions a save may carry (32). */
+  too_many_turns: `more AnA turns than one save verifies (at most ${MAX_TURN_RECORDS_PER_CHECK})`,
 };
 
 /** Whether this deployment has the turn-record store at all. */

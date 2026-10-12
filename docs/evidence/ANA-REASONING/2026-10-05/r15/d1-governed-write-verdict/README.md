@@ -128,10 +128,31 @@ the evidence of what was accepted does not rest on the save at all.
 
 ## What this does NOT do
 
-- **The batch-draft accept door still applies no RULE 2 check.** It verifies
-  its claims and discloses them, but credits a verified claim whatever model
-  served the turn. `mayVouch` is the one line it needs; it is a second door
-  with its own tests and is not in this increment.
+- **The batch-draft accept door still applies no RULE 2 check** — and after
+  checking, that is much closer to correct than it looked, so the follow-on
+  this file first recorded ("`mayVouch` is the one line it needs") is withdrawn.
+  Two facts, both measured:
+
+  1. **It is covered upstream, where the section save is not.**
+     `AnaDocumentDraftingService.batchDraft` dispatches
+     `taskType: 'document_drafting'`, so the gateway's own `selectionRefusal`
+     answers `pq-not-passed` in production and no draft is produced at all.
+     The section save's text comes from a CHAT turn — `regulatory_review` or
+     `chat` at a high risk tier — which `isHighRiskDraftingRequest` does not
+     cover. That asymmetry is the stated reason
+     `isServedModelApprovedForHighRisk` exists at all.
+  2. **`mayVouch` there today would refuse EVERY batch accept, in every
+     environment.** `recordBatchTurn` (`routes/ana-intelligence.ts`) records
+     `setModel({ model })` and no provider, and approval is looked up by
+     provider AND model — so `qualifyServedModels` reports `qualified: false`
+     for an admitted model, and `recordMayVouch` is false. Measured:
+     `servedModelsOf({ model: 'claude-opus-5-5' })` →
+     `[{ provider: null, model: 'claude-opus-5-5' }]` → `qualified: false`;
+     with `provider: 'anthropic'` the same model is `qualified: true`.
+
+  So the prerequisite is recording the provider at the batch door, which is
+  that door's change. Doing it the other way round would have shipped a gate
+  that refuses every accept.
 - **`acceptedAuthors` is now disclosed, not trusted.** An older deployed bundle
   that sends an author without its text gets no attribution and an
   `uncredited` entry on the row. The server cannot check such a claim at all,

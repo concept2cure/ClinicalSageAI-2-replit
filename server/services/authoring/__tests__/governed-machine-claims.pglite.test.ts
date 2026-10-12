@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { openTurnRecorder, writeTurnRecordSafely } from '../../ana/turn-record';
+import { MAX_TURN_RECORDS_PER_CHECK } from '../machine-claim-verify';
 import {
   contributorsOf,
   creditMachineClaims,
@@ -163,6 +164,32 @@ describe('creditMachineClaims', () => {
     expect(verdict.credited).toHaveLength(1);
     const { comparableText } = await import('../../clinical-regulatory-evidence/machine-attribution');
     expect(verdict.recordOccurrences(comparableText(CLAIM))).toBe(1);
+  });
+
+  it('refuses claims past the record-read bound, naming it, and credits the rest', async () => {
+    /* The bound is on RECORD READS — each loads every text a record references
+       — so accepted text from more than MAX_TURN_RECORDS_PER_CHECK distinct
+       turns in ONE save loses its attribution on the extras. Disclosed with
+       the number, because saving more often is the thing the saver can do. */
+    const claims = [];
+    for (let i = 0; i <= MAX_TURN_RECORDS_PER_CHECK; i++) {
+      const text = `Paragraph ${i} of the efficacy overview was within expectations.`;
+      claims.push(claim(text, await filedTurn(text, [OPUS])));
+    }
+    const verdict = await creditMachineClaims(q, ORG, claims);
+    expect(verdict.credited).toHaveLength(MAX_TURN_RECORDS_PER_CHECK);
+    expect(verdict.refused).toEqual([
+      {
+        authorId: 'ana',
+        turnRecordId: claims[MAX_TURN_RECORDS_PER_CHECK].turnRecordId,
+        why: `more AnA turns than one save verifies (at most ${MAX_TURN_RECORDS_PER_CHECK})`,
+        servedBy: null,
+        chars: claims[MAX_TURN_RECORDS_PER_CHECK].text.length,
+      },
+    ]);
+    /* And it is NOT a governed-write refusal: the save stands, with the extra
+       clause recorded as the saver's own. */
+    expect(refusedForModel(verdict)).toBeNull();
   });
 
   it('claims nothing and reads nothing when the save carried no claim', async () => {

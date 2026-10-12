@@ -2185,6 +2185,12 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       });
     }
 
+    /* What the Part 11 row and the saver are each told about the claims.
+       Computed once: both are pure functions of the verdict, and calling them
+       inside the object literal that uses them read as two decisions. */
+    const claimDisclosure = machineClaimDisclosure(machineClaims, claimedAuthors);
+    const claimReport = machineClaimReport(machineClaims);
+
     const client = await pool.connect();
     let result: { rows: any[] };
     // Whether the text reached the filing, and when it did not, why. Reported
@@ -2300,9 +2306,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
                one having been made. Credited claims name their turn record;
                refused ones carry the reason and, for a refused model, the
                models the record named. Absent when the save claimed nothing. */
-            ...(machineClaimDisclosure(machineClaims, claimedAuthors)
-              ? { machineText: machineClaimDisclosure(machineClaims, claimedAuthors) }
-              : {}),
+            ...(claimDisclosure ? { machineText: claimDisclosure } : {}),
           },
           client,
         );
@@ -2389,7 +2393,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       /* And what became of each machine-authorship claim. The saver has to be
          told: without it they see an ordinary "Section saved" while the record
          now says they asserted words they believed were attributed to AnA. */
-      ...(machineClaimReport(machineClaims) ? { machineText: machineClaimReport(machineClaims) } : {}),
+      ...(claimReport ? { machineText: claimReport } : {}),
     });
   } catch (error) {
     console.error('Error updating section:', error);
