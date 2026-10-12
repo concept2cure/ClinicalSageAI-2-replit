@@ -1,0 +1,39 @@
+# 12 mutations, all red
+# driver: scratchpad/mutate15.py (apply, run the named test, restore)
+
+RED       the IVDR class is asked nowhere again
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the IVDR class question > is asked of a diagnostics programme — the first question anywhere to ask it 12ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the IVDR class question > states the Article 48 route each class commits the programme to, from the platform’s own statement 2ms
+RED       the IVDR class question writes its own list
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the IVDR class question > is asked of a diagnostics programme — the first question anywhere to ask it 14ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the IVDR class question > answers in the spelling the rest of the platform already stores 8ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the IVDR class question > states the Article 48 route each class commits the programme to, from the platform’s own statement 2ms
+RED       the Article 48 route is written here instead of read from the platform's statement
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the IVDR class question > states the Article 48 route each class commits the programme to, from the platform’s own statement 13ms
+RED       a Class A assay is offered every other class's route unmarked
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > the IVDR class routes > close the routes the stated class is not the route for 8ms | × shared/regulatory/__tests__/pathway-availability.test.ts > the IVDR class routes > keep Class C and Class D on the one entry the registry holds for them 1ms | × shared/regulatory/__tests__/pathway-availability.test.ts > the IVDR class routes > close the companion-diagnostic route to a Class A or B assay 1ms
+RED       C and D stop being the one entry the registry holds for them
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > the IVDR class routes > keep Class C and Class D on the one entry the registry holds for them 10ms
+RED       the companion-diagnostic route is opened to a Class B assay
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > the IVDR class routes > close the companion-diagnostic route to a Class A or B assay 7ms
+RED       the reference laboratory applies to any class
+          test: shared/regulatory/__tests__/pathway-availability.test.ts
+          first failures: × shared/regulatory/__tests__/pathway-availability.test.ts > the IVDR class routes > close the reference-laboratory step to anything but Class D 6ms
+RED       a diagnostics programme is asked its MDR class as well
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the IVDR class question > does not ask a diagnostics programme its MDR class, which is the wrong regulation 11ms
+RED       a device programme is asked its IVDR class
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the IVDR class question > does not ask a device programme its IVDR class either 12ms
+RED       the MDR Class I variants are dropped from the question again
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the IVDR class question > offers the MDR classes a sponsor can actually declare, including the Class I variants 15ms
+RED       a class spelled the way a person writes it is not read
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the IVDR class question > answers in the spelling the rest of the platform already stores 17ms
+RED       the two MDR shapes are conflated, so Is is treated as its own rule outcome
+          test: shared/regulatory/__tests__/device-class.test.ts
+          first failures: × shared/regulatory/__tests__/device-class.test.ts > the two MDR shapes > relate the three that are not rule outcomes to the class they are 7ms

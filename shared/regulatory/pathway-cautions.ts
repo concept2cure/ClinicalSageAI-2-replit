@@ -32,6 +32,7 @@
 
 import type { PositionCaution } from '../types/intelligence-questions.js';
 import { agencyFor } from './agency-positions.js';
+import type { IvdrClass } from './device-class.js';
 import { getApplicationType } from './global-document-registry.js';
 import { MODALITY_LABEL, type Modality } from './modality.js';
 import { annotatedPositionIds, positionFor } from './pathway-positions.js';
@@ -74,6 +75,12 @@ export interface ProgrammeFacts {
   /** The MDR class the sponsor states for the EU. */
   euMdrClass?: 'I' | 'IIa' | 'IIb' | 'III';
   /**
+   * The IVDR class the sponsor states for the EU. Until the classification
+   * question landed no interview could state it at all, so the IVDR routes
+   * were offered to a diagnostics programme flat.
+   */
+  ivdrClass?: IvdrClass;
+  /**
    * The modality behind the product the sponsor named
    * (`product-modality.ts`). It decides which statute governs the product, so
    * it speaks against a route under the other one.
@@ -110,6 +117,23 @@ function productWords(facts: ProgrammeFacts): string {
   if (facts.modality) return MODALITY_LABEL[facts.modality].toLowerCase();
   return facts.statute === 'biologic' ? 'a biological product' : 'a product approved under section 505';
 }
+
+/**
+ * The IVDR classes each position applies to. Four of these are routes and two
+ * are steps inside one — the Article 48(6) consultation and the Class D
+ * reference-laboratory verification — and the classes decide both.
+ */
+const IVDR_POSITION_CLASSES: Readonly<Record<string, readonly IvdrClass[]>> = {
+  EU_IVDR_CLASS_A: ['A'],
+  EU_IVDR_CLASS_B: ['B'],
+  /* The registry holds C and D as one entry; the classes are two. */
+  EU_IVDR_CLASS_CD: ['C', 'D'],
+  /* A companion diagnostic is Class C or D (Annex VIII Rule 3(f)). */
+  EU_CDX_IVDR_D: ['C', 'D'],
+  EU_IVDR_ART48_CONSULT: ['C', 'D'],
+  /* An EU reference laboratory is designated for Class D devices. */
+  EU_REF_LAB: ['D'],
+};
 
 /** The MDR class each class route is the route FOR. */
 const MDR_POSITION_CLASS: Readonly<Record<string, 'I' | 'IIa' | 'IIb' | 'III'>> = {
@@ -248,6 +272,24 @@ const CAUTION_RULES: readonly CautionRule[] = [
       `composition as the reference, and you have said this is ${productWords(f)} — for which the route is a ` +
       'biosimilar application under Article 10(4).',
     authority: 'Directive 2001/83/EC Art 10(1) against Art 10(4)',
+  },
+
+  /* -- The IVDR class decides the route the same way, and until the
+        classification question landed nothing could state it ------------- */
+  {
+    id: 'ivdr_class_route_mismatch',
+    positions: Object.keys(IVDR_POSITION_CLASSES),
+    availability: 'inapplicable',
+    when: (f, id) => Boolean(f.ivdrClass) && !IVDR_POSITION_CLASSES[id].includes(f.ivdrClass!),
+    reason: (f, id) => {
+      const applies = IVDR_POSITION_CLASSES[id].join(' or ');
+      const label = positionFor(id)?.label ?? id;
+      return (
+        `You have said this assay is Class ${f.ivdrClass} under the IVDR. ${label} applies to Class ${applies}, and ` +
+        'the classification rules decide the conformity assessment route rather than a choice between them.'
+      );
+    },
+    authority: 'IVDR (EU) 2017/746 Art 47, Art 48, Annex VIII',
   },
 
   /* -- US: a De Novo is for a device with no predicate -------------------- */

@@ -3,11 +3,18 @@
  *
  * ── WHY THIS SCREEN ─────────────────────────────────────────────────────────
  * `GET /api/tenant-export/attestation` walks the tenant's `audit_events` hash
- * chain, recomputes every row's hash, reports any broken link, and HMAC-signs
- * the result so an external auditor can verify the platform issued it and that
- * it was not edited afterwards (21 CFR Part 11 §11.10(e);
+ * chain, checks that each row's stored `previous_hash` is the prior row's
+ * stored `record_hash`, reports any link that does not join, and HMAC-signs the
+ * result so an external auditor can verify the platform issued it and that it
+ * was not edited afterwards (21 CFR Part 11 §11.10(e);
  * `server/services/tenant-export/attestation-report.service.ts`). Pulling it
  * records its own audit row naming who asked and what verdict came back.
+ *
+ * It does NOT re-derive a hash from any row's contents, so an entry edited in
+ * place with its stored hashes left alone is not detected. This header said
+ * "recomputes every row's hash" until 2026-10-12; the report now declares its
+ * own method in its signed body and this screen renders it, so the scope cannot
+ * be re-widened by a paraphrase (coverage review C-22).
  *
  * It had no caller anywhere in the client. The eight reports beside it on this
  * surface each answer "what happened"; this is the only one that answers
@@ -41,6 +48,8 @@ import { downloadBlob, safeFileName } from '../download';
 /** The report body, as `AttestationReport` defines it. */
 export interface AttestationReport {
   schemaVersion: string;
+  /** The method the attestation declares, in its signed body (schemaVersion 1.1). */
+  verifies?: { method: string; covers?: string[]; doesNotCover?: string[] };
   organization: { id: number; slug: string; name: string };
   generatedAt: string;
   windowStart: string | null;
@@ -157,6 +166,47 @@ function Fact({ term, value }: { term: string; value: string }) {
   );
 }
 
+/**
+ * What the verdict is a verdict ABOUT, from the signed body.
+ *
+ * An attestation that does not state its method invites the strongest reading:
+ * this one checks that the stored links JOIN — so no entry was removed,
+ * inserted or reordered — and says nothing about whether an entry's contents
+ * were edited in place, because nothing re-derives a hash from a row's fields.
+ * The surface claimed "nothing altered or removed" once (coverage review C-22);
+ * the scope now travels with the verdict in the HMAC-signed body rather than in
+ * copy beside it, so the two cannot be separated.
+ *
+ * Absent on a pre-1.1 server, and then nothing is shown rather than a scope
+ * this screen invented.
+ */
+function DeclaredMethod({ verifies }: { verifies?: AttestationReport['verifies'] }) {
+  if (!verifies) return null;
+  const covers = verifies.covers ?? [];
+  const doesNot = verifies.doesNotCover ?? [];
+  if (covers.length === 0 && doesNot.length === 0) return null;
+  return (
+    <details style={{ margin: '10px 0 0' }} data-testid="attestation-method">
+      <summary style={{ ...muted, cursor: 'pointer' }}>What this attestation checked</summary>
+      <div style={{ margin: '7px 0 0' }}>
+        {covers.length > 0 && <MethodList title="It establishes" items={covers} />}
+        {doesNot.length > 0 && <MethodList title="It does not establish" items={doesNot} />}
+      </div>
+    </details>
+  );
+}
+
+function MethodList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <>
+      <div style={{ ...muted, fontWeight: 600, margin: '8px 0 0' }}>{title}</div>
+      <ul style={{ ...muted, margin: '3px 0 0', paddingLeft: 18, lineHeight: 1.55 }}>
+        {items.map((c) => <li key={c}>{c}</li>)}
+      </ul>
+    </>
+  );
+}
+
 function Result({ report, onSave }: { report: AttestationReport; onSave: () => void }) {
   const known = Object.prototype.hasOwnProperty.call(ATTESTATION_VERDICT, report.attestation);
   const v = ATTESTATION_VERDICT[report.attestation] ?? {
@@ -183,6 +233,8 @@ function Result({ report, onSave }: { report: AttestationReport; onSave: () => v
       {report.unverifiableReason && (
         <p style={{ ...muted, margin: '7px 0 0', lineHeight: 1.5 }}>{report.unverifiableReason}</p>
       )}
+
+      <DeclaredMethod verifies={report.verifies} />
 
       <dl
         style={{
