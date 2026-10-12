@@ -36,6 +36,9 @@ export const IB_BINDINGS: Binding[] = m1Binding('investigators_brochure', {
  */
 const IB_GUIDELINE = e6r3Ref({ kind: 'appendix', id: 'A' });
 
+/** GCP itself, with no section named. E6(R3) supersedes E6(R2) (Step 4, 2025-01-06). */
+const GCP = 'ICH E6(R3)';
+
 export function buildIndPyramid(): SubmissionPyramid {
   const phases: SubmissionPyramid['phases'] = [];
 
@@ -101,7 +104,7 @@ export function buildIndPyramid(): SubmissionPyramid {
       estimatedHours: 6,
       role: 'clinical_lead',
       risk: { severity: 'medium', probability: 0.2, impact: 'Protocol redesign if endpoints are misaligned', mitigations: ['Engage biostatistician early for endpoint strategy', 'Review FDA guidance for indication-specific endpoints'] },
-      guidance: { ichGuideline: 'ICH E6(R2), ICH E8(R1)', keyConsiderations: ['First-in-human study design must justify starting dose', 'Safety monitoring plan is critical for IND acceptance'] },
+      guidance: { ichGuideline: `${GCP}, ICH E8(R1)`, keyConsiderations: ['First-in-human study design must justify starting dose', 'Safety monitoring plan is critical for IND acceptance'] },
       timeline: { typicalStartWeek: 3, typicalDurationWeeks: 2 },
       deliverables: ['Clinical development plan outline', 'Phase 1 study synopsis'],
       crossSubmissionDeps: [{ targetSubmissionType: 'NDA', targetTaskId: 'phase6.csr_compilation', relationship: 'feeds_into', description: 'Phase 1 data from IND clinical plan feeds NDA Module 5' }],
@@ -352,7 +355,7 @@ export function buildIndPyramid(): SubmissionPyramid {
       name: 'Draft clinical protocol outline',
       estimatedHours: 6,
       role: 'clinical_lead',
-      guidance: { ichGuideline: 'ICH E6(R2)', keyConsiderations: ['Protocol must include adequate safety monitoring', 'Stopping rules for dose escalation studies'] },
+      guidance: { ichGuideline: GCP, keyConsiderations: ['Protocol must include adequate safety monitoring', 'Stopping rules for dose escalation studies'] },
       timeline: { typicalStartWeek: 24, typicalDurationWeeks: 2 },
       deliverables: ['Protocol outline / synopsis'],
       documentBindings: [{ ctdSection: '5.3.5', sectionTitle: 'Clinical Study Reports', ectdLifecycleOp: 'new' }],

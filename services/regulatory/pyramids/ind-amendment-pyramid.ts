@@ -1,5 +1,15 @@
 import type { BaseTask, SubmissionPyramid } from './types.js';
 import { buildPhase } from './types.js';
+import { e6r3Ref } from '../../../shared/regulatory/ich-e6r3.js';
+
+/* ICH E6(R3) reached Step 4 on 2025-01-06 and supersedes E6(R2) (currency fact
+   ich-e6r3-gcp-step4). Its numbering is not R2's: the Investigator's Brochure (R2 §7) and the
+   protocol (R2 §6) became Appendices A and B, and informed consent (R2 §4.8) became Annex 1 §2.8.
+   An R2 section number given to a sponsor as the guideline in force is wrong, not merely dated, so
+   the citation comes from the record (shared/regulatory/ich-e6r3.ts) rather than from a string
+   here. Gate: tests/regulatory/ich-e6r3-citations.test.ts, which did not scan this tree until
+   2026-10-12. */
+const GCP = 'ICH E6(R3)';
 
 /**
  * IND Amendment Pyramid
@@ -242,7 +252,7 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
           ],
         },
         guidance: {
-          ichGuideline: 'ICH E6(R2) Section 7',
+          ichGuideline: e6r3Ref({ kind: 'appendix', id: 'A' }),
           cfrReference: '21 CFR 312.55(a)',
           keyConsiderations: [
             'IB must be reviewed and updated at least annually (21 CFR 312.55)',
@@ -285,7 +295,7 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
         },
         guidance: {
           cfrReference: '21 CFR 312.31(a)(2)',
-          ichGuideline: 'ICH E6(R2)',
+          ichGuideline: GCP,
           keyConsiderations: [
             'Protocol amendment must include a brief description of the change and reference to the original protocol',
             'Changes increasing risk to subjects may not be implemented before submission',
@@ -565,7 +575,7 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
         },
         guidance: {
           cfrReference: '21 CFR 50.25, 21 CFR 50.27',
-          ichGuideline: 'ICH E6(R2) Section 4.8',
+          ichGuideline: e6r3Ref({ kind: 'annex1', section: '2.8' }),
           keyConsiderations: [
             'Any change in risk or procedures requires informed consent update',
             'IRB must approve revised consent before it is used',
