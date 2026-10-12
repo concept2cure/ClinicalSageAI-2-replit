@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-11T23:42:15.481Z",
+  "generatedAt": "2026-10-12T00:06:13.595Z",
   "git": {
-    "sha": "29f4cb435ca17e21159ee07d946a8a8c84918add",
+    "sha": "b40388014731a97a02d0fc63090543c8eee331fb",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,7 +15,7 @@
     "duplicateBasenames": 217,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 56,
+    "largeFilesByBytes": 57,
     "largeFilesByLines": 113
   },
   "findings": {
@@ -2251,6 +2251,10 @@
         "bytes": 103227
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "bytes": 102128
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
         "bytes": 101535
       },
@@ -2561,6 +2565,10 @@
         "lines": 1911
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "lines": 1903
+      },
+      {
         "file": "server/routes/regulatory-digital-twin.ts",
         "lines": 1898
       },
@@ -2677,10 +2685,6 @@
         "lines": 1650
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "lines": 1637
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
         "lines": 1631
       },
@@ -2743,7 +2747,7 @@
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
-      "largeByBytes": 10,
+      "largeByBytes": 11,
       "largeByLines": 17
     },
     {
