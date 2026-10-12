@@ -65,7 +65,7 @@ And in the other direction: `PATCH /api/c2c/documents/:id/sections/:key` writes
 the filing and never writes back, so text can enter the system of record that
 no snapshot, export, vault file or signature will ever see.
 
-## The structural finding
+## The structural finding, as it stands after the refuters
 
 Every gate on every one of these paths compares the editing layer **to
 itself**: `computeDocHash` over `authoring_sections` is what every signature's
@@ -73,14 +73,49 @@ itself**: `computeDocHash` over `authoring_sections` is what every signature's
 to a digest of the same rows; file-to-vault's change-during-filing check
 compares the rows to themselves; the snapshot's seal check compares live rows
 to a frozen snapshot of rows. Each is a real, careful gate. None of them can
-see the filing.
+see the filing. That part holds.
 
-Meanwhile the submission leaf is materialized from `c2c_document_sections` or
-`coauthor_documents` (`ectd/leaf-source-resolver.ts`). So **the artefact that
-is signed and the artefact that is submitted are hashed over different
-stores**, and only four non-test files mention both tables. There is no verify
-endpoint, no CI gate and no response field outside the two save paths and the
-two signing paths.
+**Two things this file first said here were wrong, and the refuters were
+right.** Both are corrected in place rather than footnoted, because the wrong
+version is the kind a later session would build on.
+
+1. **It is not "the only place in the server that compares the two stores'
+   text". There are two, and both are gates.** The approval
+   (`approveBoundFilingSections`, `AND (ds.content ->> 'text') = sig.text`) is
+   one. The other is inside `commitSectionToFiling` itself: a save over an
+   `approved` section whose filing text differs withdraws the approval —
+   `WHEN ds.status = 'approved' AND (ds.content ->> 'text') IS DISTINCT FROM
+   $3::text THEN …` — and `settleWrite` writes a governed-action row carrying
+   `approvalWithdrawn: true` and the sentence *"The text changed after the
+   approval signature; the signature does not cover the new text."* So
+   divergence at a save is neither unnoticed nor unrecorded, and this file's
+   "visible: no" on that path was false.
+
+2. **There IS a blocking CI gate.** `tests/schema-contract/authoring-section-
+   commits-to-filing.contract.test.ts` runs under `test:proof-tier`
+   (`package.json`) at `.github/workflows/ci.yml:310`, a blocking step, and its
+   cases include the two-stores-move-together rollback against a real database.
+   The claim rested on grepping `package.json` for `"ci:`, which is the wrong
+   grep.
+
+**And the blast radius is materially smaller than this file first implied.**
+`approved` on a `c2c_document_sections` row is reachable ONLY through the text
+comparison at the approval: the MDx filing save refuses `status: 'approved'`
+and `'locked'` outright (`APPROVAL_REQUIRES_SIGNATURE`), and
+`commitSectionToFiling` never writes `approved` and demotes it. The eCTD
+dispatch gate requires `approved | locked` for a `c2c_document_sections` leaf
+to count finalized (`ectd/leaf-source-resolver.ts`, with its own
+`noteUnfinalized`). **So a diverged filing section cannot ship as finalized.**
+
+A third correction, in the other direction — a finding rather than a
+retraction: **send-to-packager's second hop targets a route no router serves.**
+It POSTs `/api/regulatory/ectd/:seqId/leaf`, under a comment that calls it
+"your existing packager route"; nothing in non-test server code serves that
+path, and `/api/regulatory` mounts only the regulatory routes and
+`/api/regulatory/tasks`. It fails closed and visibly (502 "Packager upload
+failed"), so this is a dead feature rather than a leak — but the path cannot
+currently carry anything anywhere, which is worth knowing before anyone counts
+it as an exit. Not this lane's to fix.
 
 ## Is a signed artefact REQUIRED to equal the filing?
 
@@ -125,7 +160,19 @@ file:line rather than patched in the same breath as finding them.
 
 ## Coverage, stated
 
-Three angles ran; all three returned. No angle was dropped. The one thing none
+Three angles ran; all three returned. No angle was dropped. Thirty-two
+refuters then ran against the findings and thirty returned verdicts: **22 held,
+8 were refuted** — including this file's own structural claim, one of the
+read-only enumerations (four of its thirteen entries do not read the content at
+all, and its line numbers were wrong), the reorder path's visibility field, and
+send-to-packager, refuted with something stronger than a correction.
+
+Part of why the structural claim fell is that **the fix below had already
+landed**: the refuter cites `checkFilingWritable` and concludes that once a
+document is FROZEN or APPROVED, neither store can move — "post-seal divergence
+is impossible, not merely unreported". That is the fix doing its job, not the
+gap having been imaginary; the gap was demonstrated with a failing test before
+it was closed. The one thing none
 of them settled is whether a FROZEN document's `frozen_documents` snapshot
 should be re-checked against the filing at signing time — raised by two angles,
 answered by neither, and left open rather than guessed.
