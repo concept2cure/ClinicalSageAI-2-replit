@@ -93,12 +93,89 @@ describe('renderReport', () => {
   });
 
   it('says no gaps were detected only when an evaluation ran and found none', () => {
-    const report = renderReport(baseInput({ summary: { regulatory: { missingArtifacts: [] } } }));
+    const report = renderReport(
+      baseInput({ summary: { regulatory: { artifactsAssessed: true, missingArtifacts: [] } } }),
+    );
     const gaps = sectionById(report.sections, 'gaps');
     const gapList = gaps?.blocks.find(b => b.kind === 'gap-list');
     expect(gapList?.kind === 'gap-list' && gapList.items).toEqual([]);
     const note = gaps?.blocks.find(b => b.kind === 'summary');
     expect(note?.kind === 'summary' && note.text).toBe(`No gaps detected as of ${FIXED_AT}.`);
+  });
+
+  /* HS-1008-2. THE FIXTURE ABOVE USED TO BE `{ missingArtifacts: [] }` ALONE,
+     and this case is why that was wrong. The orchestrator sets that field on
+     every project-scope run, and `evaluateReadiness` returns `missing: []`
+     whenever the filing type has no resolved artifact matrix — most of the
+     application registry. So "no evaluation ran" and "an evaluation ran clean"
+     arrived at the renderer looking identical, and the renderer chose the
+     reassuring reading for both, in a document that can be sealed. An empty
+     list with no assessment flag now fails closed. */
+  it('does not read an empty missingArtifacts list as an evaluation, absent the assessed flag', () => {
+    const report = renderReport(baseInput({ summary: { regulatory: { missingArtifacts: [] } } }));
+    const gaps = sectionById(report.sections, 'gaps');
+    const note = gaps?.blocks.find(b => b.kind === 'summary');
+    expect(note?.kind === 'summary' && note.text).toBe('Gaps were not evaluated for this scope.');
+    expect(JSON.stringify(report)).not.toContain('No gaps detected');
+  });
+
+  /* The structural rule, independent of any provider path: a document may not
+     state "No gaps detected" while the same document lists blockers. Before
+     this the renderer consulted neither `blockers` nor the readiness level
+     before printing the sentence, so a report listed "Artifact requirements not
+     assessed" as a blocker and then reassured on the next page. */
+  it('withholds the no-gaps sentence while the same report lists blockers', () => {
+    const report = renderReport(
+      baseInput({
+        blockers: ['Artifact requirements not assessed: no matrix is defined for this filing type.'],
+        summary: { regulatory: { artifactsAssessed: true, missingArtifacts: [] } },
+      }),
+    );
+    expect(sectionById(report.sections, 'blockers')).toBeDefined();
+    const note = sectionById(report.sections, 'gaps')?.blocks.find(b => b.kind === 'summary');
+    expect(note?.kind === 'summary' && note.text).toContain('not a clear result');
+    expect(JSON.stringify(report)).not.toContain('No gaps detected');
+  });
+
+  /* The run's own gap list reaches the gaps section, with the evaluator's
+     severities mapped into the renderer's. Section gaps and the `critical`
+     not-assessed markers used to go only into blockers. */
+  it('renders the readiness run\'s own gaps, at their recorded severity', () => {
+    const report = renderReport(
+      baseInput({
+        summary: {
+          regulatory: {
+            artifactsAssessed: false,
+            missingArtifacts: [],
+            gaps: [
+              {
+                type: 'artifact',
+                code: 'ARTIFACT_REQUIREMENTS_NOT_MODELLED',
+                title: 'Artifact requirements not assessed',
+                severity: 'critical',
+                message: 'This score reflects section completeness only.',
+              },
+              { type: 'section', code: 'SECTION_INCOMPLETE', title: 'Module 2.5 incomplete', severity: 'important', message: '' },
+              { type: 'section', code: 'SECTION_THIN', title: 'Module 1.2 is thin', severity: 'recommended', message: 'Consider expanding.' },
+            ],
+          },
+        },
+      }),
+    );
+    const gapList = sectionById(report.sections, 'gaps')?.blocks.find(b => b.kind === 'gap-list');
+    expect(gapList?.kind).toBe('gap-list');
+    if (gapList?.kind === 'gap-list') {
+      expect(gapList.items).toEqual([
+        {
+          title: 'Artifact requirements not assessed',
+          severity: 'critical',
+          message: 'This score reflects section completeness only.',
+        },
+        { title: 'Module 2.5 incomplete', severity: 'high' },
+        { title: 'Module 1.2 is thin', severity: 'medium', message: 'Consider expanding.' },
+      ]);
+    }
+    expect(JSON.stringify(report)).not.toContain('No gaps detected');
   });
 
   it('renders gaps from regulatory.missingArtifacts', () => {

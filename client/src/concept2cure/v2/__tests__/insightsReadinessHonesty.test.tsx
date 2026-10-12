@@ -35,7 +35,7 @@ const program = (code: string, readiness: number | null) => ({
   status: 'partial', riskLevel: 'medium', criticalBlockerCount: 0, pdufa: null,
 });
 
-function overview(leadReadiness: number | null) {
+function overview(leadReadiness: number | null, leadCriticalBlockers = 0) {
   return {
     data: {
       organizationId: 1,
@@ -43,7 +43,8 @@ function overview(leadReadiness: number | null) {
       segments: ['biotech'],
       leadProgram: {
         projectId: 1, code: 'BX204', label: 'BX204', filing: null, indication: null,
-        readiness: leadReadiness, scope: 'program', scopeId: '1', agency: null, pdufa: null, criticalBlockerCount: 0,
+        readiness: leadReadiness, scope: 'program', scopeId: '1', agency: null, pdufa: null,
+        criticalBlockerCount: leadCriticalBlockers,
       },
       // As the overview sends it to an entitled organisation (insights-canvas-routes.ts).
       portfolio: { entitled: true, requiredTier: 'enterprise', summary: null, programs: [program('BX204', 80), program('ZX9', null)] },
@@ -52,11 +53,13 @@ function overview(leadReadiness: number | null) {
 }
 
 let lead: number | null = null;
+let leadCriticalBlockers = 0;
 beforeEach(() => {
   lead = null;
+  leadCriticalBlockers = 0;
   apiRequest.mockReset();
   apiRequest.mockImplementation((_m: string, url: string) =>
-    url.includes('/api/insights-canvas/overview') ? ok(overview(lead)) : ok({}),
+    url.includes('/api/insights-canvas/overview') ? ok(overview(lead, leadCriticalBlockers)) : ok({}),
   );
 });
 afterEach(() => cleanup());
@@ -84,5 +87,43 @@ describe('Insights — readiness that was not computed', () => {
     const meta = document.querySelector('.ro-dash-head .ro-rep-meta')?.textContent ?? '';
     expect(meta).toMatch(/avg readiness 80%/);
     expect(meta).toMatch(/1 not computed/);
+  });
+});
+
+/* HS-1008-1, honest-state review 2026-10-08.
+   `evaluateReadiness` scores section completion alone when the filing type has
+   no resolved required-artifact matrix — most of the application registry —
+   and raises a `critical` gap saying so. The run reaches this canvas as
+   readiness 100 with criticalBlockerCount 1 and status 'missing', and the
+   opener read "BX204 is 100% ready". The count was fetched, typed and copied
+   into ProgramCtx, and never rendered anywhere on the surface.
+
+   This is the refuse-to-accept trap stated as reassurance: a sponsor who
+   believes the dossier is complete because the canvas said 100% files, and is
+   refused on a requirement the tool never claimed to have checked. */
+describe('Insights — a readiness figure carrying outstanding critical gaps', () => {
+  beforeEach(() => {
+    lead = 100;
+    leadCriticalBlockers = 1;
+  });
+
+  it('does not call the program ready, and states the gap count instead', async () => {
+    await renderCanvas();
+    const opener = document.querySelector('.rc-opener')?.textContent ?? '';
+    expect(opener).toMatch(/100%/);
+    expect(opener).toMatch(/1 critical gap outstanding/);
+    expect(opener).not.toMatch(/100% ready/);
+    expect(opener).not.toMatch(/\bis ready\b/);
+  });
+
+  it('qualifies the figure on the regional comparison line too', async () => {
+    await renderCanvas();
+    const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+    fireEvent.change(composer, { target: { value: 'compare FDA and EMA markets for harmonization' } });
+    fireEvent.keyDown(composer, { key: 'Enter' });
+    await waitFor(() => expect(document.querySelector('.ro-dash-progline')).not.toBeNull());
+    const line = document.querySelector('.ro-dash-progline')?.textContent ?? '';
+    expect(line).toMatch(/100%/);
+    expect(line).toMatch(/1 critical gap outstanding/);
   });
 });

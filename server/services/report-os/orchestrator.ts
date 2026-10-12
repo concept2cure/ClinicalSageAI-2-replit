@@ -309,6 +309,28 @@ export async function computeInitialRun(
           requiredArtifacts: readiness.artifactReadiness.required,
           presentArtifacts: readiness.artifactReadiness.present,
           missingArtifacts: readiness.artifactReadiness.missing.slice(0, 8),
+          /* WHETHER THE ARTIFACT HALF WAS ASSESSED AT ALL.
+             `missingArtifacts` is `[]` both for a filing whose required
+             artifacts are all present and for one this repo has no matrix for
+             — and the second is the common case (9 matrices against the
+             application registry). The renderer read the empty list as "no
+             gaps" and printed, and sealed, "No gaps detected as of <ts>" over
+             an assessment that never ran. `evaluateReadiness` already knows
+             which it was; it just never travelled. */
+          artifactsAssessed: readiness.artifactReadiness.assessed !== false,
+          /* THE RUN'S OWN GAP LIST, so the gaps section can be the gaps.
+             Before this only `missingArtifacts` reached the renderer, so
+             section gaps and the evaluator's `critical` not-assessed markers
+             appeared as blockers and were then contradicted by "No gaps
+             detected" in the same document. Not truncated: a gap list capped
+             without saying so is the same defect one step further on. */
+          gaps: readiness.gaps.map(gap => ({
+            type: gap.type,
+            code: gap.code,
+            title: gap.title,
+            severity: gap.severity,
+            message: gap.message,
+          })),
           regionalWarnings: readiness.regionalWarnings,
         };
 
