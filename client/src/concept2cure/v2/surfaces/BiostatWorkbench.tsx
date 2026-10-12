@@ -41,6 +41,8 @@ import { useSurfaceActionHandlers } from '../surfaceActions';
 import {
   CALCULATORS,
   buildRequestBody,
+  calculatorEndpoint,
+  calculatorResultKey,
   initialValues,
   isFieldVisible,
   type Calculator,
@@ -76,14 +78,28 @@ interface Defensibility {
   };
 }
 
-async function readData<T = any>(path: string, body: unknown): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
+/**
+ * POST and read the result out of the envelope the server used.
+ *
+ * `resultKey` exists because the two routers this surface drives answer
+ * differently: `/api/biostat` sends `{success, data}` and
+ * `/api/diagnostics-performance` sends `{result}`. Reading the wrong key
+ * yields null, which this surface renders as "Calculation failed" — a refusal
+ * where a result was returned. One parameter, declared per calculator in
+ * `biostatCalculators.ts`, rather than two copies of this function.
+ */
+async function readData<T = any>(
+  path: string,
+  body: unknown,
+  resultKey: 'data' | 'result' = 'data',
+): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
   try {
     const res = await apiRequest('POST', path, body);
     const parsed = (await res.json().catch(() => null)) as any;
     return {
       ok: res.ok,
       status: res.status,
-      data: (parsed?.data ?? null) as T | null,
+      data: (parsed?.[resultKey] ?? null) as T | null,
       // Servers here report failures as { error } or { message }; surfacing the
       // server's own words beats a generic "calculation failed", because the
       // usual cause is a domain constraint the form cannot check locally (an
@@ -136,15 +152,32 @@ function fmt(v: number): string {
 type Row = [string, string];
 
 /**
+ * Keys whose value EXPLAINS AN ABSENCE, and so is rendered whatever its length.
+ *
+ * The 120-character cap below exists to keep a long memo (external-control's
+ * renderExternalControlMemo) out of the row table and in the raw view. That is
+ * right for a memo and wrong for the one kind of string a reader cannot do
+ * without. The interim engine reports conditional power under H1 as
+ * `{drift: null, conditionalPower: null, reason: '<148 characters>'}` when no
+ * design effect was supplied — deliberately, rather than defaulting a drift
+ * nobody chose. The null yielded no row and the sentence was over the cap, so
+ * the H1 figure vanished from the table with no explanation anywhere on
+ * screen: a refusal rendered as nothing, which this product forbids.
+ */
+const EXPLAINS_ABSENCE = new Set(['reason', 'note', 'notAssessedReason', 'notComputedReason']);
+
+/**
  * Flatten a result object into labeled scalar rows, descending into nested
  * objects. Arrays of numbers are joined; anything else is left to the raw view
  * so nothing is quietly dropped.
  */
-function scalarRows(value: unknown, prefix = '', depth = 0): Row[] {
+function scalarRows(value: unknown, prefix = '', depth = 0, key = ''): Row[] {
   if (depth > 3 || value === null || value === undefined) return [];
   if (typeof value === 'number') return [[prefix || 'value', Number.isFinite(value) ? fmt(value) : String(value)]];
   if (typeof value === 'boolean') return [[prefix || 'value', value ? 'yes' : 'no']];
-  if (typeof value === 'string') return value.length <= 120 ? [[prefix || 'value', value]] : [];
+  if (typeof value === 'string') {
+    return value.length <= 120 || EXPLAINS_ABSENCE.has(key) ? [[prefix || 'value', value]] : [];
+  }
   if (Array.isArray(value)) {
     if (value.every(v => typeof v === 'number')) {
       return [[prefix, (value as number[]).map(fmt).join(', ')]];
@@ -156,7 +189,7 @@ function scalarRows(value: unknown, prefix = '', depth = 0): Row[] {
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       // Provenance is a reproducibility record, not a result; it has its own row.
       if (k === 'provenance') continue;
-      out.push(...scalarRows(v, prefix ? `${prefix} · ${humanize(k)}` : humanize(k), depth + 1));
+      out.push(...scalarRows(v, prefix ? `${prefix} · ${humanize(k)}` : humanize(k), depth + 1, k));
     }
     return out;
   }
@@ -294,7 +327,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
     }
     setBusy(true);
     try {
-      const res = await readData(`/api/biostat${calc.path}`, body);
+      const res = await readData(calculatorEndpoint(calc), body, calculatorResultKey(calc));
       if (generation !== calculationGeneration.current) return;
       if (!res.ok || res.data === null) {
         setResultNotice('Calculation failed. Compute again before inserting a result into a document.');
@@ -496,7 +529,7 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
       summary: `Biostatistics workbench, "${active.title}" selected — ${active.subtitle}.`,
       facts: {
         calculatorId: active.id,
-        endpoint: `/api/biostat${active.path}`,
+        endpoint: calculatorEndpoint(active),
         computes: active.about,
         requiredInputs: active.fields.filter(f => !f.optional).map(f => f.label),
         optionalInputs: active.fields.filter(f => f.optional).map(f => f.label),

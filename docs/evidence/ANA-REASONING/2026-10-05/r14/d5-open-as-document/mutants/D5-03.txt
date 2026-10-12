@@ -1,0 +1,7 @@
+mutant D5-03: the unfinished flag is dropped, so a stopped answer may be filed
+verdict: KILLED
+Tests  1 failed | 7 passed (8)
+
+ × client/src/concept2cure/v2/__tests__/conversationThreadInsertRefusals.test.tsx > the conversation’s "Open as document" applies the same rule (round 14, SEC-A-7 door 5) > fails closed on a turn this page was not told about, and on one that did not finish 516ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
