@@ -1,0 +1,4 @@
+{
+  "_comment": "Guard-before-creator pairs that are genuinely required. Every entry MUST carry a `reason`; ci:migration-guard-order fails on one that does not, because an unexplained entry is what this file exists to prevent.",
+  "entries": []
+}
