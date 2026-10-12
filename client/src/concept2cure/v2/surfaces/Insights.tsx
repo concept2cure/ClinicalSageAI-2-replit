@@ -970,13 +970,12 @@ function reportHeading(report: RenderedReport): { fam: { label?: string; region?
   return { fam: RO_FAMILY[report.family ?? ''] || {}, scope: report.scopeLabel ?? 'This program' };
 }
 
-function ROReport({ report, onExport, onFinalize, seal, compact, runId }: {
+function ROReport({ report, onExport, onFinalize, seal, runId }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
   /** Offered only to a role that may finalize, on a run that is not final. */
   onFinalize?: () => void;
   seal?: ReportSeal | null;
-  compact?: boolean;
   /** The governed run behind the report, when there is one. It unlocks the
    *  evidence disclosure: GET /runs/:id/seal re-verifies the sealing act and
    *  GET /runs/:id/dependencies says what the run read. Both were callable all
@@ -988,7 +987,15 @@ function ROReport({ report, onExport, onFinalize, seal, compact, runId }: {
   if (!report) return null;
   const { fam, scope } = reportHeading(report);
   const stTone = report.status === 'final' ? 'ok' : report.status === 'partial' ? 'warn' : 'idle';
-  const sections = compact ? report.sections.slice(0, 2) : report.sections;
+  /* Every section, always. A `compact` prop used to truncate this to
+     `sections.slice(0, 2)` with no note, and suppress the actions and the
+     evidence disclosure with it — so the first two sections of a GOVERNED
+     report would have rendered as the report, silently, the moment any caller
+     passed it. No caller ever did (the single call site omits it), and the
+     working agreement's answer for an unreachable path whose replacement is the
+     full view at that same call site is to remove it rather than leave a second
+     dormant branch to be switched on by accident (coverage review S-3). */
+  const sections = report.sections;
   return (
     <div className="ro-report">
       <div className="ro-rep-head">
@@ -1010,8 +1017,8 @@ function ROReport({ report, onExport, onFinalize, seal, compact, runId }: {
           <div className="ro-sec-body">{sec.blocks.map((b, i) => <ROBlock key={i} block={b} />)}</div>
         </section>
       ))}
-      {!compact && <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} />}
-      {!compact && runId != null && <RunEvidence runId={runId} />}
+      <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} />
+      {runId != null && <RunEvidence runId={runId} />}
     </div>
   );
 }
