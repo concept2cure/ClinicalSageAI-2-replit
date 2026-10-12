@@ -126,7 +126,23 @@ interface ProgramContext {
  * program. The read is org-filtered: a scope this organization does not own is
  * not found, never an empty assessment of it.
  */
-async function readProgramContext(organizationId: number, projectId: number): Promise<ProgramContext> {
+/** A json column that may arrive as text, as its object or as nothing. */
+function jsonObject(value: unknown): Record<string, unknown> {
+  let parsed = value;
+  if (typeof parsed === 'string') {
+    try { parsed = JSON.parse(parsed); } catch { parsed = null; }
+  }
+  return (parsed && typeof parsed === 'object' && !Array.isArray(parsed))
+    ? (parsed as Record<string, unknown>)
+    : {};
+}
+
+/** A trimmed string field, or '' when absent or of another type. */
+const strField = (meta: Record<string, unknown>, key: string): string =>
+  typeof meta[key] === 'string' ? (meta[key] as string).trim() : '';
+
+/** This program's own record, or a refusal. Org-filtered: another organization's is not found. */
+async function readProjectMetadata(organizationId: number, projectId: number): Promise<Record<string, unknown>> {
   const { rows } = await pool.query(
     `SELECT metadata FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
     [projectId, organizationId],
@@ -134,28 +150,17 @@ async function readProgramContext(organizationId: number, projectId: number): Pr
   if (rows.length === 0) {
     throw new RegionalNotComputed('This program was not found in this organization, so no market readiness was assessed.');
   }
-  let metadata = (rows[0] as { metadata: unknown }).metadata;
-  if (typeof metadata === 'string') {
-    try { metadata = JSON.parse(metadata); } catch { metadata = null; }
-  }
-  const meta = (metadata && typeof metadata === 'object' && !Array.isArray(metadata))
-    ? (metadata as Record<string, unknown>)
-    : {};
-  const rawRegistryId = typeof meta.registryId === 'string' ? meta.registryId.trim() : '';
-  const rawSubmissionType = typeof meta.submissionType === 'string' ? meta.submissionType.trim() : '';
-  const registryId = rawRegistryId || (rawSubmissionType ? resolveRegistryId(rawSubmissionType) : null);
-  if (!registryId) {
-    throw new RegionalNotComputed(
-      'This program records no registry context (registryId or submissionType), so the filing it is being assessed for is not known and no market readiness was assessed.',
-    );
-  }
-  const entry = getApplicationType(registryId);
+  return jsonObject((rows[0] as { metadata: unknown }).metadata);
+}
+
+/** The modelled application kind for a registry entry, or a refusal naming what IS modelled. */
+function modelledKindOf(registryId: string, label: string): { kind: ApplicationKind; jurisdiction: ModeledJurisdiction } {
   const kind = REGISTRY_TO_KIND[registryId];
   if (!kind) {
-    const label = entry?.displayName ?? registryId;
+    const modelled = MODELED_JURISDICTIONS.map((j) => `${j} ${REGIONAL_MODULE1[j].kinds.join('/')}`).join(', ');
     throw new RegionalNotComputed(
-      `The Module 1 record models ${MODELED_JURISDICTIONS.map((j) => `${j} ${REGIONAL_MODULE1[j].kinds.join('/')}`).join(', ')}. ` +
-        `This program is recorded as ${label}, which has no Module 1 record here, so its Module 1 content was not assessed.`,
+      `The Module 1 record models ${modelled}. This program is recorded as ${label}, ` +
+        'which has no Module 1 record here, so its Module 1 content was not assessed.',
     );
   }
   const jurisdiction = jurisdictionOfKind(kind);
@@ -164,14 +169,31 @@ async function readProgramContext(organizationId: number, projectId: number): Pr
     // an edit to either list fails loudly instead of defaulting to a tree.
     throw new RegionalNotComputed(`No Module 1 record models a ${kind} filing, so its Module 1 content was not assessed.`);
   }
-  const applicationNumber = typeof meta.applicationNumber === 'string' ? meta.applicationNumber.trim() : '';
+  return { kind, jurisdiction };
+}
+
+async function readProgramContext(organizationId: number, projectId: number): Promise<ProgramContext> {
+  const meta = await readProjectMetadata(organizationId, projectId);
+  const recordedType = strField(meta, 'submissionType');
+  const registryId = strField(meta, 'registryId') || (recordedType ? resolveRegistryId(recordedType) : null);
+  if (!registryId) {
+    throw new RegionalNotComputed(
+      'This program records no registry context (registryId or submissionType), so the filing it is being assessed for is not known and no market readiness was assessed.',
+    );
+  }
+  const entry = getApplicationType(registryId);
+  const entryLabel = entry?.displayName ?? registryId;
+  const { kind, jurisdiction } = modelledKindOf(registryId, entryLabel);
   return {
     registryId,
-    entryLabel: entry?.displayName ?? registryId,
+    entryLabel,
     kind,
     jurisdiction,
     agency: entry?.agency ?? jurisdiction,
-    continuingLifecycle: applicationNumber.length > 0,
+    /* An agency-assigned number means the filing is this application's
+       continuing lifecycle, not a new one — the only fact the market offer
+       reads beyond the market itself (market-support.ts MarketInput). */
+    continuingLifecycle: strField(meta, 'applicationNumber').length > 0,
   };
 }
 
@@ -201,13 +223,7 @@ async function readRecordedCodes(organizationId: number, projectId: number): Pro
     if (code) codes.add(code);
   };
   for (const row of sectionRows.rows as Array<{ section_id: unknown; metadata: unknown }>) {
-    let metadata = row.metadata;
-    if (typeof metadata === 'string') {
-      try { metadata = JSON.parse(metadata); } catch { metadata = null; }
-    }
-    const meta = (metadata && typeof metadata === 'object' && !Array.isArray(metadata))
-      ? (metadata as Record<string, unknown>)
-      : {};
+    const meta = jsonObject(row.metadata);
     add(meta.sectionCode);
     add(meta.code);
     add(row.section_id);
@@ -273,15 +289,11 @@ async function readDeclared(typeId: string): Promise<Declared> {
     throw new RegionalNotComputed(`${typeId} is not in the deployed report type registry, so no market readiness was assessed.`);
   }
   const row = rows[0] as { label: unknown; governance_requirements: unknown; data_dependencies: unknown };
-  const asJson = (v: unknown): unknown => {
-    if (typeof v !== 'string') return v;
-    try { return JSON.parse(v); } catch { return null; }
-  };
-  const governance = asJson(row.governance_requirements);
-  const region = (governance && typeof governance === 'object' && !Array.isArray(governance))
-    ? (governance as Record<string, unknown>).region
-    : null;
-  const deps = asJson(row.data_dependencies);
+  const region = jsonObject(row.governance_requirements).region;
+  let deps = row.data_dependencies;
+  if (typeof deps === 'string') {
+    try { deps = JSON.parse(deps); } catch { deps = null; }
+  }
   return {
     label: typeof row.label === 'string' ? row.label : null,
     region: typeof region === 'string' ? region : null,
@@ -315,6 +327,274 @@ const PARTIAL_DEPENDENCIES: Readonly<Record<string, string>> = Object.freeze({
     'so this market assessment examines Module 1 and does not examine Modules 2–5.',
 });
 
+/** One type's market binding, as {@link REGIONAL_FILING_TYPES} holds it. */
+type Binding = (typeof REGIONAL_FILING_TYPES)[string];
+
+/**
+ * The type's DECLARED region must be the market this module's binding reads.
+ *
+ * A taxonomy edit that moves a type to another region without moving it here
+ * would otherwise assess the old market's Module 1 under the new market's
+ * title. The run-time check catches it one run at a time; the paired test
+ * catches it in CI against both the taxonomy source and the deployed seed.
+ */
+function assertTypeMarket(typeId: string, binding: Binding, declared: Declared): void {
+  const fromTaxonomy = declared.region ? REGION_TO_JURISDICTION[declared.region] : undefined;
+  if (fromTaxonomy !== binding.jurisdiction) {
+    throw new RegionalNotComputed(
+      `${declared.label ?? typeId} declares region ${declared.region ?? 'none'}, which is not the ` +
+        `${binding.jurisdiction} Module 1 record this assessment reads. No market readiness was assessed.`,
+    );
+  }
+}
+
+/**
+ * The project id this assessment runs over, or a refusal.
+ *
+ * Project scope only, and said so rather than guessed. The report-os scope
+ * model passes a project id under `submission` scope as well
+ * (orchestrator.ts), but only `project` scope is checked for this
+ * organization's ownership before the engine runs, and a submission id that
+ * collided with one of this organization's project ids would be assessed as
+ * that project. A program scope is a group of projects, each with its own
+ * market, which is not one market's readiness.
+ */
+function oneProgramScope(scopeType: string, scopeId: string): number {
+  if (scopeType !== 'project') {
+    throw new RegionalNotComputed(
+      `A market's filing readiness is assessed for one program, not for a ${scopeType} scope, so it was not run here.`,
+    );
+  }
+  const projectId = Number(scopeId);
+  if (!Number.isFinite(projectId) || projectId <= 0) {
+    throw new RegionalNotComputed('This scope does not name a program, so no market readiness was assessed.');
+  }
+  return projectId;
+}
+
+/**
+ * The program must be filing in this report's market, and be the filing it
+ * names.
+ *
+ * This is the j8 defect one level down: a report titled "FDA NDA / BLA Filing
+ * Readiness" computed for a program recorded as an EU MAA is a market readiness
+ * nothing assessed for that market.
+ */
+function assertProgramMarket(typeId: string, binding: Binding, declared: Declared, ctx: ProgramContext): void {
+  const label = declared.label ?? typeId;
+  if (ctx.jurisdiction !== binding.jurisdiction) {
+    throw new RegionalNotComputed(
+      `${label} assesses a ${binding.jurisdiction} filing. This program is recorded as ${ctx.entryLabel}, ` +
+        'so its readiness for that market was not assessed under this market\u2019s name.',
+    );
+  }
+  if (!binding.kinds.includes(ctx.kind)) {
+    throw new RegionalNotComputed(
+      `${label} assesses a ${binding.kinds.join(' or ')} filing. This program is recorded as ${ctx.entryLabel}, ` +
+        'so it was not assessed under this report\u2019s name.',
+    );
+  }
+}
+
+/**
+ * One market's filing readiness for one program.
+ *
+ * `declaredByCaller` is the report type's registry row when the caller already
+ * holds it; without it the row is read here ({@link readDeclared}). Either way
+ * every declared `dataDependencies` entry this engine does not answer in full
+ * becomes its own provider observation with the reason, so nothing the type
+ * promised is silently absent from the run's evidence.
+ */
+/** One phase's provider rows and the blockers they raise. */
+interface Observations {
+  providers: ProviderResult[];
+  blockers: string[];
+  criticalBlockers: string[];
+}
+
+/** What `requiredModule1` said, with each heading's own title to hand. */
+interface Module1Assessment {
+  required: string[];
+  undetermined: Array<{ code: string; condition: string }>;
+  headingTitle: Map<string, string>;
+  missingRequired: string[];
+  /** False when nothing in the program records a CTD code, so nothing was matched. */
+  assessed: boolean;
+}
+
+/** `US Module 1 1.3.1 Product information`, or as much of it as is known. */
+const headingLine = (ctx: ProgramContext, a: Module1Assessment, code: string): string =>
+  `${ctx.jurisdiction} Module 1 ${code} ${a.headingTitle.get(code) ?? ''}`.trim();
+
+/**
+ * The Module 1 half: what this market requires of this filing, and what the
+ * program records under it.
+ *
+ * A required heading with no document is a CRITICAL blocker — the sequence is
+ * incomplete against the agency's own heading table — and is named individually
+ * so the report says which. A heading conditional on a fact nobody stated is a
+ * blocker but NOT critical: it may well not apply once the fact is stated
+ * (`requiredModule1`'s own contract, which never returns "not required" for an
+ * unstated condition).
+ */
+function module1Observations(ctx: ProgramContext, a: Module1Assessment): Observations {
+  const providers: ProviderResult[] = [];
+  const blockers: string[] = [];
+  const criticalBlockers: string[] = [];
+
+  if (!a.assessed) {
+    /* No section and no artifact of this program records a CTD code. That is the
+       absence of a RECORD of where its content sits, not the absence of content:
+       reporting every required heading as missing would turn an unrecorded
+       program into a damning gap list. */
+    const blocker =
+      'Module 1 coverage was not assessed: no section or governed document of this program records a CTD section code, ' +
+      `so nothing could be matched against the ${a.required.length} ${ctx.jurisdiction} Module 1 heading(s) ` +
+      `a ${ctx.kind.toUpperCase()} requires.`;
+    providers.push({ provider: 'module1_content', observedAt: now(), status: 'missing', blocker });
+    blockers.push(blocker);
+  } else {
+    const missing = a.missingRequired.length;
+    const present = a.required.length - missing;
+    providers.push({
+      provider: 'module1_content',
+      observedAt: now(),
+      status: missing === 0 ? 'ready' : present > 0 ? 'partial' : 'missing',
+      ...(missing > 0
+        ? {
+            blocker:
+              `${missing} of ${a.required.length} required ${ctx.jurisdiction} Module 1 heading(s) ` +
+              'have no document recorded under them.',
+          }
+        : {}),
+    });
+    for (const code of a.missingRequired) {
+      const line = `${headingLine(ctx, a, code)}: required for this filing, and no document is recorded under it.`;
+      blockers.push(line);
+      criticalBlockers.push(line);
+    }
+  }
+
+  for (const u of a.undetermined) {
+    blockers.push(
+      `${headingLine(ctx, a, u.code)}: required only if ${u.condition.replace(/_/g, ' ')} holds, ` +
+        'and that is not recorded for this program.',
+    );
+  }
+  providers.push({
+    provider: 'module1_applicability',
+    observedAt: now(),
+    status: a.undetermined.length === 0 ? 'ready' : 'partial',
+    ...(a.undetermined.length > 0
+      ? { blocker: `${a.undetermined.length} Module 1 heading(s) are conditional on a fact this program does not record.` }
+      : {}),
+  });
+  return { providers, blockers, criticalBlockers };
+}
+
+/** The market half: what the platform can carry for this filing, in the market's own words. */
+function marketObservations(market: MarketSupport | null): Observations {
+  if (!market) {
+    const blocker =
+      'The market statement could not be read, so what this platform can carry for this filing is not stated here.';
+    return {
+      providers: [{ provider: 'market_support', observedAt: now(), status: 'missing', blocker }],
+      blockers: [blocker],
+      criticalBlockers: [],
+    };
+  }
+  const blockers: string[] = [];
+  const notOffered = market.offer.tier === 'not_offered';
+  const providers: ProviderResult[] = [{
+    provider: 'market_support',
+    observedAt: now(),
+    status: notOffered ? 'missing' : market.buildable ? 'ready' : 'partial',
+    ...(notOffered ? { blocker: market.offer.reason } : {}),
+  }];
+  if (notOffered) blockers.push(market.offer.reason);
+  /* Buildable is the narrow claim: an outline AND Module 1 built to the agency's
+     own headings. Everywhere else the packager files Module 1 flat or reuses
+     another region's backbone, and that is a limit of the FILING, not of the
+     assessment, so it is stated as a blocker on the run. */
+  if (!market.buildable) blockers.push(market.module1.detail);
+  return { providers, blockers, criticalBlockers: [] };
+}
+
+/**
+ * Everything the type declared that this engine does not answer in full,
+ * disclosed rather than left to read as assessed-and-clear. A part answered is a
+ * `partial` row naming the part; nothing answered is a `missing` row.
+ */
+function declaredObservations(declared: Declared): Observations {
+  const providers: ProviderResult[] = [];
+  const blockers: string[] = [];
+  for (const dep of declared.dataDependencies ?? []) {
+    if (COMPUTED_DEPENDENCIES.has(dep)) continue;
+    const part = PARTIAL_DEPENDENCIES[dep];
+    const blocker = part
+      ? `${dep.replace(/_/g, ' ')}: ${part}`
+      : `${dep.replace(/_/g, ' ')}: not computed by this assessment, ` +
+        "which reads this market's Module 1 content and the market statement only.";
+    providers.push({ provider: dep, observedAt: now(), status: part ? 'partial' : 'missing', blocker });
+    blockers.push(blocker);
+  }
+  return { providers, blockers, criticalBlockers: [] };
+}
+
+/** The run's own record of what it assessed, for the renderer and the evidence panel. */
+function regionalSummary(
+  ctx: ProgramContext,
+  a: Module1Assessment,
+  market: MarketSupport | null,
+  scope: { scopeType: string; scopeId: string; recordedCodeCount: number },
+): Record<string, unknown> {
+  const spec = REGIONAL_MODULE1[ctx.jurisdiction].spec;
+  return {
+    scopeType: scope.scopeType,
+    scopeId: scope.scopeId,
+    market: {
+      jurisdiction: ctx.jurisdiction,
+      agency: ctx.agency,
+      registryId: ctx.registryId,
+      filing: ctx.entryLabel,
+      applicationKind: ctx.kind,
+      /* The specification the heading numbers and titles come from, so the
+         report's own numbering can be re-audited without re-deriving it. */
+      module1Spec: spec.ref,
+      module1SpecConfidence: spec.confidence,
+      ...(market
+        ? {
+            line: market.line,
+            summary: market.summary,
+            offer: market.offer,
+            buildable: market.buildable,
+            module1Shape: market.module1.state,
+            module1Detail: market.module1.detail,
+            outline: market.outline.state,
+            outlinePack: market.outline.pack,
+            channel: market.channel.state,
+          }
+        : {}),
+    },
+    module1: {
+      assessed: a.assessed,
+      requiredHeadings: a.required.length,
+      coveredHeadings: a.assessed ? a.required.length - a.missingRequired.length : null,
+      /* Null, not [], when nothing was matched: an empty list is "none missing",
+         which is the opposite of what an unassessed program means. */
+      missingHeadings: a.assessed
+        ? a.missingRequired.map((code) => ({ code, title: a.headingTitle.get(code) ?? null }))
+        : null,
+      undetermined: a.undetermined.map((u) => ({
+        code: u.code,
+        title: a.headingTitle.get(u.code) ?? null,
+        condition: u.condition,
+      })),
+      recordedCodeCount: scope.recordedCodeCount,
+    },
+  };
+}
+
 /**
  * One market's filing readiness for one program.
  *
@@ -334,191 +614,37 @@ export async function computeRegionalRun(
   const binding = REGIONAL_FILING_TYPES[typeId];
   if (!binding) throw new RegionalNotComputed(`No market readiness is computed for ${typeId}.`);
   const declared = declaredByCaller ?? (await readDeclared(typeId));
-
-  /* The type's declared region decides the market, and this module's binding
-     must agree with it. A taxonomy edit that moves a type to another region
-     without moving it here would otherwise assess the old market's Module 1
-     under the new market's title. */
-  const fromTaxonomy = declared.region ? REGION_TO_JURISDICTION[declared.region] : undefined;
-  if (fromTaxonomy !== binding.jurisdiction) {
-    throw new RegionalNotComputed(
-      `${declared.label ?? typeId} declares region ${declared.region ?? 'none'}, which is not the ${binding.jurisdiction} Module 1 record this assessment reads. No market readiness was assessed.`,
-    );
-  }
-
-  /* Project scope only, and said so rather than guessed. The report-os scope
-     model passes a project id under `submission` scope as well
-     (orchestrator.ts), but only `project` scope is checked for this
-     organization's ownership before the engine runs, and a submission id that
-     collided with one of this organization's project ids would be assessed as
-     that project. A program scope is a group of projects, each with its own
-     market, which is not one market's readiness. */
-  if (scopeType !== 'project') {
-    throw new RegionalNotComputed(
-      `A market's filing readiness is assessed for one program, not for a ${scopeType} scope, so it was not run here.`,
-    );
-  }
-  const projectId = Number(scopeId);
-  if (!Number.isFinite(projectId) || projectId <= 0) {
-    throw new RegionalNotComputed('This scope does not name a program, so no market readiness was assessed.');
-  }
+  assertTypeMarket(typeId, binding, declared);
+  const projectId = oneProgramScope(scopeType, scopeId);
 
   const ctx = await readProgramContext(organizationId, projectId);
-  if (ctx.jurisdiction !== binding.jurisdiction) {
-    throw new RegionalNotComputed(
-      `${declared.label ?? typeId} assesses a ${binding.jurisdiction} filing. This program is recorded as ${ctx.entryLabel}, ` +
-        'so its readiness for that market was not assessed under this market’s name.',
-    );
-  }
-  if (!binding.kinds.includes(ctx.kind)) {
-    throw new RegionalNotComputed(
-      `${declared.label ?? typeId} assesses a ${binding.kinds.join(' or ')} filing. This program is recorded as ${ctx.entryLabel}, so it was not assessed under this report’s name.`,
-    );
-  }
+  assertProgramMarket(typeId, binding, declared, ctx);
 
-  const providers: ProviderResult[] = [];
-  const blockers: string[] = [];
-  const criticalBlockers: string[] = [];
-
-  const spec = REGIONAL_MODULE1[ctx.jurisdiction].spec;
   const { required, undetermined } = requiredModule1(ctx.jurisdiction, ctx.kind);
-  const headingTitle = new Map(flattenModule1(ctx.jurisdiction, ctx.kind).map((h) => [h.number, h.title]));
   const codes = await readRecordedCodes(organizationId, projectId);
-
-  const missingRequired = required.filter((code) => !covered(codes, code));
-  const presentRequired = required.length - missingRequired.length;
-  const assessed = codes.size > 0;
-
-  if (!assessed) {
-    /* No section and no artifact of this program records a CTD code. That is the
-       absence of a RECORD of where its content sits, not the absence of content:
-       reporting every required heading as missing would turn an unrecorded
-       program into a damning gap list. */
-    const blocker =
-      `Module 1 coverage was not assessed: no section or governed document of this program records a CTD section code, ` +
-      `so nothing could be matched against the ${required.length} ${ctx.jurisdiction} Module 1 heading(s) a ${ctx.kind.toUpperCase()} requires.`;
-    providers.push({ provider: 'module1_content', observedAt: now(), status: 'missing', blocker });
-    blockers.push(blocker);
-  } else {
-    providers.push({
-      provider: 'module1_content',
-      observedAt: now(),
-      status: missingRequired.length === 0 ? 'ready' : presentRequired > 0 ? 'partial' : 'missing',
-      ...(missingRequired.length > 0
-        ? {
-            blocker: `${missingRequired.length} of ${required.length} required ${ctx.jurisdiction} Module 1 heading(s) have no document recorded under them.`,
-          }
-        : {}),
-    });
-    /* A required Module 1 heading with no document is a filing blocker: the
-       sequence is incomplete against the agency's own heading table. Named
-       individually so the report says which, with the heading's own title. */
-    for (const code of missingRequired) {
-      const line = `${ctx.jurisdiction} Module 1 ${code} ${headingTitle.get(code) ?? ''}`.trim() +
-        ': required for this filing, and no document is recorded under it.';
-      blockers.push(line);
-      criticalBlockers.push(line);
-    }
-  }
-
-  /* A condition nobody has stated is a gap to resolve, never "not required"
-     (requiredModule1's own contract). It is not critical: the heading may well
-     not apply once the fact is stated. */
-  for (const u of undetermined) {
-    blockers.push(
-      `${ctx.jurisdiction} Module 1 ${u.code} ${headingTitle.get(u.code) ?? ''}`.trim() +
-        `: required only if ${u.condition.replace(/_/g, ' ')} holds, and that is not recorded for this program.`,
-    );
-  }
-  providers.push({
-    provider: 'module1_applicability',
-    observedAt: now(),
-    status: undetermined.length === 0 ? 'ready' : 'partial',
-    ...(undetermined.length > 0
-      ? { blocker: `${undetermined.length} Module 1 heading(s) are conditional on a fact this program does not record.` }
-      : {}),
-  });
-
+  const assessment: Module1Assessment = {
+    required,
+    undetermined,
+    headingTitle: new Map(flattenModule1(ctx.jurisdiction, ctx.kind).map((h) => [h.number, h.title])),
+    missingRequired: required.filter((code) => !covered(codes, code)),
+    assessed: codes.size > 0,
+  };
   const market = await readMarket(ctx);
-  if (!market) {
-    const blocker = 'The market statement could not be read, so what this platform can carry for this filing is not stated here.';
-    providers.push({ provider: 'market_support', observedAt: now(), status: 'missing', blocker });
-    blockers.push(blocker);
-  } else {
-    const notOffered = market.offer.tier === 'not_offered';
-    providers.push({
-      provider: 'market_support',
-      observedAt: now(),
-      status: notOffered ? 'missing' : market.buildable ? 'ready' : 'partial',
-      ...(notOffered ? { blocker: market.offer.reason } : {}),
-    });
-    if (notOffered) blockers.push(market.offer.reason);
-    /* Buildable is the narrow claim: an outline AND Module 1 built to the
-       agency's own headings. Everywhere else the packager files Module 1 flat or
-       reuses another region's backbone, and that is a limit of the filing, not
-       of the assessment, so it is stated as a blocker on the run. */
-    if (!market.buildable) blockers.push(market.module1.detail);
-  }
 
-  /* Everything the type declared that this engine does not answer in full,
-     disclosed rather than left to read as assessed-and-clear. A part answered is
-     a `partial` row naming the part; nothing answered is a `missing` row. */
-  for (const dep of declared.dataDependencies ?? []) {
-    if (COMPUTED_DEPENDENCIES.has(dep)) continue;
-    const part = PARTIAL_DEPENDENCIES[dep];
-    const blocker = part
-      ? `${dep.replace(/_/g, ' ')}: ${part}`
-      : `${dep.replace(/_/g, ' ')}: not computed by this assessment, which reads this market's Module 1 content and the market statement only.`;
-    providers.push({ provider: dep, observedAt: now(), status: part ? 'partial' : 'missing', blocker });
-    blockers.push(blocker);
-  }
-
+  const phases = [
+    module1Observations(ctx, assessment),
+    marketObservations(market),
+    declaredObservations(declared),
+  ];
   return {
-    providers,
+    providers: phases.flatMap((o) => o.providers),
+    /* Nothing here measures a confidence, so none is reported and the
+       truthfulness gate holds every run of these types at `partial` with its own
+       sentence. See this module's header for why that is the right ceiling
+       rather than a taxonomy edit. */
     confidence: null,
-    blockers,
-    criticalBlockers,
-    summary: {
-      scopeType,
-      scopeId,
-      market: {
-        jurisdiction: ctx.jurisdiction,
-        agency: ctx.agency,
-        registryId: ctx.registryId,
-        filing: ctx.entryLabel,
-        applicationKind: ctx.kind,
-        /* The specification the heading numbers and titles come from, so the
-           report's own numbering can be re-audited without re-deriving it. */
-        module1Spec: spec.ref,
-        module1SpecConfidence: spec.confidence,
-        ...(market
-          ? {
-              line: market.line,
-              summary: market.summary,
-              offer: market.offer,
-              buildable: market.buildable,
-              module1Shape: market.module1.state,
-              module1Detail: market.module1.detail,
-              outline: market.outline.state,
-              outlinePack: market.outline.pack,
-              channel: market.channel.state,
-            }
-          : {}),
-      },
-      module1: {
-        assessed,
-        requiredHeadings: required.length,
-        coveredHeadings: assessed ? presentRequired : null,
-        missingHeadings: assessed
-          ? missingRequired.map((code) => ({ code, title: headingTitle.get(code) ?? null }))
-          : null,
-        undetermined: undetermined.map((u) => ({
-          code: u.code,
-          title: headingTitle.get(u.code) ?? null,
-          condition: u.condition,
-        })),
-        recordedCodeCount: codes.size,
-      },
-    },
+    blockers: phases.flatMap((o) => o.blockers),
+    criticalBlockers: phases.flatMap((o) => o.criticalBlockers),
+    summary: regionalSummary(ctx, assessment, market, { scopeType, scopeId, recordedCodeCount: codes.size }),
   };
 }

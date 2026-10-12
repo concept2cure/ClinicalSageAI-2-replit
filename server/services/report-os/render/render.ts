@@ -360,67 +360,74 @@ function marketBlocks(market: Record<string, unknown>): ReportBlock[] {
   return blocks;
 }
 
-function marketSection(market: Record<string, unknown>, module1: Record<string, unknown> | null): ReportSection {
-  const blocks: ReportBlock[] = [];
-  const required = typeof module1?.requiredHeadings === 'number' ? module1.requiredHeadings : null;
-  const covered = typeof module1?.coveredHeadings === 'number' ? module1.coveredHeadings : null;
-  const assessed = module1?.assessed === true;
+/** A heading row's `code` and `title`, each only when the summary recorded one. */
+function headingCells(entry: unknown): [string | null, string | null] {
+  const row = asRecord(entry) ?? {};
+  return [
+    typeof row.code === 'string' ? row.code : null,
+    typeof row.title === 'string' ? row.title : null,
+  ];
+}
 
-  if (!assessed) {
+/** The coverage half: the figure and the headings with no document, or neither. */
+function module1CoverageBlocks(module1: Record<string, unknown> | null): ReportBlock[] {
+  const required = typeof module1?.requiredHeadings === 'number' ? module1.requiredHeadings : null;
+  if (module1?.assessed !== true) {
     /* Not a zero and not a gap list: nothing in the program recorded a CTD code,
        so no heading was matched either way (filing-readiness.ts). A count here
        would read as a measurement. */
-    blocks.push({
-      kind: 'summary',
-      text:
-        'Module 1 coverage was not assessed: no section or governed document of this program records a CTD section code, ' +
-        `so nothing could be matched against the ${required ?? 0} heading(s) this filing requires.`,
-    });
-    blocks.push({ kind: 'metric', label: 'Required Module 1 headings covered', value: null, status: 'missing' });
-  } else {
-    blocks.push({
+    return [
+      {
+        kind: 'summary',
+        text:
+          'Module 1 coverage was not assessed: no section or governed document of this program records a CTD section code, ' +
+          `so nothing could be matched against the ${required ?? 0} heading(s) this filing requires.`,
+      },
+      { kind: 'metric', label: 'Required Module 1 headings covered', value: null, status: 'missing' },
+    ];
+  }
+  const covered = typeof module1.coveredHeadings === 'number' ? module1.coveredHeadings : 0;
+  const missing = Array.isArray(module1.missingHeadings) ? module1.missingHeadings : [];
+  return [
+    {
       kind: 'metric',
       label: 'Required Module 1 headings covered',
-      value: covered ?? 0,
+      value: covered,
       ...(required != null ? { unit: `of ${required}` } : {}),
-    });
-    const missing = Array.isArray(module1?.missingHeadings) ? module1.missingHeadings : [];
-    blocks.push(
-      missing.length === 0
-        ? { kind: 'summary', text: 'Every required Module 1 heading has a document recorded under it.' }
-        : {
-            kind: 'table',
-            columns: ['Heading', 'Title', 'State'],
-            rows: missing.map((h) => {
-              const row = asRecord(h) ?? {};
-              return [
-                typeof row.code === 'string' ? row.code : null,
-                typeof row.title === 'string' ? row.title : null,
-                'No document recorded',
-              ];
-            }),
-          },
-    );
-  }
+    },
+    missing.length === 0
+      ? { kind: 'summary', text: 'Every required Module 1 heading has a document recorded under it.' }
+      : {
+          kind: 'table',
+          columns: ['Heading', 'Title', 'State'],
+          rows: missing.map((h) => [...headingCells(h), 'No document recorded']),
+        },
+  ];
+}
 
-  /* A conditional heading whose fact nobody stated is its own line, never
-     "not required" (requiredModule1's contract). */
+/**
+ * The conditional half: a heading whose fact nobody stated is its own "Required
+ * if" row, never "not required" (requiredModule1's contract).
+ */
+function module1ConditionalBlocks(module1: Record<string, unknown> | null): ReportBlock[] {
   const undetermined = Array.isArray(module1?.undetermined) ? module1.undetermined : [];
-  if (undetermined.length > 0) {
-    blocks.push({
-      kind: 'table',
-      columns: ['Heading', 'Title', 'Required if'],
-      rows: undetermined.map((u) => {
-        const row = asRecord(u) ?? {};
-        return [
-          typeof row.code === 'string' ? row.code : null,
-          typeof row.title === 'string' ? row.title : null,
-          typeof row.condition === 'string' ? row.condition.replace(/_/g, ' ') : null,
-        ];
-      }),
-    });
-  }
-  return { id: 'market-module1', title: 'Module 1 content for this market', blocks };
+  if (undetermined.length === 0) return [];
+  return [{
+    kind: 'table',
+    columns: ['Heading', 'Title', 'Required if'],
+    rows: undetermined.map((u) => {
+      const condition = asRecord(u)?.condition;
+      return [...headingCells(u), typeof condition === 'string' ? condition.replace(/_/g, ' ') : null];
+    }),
+  }];
+}
+
+function marketSection(module1: Record<string, unknown> | null): ReportSection {
+  return {
+    id: 'market-module1',
+    title: 'Module 1 content for this market',
+    blocks: [...module1CoverageBlocks(module1), ...module1ConditionalBlocks(module1)],
+  };
 }
 
 /**
@@ -490,7 +497,7 @@ export function renderReport(input: RenderInput): RenderedReport {
 
   sections.push({ id: 'executive-summary', title: 'Executive summary', blocks: execBlocks });
   if (domain) sections.push(domainSection(domain));
-  if (market) sections.push(marketSection(market, module1 ?? null));
+  if (market) sections.push(marketSection(module1 ?? null));
 
   // 2. Provider readiness.
   const providerRows: Array<Array<string | number | null>> = input.providers.map(p => [
