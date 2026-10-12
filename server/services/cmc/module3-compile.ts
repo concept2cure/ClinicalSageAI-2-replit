@@ -22,6 +22,7 @@ import { createSourceHash } from '../cmc-module3-compiler';
 import { composeModule3FromCanonicalSources, type CanonicalSource, type ComposedSection } from '../module3Composer';
 import { composeAppendices, composeRegional, emittableAppendices } from '../module3-extensions';
 import { regionCodeForPrimaryRegion, resolveSubmissionSpine } from './submission-spine';
+import { applicationNotReadable, CompositionOutOfScopeError, compositionRefusal } from './composition-scope';
 
 /** A client that can run queries — a pg PoolClient, or anything shaped like one. */
 export type Queryable = Pick<PoolClient, 'query'>;
@@ -67,27 +68,72 @@ export async function resolveProjectRegional(
   client: Queryable,
   orgId: number,
   projectId: string,
-): Promise<{ region: 'US' | 'EU' | 'JP' | 'CA' | null; applicationType: string | null }> {
+): Promise<{
+  region: 'US' | 'EU' | 'JP' | 'CA' | null;
+  /** What the linked submission files, or null when there is no spine. */
+  applicationType: string | null;
+  /** The program's own declared type, which is NOT NULL on a readable row. */
+  programType: string | null;
+  /** The product class the person recorded on the program (P-21). */
+  productType: string | null;
+}> {
   const prog = await client.query(
-    `SELECT id, program_type AS "programType", product_name AS "productName", name, code
+    `SELECT id, program_type AS "programType", product_type AS "productType",
+            product_name AS "productName", name, code
        FROM regulatory_programs
       WHERE id = $1 AND organization_id = $2`,
     [projectId, orgId],
   );
   const p = prog.rows[0] as
-    | { id: string; programType: string | null; productName: string | null; name: string | null; code: string | null }
+    | {
+        id: string;
+        programType: string | null;
+        productType: string | null;
+        productName: string | null;
+        name: string | null;
+        code: string | null;
+      }
     | undefined;
-  if (!p) return { region: null, applicationType: null };
+  if (!p) return { region: null, applicationType: null, programType: null, productType: null };
   /* Run the spine reads on the CALLER'S connection. This function is reached
      from composeProjectModule3, which the compile route calls with an open
      transaction — taking a second pooled connection here is what stalled that
-     transaction under a saturated pool. */
-  const spine = await resolveSubmissionSpine(
-    { programId: p.id, programType: p.programType, productName: p.productName, title: p.name, programCode: p.code },
-    orgId,
-    client,
-  );
-  return { region: regionCodeForPrimaryRegion(spine?.primaryRegion), applicationType: spine?.applicationType ?? null };
+     transaction under a saturated pool.
+
+     Under a savepoint, because resolveSubmissionSpine swallows its own lookup
+     failures and returns "no spine" — so a statement of its own that fails
+     (an absent table, a timeout) leaves the caller's transaction aborted while
+     reporting nothing. The program's own fields are already read above and
+     stand either way: the spine is consulted for the REGION, and it can never
+     disagree about the application type, since findProgramSubmission only ever
+     matches a submission whose application_type equals the program's
+     program_type. */
+  await client.query('SAVEPOINT m3_spine');
+  let spine: Awaited<ReturnType<typeof resolveSubmissionSpine>> = null;
+  try {
+    spine = await resolveSubmissionSpine(
+      { programId: p.id, programType: p.programType, productName: p.productName, title: p.name, programCode: p.code },
+      orgId,
+      client,
+    );
+    await client.query('RELEASE SAVEPOINT m3_spine');
+  } catch (spineErr) {
+    await client.query('ROLLBACK TO SAVEPOINT m3_spine').catch(() => undefined);
+    console.warn(
+      '[module3-compile] submission spine read failed; no 3.2.R region resolved:',
+      spineErr instanceof Error ? spineErr.message : String(spineErr),
+    );
+  }
+  return {
+    region: regionCodeForPrimaryRegion(spine?.primaryRegion),
+    applicationType: spine?.applicationType ?? null,
+    /* Reported alongside the spine's, because a program need only have no
+       `submissions` row yet for the spine to resolve null — and the program's
+       own declared type is what the composition boundary then judges
+       (composition-scope.ts). */
+    programType: p.programType,
+    productType: p.productType,
+  };
 }
 
 /**
@@ -110,6 +156,31 @@ export async function composeProjectModule3(
   const sources = await loadCanonicalSources(client, orgId, projectId);
   if (sources.length === 0) return { sources, sections: [] };
 
+  /* ── The composition boundary, BEFORE anything is composed ───────────────
+     What this platform composes is small-molecule Module 3 for a US IND
+     (composition-scope.ts). The spine read has to happen first, because it is
+     what establishes the application type the boundary judges — and a failed
+     statement aborts the caller's transaction even when caught, so it runs
+     under its own savepoint. A spine that cannot be read is a refusal, not a
+     shrug: it is what says this program files an IND and not an NDA. */
+  await client.query('SAVEPOINT m3_scope');
+  let regional: Awaited<ReturnType<typeof resolveProjectRegional>>;
+  try {
+    regional = await resolveProjectRegional(client, orgId, projectId);
+    await client.query('RELEASE SAVEPOINT m3_scope');
+  } catch (spineErr) {
+    await client.query('ROLLBACK TO SAVEPOINT m3_scope').catch(() => undefined);
+    const detail = spineErr instanceof Error ? spineErr.message : String(spineErr);
+    console.warn('[module3-compile] submission spine unreadable; composition refused:', detail);
+    throw new CompositionOutOfScopeError(applicationNotReadable(detail));
+  }
+
+  /* The program's own declared type, not the spine's: the spine can only
+     carry the same one (see resolveProjectRegional), and reaching for it would
+     make a failed spine read look like an unknown application. */
+  const refusal = compositionRefusal(sources, regional.programType, regional.productType);
+  if (refusal) throw new CompositionOutOfScopeError(refusal);
+
   let sections = composeModule3FromCanonicalSources(sources);
 
   /* An OPTIONAL appendix with no matched source is not emitted at all —
@@ -126,17 +197,16 @@ export async function composeProjectModule3(
      same spine identity the eCTD compile runs against. No spine, or a market
      with no generator → nothing composed: an honest gap beats a guessed
      region's regional form in a filing. */
-  /* Inside the caller's transaction a failed statement aborts the whole
-     transaction even when caught — so the regional read runs under a
-     savepoint, and a failure rolls back to it rather than poisoning the
-     section writes that follow. */
-  await client.query('SAVEPOINT m3_regional');
+  /* The spine was already resolved for the boundary above, so the region is
+     not read twice. A composeRegional that throws is still SAID and skipped;
+     the core composition stands. */
   try {
-    const { region, applicationType } = await resolveProjectRegional(client, orgId, projectId);
-    if (region) sections = sections.concat(composeRegional(sources, region, { applicationType }));
-    await client.query('RELEASE SAVEPOINT m3_regional');
+    if (regional.region) {
+      sections = sections.concat(
+        composeRegional(sources, regional.region, { applicationType: regional.applicationType }),
+      );
+    }
   } catch (regionalErr) {
-    await client.query('ROLLBACK TO SAVEPOINT m3_regional').catch(() => undefined);
     console.warn('[module3-compile] regional (3.2.R) composition skipped:', regionalErr instanceof Error ? regionalErr.message : String(regionalErr));
   }
 

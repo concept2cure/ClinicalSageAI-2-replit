@@ -28,11 +28,12 @@ import { cdiscPrmStudies, concept2cureArtifacts, unifiedTasks } from '../../../s
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../c2c/program-project-anchor';
 import { recordGovernedAction } from '../../routes/c2c/actions';
-import { computationEngine } from '../ana-biostats/computation-engine';
+import { computationEngine, ComputationRefusal } from '../ana-biostats/computation-engine';
 import { judgmentEngine } from '../ana-biostats/judgment-engine';
 import type { ComputationResult, JudgmentResult, StatisticalDocumentType, StatisticalInput } from '../ana-biostats/types';
 import { STATS_ENGINE, STATS_ENGINE_VERSION, hashInputs } from '../stats/computation-provenance';
-import { recordComputationRun, SAMPLE_SIZE_METHOD } from '../stats/computation-runs';
+import { recordComputationRun, reproduceComputationRun, SAMPLE_SIZE_METHOD } from '../stats/computation-runs';
+import type { ReproductionResult } from '../stats/computation-runs';
 import {
   isUuid,
   loadStudyDesign,
@@ -81,6 +82,13 @@ export interface ProgramFilingContext {
   projectId: number | null;
 }
 
+/** The engine's refusal, as the wire carries it. */
+export interface DesignComputationRefusal {
+  code: 'missing_input' | 'not_supported' | 'invalid_input';
+  message: string;
+  field?: string;
+}
+
 export interface DesignAssessment {
   studyId: string;
   title: string;
@@ -88,6 +96,13 @@ export interface DesignAssessment {
   adapter: DesignAdapterResult;
   computation: ComputationResult | null;
   judgment: JudgmentResult | null;
+  /**
+   * Set when the engine declined to size this design, with its own sentence.
+   * `computation` and `judgment` are then null — a refusal never travels
+   * beside a figure. Null when the engine computed, or when the adapter's
+   * blocking gaps meant the engine was never called (`adapter.input` null).
+   */
+  refusal: DesignComputationRefusal | null;
   /** The design gates' report (ICH E9 / E9(R1) / E10 / E3), as /api/study-design returns it. */
   validation: DesignValidationReport;
   /** The reviewer's risk table and defensibility verdict, assembled from the gates and the engines. */
@@ -214,11 +229,43 @@ export async function existingBlueprintKeys(organizationId: number, studyId: str
   return keys;
 }
 
-function computeFor(adapter: DesignAdapterResult): { computation: ComputationResult | null; judgment: JudgmentResult | null; inputsSha256: string | null } {
-  if (!adapter.input) return { computation: null, judgment: null, inputsSha256: null };
-  const computation = computationEngine.compute(adapter.input);
-  const judgment = judgmentEngine.judge(adapter.input, computation);
-  return { computation, judgment, inputsSha256: hashInputs(adapter.input) };
+/**
+ * What the engines say about one adapted design — or, when the engine declines
+ * to produce a figure, WHY, in the engine's own words.
+ *
+ * Until 2026-10-11 this called `computationEngine.compute` with no catch, so a
+ * `ComputationRefusal` propagated out of `assessDesign`, through
+ * `server/routes/biostat-bridge.ts`, into `serverError` and reached the browser
+ * as **500 INTERNAL_ERROR, "Something went wrong while assessing the design."**
+ * The engine had said exactly what it needed and the read path threw the
+ * sentence away. (The IVD case never showed it, because the adapter blocks
+ * before the engine runs — but any design whose adapter yields an input the
+ * engine then refuses read as a server fault.)
+ *
+ * A refusal is not a fault: it is the assessment's answer, carried on
+ * `refusal` so the surface can render the sentence beside the inputs it
+ * refused, with no figure.
+ */
+function computeFor(adapter: DesignAdapterResult): {
+  computation: ComputationResult | null;
+  judgment: JudgmentResult | null;
+  inputsSha256: string | null;
+  refusal: DesignComputationRefusal | null;
+} {
+  if (!adapter.input) return { computation: null, judgment: null, inputsSha256: null, refusal: null };
+  try {
+    const computation = computationEngine.compute(adapter.input);
+    const judgment = judgmentEngine.judge(adapter.input, computation);
+    return { computation, judgment, inputsSha256: hashInputs(adapter.input), refusal: null };
+  } catch (err) {
+    if (!(err instanceof ComputationRefusal)) throw err;
+    return {
+      computation: null,
+      judgment: null,
+      inputsSha256: hashInputs(adapter.input),
+      refusal: { code: err.code, message: err.message, field: err.field },
+    };
+  }
 }
 
 /**
@@ -226,13 +273,42 @@ function computeFor(adapter: DesignAdapterResult): { computation: ComputationRes
  * design lacks, where its deliverables file, and which tasks that implies.
  * Nothing is written.
  */
+/**
+ * Re-run a stored computation and say whether it still produces what was filed.
+ *
+ * `reproduceComputationRun` (stats/computation-runs.ts) re-executes the engine
+ * on a run's STORED inputs and compares the hash of the result with the hash
+ * stored at the time, plus the integrity of the stored inputs and outputs
+ * against their own hashes. It answers the two questions a sponsor gets asked
+ * under statistical defence — *"reproduce the planned sample size in your SAP
+ * from the inputs you filed"* and *"prove this N was not edited after it was
+ * computed"* — and it was reachable from nothing: no route, no tool, no client.
+ * `recordComputationRun` has been writing those rows since 2026-10-08
+ * (migrations/20261008f), so the records existed and could not be checked.
+ *
+ * Tenant-scoped: the run id is matched against the caller's organization in
+ * the query, so a run in another tenant reads as not found rather than as a
+ * failed reproduction.
+ */
+export async function reproduceSizingRun(
+  organizationId: number,
+  runId: number,
+): Promise<ReproductionResult> {
+  const client = await pool.connect();
+  try {
+    return await reproduceComputationRun(client, organizationId, runId);
+  } finally {
+    client.release();
+  }
+}
+
 export async function assessDesign(organizationId: number, studyId: string): Promise<DesignAssessment | null> {
   const loaded = await loadStudyDesign(studyId, organizationId);
   if (!loaded) return null;
   const { design, validation } = loaded;
 
   const adapter = studyDesignToStatisticalInput(design);
-  const { computation, judgment, inputsSha256 } = computeFor(adapter);
+  const { computation, judgment, inputsSha256, refusal } = computeFor(adapter);
   const review = buildStatisticalReview({ validation, judgment, computation, input: adapter.input, gaps: adapter.gaps });
   const filing = await programFilingContext(organizationId, design.programId);
   const [existingDeliverables, existingTaskKeys] = await Promise.all([
@@ -257,6 +333,7 @@ export async function assessDesign(organizationId: number, studyId: string): Pro
     adapter,
     computation,
     judgment,
+    refusal,
     validation,
     review,
     provenance: { engine: STATS_ENGINE, engineVersion: STATS_ENGINE_VERSION, inputsSha256, reproducible: true },

@@ -214,6 +214,7 @@ import {
 } from './agentic-tool-dispatch.js';
 import { modelCallRefusal } from '../ai-gateway/model-call-scope.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
+import { interviewClientType } from './intelligence-questions/client-segment.js';
 import { HIDDEN_APP_TOOLS, anaCapabilityInLaunchScope } from './ana-launch-scope';
 import { launchScopeEnforced } from '../entitlements/launch-scope';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
@@ -5339,6 +5340,34 @@ function toBiostatsInput(input: Record<string, unknown>, ctx?: ToolContext): Rec
 const NEEDS_PARAMS_MESSAGE =
   'The biostatistics engine could not compute — required parameters are missing or invalid. Ask the user for exactly the fields listed in errors, then call the tool again.';
 
+/**
+ * A refusal from the computation engine is not a failure of the tool.
+ *
+ * Since 2026-10-05 the engine throws `ComputationRefusal` rather than
+ * substituting a silent default: a hazard ratio of 0.5 for an effect ≥ 1, an
+ * 0.85 performance goal, a crossover correlation of 0.5. Reported as
+ * `{ error: "… failed: …" }` the assistant tells the user the computation
+ * broke, when what happened is that it needs one more input — so it is
+ * reported as `needs_parameters`, carrying the engine's own sentence and the
+ * field it names, which is what the user has to supply.
+ *
+ * Matched on `name`, not `instanceof`: the class is defined in the engine
+ * module, and these handlers reach it through a dynamic import.
+ */
+function biostatsRefusal(err: unknown): string | null {
+  const e = err as { name?: unknown; code?: unknown; message?: unknown; field?: unknown };
+  if (e?.name !== 'ComputationRefusal') return null;
+  return JSON.stringify({
+    status: 'needs_parameters',
+    engine: 'deterministic',
+    code: typeof e.code === 'string' ? e.code : 'missing_input',
+    field: typeof e.field === 'string' ? e.field : undefined,
+    message: typeof e.message === 'string' ? e.message : NEEDS_PARAMS_MESSAGE,
+    instruction:
+      'The engine refused to compute and said why. Ask the user for the field it names; do not estimate it, and do not report this as a failure.',
+  });
+}
+
 // Compute Sample Size — deterministic biostatistics engine (validated formulas)
 registerToolHandler('compute_sample_size', async (input: Record<string, unknown>, ctx) => {
   try {
@@ -5385,6 +5414,8 @@ registerToolHandler('compute_sample_size', async (input: Record<string, unknown>
         'Report these numbers verbatim. Do NOT recompute or round differently. State which assumptions were defaults (prefilledDefaults) so the user can override them.',
     });
   } catch (err: any) {
+    const refusal = biostatsRefusal(err);
+    if (refusal) return refusal;
     return JSON.stringify({ error: `Sample size computation failed: ${err?.message || 'unknown error'}` });
   }
 });
@@ -5877,6 +5908,8 @@ registerToolHandler('compare_statistical_scenarios', async (input: Record<string
       instruction: 'Report both scenarios\' engine-computed N and power and the recommendation verbatim.',
     });
   } catch (err: any) {
+    const refusal = biostatsRefusal(err);
+    if (refusal) return refusal;
     return JSON.stringify({ error: `Scenario comparison failed: ${err?.message || 'unknown error'}` });
   }
 });
@@ -5912,6 +5945,8 @@ registerToolHandler('assess_statistical_defensibility', async (input: Record<str
       instruction: 'Report the verdict, per-dimension scores and escalation reasons verbatim. Do not soften or invent scores.',
     });
   } catch (err: any) {
+    const refusal = biostatsRefusal(err);
+    if (refusal) return refusal;
     return JSON.stringify({ error: `Defensibility assessment failed: ${err?.message || 'unknown error'}` });
   }
 });
@@ -5983,6 +6018,8 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
         'Present this as a DRAFT grounded in the deterministic engine. The numbers in the content are engine-computed — do not alter them. The user promotes it through the governed authoring flow; do not claim it is filed or approved.',
     });
   } catch (err: any) {
+    const refusal = biostatsRefusal(err);
+    if (refusal) return refusal;
     return JSON.stringify({ error: `Statistical document generation failed: ${err?.message || 'unknown error'}` });
   }
 });
@@ -6280,6 +6317,8 @@ registerToolHandler('reconcile_extracted_figures', async (input: Record<string, 
       ),
     });
   } catch (err: any) {
+    const refusal = biostatsRefusal(err);
+    if (refusal) return refusal;
     const message = err?.message || 'unknown error';
     if (isStatsParamError(message)) {
       return JSON.stringify({ status: 'needs_parameters', message });
@@ -16203,6 +16242,8 @@ async function runStatsTool(
       instruction: STATS_VERBATIM,
     });
   } catch (err: any) {
+    const refusal = biostatsRefusal(err);
+    if (refusal) return refusal;
     const message = err?.message || 'unknown error';
     if (isStatsParamError(message)) {
       return JSON.stringify({ status: 'needs_parameters', message });
@@ -20043,7 +20084,7 @@ function intelligenceEngineContext(ctx?: ToolContext) {
     organizationId: ctx?.organizationId ?? null,
     userId: ctx?.userId ?? null,
     projectId: ctx?.projectId ? String(ctx.projectId) : null,
-    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+    clientType: interviewClientType(ctx?.projectType),
   };
 }
 

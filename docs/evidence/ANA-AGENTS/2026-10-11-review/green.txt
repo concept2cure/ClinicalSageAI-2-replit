@@ -1,0 +1,333 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/sub-agent-verifiers.test.ts
+{
+  "timestamp": "2026-10-11T23:51:37.776Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-11T23:51:37.777Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/sub-agent-verifiers.test.ts
+{
+  "timestamp": "2026-10-11T23:51:37.777Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/sub-agent-verifiers.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/sub-agent-verifiers.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/sub-agent-verifiers.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_grounding reader (real handler output) > never passes: every claim marked is still see_result, sources unopened 6ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_grounding reader (real handler output) > an unmarked figure fails (ungroundedClaims is an array, not a count) 4ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_grounding reader (real handler output) > no quantitative claim is not assessed 1ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_grounding reader (real handler output) > a handler error is an error 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_grounding reader (real handler output) > forged: claims counted but no claim list is an error, not a pass 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_numerical_integrity reader (real handler output) > every figure stated once is not assessed, though the handler says clean 5ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_numerical_integrity reader (real handler output) > a figure stated twice with one value passes 1ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_numerical_integrity reader (real handler output) > a figure stated twice with two values needs a reader 1ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_numerical_integrity reader (real handler output) > no labelled figure is not assessed 1ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_numerical_integrity reader (real handler output) > forged: clean with no labelsCompared, or an unknown verdict, is never a pass 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > a matching figure in another document passes, in the handler's own words 2ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > no other documents is not assessed, though the handler says clean 1ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > a short draft is not assessed (notCompared), not an error 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > a differing figure in another document is not a pass 1ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > forged: blocker and needs_review fail, minor_issues needs a reader 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > forged: clean with no draft figures, or over a truncated set, is not a pass 1ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > a failed read is an error 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > check_dossier_consistency reader (real handler output) > a skipped check says why, and is not assessed 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > aggregateVerdict > any fail is issues_found 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > aggregateVerdict > an error or a result needing a reader is inconclusive 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > aggregateVerdict > a pass with nothing worse is no_issues_found 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > aggregateVerdict > nothing compared is nothing_checkable, never clean 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentTraceStatus > keeps every mechanical status but success 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentTraceStatus > a completed agent succeeded whatever its verdict 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentTraceStatus > a budget stop is incomplete; a refusal is an error; a cancelled child is cancelled 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentTraceStatus > an unreadable or unknown result is never success 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > HARNESS_CHECKS > each is a registered tool 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentResultSummary > a failure after the agent had started says it did not finish, not that it never ran 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentResultSummary > a refusal before anything started says it did not run 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentResultSummary > a stop with no budget names what stopped it 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentResultSummary > a budget stop names the budget 0ms
+ ✓ server/services/ana/__tests__/sub-agent-verifiers.test.ts > agentResultSummary > a verify verdict says how many checks compared anything, so a bare verdict cannot overstate 0ms
+stdout | server/routes/ana-ri/__tests__/stream-run-agent.test.ts
+{
+  "timestamp": "2026-10-11T23:51:48.697Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-11T23:51:48.699Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-run-agent.test.ts
+{
+  "timestamp": "2026-10-11T23:51:48.699Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-run-agent.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (b) no run row > does not host: not offered, and no host if the model names it anyway
+[AnA RI Stream] run control unavailable: ana_runs is unavailable
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (a) a hosting turn > asks for run_agent, offers it, and lends the call a host 63ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (b) no run row > does not host: not offered, and no host if the model names it anyway 15ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (c) a tenant that denies run_agent > lends no host when the model names it 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (d) only run_agent is lent a host > another tool in the same step gets none, and no context carries a confirmation 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (e) the view, the record and provenance > the client and the next model call read no trace; provenance comes from the child 9ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (e) the view, the record and provenance > a failed agent adds no provenance (intended) 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > the child's report is not evidence; its tool results are 8ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > the checks' echo of the parent's own text is not evidence 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (f) the answer-grounding corpus (D19) > a kept child result is exactly what the child read: budgeted over its whole round 24ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (g) agent frames > go out as agent_event under the call's id, whatever the frame says, before the call's result 11ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (h) a child's pause > names the parent's round 10ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (i) a run row of another organization > does not host 7ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (j) incomplete is said plainly, and is not a failure for the model to work around 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (k) an incomplete agent keeps its provenance, and its telemetry row says the call ran 6ms
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent.test.ts > (j)-(l) an agent's own outcome > (l) a completed verify is a success whatever its verdict 6ms
+stdout | server/services/ana/__tests__/sub-agent.test.ts
+{
+  "timestamp": "2026-10-11T23:51:54.911Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-11T23:51:54.913Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/sub-agent.test.ts
+{
+  "timestamp": "2026-10-11T23:51:54.914Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/sub-agent.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/sub-agent.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/sub-agent.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > a child cannot start an agent (depth) 4ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > no live run, no agent 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > the switch: off when set false; off in production unless set true (ADR-0015 §2) 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: no scope is refused (D24) 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: the system scope '0' is refused (D24) 0ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: another tenant is refused (D24) 0ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > tenant: a host of another organization is refused 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > a blank text_to_check is refused up front (D5) 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > refusals start nothing > a verify agent with no checker offered is refused 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the child is governed > its tools get a read-only, model-refusing context with nothing of the parent spread in (D11) 15ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the child is governed > every child model call is high-risk review, under its own run id and the parent's, with no user and no pin of the parent's (D7) 8ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the child is governed > it is offered research tools the parent has, and nothing else: a write and run_agent are answered, not run 9ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > a verify agent: the verdict comes from the checks only > runs the checks on the text as given, read-only and model-refusing, before the child model 7ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayPolicyError', code: 'MODEL_NOT_APPROVED_FOR_HIGH_RISK' } gives AGENT_FAILED MODEL_NOT_APPROVED 3ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayModelDeclinedError' } gives AGENT_FAILED MODEL_DECLINED 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'GatewayPolicyError' } gives AGENT_FAILED RATE_OR_POLICY_LIMIT 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > { name: 'Error' } gives AGENT_FAILED ERROR 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > failures are a result, never a throw (D8, D9) > a failure after a call says it could not finish 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > caps > the seventh agent of a turn is refused, and a refusal changes no count 6ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > caps > the fifth in one round is refused; a later round may start 56ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > caps > an organization has at most 8 live agents per process; the next is busy 6ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > caps > the process has at most 10 live agents across organizations (ADR-0015 §5) 10ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the token budget stops the child, at most two calls past it (D23) 3ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the round limit stops the child as incomplete 6ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a pause before the start delays the first call; a run that will not resume starts nothing 23ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a run cancelled while the child waits between rounds is cancelled, not a time budget 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a hold that expires between rounds is cancelled, and says the run stayed paused 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a Stop mid-call is cancelled, not a failure 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > an expired hold stops the child, and says so 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > a call still running at the active-time limit is aborted: incomplete, time budget 5ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > budgets and the person's controls > the active-time timer excludes time held for a person 1ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > a child's failed or refused read is never a good step (review 2026-10-11) > a refused read is recorded not-ok, and is not evidence for the answer 16ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > a child's failed or refused read is never a good step (review 2026-10-11) > control: a real result is recorded ok, and is evidence 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > a child's own gateway calls are attributed to the child (review 2026-10-11) > a tool running inside the child sees the child run, with the parent named 2ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the record and the view > the full result keeps every step whole; the view drops the trace and keeps the outcome 4ms
+ ✓ server/services/ana/__tests__/sub-agent.test.ts > the record and the view > frames: started, then steps, then finished 1ms
+stdout | server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts
+{
+  "timestamp": "2026-10-11T23:52:00.241Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-11T23:52:00.242Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts
+{
+  "timestamp": "2026-10-11T23:52:00.242Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts
+Loaded 0 academic documents
+
+ ✓ server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts > run_agent, real, through the stream > the child's model call is governed and linked to the parent run, and its finished frame precedes the result 88ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > a tool with no entry reads "Running a step" live and "Ran a step" finished 4ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > labels come from the register, never from a tool name > the unknown-step words are the shared table's, both halves 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > a live step reads in the doing form, a finished one in the done form 25ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > a step that did not succeed keeps the doing form: a failed validation never reads "Validated" 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > tense > every verb has both forms, and they differ 11ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > previews the query beneath "Searched the Vault" 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > drops a value that looks like a uuid or a long hex string, keeps numbers 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > preview: one allow-listed field, never an id > caps a preview at 80 characters and never lets a double quote split the label 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a step with input {document_id:<uuid>} and result {authoringDocId:<uuid>} carries no uuid 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > counts are read from allow-listed numeric fields and nothing else 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a listing states the scope's total, not the page it returned; the Vault search counts its hits 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > redaction: facts come from allow-listed fields only (S3 test 1, server half) > a read states the Vault title and the characters it delivered 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > document titles (S3 test 5, presentation half) > names the document when the stream resolved its title, and reads generically when it did not 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > connected systems > one system searched reads as that system; the reasons are said in words, never as tool names 1ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > connected systems > several systems read as "connected" 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > true when the capture noted a generation, false when none, null when the handler ran elsewhere 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > usedModel is the generation capture, never a list (S3 test 6, presentation half) > a step whose handler made a generation says so, whatever the register claims 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > not_found (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > cancelled (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: true, why: declined) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > error (held back: true, why: no decision within the approval window) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > not_run (held back: false, why: manual hold) 0ms
+ ✓ server/services/ana/__tests__/step-presentation.test.ts > stepMessage: the one place a status sentence is written (§2.6) > success (held back: false, why: undefined) 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: 7, orgId: 7 } → true 2ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: 7, orgId: '7' } → true 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: '7', orgId: 7 } → true 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: undefined, runOrgId: 7, orgId: 7 } → false 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: '', runOrgId: 7, orgId: 7 } → false 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: null, orgId: 7 } → false 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: 7, orgId: null } → false 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > subAgentsHostable > { runId: 'run_1', runOrgId: 8, orgId: 7 } → false 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > the timeline keeps an agent's budget stop > reads 'incomplete' off the wire 2ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > the timeline keeps an agent's budget stop > still drops a status nobody sends 0ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > an agent ended by an expired pause does not credit the person > says the run stayed paused, not that the person stopped it 1ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > an agent ended by an expired pause does not credit the person > control: a person's Stop still reads as theirs 1ms
+ ✓ server/services/ana/__tests__/sub-agent-hostable.test.ts > an agent ended by an expired pause does not credit the person > the runner marks an expired hold on the result it returns 0ms
+stdout | server/services/ana/__tests__/sub-agent-toolset.test.ts
+{
+  "timestamp": "2026-10-11T23:52:03.009Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-11T23:52:03.011Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/sub-agent-toolset.test.ts
+{
+  "timestamp": "2026-10-11T23:52:03.011Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/sub-agent-toolset.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/sub-agent-toolset.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/sub-agent-toolset.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > project_knowledge_search is registered, classed read, and in launch scope 3ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_document_passages is registered, classed read, and in launch scope 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_project_documents is registered, classed read, and in launch scope 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > list_project_documents is registered, classed read, and in launch scope 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > list_vault_documents is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > read_vault_document is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > get_document_versions is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > list_governed_documents is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > read_governed_document is registered, classed read, and in launch scope 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > compare_vault_versions is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > lookup_ich_guideline is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > check_regulatory_currency is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > check_guidance_freshness is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_literature is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_clinical_evidence is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_drug_adverse_events is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_device_adverse_events is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > harness check check_grounding is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > harness check check_numerical_integrity is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > harness check check_dossier_consistency is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > never includes a tool that delegates, calls a model, checks for the agent, or reads a path 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > no input of any child tool or check names a path, a directory or a folder 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > childToolsFrom > is the research tools the parent was offered, and nothing the parent was not 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > childToolsFrom > a hosted tool is never offered to a child, even under a research name 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > childToolsFrom > a tool the tenant denied (absent from the parent set) is absent from the child set 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > run_agent itself > is registered under RUN_AGENT_TOOL, the name the run policy and the toolset read 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > source pins > the child never reads the tenant policy, the full tool list or a model override 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > source pins > the host carries no provider or model 1ms
+ ✓ server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a budget stop is incomplete, and says which budget 2ms
+ ✓ server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a completed verify with verdict inconclusive is a success 1ms
+ ✓ server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a completed verify with verdict nothing_checkable is a success 0ms
+ ✓ server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a completed verify with verdict issues_found is a success 0ms
+ ✓ server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > AGENT_FAILED is an error 0ms
+ ✓ server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > a person's Stop stays cancelled; mechanical errors pass through 0ms
+ ✓ server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > an unreadable success is incomplete, never success 0ms
+ ✓ server/services/ana/__tests__/tool-trace-agent.test.ts > buildTraceEntry for run_agent > other tools are untouched 0ms
+ ✓ server/services/ana/__tests__/tool-trace-agent.test.ts > formatTraceForContext > lists a budget-stopped agent on its own, not among attempts to retry 1ms
+ ✓ server/services/ana/__tests__/tool-trace-agent.test.ts > the run_agent step label (D21) > a quote inside the objective cannot open a second quoted span 1ms
+
+ Test Files  8 passed (8)
+      Tests  159 passed (159)
+   Start at  23:51:34
+   Duration  30.79s (transform 12.10s, setup 222ms, import 17.93s, tests 10.88s, environment 1ms)
+

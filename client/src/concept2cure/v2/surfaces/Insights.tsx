@@ -6,6 +6,7 @@ import { downloadBlob, safeFileName } from '../download';
 import { getOrgId } from '@/utils/authToken';
 import { useAuthUser } from '@/services/portal/authService';
 import { canFinalizeReport, canGovernedWrite } from '@shared/constants/permissions';
+import { readinessPredicate, readinessQualifier } from '@shared/regulatory/readiness-statement';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import type { EsigMeaning } from '../../hooks/useEsignature';
@@ -463,10 +464,20 @@ function roPortfolioFrom(programs: CanvasPortfolioProgram[]): PortfolioRow[] {
    segment. */
 function roSuggestForClient(p: ProgramCtx, seg: string, types: ReportType[]) {
   const preset: Preset | null = roPresetsForSeg(seg, types)[0] ?? null;
+  /* THE WORD "READY" IS NOT THE SERVER'S TO GIVE AWAY.
+     This read `${p.code} is ${p.readiness}% ready` off the score alone. For a
+     filing type with no resolved required-artifact matrix the score is section
+     completion only and the run carries a `critical` gap saying so, so a
+     project with every section drafted arrived as `readiness: 100,
+     criticalBlockerCount: 1, status: 'missing'` and the canvas opened with
+     "BX-204 is 100% ready" (HS-1008-1). That is the refuse-to-accept trap
+     stated as reassurance: the figure was right and the sentence was not.
+     `readinessPredicate` is the one place that decision is made — see
+     shared/regulatory/readiness-statement.ts. */
   const rBit = p.readiness == null
     ? (p.filing ? `${p.code} is in ${p.filing} preparation` : `${p.code}'s submission readiness is not yet computed`)
-    : `${p.code} is ${p.readiness}% ready`;
-  const pduBit = p.pdufa ? ` with a target action date of ${p.pdufa}` : '';
+    : `${p.code} ${readinessPredicate(p)}`;
+  const pduBit = p.pdufa ? ` Its target action date is ${p.pdufa}.` : '';
   /* The third prompt was "Run the audit assurance pack" or "Show the 510(k)
      equivalence matrix", chosen by the shell's segment preference: the 510(k)
      prompt was offered to a biologic program, and neither report has an engine
@@ -474,8 +485,8 @@ function roSuggestForClient(p: ProgramCtx, seg: string, types: ReportType[]) {
   return {
     headline: 'Build any governed report or dashboard — describe what you need.',
     body: preset
-      ? `${rBit}${pduBit}. The ${preset.label} is the standard starting pack for ${SEG_LABEL[seg] || seg} — it is not picked from the readiness figure above.`
-      : `${rBit}${pduBit}.`,
+      ? `${rBit}.${pduBit} The ${preset.label} is the standard starting pack for ${SEG_LABEL[seg] || seg} — it is not picked from the readiness figure above.`
+      : `${rBit}.${pduBit}`,
     preset,
     prompts: [
       ...(preset ? [`Build the ${preset.label}`] : []),
@@ -527,6 +538,58 @@ interface RenderedReport {
   status: string;
   truthfulness: { allowedStatus: string; downgradedFrom: string; reasons: string[] };
   sections: ROSection[];
+}
+
+/**
+ * Why a report is held at its status — the clause after "is held at <status>".
+ *
+ * PURE, and separate from the router so the sentence can be tested without
+ * driving the canvas (the idiom roPortfolioCovers set in this file).
+ *
+ * "Those are the gate's own reasons, verbatim" used to print over an empty
+ * list (HS-1008-3, honest-state review 2026-10-08). A run held at `partial` by
+ * outstanding blockers has `truthfulness.reasons == []`, because the gate
+ * records a reason only when it downgraded a status that was asked for. The
+ * reply read '"X" is held at partial because: . Those are the gate's own
+ * reasons, verbatim.' — naming no cause while claiming to quote one.
+ *
+ * So: quote whichever list the record actually holds, and say which list it is.
+ * When neither holds anything, say that, rather than introducing nothing as a
+ * quotation.
+ */
+export function roHeldBecause(reasons: string[], blockers: string[]): string {
+  const promote = 'Clear them and it can promote toward final; the status gate is deterministic.';
+  if (reasons.length) {
+    return `because: ${reasons.join('; ')}. Those are the gate's own reasons, verbatim. ${promote}`;
+  }
+  if (blockers.length) {
+    return (
+      `while these blockers stand: ${blockers.join('; ')}. The truthfulness gate ` +
+      `recorded no reason of its own — that is the run's blocker list, which is ` +
+      `what holds the status. ${promote}`
+    );
+  }
+  return (
+    'and neither the truthfulness gate nor the run records a cause. Nothing in ' +
+    'the governed record explains this status, so none is offered here.'
+  );
+}
+
+/**
+ * The report's own blockers, read off its rendered blockers section.
+ *
+ * The server builds that section from the run's `blockers` (render.ts), so this
+ * is the document's own list and not a second derivation of it. Absent when the
+ * run had none — the section is only pushed when it is non-empty.
+ */
+function roBlockersOf(rep: RenderedReport): string[] {
+  const section = (rep.sections || []).find(sec => sec.id === 'blockers');
+  if (!section) return [];
+  return (section.blocks || [])
+    .filter(b => b.kind === 'blocker-list')
+    .flatMap(b => (b.items || []).map(item => String(item)))
+    .map(item => item.trim())
+    .filter(Boolean);
 }
 
 
@@ -647,7 +710,8 @@ function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCt
     const rep = c.report;
     if (!rep) return { tool: name, question: true, text: 'Which report? Generate or open one and its blockers are listed here, straight from the server’s truthfulness gate.', chips: [['Executive Readiness Digest', `Generate the executive readiness digest for ${p.code}`]], report: null, dashboard: null };
     const reasons = (rep.truthfulness && rep.truthfulness.reasons) || [];
-    return { tool: name, text: `"${rep.reportTypeLabel}" is held at ${rep.status} because: ${reasons.join('; ')}. Those are the gate's own reasons, verbatim. Clear them and it can promote toward final; the status gate is deterministic.`, report: rep, dashboard: null };
+    const held = roHeldBecause(reasons, roBlockersOf(rep));
+    return { tool: name, text: `"${rep.reportTypeLabel}" is held at ${rep.status} ${held}`, report: rep, dashboard: null };
   }
   /* A forecast or CRL/RTF pre-mortem was the readiness run under a prediction's
      title, behind a Professional lock: no prediction model ran (reporting
@@ -985,7 +1049,11 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashb
         <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Global harmonization</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{m.length} markets</span></div></div></div>
         {prog.readiness != null && (
           <div className="ro-dash-progline">
-            Submission readiness <b>{prog.readiness}%</b> — a programme-level figure, not assessed per market.
+            {/* The bare percentage again (HS-1008-1): the same figure can carry
+                outstanding critical gaps, and a reader comparing markets has no
+                other place here to learn that. */}
+            Submission readiness <b>{prog.readiness}%</b>
+            {readinessQualifier(prog) ? <> — {readinessQualifier(prog)}</> : null} — a programme-level figure, not assessed per market.
           </div>
         )}
         <ROTable columns={['Requirement', ...m]} rows={tRows.map((r) => [r[0], ...m.map(() => r[1] ?? '--')])} />

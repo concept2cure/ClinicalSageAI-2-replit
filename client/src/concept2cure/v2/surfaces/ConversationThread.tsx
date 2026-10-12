@@ -32,6 +32,10 @@ import '../styles/project-home-v2.css';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { AnaMarkdown } from '../AnaMarkdown';
 import { AnaMessageWarnings } from '../AnaMessageWarnings';
+import { AnaQuestionCard } from '../AnaQuestionCard';
+/* The server's own fast path for a structured interview answer (stream.ts):
+   it skips the model entirely and hands the payload to the engine. */
+const INTELLIGENCE_ANSWER_PREFIX = '[INTELLIGENCE_ANSWER]';
 import { CrlPremortemPanel } from '../../components/ana/CrlPremortemPanel';
 import { AnaGrounding } from '../AnaGrounding';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
@@ -108,6 +112,12 @@ function toTurn(m: AnaChatMessage): CtTurn {
      * other place the prompt is drawn, is by definition not on screen.
      */
     warnings: nonEmpty(m.warnings),
+    /* The interview question this turn asked, if it asked one. The engine has
+       emitted these since the flows landed and nothing drew them, so the
+       positions AnA resolved never reached the screen. */
+    question: m.intelligenceQuestion,
+    questionSessionId: m.intelligenceSessionId ?? null,
+    questionFlowState: m.intelligenceFlowState,
     /* Drawn by the right rail until it was deleted, and dropped here: a steer
        AnA accepted, and the pre-mortem the turn assembled. */
     interjections: nonEmpty(m.interjections),
@@ -255,6 +265,28 @@ function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: Insert
   );
 }
 
+/** The interview question this turn asked, drawn as positions (AnaQuestionCard). */
+function TurnQuestion({
+  turn,
+  onAnswer,
+  busy,
+}: {
+  turn: CtTurn;
+  onAnswer?: (payload: Record<string, unknown>) => void;
+  busy?: boolean;
+}) {
+  if (!turn.question || !onAnswer) return null;
+  return (
+    <AnaQuestionCard
+      question={turn.question}
+      sessionId={turn.questionSessionId}
+      flowState={turn.questionFlowState}
+      busy={busy}
+      onAnswer={onAnswer}
+    />
+  );
+}
+
 interface AnaTurnProps {
   turn: CtTurn;
   onRefine: () => void;
@@ -266,6 +298,10 @@ interface AnaTurnProps {
   onContinue?: () => void;
   /** Opens this turn's Summary: the side panel at this turn, or the sheet on a phone (S4). */
   onSummary?: () => void;
+  /** Submits an interview answer by the server's own fast path (AnaQuestionCard). */
+  onAnswer?: (payload: Record<string, unknown>) => void;
+  /** A turn is in flight, so the card's submit waits. */
+  busy?: boolean;
   /** The document canvas beneath this turn, when the turn drafted a document. */
   canvas?: {
     conversationId: string | null;
@@ -321,7 +357,7 @@ function TurnSteersAndPremortem({ turn }: { turn: CtTurn }) {
   );
 }
 
-function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, canvas, insertTarget, after }: AnaTurnProps) {
+function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, onAnswer, busy, canvas, insertTarget, after }: AnaTurnProps) {
   const a = turn.activity;
   return (
     <div className="ct-turn ct-ana">
@@ -381,6 +417,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, ca
         {/* What went wrong around the answer (a failed save, a timeout), as
             the rail shows it: this screen showed none (row 74, ADR-0015 §9). */}
         <AnaMessageWarnings warnings={turn.warnings} />
+        <TurnQuestion turn={turn} onAnswer={onAnswer} busy={busy} />
         <TurnSteersAndPremortem turn={turn} />
         {/* What was checked about the answer, directly under it: the engine's
             check of its specific claims against this turn's sources, then
@@ -591,6 +628,10 @@ export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] 
       version: d.version,
       content: d.content,
       messageId: m.id,
+      /* The turn that wrote it, so the card applies the governed-write rule
+         before posting rather than taking a refusal from the server. */
+      turnRecord: m.turnRecord ?? null,
+      unfinished: answerUnfinished(m) || undefined,
       prov: { by: 'AnA', evidence: m.groundingSources || [] },
       /* Stated as what is KNOWN, not as a diagnosis. The server withholds
          `artifact_version_saved` for two different reasons — no project to file
@@ -633,6 +674,9 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
      moment a draft acquires a durable id this state is correctly discarded. */
   const [status, setStatus] = useState(art.status);
   const [busy, setBusy] = useState<null | 'docx' | 'review' | 'open'>(null);
+  /* One id per card, above any early return — round 13's defect was a shared
+     id, which described every refused control by the FIRST one's reason. */
+  const openRefusalId = `ct-open-refusal-${React.useId()}`;
 
   /* The '.docx' button used to be wired to an `onAdvance` the one mount passed
      as `() => undefined`, so it downloaded nothing. The endpoint it needed had
@@ -678,11 +722,33 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
     }
   };
 
+  /* Why "Open as document" is off, in the order the person needs to hear it.
+     The host's own two refusals come first — with no draft text or no project
+     there is nothing to file and nowhere to file it, whatever the rule says —
+     and then the governed-write rule, which this door reaches
+     POST /api/authoring/docs/from-draft with (round 14, SEC-A-7 door 5).
+     Before this, the rule was applied at the conversation's "Insert into open
+     section" (`anaInsertRefusal`, above) and NOT here, which was not a decision
+     anyone made: this door creates a whole governed document whose entire
+     content is model prose, so it is the stronger case of the two. The act is
+     'document' because that is what this control does; "inserted" would name
+     an act it does not perform. */
+  const openBlockedBecause = !art.content
+    ? 'There is no draft text to open.'
+    : !isProgramId(projectId)
+      ? 'Open a project first — a document is filed in one.'
+      : anaInsertRefusal(art.turnRecord, art.unfinished === true, 'document');
+
   /* The draft becomes a document in the editor's store and opens beside the
      conversation (draftToDocument.ts). This was "Edit", which went to the
      authoring workspace with no document, so the draft never reached it. */
   const openAsDocument = async () => {
-    if (busy || !onOpenAsDocument) return;
+    /* The refusal is checked again here, not only on the disabled button, as
+       the sibling insert offer does (`if (refusal) return`). The GE-P-3 family
+       is slated to move to `aria-disabled`, which leaves the control clickable;
+       a guard only on `disabled` would then post the very draft the rule
+       refuses. */
+    if (busy || !onOpenAsDocument || openBlockedBecause) return;
     setBusy('open');
     try {
       await onOpenAsDocument();
@@ -690,11 +756,6 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
       setBusy(null);
     }
   };
-  const openBlockedBecause = !art.content
-    ? 'There is no draft text to open.'
-    : isProgramId(projectId)
-      ? null
-      : 'Open a project first — a document is filed in one.';
 
   /* draft → review, through the governed transition route. The server owns the
      rules — VALID_TRANSITIONS and the per-role permission map — so a refusal is
@@ -851,7 +912,11 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
               aria-label={'Open ' + art.title + ' as a document in the editor'}
               onClick={openAsDocument}
               disabled={busy !== null || !onOpenAsDocument || openBlockedBecause !== null}
-              title={openBlockedBecause ?? undefined}
+              /* GE-P-3: the reason is text the control is described by, never a
+                 `title` — unreachable by keyboard, invisible on touch. Round 13
+                 fixed exactly this on the two sibling offers; this card kept
+                 the title. */
+              aria-describedby={openBlockedBecause ? openRefusalId : undefined}
             >
               {I.penLine} {busy === 'open' ? 'Opening…' : 'Open as document'}
             </button>
@@ -881,6 +946,17 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
               </button>
             )}
           </div>
+          {/* Classless with inline values, exactly as the sibling refusal reason
+              above is (`id={refusalId}`): these seven notes across the product
+              are slated to become one `RefusalNote` component, and a one-off
+              class for one of them would make that harder. The values are round
+              13's measured pair — see r14/d5-open-as-document/contrast.txt for
+              this card's own surface. */}
+          {openBlockedBecause && (
+            <p id={openRefusalId} style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-300)' }}>
+              {openBlockedBecause}
+            </p>
+          )}
           {/* Not repeated when the artifact's own note already says it — an
               unsaved draft carries the longer explanation, including what to do
               about it, a few lines above. */}
@@ -1768,6 +1844,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
                     onStartDemo={liveDrive?.onStartDemo}
                     onContinue={i === continueAt ? continueTurn : undefined}
                     onSummary={() => openSummary(anaChat.messages[i].id)}
+                    onAnswer={payload => { void sendTurn(`${INTELLIGENCE_ANSWER_PREFIX}${JSON.stringify(payload)}`); }}
+                    busy={anaChat.isStreaming}
                     insertTarget={insertTarget}
                     canvas={t.authoringDoc ? {
                       conversationId,

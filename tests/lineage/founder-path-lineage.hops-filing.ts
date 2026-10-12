@@ -168,14 +168,55 @@ function configureStubEsg(w: World): void {
  * freeze, dispatch and transmit, each on its own Part 11 sign by the approver
  * (separation of duties: the author created the sequence). Routes:
  * submissions.ts:890, :1674, :1690, :1718; c2c/actions.ts:777.
+ *
+ * Marking an ORIGINAL IND Validated also asks for its Module 3 (D2,
+ * 2026-10-11). This journey's sequence 0000 carries one clinical document, so
+ * the refusal is asserted and then cleared the second way 21 CFR 312.23(b)
+ * allows — a Drug Master File on the Module 1.4 register, its Letter of
+ * Authorization on file.
  */
 async function freezeDispatchTransmit(w: World): Promise<request.Response> {
   const seqId = w.k.sequenceId!;
   const as = (userId: number) => asPrincipal(ORG_A, userId);
-  for (const status of ['assembling', 'validated']) {
-    const t = await as(3)(request(w.app).post(`/api/submissions/sequences/${seqId}/transition`)).send({ status });
-    expect(t.status, JSON.stringify(t.body)).toBe(200);
+  const transition = (status: string) =>
+    as(3)(request(w.app).post(`/api/submissions/sequences/${seqId}/transition`)).send({ status });
+
+  const assembling = await transition('assembling');
+  expect(assembling.status, JSON.stringify(assembling.body)).toBe(200);
+
+  /* Since 2026-10-11 (D2, 4ad6118fc) Submission Readiness asks an ORIGINAL IND
+     for its Module 3 content: 21 CFR 312.23(a)(7). This journey files one
+     clinical document into 2.5, so sequence 0000 carries no 3.2.S or 3.2.P
+     leaf, and the product refuses to mark it Validated. That refusal is this
+     journey's subject too — it is asserted here, naming both headings, before
+     the journey takes the second route 21 CFR 312.23(b) allows. */
+  const refusedForModule3 = await transition('validated');
+  expect(refusedForModule3.status, JSON.stringify(refusedForModule3.body)).toBe(422);
+  for (const code of ['3.2.S', '3.2.P']) {
+    expect(JSON.stringify(refusedForModule3.body), `the refusal names ${code}`).toContain(code);
   }
+
+  /* The route the refusal itself names: record the Drug Master File that holds
+     the chemistry, naming the sections it covers, with its Letter of
+     Authorization on file (Module 1.4.1). This is the real service behind
+     POST /api/ind-lifecycle/submission/:id/cross-references
+     (registers.routes.ts:72), called as hops 3 and 7 call their services. */
+  const { createCrossReference } = await import('../../server/services/ind-lifecycle/ind-cross-reference-persistence');
+  await createCrossReference(
+    {
+      submissionId: w.k.submissionId!,
+      referencedFileType: 'DMF',
+      referencedFileNumber: 'MF-034512',
+      subjectName: 'C2C-101 drug substance and drug product',
+      authorizedSections: ['3.2.S', '3.2.P'],
+      loaOnFile: true,
+      loaLeafSection: 'm1.4.1',
+    },
+    { organizationId: ORG_A, userId: 3 },
+  );
+
+  const validated = await transition('validated');
+  expect(validated.status, JSON.stringify(validated.body)).toBe(200);
   // Seeded, not run: POST /sequences/:id/shadow-review calls a model (see the test file's header).
   await w.jdb.pool.query(
     `INSERT INTO shadow_review_runs (sequence_id, organization_id, region, lens, status, summary, created_by)

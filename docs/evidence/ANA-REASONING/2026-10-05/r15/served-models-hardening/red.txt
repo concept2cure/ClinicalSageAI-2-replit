@@ -1,0 +1,22 @@
+Round 15: servedModelsOf against a malformed record body, before the fix.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+  server/services/ana/__tests__/turn-record-served-models.test.ts
+
+ x tolerates a `calls` that is not an array
+   -> expected [ { provider: null, model: null } ] to deeply equal []
+ x falls back to the turn's own model when `calls` is unusable
+   -> expected [ { provider: null, model: null } ] to deeply equal [ { provider: 'anthropic', ... } ]
+ x skips a call that is not an object instead of throwing on it
+   -> Cannot read properties of null (reading 'provider')
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)
+
+Reproduced standalone first, on the function's exact logic:
+  calls is a string      -> [{"provider":null,"model":null}]   (an invented author)
+  calls is {length:2}    -> THROWS TypeError: named is not iterable
+  calls holds a null     -> THROWS TypeError: Cannot read properties of null
+  calls holds a string   -> [{"provider":null,"model":null}]   (an invented author)
+
+The documented case — a call whose model the gateway did not report — passed
+before and after, so the fix does not narrow what the record can say.

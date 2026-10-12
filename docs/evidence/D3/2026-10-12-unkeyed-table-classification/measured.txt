@@ -1,0 +1,38 @@
+MEASURED 2026-10-12T09:29:58Z
+
+$ npm run ci:unkeyed-request-tables:unreviewed   — before
+[ci:unkeyed-request-tables] 1082 tables created; 594 read by a per-request path; 105 of those carry NO tenant column; 105 baselined, 96 still unreviewed
+
+$ npm run ci:unkeyed-request-tables:unreviewed   — after
+[ci:unkeyed-request-tables] 1082 tables created; 594 read by a per-request path; 105 of those carry NO tenant column; 105 baselined, 77 still unreviewed
+
+
+$ npm run ci:unkeyed-request-tables   (the per-PR sibling must still pass)
+[ci:unkeyed-request-tables] 1082 tables created; 594 read by a per-request path; 105 of those carry NO tenant column; 105 baselined, 77 still unreviewed
+[ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
+
+$ node scripts/ci/check-unkeyed-request-tables.selftest.mjs
+[selftest] ✅ the gate fails on the case it exists to catch, and only on that case.
+
+
+$ the policy on each of the 19, read from a deploy-shaped database (c2c_dbtest,
+   installed by install-fresh.mjs + deploy-migrate.mjs; 953 tenant_isolation_policy rows in all):
+ai_generation_runs|policy|rls|forced
+ai_messages|policy|rls|forced
+ai_retrieval_chunks|policy|rls|forced
+approval_checkpoints|policy|rls|forced
+c2c_correspondence_issues|policy|rls|forced
+c2c_document_sections|policy|rls|forced
+c2c_milestone_sections|policy|rls|forced
+chat_messages|policy|rls|forced
+ctd_nonclinical_studies|policy|rls|forced
+document_audit_logs|policy|rls|forced
+embedding_audit_log|policy|rls|forced
+lumen_atom_citations|policy|rls|forced
+lumen_atom_conflicts|policy|rls|forced
+lumen_atom_quality_scores|policy|rls|forced
+lumen_atom_versions|policy|rls|forced
+pdev_program_activities|policy|rls|forced
+pdev_readiness_snapshots|policy|rls|forced
+program_milestones|policy|rls|forced
+vigilance_events|policy|rls|forced

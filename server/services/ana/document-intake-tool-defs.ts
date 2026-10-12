@@ -247,7 +247,12 @@ export const COMPUTE_SAMPLE_SIZE: AnaTool = {
       },
       effectSize: {
         type: 'number',
-        description: "Standardized effect size (e.g. Cohen's d for continuous). For binary endpoints you may instead supply controlRate and treatmentRate and the engine derives the effect.",
+        description:
+          "Standardized effect size (e.g. Cohen's d for continuous). For binary endpoints you may instead supply controlRate and treatmentRate and the engine derives the effect. "
+          + 'FOR A time_to_event ENDPOINT THIS IS THE HAZARD-RATIO REDUCTION, not the hazard ratio: HR = 1 - effectSize. '
+          + 'A sponsor who says "a hazard ratio of 0.7" must be sent effectSize 0.3. Sending 0.7 sizes the trial for HR 0.300 '
+          + 'instead, which is roughly an eleven-fold under-sizing (50 subjects where 550 is right at 80% power). '
+          + 'If the user states a hazard ratio, convert it and say in your reply that you did.',
       },
       controlRate: {
         type: 'number',

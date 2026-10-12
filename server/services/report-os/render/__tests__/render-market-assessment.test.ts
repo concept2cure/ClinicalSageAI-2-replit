@@ -129,6 +129,23 @@ describe('the Gaps section agrees with the assessment in the same document', () 
     expect(JSON.stringify(gaps)).not.toMatch(/were not evaluated/);
   });
 
+  /* The two rules meeting: the "no document may say 'No gaps detected' beside
+     its own blockers" rule (be20b53d9) and the market assessment's blockers,
+     which include every declared dependency it does not answer. A real market
+     run therefore always carries blockers, so a clean Module 1 must NOT read as
+     a clear result. Neither session's tests covered the interaction. */
+  it('withholds the clear result when the document also lists blockers', () => {
+    const r = renderReport(
+      marketRun({
+        module1: { coveredHeadings: 9, missingHeadings: [] },
+        blockers: ['question risk: not computed by this assessment, which reads this market\u2019s Module 1 content and the market statement only.'],
+      }),
+    );
+    const gaps = r.sections.find((s) => s.id === 'gaps')!;
+    expect(JSON.stringify(gaps)).not.toMatch(/No gaps detected/);
+    expect(JSON.stringify(gaps)).toMatch(/this is not a clear result/);
+  });
+
   it('says WHY nothing could be evaluated, not the generic scope sentence', () => {
     const r = renderReport(
       marketRun({

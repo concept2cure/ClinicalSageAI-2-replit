@@ -642,8 +642,8 @@ export function createSopDevelopmentFlow(): FlowDefinition {
               { value: 'documentum', label: 'Documentum' },
               { value: 'sharepoint', label: 'SharePoint' },
               { value: 'paper_based', label: 'Paper-Based' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'version_control_method',

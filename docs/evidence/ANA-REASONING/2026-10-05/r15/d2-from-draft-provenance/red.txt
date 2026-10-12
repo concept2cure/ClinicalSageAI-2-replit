@@ -1,0 +1,20 @@
+Round 15 door 2: the new suite against trunk's server, no source change.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+  server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts
+
+7 of 8 failed. The first failure IS the defect:
+
+  x a caller cannot name the model: the stored model is the turn record's
+    -> expected 'claude-opus-5-5' to be 'claude-sonnet-5'
+
+i.e. a POST naming claude-opus-5-5 for prose the record says claude-sonnet-5
+wrote stored the CALLER's string, permanently, in three append-only records.
+The other six failed on undefined: servedBy, governedWrite and
+governedWriteWhy did not exist, and the run-id reference resolved to nothing.
+
+The one that passed is the negative control: a seed or an import carries no
+machine verdict, before and after.
+
+(Three more cases were added after the first green, each to kill a surviving
+mutant: a seed naming a model, a run named by two records, and the in-process
+caller's model. 11 cases now.)

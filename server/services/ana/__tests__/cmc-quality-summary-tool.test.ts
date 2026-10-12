@@ -11,7 +11,10 @@ const ORG = 7;
 const PROGRAM = '9a4c4a2e-5d1e-4c6b-9c0a-1f2e3d4c5b6a';
 
 const SOURCES = [
-  { id: 'so-1', sourceType: 'drug_substance', sourcePayload: { name: 'BX-115', manufacturer: 'Acme Biologics' }, sourceHash: 'h1' },
+  /* `modality` is what the composition boundary reads to establish that this
+     program's Module 3 is composed here at all
+     (services/cmc/composition-scope.ts). */
+  { id: 'so-1', sourceType: 'drug_substance', sourcePayload: { name: 'BX-115', manufacturer: 'Acme Biologics', modality: 'small_molecule' }, sourceHash: 'h1' },
   { id: 'so-2', sourceType: 'drug_product', sourcePayload: { productName: 'BX-115 50 mg tablet', dosageFormDescription: 'tablet', composition: 'BX-115, MCC', strength: '50 mg' }, sourceHash: 'h2' },
   { id: 'so-3', sourceType: 'specification', sourcePayload: { acceptanceCriteria: { assay: '95.0-105.0%' } }, sourceHash: 'h3' },
 ];
@@ -23,7 +26,14 @@ function fakePool(opts: { programHere?: boolean; sources?: unknown[]; fail?: boo
     query: async (sql: string, params: unknown[] = []) => {
       asked.push({ sql, params });
       if (opts.fail) throw new Error('relation "cmc_source_objects" does not exist');
-      if (/regulatory_programs/i.test(sql)) return { rows: opts.programHere === false ? [] : [{ id: PROGRAM }] };
+      if (/regulatory_programs/i.test(sql)) {
+        return {
+          rows:
+            opts.programHere === false
+              ? []
+              : [{ id: PROGRAM, programType: 'ind', productType: 'drug', productName: 'BX-115', name: 'BX-115 IND', code: 'BX115' }],
+        };
+      }
       if (/FROM cmc_source_objects/i.test(sql)) return { rows: params[0] === ORG && params[1] === PROGRAM ? (opts.sources ?? SOURCES) : [] };
       if (/region|regional|3\.2\.R/i.test(sql)) return { rows: [] };
       return { rows: [] };

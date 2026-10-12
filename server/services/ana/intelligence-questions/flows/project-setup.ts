@@ -5,14 +5,40 @@
  * covering organization and project identity, product and regulatory
  * scope, team and roles, and initial configuration.
  *
- * 10 nodes · 48 fields · 4 sections · 6 issue checks
+ * 11 nodes · 48 fields · 4 sections · 6 issue checks
  *
  * @module server/services/ana/intelligence-questions/flows/project-setup
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { OTHER_POSITION } from '../../../../../shared/types/intelligence-questions.js';
+import { agencyOptions } from '../../../../../shared/regulatory/agency-positions.js';
+import { pathwayOptions, type PathwayDomain } from '../../../../../shared/regulatory/pathway-positions.js';
+import type { FlowEngineContext } from '../types.js';
 
-export function createProjectSetupFlow(): FlowDefinition {
+/** The registry's own segment for this client, so the pathway question matches what they file. */
+function domainFor(clientType: FlowEngineContext['clientType']): PathwayDomain {
+  if (clientType === 'ivd') return 'diagnostics_ivd';
+  if (clientType === 'medtech') return 'medical_devices';
+  return 'pharma_biotech';
+}
+
+export function createProjectSetupFlow(ctx?: FlowEngineContext): FlowDefinition {
+  /* The pathway positions come from the governed filing registry, annotated
+     with what each one commits the programme to and the authority behind it
+     (shared/regulatory/pathway-positions.ts). They used to be written here:
+     seven labels that mixed the three 510(k) flavours — which are a question
+     the 510(k) flow itself asks — with distinct pathways, and left out
+     exemption and the 513(g) that clears nothing (founder's directive,
+     2026-10-12). US positions, as this list always was. */
+  const devicePathways = pathwayOptions({ domain: domainFor(ctx?.clientType ?? 'medtech'), region: 'US' });
+  /* The agencies come from the two governed region modules, and the value is
+     the canonical region code the rest of the platform keys on. This question
+     was declared `agency_select`, a type nothing ever rendered, so it reached
+     the person as a free-text box — the one answer that decides the Module 1
+     backbone, the validation profile, the gateway and which filings exist at
+     all was typed prose (founder's directive, 2026-10-12). */
+  const agencies = agencyOptions();
   return {
     id: 'project-setup-v1',
     category: 'project_setup',
@@ -34,7 +60,13 @@ export function createProjectSetupFlow(): FlowDefinition {
       {
         id: 'product_regulatory',
         label: 'Product & Regulatory Scope',
-        nodeIds: ['product_details', 'regulatory_targets', 'medtech_regulatory', 'multi_country_setup'],
+        nodeIds: [
+          'product_details',
+          'regulatory_targets',
+          'device_classification',
+          'medtech_regulatory',
+          'multi_country_setup',
+        ],
       },
       {
         id: 'team_roles',
@@ -225,8 +257,8 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'gastroenterology', label: 'Gastroenterology' },
               { value: 'gene_cell_therapy', label: 'Gene / Cell Therapy' },
               { value: 'medical_device', label: 'Medical Device' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'product_type',
@@ -247,8 +279,8 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'medical_device', label: 'Medical Device' },
               { value: 'combination_product', label: 'Drug-Device Combination' },
               { value: 'diagnostic', label: 'Diagnostic / IVD' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'indication',
@@ -271,30 +303,30 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'ophthalmic', label: 'Ophthalmic' },
               { value: 'implant', label: 'Implant' },
               { value: 'na_device', label: 'N/A (Device)' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             visibleWhen: { field: 'product_type', operator: 'neq', value: 'medical_device' },
           },
         ],
         branches: [
           {
             when: { field: 'organization_type', operator: 'eq', value: 'medtech' },
-            goto: 'medtech_regulatory',
+            goto: 'device_classification',
           },
           {
             when: { field: 'product_type', operator: 'in', value: ['medical_device', 'diagnostic'] },
-            goto: 'medtech_regulatory',
+            goto: 'device_classification',
           },
         ],
         defaultNext: 'regulatory_targets',
         issueChecks: [
           {
             id: 'missing_therapeutic_area',
-            condition: { field: 'therapeutic_area', operator: 'eq', value: 'other' },
+            condition: { field: 'therapeutic_area', operator: 'eq', value: OTHER_POSITION },
             severity: 'info',
-            title: 'Therapeutic Area Not Specified',
+            title: 'A therapeutic area in your own words',
             message:
-              'Selecting a specific therapeutic area enables the platform to provide more relevant document templates, regulatory guidance, and competitive intelligence. Consider selecting the most appropriate therapeutic area for your product.',
+              'AnA has your wording and will use it. What she cannot do for an area she does not hold is offer its document templates, its regulatory guidance or its competitive intelligence — those are keyed to the listed areas. If one of them is close enough to work from, say which.',
           },
         ],
       },
@@ -312,6 +344,8 @@ export function createProjectSetupFlow(): FlowDefinition {
             label: 'Primary Regulatory Agency',
             type: 'agency_select',
             required: true,
+            options: agencies,
+            allowOther: { prompt: 'Which agency, in your own words?' },
           },
           {
             id: 'submission_type',
@@ -329,8 +363,8 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'maa', label: 'MAA (Marketing Authorization Application — EU)' },
               { value: 'cta', label: 'CTA (Clinical Trial Application — EU/UK)' },
               { value: 'jnda', label: 'JNDA (Japan New Drug Application)' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'multi_country_submission',
@@ -343,17 +377,20 @@ export function createProjectSetupFlow(): FlowDefinition {
             label: 'Additional Regulatory Agencies',
             type: 'multi_select',
             visibleWhen: { field: 'multi_country_submission', operator: 'eq', value: true },
+            /* The same governed twelve, plus the one entry that is not a
+               national filing and says so. The hand-written nine this
+               replaced held no Swissmedic, HSA or MFDS, and said nothing about
+               what filing with any of them commits the programme to. */
             options: [
-              { value: 'ema', label: 'EMA (European Medicines Agency)' },
-              { value: 'pmda', label: 'PMDA (Japan)' },
-              { value: 'nmpa', label: 'NMPA (China)' },
-              { value: 'health_canada', label: 'Health Canada' },
-              { value: 'tga', label: 'TGA (Australia)' },
-              { value: 'mhra', label: 'MHRA (United Kingdom)' },
-              { value: 'anvisa', label: 'ANVISA (Brazil)' },
-              { value: 'cdsco', label: 'CDSCO (India)' },
-              { value: 'who', label: 'WHO Prequalification' },
+              ...agencies,
+              {
+                value: 'who',
+                label: 'WHO Prequalification — not a national filing',
+                commits:
+                  'WHO prequalification is an assessment for UN procurement, not a marketing authorisation. AnA holds no Module 1 requirements, no validation profile and no gateway for it, and a national filing is still to be made.',
+              },
             ],
+            allowOther: { prompt: 'Which other agency, in your own words?' },
           },
           {
             id: 'ctd_format',
@@ -372,22 +409,29 @@ export function createProjectSetupFlow(): FlowDefinition {
         issueChecks: [
           {
             id: 'no_regulatory_target',
-            condition: { field: 'submission_type', operator: 'eq', value: 'other' },
+            condition: { field: 'submission_type', operator: 'eq', value: OTHER_POSITION },
             severity: 'warning',
-            title: 'No Standard Regulatory Target Selected',
+            title: 'A submission type AnA does not hold',
             message:
-              'Selecting a specific submission type enables the platform to provide tailored document templates, formatting requirements, and regulatory intelligence. If your submission type is not listed, contact support for assistance with custom configurations.',
+              'AnA has your wording, but a submission type she does not hold carries no templates, no formatting rules and no validation profile — so nothing she drafts for it can be checked against the agency\u2019s requirements for that submission. Name the closest listed type if one applies, or treat anything drafted here as unvalidated.',
           },
         ],
       },
 
+      /* The classification is asked BEFORE the route, and in its own question,
+         for two reasons: it is the order the regulation works in — the class
+         decides which conformity or premarket route is open — and it is what
+         lets AnA mark a route the stated class speaks against before the
+         person picks it rather than after (founder's decision, 2026-10-12).
+         Asked together in one question, as they were, the caution could only
+         ever arrive once the answer was already given. */
       {
-        id: 'medtech_regulatory',
+        id: 'device_classification',
         section: 'product_regulatory',
         question:
-          'This is a medical device project. Provide device-specific regulatory information.',
+          'This is a medical device project. How is the device classified?',
         guidance:
-          'Medical device submissions follow distinct pathways: 510(k) for substantial equivalence to a predicate device (21 CFR 807), PMA for Class III devices (21 CFR 814), and De Novo for novel low-to-moderate risk devices (21 CFR 860). Device classification determines the regulatory pathway and required documentation. In the EU, the Medical Device Regulation (EU 2017/745) applies with Notified Body assessment.',
+          'Classification comes before the route, because it decides which routes are open. In the US the class follows from the classification regulation and the product code (21 CFR 860): Class I is general controls and is usually exempt from premarket notification, Class II adds special controls and is normally a 510(k), and Class III needs premarket approval unless it is a preamendments type. In the EU the MDR classification rules (Annex VIII) decide the conformity assessment route and whether a Notified Body is involved at all.',
         fields: [
           {
             id: 'device_class',
@@ -400,28 +444,6 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'class_iii', label: 'Class III — Premarket Approval Required' },
               { value: 'not_classified', label: 'Not Yet Classified' },
             ],
-          },
-          {
-            id: 'device_submission_pathway',
-            label: 'Submission Pathway',
-            type: 'select',
-            required: true,
-            options: [
-              { value: '510k_traditional', label: '510(k) — Traditional' },
-              { value: '510k_special', label: '510(k) — Special' },
-              { value: '510k_abbreviated', label: '510(k) — Abbreviated' },
-              { value: 'pma', label: 'PMA (Premarket Approval)' },
-              { value: 'de_novo', label: 'De Novo Classification Request' },
-              { value: 'hde', label: 'HDE (Humanitarian Device Exemption)' },
-              { value: 'eua', label: 'Emergency Use Authorization (EUA)' },
-            ],
-          },
-          {
-            id: 'predicate_device',
-            label: 'Predicate Device (for 510(k))',
-            type: 'text',
-            placeholder: 'e.g., K123456 — Brand Name by Manufacturer',
-            visibleWhen: { field: 'device_submission_pathway', operator: 'in', value: ['510k_traditional', '510k_special', '510k_abbreviated'] },
           },
           {
             id: 'product_code',
@@ -440,6 +462,36 @@ export function createProjectSetupFlow(): FlowDefinition {
               { value: 'class_iii', label: 'Class III' },
               { value: 'na', label: 'Not applicable / No EU filing planned' },
             ],
+          },
+        ],
+        defaultNext: 'medtech_regulatory',
+      },
+
+      {
+        id: 'medtech_regulatory',
+        section: 'product_regulatory',
+        question:
+          'Which route are you taking to market, and against what?',
+        guidance:
+          'Medical device submissions follow distinct pathways: 510(k) for substantial equivalence to a predicate device (21 CFR 807), PMA for Class III devices (21 CFR 814), and De Novo for novel low-to-moderate risk devices (21 CFR 860). Each position says what it commits the programme to. Where the classification you have just given speaks against a route, AnA marks it and still offers it — the choice is yours, and she records the basis you take it on.',
+        fields: [
+          {
+            id: 'device_submission_pathway',
+            label: 'Submission Pathway',
+            type: 'select',
+            required: true,
+            options: devicePathways,
+            allowOther: { prompt: 'Which route are you taking, in your own words?' },
+          },
+          {
+            id: 'predicate_device',
+            label: 'Predicate Device (for 510(k))',
+            type: 'text',
+            placeholder: 'e.g., K123456 — Brand Name by Manufacturer',
+            /* Every 510(k) names a predicate — Traditional, Special and
+               Abbreviated alike — so this is gated on the pathway, and the
+               flavour is the 510(k) flow's own question. */
+            visibleWhen: { field: 'device_submission_pathway', operator: 'eq', value: 'US_510K' },
           },
           {
             id: 'notified_body',

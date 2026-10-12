@@ -865,6 +865,28 @@ const createRevision = (
   contributors: { id: string; name: string }[] = []
 ) => createRevisionOn(executor, { sectionId, content, updatedBy, tenantId, origin, contributors });
 
+/**
+ * The machine author a doc_revisions row recorded about itself, re-validated
+ * (round 15, SEC-A-7 door 3).
+ *
+ * `inputs.contributors` is written by createRevision from the save door's
+ * already-validated list, and it is re-checked here rather than trusted
+ * because it is in our own table: `machineContributors` is the one list of ids
+ * that may be written as a machine author, and a JSONB column is only as
+ * trustworthy as every writer that ever touched it. An unrecognised id yields
+ * none, so the filing records NULL — "origin not stated" — rather than a
+ * guess, which is the fabrication
+ * migrations/20260822_section_version_author_kind_unspecified.sql closed one
+ * layer up.
+ *
+ * Its own function so the revert handler stays inside the file's complexity
+ * limit.
+ */
+function restoredMachineAuthor(inputs: unknown) {
+  const contributors = machineContributors((inputs as { contributors?: unknown } | null)?.contributors);
+  return { contributors, draftSource: contributors.length > 0 ? contributors[0].id : null };
+}
+
 // ============= Token Operations =============
 router.post('/sections/:sectionId/tokens', async (req: Request, res: Response) => {
   try {
@@ -2354,9 +2376,16 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
       });
     }
 
-    // Get the revision
+    /* Get the revision — INCLUDING what it records about its own provenance
+       (round 15, SEC-A-7 door 3). `origin` and `inputs.contributors` are on the
+       append-only doc_revisions row, written by createRevision from the save
+       door's MACHINE_AUTHOR_IDS-validated list. This SELECT used to name
+       neither, so the one provenance fact the restored version carries about
+       itself was discarded at the moment it was restored, and the filing then
+       recorded NULL — "origin not stated" — over model prose. */
     const revResult = await pool.query(
-      'SELECT id, section_id, content, created_by, created_at, tenant_id FROM doc_revisions WHERE id = $1 AND section_id = $2 AND tenant_id = $3',
+      `SELECT id, section_id, content, created_by, created_at, tenant_id, origin, inputs
+         FROM doc_revisions WHERE id = $1 AND section_id = $2 AND tenant_id = $3`,
       [rev_id, sectionId, tenantId]
     );
 
@@ -2368,6 +2397,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
     }
 
     const revision = revResult.rows[0];
+    const restored = restoredMachineAuthor(revision.inputs);
 
     const currentSection = await pool.query(
       'SELECT content FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
@@ -2408,7 +2438,10 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
       // path, and it replaces a pre-update createRevision that stored the
       // content being replaced under the reverter's name — the same
       // misattribution the edit path had.
-      await createRevision(sectionId, revision.content, revertedBy, tenantId, client, 'revert');
+      /* With the restored contributors, so the attribution survives a revert
+         OF this revert: without them it would be recorded once and lost on the
+         next restoration, which is the same erasure one step later. */
+      await createRevision(sectionId, revision.content, revertedBy, tenantId, client, 'revert', restored.contributors);
 
       /* AND THE FILING MOVES WITH IT.
        *
@@ -2439,6 +2472,12 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
         actorId: String(revertedBy),
         tenantId,
         reason: `Reverted to revision ${rev_id}`,
+        /* The restored revision's own machine author, so reverting TO
+           AI-drafted text does not erase 'ana' from the system of record. An
+           absent one still resolves to NULL — never a guessed 'human', which
+           is what 20260822_section_version_author_kind_unspecified.sql closed
+           one layer up. */
+        draftSource: restored.draftSource,
       });
 
       /* 2026-09-28 (GE-P-1, coverage-gap sweep): the audit record for this

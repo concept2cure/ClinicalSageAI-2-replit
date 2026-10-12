@@ -21,7 +21,11 @@ type Store = {
   enabled: boolean;
   author: { id: string; name: string };
   acceptedAuthors: { id: string; name: string }[];
-  acceptedInsertions: { authorId: string; text: string }[];
+  /* `turnRecordId` is REQUIRED on AcceptedInsertion, not optional: a default of
+     "no turn" is the shape that would quietly make every claim unverifiable,
+     which is the defect this field exists to close. The local type mirrors the
+     real one so this test cannot drift from it. */
+  acceptedInsertions: { authorId: string; text: string; turnRecordId: string | null }[];
 };
 const store = (): Store => ({
   enabled: true,
@@ -86,7 +90,7 @@ describe('rememberAcceptedAuthor keeps the accepted text', () => {
   it('keeps the text of an ACCEPTED insertion with its author', () => {
     const s = store();
     rememberAcceptedAuthor(s, 'insertion', 'accept', 'ana', 'AnA (AI draft)', ANA_TEXT);
-    expect(s.acceptedInsertions).toEqual([{ authorId: 'ana', text: ANA_TEXT }]);
+    expect(s.acceptedInsertions).toEqual([{ authorId: 'ana', text: ANA_TEXT, turnRecordId: null }]);
   });
 
   it('keeps every accepted insertion, not one per author', () => {
@@ -118,11 +122,17 @@ describe('the capture runs before the mark is stripped', () => {
     'utf8',
   );
 
-  it('both resolve paths call it, and both pass the range\'s text', () => {
+  it('both resolve paths call it, and both pass the range\'s text AND its turn', () => {
     expect((src.match(/rememberAcceptedAuthor\(this\.storage/g) || []).length).toBe(2);
+    /* The turn is checked here with the text, for the same reason and in the
+       same shape (round 15, SEC-A-7 door 1): a call site that drops
+       `sourceRecord` records the words and loses WHICH TURN wrote them, which
+       makes the server's claim unverifiable — and it would do so silently,
+       because the argument is optional at the type level so that a caller with
+       no turn can still record one. */
     expect(
-      (src.match(/rememberAcceptedAuthor\(this\.storage, (?:range|r)\.kind, action, (?:range|r)\.authorId, (?:range|r)\.authorName, (?:range|r)\.text\)/g) || []).length,
-      'a call site that drops the text records the author and loses the words',
+      (src.match(/rememberAcceptedAuthor\(this\.storage, (?:range|r)\.kind, action, (?:range|r)\.authorId, (?:range|r)\.authorName, (?:range|r)\.text, (?:range|r)\.sourceRecord\)/g) || []).length,
+      'a call site that drops the text or the turn records the author and loses the rest',
     ).toBe(2);
   });
 
@@ -150,5 +160,55 @@ describe('the capture runs before the mark is stripped', () => {
       expect(before.includes('removeMark'), 'the mark is stripped BEFORE the author is captured').toBe(false);
     }
     expect(sites).toBe(2);
+  });
+});
+
+describe('an accepted insertion keeps the turn it came from (round 15, SEC-A-7 door 1)', () => {
+  /* The save door's claim — "a machine wrote these words" — is only checkable
+     against the turn record that would prove it, and the id for that is
+     already on the client: AnA's suggestion mark carries it as `sourceRecord`,
+     and it rides on SuggestionRange. It stopped here, because
+     `AcceptedInsertion` held only {authorId, text}. So the PATCH could say
+     WHICH words a machine wrote and never WHICH TURN wrote them, and
+     verifyMachineText had nothing to hold the claim against. */
+  const TURN = 'b2e7d9f0-1a3c-4b5d-9e8f-7a6b5c4d3e21';
+
+  it('records the turn record the accepted mark named', () => {
+    const s = store();
+    rememberAcceptedAuthor(s, 'insertion', 'accept', 'ana', 'AnA (AI draft)', ANA_TEXT, TURN);
+    expect(s.acceptedInsertions).toEqual([{ authorId: 'ana', text: ANA_TEXT, turnRecordId: TURN }]);
+  });
+
+  it('records null when the mark named none, rather than omitting the entry', () => {
+    /* A plain paste, an older bundle, or text typed by hand. The clause must
+       still reach the server, where it is recorded as the person's own words
+       with the reason — not dropped. */
+    const s = store();
+    rememberAcceptedAuthor(s, 'insertion', 'accept', 'ana', 'AnA (AI draft)', ANA_TEXT);
+    expect(s.acceptedInsertions).toEqual([{ authorId: 'ana', text: ANA_TEXT, turnRecordId: null }]);
+  });
+
+  it('keeps each accepted insertion’s OWN turn, not the first one’s', () => {
+    /* Two AnA drafts from different turns accepted in one editing session: the
+       per-clause grain is the whole point, because the models that served one
+       turn say nothing about the other. */
+    const OTHER = '9c4f1e22-77aa-4b31-8d55-1e2f3a4b5c6d';
+    const s = store();
+    rememberAcceptedAuthor(s, 'insertion', 'accept', 'ana', 'AnA (AI draft)', 'First clause.', TURN);
+    rememberAcceptedAuthor(s, 'insertion', 'accept', 'ana', 'AnA (AI draft)', 'Second clause.', OTHER);
+    expect(s.acceptedInsertions).toEqual([
+      { authorId: 'ana', text: 'First clause.', turnRecordId: TURN },
+      { authorId: 'ana', text: 'Second clause.', turnRecordId: OTHER },
+    ]);
+    /* The author is still named once — that list answers WHO, and this one
+       answers which words and from which turn. */
+    expect(s.acceptedAuthors).toEqual([{ id: 'ana', name: 'AnA (AI draft)' }]);
+  });
+
+  it('records no turn for a rejected insertion or a deletion (negative controls)', () => {
+    const s = store();
+    rememberAcceptedAuthor(s, 'insertion', 'reject', 'ana', 'AnA (AI draft)', ANA_TEXT, TURN);
+    rememberAcceptedAuthor(s, 'deletion', 'accept', 'ana', 'AnA (AI draft)', ANA_TEXT, TURN);
+    expect(s.acceptedInsertions).toEqual([]);
   });
 });

@@ -1406,6 +1406,132 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
       { name: 'lens', required: true, description: 'The lens id (e.g. "fda_filing") or its label (e.g. "FDA filing reviewer"), case-insensitive.' },
     ],
   },
+
+  // ── Wave 7: the launch-catalog screens AnA could reach but not operate ──
+  //
+  // An audit of the shipped catalog found 13 of its 29 screens with no action
+  // at all: she navigated there and then had nothing to do. These are the
+  // view-state operations their own controls already perform — each handler
+  // drives the same state the human control drives, and names the control it
+  // mirrors. Three of the 13 are deliberately still empty: Submission
+  // Readiness and the Part 11 console hold no view state (they are verdicts,
+  // not workspaces), and Setup is a launcher. The conversation screen's own
+  // document list is not here either: it would need the chat to become a
+  // navigation target, which is a shell decision, not a registry one.
+  //
+  // An entry lands here only once its screen's handler does. A registered
+  // action with no handler is a dead end: AnA is told she can do it, tries,
+  // and the bus refuses. The remaining screens — eCTD Compile, the submission
+  // gateway, compliance reports, the reporting canvas, the identity console
+  // and both onboarding screens — are surveyed and specified, and land with
+  // their handlers (docs/evidence/W1/2026-09-28-ana-drive/ui-coverage.txt).
+  {
+    id: 'audit-trail.filter-entries',
+    surfaceId: 'audit-trail',
+    label: 'Filter the audit trail by kind',
+    description:
+      'On the audit trail, filter the hash-chained ledger to one kind of governed event — the same ' +
+      'selection the kind segment buttons make. A kind with no entries still applies and the ' +
+      'resulting count is reported truthfully; it is never presented as the trail being empty.',
+    params: [
+      {
+        name: 'kind',
+        required: true,
+        description:
+          'The event kind to filter to, or "all" for the whole ledger.',
+        enum: ['all', 'esign', 'authoring', 'review', 'submission', 'vault', 'validation', 'admin'],
+      },
+    ],
+  },
+  {
+    id: 'audit-trail.search',
+    surfaceId: 'audit-trail',
+    label: 'Search the audit trail',
+    description:
+      'On the audit trail, run the search box over the ledger rows on screen — matches entry id, ' +
+      'event, actor, actor account, target and record reference. A local view filter; zero matches is ' +
+      'a truthful result and is reported as a count, not as an empty trail.',
+    params: [
+      {
+        name: 'query',
+        required: true,
+        description:
+          'Text to search the ledger for — an entry id (e.g. "AUD-0007"), an event name, an actor, a ' +
+          'target or a record reference.',
+      },
+    ],
+  },
+  {
+    id: 'audit-trail.select-entry',
+    surfaceId: 'audit-trail',
+    label: 'Open an audit entry',
+    description:
+      'On the audit trail, open one ledger entry\'s detail panel — its event, timestamp, target, ' +
+      'record and signature references, kind, origin IP, reason for change, signature meaning, entry ' +
+      'hash and previous hash. Named by entry id (e.g. "AUD-0007") or by event text; resolved against ' +
+      'the real ledger with honest misses. When the only match is hidden by the kind filter or the ' +
+      'search, those are cleared first and the detail says so. Reading an entry is all that happens — ' +
+      'the ledger is append-only and nothing here can alter it.',
+    params: [
+      {
+        name: 'entry',
+        required: true,
+        description:
+          'The entry id as shown in the ID column, or the event text (case-insensitive; partial text ' +
+          'resolves when unambiguous).',
+      },
+    ],
+  },
+  {
+    id: 'audit-trail.set-chain-view',
+    surfaceId: 'audit-trail',
+    label: 'Show or hide the hash-chain view',
+    description:
+      'On the audit trail, show or hide the hash-chain view — the newest-to-oldest chain of entry ' +
+      'hashes beside the ledger table, where each entry links to the previous one. The same toggle ' +
+      'the Hash chain header button makes. It changes only what is displayed; it does not verify the ' +
+      'chain (the verdict in the banner is the server\'s).',
+    params: [
+      {
+        name: 'state',
+        required: true,
+        description:
+          'Whether the hash-chain view should be showing.',
+        enum: ['shown', 'hidden'],
+      },
+    ],
+  },
+  {
+    id: 'audit-trail.close-entry',
+    surfaceId: 'audit-trail',
+    label: 'Close the open audit entry',
+    description:
+      'On the audit trail, close the entry detail panel and clear the row selection, returning the ' +
+      'screen to the list. Precedent: intelligence.close-capability.',
+  },
+  {
+    id: 'apps.show-admin-controls',
+    surfaceId: 'apps',
+    label: 'Show or hide the admin controls',
+    description:
+      'On the Apps catalog, show or hide the administrator controls — the per-module enable/disable ' +
+      'switches on the app cards. This only changes what is displayed: switching a module on or off ' +
+      'for the organisation stays an administrator\'s own click on the switch this reveals (a ' +
+      'persisted, admin-only write). Refuses honestly when the catalog has not loaded, failed, is ' +
+      'empty, or when no module on screen has a switch at all (plan or industry-mode locks have no ' +
+      'switch), naming the modules and the reason in that case.',
+    params: [
+      {
+        name: 'state',
+        required: true,
+        description:
+          'Whether the admin controls should be showing. \'on\' reveals the per-module switches (same ' +
+          'as the header\'s "Admin controls" button and a locked card\'s "Admin controls" button); ' +
+          '\'off\' hides them and restores the Open / upgrade buttons.',
+        enum: ['on', 'off'],
+      },
+    ],
+  },
 ] as const;
 
 const ACTIONS_BY_ID: ReadonlyMap<string, SurfaceActionTarget> = new Map(

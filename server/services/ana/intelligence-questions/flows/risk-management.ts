@@ -143,8 +143,8 @@ export function createRiskManagementFlow(): FlowDefinition {
               { value: 'china', label: 'China (NMPA)' },
               { value: 'canada', label: 'Canada (Health Canada)' },
               { value: 'australia', label: 'Australia (TGA)' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'applicable_standards',
@@ -216,8 +216,8 @@ export function createRiskManagementFlow(): FlowDefinition {
               { value: 'topical', label: 'Topical' },
               { value: 'inhaled', label: 'Inhaled' },
               { value: 'implant', label: 'Implant' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'samd_classification',

@@ -1,0 +1,17 @@
+Round 15: servedModelsForTurn / turnServedModels.
+Test: server/services/authoring/__tests__/turn-served-models.pglite.test.ts
+
+baseline: Tests  8 passed (8)
+
+R15-01   KILLED    the id shape is not checked, so a malformed id reaches a uuid column
+         Tests  1 failed | 7 passed (8)
+R15-02   KILLED    an empty id is not refused up front
+         Tests  1 failed | 7 passed (8)
+R15-03   KILLED    the models are returned unqualified, so no caller sees RULE 2 verdict
+         Tests  2 failed | 6 passed (8)
+R15-04   KILLED    a record that no longer verifies is read as if it did
+         Tests  1 failed | 7 passed (8)
+R15-05   KILLED    a record that does not exist reads as one that names no model
+         Tests  2 failed | 6 passed (8)
+R15-06   KILLED    the served models are dropped, so every turn looks like one naming none
+         Tests  2 failed | 6 passed (8)

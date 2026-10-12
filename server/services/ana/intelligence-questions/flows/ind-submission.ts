@@ -294,8 +294,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'inhaled', label: 'Inhaled' },
               { value: 'intrathecal', label: 'Intrathecal' },
               { value: 'intravitreal', label: 'Intravitreal' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'is_biologic',
@@ -360,8 +360,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'plant', label: 'Plant-based' },
               { value: 'viral_vector', label: 'Viral Vector Production (AAV, Lentiviral, etc.)' },
               { value: 'cell_expansion', label: 'Autologous/Allogeneic Cell Expansion' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'purification_overview',
@@ -435,8 +435,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'patch', label: 'Transdermal Patch' },
               { value: 'cream_ointment', label: 'Cream / Ointment' },
               { value: 'implant', label: 'Implant' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'strengths',
@@ -564,8 +564,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'cynomolgus_monkey', label: 'Cynomolgus Monkey' },
               { value: 'rhesus_monkey', label: 'Rhesus Monkey' },
               { value: 'minipig', label: 'Minipig' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
             helpText: 'ICH M3(R2) requires toxicology in at least two species (one rodent, one non-rodent) for small molecules. For biologics (ICH S6(R1)), one pharmacologically relevant species may suffice.',
           },
           {
@@ -820,8 +820,8 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'noael_hed', label: 'NOAEL-based HED (with BSA scaling per FDA 2005 guidance)' },
               { value: 'mabel', label: 'MABEL (Minimum Anticipated Biological Effect Level)' },
               { value: 'pad', label: 'Pharmacologically Active Dose (PAD) based' },
-              { value: 'other', label: 'Other (explain below)' },
             ],
+            allowOther: { label: 'Other (explain below)' },
           },
           {
             id: 'safety_factor',

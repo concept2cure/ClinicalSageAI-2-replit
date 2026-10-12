@@ -418,8 +418,17 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'gitBranch',
     group: 'submission',
     uiKit: 'ectd_coauthor',
-    // Launch-scope API (2026-09-25, ci:launch-scope-api): EctdCompile reads orchestrator runs and their audit.
-    apiPrefixes: ['/api/ectd-compile', '/api/ectd', '/api/submission-orchestrator'],
+    /* Launch-scope API (2026-09-25, ci:launch-scope-api): EctdCompile reads
+       orchestrator runs and their audit — `/runs`, not the mount root.
+       Attribution is by longest prefix at a segment boundary, so
+       '/api/submission-orchestrator' admitted every handler under the mount,
+       including five standalone builders no screen calls (/m2/nonclinical,
+       /m2/clinical, /m2/clinical-overview, /csr/tabulate, /validate/hardened),
+       each of which composes regulated submission content from arrays in the
+       REQUEST BODY. Narrowed to the segment the screens read, so the rest are
+       unmapped and production refuses them 403 LAUNCH_SCOPE (GA plan item 1,
+       decision 2026-10-05; /m2/qos, the CMC one, is deleted outright). */
+    apiPrefixes: ['/api/ectd-compile', '/api/ectd', '/api/submission-orchestrator/runs'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,

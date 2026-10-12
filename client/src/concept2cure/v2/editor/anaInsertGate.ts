@@ -17,12 +17,27 @@
  * server), cannot go in as AnA's text.
  *
  * Where it is applied, and where it is NOT. This module runs in the browser
- * only, at the pane's offer, the conversation's offer and the editor bridge.
- * These do not enforce it: `PATCH /sections/:sectionId` (the section save),
- * `POST /docs/from-draft`, a section revert, and `EditorBridge.propose`. So a
- * client that skips this module, an older bundle, or a save that carries text
- * with no pending AnA mark is not refused. The server's check is its own
- * change (SEC-A-7 on round 11's review).
+ * only. It is applied at the pane's offer, the conversation's offer, the editor
+ * bridge's `insert` and, since round 14, the bridge's `propose` and the
+ * conversation draft card's "Open as document" (`ArtifactCard`, which reaches
+ * `POST /api/authoring/docs/from-draft`). That last one was missing and the
+ * omission was not a decision anyone made: the sibling control in the same
+ * component consulted this module and the card did not, although the card
+ * creates a whole governed document whose entire content is model prose.
+ *
+ * No SERVER route enforces it yet: `PATCH /sections/:sectionId` (the section
+ * save), `POST /docs/from-draft` and a section revert all accept
+ * machine-attributed content without reading a turn record. So a client that
+ * skips this module, an older bundle, a direct API call, or a save that carries
+ * text with no pending AnA mark is not refused. Those are SEC-A-7's remaining
+ * doors and are named with their paths in
+ * `docs/evidence/ANA-REASONING/2026-10-05/r14/`.
+ *
+ * Two other AI-drafting doors ARE already closed in production, which is why
+ * these gaps are asymmetries rather than policy: `draft_authoring_document` is
+ * refused by the tool pre-handler (`server/services/ana/governed-write-tools.ts`),
+ * and `POST /sections/:sectionId/ai/draft` is refused by the gateway as
+ * `pq-not-passed` (`server/services/ai-gateway/model-governance.ts:85`).
  *
  * Nor does the record close that gap by itself, and an earlier draft of this
  * note said it did. A decision row naming the turn is written only when a
@@ -59,7 +74,18 @@ export const ANA_SUGGESTION_AUTHOR_ID = 'ana';
    control neither host draws; a remedy that names no control but still
    promises an outcome it cannot deliver is the same defect in quieter words. */
 const ASK_AGAIN = 'Ask again to get an answer with its own record.';
-const CANT_INSERT = 'so the answer can’t be inserted';
+/* What the refused act IS, per door. The sentences are otherwise identical, so
+   the verb is a parameter rather than a second copy of the gate: round 14 found
+   a second real door (the conversation's "Open as document", which creates a
+   whole governed document) where "inserted" names an act the control does not
+   perform — the same untrue-named-cause defect round 13 fixed in the pane's
+   toast. 'insert' is the default so round 11's and round 13's callers, their
+   tests and the committed contrast capture are byte-identical. */
+export type AnaGovernedAct = 'insert' | 'document';
+const ACT: Record<AnaGovernedAct, { it: string; answer: string }> = {
+  insert: { it: 'it can’t be inserted', answer: 'the answer can’t be inserted' },
+  document: { it: 'it can’t be filed as a document', answer: 'the answer can’t be filed as a document' },
+};
 
 /**
  * Whether the answer's text is unfinished: the person stopped it, the stream
@@ -79,18 +105,19 @@ export function answerUnfinished(turn: AnaChatMessage): boolean {
 }
 
 /** Why one model the rule does not admit means the answer cannot go into a document. */
-function modelRefusal(m: AnaServedModel, several: boolean): string {
+function modelRefusal(m: AnaServedModel, several: boolean, act: AnaGovernedAct): string {
+  const cant = `so ${ACT[act].answer}`;
   if (m.model === null) {
     const which = several ? 'one of the models that worked on' : 'the model that wrote';
-    return `The record does not name ${which} this answer, ${CANT_INSERT}. ${ASK_AGAIN}`;
+    return `The record does not name ${which} this answer, ${cant}. ${ASK_AGAIN}`;
   }
   const by = several
     ? `More than one model worked on this answer, including ${m.model}`
     : `This answer was written by ${m.model}`;
   if (m.approvedForHighRisk === true) {
-    return `${by}, which has not passed performance qualification, ${CANT_INSERT}. Asking again will not change that.`;
+    return `${by}, which has not passed performance qualification, ${cant}. Asking again will not change that.`;
   }
-  return `${by}, which is not approved for regulatory drafting, ${CANT_INSERT}.`;
+  return `${by}, which is not approved for regulatory drafting, ${cant}.`;
 }
 
 /**
@@ -102,20 +129,25 @@ function modelRefusal(m: AnaServedModel, several: boolean): string {
  * and a default of "it finished" is the one shape that silently admits an
  * answer the person stopped or a stream that died.
  */
-export function anaInsertRefusal(record: AnaTurnRecordStatus | null | undefined, unfinished: boolean): string | null {
-  if (unfinished) return 'This answer did not finish, so it can’t be inserted. Ask again to get a complete answer.';
+export function anaInsertRefusal(
+  record: AnaTurnRecordStatus | null | undefined,
+  unfinished: boolean,
+  act: AnaGovernedAct = 'insert',
+): string | null {
+  const { it, answer } = ACT[act];
+  if (unfinished) return `This answer did not finish, so ${it}. Ask again to get a complete answer.`;
   if (record?.status === 'not_recorded') {
-    return `This answer was not recorded, so the model that wrote it can’t be checked and the answer can’t be inserted. ${ASK_AGAIN}`;
+    return `This answer was not recorded, so the model that wrote it can’t be checked and ${answer}. ${ASK_AGAIN}`;
   }
   if (record?.status === 'unconfirmed') {
-    return `This answer’s record is not confirmed, so the model that wrote it can’t be checked and the answer can’t be inserted. ${ASK_AGAIN}`;
+    return `This answer’s record is not confirmed, so the model that wrote it can’t be checked and ${answer}. ${ASK_AGAIN}`;
   }
   const served = record?.servedBy;
   /* This page was not told (a reopened conversation, a run-recovered record, an
      older server). The record exists on the server; saying the model "can't be
      checked" would report this view's limit as a fact about the record. */
-  if (!served) return `This page has no record of which model wrote this answer, ${CANT_INSERT}. ${ASK_AGAIN}`;
-  if (served.length === 0) return `This answer’s record names no model, ${CANT_INSERT}. ${ASK_AGAIN}`;
+  if (!served) return `This page has no record of which model wrote this answer, so ${answer}. ${ASK_AGAIN}`;
+  if (served.length === 0) return `This answer’s record names no model, so ${answer}. ${ASK_AGAIN}`;
   const refused = served.find((m) => m.model === null || !m.qualified);
-  return refused ? modelRefusal(refused, served.length > 1) : null;
+  return refused ? modelRefusal(refused, served.length > 1, act) : null;
 }

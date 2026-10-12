@@ -64,6 +64,14 @@ export interface CtTurn {
   contextUsed?: string[];
   /** What went wrong around the answer (a failed save, a timeout), shown under it. */
   warnings?: string[];
+  /**
+   * The question AnA is asking, when this turn asked one: the interview
+   * engine's own node, with the positions it resolved for this programme
+   * (founder's directive, 2026-10-12). Drawn by AnaQuestionCard.
+   */
+  question?: import('@shared/types/intelligence-questions').IntelligenceQuestionEvent;
+  questionSessionId?: string | null;
+  questionFlowState?: unknown;
   /** The steers the person sent mid-run that AnA accepted, in order, shown under the answer they shaped. */
   interjections?: string[];
   /** The CRL/RTF pre-mortem artifact, when the turn assembled one (CrlPremortemPanel). */
@@ -179,6 +187,18 @@ export interface CtArtifact {
   content?: string;
   /** The message that drafted it, so the card can open that draft as a document. */
   messageId?: string;
+  /**
+   * The drafting turn's record status and whether its answer finished, so the
+   * card can apply the governed-write rule BEFORE it posts (round 14, SEC-A-7
+   * door 5). "Open as document" creates a whole governed authoring document
+   * whose content is model prose, so RULE 2 governs it exactly as it governs
+   * an insert; `anaInsertRefusal` is the one implementation of that rule.
+   *
+   * Absent means this view was not told, which the rule refuses — so these are
+   * carried whenever the draft came from a turn, never defaulted.
+   */
+  turnRecord?: AnaTurnRecordStatus | null;
+  unfinished?: boolean;
 }
 
 /* ---- Link maps ---- */

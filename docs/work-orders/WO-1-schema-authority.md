@@ -102,13 +102,68 @@ tenant-isolation fix built on top of this is a fix you cannot prove.
 
 1. For each of the 64 tables, identify the **canonical** definition per ADR-0006
    (`docs/adr/0006-canonical-migration-lineage.md`) and reduce to one.
-2. Resolve the 4 colliding prefixes across 13 files by renumbering, per the
-   gate's own instruction (`ls migrations/ | grep -E "^[0-9]{4}_" | sort | tail -1`).
+2. Resolve the colliding prefixes by renumbering, per the gate's own
+   instruction (`ls migrations/ | grep -E "^[0-9]{4}_" | sort | tail -1`) —
+   **but not before reading "Renumbering is not a rename" below.** It is now 3
+   collisions across 10 files, measured 2026-10-12.
 3. Amend creating migrations **in place** where a column must be removed. RULE 1
    is explicit: do not append a DROP. Each amendment carries a dated header note
    saying what was removed, why, and which change removed it.
 4. Delete `scripts/ci/duplicate-table-ddl-baseline.json` and
    `migrations/.prefix-collisions-baseline.json`.
+
+### Renumbering is not a rename (measured 2026-10-12)
+
+Step 2 reads as a filename change. It is not. Three things key off these exact
+names, and a renumber that does not carry all three is a worse state than the
+collision:
+
+1. **`install-fresh.mjs` applies every `migrations/*.sql` in filename-sort
+   order** (`readdirSync(MIGRATIONS_DIR)… .sort()`, install-fresh.mjs:1202-1205,
+   and again for the guarded-root re-sweep at :1563-1567). So a renumber
+   changes the order a FRESH install applies these files in. The
+   `deploy-migrate` path does not change: `C2C_MIGRATION_FILES` is an
+   explicitly ordered list, and a renamed entry keeps its position. The overlay
+   loop retries on a missing dependency (`isMissingDep`, install-fresh.mjs:1210),
+   which softens this but does not remove it — the order still decides which
+   attempt lands first and which error each file is classified under.
+2. **`0008_critical_fk_delete_policies.sql` is a `CLASSIFIED_OVERLAY_SKIPS`
+   key** (install-fresh.mjs:1170). The map is keyed by exact filename, so
+   renaming the file silently un-skips it, and the install then fails loudly on
+   the retired `user_sessions` the entry exists to record.
+3. **`migrations/0011_governed_decision_transitions.sql` is a
+   `C2C_MIGRATION_FILES` entry** (migration-set.mjs:2779). RULE 1 re-executes
+   the set every deploy; a renamed entry registers as `new` in
+   `c2c_migration_journal` and the old row simply stops being refreshed, which
+   is survivable because the file is additive — but the entry must move in the
+   same change or the deploy applies nothing under either name.
+
+Three CI baselines are keyed by these filenames
+(`migrations/.prefix-collisions-baseline.json`,
+`scripts/ci/migration-deploy-path-baseline.json` — which records nine of the
+ten as on no deploy path at all; `0011_governed_decision_transitions.sql` is
+the one exception, and it is the one on the deploy set — and
+`scripts/ci/unkeyed-request-tables-baseline.json`), and
+about fifteen dated evidence and audit documents name them as the record of a
+past measurement. Those records are not edited to match a
+rename; they describe what was true when they were written.
+
+**What is NOT a reason to hurry.** The hazard step 1 removes — "the surviving
+column set is decided by migration ORDER" — does not apply to these ten files:
+none of them defines a table that appears in
+`scripts/ci/duplicate-table-ddl-baseline.json`, whose total is now **15**, not
+the 64 this work order was written against. So renumbering them cannot change
+which definition of a duplicated table survives a fresh install. Step 1 before
+step 2 still holds for any file that DOES overlap; for these ten, the only
+thing renumbering buys is the nightly report line, and the only thing it risks
+is the three keys above.
+
+**So the exit criterion for step 2 is a fresh install, not a green gate.** A
+renumber is proven by `node scripts/db/install-fresh.mjs` followed by
+`node scripts/db/deploy-migrate.mjs` against a throwaway database, reported
+before and after, with the skip classification and the journal both read back —
+not by `ci:migration-prefix-collisions:strict` returning 0, which a rename
+satisfies whether or not the install still works.
 
 ## Exit criteria
 

@@ -536,16 +536,16 @@ describe('settleAcceptedContributions', () => {
 
   it('keeps an accepted text present, unmarked, in the document — across a formatting split', () => {
     const { editor } = makeEditor(`<p>Base. Confirmed by <strong>MS/NMR</strong>.</p>`);
-    const s = store([{ authorId: 'ana', text: DRAFT }], [ANA]);
+    const s = store([{ authorId: 'ana', text: DRAFT, turnRecordId: null }], [ANA]);
     settleAcceptedContributions(s, editor.state.doc);
-    expect(s.acceptedInsertions).toEqual([{ authorId: 'ana', text: DRAFT }]);
+    expect(s.acceptedInsertions).toEqual([{ authorId: 'ana', text: DRAFT, turnRecordId: null }]);
     expect(s.acceptedAuthors).toEqual([ANA]);
     editor.destroy();
   });
 
   it('drops a text that is back under a pending insertion mark, and its author with it', () => {
     const { editor } = makeEditor(SAVED_WITH_PENDING_DRAFT);
-    const s = store([{ authorId: 'ana', text: DRAFT }], [ANA]);
+    const s = store([{ authorId: 'ana', text: DRAFT, turnRecordId: null }], [ANA]);
     settleAcceptedContributions(s, editor.state.doc);
     expect(s.acceptedInsertions).toEqual([]);
     expect(s.acceptedAuthors).toEqual([]);
@@ -556,7 +556,7 @@ describe('settleAcceptedContributions', () => {
     const { editor } = makeEditor(
       `<p>Base. <del data-author-id="reviewer-7" data-author-name="Reviewer">${DRAFT}</del></p>`,
     );
-    const s = store([{ authorId: 'ana', text: DRAFT }], [ANA]);
+    const s = store([{ authorId: 'ana', text: DRAFT, turnRecordId: null }], [ANA]);
     settleAcceptedContributions(s, editor.state.doc);
     expect(s.acceptedInsertions).toEqual([]);
     expect(s.acceptedAuthors).toEqual([]);
@@ -565,7 +565,7 @@ describe('settleAcceptedContributions', () => {
 
   it('drops a text the document no longer holds', () => {
     const { editor } = makeEditor('<p>The impurity is below the qualification threshold.</p>');
-    const s = store([{ authorId: 'ana', text: DRAFT }], [ANA]);
+    const s = store([{ authorId: 'ana', text: DRAFT, turnRecordId: null }], [ANA]);
     settleAcceptedContributions(s, editor.state.doc);
     expect(s.acceptedInsertions).toEqual([]);
     expect(s.acceptedAuthors).toEqual([]);
@@ -576,14 +576,14 @@ describe('settleAcceptedContributions', () => {
     const { editor } = makeEditor('<p>First clause.</p><p>Unrelated.</p>');
     const s = store(
       [
-        { authorId: 'ana', text: 'First clause.' },
-        { authorId: 'ana', text: 'Second clause.' },
-        { authorId: 'u9', text: 'A colleague’s clause.' },
+        { authorId: 'ana', text: 'First clause.', turnRecordId: null },
+        { authorId: 'ana', text: 'Second clause.', turnRecordId: null },
+        { authorId: 'u9', text: 'A colleague’s clause.', turnRecordId: null },
       ],
       [ANA, { id: 'u9', name: 'A colleague' }],
     );
     settleAcceptedContributions(s, editor.state.doc);
-    expect(s.acceptedInsertions).toEqual([{ authorId: 'ana', text: 'First clause.' }]);
+    expect(s.acceptedInsertions).toEqual([{ authorId: 'ana', text: 'First clause.', turnRecordId: null }]);
     expect(s.acceptedAuthors).toEqual([ANA]);
     editor.destroy();
   });
@@ -595,7 +595,7 @@ describe('settleAcceptedContributions', () => {
     editor.commands.setTextSelection(1 + 'Confirmed by'.length);
     editor.commands.splitBlock();
     expect(editor.getHTML()).toBe('<p>Confirmed by</p><p> MS/NMR.</p>');
-    const s = store([{ authorId: 'ana', text: DRAFT }], [ANA]);
+    const s = store([{ authorId: 'ana', text: DRAFT, turnRecordId: null }], [ANA]);
     settleAcceptedContributions(s, editor.state.doc);
     expect(s.acceptedInsertions).toEqual([]);
     editor.destroy();
@@ -640,7 +640,7 @@ describe('the accepted-author read at save time', () => {
     expect(decisions.map((d) => d.decision)).toEqual(['accept']);
     expect(collectSuggestions(canvas().state.doc)).toHaveLength(0);
     expect(ref.current!.takeAcceptedAuthors()).toEqual([ANA]);
-    expect(ref.current!.takeAcceptedInsertions()).toEqual([{ authorId: 'ana', text: DRAFT }]);
+    expect(ref.current!.takeAcceptedInsertions()).toEqual([{ authorId: 'ana', text: DRAFT, turnRecordId: null }]);
   });
 
   it('attributes nothing to AnA once the accepted text is gone from the section', async () => {
@@ -674,13 +674,13 @@ describe('the accepted-author read at save time', () => {
     expect(decisions.map((d) => d.decision)).toEqual(['accept']);
     expect(canvas().state.doc.textContent).toBe(own.accepted);
     expect(pendingOf(canvas())).toEqual([]);
-    expect(ref.current!.takeAcceptedInsertions()).toEqual([{ authorId: REVIEWER.id, text: own.pending }]);
+    expect(ref.current!.takeAcceptedInsertions()).toEqual([{ authorId: REVIEWER.id, text: own.pending, turnRecordId: null }]);
   });
 
   it('answers the same whichever list the host reads first', async () => {
     const { ref, accept } = await mountTracked();
     accept();
-    expect(ref.current!.takeAcceptedInsertions()).toEqual([{ authorId: 'ana', text: DRAFT }]);
+    expect(ref.current!.takeAcceptedInsertions()).toEqual([{ authorId: 'ana', text: DRAFT, turnRecordId: null }]);
     expect(ref.current!.takeAcceptedAuthors()).toEqual([ANA]);
     // Read-and-clear, as before.
     expect(ref.current!.takeAcceptedAuthors()).toEqual([]);

@@ -498,7 +498,15 @@ describe('ConversationThread — every AnA draft opens as a document (2026-10-01
     id: 'm6',
     role: 'assistant',
     text: 'Here is the statistical analysis plan.',
-    turnRecord: { status: 'recorded', id: 'rec-9', sha256: 'b'.repeat(64) },
+    /* The models that served the turn, with RULE 2's verdict. Required here
+       since round 14 (SEC-A-7 door 5): "Open as document" reaches
+       POST /api/authoring/docs/from-draft, which creates a whole governed
+       document of model prose, so the governed-write rule applies to it as it
+       applies to an insert. A record with no `servedBy` is one this view was
+       not told about, and the card refuses it — which is what this fixture
+       was before, four days before that rule reached this door. The refusal
+       itself is covered in conversationThreadInsertRefusals.test.tsx. */
+    turnRecord: { status: 'recorded', id: 'rec-9', sha256: 'b'.repeat(64), servedBy: [{ provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'pending' }] },
     generatedDraft: {
       title: SAP_TITLE,
       content: `# ${SAP_TITLE}\n\nScope of this plan.\n\n## 1. Objectives\n\nPrimary objective.\n\n## 2. Endpoints\n\nPrimary endpoint.`,

@@ -1780,6 +1780,63 @@
 .c2c-v2 .ana-msg-warning-ic{display:inline-flex;flex:none;margin-top:1px;}
 .c2c-v2 .ana-msg-warning-ic svg{font-size:12px;}
 
+/* ── The question AnA asks, as positions you can take (AnaQuestionCard) ─────────
+   The interview engine has emitted a question per node since the flows landed
+   and nothing drew it, so the positions it resolved never reached the screen
+   (founder's directive, 2026-10-12).
+
+   One bordered card under the answer. Each position is a label, what it
+   commits the programme to, and the authority behind it where the flow states
+   one — so the choice is read before it is made. The last row is the position
+   the list does not hold; choosing it opens a box for the person's own words.
+   Motion is the house 200ms ease-out on border and background only. */
+.c2c-v2 .ana-q-card{margin-top:10px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);padding:14px 16px;display:flex;flex-direction:column;gap:12px;}
+.c2c-v2 .ana-q-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+.c2c-v2 .ana-q-section{font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-300);}
+.c2c-v2 .ana-q-progress{font-size:11.5px;color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-q-title{margin:0;font-size:14.5px;line-height:1.5;font-weight:560;color:var(--text-000);}
+.c2c-v2 .ana-q-guidance{margin:0;font-size:12.5px;line-height:1.6;color:var(--text-200);}
+.c2c-v2 .ana-q-issues{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;}
+.c2c-v2 .ana-q-issue{font-size:12px;line-height:1.55;color:var(--text-200);padding-left:9px;border-left:2px solid var(--border);}
+.c2c-v2 .ana-q-issue.is-warning{border-left-color:var(--warning);}
+.c2c-v2 .ana-q-issue.is-critical{border-left-color:var(--danger);}
+.c2c-v2 .ana-q-issue-title{font-weight:560;color:var(--text-100);}
+.c2c-v2 .ana-q-issue-ref{display:block;font-size:11px;color:var(--text-300);margin-top:2px;}
+.c2c-v2 .ana-q-field{margin:0;padding:0;border:0;display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .ana-q-label{padding:0;font-size:12.5px;font-weight:560;color:var(--text-100);}
+.c2c-v2 .ana-q-required{font-weight:400;color:var(--text-300);}
+.c2c-v2 .ana-q-help{margin:0;font-size:12px;line-height:1.55;color:var(--text-300);}
+.c2c-v2 .ana-q-positions{display:flex;flex-direction:column;gap:6px;}
+/* 44px minimum target height (SC 2.5.8) comes from the padding plus line-height. */
+.c2c-v2 .ana-q-position{display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);cursor:pointer;transition:border-color var(--dur) ease-out,background var(--dur) ease-out;}
+.c2c-v2 .ana-q-position:hover{background:var(--bg-050);}
+.c2c-v2 .ana-q-position.is-picked{border-color:var(--accent-200);background:var(--bg-050);}
+.c2c-v2 .ana-q-position input{margin-top:2px;flex:none;accent-color:var(--accent-200);}
+.c2c-v2 .ana-q-position-body{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.c2c-v2 .ana-q-position-label{font-size:13px;line-height:1.45;color:var(--text-000);}
+.c2c-v2 .ana-q-position-commits{font-size:12px;line-height:1.5;color:var(--text-200);}
+.c2c-v2 .ana-q-position-desc{font-size:12px;line-height:1.5;color:var(--text-300);}
+.c2c-v2 .ana-q-position-authority{font-size:11px;line-height:1.45;color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-q-position.is-needs-basis{border-color:var(--warning);}
+.c2c-v2 .ana-q-position.is-inapplicable{border-color:var(--danger);}
+.c2c-v2 .ana-q-position-caution{display:block;margin-top:4px;font-size:11.5px;line-height:1.5;color:var(--text-200);padding-left:8px;border-left:2px solid var(--warning);}
+.c2c-v2 .ana-q-position-caution.is-inapplicable{border-left-color:var(--danger);}
+.c2c-v2 .ana-q-caution-lead{font-weight:560;color:var(--text-100);}
+.c2c-v2 .ana-q-caution-authority{display:block;font-size:11px;color:var(--text-300);margin-top:2px;font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-q-caution-taken{display:block;font-size:11px;color:var(--text-300);margin-top:2px;}
+.c2c-v2 .ana-q-own{display:flex;flex-direction:column;gap:5px;padding:0 0 0 11px;border-left:2px solid var(--accent-200);}
+.c2c-v2 .ana-q-own-label{font-size:12px;line-height:1.5;color:var(--text-200);}
+.c2c-v2 .ana-q-input{width:100%;font:inherit;font-size:13px;line-height:1.5;color:var(--text-000);background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 10px;}
+.c2c-v2 .ana-q-input:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
+.c2c-v2 .ana-q-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.c2c-v2 .ana-q-submit{min-height:32px;padding:0 14px;border:1px solid var(--accent-200);border-radius:var(--radius-md);background:var(--accent-200);color:var(--bg-000);font-size:12.5px;font-weight:560;cursor:pointer;transition:opacity var(--dur) ease-out;}
+.c2c-v2 .ana-q-submit:disabled{opacity:0.55;cursor:not-allowed;}
+.c2c-v2 .ana-q-foot-note{font-size:11.5px;line-height:1.5;color:var(--text-300);}
+@media (prefers-reduced-motion: reduce){
+  .c2c-v2 .ana-q-position,
+  .c2c-v2 .ana-q-submit{transition:none;}
+}
+
 /* ── AnA activity — the per-turn record in the transcript (AnaActivity) ──────── */
 /* Text is --text-300 or darker, never --text-400: --text-400 on --bg-000 is
    3.37:1 light / 4.27:1 dark and fails SC 1.4.3 at these sizes. --text-300 is

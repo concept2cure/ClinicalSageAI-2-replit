@@ -4,15 +4,27 @@
  * Originally a peer of the generic `proactive-commitment-engine` (removed with
  * the formal drop of the staged charter tables — decision register #727,
  * item 10). This module reads the MDX-specific tables (q_submissions,
- * q_sub_commitments, cerv2_510k_sections, regulatory_correspondence,
- * regulatory_programs, evidence_sufficiency_assessments) and emits MDX-shaped
- * alerts.
+ * q_sub_commitments, cerv2_510k_sections, regulatory_programs,
+ * evidence_sufficiency_assessments) and emits MDX-shaped alerts.
+ *
+ * The correspondence alert reads `c2c_correspondence` (joined to
+ * `c2c_submissions` for the application family) through
+ * regulatory-correspondence/response-clock.ts, which holds the response
+ * deadline rule. This list once said `regulatory_correspondence` and the code
+ * queried `correspondences`; neither exists in this repository, so that alert
+ * had never fired, and when it was restored it was restored on the regulation
+ * rather than on the 14-day constant it used to carry (2026-10-12).
  *
  * All queries are tenant-scoped via `regulatory_programs.organization_id`.
  * Read-only. Never mutates.
  */
 
 import type { Pool, PoolClient } from 'pg';
+
+import { correspondenceResponseClock } from '../regulatory-correspondence/response-clock';
+import { createScopedLogger } from '../../utils/logger';
+
+const logger = createScopedLogger('mdx-proactive-signals');
 
 export type MdxAlertSeverity = 'info' | 'warn' | 'critical';
 
@@ -52,7 +64,6 @@ const Q_SUB_DEADLINE_WARN_DAYS = 14;
 const Q_SUB_DEADLINE_CRITICAL_DAYS = 5;
 const TARGET_SUBMISSION_WARN_DAYS = 60;
 const TARGET_SUBMISSION_CRITICAL_DAYS = 30;
-const CORRESPONDENCE_NO_RESPONSE_DAYS = 14;
 
 function daysBetween(a: Date, b: Date): number {
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
@@ -198,45 +209,99 @@ export async function buildMdxProactiveSnapshot(
     // fail-soft (table may not exist on a fresh tenant)
   }
 
-  // ── Ingested correspondence with no response yet ──
+  /* ── An inbound agency letter still awaiting our response ────────────────
+     This read `FROM correspondences`, a table that exists nowhere in this
+     repository, inside `catch { // fail-soft … may have a different name in
+     some tenants }` — so it threw 42P01 every call, was swallowed, and the
+     alert had never once fired (2026-10-12). The real store is
+     `c2c_correspondence` (db/migrations/20260331_regulatory_correspondence_os.sql)
+     and carries every column that query selected.
+
+     What is NOT restored is its rule. It compared receipt against a single
+     platform constant of 14 days, which is not a deadline in any of these
+     regimes: a refuse-to-file letter runs 30 days, a complete response letter
+     a year, a device Additional Information hold 180 days or the application is
+     withdrawn, and a drug information request runs on the date FDA wrote in it
+     and no other. The clock is computed by
+     regulatory-correspondence/response-clock.ts, which takes the agency's
+     stated date ahead of any table, falls back to the governed window for the
+     letter class and application family, and reports a letter with neither as
+     exactly that rather than as an invented overdue. Bucketing is the same
+     rule the Regulatory Deadline Radar uses.
+
+     `upcoming` raises nothing: a CRL eleven months out is not something AnA
+     should interrupt anyone about. */
   try {
     const { rows } = await client.query(
-      `SELECT c.id, c.subject, c.received_at, c.due_date, c.urgency, c.project_id,
-              c.submission_id
-       FROM correspondences c
-       WHERE c.organization_id = $1
-         AND COALESCE(c.response_status, 'open') = 'open'
-         AND c.received_at < NOW() - INTERVAL '${CORRESPONDENCE_NO_RESPONSE_DAYS} days'
-       ORDER BY c.received_at ASC
-       LIMIT 25`,
+      `SELECT c.id, c.subject, c.direction, c.communication_type, c.response_required,
+              c.status, c.received_at, c.due_date, c.urgency, c.project_id, c.submission_id,
+              s.submission_type
+         FROM c2c_correspondence c
+         LEFT JOIN c2c_submissions s
+                ON s.id = c.submission_id AND s.organization_id = c.organization_id
+        WHERE c.organization_id = $1
+          AND c.direction = 'inbound'
+          AND c.response_required
+          AND c.status NOT IN ('responded', 'closed')
+        ORDER BY c.received_at ASC NULLS LAST
+        LIMIT 100`,
       [organizationId],
     );
     for (const r of rows) {
-      const days = daysBetween(new Date(r.received_at), now);
-      const severity: MdxAlertSeverity =
-        r.urgency === 'critical' ? 'critical' : r.urgency === 'high' ? 'warn' : 'info';
+      const clock = correspondenceResponseClock(
+        {
+          direction: r.direction,
+          communicationType: r.communication_type,
+          responseRequired: r.response_required,
+          status: r.status,
+          receivedAt: r.received_at,
+          dueDate: r.due_date,
+          submissionType: r.submission_type ?? null,
+        },
+        now,
+      );
+      if (clock.state === 'untracked' || (clock.state === 'dated' && clock.bucket === 'upcoming')) continue;
+
+      const subject = String(r.subject ?? 'an agency letter');
+      const message =
+        clock.state === 'dated'
+          ? `${subject} is ${clock.bucket === 'overdue' ? `${Math.abs(clock.daysUntilDue)} day(s) overdue` : `due in ${clock.daysUntilDue} day(s)`}` +
+            (clock.dueDateSource === 'agency_stated'
+              ? ` — the date the agency stated (${clock.dueDate.slice(0, 10)}).`
+              : ` — ${clock.dueDate.slice(0, 10)}, from ${clock.window.citation ?? 'the governed response window'}.`) +
+            (clock.window.consequence ? ` ${clock.window.consequence}` : '')
+          : `${subject} arrived ${clock.daysSinceReceived} day(s) ago and has no recorded response. ` +
+            `No response date is on record and no regulation fixes a window for this class, so nothing here is overdue — ` +
+            `the date the agency set is what governs.` +
+            (clock.window.consequence ? ` ${clock.window.consequence}` : '');
+
       alerts.push({
         id: `correspondence-no-response:${r.id}`,
         kind: 'correspondence.no_response',
-        severity,
+        severity: clock.severity,
         organizationId,
-        message:
-          `FDA correspondence "${r.subject}" was received ${days} days ago and has no ` +
-          `recorded response yet${r.due_date ? ` (due ${new Date(r.due_date).toISOString().slice(0, 10)})` : ''}.`,
+        message,
         suggestedSurface: 'pre-sub',
         detail: {
           correspondenceId: r.id,
           projectId: r.project_id,
           submissionId: r.submission_id,
+          communicationType: r.communication_type,
+          submissionType: r.submission_type ?? null,
+          status: r.status,
           receivedAt: r.received_at,
-          dueDate: r.due_date,
           urgency: r.urgency,
-          daysSinceReceived: days,
+          clock,
         },
       });
     }
-  } catch {
-    // fail-soft (correspondences table may have a different name in some tenants)
+  } catch (err) {
+    /* Not swallowed as "nothing to report": a read that could not run is said
+       so, which is the distinction the previous version lost. */
+    logger.warn('correspondence response clock could not be read', {
+      organizationId,
+      err: err instanceof Error ? err.message : String(err),
+    });
   }
 
   // ── Evidence-sufficiency verdict insufficient + target date < 60d ──

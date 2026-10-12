@@ -60,8 +60,10 @@ export const TABS = [
   // capability existed and no client code reached it; this is the reach.
   { id: 'irb-package', label: 'IRB package', icon: 'layers' },
   // The protocol's statistics live on its study design (the design-as-data
-  // spine), read through the biostatistics bridge; the tab links into the
-  // designer with the design pre-loaded instead of retyped.
+  // spine), read through the biostatistics bridge: the design record's figures,
+  // the deterministic engine's computation for them, and the governed write
+  // that applies the computed size. It also links into the designer with the
+  // design pre-loaded instead of retyped, but no longer only that.
   { id: 'statistics', label: 'Statistics', icon: 'sigma' },
   { id: 'risks', label: 'Risk register', icon: 'alertTriangle' },
   { id: 'milestones', label: 'Milestones', icon: 'gitBranch' },
@@ -280,8 +282,12 @@ function TabBody(props: BodyProps) {
     case 'compliance': return <ComplianceTab doc={doc} />;
     case 'irb-package': return <IrbPackageTab doc={doc} />;
     /* Scoped to the design BOUND to this protocol. Passing nothing rendered the
-       whole program's designs on one protocol's workspace. */
-    case 'statistics': return <StudyDesignStatisticsTab onNav={onNav} boundStudyId={boundStudyIdOf(doc)} />;
+       whole program's designs on one protocol's workspace. `onChanged` is the
+       re-read after the tab's governed write: the design gates' findings the
+       Study design tab shows are computed from the statistical plan that write
+       changes, so without it this workspace would keep reporting the previous
+       plan as current. */
+    case 'statistics': return <StudyDesignStatisticsTab onNav={onNav} boundStudyId={boundStudyIdOf(doc)} onChanged={onRefresh} />;
     default:
       return sec
         /* Keyed on the section: switching section replaces the pane rather

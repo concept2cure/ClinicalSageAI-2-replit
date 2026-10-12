@@ -307,7 +307,7 @@ export async function orchestrateContradictionResolution(
   // ── STEP 11: Refresh preflight/readiness ──
   let readinessRefreshed = false;
   try {
-    await refreshPreflightAfterExecution(organizationId, projectId, receipt, plan);
+    await restampAfterExecution(organizationId, receipt, plan);
     readinessRefreshed = true;
   } catch {
     // Best-effort
@@ -727,18 +727,28 @@ function determineConfidence(plan: ResolutionBundlePlan): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PREFLIGHT / READINESS REFRESH
+// POST-EXECUTION RESTAMP
 //
-// After bundle execution, update the relevant truth surfaces:
+// After bundle execution, restamp what records the execution:
 // - SectionWorkspace issues/status (via contradiction_findings.updated_at)
-// - Dossier preflight (via concept2cure_projects.updated_at)
 // - Promotion gating (via artifact metadata)
-// - Readiness messaging
+//
+// There is no readiness or preflight cache to invalidate. Until 2026-10-12
+// this block also stamped updated_at on a "concept2cure_projects" table, under
+// the heading "Invalidate cached readiness" — a table that exists NOWHERE in
+// this repository (no migration, no `shared/schema` entry), written inside
+// `catch { // Table may not exist }`, so it never ran and nothing said so
+// (ci:unbacked-tables had been naming it: "A guarded one degrades to a silent
+// no-op, which is worse: it looks durable and is not"). Nor was there anything
+// to invalidate: no readiness cache keyed on a project's timestamp exists, and
+// nothing reads `projects.updated_at` for preflight. Readiness is computed from
+// server-side truth on every assessment — assessSequenceDispatchReadiness,
+// server/services/ectd/assess-dispatch-readiness.ts — so a resolved
+// contradiction is reflected on the next read with no write here at all.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function refreshPreflightAfterExecution(
+async function restampAfterExecution(
   organizationId: number,
-  projectId: number,
   receipt: BundleExecutionReceipt,
   plan: ResolutionBundlePlan
 ): Promise<void> {
@@ -759,20 +769,6 @@ async function refreshPreflightAfterExecution(
     } catch {
       // Best-effort
     }
-  }
-
-  // Invalidate cached readiness by touching project updated_at
-  try {
-    await pool.query(
-      `
-      UPDATE concept2cure_projects
-      SET updated_at = NOW()
-      WHERE id = $1 AND organization_id = $2
-    `,
-      [projectId, organizationId]
-    );
-  } catch {
-    // Table may not exist
   }
 
   // Update affected artifacts with resolution bundle reference
@@ -935,10 +931,16 @@ export function buildContradictionExplanation(result: ContradictionOrchestration
     }
   }
 
-  // Readiness refresh
+  /* What the restamp did, not what it was once named. It touches the findings
+     the bundle resolved and the artifacts it superseded; readiness itself is
+     recomputed from the record on every read, so there is no cache here that
+     could be stale or fresh. */
   if (result.readinessRefreshed) {
     lines.push('');
-    lines.push('Preflight and readiness truth have been refreshed.');
+    lines.push(
+      'The resolved findings and affected artifacts have been restamped. ' +
+        'Readiness is recomputed from the record on each read, so it reflects this execution immediately.'
+    );
   }
 
   if (result.contradictionStatesUpdated.length > 0) {

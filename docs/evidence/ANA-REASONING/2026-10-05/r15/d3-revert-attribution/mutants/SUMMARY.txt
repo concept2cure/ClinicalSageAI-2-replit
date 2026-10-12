@@ -1,0 +1,15 @@
+Round 15, SEC-A-7 door 3 (the revert restores its attribution).
+Test: tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+
+baseline: Tests  37 passed (37)
+
+RV-01   KILLED    the filing is not told the restored origin (trunk behaviour: NULL over model prose)
+        Tests  2 failed | 35 passed (37)
+RV-02   KILLED    the revert’s own revision records no contributors, so the attribution is spent after one revert
+        Tests  1 failed | 36 passed (37)
+RV-03   KILLED    every revert claims AnA, including a revert to a person’s own words
+        Tests  1 failed | 36 passed (37)
+RV-04   KILLED    the SELECT stops asking for the provenance columns
+        Tests  2 failed | 35 passed (37)
+RV-05   KILLED    an absent origin is guessed as ‘human’, the fabrication 20260822 closed
+        Tests  1 failed | 36 passed (37)

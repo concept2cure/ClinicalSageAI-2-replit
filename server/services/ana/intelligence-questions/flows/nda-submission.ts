@@ -163,8 +163,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'endocrine', label: 'Endocrine / Metabolic' },
               { value: 'immunology', label: 'Immunology / Rheumatology' },
               { value: 'rare_disease', label: 'Rare Disease / Orphan' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'accelerated_pathway',
@@ -356,8 +356,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'topical', label: 'Topical (Cream/Ointment/Gel)' },
               { value: 'inhaled', label: 'Inhaled (Powder/Solution)' },
               { value: 'patch', label: 'Transdermal Patch' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'route_of_administration',
@@ -372,8 +372,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'topical', label: 'Topical' },
               { value: 'inhaled', label: 'Inhaled' },
               { value: 'intrathecal', label: 'Intrathecal' },
-              { value: 'other', label: 'Other' },
             ],
+            allowOther: {},
           },
           {
             id: 'strengths',
@@ -1577,8 +1577,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'global_submit', label: 'Global Submit (IQVIA)' },
               { value: 'lorenz', label: 'Lorenz docuBridge' },
               { value: 'isi_toolbox', label: 'ISI Toolbox' },
-              { value: 'other', label: 'Other Publishing Tool' },
             ],
+            allowOther: { label: 'Other Publishing Tool' },
           },
           {
             id: 'module_2_summaries',

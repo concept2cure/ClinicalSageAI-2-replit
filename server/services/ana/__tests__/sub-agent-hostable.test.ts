@@ -55,3 +55,49 @@ describe("the timeline keeps an agent's budget stop", () => {
     expect(event('nearly')?.status).toBeUndefined();
   });
 });
+
+/**
+ * A pause nobody answered is not a person's Stop (review 2026-10-11).
+ *
+ * Under Manual, a person can pause a run while a sub-agent is working and not
+ * come back. The hold then expires and ends the turn. The agent's own result
+ * said so, but the step's sentence — the one in the live frame, the Summary row
+ * and the retained turn record — read "You stopped running an agent before it
+ * finished", crediting the person with an act they never performed.
+ */
+describe("an agent ended by an expired pause does not credit the person", () => {
+  const ended = (over: Record<string, unknown> = {}) =>
+    JSON.stringify({
+      agent: { runId: 'agent_1', role: 'research', objective: 'trials' },
+      status: 'cancelled',
+      stoppedReason: 'cancelled',
+      note: 'Stopped: the run stayed paused past its limit.',
+      ...over,
+    });
+
+  it('says the run stayed paused, not that the person stopped it', async () => {
+    const { finishedStep } = await import('../step-presentation');
+    const step = finishedStep({ name: 'run_agent', input: { role: 'research', objective: 'trials' } }, null, {
+      status: 'cancelled',
+      result: ended({ endedBy: 'hold_expired' }),
+    });
+    expect(step.message).not.toMatch(/You stopped/);
+    expect(step.message).toMatch(/stayed paused past its limit/);
+  });
+
+  it("control: a person's Stop still reads as theirs", async () => {
+    const { finishedStep } = await import('../step-presentation');
+    const step = finishedStep({ name: 'run_agent', input: { role: 'research', objective: 'trials' } }, null, {
+      status: 'cancelled',
+      result: ended(),
+    });
+    expect(step.message).toMatch(/^You stopped /);
+  });
+
+  it('the runner marks an expired hold on the result it returns', async () => {
+    const { agentEndedByHoldExpiry } = await import('../sub-agent-result');
+    expect(agentEndedByHoldExpiry(ended({ endedBy: 'hold_expired' }))).toBe(true);
+    expect(agentEndedByHoldExpiry(ended())).toBe(false);
+    expect(agentEndedByHoldExpiry('not json')).toBe(false);
+  });
+});

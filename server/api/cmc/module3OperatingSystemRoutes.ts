@@ -4,6 +4,7 @@ import { getPool } from '../../db';
 import { summarizeSectionDiff } from '../../services/cmc-module3-compiler';
 import { renderComposedSectionMarkdown } from '../../services/module3Composer';
 import { compiledRecordOf, composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
+import { compositionRefusalBody, isCompositionOutOfScope } from '../../services/cmc/composition-scope';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { readContradictionRegisters } from '../../services/cmc/contradiction-registers';
@@ -35,8 +36,6 @@ import { governedActorId, requireEditorAccess } from '../../middleware/orgMember
 import { clientIpOf } from '../../utils/client-ip';
 import { requireRole } from '../../middleware/auth';
 import { requireGovernedReason } from '../../routes/governed-reason';
-import { resolveSignerOrgRole } from '../../services/part11/resolve-signer-role';
-import { isSigningAuthorized } from '../../services/part11/signing-authority';
 
 /** The §11.50(a)(3) meanings a signature may carry. */
 type SignatureMeaning = (typeof SIGNATURE_MEANINGS)[number];
@@ -182,6 +181,14 @@ router.post('/compile/:projectId', async (req, res) => {
     res.json({ success: true, compiledCount: compiled.length, sections: compiled, bridgedArtifacts, bridgeSkips });
   } catch (error) {
     await client.query('ROLLBACK');
+    /* Outside the composition scope this platform ships — a biologically
+       derived substance, a modality the record does not establish, or a
+       submission that files something other than a US IND
+       (services/cmc/composition-scope.ts). A business refusal, not a server
+       fault: 409 with the reason and the path that does author it. */
+    if (isCompositionOutOfScope(error)) {
+      return res.status(409).json(compositionRefusalBody(error.refusal));
+    }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
@@ -323,8 +330,20 @@ router.patch('/contradictions/:id/resolve', requireEditorAccess, async (req, res
     if (!userId) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
     /* A critical finding blocks every section approval; clearing one is a
        signer's decision, not any member's (GA plan item 4, separation of
-       duties). The role comes from the membership row, as for a signature. */
-    const signingAuthority = isSigningAuthorized(await resolveSignerOrgRole(userId, orgId));
+       duties). The answer comes from the ONE gate (checkSigningAuthority,
+       part11/signing-authority-gate.ts), which reads the role from the
+       membership row and answers a lookup that cannot run with 503
+       SIGNING_AUTHORITY_UNVERIFIED. This route used to read the role and apply
+       the predicate itself, so a failed lookup reached the catch-all as a 500
+       and the person was told the server had erred rather than that their
+       authority could not be verified (one-signing-authority-policy, P-27). */
+    const authority = await checkSigningAuthority(userId, orgId);
+    if (authority && authority.code === 'SIGNING_AUTHORITY_UNVERIFIED') {
+      return res.status(authority.status).json({ success: false, error: authority.code, message: authority.message });
+    }
+    /* A refusal here means "this role may not sign", which only a CRITICAL
+       finding requires: the service still decides that, by severity. */
+    const signingAuthority = authority === null;
     const out = await resolveContradiction({
       organizationId: orgId,
       userId,
@@ -930,6 +949,11 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
     });
   } catch (error) {
     await client.query('ROLLBACK');
+    // Same boundary as the compile: a refresh re-composes, so it is refused on
+    // the same terms (services/cmc/composition-scope.ts).
+    if (isCompositionOutOfScope(error)) {
+      return res.status(409).json(compositionRefusalBody(error.refusal));
+    }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }

@@ -1,0 +1,22 @@
+RED — the two kernel reads before the fix, measured 2026-10-12T08:14:08Z
+
+$ npm run ci:tenant-isolation:strict   (at 8d5228bc2, before this change)
+[ci:tenant-isolation] FAIL — 6 candidate violation(s) (36 query(ies) inline-suppressed with justifications)
+  server/routes/module-access-requests.ts  (1)   L290
+  server/services/kernel-adaptive-policy.ts  (1) L85
+  server/services/kernel-observability.ts  (4)   L53 L63 L72 (+1)
+
+$ the two new suites, on the unfixed code:
+ × server/routes/__tests__/ana-ri-kernel-metrics-scope.test.ts > GET /api/ana-ri/kernel/metrics > refuses without organization context instead of aggregating every tenant, and reads nothing 29ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/ana-ri-kernel-metrics-scope.test.ts > GET /api/ana-ri/kernel/metrics > scopes every statement to the caller organization, unconditionally 6ms
+   → a conditional tenant predicate is not a predicate: expected 'SELECT\n           COUNT(*)::int AS t…' not to match /IS\s+NULL\s+OR\s+organization_id/i
+ × server/routes/__tests__/ana-ri-kernel-metrics-scope.test.ts > getKernelMetrics requires an organization at the service boundary > refuses rather than reading every tenant: no statement runs 6ms
+   → promise resolved "{ windowDays: 7, kdr: { …(3) }, …(3) }" instead of rejecting
+ × server/services/__tests__/kernel-policy-hint-scope.test.ts > getKernelPolicyHint is scoped to one organisation > reads nothing and hints nothing when no organisation is named 6ms
+   → null: expected { …(3) } to be null
+ × server/services/__tests__/kernel-policy-hint-scope.test.ts > getKernelPolicyHint is scoped to one organisation > scopes the read unconditionally when one is 2ms
+   → a conditional tenant predicate is not a predicate: expected 'SELECT strategy, AVG(quality_score)::…' not to match /IS\s+NULL\s+OR\s+organization_id/i
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  5 failed (5)

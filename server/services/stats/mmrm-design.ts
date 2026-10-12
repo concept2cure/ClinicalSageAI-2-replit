@@ -34,7 +34,23 @@
  * @module server/services/stats/mmrm-design
  */
 
-import { normalQuantile } from './normal';
+/* Φ and Φ⁻¹ are the canonical full-precision ones.
+ *
+ * Until 2026-10-12 this module carried its own standard-normal CDF —
+ * Abramowitz & Stegun 7.1.26, absolute error ~7e-8 — behind the comment
+ * "to avoid a circular import". There was no cycle: this line already
+ * imported `normalQuantile` from the same module, and `./normal` imports
+ * nothing at all. It was the last of the private CDF copies the 2026-10-05
+ * sweep removed from the AnA engine, the adaptive service and the
+ * trial-statistics knowledge engine, kept alive by a reason nobody checked.
+ *
+ * `mmrmPower` rounds to six decimals and the two forms land on a different
+ * sixth decimal at about 4.4% of points — including, for the reference design
+ * in tests/biostat/mmrm-power-uses-the-canonical-cdf.test.ts, the very n the
+ * sizing returns (0.900072 against the correct 0.900073). Not a safety
+ * defect; a reproducibility one, against a provenance stamp that promises the
+ * same inputs give the same answer. */
+import { normalCdf, normalQuantile } from './normal';
 import { buildProvenance, type StatsProvenance } from './computation-provenance';
 
 export type MmrmCovariance = 'compound_symmetry' | 'ar1';
@@ -297,16 +313,7 @@ function mmrmPowerForN(factor: number, sigma2: number, delta: number, alpha: num
   const se = Math.sqrt(sigma2 * factor * (1 / n1 + 1 / n2));
   const za = normalQuantile(1 - alpha / 2);
   const z = Math.abs(delta) / se - za;
-  return standardNormalCdf(z);
-}
-
-// Local standard-normal CDF (Abramowitz–Stegun 7.1.26) to avoid a circular import.
-function standardNormalCdf(x: number): number {
-  const t = 1 / (1 + 0.2316419 * Math.abs(x));
-  const d = 0.3989422804014327 * Math.exp((-x * x) / 2);
-  const p =
-    d * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
-  return x >= 0 ? 1 - p : p;
+  return normalCdf(z);
 }
 
 function round(x: number, dp: number): number {

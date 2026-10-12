@@ -1,0 +1,8 @@
+mutant SM-04: the fallback to the turn’s own model is dropped, so a corrupt list hides a named model
+verdict: KILLED
+Tests  2 failed | 7 passed (9)
+
+ × server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: every model that served the turn > falls back to the turn's one model where the door records no calls, and is empty where it names none 7ms
+ × server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: a malformed record body yields a verdict, never a fault > falls back to the turn’s own model when `calls` is unusable 1ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)

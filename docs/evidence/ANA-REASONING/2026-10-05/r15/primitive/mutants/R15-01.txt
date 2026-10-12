@@ -1,0 +1,7 @@
+mutant R15-01: the id shape is not checked, so a malformed id reaches a uuid column
+verdict: KILLED
+Tests  1 failed | 7 passed (8)
+
+ × server/services/authoring/__tests__/turn-served-models.pglite.test.ts > servedModelsForTurn — the model half of the record check > refuses an id that is not a record id, without touching the store 6ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
