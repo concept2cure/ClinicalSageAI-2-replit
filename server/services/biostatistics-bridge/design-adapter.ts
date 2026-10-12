@@ -53,8 +53,13 @@ import type {
 
 /** Why the adapter could not take a value from the design, and what it did instead. */
 export interface DesignGap {
-  /** The engine input this concerns (e.g. "effectSize"). */
-  field: keyof StatisticalInput | 'primaryEndpoint' | 'estimand';
+  /**
+   * The engine input this concerns (e.g. "effectSize"), or one of the three
+   * design-level concerns that are not a single engine input:
+   * `primaryEndpoint`, `estimand`, and `carryover` (the crossover design's
+   * no-carryover assumption, which the sizing takes and does not verify).
+   */
+  field: keyof StatisticalInput | 'primaryEndpoint' | 'estimand' | 'carryover';
   /** Sentence for a person: what was missing and what was assumed, if anything. */
   message: string;
   /**
@@ -413,6 +418,89 @@ export function studyDesignToStatisticalInput(design: StudyDesign): DesignAdapte
   const interimAnalyses = (plan.interim?.informationFractions ?? []).filter((f) => f > 0 && f < 1).length;
   const keySecondaries = (design.endpoints ?? []).filter((e) => e.role === 'key_secondary').length;
 
+  /* ── The structural design, which until 2026-10-11 was dropped entirely ──
+     `studyTypeFor` maps single_arm, adaptive, basket, platform and
+     dose_ranging; every other StructuralDesign fell through to `superiority`,
+     so a protocol that declares a CROSSOVER was sized as two parallel groups
+     with nothing in the result saying so — the 2×2 design needs about a
+     quarter of the subjects, and the engine's crossover method was reachable
+     only from its own unit test. The engine now sizes a crossover as one
+     (computation-engine.ts crossoverDesign); the bridge has to tell it that
+     is the design. */
+  const structural = design.framework?.structuralDesign;
+  let crossoverPeriods: number | undefined;
+  let withinSubjectCorrelation: number | undefined;
+
+  if (structural === 'crossover') {
+    if (endpointType !== 'continuous') {
+      // Sizing it as parallel groups would overstate N several-fold, so this
+      // blocks rather than quietly producing the parallel figure.
+      gaps.push({
+        field: 'endpointType',
+        message: `This is a crossover design with a ${endpointType} primary endpoint. The engine's crossover method is the 2×2 within-subject comparison of two MEANS (Julious 2004); a binary crossover is McNemar-based and a time-to-event endpoint is not a crossover comparison at all. Sizing it as parallel groups would overstate the sample size several-fold, so no figure is produced.`,
+        severity: 'blocking',
+        designPath: 'framework.structuralDesign',
+      });
+    } else {
+      crossoverPeriods = 2;
+      mapped.push('crossoverPeriods');
+      // The MMRM block is the one place the design schema records a
+      // within-subject correlation. It is the same quantity the crossover
+      // formula needs — the correlation between two measurements on one
+      // subject — but it was recorded for a different analysis, so using it
+      // is disclosed rather than assumed.
+      const mmrmRho = plan.mmrmAssumptions?.rho;
+      const mmrmEndpoint = plan.mmrmAssumptions?.endpointName;
+      if (typeof mmrmRho === 'number' && mmrmRho >= 0 && mmrmRho < 1 && (!primary || !mmrmEndpoint || mmrmEndpoint === primary.name)) {
+        withinSubjectCorrelation = mmrmRho;
+        mapped.push('withinSubjectCorrelation');
+        gaps.push({
+          field: 'withinSubjectCorrelation',
+          message: `The crossover is sized with the within-subject correlation of ${mmrmRho} the plan records for its MMRM assumptions${mmrmEndpoint ? ` (endpoint "${mmrmEndpoint}")` : ''}. That figure was recorded for a repeated-measures analysis, not for this crossover; confirm it is the right correlation for the two-period comparison, because N scales with (1 − ρ).`,
+          severity: 'defaulted',
+          designPath: 'statisticalPlan.mmrmAssumptions.rho',
+        });
+      } else {
+        gaps.push({
+          field: 'withinSubjectCorrelation',
+          message: 'A 2×2 crossover is sized on the within-subject correlation (N scales with 1 − ρ) and the design records none — the statistical plan has no field for it outside its MMRM assumptions. The engine refuses to assume one, so no figure is produced. Record it in the plan\'s MMRM assumptions, or size the design in the biostatistics workbench where the correlation is an input.',
+          severity: 'blocking',
+          designPath: 'statisticalPlan.mmrmAssumptions.rho',
+        });
+      }
+      gaps.push({
+        field: 'carryover',
+        message: 'The crossover sizing assumes no carryover between periods. A washout long enough to exclude it is a design obligation the sizing does not verify.',
+        severity: 'note',
+        designPath: 'framework.structuralDesign',
+      });
+    }
+  } else if (structural === 'factorial' || structural === 'umbrella' || structural === 'mams') {
+    // Same class of silence, lower stakes: these three also fall through to
+    // the parallel two-group sizing, which is a defensible starting figure for
+    // a factorial or MAMS design but is not the design's own method.
+    gaps.push({
+      field: 'studyType',
+      message: `This is a ${structural.replace(/_/g, ' ')} design. The engine has no method for it and sizes the primary comparison as two parallel groups; the figure ignores the factorial structure, the multi-arm multi-stage boundaries or the umbrella's sub-study allocation. Treat it as the per-comparison starting point, not the study's N.`,
+      severity: 'defaulted',
+      designPath: 'framework.structuralDesign',
+    });
+  }
+
+  /* An IVD design's endpoint is forced to the accuracy pair above, because the
+     design schema's EndpointType has no ROC member. The engine sizes an ROC
+     design by the AUC (Hanley & McNeil) and that method is now reachable from
+     the workbench and the biostatistics surface — but not from a protocol,
+     because the protocol cannot say its endpoint is an AUC. */
+  if (clientTrack === 'diagnostics_ivd' && primary && DESIGN_ENDPOINT_TO_ENGINE[primary.type] !== 'binary') {
+    gaps.push({
+      field: 'endpointType',
+      message: `This IVD design is sized against sensitivity and specificity targets, because the design schema cannot record an ROC/AUC endpoint (its primary endpoint reads "${primary.type}"). If the study's primary analysis is the AUC, size it in the biostatistics workbench, which runs the AUC method directly.`,
+      severity: 'note',
+      designPath: `endpoints["${primary.name}"].type`,
+    });
+  }
+
   const blocking = gaps.some((g) => g.severity === 'blocking');
 
   const input: StatisticalInput = {
@@ -438,6 +526,8 @@ export function studyDesignToStatisticalInput(design: StudyDesign): DesignAdapte
     numberOfGroups: Math.max(1, design.arms?.length ?? 2),
     numberOfEndpoints: 1 + keySecondaries,
     interimAnalyses: interimAnalyses > 0 ? interimAnalyses : undefined,
+    crossoverPeriods,
+    withinSubjectCorrelation,
     multiplicityMethod: multiplicityFor(plan),
     estimandStrategy: primaryEstimand?.strategy,
     missingDataMethod: missingDataFor(plan.missingDataStrategy),

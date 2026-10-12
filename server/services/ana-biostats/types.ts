@@ -162,8 +162,12 @@ export interface ScenarioResult {
 }
 
 export interface DiagnosticComputationResult {
-  sensitivity: number;
-  specificity: number;
+  // Optional since 2026-10-11: an ROC design is sized on the AUC and supplies
+  // neither a sensitivity nor a specificity. They were required, so the AUC
+  // path filled them with zeros — a fabricated figure that a document
+  // generator then printed as "Sensitivity: 0.0%". Absent means not assessed.
+  sensitivity?: number;
+  specificity?: number;
   ppv?: number;
   npv?: number;
   auc?: number;

@@ -49,6 +49,24 @@ export class ComputationEngine {
   // ════════════════════════════════════════════════════════════════
 
   compute(input: StatisticalInput): ComputationResult {
+    // A crossover IS the design, so it is chosen before the track: a 2×2
+    // crossover sized as two parallel groups is wrong on every track.
+    //
+    // Until 2026-10-11 nothing routed here. computeCrossover existed, was
+    // reference-pinned to 32 subjects for the d = 0.5, ρ = 0.5 design, and was
+    // reachable only from its own test: computeEnhanced attached its result to
+    // `crossoverResult` while leaving `sampleSize` holding the PARALLEL-GROUP
+    // figure (128 for that design) and `method` reading "Two-sample t-test".
+    // Every surface and the protocol bridge read `sampleSize.total`, so a
+    // crossover trial was sized at four times the subjects it needs, with
+    // nothing in the headline saying the design had been ignored.
+    if (typeof input.crossoverPeriods === 'number') {
+      const crossover = this.crossoverDesign(input);
+      if (crossover) return crossover;
+      // Refused (period count, correlation, or a non-continuous endpoint): the
+      // parallel-group sizing below stands and the refusal travels with it.
+    }
+
     switch (input.clientTrack) {
       case 'diagnostics_ivd':
         if (input.studyType === 'agreement') {
@@ -91,8 +109,14 @@ export class ComputationEngine {
         return this.computeDiagnostic(input);
       case 'agreement':
         throw this.kappaRefusal();
+      // An ROC design is sized on the AUC itself (Hanley & McNeil), not on a
+      // sensitivity/specificity pair it does not carry. Between 2026-10-11 and
+      // this change it routed to computeDiagnostic, which refused a COMPLETE
+      // AUC design (aucTarget 0.85, aucNull 0.5) for want of `sensitivity` —
+      // trading a wrong number for a wrong refusal. computeAUCComparison was
+      // reachable from its own test only.
       case 'auc_roc':
-        return this.computeDiagnostic(input);
+        return this.computeAUC(input, assumptions);
       // ordinal | count | composite | patient_reported: no closed form here, so
       // the continuous normal approximation stands in — and SAYS SO, in the
       // method and in the assumptions, so the caveat travels with the number.
@@ -718,6 +742,87 @@ export class ComputationEngine {
     };
   }
 
+  /**
+   * The 2×2 crossover as a `ComputationResult` — the shape every caller reads.
+   * `computeCrossover` owns the formula; this wraps it so `sampleSize`,
+   * `method` and `power` describe the crossover rather than a parallel design
+   * beside it. Returns null when the crossover engine refuses, so the caller
+   * can fall back to the parallel sizing with the refusal recorded.
+   *
+   * Power at the sized N, same normal form as the sizing:
+   *   Φ( δ / √(2σ²(1 − ρ)/N) − z_{1−α/2} ).
+   */
+  private crossoverDesign(input: StatisticalInput): ComputationResult | null {
+    const assumptions = this.buildAssumptions(input);
+
+    // The formula is the within-subject difference of a continuous endpoint. A
+    // binary crossover is McNemar-based and a time-to-event crossover is not a
+    // crossover at all, so neither is sized here.
+    if (input.endpointType !== 'continuous') {
+      return null;
+    }
+
+    let crossoverResult: CrossoverResult;
+    try {
+      crossoverResult = this.computeCrossover(input);
+    } catch (err) {
+      if (!(err instanceof ComputationRefusal)) throw err;
+      return null;
+    }
+
+    const rho = input.withinSubjectCorrelation as number;
+    const sigma = this.continuousSigma(input);
+    const zAlpha = normalQuantile(1 - input.alpha / 2);
+
+    // Two sequences (AB, BA), balanced — so the enrolled total is even.
+    const groups = 2;
+    const total = crossoverResult.totalSubjects % 2 === 0
+      ? crossoverResult.totalSubjects
+      : crossoverResult.totalSubjects + 1;
+    const perGroup = total / groups;
+
+    const n = crossoverResult.withinSubjectN;
+    const se = Math.sqrt((2 * sigma * sigma * (1 - rho)) / n);
+    const power = se > 0 ? normalCdf(Math.abs(input.effectSize) / se - zAlpha) : 0;
+
+    return {
+      method: `2×2 (AB/BA) crossover, within-subject comparison of two means (Julious 2004; Senn 2002 §3), ${n} subjects before attrition in ${groups} balanced sequences`,
+      sampleSize: { perGroup, total, groups },
+      power: Math.min(power, 0.9999),
+      effectSize: input.effectSize,
+      alpha: input.alpha,
+      adjustedSampleSize: perGroup,
+      adjustedTotal: total,
+      attritionAdjusted: input.attritionRate > 0,
+      criticalValue: zAlpha,
+      testStatistic: 'z on the within-subject difference (normal approximation)',
+      formula: `N = 2σ²(1 − ρ)(z_{1−α/2} + z_{1−β})² / δ², where δ=${input.effectSize}, σ=${sigma.toFixed(3)}, ρ=${rho}; rounded up to an even N so the two sequences balance`,
+      assumptions: [
+        ...assumptions,
+        {
+          parameter: 'design',
+          value: `2×2 crossover; each subject receives both treatments, so N is subjects, not subjects per arm. The parallel-group design at the same α, power and σ would need ${crossoverResult.parallelEquivalentN} subjects in total.`,
+          source: 'user_provided',
+          sensitivity: 'high',
+        },
+        {
+          parameter: 'within_subject_correlation',
+          value: rho,
+          source: 'user_provided',
+          sensitivity: 'high',
+        },
+        {
+          parameter: 'carryover',
+          value: 'Assumed no carryover between periods. A washout long enough to exclude it is a design obligation this sizing does not verify.',
+          source: 'derived',
+          sensitivity: 'high',
+        },
+      ],
+      scenarios: this.generateScenarios(input, 'continuous'),
+      crossoverResult,
+    };
+  }
+
   // ════════════════════════════════════════════════════════════════
   // Multiplicity adjustment computation
   // ════════════════════════════════════════════════════════════════
@@ -1007,7 +1112,7 @@ export class ComputationEngine {
    * group for the reference design) and a missing target AUC was silently 0.85.
    * A missing null is the conventional chance-level 0.5, disclosed in the result.
    */
-  computeAUCComparison(input: StatisticalInput): { aucSampleSize: number; auc: number; aucNull: number; aucCI: { lower: number; upper: number }; method: string } {
+  computeAUCComparison(input: StatisticalInput): { aucSampleSize: number; nBeforeAttrition: number; auc: number; aucNull: number; aucCI: { lower: number; upper: number }; method: string } {
     if (typeof input.aucTarget !== 'number') {
       throw new ComputationRefusal(
         'missing_input',
@@ -1052,10 +1157,73 @@ export class ComputationEngine {
 
     return {
       aucSampleSize: Math.ceil(n / (1 - input.attritionRate)),
+      // The n the power is achieved at, before any attrition top-up.
+      nBeforeAttrition: n,
       auc,
       aucNull,
       aucCI,
       method: `AUC vs a fixed null (Hanley & McNeil 1982 variance), ${n} diseased + ${n} non-diseased before attrition; null AUC ${aucNull}${typeof input.aucNull === 'number' ? '' : ' (default: chance level)'}`,
+    };
+  }
+
+  /**
+   * The ROC design as a `ComputationResult`. `computeAUCComparison` owns the
+   * formula; this wraps it so `sampleSize` and `method` describe the AUC test.
+   * The two groups are diseased and non-diseased, equal-sized — the design
+   * Hanley & McNeil's variance assumes — so `total` is twice `perGroup`.
+   *
+   * Power at the sized n, the inverse of the sizing inequality:
+   *   Φ( (A − A₀ − z_{1−α/2}·SE₀(n)) / SE₁(n) ).
+   *
+   * No sensitivity or specificity is reported: an ROC design does not supply
+   * them, and a zero in their place reads as a computed figure. They are
+   * optional on DiagnosticComputationResult for exactly this case.
+   */
+  private computeAUC(input: StatisticalInput, assumptions: ComputationAssumption[]): ComputationResult {
+    const auc = this.computeAUCComparison(input);
+    const zAlpha = normalQuantile(1 - input.alpha / 2);
+    const n = auc.nBeforeAttrition;
+    const se0 = Math.sqrt(this.hanleyMcNeilVariance(auc.aucNull, n));
+    const se1 = Math.sqrt(this.hanleyMcNeilVariance(auc.auc, n));
+    const power = se1 > 0 ? normalCdf((auc.auc - auc.aucNull - zAlpha * se0) / se1) : 0;
+
+    const perGroup = auc.aucSampleSize;
+    return {
+      method: auc.method,
+      sampleSize: { perGroup, total: perGroup * 2, groups: 2 },
+      power: Math.min(power, 0.9999),
+      effectSize: auc.auc - auc.aucNull,
+      alpha: input.alpha,
+      adjustedSampleSize: perGroup,
+      adjustedTotal: perGroup * 2,
+      attritionAdjusted: input.attritionRate > 0,
+      confidenceInterval: auc.aucCI,
+      criticalValue: zAlpha,
+      testStatistic: 'z on the empirical AUC (Hanley–McNeil variance)',
+      formula: `smallest n per group with z_{1−α/2}·SE₀(n) + z_{1−β}·SE₁(n) ≤ A − A₀, SE from Var(Â) = [A(1−A) + (n−1)(Q1 − A²) + (n−1)(Q2 − A²)]/n², Q1 = A/(2−A), Q2 = 2A²/(1+A); A=${auc.auc}, A₀=${auc.aucNull}`,
+      assumptions: [
+        ...assumptions,
+        {
+          parameter: 'design',
+          value: `${perGroup} diseased and ${perGroup} non-diseased subjects. The groups are equal-sized, which is what the Hanley–McNeil variance assumes; an unequal split needs its own variance and is not sized here.`,
+          source: 'derived',
+          sensitivity: 'high',
+        },
+        {
+          parameter: 'auc_null',
+          value: auc.aucNull,
+          source: typeof input.aucNull === 'number' ? 'user_provided' : 'default',
+          sensitivity: 'high',
+        },
+        {
+          parameter: 'reader_variability',
+          value: 'Not modelled. A multi-reader multi-case study needs the MRMC variance decomposition, not this one-reader form.',
+          source: 'derived',
+          sensitivity: 'moderate',
+        },
+      ],
+      scenarios: this.generateScenarios(input, 'continuous'),
+      diagnosticMetrics: { auc: auc.auc, aucCI: auc.aucCI },
     };
   }
 
@@ -1086,8 +1254,12 @@ export class ComputationEngine {
       base.multiplicityResult = this.computeMultiplicity(input);
     }
 
-    // Add crossover result if crossover design
-    if (input.crossoverPeriods && input.crossoverPeriods >= 2) {
+    // Crossover: compute() sizes the design itself when it can (crossoverDesign),
+    // and base.crossoverResult is already set. What reaches here is a crossover
+    // it declined — a period count with no formula, a missing correlation, or a
+    // non-continuous endpoint — sized as parallel groups above. Record why, so
+    // the refusal is visible beside the number rather than silently absent.
+    if (typeof input.crossoverPeriods === 'number' && !base.crossoverResult) {
       try {
         base.crossoverResult = this.computeCrossover(input);
       } catch (err) {
@@ -1102,16 +1274,21 @@ export class ComputationEngine {
 
     // Agreement studies are refused in compute() (kappa is not supported).
 
-    // Add AUC for diagnostic AUC studies
-    if (input.endpointType === 'auc_roc' && input.clientTrack === 'diagnostics_ivd') {
-      try {
-        const aucResult = this.computeAUCComparison(input);
-        if (!base.diagnosticMetrics) base.diagnosticMetrics = { sensitivity: 0, specificity: 0 };
-        base.diagnosticMetrics.auc = aucResult.auc;
-        base.diagnosticMetrics.aucCI = aucResult.aucCI;
-      } catch (err) {
-        this.recordRefusal(base, 'auc', err);
-      }
+    // AUC: compute() sizes an auc_roc endpoint by the AUC method on every track
+    // and carries the AUC and its interval (computeAUC), so there is nothing to
+    // re-attach. Until 2026-10-11 this block was the only path to the AUC engine
+    // and it ran for the diagnostics_ivd track only — the same track-instead-of-
+    // endpoint mistake as the kappa gate — and it filled the required
+    // sensitivity and specificity with zeros, which read as computed figures.
+    // An AUC target supplied on a design that is NOT an ROC design is reported
+    // as an input the sizing did not use, rather than silently ignored.
+    if (typeof input.aucTarget === 'number' && input.endpointType !== 'auc_roc') {
+      base.assumptions.push({
+        parameter: 'auc_target_not_used',
+        value: `An AUC target of ${input.aucTarget} was supplied, but this design's endpoint is ${input.endpointType}, which is not sized on the AUC. The figure above does not use it.`,
+        source: 'derived',
+        sensitivity: 'high',
+      });
     }
 
     return base;
