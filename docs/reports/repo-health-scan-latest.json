@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T06:44:11.120Z",
+  "generatedAt": "2026-10-12T07:36:43.739Z",
   "git": {
-    "sha": "f8389536311921b2e480b070c1a16e1030325816",
+    "sha": "b54b9f7e742d672bb6ef37ff59e7b97948ef3e54",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2048,7 +2048,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1132038
+        "bytes": 1132021
       },
       {
         "file": "shared/schema.ts",
@@ -2215,6 +2215,10 @@
         "bytes": 112018
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "bytes": 109470
+      },
+      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 109447
       },
@@ -2241,10 +2245,6 @@
       {
         "file": "server/routes/c2c/projects.ts",
         "bytes": 107300
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 106835
       },
       {
         "file": "server/api/cmc/routes.ts",
@@ -2278,7 +2278,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21800
+        "lines": 21801
       },
       {
         "file": "shared/schema.ts",
@@ -2465,6 +2465,10 @@
         "lines": 2186
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 2184
+      },
+      {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
         "lines": 2175
       },
@@ -2475,10 +2479,6 @@
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 2145
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
@@ -2574,7 +2574,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
-        "lines": 1888
+        "lines": 1889
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
@@ -2642,7 +2642,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
-        "lines": 1813
+        "lines": 1814
       },
       {
         "file": "ui_kits/home/Projects.jsx",
