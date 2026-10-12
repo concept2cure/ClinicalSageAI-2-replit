@@ -29,11 +29,13 @@
  * @module server/services/ana/intelligence-questions/governed-options
  */
 
+import { OTHER_POSITION } from '../../../../shared/types/intelligence-questions.js';
 import { agencyFor } from '../../../../shared/regulatory/agency-positions.js';
 import { IVDR_CLASSES } from '../../../../shared/regulatory/device-class.js';
 import { MODALITY_FRAME, MODALITY_LABEL } from '../../../../shared/regulatory/modality.js';
 import { IVDR_CONFORMITY_ROUTES } from '../../regulatory/ivdr-classification.js';
 import type { ProgrammeFacts } from '../../../../shared/regulatory/pathway-cautions.js';
+import { AGENCY_FIELDS } from './programme-facts.js';
 import {
   pathwayOptions,
   pathwayRegionOf,
@@ -81,12 +83,22 @@ function euRoutesAre(domain: PathwayDomain): string {
 }
 
 /** Whose routes a list belongs to, said plainly, including when it was assumed. */
-function whoseRoutes(facts: ProgrammeFacts, domain: PathwayDomain): { region: 'US' | 'EU' | null; note: string } {
+function whoseRoutes(
+  facts: ProgrammeFacts,
+  domain: PathwayDomain,
+  /** The person named an agency AnA does not hold, in their own words. */
+  agencyInOwnWords: boolean,
+): { region: 'US' | 'EU' | null; note: string } {
   const named = facts.primaryRegion;
   if (!named) {
     return {
       region: 'US',
-      note: 'No primary agency has been named yet, so these are FDA’s routes. Name the agency and AnA offers that regulator’s instead.',
+      /* "No agency has been named" is false where they named one AnA does not
+         hold: she was told, she could not place it, and saying otherwise
+         contradicts the person's own answer (2026-10-12 review). */
+      note: agencyInOwnWords
+        ? 'AnA does not hold the agency you named, so she cannot offer its routes — these are FDA’s. If you are filing elsewhere, describe the route you are taking and she will record it in your words.'
+        : 'No primary agency has been named yet, so these are FDA’s routes. Name the agency and AnA offers that regulator’s instead.',
     };
   }
   const region = pathwayRegionOf(named);
@@ -188,7 +200,8 @@ function resolveField(field: QuestionField, input: GovernedOptionInput): Questio
   }
   const domain: PathwayDomain =
     field.optionsFrom === 'medicine_pathway_positions' ? 'pharma_biotech' : deviceDomainOf(input);
-  const { region, note } = whoseRoutes(input.facts, domain);
+  const agencyInOwnWords = AGENCY_FIELDS.some(f => input.answers[f] === OTHER_POSITION);
+  const { region, note } = whoseRoutes(input.facts, domain, agencyInOwnWords);
   const said = (reason: string) => (field.helpText ? `${field.helpText} ${reason}` : reason);
   /* No positions, and the reason in their place. The escape hatch is the
      answer here, so it is never dropped. */
