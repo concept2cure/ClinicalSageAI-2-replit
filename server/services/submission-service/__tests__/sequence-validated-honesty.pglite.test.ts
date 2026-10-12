@@ -42,7 +42,10 @@ vi.mock('../../ectd/release-signature-status', async (importOriginal) => ({
   signingNowResolvesRelease: (await importOriginal<typeof import('../../ectd/release-signature-status')>()).signingNowResolvesRelease,
 }));
 
-import { assessSequenceDispatchReadiness } from '../../ectd/assess-dispatch-readiness';
+import {
+  assessSequenceDispatchReadiness,
+  originalIndModule3Headings,
+} from '../../ectd/assess-dispatch-readiness';
 import {
   transitionSequence,
   upsertLeaf,
@@ -125,7 +128,9 @@ async function completeModule1(sequenceId: number): Promise<void> {
  * these is not a way around the rule — the case below proves a sequence missing
  * them is still refused, and names them.
  */
-const IND_MODULE3 = ['3.2.S', '3.2.P'];
+/* Read from the gate's own heading source rather than restated, so this
+   fixture cannot drift from what the requirement asks for. */
+const IND_MODULE3 = (originalIndModule3Headings('ind', 'fda') ?? []).map(h => h.code);
 async function completeModule3(sequenceId: number): Promise<void> {
   for (const code of IND_MODULE3) {
     const body = `Module 3 ${code} body.`;
@@ -208,7 +213,7 @@ describe('Validated is reached only through a validation with no errors (finding
     expect(err.code).toBe('VALIDATION_FAILED');
     // 7 Module 1 (1.1, 1.2, 1.3, 1.12.14, 1.14.4.1, 1.14.4.2, 1.20) + 2 Module 3
     // (3.2.S, 3.2.P), the latter added when 21 CFR 312.23(a)(7) joined the rule.
-    expect(err.message).toMatch(/found 9 errors/);
+    expect(err.message).toMatch(new RegExp(`found ${IND_MODULE1.length + IND_MODULE3.length} errors`));
     expect(err.message).toContain('1.1: Required section 1.1 has no leaf in this sequence.');
     expect(err.message).toContain('original IND application');
     // The CMC requirement is named, with the regulation and both ways to clear it.
@@ -368,8 +373,11 @@ describe('a stored Validated stage is checked against the current validation (fi
     // 9: the 7 Module 1 sections plus 3.2.S and 3.2.P, this sequence carrying
     // only a 2.5 leaf. The count is the point of the case -- the stored stage
     // does not hold, and the reason says by how much -- so it tracks the rule.
-    expect(a.validatedStage).toMatchObject({ holds: false, verdictRecorded: false, errors: 9 });
-    expect(a.validatedStage && !a.validatedStage.holds && a.validatedStage.reason).toMatch(/recorded as Validated, but its validation now finds 9 errors/);
+    const required = IND_MODULE1.length + IND_MODULE3.length;
+    expect(a.validatedStage).toMatchObject({ holds: false, verdictRecorded: false, errors: required });
+    expect(a.validatedStage && !a.validatedStage.holds && a.validatedStage.reason).toMatch(
+      new RegExp(`recorded as Validated, but its validation now finds ${required} errors`),
+    );
   });
 
   it('a sequence Validated through the validation holds', async () => {

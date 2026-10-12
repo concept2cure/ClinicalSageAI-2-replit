@@ -35,7 +35,13 @@ export interface FlowEngineContext {
   userId: number | string | null;
   projectId: string | null;
   projectName?: string | null;
-  clientType?: 'pharma' | 'biotech' | 'medtech' | null;
+  /**
+   * The client's segment, or null when it is not known. Null means NO
+   * restriction: a wrong segment silently hides whole flows (a device client
+   * read as 'pharma' could not start the 510(k) interview at all), so not
+   * knowing must be said rather than guessed.
+   */
+  clientType?: 'pharma' | 'biotech' | 'medtech' | 'ivd' | null;
   submissionType?: string | null;
   threadId?: string | null;
 }

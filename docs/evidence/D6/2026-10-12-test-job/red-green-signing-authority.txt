@@ -1,0 +1,14 @@
+server/api/cmc/__tests__/module3GovernedActs.test.ts, before the route used the gate:
+
+  → expected 500 to be 503 // Object.is equality
+ FAIL  resolving a contradiction is a governed act > a signer-role lookup that
+       cannot run is 503 SIGNING_AUTHORITY_UNVERIFIED, and resolves nothing
+      Tests  1 failed | 7 passed (8)
+
+and one-signing-authority-policy counted the direct call:
+
+  AssertionError: isSigningAuthorized outside checkSigningAuthority: route the
+  check through the gate: expected [ Array(1) ] to deeply equal []
+  +   "server/api/cmc/module3OperatingSystemRoutes.ts: 1 call(s), 0 allowed",
+
+After: both suites pass, 13 tests.

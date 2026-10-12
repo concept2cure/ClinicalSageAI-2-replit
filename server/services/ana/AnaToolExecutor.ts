@@ -214,6 +214,7 @@ import {
 } from './agentic-tool-dispatch.js';
 import { modelCallRefusal } from '../ai-gateway/model-call-scope.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
+import { interviewClientType } from './intelligence-questions/client-segment.js';
 import { HIDDEN_APP_TOOLS, anaCapabilityInLaunchScope } from './ana-launch-scope';
 import { launchScopeEnforced } from '../entitlements/launch-scope';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
@@ -20083,7 +20084,7 @@ function intelligenceEngineContext(ctx?: ToolContext) {
     organizationId: ctx?.organizationId ?? null,
     userId: ctx?.userId ?? null,
     projectId: ctx?.projectId ? String(ctx.projectId) : null,
-    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+    clientType: interviewClientType(ctx?.projectType),
   };
 }
 

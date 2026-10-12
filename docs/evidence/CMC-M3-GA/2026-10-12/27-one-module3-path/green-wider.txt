@@ -1,0 +1,7 @@
+server/routes/__tests__ + server/__tests__/services
+ Test Files  431 passed | 2 skipped (433)
+      Tests  4128 passed | 14 skipped (4142)
+
+server/__tests__/services + tests/unit + tests/schema-contract
+ Test Files  135 passed | 1 skipped (136)
+      Tests  1819 passed | 7 skipped (1826)
