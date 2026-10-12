@@ -868,6 +868,38 @@ export function filingCommitNote(filing: unknown): string {
   return '';
 }
 
+/**
+ * What a section save's `machineText` field says, as a sentence appended to the
+ * save confirmation; '' when the save claimed nothing or everything it claimed
+ * was credited (AnA reasoning round 15, SEC-A-7 door 1).
+ *
+ * Without this the author sees an ordinary "Section saved" while the record
+ * now says they asserted words they believed were attributed to AnA. The
+ * server's own reason is shown as given — it is the reason the record keeps.
+ *
+ * A claim whose MODEL the governed-write rule refuses never reaches here: that
+ * save is refused outright, and the author reads the 403's own sentence.
+ */
+export function machineTextNote(machineText: unknown): string {
+  if (!machineText || typeof machineText !== 'object') return '';
+  const m = machineText as { refused?: unknown };
+  const refused = Array.isArray(m.refused) ? m.refused : [];
+  const reasons = [
+    ...new Set(
+      refused
+        .map((r) => (r as { why?: unknown })?.why)
+        .filter((why): why is string => typeof why === 'string' && why.trim().length > 0),
+    ),
+  ];
+  if (reasons.length === 0) return '';
+  const passages = refused.length === 1 ? 'One passage' : `${refused.length} passages`;
+  const was = refused.length === 1 ? 'was' : 'were';
+  return (
+    ` ${passages} you accepted from AnA ${was} recorded as your own words, because ` +
+    `${reasons.join('; ')}. The record says so.`
+  );
+}
+
 /** True when the server refuses every signature but the review signature. */
 export function esignReviewOnly(access: DocumentAccess): boolean {
   return !!actRefusal(access.esign) && access.esignReview?.allowed === true;
@@ -2881,18 +2913,22 @@ export function DocumentWorkbench({
 
       setSaving(true);
       try {
-        /* Authors whose insertions this reviewer accepted since the last save.
-           Accepting a suggestion strips the mark that named its author, so
-           without this the revision would attribute an AnA draft entirely to
-           whoever pressed accept. Read-and-clear: an author counts once, for
-           the save that carried their text in. */
-        const acceptedAuthors = editorRef.current?.takeAcceptedAuthors?.() ?? [];
+        /* Authors whose insertions this reviewer accepted and no save has
+           carried in yet. Accepting a suggestion strips the mark that named
+           its author, so without this the revision would attribute an AnA
+           draft entirely to whoever pressed accept.
+           READ, not read-and-clear: the store is emptied by the save that
+           LANDS, below. It used to be emptied here, before the request — so
+           every refused save lost the attribution and the retry recorded AnA's
+           clauses as a human's. See `clearAcceptedContributions`. */
+        const acceptedAuthors = editorRef.current?.peekAcceptedAuthors?.() ?? [];
         /* And the accepted text itself, per insertion. The author list says
            WHO contributed to this save; this says WHICH words, so the lineage
            gate can record the machine's clauses as the machine's. The server
            keeps only machine authors it names — a colleague's accepted text is
-           simply the document. */
-        const acceptedMachineText = editorRef.current?.takeAcceptedInsertions?.() ?? [];
+           simply the document — and believes a claim only when the AnA turn
+           record it names holds the words. */
+        const acceptedMachineText = editorRef.current?.peekAcceptedInsertions?.() ?? [];
         /* The concurrency token. `updated_at` is the value THIS editor loaded;
            the server refuses with 409 SECTION_CHANGED if the row has moved
            since. Without it the PATCH is a blind last-write-wins, and two
@@ -2946,6 +2982,11 @@ export function DocumentWorkbench({
             s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s
           )
         );
+        /* THE SAVE LANDED, so the accepted contributions it carried in are
+           spent. Not before the request: a refused save must leave the claim
+           for the retry, or the attribution is lost and the next save records
+           AnA's clauses as this person's own. */
+        editorRef.current?.clearAcceptedContributions?.();
         // This save just persisted whatever content reflects any decisions
         // made since the section was last saved — the unsaved-work guard's
         // count belongs to what is still unsaved, not to what this save
@@ -2959,7 +3000,8 @@ export function DocumentWorkbench({
           (adopted && adopted.revision_count != null
             ? `Section saved — revision ${num(adopted.revision_count)} recorded (${activeSection.code}).`
             : `Section saved (${activeSection.code}) — open History to confirm the revision.`) +
-            filingCommitNote((json as { filing?: unknown } | null)?.filing)
+            filingCommitNote((json as { filing?: unknown } | null)?.filing) +
+            machineTextNote((json as { machineText?: unknown } | null)?.machineText)
         );
         // Keep the history and audit rails fresh if open — a save writes both.
         if (rail === 'history') void loadHistory(activeSection.id);
