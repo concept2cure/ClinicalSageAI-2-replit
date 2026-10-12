@@ -580,7 +580,12 @@ interface DashboardData {
  */
 function roPortfolioCovers(count: number, truncated: boolean): string {
   if (truncated) {
-    return `The first ${count} programs your organization has, by the server's ranking — there are more.`;
+    /* NOT "the highest-ranked": fetchOrgPrograms selects `ORG_ROLLUP_CAP + 1`
+       rows with no ORDER BY, and attentionRanked sorts only within whatever
+       hundred came back. Calling them the top programmes would promise a
+       selection the query does not make, and would read as "nothing worse than
+       this exists". */
+    return `${count} of your organization's programs — there are more, and these are not a ranked selection.`;
   }
   return `Readiness across your ${count} program${count > 1 ? 's' : ''}.`;
 }
@@ -932,8 +937,9 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashb
         {dashboard.truncated && (
           <div className="ro-dash-note" role="status" data-testid="ro-port-truncated">
             {I.alertTriangle} Your organization has more programs than this board shows. The rollup is capped
-            at {rows.length}, so these are the highest-ranked ones and the average above is over them only —
-            not over your whole portfolio.
+            at {rows.length}, and the server selects them without an ordering — so these are not the
+            highest-risk or least-ready ones, and the average above is over them only, not over your whole
+            portfolio.
           </div>
         )}
       </div>
@@ -1574,7 +1580,11 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
 
   const exportBundle = async (bundleId: string, name: string) => {
     const out = await downloadBundlePdf(bundleId, name);
-    fireToast(out.text);
+    /* The tone matters: fireToast defaults to 'ok', which draws a green check.
+       A refusal ("Exporting this bundle requires the enterprise plan") under a
+       green tick is the defect toast.tsx's own header names, and exportRep
+       beside this already passes the tone. */
+    fireToast(out.text, out.ok ? undefined : 'error');
   };
 
   /* A report run from the catalog shows its document, as a run from the find

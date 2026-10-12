@@ -112,9 +112,90 @@ export function PanelAlert({ note }: { note: string | null }) {
  * `liveGetOrNull` unwraps the project's `{ data: rows }` envelope, so the hook
  * normally hands over a bare array; a route that answers the envelope
  * unchanged is tolerated rather than rendered as empty.
+ *
+ * THIS IS NOT A SHAPE CHECK, and a caller must not rely on it as one. A 200
+ * whose payload is not a list at all — version skew, a nested envelope, an
+ * error body — returns `[]` here, which a panel would render as "none yet".
+ * Pass {@link isRowList} as `useLiveData`'s guard so a shape mismatch becomes
+ * the panel's error state instead. That is what the guard parameter is for
+ * (dataConnect.tsx), and leaving it off is how a failed read reads as an empty
+ * one (CLAUDE.md: an error is never rendered as an empty result).
  */
 export function rowsOf<T>(data: unknown): T[] {
   if (Array.isArray(data)) return data as T[];
   const inner = (data as { data?: unknown } | null)?.data;
   return Array.isArray(inner) ? (inner as T[]) : [];
+}
+
+/**
+ * `useLiveData` guard for a list read: the payload must be an array, or the
+ * envelope's `data` must be. Anything else is a shape mismatch, which the hook
+ * reports as an error rather than handing over a payload a panel would show as
+ * emptiness.
+ */
+export function isRowList(payload: unknown): payload is unknown[] {
+  if (Array.isArray(payload)) return true;
+  const inner = (payload as { data?: unknown } | null)?.data;
+  return Array.isArray(inner);
+}
+
+/**
+ * What a failed list read was, so the panel can offer the right remedy.
+ *
+ * ── WHY THIS EXISTS ─────────────────────────────────────────────────────────
+ * Every panel here first shipped with one sentence for any failure — "the
+ * records could not be read" — and a Try again button. `useLiveData` reports
+ * the HTTP status (`DataState.status`), and none of the reads consulted it, so
+ * a 403 from the tenant guard and an expired session both rendered as an
+ * outage with a retry that cannot succeed. A reader clicks it, it fails
+ * identically, and nothing tells them to sign in or that their role is the
+ * reason.
+ *
+ * `status: 0` means the request never reached the server, which IS the case a
+ * retry is for. Everything else is the server answering, and only a 5xx or a
+ * shape mismatch is worth retrying.
+ */
+export interface ReadFailure {
+  title: string;
+  message: string;
+  /** Offered only when retrying could plausibly change the answer. */
+  retryable: boolean;
+}
+
+export function readFailureOf(
+  state: { error?: string; status?: number },
+  what: string,
+): ReadFailure {
+  const status = state.status ?? 0;
+  if (status === 401) {
+    return {
+      title: 'Your session has expired',
+      message: `Sign in again to read ${what}. Nothing is shown in their place.`,
+      retryable: false,
+    };
+  }
+  if (status === 403) {
+    return {
+      title: `You do not have access to ${what}`,
+      message:
+        'This organization\u2019s records are role-scoped, and your role does not include them. ' +
+        'Nothing is shown in their place, and retrying will not change the answer.',
+      retryable: false,
+    };
+  }
+  if (status === 404) {
+    return {
+      title: `No record of ${what}`,
+      message: 'The server has no such record. Nothing is shown in its place.',
+      retryable: false,
+    };
+  }
+  return {
+    title: `Couldn\u2019t read ${what}`,
+    message:
+      status === 0
+        ? `The request did not reach the server, so ${what} could not be read. Nothing is shown in their place.`
+        : `The server could not return ${what}. Nothing is shown in their place.`,
+    retryable: true,
+  };
 }
