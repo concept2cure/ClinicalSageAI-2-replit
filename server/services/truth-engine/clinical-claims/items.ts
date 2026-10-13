@@ -104,6 +104,7 @@ function shapes(doc: DocInfo, opts: ItemOptions): Shape[] {
     if (!w) return undefined;
     return w.pct ? w : opts.percentColumn ? { ...w, pct: 'column' as const } : w;
   };
+  // nosemgrep: detect-non-literal-regexp -- every caller passes a String.raw literal composed of module constants (CNT, ARM_HEAD, PCT, NOUN, DOSE); a readability wrapper, never given data
   const S = (src: string) => new RegExp(src, 'y');
   return [
     {
@@ -189,6 +190,7 @@ export interface ItemOptions {
 function wordBeforeArm(rest: string, doc: DocInfo): boolean {
   const m = new RegExp(String.raw`^${NUMBER_WORDS}\s+(?=\S)`, 'i').exec(rest);
   if (!m) return false;
+  // nosemgrep: detect-non-literal-regexp -- `doc.armSrc` is armSource()'s output, whose roster keys go through rosterKeyPattern (doc.ts) and so are metacharacter-escaped; pinned by __tests__/roster-key-pattern.test.ts
   return new RegExp(String.raw`^(?:${doc.armSrc})(?![\w-])`, 'i').test(rest.slice(m[0].length));
 }
 

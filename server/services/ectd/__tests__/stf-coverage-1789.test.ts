@@ -98,6 +98,7 @@ async function pack(region: 'fda' | 'ema', extra: Array<Partial<EctdLeaf> & { ct
   const src = path.join(work, 'src');
   await fs.mkdir(src, { recursive: true });
   const mk = async (name: string) => {
+    // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- a test: `src` is this test's own mkdtemp directory and `name` comes from readdir of it
     const p = path.join(src, name);
     await fs.writeFile(p, pdf(name));
     return p;

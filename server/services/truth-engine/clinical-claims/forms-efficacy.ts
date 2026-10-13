@@ -243,6 +243,7 @@ export function effectForms(clause: Sentence, ctx: Ctx, env: Env): Draft[] {
     'gi',
   ).exec(text);
   if (ciFirst) {
+    // nosemgrep: detect-non-literal-regexp -- `r.re` is a module-constant RegExp in vocabulary.ts; this anchors its own source. The CI text is the input, not the pattern
     const effRow = EFFECT_ROWS.find((r) => new RegExp(`^(?:${r.re.source})$`, 'i').test(ciFirst[4].trim()) || new RegExp(r.re.source, 'i').test(ciFirst[4]));
     const estAt = base + ciFirst.index + ciFirst[0].lastIndexOf(ciFirst[7]);
     const span = { start: base + ciFirst.index, end: base + ciFirst.index + ciFirst[0].length };
@@ -287,6 +288,7 @@ export function effectForms(clause: Sentence, ctx: Ctx, env: Env): Draft[] {
       if (isConsumed(env, span)) continue;
       const est = readNumber(`${num}%`, { convention: env.doc.convention });
       if (!est) continue;
+      // nosemgrep: detect-non-literal-regexp -- `r.re` is a module-constant RegExp in vocabulary.ts; `epText` is the input, not the pattern
       const ep = ENDPOINT_ROWS.find((r) => new RegExp(r.re.source, 'i').test(epText));
       consume(env, span);
       const d = makeDraft('E-rrr', 'effect', { effect: 'rrr' }, { estimate: est }, span, ctx, env);
