@@ -5,10 +5,48 @@ import { useDialog } from '../useDialog';
 import { setEditorTarget } from '../editorTarget';
 import { isWorkflowImportOrigin, type AuthoringImportSource, type AuthoringSourceImportData, type AuthoringSourceImportPreviewData } from '@shared/authoring/source-import';
 import { createWorkflowImport, isWorkflowSource, previewWorkflowImport, workflowSourceKey } from '../authoringHandoff';
+import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 
 export type ImportSource = AuthoringImportSource;
 export type SourceImportResult = AuthoringSourceImportData;
 const SOURCE_LABELS: Record<ImportSource['kind'], string> = { vault: 'Vault', 'data-room': 'Data room', protocol: 'Protocol', csr: 'CSR' };
+
+/** Availability explanations follow the same recorded source state in each host. */
+export function sourceImportUnavailableReason(source: {
+  dataEligible?: boolean; isCurrent?: boolean; originalFileAvailable?: boolean; disposition?: string | null;
+}): string | null {
+  if (source.dataEligible === false || source.isCurrent === false
+    || source.disposition === 'remove_data' || source.disposition === 'supersede') return 'This source is excluded from active data use.';
+  if (source.originalFileAvailable === false) return 'The original file is unavailable, so a working copy cannot be created.';
+  return null;
+}
+
+const REASON_LABEL = 'Reason for creating a working copy';
+function validReason(reason: string): boolean {
+  const length = reason.trim().length;
+  return length >= GOVERNED_REASON_MIN && length <= GOVERNED_REASON_MAX;
+}
+
+function SourceReasonField({ id, value, busy, onChange, label = REASON_LABEL }: {
+  id: string; value: string; busy: boolean; onChange: (value: string) => void; label?: string;
+}) {
+  return <div className="de-field">
+    <label className="de-label" htmlFor={id}>{label}<span className="req" aria-hidden="true">*</span></label>
+    <div className="de-desc" id={`${id}-note`}>Recorded with the working copy on the document’s audit trail. Use {GOVERNED_REASON_MIN}–{GOVERNED_REASON_MAX} characters.</div>
+    <textarea id={id} className="c2c-input" aria-label={label} aria-required="true" aria-describedby={`${id}-note`}
+      value={value} onChange={e => onChange(e.target.value)} disabled={busy} maxLength={GOVERNED_REASON_MAX} rows={3} />
+  </div>;
+}
+
+function SourceImportIntro({ kind }: { kind: ImportSource['kind'] }) {
+  return <div className="de-source-intro">
+    <div className="de-gov">
+      <span className="ico">{I.fileText}</span>
+      <div className="de-gov-t">Creates a draft working copy in this project, linked to the source version. The original file stays in the {kind === 'vault' ? 'Vault' : 'data room'}.</div>
+    </div>
+    <p className="de-desc">Word documents retain supported headings, lists and tables. Other readable formats become extracted text; page layout, spreadsheet formulas, figures and form controls need review against the original.</p>
+  </div>;
+}
 
 function sourceMatches(origin: SourceImportResult['origin'] | undefined, programId: string, source: ImportSource): boolean {
   if (!origin || isWorkflowSource(source) || isWorkflowImportOrigin(origin)) return false;
@@ -81,8 +119,8 @@ function useSourceIntake(programId: string, source: ImportSource) {
   const refreshRef = useRef(refresh);
   refreshRef.current = refresh;
   useEffect(() => { void refreshRef.current(); }, []);
-  const canCreate = !!reason.trim() && (!isWorkflowSource(source) || (!!preview && reason.trim().length >= 8
-    && (!preview.association.required || associationReason.trim().length >= 8)));
+  const canCreate = validReason(reason) && (!isWorkflowSource(source) || (!!preview
+    && (!preview.association.required || validReason(associationReason))));
   const pull = async () => {
     if (busyRef.current || result || !canCreate) return;
     busyRef.current = true; setBusy(true); setError(null);
@@ -101,9 +139,9 @@ function useSourceIntake(programId: string, source: ImportSource) {
 }
 
 function WorkflowPreview({ preview }: { preview: AuthoringSourceImportPreviewData }) {
-  return <div data-testid="workflow-import-preview">
+  return <div className="de-source-intro" data-testid="workflow-import-preview">
     <p>Saved source: {preview.origin.title} · version {preview.origin.version ?? 'not recorded'} · {preview.origin.sourceScope.level} scope.</p>
-    <p>Snapshot fingerprint: <code style={{ overflowWrap: 'anywhere' }}>{preview.fingerprint}</code></p>
+    <p className="de-desc">Snapshot fingerprint: <span className="source-import-hash">{preview.fingerprint}</span></p>
     <p>Creates an unbound draft. Source approval or signatures are not copied.</p>
     <ul>{preview.sections.map(s => <li key={s.code}>{s.code} · {s.title}</li>)}</ul>
     <ul>{preview.origin.sectionOrigins.map(s => <li key={s.code}>{s.code} · {s.originalAuthorship === 'unknown' ? 'Original authorship not recorded' : `${s.originalAuthorship} origin`}
@@ -114,20 +152,22 @@ function WorkflowPreview({ preview }: { preview: AuthoringSourceImportPreviewDat
   </div>;
 }
 
-function SavedIntake({ result, onOpen, blocked }: { result: SourceImportResult; onOpen?: (code?: string) => void; blocked: boolean }) {
+function SourceImportReceipt({ result, onOpen, blocked }: { result: SourceImportResult; onOpen?: (code?: string) => void; blocked: boolean }) {
   const workflow = isWorkflowImportOrigin(result.origin);
   const sections = result.sections.filter(s => typeof s.code === 'string');
   const [code, setCode] = useState(String(sections[0]?.code ?? ''));
-  return <div role="status" data-testid="source-import-result">
-    <p>{result.reused ? 'Existing working copy ready' : 'Draft working copy saved'}: “{result.doc.title}”.</p>
-    <p>{workflow ? 'Source fingerprint' : 'Source SHA-256'}: <code style={{ overflowWrap: 'anywhere' }}>{isWorkflowImportOrigin(result.origin) ? result.origin.fingerprint : result.origin.sha256}</code></p>
-    {result.warnings.length > 0 && <ul>{result.warnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul>}
+  return <div className="de-gov" role="status" data-testid="source-import-result">
+    <span className="ico">{I.checkCircle}</span><div className="de-gov-t">
+    <div>{result.reused ? 'Existing working copy ready' : 'Draft working copy saved'}: “{result.doc.title}”.</div>
+    <div>{workflow ? 'Source fingerprint' : 'Source SHA-256'}: <span className="source-import-hash">{isWorkflowImportOrigin(result.origin) ? result.origin.fingerprint : result.origin.sha256}</span></div>
+    {result.warnings.length > 0 && <ul className="source-import-warnings">{result.warnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul>}
     {workflow && <label>Section to open <select className="c2c-input" value={code} onChange={e => setCode(e.target.value)}>
       {sections.map(s => <option key={String(s.id)} value={String(s.code)}>{String(s.code)} · {String(s.title ?? '')}</option>)}
     </select></label>}
     {blocked && <p>Save or discard the source editor's unsaved changes before opening this copy.</p>}
     {onOpen ? <button className="de-btn primary" disabled={blocked} onClick={() => onOpen(workflow ? code : undefined)}>{I.penLine} Open working copy</button>
-      : <p>Open Document authoring in this project to find the saved working copy.</p>}
+      : <div>Open document authoring in this project to find the saved working copy.</div>}
+    </div>
   </div>;
 }
 
@@ -144,7 +184,7 @@ function ScopedSourceImportDialog({ programId, source, title, onClose, onOpenDoc
     if (code) onOpenDocument(intake.result.doc.id, code); else onOpenDocument(intake.result.doc.id);
   } : undefined;
   return <div className="de-bd" onMouseDown={e => { if (e.target === e.currentTarget && !intake.busyRef.current) onClose(); }}>
-    <div className="de" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={labelId} data-testid="source-import-dialog">
+    <div className="de de-source-import" ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={labelId} data-testid="source-import-dialog">
       <div className="de-h"><div>
         <div className="de-h-eye">{SOURCE_LABELS[source.kind]} → document editor</div>
         <div className="de-h-t" id={labelId}>{workflow ? 'Open saved draft in editor' : 'Work on this document'}</div>
@@ -161,12 +201,9 @@ type SourceIntake = ReturnType<typeof useSourceIntake>;
 function IntakeFields({ intake, reasonId, associationId }: { intake: SourceIntake; reasonId: string; associationId: string }) {
   if (intake.result) return null;
   return <>
-    <div className="de-field"><label className="de-label" htmlFor={reasonId}>Reason for creating a working copy</label>
-      <textarea id={reasonId} className="c2c-input" value={intake.reason} onChange={e => intake.setReason(e.target.value)} disabled={intake.busy} maxLength={2000} rows={3} style={{ width: '100%' }} />
-    </div>
-    {intake.preview?.association.required && <div className="de-field"><label className="de-label" htmlFor={associationId}>Reason for associating this source with the target project</label>
-      <textarea id={associationId} className="c2c-input" value={intake.associationReason} onChange={e => intake.setAssociationReason(e.target.value)} disabled={intake.busy} maxLength={2000} rows={3} />
-    </div>}
+    <SourceReasonField id={reasonId} value={intake.reason} onChange={intake.setReason} busy={intake.busy} />
+    {intake.preview?.association.required && <SourceReasonField id={associationId} label="Reason for associating this source with the target project"
+      value={intake.associationReason} onChange={intake.setAssociationReason} busy={intake.busy} />}
   </>;
 }
 function IntakeBody({ programId, programName, source, intake, reasonId, associationId, openBlocked, onOpen }: {
@@ -176,13 +213,12 @@ function IntakeBody({ programId, programName, source, intake, reasonId, associat
   const workflow = isWorkflowSource(source);
   return <div className="de-body">
     <p className="de-gov-t">Target project: {programName || programId}</p>
-    {!workflow && <><p className="de-gov-t">Creates a draft working copy linked to this source version. The original stays in the {source.kind === 'vault' ? 'Vault' : 'data room'}.</p>
-      <p className="de-gov-t">Word documents retain supported headings, lists and tables. Other readable formats become extracted text; page layout, spreadsheet formulas, figures and form controls need review against the original.</p></>}
+    {!workflow && <SourceImportIntro kind={source.kind} />}
     {workflow && intake.busy && !intake.result && !intake.preview && <p>Reading saved source…</p>}
     {intake.preview && <WorkflowPreview preview={intake.preview} />}
     <IntakeFields intake={intake} reasonId={reasonId} associationId={associationId} />
     {intake.error && <div className="de-err" role="alert">{intake.error}</div>}
-    {intake.result && <SavedIntake result={intake.result} blocked={openBlocked} onOpen={onOpen} />}
+    {intake.result && <SourceImportReceipt result={intake.result} blocked={openBlocked} onOpen={onOpen} />}
   </div>;
 }
 function IntakeFooter({ intake, workflow, onClose }: { intake: SourceIntake; workflow: boolean; onClose: () => void }) {

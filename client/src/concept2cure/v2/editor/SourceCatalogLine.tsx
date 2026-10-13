@@ -36,21 +36,21 @@ function catalogFacts(c: SourceCatalog | null | undefined): string[] {
   return facts;
 }
 
-export function SourceCatalogLine({ catalog }: { catalog?: SourceCatalog | null }) {
+export function SourceCatalogLine({ catalog, className = 'sec-sub' }: { catalog?: SourceCatalog | null; className?: string }) {
   const facts = catalogFacts(catalog);
   if (facts.length === 0) return null;
   return (
-    <span className="sec-sub" style={{ display: 'block', fontSize: 11.5 }} data-testid="source-catalog">
+    <span className={className} style={{ display: 'block' }} data-testid="source-catalog">
       {facts.join(' · ')}
     </span>
   );
 }
 
 /** Where a search matched in the text read from the file; nothing outside a search. */
-export function SourceSnippet({ show, text }: { show: boolean; text?: string | null }) {
+export function SourceSnippet({ show, text, className = 'sec-sub' }: { show: boolean; text?: string | null; className?: string }) {
   if (!show || !text) return null;
   return (
-    <span className="sec-sub" style={{ display: 'block', fontSize: 11.5 }}>
+    <span className={className} style={{ display: 'block' }}>
       &hellip;{text.replace(/<\/?b>/g, '')}&hellip;
     </span>
   );

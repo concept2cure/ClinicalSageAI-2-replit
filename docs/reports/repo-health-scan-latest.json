@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-13T20:31:59.577Z",
+  "generatedAt": "2026-10-13T22:56:06.540Z",
   "git": {
-    "sha": "a64d422ac14c5eb177734c18f4224e0517bc50b4",
+    "sha": "18df9a0b8dc88bc6b18e0a7e03b41c018032c089",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2149,7 +2149,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 313098
+        "bytes": 293466
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2228,12 +2228,12 @@
         "bytes": 134822
       },
       {
-        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "bytes": 133645
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 133663
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 133042
+        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
+        "bytes": 133645
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2276,6 +2276,10 @@
         "bytes": 117247
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "bytes": 116754
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116624
       },
@@ -2302,10 +2306,6 @@
       {
         "file": "server/routes/auth.ts",
         "bytes": 110807
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 110201
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
@@ -2337,7 +2337,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "bytes": 102143
+        "bytes": 102670
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2349,7 +2349,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 100683
+        "bytes": 100933
       },
       {
         "file": "server/routes/submissions.ts",
@@ -2370,12 +2370,12 @@
         "lines": 8627
       },
       {
-        "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6516
-      },
-      {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
         "lines": 6201
+      },
+      {
+        "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+        "lines": 6056
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2459,7 +2459,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2894
+        "lines": 2902
       },
       {
         "file": "server/routes/auth.ts",
@@ -2526,6 +2526,10 @@
         "lines": 2302
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 2289
+      },
+      {
         "file": "server/routes/c2c/reviews.ts",
         "lines": 2284
       },
@@ -2538,10 +2542,6 @@
         "lines": 2207
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 2197
-      },
-      {
         "file": "server/routes/c2c/projects.ts",
         "lines": 2189
       },
@@ -2550,12 +2550,12 @@
         "lines": 2186
       },
       {
-        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
-        "lines": 2175
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 2183
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 2174
+        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
+        "lines": 2175
       },
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
@@ -2606,16 +2606,16 @@
         "lines": 2029
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2024
+      },
+      {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
         "lines": 2024
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 2020
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2019
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",

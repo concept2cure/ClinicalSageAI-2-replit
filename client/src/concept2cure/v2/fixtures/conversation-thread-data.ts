@@ -42,6 +42,8 @@ export interface CtTurn {
   role: string;
   text?: string;
   answer?: string;
+  /** Real orchestration follow-up prompts, submitted only when the person chooses one. */
+  suggestedActions?: string[];
   /** AnA's turn has finished streaming; only a settled answer can be inserted into a document. */
   settled?: boolean;
   /** The retained turn record that produced the answer, when the server confirmed one. */

@@ -15,6 +15,7 @@ vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFi
 vi.mock('../ProjectFilesPanel', () => ({ ProjectFilesPanel: ({ onOpenDocument }: { onOpenDocument?: (id: string) => void }) => <button type="button" onClick={() => onOpenDocument?.('cccccccc-0000-4000-8000-000000000001')}>Open pulled working copy</button> }));
 
 import { DocumentAuthoring } from '../../surfaces/DocumentAuthoring';
+import { ConversationThread } from '../../surfaces/ConversationThread';
 import { AuthoringRemedies } from '../AuthoringRemedies';
 import { DocumentCanvas } from '../DocumentCanvas';
 import { clearEditorTarget, peekEditorTarget } from '../../editorTarget';
@@ -49,7 +50,7 @@ beforeEach(() => {
     return ok({ success: true });
   });
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); delete window.C2C_PROJECT; clearEditorTarget(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); delete window.C2C_PROJECT; delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO; clearEditorTarget(); });
 
 function stream(text: string, turnRecord: AnaTurnRecordStatus) {
   return new ReadableStream<Uint8Array>({ start(controller) {
@@ -61,13 +62,27 @@ function stream(text: string, turnRecord: AnaTurnRecordStatus) {
 }
 
 async function prepareFix(base = AT, qualified = true) {
-  const fetchMock = vi.fn(async (_url: string, _init?: Parameters<typeof globalThis.fetch>[1]) => ({ ok: true, status: 200, body: stream(answer(base), recorded(qualified)) }));
+  const fetchMock = vi.fn(async (url: string, _init?: Parameters<typeof globalThis.fetch>[1]) => url.includes('/api/ana-ri/stream')
+    ? { ok: true, status: 200, body: stream(answer(base), recorded(qualified)) }
+    : { ok: false, status: 503, json: async () => ({}) });
   vi.stubGlobal('fetch', fetchMock);
-  render(<DocumentAuthoring onNav={vi.fn()} segment="biotech" surface={{ id: 'document-authoring', label: 'Authoring' } as never} />);
+  const Flow = () => {
+    const [surface, setSurface] = React.useState('document-authoring');
+    return surface === 'document-authoring'
+      ? <DocumentAuthoring onNav={setSurface} segment="biotech" surface={{ id: surface, label: 'Authoring' } as never} />
+      : <ConversationThread onNav={setSurface} segment="biotech" surface={{ id: surface, label: 'Conversation' } as never} />;
+  };
+  render(<Flow />);
   await screen.findAllByText('Stability Summary');
   await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('18 months'));
+  fireEvent.click(screen.getByText('Review with AnA'));
   fireEvent.click(screen.getByRole('button', { name: 'Prepare targeted fixes' }));
+  const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' });
+  await waitFor(() => expect((screen.getByRole('button', { name: 'Send message to AnA' }) as HTMLButtonElement).disabled).toBe(false));
+  expect(fetchMock.mock.calls.some(([url]) => url.includes('/api/ana-ri/stream'))).toBe(false);
+  fireEvent.keyDown(composer, { key: 'Enter' });
   const apply = await screen.findByRole('button', { name: 'Apply as tracked suggestion' });
+  if (qualified) await waitFor(() => expect((apply as HTMLButtonElement).disabled).toBe(false));
   return { apply, fetchMock };
 }
 
@@ -122,8 +137,10 @@ describe('AnA remedies reach the existing editor', () => {
       expect(bridge).toBeTruthy();
       expect(document.querySelector('.tiptap')?.textContent).toContain('18 months');
     });
+    fireEvent.click(screen.getByText('Review with AnA'));
     fireEvent.click(screen.getByRole('button', { name: 'Review document' }));
     expect(onAsk.mock.calls[0][0]).toContain('critique_document');
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Apply as tracked suggestion' }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(screen.getByRole('button', { name: 'Apply as tracked suggestion' }));
     await screen.findByRole('button', { name: 'Added as tracked suggestion' });
     expect(document.querySelector('.tiptap del')?.textContent).toBe('18 months');

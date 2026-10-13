@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useId } from 'react';
 import { I } from '../icons';
 import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -16,7 +16,7 @@ import { DocumentDisposition } from './DocumentDisposition';
 import { useProjectThreads } from './projectThreads';
 import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
 import { SourceCatalogLine, SourceSnippet, type SourceCatalog } from '../editor/SourceCatalogLine';
-import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
+import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import { StatusPill, rowsOf, updatedWords, useDocumentList, type BuiltDocument, type ListRead } from '../editor/CanvasDocumentList';
 import { clearEditorTarget, setEditorTarget } from '../editorTarget';
 import type { ReviewItem } from '../fixtures/review-data';
@@ -457,12 +457,17 @@ function sourcePinTitle(s: SourceRow): string {
 }
 
 function SourceWorkButton({ source, projectId, onPull }: { source: SourceRow; projectId: string | null; onPull: (s: SourceRow) => void }) {
+  const reasonId = useId();
   if (!projectId) return null;
-  const unavailable = source.dataEligible === false || source.isCurrent === false || source.originalFileAvailable === false;
-  return <button className="btn ghost" disabled={unavailable} onClick={() => onPull(source)}
-    aria-label={`Work on ${source.title || `source ${source.id}`} in editor`}>
-    {I.penLine} Work on document
-  </button>;
+  const unavailable = sourceImportUnavailableReason(source);
+  return <div className="source-work-action">
+    <button type="button" className="btn ghost" disabled={Boolean(unavailable)} onClick={() => onPull(source)}
+      title={unavailable ?? undefined} aria-describedby={unavailable ? reasonId : undefined}
+      aria-label={`Work on ${source.title || `source ${source.id}`} in editor`}>
+      {I.penLine} Work on document
+    </button>
+    {unavailable && <p className="sec-sub" id={reasonId}>{unavailable}</p>}
+  </div>;
 }
 
 function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {

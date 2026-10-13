@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useId } from 'react';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
@@ -43,7 +43,7 @@ import {
   type EditorTargetDocType,
 } from '../editorTarget';
 import { readShellProject } from '../shellProject';
-import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
+import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
 import '../styles/project-home-v2.css';
 
 /* ── GET /api/c2c/project-vault/:id display contract ──
@@ -764,6 +764,17 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
 /** The Vault shows one program's documents; with none open there is no vault
  *  to operate, and "no documents" or "no such folder" would misstate why. */
 const NO_PROGRAM_OPEN = 'No program is open, so there is no vault here yet — open a program first.';
+
+/** Keep the recorded refusal with the action rather than only in a hover hint. */
+function VaultSourceWorkButton({ source, onPull }: { source: VaultDoc; onPull: (source: VaultDoc) => void }) {
+  const reasonId = useId();
+  const unavailable = sourceImportUnavailableReason({ ...source, isCurrent: source.earlierVersion ? false : undefined });
+  return <div className="source-work-action">
+    <button type="button" className="sp-primary" disabled={Boolean(unavailable)} title={unavailable ?? undefined}
+      aria-describedby={unavailable ? reasonId : undefined} onClick={() => onPull(source)}>{I.penLine} Work on document</button>
+    {unavailable && <p className="sec-sub" id={reasonId}>{unavailable}</p>}
+  </div>;
+}
 
 /* The Vault for the project open now. The body is keyed by the project, so a
    switch remounts it with no data: the read hook keeps the last payload while a
@@ -2102,9 +2113,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 )}
 
                 <div className="vd-d-actions">
-                  {sel.src === 'upload' && sel.docId && projectId && <button className="sp-primary"
-                    style={{ padding: '8px 12px' }} disabled={sel.disposition === 'remove_data' || sel.disposition === 'supersede' || sel.originalFileAvailable === false}
-                    onClick={() => setPullDoc(sel)}>{I.penLine} Work on document</button>}
+                  {sel.src === 'upload' && sel.docId && projectId && <VaultSourceWorkButton source={sel} onPull={setPullDoc} />}
                   {sel.src !== 'upload' && (
                     <button
                       className="sp-primary"

@@ -10,6 +10,7 @@ import { describeProvenance } from '../provenance';
 import { readWorkflowImportResult, readWorkflowPreview } from '../../authoringHandoff';
 import { clearEditorTarget, peekEditorTarget } from '../../editorTarget';
 import type { AuthoringSourceImportPreviewData, WorkflowImportSource } from '@shared/authoring/source-import';
+import { GOVERNED_REASON_MAX } from '@shared/constants/governed-reason';
 const PID = '11111111-1111-4111-8111-111111111111';
 const source: WorkflowImportSource = { kind: 'csr', jobId: 14, sectionNumbers: ['11'] };
 const hash = 'ab'.repeat(32);
@@ -98,5 +99,24 @@ describe('workflow response and provenance boundaries', () => {
     const onNav = vi.fn(); openImportedDocument(created.doc.id, PID, onNav, 'CSR_11');
     expect(peekEditorTarget()).toMatchObject({ docId: created.doc.id, programId: PID, sectionCode: 'CSR_11', docType: null });
     expect(onNav).toHaveBeenCalledWith('document-authoring');
+  });
+});
+
+describe('workflow intake keeps the canonical governed reason fields', () => {
+  it('applies the same accessible reason bounds to creation and explicit association', async () => {
+    apiRequest.mockResolvedValue(ok(preview));
+    render(dialog()); await screen.findByTestId('workflow-import-preview');
+    const reasonField = screen.getByLabelText('Reason for creating a working copy') as HTMLTextAreaElement;
+    const association = screen.getByLabelText('Reason for associating this source with the target project') as HTMLTextAreaElement;
+    expect(reasonField.getAttribute('aria-required')).toBe('true');
+    expect(association.getAttribute('aria-required')).toBe('true');
+    reason(); associate();
+    fireEvent.change(association, { target: { value: 'x'.repeat(GOVERNED_REASON_MAX + 1) } });
+    const button = screen.getByRole('button', { name: 'Create working copy' }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true); fireEvent.click(button);
+    expect(apiRequest).toHaveBeenCalledTimes(1);
+    associate(); fireEvent.change(reasonField, { target: { value: 'x'.repeat(GOVERNED_REASON_MAX + 1) } });
+    expect(button.disabled).toBe(true); fireEvent.click(button);
+    expect(apiRequest).toHaveBeenCalledTimes(1);
   });
 });

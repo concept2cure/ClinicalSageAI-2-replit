@@ -337,3 +337,133 @@ describe('source transaction evidence and the complete IND library', () => {
     expect(response.body.data.phases).toHaveLength(8);
   });
 });
+
+describe('continued source headings in the same authoring working copy', () => {
+  it('preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse', async () => {
+    const sourceId = randomUUID();
+    const filePath = path.join(root, 'Continued specification.docx');
+    const repeatedBytes = await Packer.toBuffer(new Document({ sections: [{ children: [
+      new Paragraph({ text: '3.2.S.4.1 Specification', heading: HeadingLevel.HEADING_1 }),
+      new Paragraph('Initial assay limit is 99.2 percent.'),
+      new Paragraph({ text: '3.2.S.4.1 Specification continued', heading: HeadingLevel.HEADING_1 }),
+      new Table({ rows: [new TableRow({ children: [
+        new TableCell({ children: [new Paragraph('Second assay')] }), new TableCell({ children: [new Paragraph('98.4 percent')] }),
+      ] })] }),
+      new Paragraph({ text: '3.2.S.4.1 Specification appendix', heading: HeadingLevel.HEADING_1 }),
+      new Paragraph('The appendix source passage must remain distinct.'),
+    ] }] }));
+    const hash = createHash('sha256').update(repeatedBytes).digest('hex');
+    await fs.writeFile(filePath, repeatedBytes);
+    await db.pool.query(`INSERT INTO vault.documents (id,program_id,organization_id,document_code,document_title,document_type,file_name,mime_type,content_hash,s3_key)
+      VALUES ($1,$2,$3,'SRC-CONTINUED','Continued specification','specification','Continued specification.docx',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',$4,$5)`, [sourceId, PROGRAM, ORG, hash, filePath]);
+    const input = body({ source: { kind: 'vault', documentId: sourceId } });
+    const response = await author(request(app).post('/api/authoring/import/source')).send(input);
+    expect(response.status, JSON.stringify(response.body)).toBe(201);
+    const result = response.body.data;
+    expect(result.sections.map((s: { code: string; title: string; order_index: number }) => [s.code, s.title, s.order_index])).toEqual([
+      ['3.2.S.4.1', 'Specification', 0], ['import.2', 'Specification continued', 1], ['import.3', 'Specification appendix', 2],
+    ]);
+    expect(result.sections[0].content).toContain('99.2 percent');
+    expect(result.sections[1].content).toContain('<table>');
+    expect(result.sections[1].content).toContain('98.4 percent');
+    expect(result.sections[2].content).toContain('appendix source passage must remain distinct');
+    expect(result.warnings.join(' ')).toContain('3.2.S.4.1 Specification continued');
+    expect(result.warnings.join(' ')).toContain('3.2.S.4.1 Specification appendix');
+    expect(result.warnings.join(' ')).toContain('not a CTD filing location');
+    expect(result.doc.provenance.importSource).toMatchObject({ id: sourceId, sha256: hash, warnings: result.warnings });
+    const audits = (await db.pglite.query<SourceAuditRow>('SELECT change_reason,metadata FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2', [result.doc.id, ORG])).rows;
+    expect(audits).toHaveLength(3);
+    for (const audit of audits) expect(audit.metadata.provenance.importSource).toMatchObject({ id: sourceId, sha256: hash, warnings: result.warnings });
+    const editedSection = result.sections[1];
+    const saved = await author(request(app).patch(`/api/authoring/sections/${editedSection.id}`)).send({
+      content: '<p>Reviewed continued source: second assay 98.4 percent.</p>', expectedUpdatedAt: editedSection.updated_at,
+      changeReason: 'Record the reviewed continuation of the verified specification',
+    });
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    const reopened = await author(request(app).get(`/api/authoring/docs/${result.doc.id}/sections`));
+    expect(reopened.status).toBe(200);
+    expect(reopened.body.sections.map((s: { code: string }) => s.code)).toEqual(['3.2.S.4.1', 'import.2', 'import.3']);
+    expect(reopened.body.sections[1].content).toContain('Reviewed continued source');
+    const reused = await author(request(app).post('/api/authoring/import/source')).send(input);
+    expect(reused.status, JSON.stringify(reused.body)).toBe(200);
+    expect(reused.body.data).toMatchObject({ reused: true, doc: { id: result.doc.id }, warnings: result.warnings });
+    expect(reused.body.data.sections[1].content).toContain('Reviewed continued source');
+    expect(await fs.readFile(filePath)).toEqual(repeatedBytes);
+    expect((await db.pool.query('SELECT content_hash FROM vault.documents WHERE id=$1', [sourceId])).rows).toEqual([{ content_hash: hash }]);
+  });
+});
+
+async function versionedSource(label: string) {
+  const sourceId = randomUUID();
+  const filePath = path.join(root, `${sourceId}.docx`);
+  const sourceBytes = await Packer.toBuffer(new Document({ sections: [{ children: [
+    new Paragraph({ text: '3.2.S.4.1 Specification', heading: HeadingLevel.HEADING_1 }), new Paragraph(label),
+  ] }] }));
+  const hash = createHash('sha256').update(sourceBytes).digest('hex');
+  const code = `SRC-VERSION-${sourceId}`;
+  await fs.writeFile(filePath, sourceBytes);
+  await db.pool.query(`INSERT INTO vault.documents (id,program_id,organization_id,document_code,document_title,document_type,file_name,mime_type,content_hash,s3_key)
+    VALUES ($1,$2,$3,$4,$5,'specification','Specification.docx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',$6,$7)`, [sourceId, PROGRAM, ORG, code, label, hash, filePath]);
+  const supersede = () => db.pool.query(`INSERT INTO vault.documents
+    (id,program_id,organization_id,document_code,document_title,document_type,version,file_name,mime_type,content_hash,supersedes_id)
+    VALUES ($1,$2,$3,$4,$5,'specification','2.0','Specification.docx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',$6,$7)`,
+  [randomUUID(), PROGRAM, ORG, code, `${label} successor`, createHash('sha256').update(`${sourceId}:v2`).digest('hex'), sourceId]);
+  return { sourceId, filePath, sourceBytes, supersede, input: body({ source: { kind: 'vault', documentId: sourceId } }) };
+}
+
+const importEvidenceCounts = async () => (await db.pool.query(`SELECT
+  (SELECT count(*) FROM authoring_documents)::int AS docs,
+  (SELECT count(*) FROM authoring_sections)::int AS sections,
+  (SELECT count(*) FROM doc_revisions)::int AS revisions,
+  (SELECT count(*) FROM authoring_audit_trail)::int AS audits,
+  (SELECT count(*) FROM doc_permissions)::int AS permissions`)).rows[0];
+
+describe('intake keeps the exact currently eligible Vault version', () => {
+  it.each([false, true])('refuses an earlier version before byte access, including an existing working copy (%s)', async savedCopy => {
+    const source = await versionedSource(`Intake version before POST ${savedCopy}`);
+    const first = savedCopy ? await author(request(app).post('/api/authoring/import/source')).send(source.input) : null;
+    if (first) expect(first.status, JSON.stringify(first.body)).toBe(201);
+    await source.supersede();
+    const before = await importEvidenceCounts();
+    await fs.rename(source.filePath, `${source.filePath}.held`);
+    try {
+      const response = await author(request(app).post('/api/authoring/import/source')).send(source.input);
+      expect(response.status, JSON.stringify(response.body)).toBe(409);
+      expect(response.body.error).toBe('SOURCE_CHANGED');
+      expect(response.body.message).toContain('current version');
+      expect(response.body.data).toBeUndefined();
+      expect(await importEvidenceCounts()).toEqual(before);
+      if (first) {
+        const saved = await author(request(app).get(`/api/authoring/docs/${first.body.data.doc.id}/sections`));
+        expect(saved.status).toBe(200);
+        expect(saved.body.sections[0].content).toContain('Intake version before POST true');
+      }
+    } finally { await fs.rename(`${source.filePath}.held`, source.filePath); }
+    expect(await fs.readFile(source.filePath)).toEqual(source.sourceBytes);
+  });
+
+  it.each([false, true])('rechecks a successor inserted during conversion before creation or reuse (%s)', async savedCopy => {
+    const source = await versionedSource(`Intake version during conversion ${savedCopy}`);
+    const first = savedCopy ? await author(request(app).post('/api/authoring/import/source')).send(source.input) : null;
+    if (first) expect(first.status, JSON.stringify(first.body)).toBe(201);
+    const before = await importEvidenceCounts();
+    const [{ importSourceDocument }, { createDocumentFromDraft }, { importDocx }] = await Promise.all([
+      import('../../services/authoring/authoring-source-import'), import('../../services/authoring/authoring-from-draft'),
+      import('../../import/docx-to-authoring'),
+    ]);
+    const pool = db.pool as unknown as Pool;
+    const ctx: CreateContext = { pool, tenantId: ORG, actor: { id: AUTHOR.id, email: AUTHOR.email },
+      audit: { pool, tenantId: ORG, actorId: AUTHOR.id, actorEmail: AUTHOR.email, actorRole: 'MEMBER', ipAddress: '', userAgent: 'source-version-race' } };
+    const outcome = await importSourceDocument(ctx, { id: AUTHOR.id, email: AUTHOR.email, roles: ['MEMBER'] }, source.input, {
+      readVaultBytes: () => fs.readFile(source.filePath), readUpload: async () => { throw new Error('Unexpected upload'); },
+      classify: () => 'docx', importDocx: async original => { await source.supersede(); return importDocx(original); },
+      extractText: async () => { throw new Error('Unexpected plain-text extraction'); }, create: createDocumentFromDraft,
+    });
+    expect(outcome).toMatchObject({ ok: false, status: 409, code: 'SOURCE_CHANGED', message: expect.stringContaining('current version') });
+    expect(await importEvidenceCounts()).toEqual(before);
+    expect(await fs.readFile(source.filePath)).toEqual(source.sourceBytes);
+  });
+});

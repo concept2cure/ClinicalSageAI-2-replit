@@ -271,7 +271,7 @@ export function describeAcceptFailure(
 
 const NOTE_TONE: Record<'ok' | 'warn' | 'error', React.CSSProperties> = {
   ok: {},
-  warn: { borderLeftColor: 'var(--warning,#b54708)' },
+  warn: { borderLeftColor: 'var(--warning)' },
   error: { borderLeftColor: 'var(--error)' },
 };
 
@@ -715,7 +715,7 @@ export function AuthoringAiDraft({
             <div
               role="status"
               data-testid="ai-draft-edited"
-              style={{ fontSize: 11, color: 'var(--warning,#b54708)' }}
+              style={{ fontSize: 11, color: 'var(--warning)' }}
             >
               Edited. The audit record will note that the saved text differs from what the model
               produced, and the citations describe the draft’s origin rather than your wording.
@@ -726,7 +726,7 @@ export function AuthoringAiDraft({
             <div
               role="status"
               data-testid="ai-draft-dirty-warning"
-              style={{ fontSize: 11, color: 'var(--warning,#b54708)' }}
+              style={{ fontSize: 11, color: 'var(--warning)' }}
             >
               The editor has unsaved changes. Accepting replaces the section content, and those
               unsaved edits are not part of this draft.

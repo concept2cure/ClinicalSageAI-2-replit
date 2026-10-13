@@ -10,10 +10,12 @@ import type { AuthoringImportOrigin, AuthoringSourceImportData, AuthoringSourceI
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { isInlineFigureImage } from '../../../shared/authoring/figure-refs';
 import { requireGovernedReason } from '../../routes/governed-reason';
+import { supersededSql } from '../vault/vault-version-family';
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
 import { capturedBinaryAvailableSql, capturedDataEligibleSql, vaultBinaryAvailableSql, vaultDataEligibleSql } from '../document-data-disposition/eligibility';
 import { decideAuthoringPermission, type AuthoringPrincipal } from './authoring-permissions';
 import { createDocumentFromDraft, type CreateDocumentFromDraftInput } from './authoring-from-draft';
+import { allocateImportedSectionCodes } from './authoring-source-conversion';
 import type { CreateContext } from './authoring-documents';
 import { authorizeAuthoringProgram, AuthoringProgramAccessError } from './authoring-program-access';
 import { materializeWorkflowSource, WorkflowSourceImportError, type MaterializedWorkflowSource } from './workflow-source-import';
@@ -91,6 +93,21 @@ async function authorizedImportPrincipal(q: Queryable, ctx: CreateContext, princ
   }
 }
 
+async function requireCurrentVaultSource(q: Queryable, tenantId: number, programId: string, documentId: string): Promise<void> {
+  // Run after sourceRecord acquires the original row's FOR SHARE. A check-in
+  // holds that same predecessor FOR UPDATE while inserting its successor. A
+  // fresh statement sees a successor committed while we waited for the row;
+  // the transaction keeps the row lock until authoring creation/reuse ends.
+  const result = await q.query(
+    `SELECT NOT ${supersededSql('d')} AS current FROM vault.documents d
+      WHERE d.id = $1 AND d.program_id = $2 AND d.organization_id = $3 AND d.deleted_at IS NULL`,
+    [documentId, programId, tenantId],
+  );
+  if (result.rows.length !== 1 || result.rows[0].current !== true) {
+    abort(409, 'SOURCE_CHANGED', 'This Vault source is no longer the current version. Refresh the source list and choose its current version. Nothing was imported.');
+  }
+}
+
 /** Both tenant and project are bound, and dispositions apply before any bytes
  * are read. The metadata below describes the file, never model input. */
 async function sourceRecord(q: Queryable, tenantId: number, input: SourceImportInput): Promise<SourceRecord | null> {
@@ -107,7 +124,9 @@ async function sourceRecord(q: Queryable, tenantId: number, input: SourceImportI
         LIMIT 1 FOR SHARE OF d`,
       [input.source.documentId, input.programId, tenantId],
     );
-    return result.rows[0] ?? null;
+    const record = result.rows[0] ?? null;
+    if (record) await requireCurrentVaultSource(q, tenantId, input.programId, input.source.documentId);
+    return record;
   }
   const result = await q.query(
     `SELECT s.id::text, s.title, f.original_name AS file_name, f.mime_type, s.checksum AS content_hash,
@@ -161,11 +180,12 @@ async function convert(bytes: Buffer, origin: BinaryImportOrigin, deps: SourceIm
       return abort(409, 'SOURCE_TEXT_UNREADABLE', 'The Word file produced no editable content. Nothing was imported.');
     }
     if (parsed.sections.length > MAX_SECTIONS) return abort(409, 'SOURCE_TOO_MANY_SECTIONS', 'This source has more than 200 sections; split it before importing. Nothing was imported.');
-    const warnings = [...parsed.warnings];
+    const allocation = allocateImportedSectionCodes(parsed.sections, origin.sectionCode);
+    const warnings = [...parsed.warnings, ...allocation.warnings];
     if (parsed.sections.some(s => !s.code)) warnings.push('Sections without source codes use working identifiers (import.1, import.2, …). These are not CTD filing locations.');
     let omittedImages = 0;
     const sections = parsed.sections.map((section, i) => ({
-      code: section.code || (parsed.sections.length === 1 && origin.sectionCode ? origin.sectionCode : `import.${i + 1}`),
+      code: allocation.codes[i],
       title: section.title || origin.title,
       content: section.html.replace(/<img\b[^>]*>/gi, tag => {
         const src = /\bsrc=["']([^"']*)["']/i.exec(tag)?.[1];
