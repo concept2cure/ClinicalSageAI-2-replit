@@ -142,6 +142,39 @@ async function draftUnderStreamCtx(w: World): Promise<Record<string, unknown>> {
        LX-06 adds it — if it lands under another name, this input follows it. */
     sources: [{ evidence_source_id: w.k.sourceId, excerpt: QUOTE }],
   };
+  /* File the turn record this draft will name, as a real turn does. The model
+     recorded on a drafted document comes from that record and from nowhere
+     else (27211528b, SEC-A-7 door 2) -- `ctx.servingModel` below is what the
+     loop hands a tool, not a channel that can write the field. So a walk that
+     files no record would prove only that an unfiled turn records no model,
+     which is true but is not the founder path. Written through the production
+     writer, so this cannot drift from how a turn is really sealed. */
+  const { openTurnRecorder, writeTurnRecordSafely } = await import('../../server/services/ana/turn-record');
+  const recorder = openTurnRecorder({
+    orgId: ORG_A,
+    userId: 3,
+    runId: WALK_RUN_ID,
+    typed: 'Draft the Module 2.5 clinical overview from the source in the Data Room.',
+  });
+  if (!recorder) throw new Error('the walk could not open a turn recorder');
+  recorder.setAnswer({ streamed: 'Drafting the clinical overview.', stored: 'Drafting the clinical overview.' });
+  recorder.setModel(SERVED_MODEL);
+  recorder.addServed(1, SERVED_MODEL);
+  /* writeTurnRecord opens its own transaction, so it needs a pool it can
+     check a client out of; the walk's PGlite pool answers queries only. One
+     client, because PGlite is a single connection -- which is also why this
+     walk cannot prove the concurrent case, and does not claim to. */
+  const connectable = {
+    connect: async () => ({
+      query: async (t: string, v?: unknown[]) => ({ rows: await w.q(t, v) }),
+      release: () => undefined,
+    }),
+  };
+  const filed = await writeTurnRecordSafely(connectable as never, recorder, 'answered');
+  if (filed.status !== 'recorded') {
+    throw new Error(`the walk's turn record was not filed: ${JSON.stringify(filed)}`);
+  }
+
   const { heldToolContext, confirmedToolContext } = await import('../../server/services/ana/turn-tool-context');
   const held = heldToolContext('draft_authoring_document', streamProjectId, {
     threadId: WALK_THREAD_ID,
