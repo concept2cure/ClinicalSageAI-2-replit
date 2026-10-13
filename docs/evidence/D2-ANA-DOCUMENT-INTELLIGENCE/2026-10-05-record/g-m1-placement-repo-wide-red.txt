@@ -80,3 +80,71 @@ Of these, 30 were fixed. Two were correctly stated and the checks were wrong:
     says so (see the facts file).
   - template-seeds.ts:234 is the EMA centralised-procedure block; it is the single NOT_FDA_ECTD
     baseline entry, with its reason written out.
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════
+Second round, same day: the Modules 2–5 extension, run and then REMOVED.
+════════════════════════════════════════════════════════════════════════════════════════════════
+
+Widening the code key to m?[1-5](\.(\d+|[SPAR]))+ and asserting checkM2to5 over every pair:
+
+× every Module 2–5 heading in the repository agrees with the record
+
+server/services/labeling/smpc-qrd-catalog.ts:74 — 4.4 "Special warnings and precautions for use" is not an ICH M4 heading
+server/services/labeling/smpc-qrd-catalog.ts:75 — 4.5 "Interaction with other medicinal products and other forms of interaction" is not an ICH M4 heading
+server/services/labeling/smpc-qrd-catalog.ts:76 — 4.6 "Fertility, pregnancy and lactation" is not an ICH M4 heading
+server/services/labeling/smpc-qrd-catalog.ts:77 — 4.7 "Effects on ability to drive and use machines" is not an ICH M4 heading
+server/services/labeling/smpc-qrd-catalog.ts:78 — 4.8 "Undesirable effects" is not an ICH M4 heading
+server/services/labeling/smpc-qrd-catalog.ts:79 — 4.9 "Overdose" is not an ICH M4 heading
+scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs:445 — 5.1.1 "Manufacturer" is not an ICH M4 heading
+scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs:448 — 5.1.3 "Date of manufacture" is not an ICH M4 heading
+scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs:451 — 5.1.4 "Use-by date" is not an ICH M4 heading
+scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs:454 — 5.1.5 "Batch code" is not an ICH M4 heading
+scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs:457 — 5.1.6 "Catalogue number" is not an ICH M4 heading
+scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs:460 — 5.1.7 "Serial number" is not an ICH M4 heading
+scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs:463 — 5.2.8 "Do not use if package is damaged" is not an ICH M4 heading
+scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs:469 — 5.4.2 "Do not re-use" is not an ICH M4 heading
+scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs:472 — 5.4.3 "Consult instructions for use" is not an ICH M4 heading
+scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs:475 — 5.4.4 "Caution" is not an ICH M4 heading
+scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs:478 — 5.7.7 "Medical device" is not an ICH M4 heading
+server/services/csr-builder.ts:123 — 2.8 "Efficacy Results" is not an ICH M4 heading
+server/services/csr-builder.ts:124 — 2.9 "Safety Results" is not an ICH M4 heading
+server/services/csr-builder.ts:125 — 2.10 "Conclusions" is not an ICH M4 heading
+server/services/conversation-os/artifactProposalService.ts:91 — 5.0 "Accepted Proposal ${params.proposalId}" is not an ICH M4 heading
+services/regulatory/pyramids/ind-amendment-pyramid.ts:245 — 2.0 "Amended CTD Modules" is not an ICH M4 heading
+server/services/market-specs/document-template-library.ts:255 — 2.4.1 "Overview of the Nonclinical Testing Strategy" is not an ICH M4 heading
+server/services/market-specs/document-template-library.ts:256 — 2.4.2 "Pharmacology" is not an ICH M4 heading
+server/services/market-specs/document-template-library.ts:257 — 2.4.3 "Pharmacokinetics" is not an ICH M4 heading
+server/services/market-specs/document-template-library.ts:258 — 2.4.4 "Toxicology" is not an ICH M4 heading
+server/services/market-specs/document-template-library.ts:259 — 2.4.5 "Integrated Overview and Conclusions" is not an ICH M4 heading
+server/services/market-specs/document-template-library.ts:260 — 2.4.6 "List of Literature References" is not an ICH M4 heading
+
+The first three groups are EU SmPC sections, ISO 15223-1 device labelling symbols, and a CSR
+outline's own numbering — three numbering systems this platform legitimately holds, none of them
+CTD. The LAST group is correct ICH M4S(R2) and the RECORD was missing it.
+
+So the repo-wide Module 2–5 assertion was removed, and the record gained 2.4.1–2.4.6.
+
+── What the widened code key DID find, and keeps finding ────────────────────────────────────────
+
+violationsFor's "Module 1 document filed outside Module 1" rule, now running repository-wide:
+
+services/regulatory/pyramids/ind-amendment-pyramid.ts:285 — 5.3.5.4 "Investigator's Brochure" — investigator's brochure is a Module 1 document; it files under 1.14.4.1, not in Module 5
+services/regulatory/pyramids/ind-annual-report-pyramid.ts:206 — 5.3.5 "Individual Study Information — Annual Report" — annual report / DSUR is a Module 1 document; it files under 1.13, not in Module 5
+services/regulatory/pyramids/ind-annual-report-pyramid.ts:239 — 2.7.4 "Summary of Clinical Safety — Annual Report" — annual report / DSUR is a Module 1 document; it files under 1.13, not in Module 2
+
+The first is a real defect — the same misfiling ind-pyramid.ts carried until 2026-10-12 — and is
+now on the record through m1Binding().
+
+── The refinement that was reverted, and what caught it ─────────────────────────────────────────
+
+The other two are the annual report's Module 2 and Module 5 CONTENT. Standing the rule down
+whenever the pair agrees with the Module 2–5 record broke it for the case it was built for:
+
+ × the check is live — each Module 1 placement this step fixed fails if it comes back >
+   Vault body-text filing rules — the IB back at 5.3 (where the clinical study reports live)
+
+5.3 IS a modelled heading ("Clinical Study Reports") and "investigator's brochure" does not
+CONTRADICT that title by any term pair, so the weakened rule let the IB back into Module 5. The
+permanent revert-mutation written on 2026-10-12 caught it in one run. The refinement was reverted
+and the two titles fixed instead.
