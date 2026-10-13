@@ -110,6 +110,18 @@
 -- behaves identically under both appliers. Nothing is removed from this file.
 -- Evidence docs/evidence/D3/2026-10-12-citation-chains-tenant-key/.
 --
+-- ── Amended 2026-10-13 (D6): the backfill reads a column a fresh database ──
+-- ── does not have yet ─────────────────────────────────────────────────────
+-- Above the loop, the backfill reads knowledge_graph_nodes.organization_id,
+-- and the loop below is what adds that column. A database that ran an
+-- earlier version of this file already has it. A freshly provisioned one
+-- does not. There the UPDATE failed with "column n.organization_id does not
+-- exist", and deploy-migrate halted at this file (172 of 375): CI's Blank DB,
+-- boot-smoke and image-boot jobs went red on every trunk run from 15af6bc4b.
+-- The backfill now runs only when the node table carries the tenant key. A
+-- fresh database's nodes are new and unattributed, so nothing could be
+-- attributed from them anyway. Nothing is removed.
+--
 -- Idempotent throughout; safe to re-run on every deploy.
 
 BEGIN;
@@ -142,7 +154,16 @@ BEGIN
     END IF;
 
     -- Only rows still unattributed, so a re-run never overwrites an
-    -- attribution an operator made deliberately.
+    -- attribution an operator made deliberately. Only when the nodes carry the
+    -- tenant key: on a fresh database the loop below adds it (2026-10-13 note).
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'knowledge_graph_nodes'
+         AND column_name = 'organization_id'
+    ) THEN
+      RAISE NOTICE '[kg-tenant] knowledge_graph_nodes has no organization_id yet — nothing to attribute from';
+      RETURN;
+    END IF;
     WITH unambiguous AS (
       SELECT n.source_document_id AS doc, min(n.organization_id) AS org
         FROM public.knowledge_graph_nodes n
