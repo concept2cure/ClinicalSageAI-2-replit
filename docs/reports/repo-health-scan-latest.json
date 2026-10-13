@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-12T19:16:21.929Z",
+  "generatedAt": "2026-10-13T04:38:15.281Z",
   "git": {
-    "sha": "267ff29516480898f15bfdaa9f74778392f078fd",
+    "sha": "4c7c2c206707c9946a3847cff5b7af158eb33983",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2089,7 +2089,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1134141
+        "bytes": 1134231
       },
       {
         "file": "shared/schema.ts",
@@ -2245,7 +2245,7 @@
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
-        "bytes": 113223
+        "bytes": 113548
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
@@ -2319,7 +2319,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21833
+        "lines": 21834
       },
       {
         "file": "shared/schema.ts",
@@ -2483,7 +2483,7 @@
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
-        "lines": 2295
+        "lines": 2302
       },
       {
         "file": "server/routes/c2c/reviews.ts",
@@ -2535,7 +2535,7 @@
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
-        "lines": 2093
+        "lines": 2095
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
@@ -2622,16 +2622,16 @@
         "lines": 1878
       },
       {
+        "file": "server/services/digital-health/digital-health-knowledge.ts",
+        "lines": 1871
+      },
+      {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
       },
       {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
         "lines": 1866
-      },
-      {
-        "file": "server/services/digital-health/digital-health-knowledge.ts",
-        "lines": 1864
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
