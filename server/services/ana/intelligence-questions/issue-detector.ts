@@ -12,6 +12,21 @@
 
 import type { QuestionNode, DetectedIssue, FlowState, FlowDefinition } from './types.js';
 import { evaluatePredicate } from './engine.js';
+import {
+  askedAt,
+  contextFor,
+  fieldsAskedBy,
+  isBlank,
+  mentions,
+  numVal,
+  strVal,
+  type CrossNodeContext,
+  type MitigationState,
+} from './cross-node-context.js';
+
+/* Re-exported so every existing caller — and the gates — are unchanged. */
+export { fieldsAskedBy };
+export type { CrossNodeContext, MitigationState };
 import { programmeFactsFrom } from './programme-facts.js';
 
 /**
@@ -56,11 +71,20 @@ export function runCrossNodeAnalysis(
   const existingIds = new Set(state.issues.map(i => i.checkId));
 
   const asked = fieldsAskedBy(definition);
-  /* A question the person has not reached is not a question they declined. The
-     node that asks it must be among the completed ones. */
-  const nodeOf = nodeOfField(definition);
+  /* A question the person has not reached is not a question they declined, and
+     neither is one the card never DREW. The node must be completed AND the
+     field's own `visibleWhen` must have held — a mitigating field hidden by its
+     gate inside a completed node was indistinguishable from one left empty, so
+     a CRITICAL finding asserted the absence of something never shown
+     (2026-10-13 audit, F10). The gate is evaluated with the same shared
+     evaluator the engine, the validator and the card all use. */
+  const asksAt = askedAt(definition);
   const completed = new Set(state.completedNodes);
-  const reached = (fieldId: string) => completed.has(nodeOf.get(fieldId) ?? '');
+  const reached = (fieldId: string) => {
+    const where = asksAt.get(fieldId);
+    if (!where || !completed.has(where.node)) return false;
+    return where.gate ? evaluatePredicate(where.gate, flat) : true;
+  };
   for (const rule of CROSS_NODE_RULES) {
     if (existingIds.has(rule.id)) continue;
     if (rule.appliesTo && !rule.appliesTo.includes(definition.category)) continue;
@@ -119,69 +143,8 @@ function flattenAnswers(answers: Record<string, Record<string, unknown>>): Recor
   return flat;
 }
 
-function isBlank(val: unknown): boolean {
-  if (val === undefined || val === null) return true;
-  if (typeof val === 'string' && val.trim() === '') return true;
-  if (Array.isArray(val) && val.length === 0) return true;
-  return false;
-}
-
-function numVal(val: unknown): number | null {
-  if (val == null) return null;
-  const n = Number(val);
-  return Number.isFinite(n) ? n : null;
-}
-
-function strVal(val: unknown): string {
-  return typeof val === 'string' ? val.toLowerCase().trim() : '';
-}
 
 /* ─── Cross-node rule definitions ────────────────────────────────────── */
-
-/**
- * What a cross-node rule needs the FLOW to have asked.
- *
- * ── The defect this exists for ────────────────────────────────────────
- * Every rule here has the shape "the programme says X, and the mitigating fact
- * is blank". `isBlank(undefined)` is TRUE, so a rule whose mitigating field no
- * flow ASKS fired on the trigger alone — telling a sponsor they have no
- * biomarker strategy, no confirmatory trial plan, no clinical evidence, no
- * immunogenicity assessment, because AnA never asked. A sweep on 2026-10-13
- * found thirty-five field ids read here that no flow asks, across eleven of the
- * twelve rules.
- *
- * One of them, `xn_class_iii_device_no_clinical_data`, is severity CRITICAL and
- * fired at every Class III device programme. The review had already caught this
- * shape once — "that check landed on a sponsor who had been made to invent the
- * data" — and this is the same shape eleven more times.
- *
- * So a rule now DECLARES the fields it triggers on and the fields whose absence
- * it asserts, and the mitigation state answers only where the flow asked:
- *
- *   present   one of them was answered        → the rule must not fire
- *   blank     asked, REACHED, and left empty  → the rule MAY fire
- *   pending   asked, and the person has not reached that question yet → the
- *             rule MUST NOT fire; telling someone they have no immunogenicity
- *             assessment the moment they say "biologic", three nodes before
- *             being asked, is the same insult in a smaller form
- *   unasked   this flow asks none of them     → the rule MUST NOT fire, because
- *             nothing was ever established about it
- *
- * `unasked` is not a silence to be fixed by firing anyway: it is a question AnA
- * does not ask yet, and `__tests__/cross-node-rules-can-fire.test.ts` keeps the
- * written list of them, so the gap is visible to us instead of asserted at a
- * sponsor.
- */
-export type MitigationState = 'present' | 'blank' | 'pending' | 'unasked';
-
-export interface CrossNodeContext {
-  /** Whether the running flow asks this field at all. */
-  asks: (fieldId: string) => boolean;
-  /** True only where the flow ASKED and the answer is empty. */
-  mitigationAbsent: () => boolean;
-  /** The same decision, reported, for a rule that wants to name what it saw. */
-  mitigation: () => MitigationState;
-}
 
 interface CrossNodeRule {
   id: string;
@@ -190,6 +153,18 @@ interface CrossNodeRule {
   triggeredBy?: string[];
   /** The answers whose absence the finding asserts. Same reason. */
   mitigatedBy?: string[];
+  /**
+   * Mitigating fields where a NEGATIVE answer is an answer, not a refusal.
+   *
+   * "Did you run a clinical study?" — no, is the finding. "Is clinical data
+   * REQUIRED to address the differences?" — no, is the normal and usually
+   * correct 510(k) answer, and treating it as a refusal fired a CRITICAL
+   * finding that nothing the sponsor could do would silence, because
+   * answering no also skips the node holding the only other mitigating field
+   * (2026-10-13 audit, F11). The difference is in the question, so the rule
+   * names the fields rather than the engine guessing.
+   */
+  negativeIsAnswer?: string[];
   check: (
     flat: Record<string, unknown>,
     state: FlowState,
@@ -218,48 +193,7 @@ export function crossNodeRuleFields(): Array<{
   }));
 }
 
-/** Every field id a flow definition asks, for the asked/blank/unasked decision. */
-export function fieldsAskedBy(definition: FlowDefinition): Set<string> {
-  const out = new Set<string>();
-  for (const node of definition.nodes) for (const field of node.fields) out.add(field.id);
-  return out;
-}
 
-/**
- * An answer that says the mitigating thing was NOT done. It is an answer, so
- * it is not an absence — and it is not a mitigation either, so the finding
- * stands. `not_defined` is here because the IND interview's safety-monitoring
- * question offers it by name, which is a sponsor telling AnA there is no
- * monitoring body rather than leaving the question alone.
- */
-const REFUSALS = new Set(['no', 'none', 'false', 'not_defined', 'not_applicable', 'na']);
-const isRefusal = (value: unknown): boolean =>
-  /* A yes_no answer reaches here as a real boolean from the card and as a
-     string from the tool surface (shared/ana/question-predicate.ts says the
-     same of its own coercion), and `false` is not a blank. */
-  value === false || REFUSALS.has(strVal(value));
-
-/** Which node asks each field, so "have they been asked yet" has an answer. */
-function nodeOfField(definition: FlowDefinition): Map<string, string> {
-  const out = new Map<string, string>();
-  for (const node of definition.nodes) for (const field of node.fields) out.set(field.id, node.id);
-  return out;
-}
-
-function contextFor(
-  rule: CrossNodeRule,
-  flat: Record<string, unknown>,
-  asked: Set<string>,
-  reached: (fieldId: string) => boolean,
-): CrossNodeContext {
-  const mitigation = (): MitigationState => {
-    const ids = (rule.mitigatedBy ?? []).filter(id => asked.has(id));
-    if (ids.length === 0) return 'unasked';
-    if (ids.some(id => !isBlank(flat[id]) && !isRefusal(flat[id]))) return 'present';
-    return ids.some(reached) ? 'blank' : 'pending';
-  };
-  return { asks: id => asked.has(id), mitigation, mitigationAbsent: () => mitigation() === 'blank' };
-}
 
 const CROSS_NODE_RULES: CrossNodeRule[] = [
   /* The two answers about the US cannot both be true. The agencies are read
@@ -298,14 +232,37 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_pediatric_without_safety_monitoring',
     appliesTo: ['protocol_development', 'ind_submission'],
-    triggeredBy: ['target_population', 'study_population'],
+    /* `includes_vulnerable_populations` is protocol_development's own
+       question, a multi_select offering 'pediatric'. The rule read
+       `target_population`, which no applicable flow asks, so a CRITICAL
+       paediatric-safety finding could never fire (2026-10-13 audit, F2). */
+    triggeredBy: ['target_population', 'study_population', 'includes_vulnerable_populations'],
     /* `data_safety_monitoring` is the IND interview's own question, and it
        offers 'not_defined' — a sponsor saying there is no monitoring body,
        which is an answer and not a mitigation. */
-    mitigatedBy: ['has_dsmb', 'dsmb', 'data_monitoring', 'data_safety_monitoring', 'safety_monitoring_plan_detail'],
+    /* `dsmb_required` and its three companions are protocol_development's own
+       DSMB node; `data_safety_monitoring` is the IND interview's question, and
+       it offers 'not_defined' — a sponsor saying there is no monitoring body,
+       which is an answer and not a mitigation.
+       KNOWN VALUE GAP: `ind_submission`'s `study_population` offers only
+       healthy_volunteers | patients | both, so the paediatric trigger cannot
+       come from there. The rule is live in protocol_development, and in the
+       IND only if that question gains a paediatric option (2026-10-13 audit,
+       F2/F21; task #19). */
+    mitigatedBy: [
+      'has_dsmb',
+      'dsmb',
+      'data_monitoring',
+      'data_safety_monitoring',
+      'safety_monitoring_plan_detail',
+      'dsmb_required',
+      'dsmb_charter_available',
+      'dsmb_membership',
+    ],
     check(flat, _state, _definition, ctx) {
-      const pop = strVal(flat['target_population'] ?? flat['study_population']);
-      const paediatric = pop.includes('pediatric') || pop.includes('paediatric') || pop.includes('children');
+      const paediatric =
+        mentions(flat['includes_vulnerable_populations'], 'pediatric', 'paediatric') ||
+        mentions(flat['target_population'] ?? flat['study_population'], 'pediatric', 'paediatric', 'children');
       if (paediatric && ctx.mitigationAbsent()) {
         return {
           checkId: 'xn_pediatric_without_safety_monitoring',
@@ -368,7 +325,11 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_accelerated_approval_no_confirmatory',
     appliesTo: ['nda_submission', 'bla_submission'],
-    triggeredBy: ['regulatory_pathway', 'approval_pathway'],
+    /* `accelerated_approval_basis` is the BLA interview's own question — the
+       surrogate endpoint the accelerated claim rests on. The rule read two ids
+       neither applicable flow asks, so a CRITICAL finding about the
+       confirmatory trial FDORA §3210 requires could never fire (F1). */
+    triggeredBy: ['regulatory_pathway', 'approval_pathway', 'accelerated_approval_basis'],
     /* The BLA interview asks both of the last two in its post-marketing plan. */
     mitigatedBy: [
       'confirmatory_trial',
@@ -377,8 +338,13 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
       'confirmatory_study_protocol',
     ],
     check(flat, _state, _definition, ctx) {
-      const pathway = strVal(flat['regulatory_pathway'] ?? flat['approval_pathway']);
-      if (pathway.includes('accelerated') && ctx.mitigationAbsent()) {
+      /* Either the pathway answer names it (a multi_select in the one flow
+         that asks it) or the BLA stated the basis the accelerated claim rests
+         on. Both are the sponsor saying they are on that route. */
+      const accelerated =
+        mentions(flat['regulatory_pathway'] ?? flat['approval_pathway'], 'accelerated') ||
+        strVal(flat['accelerated_approval_basis']) !== '';
+      if (accelerated && ctx.mitigationAbsent()) {
         return {
           checkId: 'xn_accelerated_approval_no_confirmatory',
           severity: 'critical',
@@ -457,15 +423,30 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
       'clinical_data_required',
       'clinical_study_type',
     ],
-    check(flat, _state, _definition, ctx) {
+    /* "Clinical Data Required to Address Differences" — no, is the normal
+       510(k) answer: performance and bench testing establish substantial
+       equivalence. It is also the answer that skips the clinical-evidence
+       node, so treating it as a refusal left a CRITICAL finding nothing could
+       silence. */
+    negativeIsAnswer: ['clinical_data_required'],
+    check(flat, _state, definition, ctx) {
       const deviceClass = strVal(flat['device_class'] ?? flat['classification']);
       if (deviceClass.includes('iii') && ctx.mitigationAbsent()) {
         return {
           checkId: 'xn_class_iii_device_no_clinical_data',
           severity: 'critical',
           title: 'Class III Device Without Clinical Evidence',
-          message: 'Class III devices require valid scientific evidence of safety and effectiveness, which typically includes clinical data from well-controlled investigations.',
-          reference: '21 CFR 814.20(b)(6); FDA PMA Guidance',
+          message:
+            definition.category === 'device_510k'
+              ? 'A Class III device is a premarket approval route unless it is a preamendments type FDA has not yet called for PMA, so a 510(k) for one needs the basis for that first — and a Class III device needs valid scientific evidence of safety and effectiveness either way.'
+              : 'Class III devices require valid scientific evidence of safety and effectiveness, which typically includes clinical data from well-controlled investigations.',
+          /* The 814 citation is the PMA's. A 510(k) interview reaching this
+             finding is being told something about its ROUTE first, so it is
+             cited to the statute that decides the route (2026-10-13 audit). */
+          reference:
+            definition.category === 'device_510k'
+              ? 'FD&C Act 515(b); 21 CFR 807.81(b); 21 CFR 814.20(b)(6)'
+              : '21 CFR 814.20(b)(6); FDA PMA Guidance',
           questionId: '_cross_node',
           /* What the record says it judged: the class, and the clinical answer
              each device interview actually gives. */

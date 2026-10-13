@@ -86,7 +86,30 @@ function isGroup(pred: QuestionPredicate): pred is { anyOf?: QuestionPredicate[]
   return !('field' in pred);
 }
 
+/**
+ * A predicate carrying BOTH a field and a group — an author's typo that the
+ * compiler accepts.
+ *
+ * `QuestionPredicate` is a union of an interface and an all-optional one, so
+ * excess-property checking lets `{field, operator, value, anyOf: […]}` past
+ * with no diagnostic. At runtime `isGroup` reads it as a field predicate and
+ * the group is discarded in silence: the gate half-evaluates, and the leaves
+ * inside the group are invisible to the engine's own-node test, which decides
+ * whether a field can be settled server-side at all (2026-10-13 audit, F17).
+ *
+ * Half a gate is worse than either half, so it is refused rather than guessed.
+ */
+function assertNotHybrid(pred: QuestionPredicate): void {
+  if ('field' in pred && ('anyOf' in pred || 'allOf' in pred)) {
+    throw new Error(
+      `A predicate carries both a field ("${(pred as FieldPredicate).field}") and a group. ` +
+        'Write one or the other: a group whose leaves are field predicates, or a field predicate alone.',
+    );
+  }
+}
+
 export function evaluatePredicate(pred: QuestionPredicate, values: Record<string, unknown>): boolean {
+  assertNotHybrid(pred);
   if (isGroup(pred)) {
     /* A group with neither key, or an empty one, is NOT satisfied — `every`
        over an empty list is true, and a gate nobody wrote must not read as
@@ -124,6 +147,7 @@ export function predicateFieldIds(pred: QuestionPredicate): string[] {
  * rather than off a group, which has neither.
  */
 export function predicateLeaves(pred: QuestionPredicate): FieldPredicate[] {
+  assertNotHybrid(pred);
   if (!isGroup(pred)) return [pred as FieldPredicate];
   return [...(pred.anyOf ?? []), ...(pred.allOf ?? [])].flatMap(predicateLeaves);
 }

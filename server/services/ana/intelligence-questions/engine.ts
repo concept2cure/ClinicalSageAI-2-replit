@@ -163,14 +163,22 @@ export function advanceFlow(
   ];
   const allIssues = [...state.issues, ...newIssues];
 
-  // Run cross-node analysis with the updated state
-  const crossNodeState: FlowState = { ...state, answers: updatedAnswers, issues: allIssues };
+  // Mark node complete
+  const completedNodes = [...state.completedNodes, nodeId];
+
+  /* Run cross-node analysis with the updated state — INCLUDING the node just
+     answered. The detector decides whether a mitigating question has been put
+     to the person from `completedNodes`, and this ran five lines before that
+     list was extended: a rule whose trigger and mitigation live in the SAME
+     node read 'pending' at the moment the answer arrived, and fired one
+     question later. Where that node is terminal — `rems_evaluation` is the
+     last node of `bla_submission` — no later question existed, so the finding
+     never arrived at all. A sponsor who said a REMS was required and named no
+     elements was told nothing (2026-10-13 audit). */
+  const crossNodeState: FlowState = { ...state, answers: updatedAnswers, issues: allIssues, completedNodes };
   const crossNodeIssues = runCrossNodeAnalysis(crossNodeState, definition);
   allIssues.push(...crossNodeIssues);
   newIssues.push(...crossNodeIssues);
-
-  // Mark node complete
-  const completedNodes = [...state.completedNodes, nodeId];
 
   // Update section progress
   const sectionProgress = { ...state.sectionProgress };

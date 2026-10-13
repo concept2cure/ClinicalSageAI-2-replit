@@ -6,7 +6,7 @@ where the human can insert alternatives. And make this consistent and subject
 matter intelligent across all medical device and diagnostics scenarios and all
 Biotech scenarios."*
 
-Twenty-seven slices, each with its own evidence, the gates it added and the
+Twenty-eight slices, each with its own evidence, the gates it added and the
 mutations that were run red against them. This index exists because the
 directory had none: a session arriving here found twenty-seven folders and no
 order, which is how the second half of a batch gets rebuilt by someone who did
@@ -62,6 +62,7 @@ the reason. Nothing else here is a reliable summary of what is done.
 |---|---|
 | `2026-10-13-never-asked` | Eleven cross-node rules fired on the trigger alone, because `isBlank(undefined)` is true and no flow asked the mitigating question. Two of them severity CRITICAL |
 | `2026-10-13-checks-made-live` | Four of those were vocabulary mismatches: the interviews DO ask, in their own words. Four critical checks now read the sponsor's answer |
+| `2026-10-13-audit-repairs` | **An audit of the two above found eight more**, including a rule the first repair killed outright and a gate that was hiding three dead rules, two of them critical |
 
 ## What is open
 
@@ -74,4 +75,8 @@ and in the task list:
   CER surfaces take a class from their own stores
   (`2026-10-12-eu-classes/`, "What is written and not yet read");
 - **the predicate of record needs a trade name** the question does not ask
-  (`2026-10-12-project-setup-commits/`, `NOT_PROJECTED.predicate_device`).
+  (`2026-10-12-project-setup-commits/`, `NOT_PROJECTED.predicate_device`);
+- **the programme write can commit with no audit row** and report success, and
+  the extraction moved that discard where `ci:discarded-audit-write` cannot see
+  it (`2026-10-13-audit-repairs/`, "What this slice does NOT fix"). The more
+  serious of the audit's two halves, and the next thing.

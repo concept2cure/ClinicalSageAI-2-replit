@@ -23,6 +23,7 @@ import { evaluatePredicate, predicateFieldIds } from '@shared/ana/question-predi
 import type { QuestionPredicate } from '@shared/types/intelligence-questions';
 import type { FlowEngineContext, FlowState } from '../types.js';
 import { advanceFlow } from '../engine.js';
+import { getAvailableFlows, getFlowDefinition } from '../flows/index.js';
 
 const CTX: FlowEngineContext = { organizationId: 7, userId: 3, projectId: null, clientType: 'medtech' };
 
@@ -87,6 +88,43 @@ describe('the notified-body question', () => {
   });
 });
 
+describe('a composite gate may not span the question it is in and an earlier one', () => {
+  it('holds for every composite gate in every flow', () => {
+    /* The engine sends a field whose gate names ANY field in its own node and
+       lets the card decide it. The card's `answers` hold THIS node's inputs
+       only — never a prior node's — so a MIXED gate is decided three ways: the
+       engine sends it, the card evaluates the prior leaf against `undefined`
+       and hides it, and the validator evaluates the same leaf against its real
+       value and demands it. That is the unanswerable question
+       `same-question-gate` was written to end, reopened for mixed gates
+       (2026-10-13 audit, F16).
+       No mixed gate exists today, and this is what keeps it that way. */
+    let composites = 0;
+    const mixed: string[] = [];
+    for (const listed of getAvailableFlows(CTX)) {
+      const definition = getFlowDefinition(listed.category, CTX);
+      const order = new Map((definition?.nodes ?? []).map((n, i) => [n.id, i]));
+      for (const node of definition?.nodes ?? []) {
+        const own = new Set(node.fields.map(f => f.id));
+        for (const field of node.fields) {
+          if (!field.visibleWhen || !('anyOf' in field.visibleWhen || 'allOf' in field.visibleWhen)) continue;
+          composites += 1;
+          const leaves = predicateFieldIds(field.visibleWhen);
+          const inOwn = leaves.filter(id => own.has(id));
+          const earlier = leaves.filter(
+            id => !own.has(id) && [...order.keys()].some(n => order.get(n)! < order.get(node.id)!),
+          );
+          if (inOwn.length > 0 && earlier.length > 0) {
+            mixed.push(`${listed.category}.${node.id}.${field.id}: own=${inOwn.join(',')} earlier=${earlier.join(',')}`);
+          }
+        }
+      }
+    }
+    expect(composites, 'a scan over no composite gates proves nothing').toBeGreaterThan(0);
+    expect(mixed, 'a composite gate the card and the validator would decide differently').toEqual([]);
+  });
+});
+
 describe('the predicate language the gate needed', () => {
   const values = { a: 'x', b: '', c: ['one'] };
 
@@ -116,6 +154,35 @@ describe('the predicate language the gate needed', () => {
     };
     expect(evaluatePredicate(gate, { a: 'na' }), 'the first arm fails').toBe(false);
     expect(evaluatePredicate(gate, { a: 'na', c: ['one'] }), 'the second carries it').toBe(true);
+  });
+
+  it('holds BOTH keys to the AND the doc comment promises', () => {
+    /* Two optional keys usually read as OR, and this reads as AND. That is a
+       deliberate, non-obvious choice and it had no test: rewriting the branch
+       to OR left four suites and sixty tests green (2026-10-13 audit, F18). */
+    const both: QuestionPredicate = {
+      anyOf: [{ field: 'a', operator: 'eq', value: 'x' }],
+      allOf: [{ field: 'b', operator: 'eq', value: 'y' }],
+    };
+    expect(evaluatePredicate(both, { a: 'x', b: 'y' }), 'both arms hold').toBe(true);
+    expect(evaluatePredicate(both, { a: 'x' }), 'the allOf arm fails').toBe(false);
+    expect(evaluatePredicate(both, { b: 'y' }), 'the anyOf arm fails').toBe(false);
+  });
+
+  it('refuses a predicate carrying both a field and a group', () => {
+    /* The compiler accepts `{field, operator, value, anyOf: […]}` — a union of
+       an interface and an all-optional one defeats excess-property checking —
+       and the runtime read it as a field predicate and discarded the group in
+       silence, hiding its leaves from the engine's own-node test. Half a gate
+       is worse than either half (F17). */
+    const hybrid = {
+      field: 'a',
+      operator: 'eq',
+      value: 'x',
+      anyOf: [{ field: 'b', operator: 'eq', value: 'y' }],
+    } as unknown as QuestionPredicate;
+    expect(() => evaluatePredicate(hybrid, { a: 'x' })).toThrow(/both a field .* and a group/);
+    expect(() => predicateFieldIds(hybrid)).toThrow(/both a field .* and a group/);
   });
 
   it('is NOT satisfied by a group nobody wrote', () => {
