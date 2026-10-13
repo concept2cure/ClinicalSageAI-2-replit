@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-13T04:38:15.281Z",
+  "generatedAt": "2026-10-13T16:58:52.565Z",
   "git": {
-    "sha": "4c7c2c206707c9946a3847cff5b7af158eb33983",
+    "sha": "04ab1182c3209ee084fe299b846dcd3f48849d30",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2113,7 +2113,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 225079
+        "bytes": 225466
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2272,12 +2272,12 @@
         "bytes": 109447
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 109329
+        "file": "shared/regulatory/project-bootstrap.ts",
+        "bytes": 109421
       },
       {
-        "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 109184
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 109329
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
@@ -2313,7 +2313,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "bytes": 100606
+        "bytes": 100363
       }
     ],
     "largeFilesByLines": [
@@ -2339,7 +2339,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5643
+        "lines": 5649
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2611,7 +2611,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 1911
+        "lines": 1904
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",

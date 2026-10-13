@@ -1103,4 +1103,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   'session_activity',
   'coordination_leases',
   'relation_extraction_log',
+  /* citation_chains: which of the tenant's documents cite which. It became
+     org-keyed in 15af6bc4 (20260813_knowledge_graph_tenant_keys.sql, amended
+     2026-10-12), and ci:purge-coverage then failed every Blank DB run: an
+     erased tenant kept its citation rows. No foreign key, so a leaf. Rows the
+     backfill could not attribute stay NULL and belong to no tenant, so a purge
+     does not touch them (2026-10-13). */
+  'citation_chains',
 ]);
