@@ -64,10 +64,18 @@ export interface ComplianceGap {
 
 const REQUIRED_SECTIONS: Record<string, Array<{ module: number; section: string; title: string; severity: string }>> = {
   FDA: [
-    { module: 1, section: '1.1', title: 'Cover Letter', severity: 'critical' },
-    { module: 1, section: '1.2', title: 'Application Form (FDA Form 356h)', severity: 'critical' },
-    { module: 1, section: '1.3.1', title: 'Patent Information', severity: 'major' },
-    { module: 1, section: '1.3.2', title: 'Patent Certification', severity: 'major' },
+    /* FDA regional Module 1: 1.1 is FORMS, 1.2 is the COVER LETTER
+    (shared/regulatory/regional-module1.ts; gate: tests/regulatory/m1-placement-repo-wide.test.ts).
+    The table of contents has no US Module 1 heading at all — the eCTD XML backbone IS the table
+    of contents — so the row for it is gone rather than renumbered. */
+    /* This table was missed when SECTION_PATTERNS below was put on the record on 2026-10-12:
+       the same file held the same swapped pair twice, and only one copy was fixed. Patent
+       information and certification are 1.3.5 (1.3.5.1 / 1.3.5.2); FDA 1.3.2 is FIELD COPY
+       certification, which is a different document. */
+    { module: 1, section: '1.1', title: 'Forms (FDA Form 356h)', severity: 'critical' },
+    { module: 1, section: '1.2', title: 'Cover Letter', severity: 'critical' },
+    { module: 1, section: '1.3.5.1', title: 'Patent Information', severity: 'major' },
+    { module: 1, section: '1.3.5.2', title: 'Patent Certification', severity: 'major' },
     { module: 2, section: '2.2', title: 'Introduction to CTD', severity: 'critical' },
     { module: 2, section: '2.3', title: 'Quality Overall Summary', severity: 'critical' },
     { module: 2, section: '2.4', title: 'Nonclinical Overview', severity: 'critical' },

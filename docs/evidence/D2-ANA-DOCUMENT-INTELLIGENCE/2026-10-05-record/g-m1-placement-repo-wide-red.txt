@@ -1,0 +1,82 @@
+Red — the repo-wide Module 1 gate, run before any production file changed, and after each
+scanner correction (2026-10-13). tests/regulatory/m1-placement-repo-wide.test.ts.
+
+== Run 1: no region awareness ==
+141 violations across 20 files. 94 of them were correct EU/JP/eSTAR placements judged by the
+FDA contract — including thirteen correct headings in the record's own EU and JP trees.
+
+  23 server/services/global-ri/regional-module1-requirements.ts
+  19 server/services/intelligence/template-seeds.ts
+  16 server/services/regulatory/registry/adapters/ctdBlueprintNormalizer.ts
+  13 shared/regulatory/regional-module1.ts        <- the record itself
+  11 server/services/regulatory/ctd-module-structure.ts
+  11 server/services/ctd-ingestion-service.ts
+   9 server/services/regional-ctd-templates.ts
+   6 server/services/regulatory/registry/blueprints/canadaCtaBlueprint.ts
+   6 server/services/reasoning-engine/rule-data.ts
+   5 server/services/docx/templateRegistry.ts
+   4 shared/regulatory/project-bootstrap.ts
+   4 services/regulatory/pyramids/ind-annual-report-pyramid.ts
+   4 server/routes/deep-research.ts
+   3 services/regulatory/pyramids/ind-amendment-pyramid.ts
+   2 server/routes/concept2cure.ts
+   1 server/services/regulatory/templateCatalog.ts
+   1 server/services/biostatistics-bridge/filing-placement.ts
+   1 server/services/ana-ri/workflow-orchestration.ts
+   1 server/services/ana-ri/document-routing.ts
+   1 scripts/seed/ga-demo.d/70-vault-memory-symbols.mjs
+
+== Run 2: region awareness, with the \b boundary bug ==
+47 violations. `\b` does not match inside M1_EU / M1_FDA because _ is a word character, so every
+regional block in this repository still read as unmarked.
+
+== Run 3: boundary fixed, title-after-code preferred ==
+40 violations — and templateCatalog.ts and project-bootstrap.ts DISAPPEARED. Their rows write
+`title` before `sectionCode`, so the code paired with the next row's title and two real defects
+went silent. A false negative, which is worse than the false positive it fixed.
+
+== Run 4: object-scoped pairing (committed) ==
+32 violations across 10 files, every one real. Six findings against
+regional-module1-requirements.ts retired as window artifacts (its `code` key holds an id, its
+`section` key the eCTD code, and its placements are correct), and the two false negatives above
+came back.
+
+---- the 32, as Run 4 printed them ----
+server/routes/deep-research.ts:278 — 1.1 "Cover Letter" — cover letter files under 1.2
+server/routes/deep-research.ts:332 — 1.1 "Cover Letter" — cover letter files under 1.2
+server/routes/deep-research.ts:333 — 1.2 "FDA Form 1571" — FDA transmittal form files under 1.1
+server/routes/deep-research.ts:334 — 1.3 "FDA Form 1572" — FDA transmittal form files under 1.1
+server/services/ctd-ingestion-service.ts:67 — 1.1 "Cover Letter" — cover letter files under 1.2
+server/services/ctd-ingestion-service.ts:68 — 1.2 "Application Form (FDA Form 356h)" — FDA transmittal form files under 1.1
+server/services/ctd-ingestion-service.ts:69 — 1.3.1 "Patent Information" — patent information / certification files under 1.3.5
+server/services/ctd-ingestion-service.ts:70 — 1.3.2 "Patent Certification" — patent information / certification files under 1.3.5
+server/services/ctd-ingestion-service.ts:70 — 1.3.2 "Patent Certification" — FDA 1.3.2 is field copy certification
+server/services/docx/templateRegistry.ts:450 — 1.1 "Cover Letter" — cover letter files under 1.2
+server/services/docx/templateRegistry.ts:451 — 1.2 "FDA Form 1571" — FDA transmittal form files under 1.1
+server/services/docx/templateRegistry.ts:452 — 1.3 "FDA Form 1572" — FDA transmittal form files under 1.1
+server/services/docx/templateRegistry.ts:453 — 1.4 "FDA Form 3674" — FDA transmittal form files under 1.1
+server/services/docx/templateRegistry.ts:454 — 1.5 "Table of Contents" — table of contents (the backbone is the TOC) is not filed as a Module 1 section in FDA eCTD
+server/services/intelligence/template-seeds.ts:164 — 1.12 "Patent information / certifications" — patent information / certification files under 1.3.5
+server/services/intelligence/template-seeds.ts:165 — 1.14 "Environmental assessment" — environmental assessment / categorical exclusion files under 1.12.14
+server/services/intelligence/template-seeds.ts:234 — 1.0 "Cover letter" is not an FDA Module 1 heading (nor an ancestor/descendant of one)
+server/services/intelligence/template-seeds.ts:234 — 1.0 "Cover letter" — cover letter files under 1.2
+server/services/reasoning-engine/rule-data.ts:40 — 1.3 "Administrative Information (1.3.1 contact/sponsor; 1.3.4 financial certification)" — financial certification / disclosure (3454/3455) files under 1.3.4
+server/services/regulatory/registry/adapters/ctdBlueprintNormalizer.ts:138 — 1.1 "Cover Letter" — cover letter files under 1.2
+server/services/regulatory/registry/adapters/ctdBlueprintNormalizer.ts:140 — 1.3 "Prescribing Information / Labeling" — labeling files under 1.14
+server/services/regulatory/registry/adapters/ctdBlueprintNormalizer.ts:142 — 1.5 "Table of Contents" — table of contents (the backbone is the TOC) is not filed as a Module 1 section in FDA eCTD
+server/services/regulatory/templateCatalog.ts:42 — 1.1 "Cover Letter" — cover letter files under 1.2
+shared/regulatory/project-bootstrap.ts:28 — 1.1 "Cover Letter" — cover letter files under 1.2
+shared/regulatory/project-bootstrap.ts:30 — 1.5 "Table of Contents" — table of contents (the backbone is the TOC) is not filed as a Module 1 section in FDA eCTD
+services/regulatory/pyramids/ind-amendment-pyramid.ts:178 — 1.1 "Cover Letter" — cover letter files under 1.2
+services/regulatory/pyramids/ind-amendment-pyramid.ts:397 — 1.2 "FDA Form 1571" — FDA transmittal form files under 1.1
+services/regulatory/pyramids/ind-amendment-pyramid.ts:426 — 1.0 "Regional Administrative Information" is not an FDA Module 1 heading (nor an ancestor/descendant of one)
+services/regulatory/pyramids/ind-annual-report-pyramid.ts:363 — 1.3 "General Investigational Plan — Annual Update" — general investigational plan files under 1.20
+services/regulatory/pyramids/ind-annual-report-pyramid.ts:521 — 1.1 "Cover Letter — Annual Report" — cover letter files under 1.2
+services/regulatory/pyramids/ind-annual-report-pyramid.ts:521 — 1.1 "Cover Letter — Annual Report" — annual report / DSUR files under 1.13
+services/regulatory/pyramids/ind-annual-report-pyramid.ts:522 — 1.2 "Administrative — Annual Report" — annual report / DSUR files under 1.13
+
+Of these, 30 were fixed. Two were correctly stated and the checks were wrong:
+  - rule-data.ts:40 is a CONTAINER naming its own children with their codes; violationsFor now
+    says so (see the facts file).
+  - template-seeds.ts:234 is the EMA centralised-procedure block; it is the single NOT_FDA_ECTD
+    baseline entry, with its reason written out.

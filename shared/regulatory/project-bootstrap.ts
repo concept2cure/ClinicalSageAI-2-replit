@@ -25,9 +25,12 @@ import { ICH_M11_PROTOCOL_BASIS, ICH_M11_PROTOCOL_SECTIONS } from './protocol-m1
 
 /** CTD Module 1-5 section blueprint (used by IND, NDA, BLA, MAA, etc.) */
 const CTD_SECTIONS: SectionDefinition[] = [
-  { code: '1.1', title: 'Cover Letter', module: 1, required: true, contentType: 'narrative' },
-  { code: '1.2', title: 'Administrative Forms', module: 1, required: true, contentType: 'form' },
-  { code: '1.5', title: 'Table of Contents', module: 1, required: true, contentType: 'list' },
+  /* FDA regional Module 1: 1.1 is FORMS, 1.2 is the COVER LETTER
+  (shared/regulatory/regional-module1.ts; gate: tests/regulatory/m1-placement-repo-wide.test.ts).
+  The table of contents has no US Module 1 heading at all — the eCTD XML backbone IS the table
+  of contents — so the row for it is gone rather than renumbered. */
+  { code: '1.1', title: 'Administrative Forms', module: 1, required: true, contentType: 'form' },
+  { code: '1.2', title: 'Cover Letter', module: 1, required: true, contentType: 'narrative' },
   { code: '2.2', title: 'Introduction', module: 2, required: true, contentType: 'narrative', guidance: 'ICH M4' },
   { code: '2.3', title: 'Quality Overall Summary', module: 2, required: true, contentType: 'narrative', guidance: 'ICH M4Q(R1)' },
   { code: '2.4', title: 'Nonclinical Overview', module: 2, required: true, contentType: 'narrative', guidance: 'ICH M4S(R2)' },
