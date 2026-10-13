@@ -1,5 +1,13 @@
 # Regulated platform: next implementation increment
 
+Implementation update: the supplied-QC overclaim described below was corrected
+in local commit `0e4ccf46f`. The existing JSON/PDF endpoint now keeps full-dossier
+readiness `NOT_ASSESSED`, includes all five modules and identifies supplied QC
+as unverified caller input. The 51-case focused proof is retained in
+[`CTD_SUPPLIED_QC_SCOPE_2026-10-13.md`](CTD_SUPPLIED_QC_SCOPE_2026-10-13.md) and
+the corresponding evidence directory. This preserves the baseline audit below;
+it does not establish authoritative full-dossier readiness.
+
 Read-only audit of the current `concept2cure-v2` checkout, 2026-10-13. This moves
 W1 / D2 and informs D7. The baseline HEAD at inspection was
 `e198f24a5758accf206fb2bf5f784fb5636b328c`; the current workflow bridge is also

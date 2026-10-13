@@ -100,7 +100,10 @@ import { looksLikeHtml } from '@shared/authoring/plain-text-html';
 import { opensInSourceMode } from '@shared/authoring/source-mode';
 import type { SentenceSpan } from '../sentenceTraceabilityService';
 import { normalizeForMatch } from './source-attribution';
-import { hashSpanText, type LiveMachineSpan } from './span-lineage.service';
+import { hashSpanText, SpanLineageError, type LiveMachineSpan, type SpanUsage } from './span-lineage.service';
+import { mappedFormattingCarryForwardRanges, formattingSafety, type FormattingReaders, type FormattingCarryRange, type FormattingSafety } from './machine-attribution-formatting';
+import { subtractAttributedRanges } from './machine-attribution-formatting';
+export { subtractAttributedRanges } from './machine-attribution-formatting';
 
 /** Text a reviewer accepted from a machine author in one editing session. */
 export interface AcceptedMachineText {
@@ -123,6 +126,8 @@ export interface MachineAttributedSpan {
   /** Who asked for the draft, carried forward so a later saver does not
    *  displace the original requester on a span they did not create. */
   createdBy?: string | null;
+  usage?: SpanUsage;
+  confidence?: number | null;
   /**
    * True when the clause is inside text accepted from a machine author in THIS
    * save: credited by it now, or credited by an earlier save and accepted again
@@ -283,14 +288,21 @@ const REGION_ELEMENTS = new Set([
 ]);
 
 /** `''` for a silent inline tag, `' '` for a silent block tag, null for every other tag. */
-function silentAs(tag: Tag): '' | ' ' | null {
+function silentAs(tag: Tag, opts: { formatting?: boolean } = {}): '' | ' ' | null {
   const inline = SILENT_INLINE.has(tag.name);
   if (!inline && !SILENT_BLOCK.has(tag.name)) return null;
   for (const [name, value] of attributesOf(tag)) {
+    if (opts.formatting && name === 'style' && safeFormattingStyle(value)) continue;
     const allowed = SILENT_ATTRIBUTES.get(name);
     if (!allowed || !allowed.test(value)) return null;
   }
   return inline ? '' : ' ';
+}
+
+function safeFormattingStyle(value: string): boolean {
+  const declarations = value.split(';').map(part => part.trim()).filter(Boolean);
+  return declarations.length > 0 && declarations.every(part =>
+    /^(?:text-align: ?(?:left|center|right|justify)|(?:min-)?width: ?\d{1,5}px|margin-top: ?0px)$/.test(part));
 }
 
 function prints(tag: Tag): boolean {
@@ -531,6 +543,25 @@ export function tagsMaskedForSplit(content: string): string {
   return maskTags(content, scanMarkup(content).tags, (n) => `<${'x'.repeat(n - 2)}>`);
 }
 
+const formattingReaders: FormattingReaders = {
+  scanMarkup, regionFrom, attributesOf, prints, notComparedRanges,
+  silentAs: tag => silentAs(tag, { formatting: true }),
+  voidElements: VOID_ELEMENTS, blockElements: SILENT_BLOCK,
+  minClauseChars: MIN_MACHINE_CLAUSE_CHARS,
+};
+
+export function formattingCarryForwardRanges(
+  previousContent: string,
+  content: string,
+  previousSpans: ReadonlyArray<{ charStart: number; charEnd: number; spanTextSha256: string }>,
+): FormattingCarryRange[] {
+  return mappedFormattingCarryForwardRanges(previousContent, content, previousSpans, formattingReaders);
+}
+
+export function formattingCarryForwardSafety(previousContent: string, content: string): FormattingSafety {
+  return formattingSafety(previousContent, content, formattingReaders);
+}
+
 /* ── Attribution ───────────────────────────────────────────────────────────── */
 
 /** Non-overlapping occurrences of `needle` in `haystack`. */
@@ -622,6 +653,44 @@ function creditNewlyAccepted(
   return out;
 }
 
+function retainedMachineSpan(live: LiveMachineSpan, range: { charStart: number; charEnd: number; spanText: string }, inAcceptedText: boolean): MachineAttributedSpan {
+  return { ...range, machineAuthorId: live.machineAuthorId, assertedBy: live.assertedBy,
+    assertedAt: live.assertedAt ?? undefined, signatureId: live.signatureId, createdBy: live.createdBy,
+    usage: live.usage, confidence: live.confidence, inAcceptedText };
+}
+
+/** A carried part of a combined HTML clause must not hide independently
+ * accepted new prose. Otherwise retain the original candidates and budgets. */
+function creditAcceptanceRemainder(
+  candidates: SentenceSpan[],
+  carried: MachineAttributedSpan[],
+  claimed: Set<number>,
+  opts: { content: string; actor: string; haystacks: Haystack[]; needleOf: (index: number) => string | null;
+    recordOccurrences?: (needle: string) => number; reaccepted: Map<string, number> },
+): MachineAttributedSpan[] {
+  const { haystacks, needleOf } = opts;
+  const partial = carried.some(span => candidates.some(candidate =>
+    span.charStart < candidate.charEnd && span.charEnd > candidate.charStart &&
+    (span.charStart > candidate.charStart || span.charEnd < candidate.charEnd)));
+  if (!partial) return creditNewlyAccepted(candidates, haystacks, needleOf, claimed, opts);
+  const remainder = subtractAttributedRanges(candidates, carried, opts.content).map((range, index) => {
+    const original = candidates.find(candidate => candidate.charStart <= range.charStart && candidate.charEnd >= range.charEnd);
+    if (!original) throw new SpanLineageError('An acceptance remainder has no original clause.');
+    return { ...original, ...range, index, contentHash: hashSpanText(range.text).slice(0, 16) };
+  });
+  const comparable = comparableClauses(remainder, opts.content);
+  const remainderNeedle = (index: number): string | null => {
+    if (!comparable[index]) return null;
+    const needle = comparableText(remainder[index].text);
+    return needle.length < MIN_MACHINE_CLAUSE_CHARS ? null : needle;
+  };
+  const newly = creditNewlyAccepted(remainder, haystacks, remainderNeedle, new Set(), opts);
+  candidates.forEach((candidate, index) => {
+    if (newly.some(span => span.charStart < candidate.charEnd && span.charEnd > candidate.charStart)) claimed.add(index);
+  });
+  return newly;
+}
+
 /**
  * The machine-attributed spans among `candidates` — the clauses of the saved
  * content not already attributed to a source — given what was accepted in
@@ -646,6 +715,9 @@ export function attributeMachineSpans(
      * whole content, not about any one clause.
      */
     content: string;
+    /** Server-read content from before this transaction's section update.
+     * Enables strict formatting carry only after the stored hashes verify. */
+    previousContent?: string;
     /**
      * How many times the turn records the accepted texts were verified against
      * hold a clause's comparison form. When given, this save credits no more
@@ -658,6 +730,11 @@ export function attributeMachineSpans(
   const out: MachineAttributedSpan[] = [];
   const claimed = new Set<number>();
   const comparable = comparableClauses(candidates, opts.content);
+  const orderedLive = [...opts.live].sort((a, b) => {
+    const acceptedFirst = Number(b.provenanceKind === 'accepted_machine_draft') - Number(a.provenanceKind === 'accepted_machine_draft');
+    return acceptedFirst || a.charStart - b.charStart;
+  });
+  const formatting = opts.previousContent === undefined ? [] : formattingCarryForwardRanges(opts.previousContent, opts.content, orderedLive);
 
   const byHash = new Map<string, number[]>();
   candidates.forEach((c, i) => {
@@ -696,18 +773,23 @@ export function attributeMachineSpans(
     const needle = accepted ? needleOf(best) : null;
     const inAcceptedText = needle !== null && haystacks.some((h) => h.norm.includes(needle));
     if (inAcceptedText) reaccepted.set(needle, (reaccepted.get(needle) ?? 0) + 1);
-    out.push({
-      charStart: c.charStart,
-      charEnd: c.charEnd,
-      spanText: c.text,
-      machineAuthorId: live.machineAuthorId,
-      assertedBy: live.assertedBy,
-      assertedAt: live.assertedAt ?? undefined,
-      signatureId: live.signatureId,
-      createdBy: live.createdBy,
-      inAcceptedText,
-    });
+    out.push(retainedMachineSpan(live, { charStart: c.charStart, charEnd: c.charEnd, spanText: c.text }, inAcceptedText));
     return true;
+  };
+
+  const carryFormatting = (live: LiveMachineSpan): void => {
+    const priorIndex = orderedLive.indexOf(live);
+    for (const span of formatting.filter(value => value.priorIndex === priorIndex)) {
+      if (out.some(value => value.charStart < span.charEnd && value.charEnd > span.charStart)) continue;
+      out.push(retainedMachineSpan(live, { charStart: span.charStart, charEnd: span.charEnd, spanText: span.spanText }, false));
+      if (live.provenanceKind === 'accepted_machine_draft') {
+        const needle = comparableText(span.spanText);
+        if (needle.length >= MIN_MACHINE_CLAUSE_CHARS && haystacks.some(value => value.norm.includes(needle))) reaccepted.set(needle, (reaccepted.get(needle) ?? 0) + 1);
+      }
+      candidates.forEach((candidate, index) => {
+        if (candidate.charStart < span.charEnd && candidate.charEnd > span.charStart) claimed.add(index);
+      });
+    }
   };
 
   const inOffsetOrder = [...opts.live].sort((a, b) => a.charStart - b.charStart);
@@ -716,7 +798,7 @@ export function attributeMachineSpans(
   //    this same save can never displace the person who accepted them
   //    originally. Acceptance is theirs; it does not transfer on a later save.
   for (const live of inOffsetOrder) {
-    if (live.provenanceKind === 'accepted_machine_draft') carryForward(live, true);
+    if (live.provenanceKind === 'accepted_machine_draft' && !carryForward(live, true)) carryFormatting(live);
   }
 
   // 2. Newly accepted text, occurrence-bounded per (author, clause text). This
@@ -725,7 +807,9 @@ export function attributeMachineSpans(
   //    into an accepted one, and it would be missed if the draft had already
   //    claimed the clause.
   if (haystacks.length > 0) {
-    const newly = creditNewlyAccepted(candidates, haystacks, needleOf, claimed, {
+    const newly = creditAcceptanceRemainder(candidates, out, claimed, {
+      haystacks, needleOf,
+      content: opts.content,
       actor: opts.actor,
       recordOccurrences: opts.recordOccurrences,
       reaccepted,
@@ -738,16 +822,14 @@ export function attributeMachineSpans(
   //    document is not a human accepting each clause of it, so nothing here
   //    gains an asserter.
   for (const live of inOffsetOrder) {
-    if (live.provenanceKind === 'machine_draft') carryForward(live, false);
+    if (live.provenanceKind === 'machine_draft' && !carryForward(live, false)) carryFormatting(live);
   }
 
   // 4. A whole-content machine draft claims everything left. No asserter: the
   //    actor ASKED for this draft, which is recorded as createdBy, and is not
   //    the same claim as having stood behind its words.
   if (opts.machineDraft?.authorId) {
-    candidates.forEach((c, i) => {
-      if (claimed.has(i)) return;
-      claimed.add(i);
+    subtractAttributedRanges(candidates, out, opts.content).forEach((c) => {
       out.push({
         charStart: c.charStart,
         charEnd: c.charEnd,

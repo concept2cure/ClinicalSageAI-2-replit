@@ -1,0 +1,165 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-13T23:28:23.952Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-13T23:28:23.954Z","pid":68077,"hostname":"843541c42987","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-13T23:28:23.954Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/workflow-import-formatting-lineage.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/workflow-import-formatting-lineage.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/workflow-import-formatting-lineage.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > canonical import under the restricted native runtime > uses real NOSUPERUSER NOBYPASSRLS and forced tenant RLS 15ms
+{"level":30,"time":"2026-10-13T23:28:28.466Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 1ca20ea3-3a97-4dc8-8e3f-4c3fa38554dc by f***@example.invalid"}
+ ✓ tests/db/workflow-import-formatting-lineage.dbtest.ts > canonical import under the restricted native runtime > starts with actual workflow_import machine-draft prose and immutable source receipts 262ms
+{"level":30,"time":"2026-10-13T23:28:28.586Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 4bef03f1-b01f-4201-b1ab-70fad49d7e6a by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:28.636Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 4bef03f1-b01f-4201-b1ab-70fad49d7e6a by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:28.725Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 695c342b-b777-4441-a46c-0e3986b7507a by f***@example.invalid"}
+ × tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'strong wrappers around unchanged narr…' 149ms
+   → expected 0 to be greater than 0
+{"level":30,"time":"2026-10-13T23:28:28.775Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 695c342b-b777-4441-a46c-0e3986b7507a by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:28.870Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 85624bbd-1fdd-491b-8683-6c21ffba2ad5 by f***@example.invalid"}
+ × tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'paragraph alignment and printing attr…' 136ms
+   → expected 0 to be greater than 0
+{"level":30,"time":"2026-10-13T23:28:29.244Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 85624bbd-1fdd-491b-8683-6c21ffba2ad5 by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:29.333Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 4345a665-1175-4148-9756-534d6861383b by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:29.372Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 4345a665-1175-4148-9756-534d6861383b by f***@example.invalid"}
+ × tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'a figure placed before unchanged narr…' 471ms
+   → expected 0 to be greater than 0
+{"level":30,"time":"2026-10-13T23:28:29.450Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 5ede3f42-8dcf-4d62-a70b-d6104ea375bf by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:29.486Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 5ede3f42-8dcf-4d62-a70b-d6104ea375bf by f***@example.invalid"}
+ × tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'a figure inserted inside unchanged na…' 125ms
+   → expected 0 to be greater than 0
+{"level":30,"time":"2026-10-13T23:28:29.575Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 42aa1d96-e639-49d9-93f5-906452fa4499 by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:29.608Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 42aa1d96-e639-49d9-93f5-906452fa4499 by f***@example.invalid"}
+ × tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'TipTap table paragraph/strong wrapper…' 114ms
+   → expected 0 to be greater than 0
+{"level":30,"time":"2026-10-13T23:28:29.684Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 553233cd-35ad-45e1-9ebb-8154b607647a by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:29.718Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 553233cd-35ad-45e1-9ebb-8154b607647a by f***@example.invalid"}
+ × tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'table colgroup and printing width nor…' 121ms
+   → expected 0 to be greater than 0
+{"level":30,"time":"2026-10-13T23:28:29.791Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc b8984d43-4f82-41b0-a13b-2e6fb17359db by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:29.819Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc b8984d43-4f82-41b0-a13b-2e6fb17359db by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:29.889Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc c1d3c1cb-402d-4e47-9ca9-65e3de355cba by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:29.918Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc c1d3c1cb-402d-4e47-9ca9-65e3de355cba by f***@example.invalid"}
+ × tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'exact scientific characters represent…' 112ms
+   → expected 0 to be greater than 0
+ × tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > attributes the changed clinical clause to its actual editor while retaining unchanged table prose 100ms
+   → expected 0 to be greater than 0
+{"level":30,"time":"2026-10-13T23:28:29.991Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc e5905cb3-9a49-415a-a8a4-aabf725fb352 by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:30.029Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc e5905cb3-9a49-415a-a8a4-aabf725fb352 by f***@example.invalid"}
+ × tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > cannot credit more repeated occurrences than the prior machine draft actually held 99ms
+   → expected 0 to be greater than 0
+{"level":30,"time":"2026-10-13T23:28:30.112Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc cc842198-d427-4d04-9ae4-b61cd499a57a by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:30.150Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc cc842198-d427-4d04-9ae4-b61cd499a57a by f***@example.invalid"}
+ × tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > does not let a forged acceptance turn receipt accept already imported prose 112ms
+   → expected 0 to be greater than 0
+{"level":30,"time":"2026-10-13T23:28:30.213Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 0029ce36-0bcd-4bce-a18d-4a90275fca59 by f***@example.invalid"}
+{"level":30,"time":"2026-10-13T23:28:30.241Z","pid":68077,"hostname":"843541c42987","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc 0029ce36-0bcd-4bce-a18d-4a90275fca59 by f***@example.invalid"}
+ × tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > refuses a corrupt prior live machine hash atomically instead of minting human authority 120ms
+   → {"success":true,"section":{"id":"078b74db-db98-4034-ad13-e429ad60e29c","doc_id":"cc842198-d427-4d04-9ae4-b61cd499a57a","code":"1","title":"Title Page","content":"<p><strong>Participants were monitored throughout the study.</strong></p><table><tbody><tr><th>Visit</th><th>Assessment</th></tr><tr><td>Baseline</td><td>Safety visits followed the recorded schedule.</td></tr></tbody></table>","order_index":0,"track_changes":false,"tenant_id":9,"created_at":"2026-10-13T23:28:30.090Z","updated_at":"2026-10-13T23:28:30.137Z"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"This document is not bound to a filing, so there is no governed section to update."}}: expected 200 to be 500 // Object.is equality
+ × tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > does not carry table provenance when identical words acquire different header associations 90ms
+   → expected 0 to be greater than 0
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'strong wrappers around unchanged narr…'
+ FAIL  tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'paragraph alignment and printing attr…'
+ FAIL  tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'a figure placed before unchanged narr…'
+ FAIL  tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'a figure inserted inside unchanged na…'
+ FAIL  tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'TipTap table paragraph/strong wrapper…'
+ FAIL  tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'table colgroup and printing width nor…'
+ FAIL  tests/db/workflow-import-formatting-lineage.dbtest.ts > formatting does not create human scientific authority > preserves unaccepted provenance for 'exact scientific characters represent…'
+AssertionError: expected 0 to be greater than 0
+ ❯ expectUnacceptedIdentity tests/db/workflow-import-formatting-lineage.dbtest.ts:104:26
+    102| function expectUnacceptedIdentity(state: Awaited<ReturnType<typeof liv…
+    103|   const machine = state.spans.filter(span=>span.provenance_kind==='mac…
+    104|   expect(machine.length).toBeGreaterThan(0);
+       |                          ^
+    105|   for (const span of machine) expect(span).toMatchObject({machine_auth…
+    106|     asserted_at:null,signature_id:null,usage:'asserted',confidence:nul…
+ ❯ expectFormatting tests/db/workflow-import-formatting-lineage.dbtest.ts:115:3
+ ❯ tests/db/workflow-import-formatting-lineage.dbtest.ts:196:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > attributes the changed clinical clause to its actual editor while retaining unchanged table prose
+AssertionError: expected 0 to be greater than 0
+ ❯ expectUnacceptedIdentity tests/db/workflow-import-formatting-lineage.dbtest.ts:104:26
+    102| function expectUnacceptedIdentity(state: Awaited<ReturnType<typeof liv…
+    103|   const machine = state.spans.filter(span=>span.provenance_kind==='mac…
+    104|   expect(machine.length).toBeGreaterThan(0);
+       |                          ^
+    105|   for (const span of machine) expect(span).toMatchObject({machine_auth…
+    106|     asserted_at:null,signature_id:null,usage:'asserted',confidence:nul…
+ ❯ tests/db/workflow-import-formatting-lineage.dbtest.ts:206:39
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > cannot credit more repeated occurrences than the prior machine draft actually held
+AssertionError: expected 0 to be greater than 0
+ ❯ expectUnacceptedIdentity tests/db/workflow-import-formatting-lineage.dbtest.ts:104:26
+    102| function expectUnacceptedIdentity(state: Awaited<ReturnType<typeof liv…
+    103|   const machine = state.spans.filter(span=>span.provenance_kind==='mac…
+    104|   expect(machine.length).toBeGreaterThan(0);
+       |                          ^
+    105|   for (const span of machine) expect(span).toMatchObject({machine_auth…
+    106|     asserted_at:null,signature_id:null,usage:'asserted',confidence:nul…
+ ❯ tests/db/workflow-import-formatting-lineage.dbtest.ts:219:39
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > does not let a forged acceptance turn receipt accept already imported prose
+AssertionError: expected 0 to be greater than 0
+ ❯ expectUnacceptedIdentity tests/db/workflow-import-formatting-lineage.dbtest.ts:104:26
+    102| function expectUnacceptedIdentity(state: Awaited<ReturnType<typeof liv…
+    103|   const machine = state.spans.filter(span=>span.provenance_kind==='mac…
+    104|   expect(machine.length).toBeGreaterThan(0);
+       |                          ^
+    105|   for (const span of machine) expect(span).toMatchObject({machine_auth…
+    106|     asserted_at:null,signature_id:null,usage:'asserted',confidence:nul…
+ ❯ tests/db/workflow-import-formatting-lineage.dbtest.ts:229:39
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > refuses a corrupt prior live machine hash atomically instead of minting human authority
+AssertionError: {"success":true,"section":{"id":"078b74db-db98-4034-ad13-e429ad60e29c","doc_id":"cc842198-d427-4d04-9ae4-b61cd499a57a","code":"1","title":"Title Page","content":"<p><strong>Participants were monitored throughout the study.</strong></p><table><tbody><tr><th>Visit</th><th>Assessment</th></tr><tr><td>Baseline</td><td>Safety visits followed the recorded schedule.</td></tr></tbody></table>","order_index":0,"track_changes":false,"tenant_id":9,"created_at":"2026-10-13T23:28:30.090Z","updated_at":"2026-10-13T23:28:30.137Z"},"message":"Section updated successfully","revision_created":true,"filing":{"committed":false,"reason":"This document is not bound to a filing, so there is no governed section to update."}}: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ tests/db/workflow-import-formatting-lineage.dbtest.ts:241:53
+    239|     const before = await fullState(copy);
+    240|     const saved = await patchSection(copy,`<p><strong>${A}</strong></p…
+    241|     expect(saved.status,JSON.stringify(saved.body)).toBe(500);
+       |                                                     ^
+    242|     expect(saved.body.error.code).toBe('LINEAGE_REQUIRED');
+    243|     expect(await fullState(copy)).toEqual(before); expect(await immuta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  tests/db/workflow-import-formatting-lineage.dbtest.ts > semantic changes and adversarial claims remain bounded > does not carry table provenance when identical words acquire different header associations
+AssertionError: expected 0 to be greater than 0
+ ❯ expectUnacceptedIdentity tests/db/workflow-import-formatting-lineage.dbtest.ts:104:26
+    102| function expectUnacceptedIdentity(state: Awaited<ReturnType<typeof liv…
+    103|   const machine = state.spans.filter(span=>span.provenance_kind==='mac…
+    104|   expect(machine.length).toBeGreaterThan(0);
+       |                          ^
+    105|   for (const span of machine) expect(span).toMatchObject({machine_auth…
+    106|     asserted_at:null,signature_id:null,usage:'asserted',confidence:nul…
+ ❯ tests/db/workflow-import-formatting-lineage.dbtest.ts:250:39
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 2 passed (14)
+   Start at  23:28:21
+   Duration  8.72s (transform 3.81s, setup 119ms, import 341ms, tests 7.80s, environment 0ms)

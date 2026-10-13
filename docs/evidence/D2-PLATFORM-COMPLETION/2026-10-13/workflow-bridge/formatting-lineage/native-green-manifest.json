@@ -1,0 +1,45 @@
+{
+  "phase": "final independent native regression after terminal blank-line normalization",
+  "head": "fa5597ffb94832ff617a017f32e9718903106eca",
+  "testCommand": "npx vitest run --config vitest.db.config.ts tests/db/workflow-import-formatting-lineage.dbtest.ts",
+  "postgresql": "16.15",
+  "database": "isolated platform_ci_native_recheck_20261013",
+  "runtimeRole": "app_service, NOSUPERUSER, NOBYPASSRLS, verified forced RLS",
+  "tests": {
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0,
+    "total": 16,
+    "durationSeconds": 14.16,
+    "testFileUnchangedFromPreRemainder": true
+  },
+  "lint": {
+    "exitStatus": 0,
+    "errors": 0,
+    "warnings": 0
+  },
+  "files": {
+    "tests/db/workflow-import-formatting-lineage.dbtest.ts": "68eb7a77bacf205c605ae7622329bef6bef39303023e59ea0f4396b4588cbad0",
+    "vitest.db.config.ts": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d",
+    "tests/setup.db.ts": "d378e317a3570e7a172a33a2e798a55b53234536ae1483ef304407a7346135a3",
+    "server/routes/authoring.router.ts": "7e350e5bf189a5ce24984302496259b02a4f8b8446efde160d86368a25e57f50",
+    "server/services/clinical-regulatory-evidence/lineage-gate.ts": "ab61ef7f5df67c92e7139588bc93c51b22d8c8136d521952152ebbed60d0c35f",
+    "server/services/clinical-regulatory-evidence/machine-attribution.ts": "56b7f478492f58654e839f44b326c945fbbd84dc1c39f20ed524a07fed54dd06",
+    "server/services/clinical-regulatory-evidence/machine-attribution-formatting.ts": "aff6aeb7936028621c79fb30987ffff7bfbb0fa0622be5abc0e7976e18cfd252",
+    "server/services/clinical-regulatory-evidence/span-lineage.service.ts": "66e5e89837cca8184fc0022f3904dd6e3090247155ac077830439ece92389863",
+    "server/export/decode-html-entities.ts": "703103b5217e7b5046c7b74e75b675694f7d0ff7988a3c3d98ce06600222cd1f",
+    "shared/authoring/plain-text-html.ts": "683497ab49c9af3a97cc88b2dbb6091e88796012b1a0ab0947a1e1696feec10f",
+    "shared/authoring/source-mode.ts": "3899425b52f15bde8283a7576ad5f6934b0982f0783faee5de557097163a8d9c"
+  },
+  "limits": [
+    "Test JWTs and development audit-HMAC fallback; no production signature qualification",
+    "No complete dossier or regional regulatory readiness claim",
+    "Canonical native DB already installed/deployed; this proof is scoped to real import/save provenance and atomic refusal"
+  ],
+  "previousNativeCheckpoint": {
+    "log": "native-pre-remainder-green-16.txt",
+    "manifest": "native-pre-remainder-manifest.json",
+    "passed": 16,
+    "durationSeconds": 17.55
+  }
+}

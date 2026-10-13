@@ -1,28 +1,25 @@
 
  RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
 
- ✓ client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx > an absent figure comes with its reason > shows the engine’s not-computed sentence on screen 1295ms
- ✓ client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx > an absent figure comes with its reason > still shows the figures that WERE computed 295ms
- ✓ client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx > an absent figure comes with its reason > keeps a long method string out of the rows, as before 245ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > sends the engine its inputs and renders the deterministic verdict 309ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > shows the engine’s own sentence when it cannot judge the design, and no verdict 267ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > computes assurance from the real design-stats endpoint and renders only the response 266ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > omits a blank optional field rather than sending a placeholder value 142ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > blocks submission and marks the offending field, not just a summary 274ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > clears a field’s error as soon as the user acts on it 121ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > announces the toast through a live region 128ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > marks the selected calculator for assistive technology, not by colour alone 144ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > the raw-response disclosure reports its expanded state 349ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > surfaces the server’s own error text, not a generic failure 147ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > says to sign in on a 401 rather than showing an empty result 162ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > offers every registered engine, and switching clears the previous form 814ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > posts nested and row-shaped bodies correctly — RMST arms 205ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > sends a calculator’s fixed mode discriminator 426ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > shows only the fields that apply to the selected mode 120ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > sends the engine its inputs and renders the deterministic verdict 487ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > shows the engine’s own sentence when it cannot judge the design, and no verdict 283ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > computes assurance from the real design-stats endpoint and renders only the response 182ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > omits a blank optional field rather than sending a placeholder value 127ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > blocks submission and marks the offending field, not just a summary 125ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > clears a field’s error as soon as the user acts on it 122ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine > announces the toast through a live region 120ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > marks the selected calculator for assistive technology, not by colour alone 122ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > the raw-response disclosure reports its expanded state 320ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > surfaces the server’s own error text, not a generic failure 142ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > says to sign in on a 401 rather than showing an empty result 131ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > offers every registered engine, and switching clears the previous form 598ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > posts nested and row-shaped bodies correctly — RMST arms 174ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > sends a calculator’s fixed mode discriminator 179ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BiostatWorkbench — real statistical engine, controls and errors > shows only the fields that apply to the selected mode 115ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Assurance (Bayesian power) produces a complete body from a filled form 1ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Group-sequential operating characteristics produces a complete body from a filled form 0ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Interim look — boundary and conditional power produces a complete body from a filled form 0ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Multiplicity adjustment produces a complete body from a filled form 0ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Group-sequential operating characteristics produces a complete body from a filled form 1ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Interim look — boundary and conditional power produces a complete body from a filled form 1ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Multiplicity adjustment produces a complete body from a filled form 1ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > MMRM sample size produces a complete body from a filled form 0ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > MMRM power at a chosen n produces a complete body from a filled form 0ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Enrollment forecast back-test produces a complete body from a filled form 0ms
@@ -45,7 +42,7 @@
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Reference interval (CLSI EP28) produces a complete body from a filled form 0ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Stability / shelf life (CLSI EP25) produces a complete body from a filled form 0ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Qualitative dose response (C50 / C95) produces a complete body from a filled form 0ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Clinical accuracy (2×2) produces a complete body from a filled form 0ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Clinical accuracy (2×2) produces a complete body from a filled form 2ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > ROC / AUC with a confidence interval produces a complete body from a filled form 0ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Weighted kappa produces a complete body from a filled form 0ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Assurance (Bayesian power) reports every missing required field when the form is empty 0ms
@@ -78,21 +75,24 @@
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > ROC / AUC with a confidence interval reports every missing required field when the form is empty 0ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > Weighted kappa reports every missing required field when the form is empty 0ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > every calculator has a distinct id and a path under /api/biostat 1ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > a select field always starts on a real option 1ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the request-body helpers > setPath builds nested objects for dotted keys 1ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the calculator registry builds bodies the server will accept > a select field always starts on a real option 2ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the request-body helpers > setPath builds nested objects for dotted keys 0ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the request-body helpers > parseNumberList accepts commas or whitespace and rejects anything else 0ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the request-body helpers > parseRowLines returns one list per non-empty line 0ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the request-body helpers > rejects a non-integer where the engine requires a whole number 0ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the request-body helpers > shapes win-ratio rows into the subject/hierarchy structures the engine expects 1ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the request-body helpers > shapes win-ratio rows into the subject/hierarchy structures the engine expects 0ms
  ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > the request-body helpers > shapes enrollment rows into SiteConfig objects, dropping absent trailing fields 0ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BP-W2-4 — a computed result files into a governed section, stamp intact > Insert into document writes the tabulated result plus the FULL provenance hash 221ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BP-W2-4 — a computed result files into a governed section, stamp intact > a failed filing is toasted and nothing pretends to have saved 239ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > D4 — structured scientific result fidelity in Authoring > files every displayed result table, later-row columns and all rows with the full stamp 242ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > D4 — structured scientific result fidelity in Authoring > can file a table-only result with heterogeneous and null rows 237ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BP-W2-4 — with no project open, Insert into document files nothing (PF-07) > no project open: posts no document, claims no filing, and says to open a project first 236ms
- ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BP-W2-4 — with no project open, Insert into document files nothing (PF-07) > a legacy numeric workspace id: posts no document, claims no filing, and says to open a project first 222ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BP-W2-4 — a computed result files into a governed section, stamp intact > Insert into document writes the tabulated result plus the FULL provenance hash 227ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BP-W2-4 — a computed result files into a governed section, stamp intact > a failed filing is toasted and nothing pretends to have saved 265ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > D4 — structured scientific result fidelity in Authoring > files every displayed result table, later-row columns and all rows with the full stamp 255ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > D4 — structured scientific result fidelity in Authoring > can file a table-only result with heterogeneous and null rows 245ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BP-W2-4 — with no project open, Insert into document files nothing (PF-07) > no project open: posts no document, claims no filing, and says to open a project first 238ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx > BP-W2-4 — with no project open, Insert into document files nothing (PF-07) > a legacy numeric workspace id: posts no document, claims no filing, and says to open a project first 228ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx > an absent figure comes with its reason > shows the engine’s not-computed sentence on screen 570ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx > an absent figure comes with its reason > still shows the figures that WERE computed 281ms
+ ✓ client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx > an absent figure comes with its reason > keeps a long method string out of the rows, as before 229ms
 
  Test Files  2 passed (2)
       Tests  90 passed (90)
-   Start at  23:00:40
-   Duration  12.02s (transform 1.82s, setup 308ms, import 2.58s, tests 7.13s, environment 1.54s)
+   Start at  23:24:48
+   Duration  8.75s (transform 852ms, setup 257ms, import 1.28s, tests 5.79s, environment 1.05s)

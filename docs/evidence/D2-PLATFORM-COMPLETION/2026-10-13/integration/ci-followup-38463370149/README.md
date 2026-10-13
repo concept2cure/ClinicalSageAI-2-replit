@@ -47,7 +47,7 @@ baseline was lowered or regenerated.
 
 `coverage-failure-classification.json` distinguishes eight files verified here,
 four authoring mock files already updated by the bridge owner, and the following
-13 files still requiring focused verification/repair. The old outstanding set
+13 files that required focused verification/repair. The old outstanding set
 contains 24 failed assertions plus five setup/import failures:
 
 | File | Old diagnostic / focused next check |
@@ -65,6 +65,17 @@ contains 24 failed assertions plus five setup/import failures:
 | `server/services/c2c/__tests__/node-status-follows-work.pglite.test.ts` | Two cases expect a signing request after approval/freeze to return 200; current guard returns 403. Check immutable status/audit effects and legitimate first signatures. |
 | `client/src/concept2cure/v2/__tests__/biostatWorkbench.test.tsx` | The indication selector matches multiple real forms; scope to the intended calculator and retain request/result assertions. |
 | `client/src/concept2cure/v2/__tests__/workbenchRendersNotComputedReason.test.tsx` | Three unmeasured-result checks use an ambiguous Interim look selector; target the actual calculator control. |
+
+All 13 files have now received focused verification. The five authoring fixture
+files passed **41/41** with the actual current migrations and parent reservation
+projection ([evidence](authoring-setup/README.md)). Both device route suites
+passed **90/90**, retaining the actual validation, tenant, role and zero-row
+update checks ([evidence](../../ci-device-route-fixtures/README.md)). Both
+biostat UI files passed **90/90**, preserving request/result and not-computed
+assertions ([evidence](../biostat-ci-selectors/README.md)). The four remaining
+requirements, parser, AnA source and status/signing files passed **52/52**
+([evidence](../../workflow-bridge/test-contract-alignment/README.md)). These
+counts describe separate scoped runs and are not a full-suite coverage result.
 
 The full native CI artifact additionally had five failures: two missing-font
 exports and three stale launch catalog/CMC expectations. All are covered by the

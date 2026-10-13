@@ -85,7 +85,7 @@ async function computeInterim() {
   // The stored monitoring panel also mentions interim looks. Open the
   // stateless calculator by the exact button title declared in the registry.
   const interim = CALCULATORS.find((calculator) => calculator.id === 'interim-look')!;
-  fireEvent.click(await screen.findByRole('button', { name: interim.title, exact: true }));
+  fireEvent.click(await screen.findByRole('button', { name: interim.title }));
 
   const fill = (label: RegExp, value: string) => {
     const input = screen.getByText(label).closest('label')!.querySelector('input, select') as HTMLElement;

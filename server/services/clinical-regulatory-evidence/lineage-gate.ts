@@ -32,8 +32,11 @@ import {
   assertLineageCoversContent,
   type Queryable,
   retireStaleSourceSpans,
+  hashSpanText,
+  type LiveMachineSpan,
 } from './span-lineage.service';
-import { attributeMachineSpans, tagsMaskedForSplit, type AcceptedMachineText } from './machine-attribution';
+import { attributeMachineSpans, formattingCarryForwardSafety, subtractAttributedRanges, tagsMaskedForSplit,
+  type AcceptedMachineText, type MachineAttributedSpan } from './machine-attribution';
 import {
   attributeQuotedSpans,
   attributeAssertedParaphraseSpans,
@@ -47,7 +50,20 @@ export interface AuthorLineageRef {
   documentId: string;
 }
 
+export class UnverifiedMachineFormattingError extends Error {
+  readonly status = 422;
+  readonly code = 'MACHINE_LINEAGE_FORMATTING_UNVERIFIED';
+  constructor(readonly reason: string) {
+    super('The section was not saved because unsupported markup prevents verification of its retained content attribution. '
+      + 'Use supported formatting or create a supported working copy. Nothing was changed.');
+    this.name = 'UnverifiedMachineFormattingError';
+  }
+}
+
 export interface AuthorLineageOptions {
+  /** Server-read prior body held by the same write transaction. Never a client
+   * claim: carry-forward verifies the retained raw span hashes against it. */
+  previousContent?: string;
   /**
    * Text the reviewer accepted from a machine author in the editing session
    * this save closes (validated at the request boundary by
@@ -121,7 +137,22 @@ interface MachinePassInput {
   accepted: AcceptedMachineText[];
   machineDraft: { authorId: string } | null;
   content: string;
+  previousContent?: string;
   recordOccurrences?: (needle: string) => number;
+}
+
+/** Exact raw carry needs no formatting inference. Consume each retained
+ * occurrence once and require the original attribution, including unknowns. */
+function allPreviousMachineSpansCarriedExactly(live: LiveMachineSpan[], current: MachineAttributedSpan[]): boolean {
+  const remaining = [...current];
+  return live.every(previous => {
+    const index = remaining.findIndex(span => hashSpanText(span.spanText) === previous.spanTextSha256
+      && span.machineAuthorId === previous.machineAuthorId && (span.assertedBy ?? null) === previous.assertedBy
+      && (span.createdBy ?? null) === previous.createdBy && (span.signatureId ?? null) === previous.signatureId);
+    if (index === -1) return false;
+    remaining.splice(index,1);
+    return true;
+  });
 }
 
 /**
@@ -148,13 +179,20 @@ async function attributeMachineThenAuthor(
     actor,
     machineDraft: input.machineDraft,
     content: input.content,
+    previousContent: input.previousContent,
     recordOccurrences: input.recordOccurrences,
   });
+  if (input.previousContent !== undefined && live.length > 0) {
+    const safety = formattingCarryForwardSafety(input.previousContent,input.content);
+    if (!safety.safe && !allPreviousMachineSpansCarriedExactly(live,machine)) {
+      throw new UnverifiedMachineFormattingError(safety.reason);
+    }
+  }
   await replaceMachineSpans(orgId, ref, machine, { createdBy: actor }, exec);
 
-  const machineRanges = new Set(machine.map((m) => `${m.charStart}:${m.charEnd}`));
-  const authorSpans = candidates
-    .filter((c) => !machineRanges.has(`${c.charStart}:${c.charEnd}`))
+  // Formatting and figures can reshape a clause around unchanged machine
+  // prose. Credit only its interval, then assert the actual human remainder.
+  const authorSpans = subtractAttributedRanges(candidates, machine, input.content)
     .map((c) => ({ charStart: c.charStart, charEnd: c.charEnd, spanText: c.text }));
   await replaceAuthorSpans(orgId, ref, authorSpans, { assertedBy: actor, createdBy: actor }, exec);
 
@@ -211,6 +249,7 @@ export async function enforceAuthorLineage(
     accepted: opts.acceptedMachineText ?? [],
     machineDraft: opts.machineDraft ?? null,
     content,
+    previousContent: opts.previousContent,
     recordOccurrences: opts.recordOccurrences,
   });
 

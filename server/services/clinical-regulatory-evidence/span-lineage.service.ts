@@ -188,6 +188,8 @@ export interface LiveMachineSpan {
   assertedAt: Date | null;
   signatureId: string | null;
   createdBy: string | null;
+  usage?: SpanUsage;
+  confidence?: number | null;
 }
 
 export interface SpanLineageRow {
@@ -657,7 +659,7 @@ export async function recordMachineSpan(
       orgId,
       // Who asked, when nobody has accepted. Never a stand-in for an asserter:
       // the asserted_by column above is NULL and the CHECK requires it to be.
-      p.createdBy ?? assertedBy,
+      p.createdBy === undefined ? assertedBy : p.createdBy,
     ],
   );
 
@@ -690,9 +692,11 @@ export async function listLiveMachineSpans(
     asserted_at: Date | string | null;
     signature_id: string | null;
     created_by: string | null;
+    usage: SpanUsage;
+    confidence: number | null;
   }>(
     `SELECT char_start, char_end, span_text_sha256, provenance_kind, machine_author_id,
-            asserted_by, asserted_at, signature_id, created_by
+            asserted_by, asserted_at, signature_id, created_by, usage, confidence
        FROM document_span_lineage
       WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
         AND provenance_kind IN ('accepted_machine_draft', 'machine_draft')
@@ -712,6 +716,8 @@ export async function listLiveMachineSpans(
       : null,
     signatureId: r.signature_id ?? null,
     createdBy: r.created_by ?? null,
+    usage: r.usage,
+    confidence: r.confidence == null ? null : Number(r.confidence),
   }));
 }
 
@@ -740,6 +746,7 @@ export async function replaceMachineSpans(
     assertedAt?: Date;
     signatureId?: string | null;
     usage?: SpanUsage;
+    confidence?: number | null;
     createdBy?: string | null;
   }>,
   p: { createdBy: string },
@@ -760,9 +767,10 @@ export async function replaceMachineSpans(
         assertedAt: s.assertedAt,
         signatureId: s.signatureId ?? null,
         usage: s.usage,
+        confidence: s.confidence,
         // The original requester survives a carry-forward; only a save that
         // introduces the span falls back to this save's actor.
-        createdBy: s.createdBy ?? p.createdBy,
+        createdBy: s.createdBy === undefined ? p.createdBy : s.createdBy,
       },
       exec,
     );

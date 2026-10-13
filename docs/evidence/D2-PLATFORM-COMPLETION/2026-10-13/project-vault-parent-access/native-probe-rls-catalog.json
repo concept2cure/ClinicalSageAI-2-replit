@@ -1,0 +1,38 @@
+[
+  {
+    "table_name": "cre_evidence_sources",
+    "relrowsecurity": true,
+    "relforcerowsecurity": true,
+    "owner": "postgres"
+  },
+  {
+    "table_name": "file_uploads",
+    "relrowsecurity": true,
+    "relforcerowsecurity": true,
+    "owner": "postgres"
+  },
+  {
+    "table_name": "projects",
+    "relrowsecurity": true,
+    "relforcerowsecurity": true,
+    "owner": "postgres"
+  },
+  {
+    "table_name": "regulatory_programs",
+    "relrowsecurity": true,
+    "relforcerowsecurity": true,
+    "owner": "postgres"
+  },
+  {
+    "table_name": "vault_document_relationships",
+    "relrowsecurity": true,
+    "relforcerowsecurity": true,
+    "owner": "postgres"
+  },
+  {
+    "table_name": "vault.documents",
+    "relrowsecurity": true,
+    "relforcerowsecurity": false,
+    "owner": "postgres"
+  }
+]

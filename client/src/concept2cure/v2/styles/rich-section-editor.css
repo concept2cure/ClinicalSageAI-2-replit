@@ -49,13 +49,14 @@
    free to use the full column while paragraphs keep a readable line. */
 .rse-body .tiptap > p, .rse-body .tiptap > h1, .rse-body .tiptap > h2, .rse-body .tiptap > h3, .rse-body .tiptap > ul, .rse-body .tiptap > ol, .rse-body .tiptap > blockquote { max-width:78ch; }
 .rse-body .tiptap p { margin:0 0 12px; }
+.rse-body .tiptap :is(h1,h2,h3,h4,h5,h6) { color:inherit; }
 .rse-body .tiptap h1 { font-size:18px; font-weight:700; margin:0 0 8px; }
 .rse-body .tiptap h2 { font-size:15px; font-weight:700; margin:20px 0 8px; }
 .rse-body .tiptap h3 { font-size:13px; font-weight:600; margin:16px 0 6px; }
 .rse-body .tiptap ul, .rse-body .tiptap ol { margin:0 0 12px 24px; }
 .rse-body .tiptap li { margin-bottom:6px; }
 .rse-body .tiptap table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; }
-.rse-body .tiptap th { padding:8px 12px; background:var(--bg-50); border:1px solid var(--border); font-weight:600; text-align:left; }
+.rse-body .tiptap th { padding:8px 12px; background:var(--bg-050); border:1px solid var(--border); font-weight:600; text-align:left; }
 .rse-body .tiptap td { padding:7px 12px; border:1px solid var(--border); }
 .rse-body .tiptap mark { background:color-mix(in srgb, var(--warning) 28%, transparent); padding:0 1px; border-radius:2px; }
 .rse-img { margin:16px auto; max-width:100%; text-align:center; }

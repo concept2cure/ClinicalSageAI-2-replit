@@ -6,7 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderCtdReadinessPdf, readinessVerdict } from '../ctd-readiness-renderer';
 import { aggregateCtdAuthoringReadiness } from '../ctd-authoring-readiness';
-import type { M2QcResult } from '../m2-summary-qc';
+import { runM2SummaryQc } from '../m2-summary-qc';
 import type { M4QcResult } from '../m4-nonclinical-qc';
 
 const ready = aggregateCtdAuthoringReadiness({ m2: {
@@ -53,7 +53,14 @@ describe('renderCtdReadinessPdf', () => {
 
 describe('supplied QC scope in the actual PDF', () => {
   it('prints partial input, omitted M3 and unverified basis without an overall READY label', async () => {
-    const result = aggregateCtdAuthoringReadiness({ m2: { ready: true, counts: { errors: 0, warnings: 0 }, findings: [] } as M2QcResult });
+    const moduleQc = runM2SummaryQc({
+      summaries: [{
+        sectionKey: '2.3', title: 'Quality Overall Summary', narrative: 'Supplied summary for the QC report fixture.',
+        tables: [], inputSectionKeys: ['3.2.S'], completeness: 100, gaps: [], generatedAt: new Date(0).toISOString(),
+      }],
+      expectedSummaries: ['2.3'], availableUpstreamKeys: ['3.2.S'],
+    });
+    const result = aggregateCtdAuthoringReadiness({ m2: moduleQc });
     const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
     const doc = await getDocument({ data: new Uint8Array(await renderCtdReadinessPdf(result)), useSystemFonts: true }).promise;
     try {

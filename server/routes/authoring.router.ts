@@ -41,7 +41,7 @@ import { recordGovernedAction } from './c2c/actions';
 // from. The gate is factored into one helper so every authored-content write
 // (interactive save AND section create) applies the identical rule.
 // See server/services/clinical-regulatory-evidence/lineage-gate.ts.
-import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
+import { enforceAuthorLineage, UnverifiedMachineFormattingError } from '../services/clinical-regulatory-evidence/lineage-gate';
 // Types only: the service itself is imported where it is called.
 import type {
   CitationChange,
@@ -2217,6 +2217,14 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       await client.query('BEGIN');
       await reserveWritableSection(client, String(sectionId), tenantId);
 
+      // The previous body is a transaction-held fact, read after the parent
+      // reservation and before this update. Client-supplied text and the
+      // pre-reservation lookup cannot establish a retained span's integrity.
+      const previous = content === undefined ? null : await client.query<{ content: string | null }>(
+        'SELECT content FROM authoring_sections WHERE id=$1 AND tenant_id=$2 FOR UPDATE',
+        [String(sectionId), tenantId],
+      );
+
       result = await client.query(updateQuery, values);
 
       // The lineage gate: record an author span per clause and assert coverage,
@@ -2232,6 +2240,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
         content,
         updatedByUser,
         {
+          previousContent: previous ? previous.rows[0]?.content ?? '' : undefined,
           /* Only the claims a record vouched for. An unverifiable claim's
              clause is not dropped — no accepted-machine text matches it, so
              the gate records it as this person's own assertion, which is what
@@ -2382,6 +2391,10 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
       if (workflowGovernanceReply(err, res)) return;
+      if (err instanceof UnverifiedMachineFormattingError) {
+        return res.status(err.status).json({ success: false,
+          error: { code: err.code, message: err.message }, field: 'content' });
+      }
       logger.error('Section save refused — content and lineage rolled back together', {
         sectionId,
         tenantId,
