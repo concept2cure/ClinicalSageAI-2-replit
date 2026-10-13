@@ -243,6 +243,13 @@ const MIGRATIONS = [
   'migrations/20260728_authoring_document_governed_binding.sql',
   'migrations/20260814d_document_alias_map.sql',
   'migrations/20260921_authoring_document_provenance.sql',
+  /* The AnA turn-record store. The model recorded on a drafted document is
+     resolved FROM the turn record the draft names and from nowhere else
+     (27211528b, SEC-A-7 door 2: provenance.model used to be caller input, so
+     any member could name any model for prose written into three append-only
+     records). Without this store the walk's draft can record no model at all,
+     which is the honest outcome for an unfiled turn -- so the walk files one. */
+  'migrations/20260926_ana_turn_records.sql',
   // Submission Center: the governed sign, the dispatch gate's review store, the transmittal ledger.
   'migrations/20260604_shadow_review.sql',
   'db/migrations/20260725_submission_orchestrator_store_port.sql',
