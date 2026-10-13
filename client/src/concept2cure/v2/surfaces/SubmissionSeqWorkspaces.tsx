@@ -926,7 +926,7 @@ interface ReadinessAssessment {
   /** Whether THIS user may sign the freeze and dispatch, from the lookup the
    *  sign step enforces (separation of duties: the sequence's creator cannot).
    *  Informational — the server still decides at signing. */
-  signer?: { state: 'independent' | 'author' | 'unresolved' | 'unverified'; sources: string[] };
+  signer?: { state: 'independent' | 'author' | 'unresolved' | 'unverified' };
   /** §11.70 state. Informational — the blocking happens in the gates. */
   releaseSignature?: {
     required: boolean;
