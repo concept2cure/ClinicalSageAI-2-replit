@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-13T19:39:09.400Z",
+  "generatedAt": "2026-10-13T20:31:59.577Z",
   "git": {
-    "sha": "30e80b571f6e2a811ffe7098ad647aebf313bf8d",
+    "sha": "a64d422ac14c5eb177734c18f4224e0517bc50b4",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 224,
+    "duplicateBasenames": 227,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 57,
@@ -1549,6 +1549,22 @@
         ]
       },
       {
+        "basename": "persistence",
+        "count": 2,
+        "paths": [
+          "server/services/conversation-os/persistence.ts",
+          "server/services/report-os/persistence.ts"
+        ]
+      },
+      {
+        "basename": "persistence.test",
+        "count": 2,
+        "paths": [
+          "server/services/report-os/__tests__/persistence.test.ts",
+          "server/services/study-design/__tests__/persistence.test.ts"
+        ]
+      },
+      {
         "basename": "policy",
         "count": 2,
         "paths": [
@@ -1610,6 +1626,14 @@
         "paths": [
           "server/services/global-ri/__tests__/process-validation.test.ts",
           "server/services/regulatory/__tests__/process-validation.test.ts"
+        ]
+      },
+      {
+        "basename": "project-access",
+        "count": 2,
+        "paths": [
+          "server/routes/c2c/project-access.ts",
+          "server/services/report-os/project-access.ts"
         ]
       },
       {
@@ -2232,8 +2256,16 @@
         "bytes": 124958
       },
       {
+        "file": "server/routes/report-os.ts",
+        "bytes": 121260
+      },
+      {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 119982
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "bytes": 118830
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
@@ -2266,14 +2298,6 @@
       {
         "file": "server/routes/c2c/project-vault.ts",
         "bytes": 112018
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "bytes": 111496
-      },
-      {
-        "file": "server/routes/report-os.ts",
-        "bytes": 111351
       },
       {
         "file": "server/routes/auth.ts",
@@ -2451,7 +2475,7 @@
       },
       {
         "file": "server/routes/report-os.ts",
-        "lines": 2772
+        "lines": 2796
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2542,6 +2566,10 @@
         "lines": 2131
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
+        "lines": 2121
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
         "lines": 2116
       },
@@ -2568,10 +2596,6 @@
       {
         "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
         "lines": 2068
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
-        "lines": 2067
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
@@ -2611,7 +2635,7 @@
       },
       {
         "file": "server/routes/ectd-compile.ts",
-        "lines": 1989
+        "lines": 1984
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
@@ -2795,7 +2819,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 423,
+      "duplicateGroups": 429,
       "largeByBytes": 41,
       "largeByLines": 87
     },
