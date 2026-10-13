@@ -25,6 +25,50 @@ export type QuestionFieldType =
   | 'country_select'
   | 'agency_select';
 
+/**
+ * Whether a position is one this programme can actually take, judged against
+ * the answers the programme itself has given (founder's decision, 2026-10-12).
+ *
+ * A regulated platform must not quietly drop a position a sponsor may have
+ * reasons to want: an absent option is a question lying by omission, and this
+ * engine has already been bitten once by hidden options — a wrong client
+ * segment silently removed whole interviews. Nor may it offer a position the
+ * sponsor's own answers contradict as though it were neutral; that invites a
+ * filing on a basis they cannot support.
+ *
+ * So every position stays selectable and the contradicted ones are MARKED:
+ *   'available'     nothing in the answers speaks against it (the default,
+ *                   and what an unknown fact means — not knowing is not a
+ *                   contradiction);
+ *   'needs_basis'   it remains open, but only with a justification the
+ *                   answers do not yet contain;
+ *   'inapplicable'  the answers contradict it outright.
+ *
+ * Marking, not hiding: the person keeps the choice, and taking a marked
+ * position is recorded on the interview's issue trail.
+ */
+export type PositionAvailability = 'available' | 'needs_basis' | 'inapplicable';
+
+/**
+ * Why a position is marked. Written in a governed catalogue, never by a
+ * model, and never without the authority that makes the contradiction one.
+ */
+export interface PositionCaution {
+  availability: Exclude<PositionAvailability, 'available'>;
+  /** The contradiction, naming the answer that creates it. One or two sentences. */
+  reason: string;
+  /** The part, section or annex the contradiction comes from. */
+  authority: string;
+  /**
+   * Which governed rule produced this, named rather than numbered. It goes on
+   * the record with the choice, so a reviewer can see what judged it — and a
+   * gate holds that every rule can actually fire, which a per-position check
+   * cannot: a new rule whose positions another rule already marks would
+   * otherwise pass without ever running.
+   */
+  ruleId: string;
+}
+
 export interface QuestionOption {
   value: string;
   label: string;
@@ -45,6 +89,12 @@ export interface QuestionOption {
    * paraphrase — these are written in the flow or the governed catalogue.
    */
   authority?: string;
+  /**
+   * Set where the programme's own answers speak against this position. The
+   * option is still offered — see {@link PositionAvailability} for why — and
+   * the engine records the choice of a cautioned position on the issue trail.
+   */
+  caution?: PositionCaution;
 }
 
 /**
@@ -80,6 +130,25 @@ export interface OwnPositionAllowed {
   required?: boolean;
 }
 
+/**
+ * A governed catalogue a question's positions come from, resolved as the
+ * question is drawn rather than written into the flow.
+ *
+ * Some positions depend on an answer the person has already given: which
+ * routes to market exist depends on the regulator they named, and no static
+ * list in a flow file can know it. A field names the catalogue; the engine
+ * resolves it for the facts the interview holds, and the SAME resolution is
+ * what the validator judges the answer against — a question that offers
+ * positions the validator does not enforce is not a closed list at all.
+ */
+export type GovernedOptionSource =
+  /** The routes to market for a device or diagnostics programme, by region. */
+  | 'device_pathway_positions'
+  /** The routes a medicine may take, by region and by the modality's own frame. */
+  | 'medicine_pathway_positions'
+  /** The IVDR risk classes, each stating the Article 48 route that follows from it. */
+  | 'ivdr_class_positions';
+
 export interface QuestionField {
   id: string;
   label: string;
@@ -88,13 +157,21 @@ export interface QuestionField {
   helpText?: string;
   required?: boolean;
   options?: QuestionOption[];
+  /**
+   * The governed catalogue these positions come from, resolved per draw from
+   * the answers already given (see {@link GovernedOptionSource}). A field that
+   * declares it carries no static list: the resolver is the only source, and
+   * where the catalogue holds nothing for this programme the field says so
+   * rather than drawing an empty select.
+   */
+  optionsFrom?: GovernedOptionSource;
   /** The person may take a position this list does not offer (see OwnPositionAllowed). */
   allowOther?: OwnPositionAllowed;
   validation?: FieldValidation;
   /** Default value pre-filled from project context or prior answers. */
   defaultValue?: string | string[] | number | boolean;
   /** Condition that must be met for this field to be visible. */
-  visibleWhen?: FieldPredicate;
+  visibleWhen?: QuestionPredicate;
 }
 
 export interface FieldValidation {
@@ -113,6 +190,30 @@ export interface FieldPredicate {
   operator: 'eq' | 'neq' | 'in' | 'not_in' | 'gt' | 'lt' | 'contains' | 'exists';
   value: string | string[] | number | boolean;
 }
+
+/**
+ * Several predicates taken together — `anyOf` satisfied by one of them,
+ * `allOf` by every one.
+ *
+ * One field and one operator could not express a gate that two answers decide,
+ * and the notified-body question is one: it belongs to a device programme that
+ * stated an MDR class other than "no EU filing planned", AND to a diagnostics
+ * programme that stated an IVDR class — whose MDR question is hidden, so its
+ * answer is absent and `neq 'na'` read TRUE for every one of them. Writing the
+ * gate as one predicate meant either asking a US-only programme who its
+ * notified body is, or never asking a diagnostics programme at all (2026-10-12
+ * review, deferred there with that reason).
+ *
+ * A group with neither key, or an empty one, is NOT satisfied: a gate nobody
+ * wrote must not read as open.
+ */
+export interface PredicateGroup {
+  anyOf?: QuestionPredicate[];
+  allOf?: QuestionPredicate[];
+}
+
+/** A field's own predicate, or several taken together. */
+export type QuestionPredicate = FieldPredicate | PredicateGroup;
 
 export interface BranchRule {
   when: FieldPredicate;

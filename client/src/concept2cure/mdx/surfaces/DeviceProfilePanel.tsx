@@ -41,10 +41,14 @@ import {
   type RegulatoryPath,
   type RecognizedStandardsResult,
 } from '../hooks/useDeviceProfile';
+import { DEVICE_CLASSES as US_DEVICE_CLASSES } from '@shared/regulatory/device-class';
 import { describeSaveFailure } from '../hooks/useFetchJson';
 import { notifyOfficialEstarFieldsChanged } from '../hooks/useEstarOfficialFields';
 
-const DEVICE_CLASSES: DeviceClass[] = ['I', 'II', 'III'];
+/* The governed vocabulary, not a fourth copy of it: this panel writes
+   regulatory_programs.device_class, and the list it offers must be the list
+   the write accepts. */
+const DEVICE_CLASSES: readonly DeviceClass[] = US_DEVICE_CLASSES;
 const REGULATORY_PATHS: Array<{ value: RegulatoryPath; label: string }> = [
   { value: '510k', label: '510(k)' },
   { value: 'de_novo', label: 'De Novo' },

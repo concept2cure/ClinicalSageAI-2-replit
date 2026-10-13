@@ -255,9 +255,13 @@ describe('Schedules — GET/POST/PATCH /api/insights/subscriptions', () => {
     const select = await screen.findByLabelText('Report');
     const offered = within(select).getAllByRole('option').map((o) => o.textContent);
     expect(offered).toContain('Executive Readiness Digest');
-    // runnable: false in the catalog fixture — no engine computes it.
+    // The regional engine computes this one over a program, so a schedule for
+    // it does produce a report (regional/filing-readiness.ts).
+    expect(offered).toContain('EMA MAA Readiness Assessment');
+    // runnable: false in the catalog fixture — no engine computes these.
     expect(offered).not.toContain('Compliance & Audit Assurance Pack');
-    expect(offered).not.toContain('EMA MAA Readiness Assessment');
+    expect(offered).not.toContain('FDA eSTAR / 510(k) Equivalence Matrix');
+    expect(offered).not.toContain('Evidence & Provenance Trace Report');
   });
 
   it('creates a schedule with the cadence chosen, and no creator in the body', async () => {

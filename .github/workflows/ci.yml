@@ -1024,6 +1024,21 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run audit:repo-health:no-regression
 
+      # The no-regression step above compares against
+      # docs/reports/repo-health-scan-latest.json, which
+      # repo-health-baseline-refresh.yml regenerates and commits on every push
+      # to concept2cure-v2. That design assumes PRs ("PRs branched after a
+      # merge therefore always see delta 0"), and RULE 0 means this repository
+      # has none — every change is a direct push to trunk, so each push's
+      # growth is absorbed into the baseline before any later run compares
+      # against it. WO-12 recorded 95 files over 1,500 lines on that reasoning;
+      # the tree reached 114 with the delta reading 0. This ceiling lives in
+      # package.json, where the auto-refresh cannot reach it, and is set at the
+      # measured count: nothing existing is blocked, only new growth fails.
+      - name: Guardrails — no new file over the size ceiling
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run audit:repo-health:ceiling
+
       - name: Audit — orphaned endpoints (threshold 1184)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # Regenerates docs/reports/orphan-endpoints-latest.{json,md} and fails

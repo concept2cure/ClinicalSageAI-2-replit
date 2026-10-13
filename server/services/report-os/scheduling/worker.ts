@@ -17,7 +17,7 @@
  */
 
 import { createScopedLogger } from '../../../utils/logger';
-import { isEntitled } from '../../entitlements/mdx-entitlements';
+import { scheduledReportsVerdict } from './entitlement';
 import type { Tier } from '../../entitlements/types';
 import { listDueSubscriptions, markRun } from './subscription-service';
 import { runWithSystemTenantScope, runWithTenantScope } from '../../../db/tenantStore';
@@ -72,8 +72,13 @@ export async function planSweep(deps: SweepDeps): Promise<SweepSummary> {
       reportTypeId: sub.reportTypeId,
     };
     try {
+      /* The SAME predicate POST /subscriptions gates on
+         (scheduling/entitlement.ts), so the create-time and fire-time verdicts
+         cannot drift. Before 2026-10-12 only this side checked, so a
+         standard-plan org could create an "Active" schedule that was skipped
+         here on every tick, for ever (coverage review C-26a). */
       const tier = await deps.resolveTier(sub.organizationId);
-      if (!isEntitled('scheduled_reports', tier)) {
+      if (!scheduledReportsVerdict(tier).entitled) {
         const reason = `Org tier '${tier}' is not entitled to scheduled reports.`;
         if (deps.onSkip) await deps.onSkip(sub, reason).catch(() => undefined);
         items.push({ ...base, disposition: 'skipped_entitlement', reason });

@@ -1,0 +1,19 @@
+Round 15 door 3: the new cases against trunk's revert handler, no source change.
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+  tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts
+
+ x restores draft_source from the revision instead of nulling it
+   -> expected null to be 'ana'
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 35 passed (36)
+
+That is the whole defect in one assertion: the save door had recorded
+draft_source = 'ana' on the filing row, a person reworded the section, and the
+revert back to AnA's words restored the TEXT and recorded NULL for its origin.
+
+The negative control — a revert to a person's own revision still states no
+origin — passed before and after, so the fix is not a blanket 'ana'.
+
+Two cases were added after the first green: the revert OF a revert (which
+kills RV-02) and the repeated restoration. 37 cases now.

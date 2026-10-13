@@ -74,6 +74,7 @@ export type MachineClaimReason =
   | 'turn_record_not_found'
   | 'record_not_intact'
   | 'text_not_in_record'
+  | 'model_not_approved'
   | 'too_many_turns';
 
 /** One claim that `text` was written by a machine author in turn `turnRecordId`. */
@@ -115,6 +116,14 @@ export interface UnverifiedMachineClaim {
   /** The id as claimed, bounded; null when none was sent. */
   turnRecordId: string | null;
   reason: MachineClaimReason;
+  /**
+   * The models the record names — present only for `model_not_approved`,
+   * which is the one reason that HAS an intact record behind it. A door's row
+   * has to say which model it refused, not merely that it refused one, and
+   * re-reading the record to find out would load every text it references a
+   * second time.
+   */
+  servedBy?: ServedModel[];
   textSha256: string;
   chars: number;
 }
@@ -166,6 +175,71 @@ async function readRecord(q: Queryable, orgId: number, id: string): Promise<Read
   return { stored, intact: true, ...outputsOf(stored) };
 }
 
+/** What a record says served the turn, read without checking any words. */
+export type TurnServedModelsRead =
+  | { ok: true; turnRecordId: string; recordSha256: string; outcome: TurnOutcome; servedBy: ServedModel[] }
+  | { ok: false; reason: Extract<MachineClaimReason, 'turn_record_not_found' | 'record_not_intact'> };
+
+/**
+ * The models a turn record names, with no text to check against it.
+ *
+ * `verifyMachineText` answers "did THIS turn write THESE words", and three of
+ * SEC-A-7's doors need only the first half of that: which models served the
+ * turn, so RULE 2 can be applied to them. `POST /docs/from-draft` has no
+ * quotable span to offer at all — the whole document is the model's prose — so
+ * the text check is not merely skipped there, it does not apply.
+ *
+ * It shares `readRecord` with `verifyMachineText`, so "read a record, confirm
+ * it is intact, and say what served it" has one implementation. A door that
+ * also has text to check keeps calling `verifyMachineText`, which still does
+ * both.
+ *
+ * The id is NOT validated here: a caller that has not checked its shape would
+ * send a malformed one to a uuid column and raise 22P02 inside its own
+ * transaction. `servedModelsForTurn` in authoring-record.ts is the checked
+ * entry point, and is what doors should call.
+ */
+export async function turnServedModels(q: Queryable, orgId: number, turnRecordId: string): Promise<TurnServedModelsRead> {
+  const read = await readRecord(q, orgId, turnRecordId);
+  if (!read.stored) return { ok: false, reason: 'turn_record_not_found' };
+  if (!read.intact) return { ok: false, reason: 'record_not_intact' };
+  return {
+    ok: true,
+    turnRecordId: read.stored.id,
+    recordSha256: read.stored.recordSha256,
+    outcome: read.stored.outcome,
+    servedBy: read.servedBy,
+  };
+}
+
+export interface VerifyMachineTextOptions {
+  /**
+   * Whether a record that holds the words may vouch for them AT ALL — CLAUDE.md
+   * RULE 2 at a governed-write door (round 15, SEC-A-7). Given `servedBy`, it
+   * returns true to admit the record and false to refuse it, and a refused
+   * claim comes back `model_not_approved`.
+   *
+   * It is a parameter of the ONE pass rather than a filter afterwards for two
+   * reasons. The reason it reports: a caller filtering `verified` itself would
+   * have to invent its own reason for each dropped claim, and the reason is
+   * what the Part 11 row and the refusal sentence carry. And the COUNT: a
+   * record that may not vouch for a claim must not vouch for
+   * `occurrencesInRecords` either — two claims of the same sentence, one from
+   * an admitted turn and one from a turn the rule refuses, would otherwise
+   * raise the cap to two and let a lineage gate credit the sentence twice on
+   * the word of one record. The closure is built here, so filtering afterwards
+   * cannot fix that and a second pass would read every record twice.
+   *
+   * The count matters to a door that CARRIES ON after a refused claim. The
+   * section save refuses the whole save instead, so only unverifiable claims
+   * reach its gate — but that is that door's choice, not this contract's.
+   *
+   * Absent means every intact record that holds the words vouches for them,
+   * which is what a door with no governed-write rule to apply wants.
+   */
+  mayVouch?: (servedBy: ServedModel[]) => boolean;
+}
+
 /**
  * Check each claim against the turn record it names, within one organization.
  * Every claim comes back exactly once, verified or with its reason.
@@ -174,6 +248,7 @@ export async function verifyMachineText(
   q: Queryable,
   orgId: number,
   claims: MachineTextClaim[],
+  opts: VerifyMachineTextOptions = {},
 ): Promise<MachineClaimVerdict> {
   const verdict: MachineClaimVerdict = { verified: [], unverified: [], occurrencesInRecords: () => 0 };
   const records = new Map<string, Promise<ReadRecord>>();
@@ -181,13 +256,14 @@ export async function verifyMachineText(
 
   for (const [index, claim] of claims.entries()) {
     const raw = typeof claim.turnRecordId === 'string' ? claim.turnRecordId.trim() : '';
-    const refuse = (reason: MachineClaimReason) =>
+    const refuse = (reason: MachineClaimReason, servedBy?: ServedModel[]) =>
       verdict.unverified.push({
         index,
         authorId: claim.authorId,
         text: claim.text,
         turnRecordId: raw ? raw.slice(0, 64) : null,
         reason,
+        ...(servedBy ? { servedBy } : {}),
         textSha256: sha256Hex(claim.text),
         chars: claim.text.length,
       });
@@ -225,6 +301,16 @@ export async function verifyMachineText(
     const needle = comparableText(claim.text);
     if (!needle || !rec.outputs.some((o) => o.includes(needle))) {
       refuse('text_not_in_record');
+      continue;
+    }
+    /* RULE 2, before the record vouches for anything: a turn served by a model
+       the rule does not admit for regulatory drafting wrote words this person
+       may still save — but not as MACHINE-AUTHORED governed content. Refused
+       after the text check on purpose: a claim of words the record does not
+       hold is a false claim, and answering it with the model's approval would
+       imply the words were AnA's. */
+    if (opts.mayVouch && !opts.mayVouch(rec.servedBy)) {
+      refuse('model_not_approved', rec.servedBy);
       continue;
     }
     vouching.add(rec);

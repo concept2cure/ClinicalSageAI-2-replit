@@ -1,0 +1,7 @@
+mutant RV-03: every revert claims AnA, including a revert to a person’s own words
+verdict: KILLED
+Tests  1 failed | 36 passed (37)
+
+ × tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts > a revert carries the attribution the restored revision recorded (round 15, SEC-A-7 door 3) > a revert to a person’s own revision still states no origin 81ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 36 passed (37)

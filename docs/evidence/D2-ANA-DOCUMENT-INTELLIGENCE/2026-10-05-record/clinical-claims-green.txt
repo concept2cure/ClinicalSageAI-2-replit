@@ -1,0 +1,291 @@
+# clinical-claims GREEN — 2026-10-05T12:52:57Z
+# command: npx vitest run server/services/truth-engine/__tests__/clinical-claims.test.ts
+# state: engine server/services/truth-engine/clinical-claims.ts + clinical-claims/ (pure: no I/O, no model) and
+#        shared/ana/clinical-claims-vocabulary.ts; corpus fixtures/clinical-claims-corpus.json, 220 cases / 594 rows.
+# red:   clinical-claims-red.txt (module absent). Interrupted build at resume: 178/256 tests, corpus 142/220.
+# green: 256/256 tests; corpus 220/220 (every consistent/conflict row reported with both values as written;
+#        every not_compared row reported with an annotated reason and never paired; no must_not outcome).
+# typecheck: flock … npx tsc --noEmit -p . — exit 0, no clinical-claims diagnostics (12:52Z).
+# eslint (engine, test, vocabulary): 0 errors; 80 warnings, all complexity/max-depth/max-lines/max-params.
+#
+# Gate seen failing (verify by making the check fail). Each rule added for the last three corpus cases was
+# disabled in place, the same command run, and the file restored byte-for-byte (cmp) before this green run:
+#  - compare.ts: two-sided pool_membership_unidentified report disabled ->
+#      "pvs-20#0: docB 1245 reported with [no_counterpart], expected one of [pool_membership_unidentified]",
+#      Tests  1 failed | 255 passed (256)
+#  - quals.ts: 'integrated analysis of Parts A and B of Study X' read as a pool again ->
+#      "pvs-33#0 consistent not reported: responder:orr 38.6 vs 38.6 — orr",
+#      Tests  1 failed | 255 passed (256)
+#  - vocabulary.ts: 'Interval' column header admitted as an arm again ->
+#      "pvs-36#0 consistent not reported: eair: 2.1 vs 2.1 — serious_infection_eair",
+#      "pvs-36#1 conflict not reported: eair: 1.6 vs 1.9 — serious_infection_eair",
+#      "pvs-36#2: docA 1.4 reported with [figure_not_read], expected one of [no_counterpart, period_differs]",
+#      "pvs-36#2: docA 0.9 reported with [figure_not_read], expected one of [no_counterpart, period_differs]",
+#      Tests  1 failed | 255 passed (256)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > annotates every expected row of every case, and nothing else 4ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-01 217ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-02 38ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-03 54ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-04 55ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-05 20ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-06 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-07 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-08 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-09 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-10 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-11 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-12 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-13 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-14 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-15 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-16 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-17 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-18 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-19 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-20 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-21 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-22 29ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-23 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-24 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-25 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-26 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-27 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-28 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-29 81ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-30 28ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-31 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-32 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-33 43ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-34 22ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-35 85ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-36 26ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-37 37ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-38 43ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-39 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > fs-40 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-001-randomized-total-transposition 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-002-randomized-active-vs-passive-voice 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-003-disposition-table-vs-synopsis-trailing-zero 26ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-004-treatment-vs-study-discontinuation 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-005-rescue-medication-treated 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-006-primary-and-key-secondary-consistent-comma-p 35ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-007-two-decimal-ci-conflict 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-008-ci-bound-zero-vs-negative 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-009-hr-consistent-coarser-precision 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-010-hr-true-conflict 20ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-011-hr-vs-risk-difference 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-012-stratified-vs-unstratified-hr 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-013-bicr-vs-investigator 25ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-014-fas-vs-pp-and-sensitivity 33ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-015-timepoint-week26-vs-week52 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-017-response-difference-scale 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-019-teae-with-most-common-and-severity 28ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-020-sae-single-arm-most-commonly 21ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-021-sae-transposed-digits 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-023-sae-and-death-rates-same-clause 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-024-per-arm-deaths-vs-total 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-025-single-arm-deaths 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-026-deaths-treatment-emergent-vs-all 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-027-deaths-true-conflict 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-029-open-label-extension-period 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-030-exposure-adjusted-vs-incidence 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-031-pooled-vs-single-study 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-032-different-studies-randomized 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-033-n-percent-layout 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-034-ambiguous-overall-rate 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-035-enrolled-vs-randomized-screened 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-036-completed-true-conflict 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-038-p-values-bound-and-exact 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-039-ci-level-90-vs-95 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-040-coarser-precision-agreement 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-041-per-arm-ls-means-vs-difference 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > sbx-042-randomized-vs-treated-n 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-01 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-02 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-04 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-05 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-06 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-07 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-08 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-09 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-10 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-11 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-12 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-13 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-14 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-15 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-16 23ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-17 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-18 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-19 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-20 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-21 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-22 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-23 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-24 24ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-25 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-26 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-27 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-28 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-29 26ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-30 27ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-31 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-32 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-33 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-34 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-35 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-36 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-37 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-38 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > pvs-39 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-01-table1-placebo-first-columns-consistent 31ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-02-table1-nausea-and-header-n-conflict 35ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-03-gi-narrative-subrates-and-event-shares 108ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-04-exposure-sentence-pooled-vs-single-study-csr 85ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-05-exposure-sentence-vs-iss-same-pool-subset-conflict 42ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-06-approximate-and-bound-exposure-statements 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-07-pooled-label-table-vs-single-study-csr-table 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-08-threshold-omission-is-not-a-value 43ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-09-threshold-boundary-rounded-row 51ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-10-grouped-term-vs-preferred-term 82ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-11-oncology-narrative-sae-fatal-grade-discontinuation 270ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-12-adverse-reaction-causality-basis-ambiguous 34ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-13-orr-bicr-vs-investigator 20ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-14-os-hazard-ratio-conflict 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-15-stratified-vs-unstratified-hr 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-16-ci-level-differs-alpha-split 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-17-trial-designation-not-bound-to-study 24ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-18-section14-hba1c-table-rounding-consistent 37ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-19-estimand-differs 21ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-20-percent-change-vs-absolute-change-weight 33ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-21-geriatric-subgroup-vs-overall 41ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-22-hypoglycemia-levels-and-explicit-zero 37ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-23-lab-threshold-and-trailing-zero-conflict 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-24-oncology-lab-table-vs-shift-table-and-ae-term 31ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-25-per-arm-deaths-vs-total 21ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-26-highlights-threshold-list-has-no-figures 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-27-upper-bound-is-not-a-value 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-28-adjudicated-vs-investigator-reported 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-29-per-dose-columns-vs-all-doses-column 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-30-section14-randomized-transposition-conflict 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-31-randomized-vs-treated-and-rescue-medication 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-32-section14-demographics-duration-conflict 28ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-33-two-trials-in-label-one-csr 30ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-34-discontinuation-and-sub-rate-consistent 30ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-35-precision-as-written-trailing-zero-conflict 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-36-pediatric-label-section-vs-adult-csr 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-37-sae-overall-vs-regional-subgroup 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > lu-38-period-week52-vs-week26 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-01 20ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-02 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-04 20ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-05 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-06 23ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-07 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-11 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-12 54ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-15 27ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-16 21ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-17 28ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-18 18ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-20 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-22 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-23 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-24 17ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-25 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-26 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-27 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-30 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-31 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-32 9ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-33 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-34 8ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-35 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-36 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-37 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-38 23ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-39 27ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > em-40 36ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-01 24ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-02 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-03 33ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-04 39ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-05 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-06 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-07 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-08 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-09 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-10 22ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-11 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-12 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-13 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-14 4ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-15 22ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-16 24ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-17 19ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-18 25ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-19 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-20 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-21 13ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-22 15ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-23 11ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-24 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-25 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-26 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-27 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-28 45ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-29 7ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-31 14ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-32 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-33 16ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-34 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-35 24ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-36 10ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-37 20ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > clinical claims corpus > euc-38 27ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 4.0 vs 4.4: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 2.0 vs 2.4: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 8 vs 8.2: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 8 vs 8.6: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 7.5 vs 8: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 8.5 vs 8: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0.72 vs 0.723: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0.10 vs 0.14: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0.00 vs -0.40: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0.00 vs -0.01: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > -0.8 vs -0.80: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > -1.0 vs -0.98: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 612 vs 621: differ 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0 vs 0.0: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > <0.001 vs <0.001: agree 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > <0.001 vs 0.0004 is not compared (bound_not_value) 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > <0.001 vs <0.0001 is not compared (bounds_differ) 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > approximately 600 vs 612 is not compared (approximate_value) 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > agreeAsWritten: precision as written (C10) > 0% vs 0.3% is not compared (zero_precision_ambiguous) 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 4.0 1ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 0.00 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > −0.62 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 1 227 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 1,227 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > Six hundred and twelve 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > <0.001 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > 4.6 per cent 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > readNumber: a number exactly as written (C19) > reads a decimal comma in a comma-convention source and a period thousands separator in a count slot 0ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > reads the verb-first and the passive randomized total as the same measure (F5, F19) 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > never reads rescue-medication "treated" as the treated population (F2) 5ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > keeps a subgroup qualifier in the frame, never the overall figure (F15, F18) 2ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > reads per-arm deaths as per-arm, never as the total (F14) 6ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > keeps sub-rates as preferred-term claims, never as more arm rates (F6) 12ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > frames an effect by type, endpoint, population, timepoint and CI, and cuts a p-value from the interval (F12, F13) 2ms
+ ✓ server/services/truth-engine/__tests__/clinical-claims.test.ts > extractClaims: a figure is a claim only with its whole frame > reports a figure it cannot frame as not compared, with the missing slot, never drops it (F13) 1ms
+
+ Test Files  1 passed (1)
+      Tests  256 passed (256)
+   Start at  12:52:50
+   Duration  6.07s (transform 759ms, setup 121ms, import 742ms, tests 4.62s, environment 0ms)
+

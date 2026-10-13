@@ -23,7 +23,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { PGlite } from '@electric-sql/pglite';
 
 vi.mock('../../clinical-regulatory-evidence/lineage-gate', () => ({
-  enforceAuthorLineage: vi.fn(async () => {}),
+  /* Its RESULT is read by the save door — `clausesInAcceptedText` decides
+     whether the revision and the filing name a machine contributor (round
+     15, SEC-A-7 door 1) — so a stand-in has to return the shape, not
+     nothing. Zero is right here: these saves accept no machine text. */
+  enforceAuthorLineage: vi.fn(async () => ({ clausesInAcceptedText: 0 })),
 }));
 vi.mock('../authoring-evidence', async (importOriginal) => {
   const real = await importOriginal<typeof import('../authoring-evidence')>();

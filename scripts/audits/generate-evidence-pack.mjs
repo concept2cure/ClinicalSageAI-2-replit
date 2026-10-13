@@ -312,7 +312,8 @@ out.push('### Compliance mapping');
 out.push('- 21 CFR Part 11 §11.10(e) — secure, computer-generated, time-stamped audit trails.');
 out.push('- 21 CFR Part 11 §11.50 — signature manifestation includes signed-by, signed-date, meaning.');
 out.push('- 21 CFR Part 11 §11.70 — signature/record link is preserved by hash chain.');
-out.push('- ICH E6(R2) §5.5.3 — data integrity (tamper detection via cryptographic chain).');
+// E6(R3) put R2 §5.5.3 (electronic trial data handling) in Annex 1 §4.3, Computerised Systems.
+out.push('- ICH E6(R3) Annex 1 §4.3 — data integrity (tamper detection via cryptographic chain).');
 out.push('');
 
 // ─── Section 6: AIOS-06 Change Governance ──────────────────────────────────

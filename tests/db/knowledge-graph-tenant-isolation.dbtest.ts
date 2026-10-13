@@ -94,12 +94,17 @@ async function cleanup(): Promise<void> {
     await asTenant(org, async c => {
       await c.query('DELETE FROM knowledge_graph_edges WHERE id LIKE $1', [`${TAG}%`]);
       await c.query('DELETE FROM knowledge_graph_nodes WHERE description = $1', [TAG]);
+      await c.query('DELETE FROM citation_chains WHERE id LIKE $1', [`${TAG}%`]);
     });
   }
   // Unattributed rows match no tenant, so they need the policy lifted to clear.
   await owner.query('ALTER TABLE knowledge_graph_nodes DISABLE ROW LEVEL SECURITY');
   await owner.query('DELETE FROM knowledge_graph_nodes WHERE description = $1', [TAG]);
   await owner.query('ALTER TABLE knowledge_graph_nodes ENABLE ROW LEVEL SECURITY');
+  // Same for the citation rows the backfill case leaves deliberately NULL.
+  await owner.query('ALTER TABLE citation_chains DISABLE ROW LEVEL SECURITY');
+  await owner.query('DELETE FROM citation_chains WHERE id LIKE $1', [`${TAG}%`]);
+  await owner.query('ALTER TABLE citation_chains ENABLE ROW LEVEL SECURITY');
 }
 
 /**
@@ -141,6 +146,17 @@ async function ensureGraphTables(pool: Pool): Promise<void> {
       metadata JSONB,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    CREATE TABLE IF NOT EXISTS public.citation_chains (
+      id TEXT PRIMARY KEY,
+      source_document_id TEXT,
+      target_document_id TEXT,
+      citation_type TEXT,
+      context TEXT,
+      page_number INTEGER,
+      section_id TEXT,
+      confidence REAL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
     CREATE TABLE IF NOT EXISTS public.lumen_knowledge_graph_edges (
       id UUID PRIMARY KEY,
       source_atom_id INTEGER NOT NULL,
@@ -166,7 +182,8 @@ beforeAll(async () => {
   // test is the posture production gets, not one this file invented.
   scratch = await createScratchSchema(databaseUrl);
   runtime = await scratch.connectAsRuntimeRole();
-  for (const t of ['knowledge_graph_nodes', 'knowledge_graph_edges', 'lumen_knowledge_graph_edges']) {
+  for (const t of ['knowledge_graph_nodes', 'knowledge_graph_edges',
+                   'lumen_knowledge_graph_edges', 'citation_chains']) {
     await owner.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON public.${t} TO ${scratch.runtimeRole}`);
   }
 
@@ -194,11 +211,16 @@ describe('knowledge graph tenant isolation', () => {
                          AND col.column_name = 'organization_id') AS has_org
          FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE n.nspname = 'public'
-          AND c.relname IN ('knowledge_graph_nodes','knowledge_graph_edges','lumen_knowledge_graph_edges')
+          AND c.relname IN ('knowledge_graph_nodes','knowledge_graph_edges',
+                            'lumen_knowledge_graph_edges','citation_chains')
         ORDER BY c.relname`
     );
 
-    expect(posture.rowCount).toBe(3);
+    // Four, not three: citation_chains joined the list on 2026-10-12. It was
+    // the one member of the trio 20260730_graphrag_knowledge_tables.sql created
+    // that this migration originally left out, and that omission was a live
+    // cross-tenant read through GET /api/graphrag/citation-trace/:documentId.
+    expect(posture.rowCount).toBe(4);
     for (const row of posture.rows) {
       expect({ table: row.relname, org: row.has_org, rls: row.relrowsecurity, forced: row.relforcerowsecurity })
         .toEqual({ table: row.relname, org: true, rls: true, forced: true });
@@ -315,5 +337,123 @@ describe('knowledge graph tenant isolation', () => {
       c.query('SELECT name FROM knowledge_graph_nodes WHERE description = $1', [TAG])
     );
     expect(rows.rows).toEqual([]);
+  });
+
+  /* ── citation_chains, added 2026-10-12 (D3) ────────────────────────────────
+     The table the migration originally skipped. Its exposure was not
+     hypothetical: GET /api/graphrag/citation-trace/:documentId walked
+     `source_document_id = ANY($1) OR target_document_id = ANY($1)` from an
+     unchecked path parameter behind authenticateToken alone, so any
+     authenticated user of any tenant could read another tenant's citation
+     graph — including `context`, the quoted source text. The route was fixed
+     the same day; these cases pin the structural half, so the next reader of
+     this table inherits the isolation.                                       */
+
+  it("does not serve one tenant's citation context to another", async () => {
+    for (const org of [ORG_A, ORG_B]) {
+      await asTenant(org, async c => {
+        await c.query(
+          `INSERT INTO citation_chains
+             (id, source_document_id, target_document_id, citation_type, context, organization_id)
+           VALUES ($1, $2, $3, 'direct', $4, $5)`,
+          [`${TAG}-cite-${org}`, `${TAG}-doc-${org}`, `${TAG}-tgt-${org}`,
+           `quoted source text belonging to ${org}`, org]
+        );
+      });
+    }
+
+    // Each tenant sees exactly its own row — the positive half, without which
+    // "sees 0 of the other's" is equally true of a table that was never seeded.
+    for (const [viewer, other] of [[ORG_A, ORG_B], [ORG_B, ORG_A]] as const) {
+      const rows = await asTenant(viewer, c =>
+        c.query('SELECT id, context FROM citation_chains WHERE id LIKE $1 ORDER BY id', [`${TAG}%`])
+      );
+      expect(rows.rows.map(r => r.id)).toEqual([`${TAG}-cite-${viewer}`]);
+      expect(JSON.stringify(rows.rows)).not.toContain(String(other));
+    }
+  });
+
+  it('refuses a citation row that claims another tenant (WITH CHECK)', async () => {
+    await expect(
+      asTenant(ORG_A, c =>
+        c.query(
+          `INSERT INTO citation_chains (id, source_document_id, target_document_id, organization_id)
+           VALUES ($1, 'x', 'y', $2)`,
+          [`${TAG}-cite-evil`, ORG_B]
+        )
+      )
+    ).rejects.toThrow(/row-level security/i);
+  });
+
+  it('attributes a citation from its citing document, and leaves an ambiguous one to nobody', async () => {
+    // The backfill's rule: a citation belongs to whoever owns the CITING
+    // document, resolved through knowledge_graph_nodes, and ONLY where that
+    // document maps to exactly one organisation.
+    const unambiguousDoc = `${TAG}-bf-one`;
+    const ambiguousDoc = `${TAG}-bf-amb`;
+
+    await asTenant(ORG_A, c =>
+      c.query(
+        `INSERT INTO knowledge_graph_nodes (id, name, description, source_document_id, organization_id)
+         VALUES ($1, 'n', $2, $3, $4)`,
+        [`${TAG}-bf-node-a`, TAG, unambiguousDoc, ORG_A]
+      )
+    );
+    // The SAME document named by nodes of BOTH tenants — unattributable.
+    for (const org of [ORG_A, ORG_B]) {
+      await asTenant(org, c =>
+        c.query(
+          `INSERT INTO knowledge_graph_nodes (id, name, description, source_document_id, organization_id)
+           VALUES ($1, 'n', $2, $3, $4)`,
+          [`${TAG}-bf-node-amb-${org}`, TAG, ambiguousDoc, org]
+        )
+      );
+    }
+
+    // Insert both citation rows UNATTRIBUTED, which is the state the backfill
+    // exists for. organization_id NULL fails WITH CHECK on a scoped
+    // connection, so these go in with the policy lifted — exactly how the
+    // legacy rows the backfill targets came to exist.
+    await owner.query('ALTER TABLE citation_chains DISABLE ROW LEVEL SECURITY');
+    try {
+      await owner.query(
+        `INSERT INTO citation_chains (id, source_document_id, target_document_id, citation_type)
+         VALUES ($1, $2, 'tgt', 'direct'), ($3, $4, 'tgt', 'direct')`,
+        [`${TAG}-cite-bf-one`, unambiguousDoc, `${TAG}-cite-bf-amb`, ambiguousDoc]
+      );
+    } finally {
+      await owner.query('ALTER TABLE citation_chains ENABLE ROW LEVEL SECURITY');
+    }
+
+    // Re-run the migration: it is replayed on every deploy, so the backfill
+    // must be safe to re-run and must attribute these two the same way.
+    await owner.query(fs.readFileSync(MIGRATION, 'utf8'));
+
+    const attributed = await asTenant(ORG_A, c =>
+      c.query('SELECT id FROM citation_chains WHERE id LIKE $1 ORDER BY id', [`${TAG}-cite-bf%`])
+    );
+    expect(
+      attributed.rows.map(r => r.id),
+      'the unambiguous citation is attributed to its citing document’s tenant',
+    ).toEqual([`${TAG}-cite-bf-one`]);
+
+    // The ambiguous one is served to NOBODY rather than guessed at — the
+    // file's determinism contract. Checked from both tenants and from an
+    // unscoped connection.
+    for (const viewer of [ORG_A, ORG_B, null]) {
+      const rows = await asTenant(viewer, c =>
+        c.query('SELECT id FROM citation_chains WHERE id = $1', [`${TAG}-cite-bf-amb`])
+      );
+      expect(rows.rows, `ambiguous citation visible to ${viewer ?? 'an unscoped connection'}`)
+        .toEqual([]);
+    }
+    // And it is still THERE on disk, preserved for deliberate attribution or
+    // purge — not quietly deleted.
+    await owner.query('ALTER TABLE citation_chains DISABLE ROW LEVEL SECURITY');
+    const onDisk = await owner.query(
+      'SELECT organization_id FROM citation_chains WHERE id = $1', [`${TAG}-cite-bf-amb`]
+    );
+    await owner.query('ALTER TABLE citation_chains ENABLE ROW LEVEL SECURITY');
+    expect(onDisk.rows).toEqual([{ organization_id: null }]);
   });
 });

@@ -540,9 +540,17 @@ describe('module3OperatingSystemRoutes', () => {
   });
 
   describe('POST /sections/:projectId/:sectionKey/refresh — the record is the composer\'s, never the body\'s', () => {
-    /* One drug_substance source with only a name: §3.2.S.1 composes at well
-       under 100% with missing inputs. The request body claims 100% / none. */
-    const SOURCE = { id: 'so-1', sourceType: 'drug_substance', sourcePayload: { name: 'BX-701' }, sourceHash: 'h1' };
+    /* One drug_substance source: §3.2.S.1 composes at well under 100% with
+       missing inputs, and the request body claims 100% / none. `modality` is
+       not one of §3.2.S.1's inputs — it is what the composition boundary reads
+       to establish the program composes here at all
+       (services/cmc/composition-scope.ts). */
+    const SOURCE = {
+      id: 'so-1',
+      sourceType: 'drug_substance',
+      sourcePayload: { name: 'BX-701', modality: 'small_molecule' },
+      sourceHash: 'h1',
+    };
     function scriptRefresh(statements: Array<{ text: string; params: unknown[] }>) {
       mockQuery.mockImplementation(async (text: string, params: unknown[] = []) => {
         statements.push({ text, params });
@@ -550,7 +558,10 @@ describe('module3OperatingSystemRoutes', () => {
           return { rows: [{ id: 'sec-1', deterministic_json: { completeness: 40, missingInputs: ['manufacturer'] }, approval_state: 'approved' }] };
         }
         if (/FROM cmc_source_objects/.test(text)) return { rows: [SOURCE] };
-        if (/FROM regulatory_programs/.test(text)) return { rows: [] };
+        // The program row the boundary reads: a US IND for a drug.
+        if (/FROM regulatory_programs/.test(text)) {
+          return { rows: [{ id: 'proj-1', programType: 'ind', productType: 'drug', productName: 'BX-701', name: 'BX-701 IND', code: 'BX701' }] };
+        }
         if (/INSERT INTO cmc_module3_sections/.test(text)) return { rows: [{ id: 'sec-1' }] };
         return { rows: [], rowCount: 0 };
       });

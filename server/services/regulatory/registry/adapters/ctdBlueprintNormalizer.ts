@@ -135,11 +135,15 @@ const CTD_COMMON_MODULES: SectionDefinition[] = [
 
 const MODULE_1_TEMPLATES: Record<string, SectionDefinition[]> = {
   US: [
-    { code: '1.1', title: 'Cover Letter', module: 1, required: true, contentType: 'narrative' },
-    { code: '1.2', title: 'Administrative Forms', module: 1, required: true, contentType: 'form' },
-    { code: '1.3', title: 'Prescribing Information / Labeling', module: 1, required: false, contentType: 'narrative' },
+    /* FDA regional Module 1: 1.1 is FORMS, 1.2 is the COVER LETTER
+    (shared/regulatory/regional-module1.ts; gate: tests/regulatory/m1-placement-repo-wide.test.ts).
+    The table of contents has no US Module 1 heading at all — the eCTD XML backbone IS the table
+    of contents — so the row for it is gone rather than renumbered. */
+    /* Labeling is 1.14, not 1.3 (which is Administrative Information). */
+    { code: '1.1', title: 'Administrative Forms', module: 1, required: true, contentType: 'form' },
+    { code: '1.2', title: 'Cover Letter', module: 1, required: true, contentType: 'narrative' },
+    { code: '1.14', title: 'Prescribing Information / Labeling', module: 1, required: false, contentType: 'narrative' },
     { code: '1.4', title: 'References', module: 1, required: false, contentType: 'list' },
-    { code: '1.5', title: 'Table of Contents', module: 1, required: true, contentType: 'list' },
   ],
   EU: [
     { code: '1.0', title: 'Cover Letter', module: 1, required: true, contentType: 'narrative' },

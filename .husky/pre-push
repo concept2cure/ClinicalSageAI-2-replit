@@ -135,6 +135,26 @@ if ! npm run --silent ci:migration-set-order 2>&1; then
   echo ""
   exit 1
 fi
+
+# A table's CREATE must precede the file that attaches a guard to it. A guard on
+# an absent table self-guards and NO-OPS, so ordered first it arrives only on the
+# deploy AFTER the one that creates the table — and in between the table exists
+# and the guard does not. For qms_documents that window is a controlled document
+# reaching 'effective' with no electronic signature (21 CFR Part 11 §11.50).
+# The set has made this mistake twice and the order gate above is blind to it:
+# verified 2026-10-12 by misplacing the two QMS files, which ci:migration-set-order,
+# ci:migration-drop-safety and ci:migration-deploy-path all passed.
+echo "   Validating that guarded tables are created before they are guarded..."
+if ! npm run --silent ci:migration-guard-order:selftest >/dev/null 2>&1 || ! npm run --silent ci:migration-guard-order 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Migration guard-order check FAILED."
+  echo "   A trigger, constraint, RLS enable or policy is attached to a table that"
+  echo "   C2C_MIGRATION_FILES creates LATER, so the guard no-ops on the deploy that"
+  echo "   creates the table and only arms on the next one."
+  echo "   Move the creator above the guard in scripts/db/migration-set.mjs."
+  echo ""
+  exit 1
+fi
 echo "   ✅ Migration apply-order passed."
 
 # The sibling hazard to apply-order, and the same shape of invisible: the
@@ -154,6 +174,25 @@ if ! npm run --silent ci:migration-drop-safety 2>&1; then
   exit 1
 fi
 echo "   ✅ Replay-safe DROPs passed."
+
+# One vocabulary per class. The US class was enumerated at least fifteen times
+# across the repository (three with a different value set), the MDR class in two
+# irreconcilable shapes, the IVDR class in eight places — and two interviews had
+# drifted out of the fact reader's vocabulary with no test noticing. Promoting
+# one module did not stop the next session writing a ninth list, so this refuses
+# one. It is name-aware, because 'A' | 'B' | 'C' | 'D' is also a cleanroom grade
+# and an FDA meeting type. Cheap: it reads the files.
+echo "   Validating no class vocabulary is restated..."
+if ! npm run --silent ci:class-vocabulary 2>&1; then
+  echo ""
+  echo "🚫 ERROR: A governed class vocabulary is restated."
+  echo "   Import it from shared/regulatory/device-class.ts — DEVICE_CLASSES,"
+  echo "   MDR_DECLARED_CLASSES, MDR_RULE_CLASSES, IVDR_CLASSES — rather than"
+  echo "   writing the values again."
+  echo ""
+  exit 1
+fi
+echo "   ✅ One class vocabulary passed."
 
 # A new migrations/*.sql must be on a deploy path. install-fresh applies the
 # whole tree to a NEW database; deploy-migrate applies only C2C_MIGRATION_FILES,
@@ -525,6 +564,36 @@ if ! npm run --silent ci:trivyignore-hygiene 2>&1; then
   exit 1
 fi
 echo "   ✅ .trivyignore entries are bounded and owned."
+
+# ── The oversized-file ratchet actually holds now ────────────────────────────
+# WO-12 defers the oversized-file decomposition on three reasons, the third
+# being "The line is held. The ratchet cannot grow now." It was not held: WO-12
+# recorded 95 files over 1,500 lines and the tree reached 114.
+#
+# audit:repo-health:no-regression compares against
+# docs/reports/repo-health-scan-latest.json, and
+# .github/workflows/repo-health-baseline-refresh.yml regenerates and COMMITS
+# that file on every push to concept2cure-v2. Its rationale is that "PRs
+# branched after a merge therefore always see delta 0" — but RULE 0 means this
+# repository has no PRs, every change is a direct push to trunk, so each push's
+# growth is absorbed into the baseline before any later run can see it. The
+# delta is 0 today with the tree 32 files above the strict ceiling.
+#
+# This ceiling is a number in package.json, where the auto-refresh cannot reach
+# it and the "moves DOWN only" convention already applies. It is set at the
+# measured count, so nothing existing is blocked and only new growth fails.
+# Takes ~1.2s (Node builtins, tracked files only).
+echo "   Checking no file crosses the size ceiling (the ratchet the auto-refresh was absorbing)..."
+if ! npm run --silent audit:repo-health:ceiling 2>&1; then
+  echo ""
+  echo "🚫 ERROR: this push puts another file over the size ceiling."
+  echo "   Split it, or reduce another file to make room. The ceiling in"
+  echo "   package.json (audit:repo-health:ceiling) moves DOWN only — see"
+  echo "   docs/work-orders/WO-12-complexity-refactor.md."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No new oversized file."
 
 # ── No 5xx body carries the caught error's text ──────────────────────────────
 #

@@ -12,6 +12,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z, ZodSchema, ZodError } from 'zod';
 import { createScopedLogger } from '../utils/logger';
 import { setRequestQuery } from '../utils/expressQuery';
+import { DEVICE_CLASSES } from '../../shared/regulatory/device-class.js';
 
 const logger = createScopedLogger('api-validation');
 
@@ -147,7 +148,7 @@ export const updateDocumentSchema = createDocumentSchema.partial();
 export const createDeviceProfileSchema = z.object({
   deviceName: z.string().min(1).max(255),
   manufacturer: z.string().min(1).max(255),
-  deviceClass: z.enum(['I', 'II', 'III']),
+  deviceClass: z.enum(DEVICE_CLASSES),
   productCode: z.string().optional(),
   regulationNumber: z.string().optional(),
   intendedUse: z.string().min(1),

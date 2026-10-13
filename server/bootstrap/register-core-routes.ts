@@ -88,7 +88,7 @@ export function registerCoreRoutes({
            deterministic POST /api/cmc/variations/classify (routes.ts,
            supac-classifier), which no screen calls yet and which the cmc
            surface does not claim, so production refuses it until one does
-           (decision P-13, docs/evidence/CMC-M3-GA/2026-10-05/
+           (decision P-28, docs/evidence/CMC-M3-GA/2026-10-05/
            20-cmc-api-allowlist/);
          · blueprint-generator → GET /api/cmc/quality/qbd/:projectId and
            POST /api/cmc/control-strategy; Module 3 drafting →

@@ -1,0 +1,7 @@
+mutant P1-03: the accept-all path drops the turn
+verdict: KILLED
+Tests  1 failed | 68 passed (69)
+
+ × client/src/concept2cure/v2/__tests__/aiDraftAttribution.test.ts > the capture runs before the mark is stripped > both resolve paths call it, and both pass the range's text AND its turn 6ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 68 passed (69)

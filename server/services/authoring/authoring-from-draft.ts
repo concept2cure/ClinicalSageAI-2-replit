@@ -18,9 +18,12 @@ import { programInOrganization } from '../c2c/program-access';
 import { parseDraftSourceReferences, verifyDraftSourceReferences, type DraftSourceReference, type VerifiedDraftSourceReference } from './draft-source-references';
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
 import { checkSectionFigures, type CitedExcerpt, type SectionFigureCheck } from './draft-figure-check';
+import { checkSectionClaims, type ClaimsExcerpt, type SectionClaimsCheck } from './section-claims-check';
 import { sectionReadableText } from './authoring-read-render';
 import crypto from 'crypto';
 import { ANA_MACHINE_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
+import { servedModelsForTurnOrRun } from './authoring-record';
+import type { QualifiedServedModel } from '../ai-governance/approved-models';
 import { columnState, type Queryable } from './authoring-evidence';
 import { sanitizeAuthoringSectionHtml, sanitizeMachineDraftSectionHtml } from './authoring-html-sanitizer';
 import {
@@ -49,12 +52,69 @@ export interface DocumentProvenance {
     sectionCode: string; sources: VerifiedDraftSourceReference[]; qualification: 'unassessed'; verification: 'current_at_save';
     /** Each figure of the stored section, found in these excerpts or unverified (S5a, draft-figure-check.ts). */
     figures?: SectionFigureCheck;
+    /**
+     * The stored section's figures set against the figures these same excerpts state for the same
+     * frame: conflict, consistent, or not compared with the slot that differs
+     * (section-claims-check.ts). `figures` answers whether a number is in the source at all;
+     * this answers whether it agrees. Neither is approval or filing readiness.
+     */
+    claims?: SectionClaimsCheck;
   }>;
   source: ProvenanceSource;
   conversationId?: string;
   turnId?: string;
-  /** The model id the gateway reported. Present only when a model drafted it. */
+  /**
+   * The model that wrote this draft, as the NAMED TURN RECORD says — never as a
+   * caller said (AnA reasoning round 15, SEC-A-7 door 2). It was caller input,
+   * validated only as a string of at most 2000 characters, and it is written
+   * into three records that cannot be amended: the append-only `doc_revisions`
+   * genesis row, the append-only `authoring_audit_trail` row whose metadata
+   * carries this object verbatim, and the document row an inspector reads. So
+   * any member of the organisation could name an approved model for prose an
+   * unapproved one wrote, permanently.
+   *
+   * `parseProvenance` therefore no longer accepts it, and `createDocumentFromDraft`
+   * parses the provenance of BOTH its callers — the HTTP route and the
+   * in-process AnA drafting tool — so there is exactly one rule and no trusted
+   * channel beside it: **the model in this record comes from the turn record or
+   * not at all.** One invariant is what makes the field auditable; a second,
+   * privileged way to set it is how the first defect got in.
+   *
+   * What that costs, stated: the tool used to set this from `ctx.model`, the
+   * gateway's own `lastServedModel`, which was a true fact. It now comes from
+   * the turn record instead — which also brings `servedBy`, so the normal tool
+   * path records strictly MORE than before. It is only a turn whose record was
+   * never filed (a failed turn) that now records no model, and for that turn
+   * nothing could have verified the name anyway, which is what 'unverified'
+   * says.
+   */
   model?: string;
+  /**
+   * Every model that served the turn this draft came from, with RULE 2's
+   * verdict for each (`qualifyServedModels`). Server-computed; absent when no
+   * turn record could be resolved.
+   */
+  servedBy?: QualifiedServedModel[];
+  /**
+   * What the governed-write rule says of this document's PROSE — not whether
+   * the document was created.
+   *
+   * 'refused' means RULE 2 does not admit these words as governed content: a
+   * model it does not admit served the turn, or the record names no model at
+   * all. The document still exists and is marked, because refusing the create
+   * would push the person to paste the same prose by hand, which carries no
+   * mark, so the lineage gate would record it as the PERSON's own work — the
+   * same words in the same immutable tables, relabelled from "a machine
+   * drafted this" to "a person authored this" (the reasoning is in
+   * docs/evidence/ANA-REASONING/2026-10-05/r14/README.md). The governed
+   * boundaries are where a 'refused' document is stopped.
+   *
+   * 'unverified' means no turn record could be resolved, so nothing is claimed
+   * either way; `governedWriteWhy` says which.
+   */
+  governedWrite?: 'allowed' | 'refused' | 'unverified';
+  /** Why the verdict is 'unverified', in the words the decision path uses. */
+  governedWriteWhy?: string;
   note?: string;
   /** True when the caller gave no module and 'M2' was assumed. Set by the
    *  service, never by the caller; a filing must not treat the assumption as
@@ -65,12 +125,17 @@ export interface DocumentProvenance {
 
 export type ProvenanceInput = Omit<DocumentProvenance, 'recordedAt' | 'projectSourceReferences'>;
 
-const PROVENANCE_TEXT_KEYS = ['conversationId', 'turnId', 'model', 'note'] as const;
+/* `model` is NOT here, and that is the point of round 15's change at this door:
+   a caller cannot name the model that wrote the draft. It is dropped like any
+   unknown key rather than refused, so a client still sending it (the browser
+   card did) keeps working and simply stops being believed. The service sets it
+   from the turn record. */
+const PROVENANCE_TEXT_KEYS = ['conversationId', 'turnId', 'note'] as const;
 
 /** Validate caller-supplied provenance. Unknown keys are dropped, not stored. */
 export function parseProvenance(raw: unknown): { ok: true; value: ProvenanceInput } | { ok: false; error: string } {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    return { ok: false, error: 'provenance is required: { source: ana | seed | import, conversationId?, turnId?, model?, note? }' };
+    return { ok: false, error: 'provenance is required: { source: ana | seed | import, conversationId?, turnId?, note? }' };
   }
   const r = raw as Record<string, unknown>;
   if (!PROVENANCE_SOURCES.includes(r.source as ProvenanceSource)) {
@@ -189,6 +254,48 @@ export function parseDraftInput(raw: unknown): Parsed<CreateDocumentFromDraftInp
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+/**
+ * What RULE 2 says of a machine draft's prose, as fields to merge into its
+ * provenance (AnA reasoning round 15, SEC-A-7 door 2).
+ *
+ * Its own function so `createDocumentFromDraft` stays under the file's
+ * complexity limit, and so this one decision reads in one place.
+ *
+ * The reference may name the turn RECORD (the browser card sends
+ * `m.turnRecord.id`) or the RUN that served it (the in-process AnA tool, since
+ * stream.ts passes `turnId: runId` into the tool context);
+ * `servedModelsForTurnOrRun` tries both and rewrites the stored reference to
+ * the record it resolved to, so the canonical verifiers can re-check it later.
+ */
+async function governedWriteOf(
+  executor: Queryable,
+  tenantId: number,
+  turnRef: string | undefined,
+): Promise<Partial<DocumentProvenance>> {
+  const turn = await servedModelsForTurnOrRun(executor, tenantId, turnRef);
+  /* Nothing resolved, so nothing is claimed — and there is no model to clear:
+     `parseProvenance` drops that field for both callers before this runs, which
+     a mutant proved (a `delete provenance.model` here changed no behaviour). */
+  if (!turn.ok) return { governedWrite: 'unverified', governedWriteWhy: turn.why };
+  /* The record's own model, which overrides whatever a caller or the tool sent.
+     `servedModelsOf` lists models "in the order it first served", so this is
+     the FIRST model to serve the turn — not a claim that it wrote any
+     particular sentence. Where more than one served, `servedBy` carries all of
+     them and is the field a reader should believe; this keeps the single-model
+     meaning the field already had. */
+  const named = turn.servedBy.find((m) => m.model !== null)?.model ?? undefined;
+  /* Two cases refuse, not one: a model the rule does not admit, AND a record
+     that names no model at all — an empty list is not a list of approved
+     models, and `.some()` over it is false. */
+  const unadmitted = turn.servedBy.length === 0 || turn.servedBy.some((m) => m.model === null || !m.qualified);
+  return {
+    turnId: turn.turnRecordId,
+    servedBy: turn.servedBy,
+    ...(named ? { model: named } : {}),
+    governedWrite: unadmitted ? 'refused' : 'allowed',
+  };
+}
+
 // createDocumentFromDraft
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -224,11 +331,15 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
     await lockDocumentDispositionProgram(q, ctx.tenantId, programId);
     const references: NonNullable<DocumentProvenance['projectSourceReferences']> = [];
     for (const section of selected) {
-      const excerpts: CitedExcerpt[] = [];
+      const excerpts: Array<CitedExcerpt & ClaimsExcerpt> = [];
       const sources = await verifyDraftSourceReferences(section.refs, q, ctx.tenantId, programId, excerpts);
-      // Every figure the stored section states, against the excerpts just verified (S5a).
-      const figures = checkSectionFigures(sectionReadableText(section.storedContent), excerpts);
-      references.push({ sectionCode: section.sectionCode, sources, qualification: 'unassessed', verification: 'current_at_save', figures });
+      const sectionText = sectionReadableText(section.storedContent);
+      // Every figure the stored section states, against the excerpts just verified (S5a) — is the
+      // number in the source at all — and then whether it agrees with the source's own figure for
+      // the same frame. One load of the excerpts serves both.
+      const figures = checkSectionFigures(sectionText, excerpts);
+      const claims = checkSectionClaims(section.sectionCode, sectionText, excerpts);
+      references.push({ sectionCode: section.sectionCode, sources, qualification: 'unassessed', verification: 'current_at_save', figures, claims });
     }
     // Keep the same object used by the document and every CREATE audit row.
     provenance.projectSourceReferences = references;
@@ -267,6 +378,11 @@ export async function createDocumentFromDraft(
     recordedAt: new Date().toISOString(),
   };
   const isMachineDraft = provenance.source === 'ana';
+  /* What the governed-write rule says of this prose, read from the turn record
+     the draft names — before `insertDocumentTx` opens its transaction, so a
+     missing store or a malformed reference cannot abort the write it is being
+     checked for. A seed or an import is a person's act and carries no verdict. */
+  if (isMachineDraft) Object.assign(provenance, await governedWriteOf(ctx.pool, ctx.tenantId, provenance.turnId));
   // A machine draft keeps no image: a model's image is never an uploaded
   // figure (item 18, 2026-10-05). An import or seed keeps its figures.
   const storedContent = input.sections.map(s =>

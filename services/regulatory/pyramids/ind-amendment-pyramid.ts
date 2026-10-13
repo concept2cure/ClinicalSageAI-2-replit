@@ -1,5 +1,35 @@
 import type { BaseTask, SubmissionPyramid } from './types.js';
 import { buildPhase } from './types.js';
+import { soleModule1Placement, type DocumentRole } from '../../../shared/regulatory/regional-module1.js';
+
+type Binding = NonNullable<BaseTask['documentBindings']>[number];
+
+/**
+ * A Module 1 binding, from the FDA record rather than from a number written here.
+ *
+ * The bindings in this file stated their own codes and had the cover letter at 1.1 (which is Forms)
+ * and FDA Form 1571 at 1.2 (which is the Cover Letter) — the swapped pair found across ten files on
+ * 2026-10-13. Empty when the record holds no single node for the role: a task with no placement is
+ * honest, a task pointing at the wrong heading is not.
+ */
+function m1Binding(
+  role: DocumentRole,
+  rest: Omit<Binding, 'ctdSection' | 'sectionTitle'> = { ectdLifecycleOp: 'new' },
+  title?: string,
+): Binding[] {
+  const p = soleModule1Placement(role, 'US', 'ind');
+  return p ? [{ ...rest, ctdSection: p.code, sectionTitle: title ?? p.title }] : [];
+}
+import { e6r3Ref } from '../../../shared/regulatory/ich-e6r3.js';
+
+/* ICH E6(R3) reached Step 4 on 2025-01-06 and supersedes E6(R2) (currency fact
+   ich-e6r3-gcp-step4). Its numbering is not R2's: the Investigator's Brochure (R2 §7) and the
+   protocol (R2 §6) became Appendices A and B, and informed consent (R2 §4.8) became Annex 1 §2.8.
+   An R2 section number given to a sponsor as the guideline in force is wrong, not merely dated, so
+   the citation comes from the record (shared/regulatory/ich-e6r3.ts) rather than from a string
+   here. Gate: tests/regulatory/ich-e6r3-citations.test.ts, which did not scan this tree until
+   2026-10-12. */
+const GCP = 'ICH E6(R3)';
 
 /**
  * IND Amendment Pyramid
@@ -164,12 +194,7 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
       timeline: { typicalStartWeek: 2, typicalDurationWeeks: 1 },
       deliverables: ['Draft amendment cover letter'],
       documentBindings: [
-        {
-          ctdSection: '1.1',
-          sectionTitle: 'Cover Letter',
-          ectdLifecycleOp: 'new',
-          artifactTypes: ['cover_letter'],
-        },
+        ...m1Binding('cover_letter', { ectdLifecycleOp: 'new', artifactTypes: ['cover_letter'] }),
       ],
     },
   ]);
@@ -242,7 +267,7 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
           ],
         },
         guidance: {
-          ichGuideline: 'ICH E6(R2) Section 7',
+          ichGuideline: e6r3Ref({ kind: 'appendix', id: 'A' }),
           cfrReference: '21 CFR 312.55(a)',
           keyConsiderations: [
             'IB must be reviewed and updated at least annually (21 CFR 312.55)',
@@ -285,7 +310,7 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
         },
         guidance: {
           cfrReference: '21 CFR 312.31(a)(2)',
-          ichGuideline: 'ICH E6(R2)',
+          ichGuideline: GCP,
           keyConsiderations: [
             'Protocol amendment must include a brief description of the change and reference to the original protocol',
             'Changes increasing risk to subjects may not be implemented before submission',
@@ -383,12 +408,7 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
         timeline: { typicalStartWeek: 4, typicalDurationWeeks: 1 },
         deliverables: ['Completed FDA Form 1571 (amendment version)'],
         documentBindings: [
-          {
-            ctdSection: '1.2',
-            sectionTitle: 'FDA Form 1571',
-            ectdLifecycleOp: 'new',
-            artifactTypes: ['fda_form'],
-          },
+          ...m1Binding('application_form', { ectdLifecycleOp: 'new', artifactTypes: ['fda_form'] }, 'FDA Form 1571'),
         ],
       },
       {
@@ -412,8 +432,11 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
           'Submission history summary',
         ],
         documentBindings: [
+          /* 1.0 is the EU regional cover-letter heading; the FDA tree has no 1.0 at all. A
+             cross-reference table and submission history are administrative information, which
+             is 1.3 in the FDA tree (shared/regulatory/regional-module1.ts). */
           {
-            ctdSection: '1.0',
+            ctdSection: '1.3',
             sectionTitle: 'Regional Administrative Information',
             ectdLifecycleOp: 'append',
           },
@@ -565,7 +588,7 @@ export function buildIndAmendmentPyramid(): SubmissionPyramid {
         },
         guidance: {
           cfrReference: '21 CFR 50.25, 21 CFR 50.27',
-          ichGuideline: 'ICH E6(R2) Section 4.8',
+          ichGuideline: e6r3Ref({ kind: 'annex1', section: '2.8' }),
           keyConsiderations: [
             'Any change in risk or procedures requires informed consent update',
             'IRB must approve revised consent before it is used',

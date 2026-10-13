@@ -48,6 +48,22 @@
  * documentation every class route produces, not a choice between routes. The
  * class entries carry the route's meaning.
  *
+ * ── Marking, not hiding ─────────────────────────────────────────────────────
+ * A position the programme's own answers contradict is MARKED and still
+ * offered (`pathway-cautions.ts`). The reasoning is in
+ * `PositionAvailability`; the line this module draws is:
+ *
+ *   the DOMAIN decides which positions exist — a monoclonal antibody is
+ *   licensed under section 351 and the modality frame does not offer it an
+ *   NDA, because that is which statute governs the product, not a judgement
+ *   about this programme;
+ *   the programme's own FACTS decide which of those carry a caution — and a
+ *   caution is a mark on an offered position, never its removal.
+ *
+ * An absent fact is not a contradiction. A rule fires only on something the
+ * person has actually said, so an interview that has not reached the question
+ * yet produces no cautions at all.
+ *
  * @module shared/regulatory/pathway-positions
  */
 
@@ -166,20 +182,23 @@ const POSITION_MEANING: Readonly<Record<string, PositionMeaning>> = {
   },
   US_IDE: {
     commits:
-      'Permission to use an unapproved device in a clinical investigation, not to market it. It carries the investigation’s own reporting and record obligations.',
-    authority: '21 CFR 812; FD&C Act 520(g)',
+      'Permission to use an unapproved device in a clinical investigation, not to market it. It carries the investigation’s own reporting and record obligations. A diagnostic study is often exempt from most of Part 812 instead — leftover specimens, not individually identifiable, results not reported to the subject or used for diagnosis — so establish whether you need one before preparing it.',
+    authority: '21 CFR 812; 21 CFR 812.2(c)(3) (exempted investigations); FD&C Act 520(g)',
     marketingRoute: false,
   },
   US_513G: {
     commits:
       'FDA’s view on how the device is classified and what applies to it. It clears nothing and approves nothing: a marketing route is still to be chosen afterwards.',
-    authority: 'FD&C Act 513(g); 21 CFR 860.123',
+    /* 21 CFR 860.123 is the reclassification petition, not a 513(g)
+       request: the request rests on the statute and FDA's own procedures. */
+    authority: 'FD&C Act 513(g); FDA, FDA and Industry Procedures for Section 513(g) Requests for Information',
     marketingRoute: false,
   },
   US_QSUB: {
     commits:
       'FDA’s written feedback before you file — on a predicate, a protocol or a test plan. Advice, not agreement: it binds neither side, though departing from it invites the question why.',
-    authority: 'FD&C Act 515B/513(a); the Q-Submission Program guidance',
+    /* 515B is the Breakthrough Devices Program, which a Q-Sub is not. */
+    authority: 'FDA, Requests for Feedback and Meetings for Medical Device Submissions: The Q-Submission Program',
     marketingRoute: false,
   },
 
@@ -228,7 +247,7 @@ const POSITION_MEANING: Readonly<Record<string, PositionMeaning>> = {
   },
   US_LDT: {
     commits:
-      'A test designed, manufactured and used within one certified high-complexity laboratory. FDA’s enforcement position on these changed in 2024 and has been challenged, so treat the premarket obligation as unsettled and confirm it before relying on this route.',
+      'A test designed, manufactured and used within one certified high-complexity laboratory. FDA’s 2024 rule bringing these under premarket review was vacated by a federal court in 2025; whether that is where the position now rests is not something AnA tracks, so treat the premarket obligation as unsettled and confirm it before relying on this route.',
     authority: '21 CFR 809; 42 CFR 493 (CLIA)',
     marketingRoute: true,
   },
@@ -260,6 +279,13 @@ const POSITION_MEANING: Readonly<Record<string, PositionMeaning>> = {
     marketingRoute: true,
   },
 
+  EU_CTA: {
+    commits:
+      'Permission to run the trial, not to market the product: one application through CTIS covers every member state you name, Part I is assessed jointly and Part II nationally, and the authorised protocol is the one you must run.',
+    authority: 'Regulation (EU) 536/2014 Art 5 to Art 8, Annex I',
+    marketingRoute: false,
+  },
+
   /* -- Devices, EU: the class decides the conformity route -------------- */
   EU_MDR_CLASS_I: {
     commits:
@@ -269,13 +295,13 @@ const POSITION_MEANING: Readonly<Record<string, PositionMeaning>> = {
   },
   EU_MDR_CLASS_IIA: {
     commits:
-      'A notified body audits the quality management system and assesses the technical documentation of at least one representative device per category (Annex IX), or examines the type and verifies production instead (Annex X with XI).',
-    authority: 'MDR Art 52(6), Annexes IX to XI',
+      'A notified body audits the quality management system and assesses the technical documentation of at least one representative device per category (Annex IX), or verifies conformity by production quality assurance or product verification instead (Annex XI). The Annex X type-examination is not open to Class IIa.',
+    authority: 'MDR Art 52(6), Annexes IX and XI',
     marketingRoute: true,
   },
   EU_MDR_CLASS_IIB: {
     commits:
-      'As Class IIa, but technical documentation is assessed per generic device group, and implantable Class IIb devices are assessed device by device.',
+      'As Class IIa with the type-examination route open as well (Annex X with XI), and the technical documentation assessed per generic device group. An implantable Class IIb device is assessed device by device, apart from the sutures, staples, dental fillings and the rest of the list Article 52(4) carves out.',
     authority: 'MDR Art 52(4) to (5), Annexes IX to XI',
     marketingRoute: true,
   },
@@ -284,6 +310,13 @@ const POSITION_MEANING: Readonly<Record<string, PositionMeaning>> = {
       'Full notified-body assessment of the quality system and of the technical documentation for each device, with a clinical evaluation consultation procedure for implantables and an expert panel view where one applies.',
     authority: 'MDR Art 52(3), Art 54, Annexes IX to XI',
     marketingRoute: true,
+  },
+
+  EU_CLIN_INVESTIGATION: {
+    commits:
+      'Permission to run the clinical investigation, not to place the device on the market. The competent authority of each member state authorises it and the ethics committee opines; for an implantable or a Class III device the investigation is the default rather than a choice, since clinical data on the device itself is what the route then needs.',
+    authority: 'MDR (EU) 2017/745 Art 62, Art 70, Art 78; Annex XV',
+    marketingRoute: false,
   },
 
   /* -- Diagnostics, EU -------------------------------------------------- */
@@ -296,31 +329,40 @@ const POSITION_MEANING: Readonly<Record<string, PositionMeaning>> = {
   EU_IVDR_CLASS_B: {
     commits:
       'A notified body audits the quality management system and assesses the technical documentation of at least one device per category, with the performance evaluation carrying the claim.',
-    authority: 'IVDR Art 48(7), Annex IX',
+    /* The paragraph of Article 48 that carries each class is not cited: the
+       article is, and the annex is — a citation precise enough to be wrong is
+       worse than one broad enough to be right (2026-10-12 review). */
+    authority: 'IVDR Art 48, Annex IX',
     marketingRoute: true,
   },
   EU_IVDR_CLASS_CD: {
     commits:
       'Technical documentation assessed per generic device group, and for Class D an EU reference laboratory verifies performance against common specifications with batch verification - the longest route to market under the IVDR.',
-    authority: 'IVDR Art 48(3) to (6), Art 49, Annex IX Section 4.4',
+    authority: 'IVDR Art 48, Art 49, Art 100, Annex IX',
     marketingRoute: true,
   },
   EU_CDX_IVDR_D: {
     commits:
-      'A companion diagnostic is Class C or D under the IVDR, and its notified body must consult the EMA or the medicine\u2019s competent authority on the suitability of the test for the therapy.',
-    authority: 'IVDR Annex VIII Rule 3(f); Art 48(6)',
+      'Annex VIII Rule 3(f) puts a companion diagnostic in Class C \u2014 another rule may put a particular assay in Class D \u2014 and its notified body must consult the EMA or the medicine\u2019s competent authority on the suitability of the test for the therapy.',
+    authority: 'IVDR Annex VIII Rule 3(f); Art 48',
     marketingRoute: true,
   },
   EU_IVDR_ART48_CONSULT: {
     commits:
       'The consultation a companion diagnostic\u2019s notified body must run with the medicines authority. It is a step inside the IVDR route, not a route of its own.',
-    authority: 'IVDR Art 48(6)',
+    authority: 'IVDR Art 48, Annex IX',
     marketingRoute: false,
   },
   EU_REF_LAB: {
     commits:
       'A Class D consultation: the reference laboratory verifies performance against common specifications. It is a step inside the IVDR route, not a route of its own.',
-    authority: 'IVDR Art 48(3)–(6), Art 100; Annex IX Section 4.4',
+    authority: 'IVDR Art 48, Art 100; Annex IX',
+    marketingRoute: false,
+  },
+  EU_PERF_STUDY: {
+    commits:
+      'Permission to run the performance study, not to place the assay on the market. A study that takes surgically invasive samples, or whose result drives patient management, is authorised by the competent authority rather than merely notified — and a companion-diagnostic study is in that category by the regulation itself.',
+    authority: 'IVDR (EU) 2017/746 Art 58, Art 66, Art 70; Annex XIII, Annex XIV',
     marketingRoute: false,
   },
 };
@@ -369,12 +411,23 @@ export function positionFor(registryId: string): PathwayPosition | null {
   };
 }
 
-/** The order positions are offered in, per domain and region. Routes to market first. */
+/**
+ * The order positions are offered in, per domain and region. Routes to market
+ * first, then the positions that are not routes to market — the
+ * investigational filing among them, because a programme that has not reached
+ * a marketing application still has to be able to say what it IS filing.
+ */
 const ORDER: Readonly<Record<string, string[]>> = {
   'pharma_biotech:US': ['US_NDA', 'US_505B2', 'US_BLA', 'US_351K', 'US_ANDA', 'US_ACCEL_APPROVAL', 'US_IND'],
   'medical_devices:US': ['US_510K', 'US_DE_NOVO', 'US_PMA', 'US_HDE', 'US_EUA', 'US_IDE', 'US_513G', 'US_QSUB'],
-  'pharma_biotech:EU': ['EU_MAA', 'EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP'],
-  'medical_devices:EU': ['EU_MDR_CLASS_I', 'EU_MDR_CLASS_IIA', 'EU_MDR_CLASS_IIB', 'EU_MDR_CLASS_III'],
+  'pharma_biotech:EU': ['EU_MAA', 'EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP', 'EU_CTA'],
+  'medical_devices:EU': [
+    'EU_MDR_CLASS_I',
+    'EU_MDR_CLASS_IIA',
+    'EU_MDR_CLASS_IIB',
+    'EU_MDR_CLASS_III',
+    'EU_CLIN_INVESTIGATION',
+  ],
   'diagnostics_ivd:US': [
     'US_510K_IVD',
     'US_DE_NOVO_IVD',
@@ -384,6 +437,12 @@ const ORDER: Readonly<Record<string, string[]>> = {
     'US_EUA_IVD',
     'US_LDT',
     'US_CLIA_WAIVER',
+    /* An IVD is a device under the Act, and a significant-risk clinical
+       performance study of one runs under the same Part 812 — the registry
+       holds no IVD-specific investigational filing because there is none.
+       Whether a study needs an IDE at all is the position's own first
+       sentence. */
+    'US_IDE',
   ],
   'diagnostics_ivd:EU': [
     'EU_IVDR_CLASS_A',
@@ -392,6 +451,7 @@ const ORDER: Readonly<Record<string, string[]>> = {
     'EU_CDX_IVDR_D',
     'EU_IVDR_ART48_CONSULT',
     'EU_REF_LAB',
+    'EU_PERF_STUDY',
   ],
 };
 
@@ -400,9 +460,12 @@ const ORDER: Readonly<Record<string, string[]>> = {
  * order they should be offered.
  *
  * `modality` narrows a drug or biologic to what the governed frame allows it,
- * in the frame's own order (default first); without one, every annotated drug
- * position is offered. An empty list means this module holds nothing for that
- * pair, and the caller must say so rather than draw an empty question.
+ * in the frame's own order (default first), followed by the pair's positions
+ * that are not routes to market — the frame holds marketing routes only, and a
+ * programme at the investigational stage must still be able to say what it is
+ * filing. Without a modality, every annotated position for the pair is
+ * offered. An empty list means this module holds nothing for that pair, and
+ * the caller must say so rather than draw an empty question.
  */
 export function pathwayPositionsFor(input: {
   domain: PathwayDomain;
@@ -410,14 +473,36 @@ export function pathwayPositionsFor(input: {
   modality?: Modality | null;
 }): PathwayPosition[] {
   const { domain, region, modality } = input;
+  const ids = ORDER[`${domain}:${region}`] ?? [];
   if (domain === 'pharma_biotech' && region === 'US' && modality) {
-    const ids = MODALITY_FRAME[modality].pathways
+    const framed = MODALITY_FRAME[modality].pathways
       .map(option => FRAME_PATHWAY_TO_REGISTRY[option.pathway])
       .filter((id): id is string => Boolean(id));
-    return ids.map(positionFor).filter((p): p is PathwayPosition => p !== null);
+    /* Where the frame has no view of the product at all — a combination
+       product, whose route follows from the centre determination rather than
+       from the product type — nothing here is offered, and the caller says
+       why in the frame's own words. Appending the investigational filing
+       would assert the drug side of a determination that has not been made. */
+    if (framed.length === 0) return [];
+    /* The frame holds ROUTES TO MARKET only, so a programme that stated a
+       modality was offered nothing for the stage it is actually at: a
+       monoclonal antibody in phase 1 could not say it is filing an IND in the
+       question that asks which application it is making. The pair's own
+       positions that are not routes to market follow the frame's routes. */
+    const alsoOffered = ids.filter(id => !framed.includes(id) && POSITION_MEANING[id]?.marketingRoute === false);
+    return [...framed, ...alsoOffered].map(positionFor).filter((p): p is PathwayPosition => p !== null);
   }
-  const ids = ORDER[`${domain}:${region}`] ?? [];
   return ids.map(positionFor).filter((p): p is PathwayPosition => p !== null);
+}
+
+/**
+ * The region as this catalogue names it, or null where it holds nothing for
+ * that regulator. The registry holds Japan's, Health Canada's and the rest;
+ * what those positions commit a sponsor to is not written, so a caller must
+ * say so rather than offer another regulator's routes.
+ */
+export function pathwayRegionOf(region: string | null | undefined): PathwayRegion | null {
+  return region === 'US' || region === 'EU' ? region : null;
 }
 
 /** Every position this module offers anywhere, for the gates that check them all. */
@@ -436,6 +521,11 @@ export function allPathwayPositions(): PathwayPosition[] {
  * The positions as a question's options — the shape a flow puts in a field, so
  * it states what each position commits to by referring here instead of writing
  * its own list.
+ *
+ * Marking a position the programme's answers contradict is the other
+ * module's half (`pathway-cautions.ts`), and the engine composes the two
+ * (`programme-facts.ts`): the catalogue lists, the rules mark, and nothing is
+ * ever removed.
  */
 export function pathwayOptions(input: {
   domain: PathwayDomain;

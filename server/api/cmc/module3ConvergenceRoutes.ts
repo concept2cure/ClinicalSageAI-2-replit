@@ -7,7 +7,7 @@
  *  POST /build-section/:projectId/:sectionKey — Compile + bridge a specific section
  *
  * Deleted 2026-10-05, with no caller in client/src or server, when the cmc
- * surface's API claim was narrowed to what its screens call (decision P-13;
+ * surface's API claim was narrowed to what its screens call (decision P-28;
  * docs/evidence/CMC-M3-GA/2026-10-05/20-cmc-api-allowlist/), and kept gone by
  * server/api/cmc/__tests__/cmc-retired-routers.contract.test.ts:
  *  POST /classify-artifact/:projectId — an upload is classified into a
@@ -28,6 +28,7 @@ import { bridgeCompileToArtifact } from '../../services/module3-convergence-serv
    3.2.A appendices + 3.2.R for the recorded region; one row, one lineage
    rewrite and one provenance event per section. */
 import { composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
+import { compositionRefusalBody, isCompositionOutOfScope } from '../../services/cmc/composition-scope';
 import { NO_CANONICAL_SOURCES_REMEDY } from '../../services/cmc/link-to-module3';
 
 /** Said the same way by every build path, so the remedy does not depend on which one the user hit. */
@@ -142,6 +143,11 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
     });
   } catch (error) {
     await client.query('ROLLBACK');
+    // The composition boundary, on the same terms as the compile route
+    // (services/cmc/composition-scope.ts).
+    if (isCompositionOutOfScope(error)) {
+      return res.status(409).json(compositionRefusalBody(error.refusal));
+    }
     if (String((error as Error)?.message || '').includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }

@@ -81,9 +81,19 @@ beforeAll(async () => {
       created_at timestamptz NOT NULL DEFAULT now());
     CREATE TABLE regulatory_programs (
       id text PRIMARY KEY, organization_id int, program_type text,
-      product_name text, name text, code text);
+      -- The product class the person records (P-21), NOT NULL on the real
+      -- table; the composition boundary reads it before composing anything.
+      product_type text, product_name text, name text, code text, deleted_at timestamptz);
   `);
   await pglite.query(`INSERT INTO organizations (id, name) VALUES ($1,'a')`, [ORG]);
+  /* The program these sections belong to. Without a readable row the
+     composition boundary cannot establish what the program files, and fails
+     closed rather than composing (services/cmc/composition-scope.ts). */
+  await pglite.query(
+    `INSERT INTO regulatory_programs (id, organization_id, program_type, product_type, product_name, name, code)
+     VALUES ($1, $2, 'ind', 'drug', 'API-1', 'API-1 IND', 'API1')`,
+    [PROJECT, ORG],
+  );
 }, 90_000);
 
 afterAll(async () => {
@@ -101,7 +111,10 @@ async function seedSource(): Promise<string> {
   const r = await wrap(
     `INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_payload, source_hash, source_key)
      VALUES ($1,$2,'drug_substance',$3::jsonb,'h1','ds-1') RETURNING id`,
-    [ORG, PROJECT, JSON.stringify({ name: 'API-1', manufacturer: 'Acme' })],
+    /* `modality` is what the composition boundary reads
+       (services/cmc/composition-scope.ts): Module 3 is composed only for a
+       small-molecule substance, and this fixture is one. */
+    [ORG, PROJECT, JSON.stringify({ name: 'API-1', manufacturer: 'Acme', modality: 'small_molecule' })],
   );
   return (r.rows[0] as any).id;
 }
@@ -191,7 +204,11 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
     // The source changes; the section it feeds is composed differently.
     await wrap(
       `UPDATE cmc_source_objects SET source_payload = $1::jsonb, source_hash = $2 WHERE id = $3`,
-      [JSON.stringify({ name: 'API-1', manufacturer: 'A DIFFERENT SITE' }), 'hash-2', sourceId],
+      [
+        JSON.stringify({ name: 'API-1', manufacturer: 'A DIFFERENT SITE', modality: 'small_molecule' }),
+        'hash-2',
+        sourceId,
+      ],
     );
     expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
     const after = await wrap(

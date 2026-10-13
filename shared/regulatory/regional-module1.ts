@@ -100,6 +100,7 @@ export const DOCUMENT_ROLES = Object.freeze([
   'letter_of_authorization',
   'expert_information',
   'meeting_information',
+  'general_investigational_plan',
 ] as const);
 export type DocumentRole = (typeof DOCUMENT_ROLES)[number];
 
@@ -304,7 +305,7 @@ const US_TREE: RegionalHeading[] = [
   },
   { number: '1.15', title: 'Promotional Material', basis: [US_PARENT], applies: [whenApplicable('promotional labeling or advertising is submitted')], description: 'Promotional labeling and advertising submissions (Form 2253 travels under 1.1)' },
   { number: '1.16', title: 'Risk Management Plan / REMS', roles: ['rems'], basis: [US_PARENT], applies: [{ kinds: ['nda', 'bla', 'anda'], necessity: 'authority-dependent' }], description: 'Risk management (non-REMS) and REMS documents' },
-  { number: '1.20', title: 'General Investigational Plan for Initial IND', applies: [always(['ind'])], basis: [fdaCv('1.20')], description: 'Introductory statement and general investigational plan (21 CFR 312.23(a)(3))' },
+  { number: '1.20', title: 'General Investigational Plan for Initial IND', applies: [always(['ind'])], roles: ['general_investigational_plan'], basis: [fdaCv('1.20')], description: 'Introductory statement and general investigational plan (21 CFR 312.23(a)(3))' },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -522,6 +523,43 @@ export function module1Rows(
 /** The headings of one tree that hold a document with this role (for `kind`, when given). */
 export function placementFor(role: DocumentRole, j: ModeledJurisdiction, kind?: ApplicationKind): RegionalHeading[] {
   return flattenModule1(j, kind).filter((n) => n.roles?.includes(role));
+}
+
+/** One heading's code, title and basis — what a caller needs to state a placement and cite it. */
+export interface SolePlacement {
+  code: string;
+  title: string;
+  basis: RegulatoryBasis[];
+}
+
+/**
+ * The ONE heading this jurisdiction files `role` under, or null.
+ *
+ * `placementFor` returns every matching heading, which is the right shape for a reader and the
+ * wrong shape for a caller that must put a single number on a document. This narrows it: null when
+ * the record holds no node for the role in that tree, and null when it holds more than one, because
+ * a caller that has to pick cannot be given a number as though the record settled it.
+ *
+ * **A null is an answer, not a gap.** `soleModule1Placement('rmp', 'US')` is null because FDA has
+ * REMS (1.16) and risk management that is not a REMS; there is no US node called an RMP, and the
+ * EU's answer must not be carried over. A caller that gets null asks what the document is — it does
+ * not fall back to a nearest match. Filing a sponsor's risk-management document under 1.5.1 because
+ * the number looked close is how the platform came to propose the heading whose controlled meaning
+ * is "withdrawal of an IND".
+ *
+ * `kind` filters by applicability, so the answer can differ between an IND and a marketing
+ * application: 1.14.4.1 (Investigator's Brochure) applies to an IND only, and 1.3.3 (Debarment
+ * Certification) to a marketing application only.
+ */
+export function soleModule1Placement(
+  role: DocumentRole,
+  j: ModeledJurisdiction,
+  kind?: ApplicationKind,
+): SolePlacement | null {
+  const hits = placementFor(role, j, kind);
+  if (hits.length !== 1) return null;
+  const n = hits[0];
+  return { code: n.number, title: n.title, basis: n.basis };
 }
 
 /**

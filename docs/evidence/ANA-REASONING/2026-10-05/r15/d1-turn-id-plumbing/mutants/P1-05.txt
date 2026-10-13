@@ -1,0 +1,11 @@
+mutant P1-05: an entry naming no turn is DROPPED, losing the clause instead of attributing it honestly
+verdict: KILLED
+Tests  5 failed | 64 passed (69)
+
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > keeps an entry whose author is a known machine author and whose text is non-empty 13ms
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > caps the list and drops an entry whose text exceeds the cap rather than truncating it 2ms
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText carries the turn record the claim names (round 15, SEC-A-7 door 1) > carries null when the claim names no turn, rather than dropping the entry 1ms
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText carries the turn record the claim names (round 15, SEC-A-7 door 1) > drops a malformed id to null instead of passing it to a uuid column 2ms
+ × server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText carries the turn record the claim names (round 15, SEC-A-7 door 1) > bounds the id before it is believed, so a long string cannot ride in on it 1ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  5 failed | 64 passed (69)

@@ -236,6 +236,7 @@ import {
   workspaceFileName,
   workspacePathOrRefusal,
 } from './document-workspace.js';
+import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -8862,7 +8863,7 @@ registerToolHandler('classify_ivd_device', async (input, ctx) => {
   if (!deviceName) {
     return JSON.stringify({ error: 'device_name is required.' });
   }
-  if (!['A', 'B', 'C', 'D'].includes(ivdrClass)) {
+  if (!(IVDR_CLASSES as readonly string[]).includes(ivdrClass)) {
     return JSON.stringify({ error: 'ivdr_class must be A / B / C / D.' });
   }
   try {
@@ -9223,6 +9224,13 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
         ...(typeof l.modified_file === 'string' && l.modified_file.trim()
           ? { modifiedFile: l.modified_file.trim() }
           : {}),
+        /* The study and the STF file-tag, carried as given. FDA validation 1789
+           refuses a Module 4/5 study file that no Study Tagging File references,
+           and the packager refuses the sequence; these are what satisfy it.
+           Nothing here infers either — an absent one stays absent, so the
+           refusal names the file instead of a guess being tagged. */
+        ...(typeof l.study_id === 'string' && l.study_id.trim() ? { studyId: l.study_id.trim() } : {}),
+        ...(typeof l.stf_file_tag === 'string' && l.stf_file_tag.trim() ? { stfFileTag: l.stf_file_tag.trim() } : {}),
       })),
       outputDir,
     });
@@ -20114,6 +20122,31 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
   if (!category) {
     return JSON.stringify({
       error: `No intelligence flow found for document type: "${documentType}". Use list_intelligence_flows to see available flows.`,
+    });
+  }
+
+  /* An interview whose answers reach no record is not offered where the
+     launch boundary is enforced (decision P-28, 2026-10-12).
+     `buildInterviewCommitPlan` produces entries for the CMC specification flow
+     and an EMPTY plan for every other category, so a protocol, CSR, 510(k),
+     CER, SOP, NDA or BLA interview could be started, answered to the end, and
+     commit nothing. Walking a person through that and then saving nothing is
+     an empty result standing in for a refusal. The list is the commit path's
+     own (services/cmc/interview-commit.ts), not a second one here.
+
+     Off the boundary — a development server — every flow stays available: the
+     engine and its question sets are what a person builds against. */
+  const { flowCommitsToRecord } = await import('../cmc/interview-commit.js');
+  const { launchScopeEnforced } = await import('../entitlements/launch-scope.js');
+  if (launchScopeEnforced() && !flowCommitsToRecord(category)) {
+    return JSON.stringify({
+      error:
+        `The "${documentType}" interview is not available in this release: its answers reach no record, so ` +
+        `completing it would save nothing. The interview that commits is the CMC specification flow, which ` +
+        `writes the drug substance, drug product, method, specification and stability registers. For a ` +
+        `protocol, a CSR, a 510(k), a CER or an SOP, author the document in Document editor & authoring.`,
+      flow: category,
+      commits: false,
     });
   }
 

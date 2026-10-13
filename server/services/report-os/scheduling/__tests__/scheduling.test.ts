@@ -115,10 +115,46 @@ describe('isDue', () => {
     expect(isDue(schedule, lastRun, now)).toBe(false);
   });
 
-  it('is due when there has been no prior run', () => {
-    const now = new Date(Date.UTC(2026, 5, 16, 9, 0, 0));
-    expect(isDue(schedule, null, now)).toBe(true);
+  /* ── The epoch anchor (coverage review C-26b) ────────────────────────────
+     This case used to read "is due when there has been no prior run" and pass
+     `null`, which `isDue` substituted with `new Date(0)`. Every next-run
+     computed from 1970 is in the past, so EVERY never-run subscription was due
+     on the next sweep whatever its cadence — while the row's own `nextRunAt`,
+     computed from the creation time, showed a date weeks away. The screen and
+     the sweep disagreed, and the screen was right.
+     The anchor is now the creation time and the parameter is non-nullable, so
+     the sentinel cannot come back through a null. */
+  it('a never-run schedule is NOT due minutes after it was created', () => {
+    const createdAt = new Date(Date.UTC(2026, 9, 12, 14, 0, 0));
+    const monthly: ReportSchedule = { cadence: 'monthly', dayOfMonth: 1, hour: 7 };
+    expect(isDue(monthly, createdAt, new Date(Date.UTC(2026, 9, 12, 14, 10, 0)))).toBe(false);
   });
+
+  it('a never-run schedule IS due on its first real occurrence', () => {
+    const createdAt = new Date(Date.UTC(2026, 9, 12, 14, 0, 0));
+    const monthly: ReportSchedule = { cadence: 'monthly', dayOfMonth: 1, hour: 7 };
+    expect(isDue(monthly, createdAt, new Date(Date.UTC(2026, 10, 1, 7, 0, 0)))).toBe(true);
+  });
+
+  /* The convergence the fix rests on, asserted rather than trusted:
+     `createSubscription` stores `nextRunAt = computeNextRun(schedule, now)` in
+     the same call that the database stamps `createdAt`, so anchoring `isDue` on
+     `createdAt` reproduces exactly the stored column. If these ever diverge, the
+     screen and the sweep disagree again. */
+  it.each([
+    ['daily', { cadence: 'daily', hour: 7 }],
+    ['weekly', { cadence: 'weekly', dayOfWeek: 3, hour: 7 }],
+    ['monthly', { cadence: 'monthly', dayOfMonth: 1, hour: 7 }],
+  ] as Array<[string, ReportSchedule]>)(
+    'the %s due-point anchored on createdAt is the stored nextRunAt',
+    (_name, sched) => {
+      const createdAt = new Date(Date.UTC(2026, 9, 12, 14, 0, 0));
+      const storedNextRunAt = computeNextRun(sched, createdAt);
+      // Not due one millisecond before the stored date, due exactly at it.
+      expect(isDue(sched, createdAt, new Date(storedNextRunAt.getTime() - 1))).toBe(false);
+      expect(isDue(sched, createdAt, storedNextRunAt)).toBe(true);
+    },
+  );
 });
 
 describe('decideDelivery', () => {

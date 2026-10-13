@@ -1,0 +1,7 @@
+mutant SM-03: a string call element is kept and read as an unknown author
+verdict: KILLED
+Tests  1 failed | 8 passed (9)
+
+ × server/services/ana/__tests__/turn-record-served-models.test.ts > servedModelsOf: a malformed record body yields a verdict, never a fault > skips a call that is not an object instead of throwing on it 7ms
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)

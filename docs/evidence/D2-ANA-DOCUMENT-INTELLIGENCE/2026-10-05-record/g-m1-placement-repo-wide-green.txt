@@ -1,0 +1,47 @@
+Green, 2026-10-13, after holding the FDA Module 1 contract over the whole repository.
+
+tests/regulatory/m1-placement-repo-wide.test.ts (the new gate: the scan's own reading, the
+region heuristic on five real shapes, the three object-scoping cases, the repo-wide contract,
+and the three baseline guards):
+
+      Tests  16 passed (16)
+
+tests/regulatory/ (the whole regulatory contract suite):
+
+ Test Files  69 passed (69)
+      Tests  1393 passed (1393)
+
+tests/services/regulatory/ + server/__tests__/routes/smoke + server/services/vault/__tests__:
+
+ Test Files  28 passed (28)
+      Tests  258 passed (258)
+
+npx tsc --noEmit over the whole tree:
+
+      DONE-0
+
+ESLint over the changed files: 0 errors. The only warnings are pre-existing file-size and
+function-length warnings on the two pyramids, which this change did not grow.
+
+node scripts/ci/check-eslint-warning-ratchet.mjs:
+
+[ci:eslint-warning-ratchet] 6118 warning(s) across 1771 file(s), 21 rule(s) (baseline 6120).
+  2 fewer warning(s) than baseline
+[ci:eslint-warning-ratchet] OK — warning count did not grow.
+
+Live mutation on the green tree, then restored:
+
+  server/services/regulatory/templateCatalog.ts cover letter 1.2 -> 1.1
+  → server/services/regulatory/templateCatalog.ts:43 — 1.1 "Cover Letter" — cover letter files under 1.2
+      Tests  1 failed | 15 passed (16)
+
+The three baseline guards, each broken in turn and then restored:
+
+  reason replaced with 'because'
+  × the baseline cannot become a parking space > every entry carries a written reason
+    → server/services/intelligence/template-seeds.ts 1.0 "Cover letter": expected 7 to be greater than 40
+
+  the entry's title changed so it matches nothing (a stale exemption)
+  × no entry is stale — each still matches a pair the scan finds
+  × no entry exempts a pair the contract is happy with anyway
+      Tests  3 failed | 13 passed (16)

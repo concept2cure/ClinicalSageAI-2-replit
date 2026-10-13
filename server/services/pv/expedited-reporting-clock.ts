@@ -62,6 +62,30 @@ export interface ExpeditedReportingClockResult {
    * is unchanged; this names what it was made without.
    */
   unassessedInputs: string[];
+  /**
+   * Whether the reportability verdict was DECIDED, as opposed to merely absent.
+   *
+   * ── WHY THIS IS NOT `unassessedInputs.length === 0` ─────────────────────────
+   * Decision P-20's follow-up (docs/LAUNCH_DEFINITION_OF_DONE.md, second IND
+   * pass): *"'Not determined' applies only where expectedness decides the
+   * outcome. An event recorded as non-serious, or as not suspected, is not
+   * expedited on those stated facts, and the verdict says so."* The canonical
+   * IND engine implements it as Gate 0 —
+   * `classifyIndSafetyReport` (ind-lifecycle/ind-safety-report-service.ts:314):
+   * *"a stated fact that rules out an individual expedited report decides the
+   * verdict without expectedness"*.
+   *
+   * This clock had no such gate, so a case RECORDED as not serious with
+   * expectedness and causality still blank reported two unassessed inputs — and
+   * a reader that treated any unassessed input as "no determination" headed a
+   * decided case "Reportability not determined". That is the mirror of the
+   * defect the field exists to close, and it reached the UI on 2026-10-12
+   * before this gate was added.
+   *
+   * So the two facts are separate and both are reported: `unassessedInputs` is
+   * what the determination was made WITHOUT, and this is whether there IS one.
+   */
+  reportabilityDetermined: boolean;
 }
 
 const MS_PER_DAY = 86_400_000;
@@ -131,6 +155,12 @@ export function computeExpeditedReportingClock(
   const isUnexpected = normalize(input.expectedness) === 'unexpected';
   const isSuspected = SUSPECTED_CAUSALITIES.has(normalize(input.causality));
 
+  /* Gate 0, the same semantics as `classifyIndSafetyReport`'s (P-20 follow-up):
+     a STATED fact that rules out an individual expedited report decides the
+     verdict without expectedness. Recorded-and-negative is a fact; absent is
+     not — so this reads the `*Assessed` flags, never the bare booleans. */
+  const ruledOutOnStatedFacts = (seriousnessAssessed && !isSerious) || (causalityAssessed && !isSuspected);
+
   // ── Category (the regulatory determination) ──────────────────────────────
   let category: ExpeditedReportingCategory;
   let clockDays: number | null;
@@ -151,17 +181,27 @@ export function computeExpeditedReportingClock(
     if (!isSerious) missing.push(seriousnessAssessed ? 'not serious' : 'seriousness not assessed');
     if (!isUnexpected) missing.push(expectednessAssessed ? 'not unexpected (listed)' : 'expectedness not assessed');
     if (!isSuspected) missing.push(causalityAssessed ? 'no suspected causality' : 'causality not assessed');
-    basis =
-      unassessedInputs.length > 0
-        ? `No expedited reporting clock has been established — ${missing.join(', ')}. This is NOT a determination that the case is non-reportable: ${unassessedInputs.join(', ')} ${unassessedInputs.length === 1 ? 'has' : 'have'} not been assessed.`
-        : `No expedited reporting clock — ${missing.join(', ') || 'criteria not met'}.`;
+    /* The disclaimer belongs only where there is no determination. On a case
+       ruled out on its stated facts it contradicted its own first clause: the
+       verdict IS that the case is not expedited, and naming the inputs nobody
+       filled in does not unmake it. */
+    const determined = ruledOutOnStatedFacts || unassessedInputs.length === 0;
+    basis = determined
+      ? `No expedited reporting clock — ${missing.join(', ') || 'criteria not met'}.` +
+        (unassessedInputs.length > 0
+          ? ` Decided on the facts recorded; ${unassessedInputs.join(', ')} ${unassessedInputs.length === 1 ? 'is' : 'are'} not assessed and does not change it.`
+          : '')
+      : `No expedited reporting clock has been established — ${missing.join(', ')}. This is NOT a determination that the case is non-reportable: ${unassessedInputs.join(', ')} ${unassessedInputs.length === 1 ? 'has' : 'have'} not been assessed.`;
   }
 
   // ── Anchor the clock (fail safe when awareness date is missing/invalid) ───
   const startMs = parseUtcDay(input.awarenessDate);
 
   if (category === 'none') {
-    return { category, clockStart: null, dueDate: null, daysRemaining: null, overdue: false, basis, unassessedInputs };
+    return {
+      category, clockStart: null, dueDate: null, daysRemaining: null, overdue: false, basis, unassessedInputs,
+      reportabilityDetermined: ruledOutOnStatedFacts || unassessedInputs.length === 0,
+    };
   }
 
   if (startMs === null) {
@@ -173,6 +213,9 @@ export function computeExpeditedReportingClock(
       overdue: false,
       basis: `${basis} Awareness (Day 0) date is missing — due date cannot be anchored.`,
       unassessedInputs,
+      /* A running category IS a determination: the clock exists, only its
+         anchor is missing. */
+      reportabilityDetermined: true,
     };
   }
 
@@ -189,5 +232,6 @@ export function computeExpeditedReportingClock(
     overdue,
     basis,
     unassessedInputs,
+    reportabilityDetermined: true,
   };
 }

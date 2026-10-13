@@ -12,6 +12,7 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { agencyOptions } from '../../../../../shared/regulatory/agency-positions.js';
 
 export function createStabilityStudyFlow(): FlowDefinition {
   return {
@@ -495,15 +496,22 @@ export function createStabilityStudyFlow(): FlowDefinition {
             id: 'zone_regulatory_authorities',
             label: 'Target Regulatory Authorities',
             type: 'multi_select',
+            /* The twelve agencies AnA configures, from the one governed list
+               (shared/regulatory/agency-positions.ts), plus the two targets
+               that are not national filings. This was a second hand-written
+               list of six: a stability programme filing with the MHRA, NMPA,
+               Swissmedic, CDSCO, MFDS or HSA could not say so, though the
+               platform holds every one of their Module 1 requirements
+               (2026-10-12 review, "three uncanonical region lists"). */
             options: [
-              { value: 'fda', label: 'US FDA' },
-              { value: 'ema', label: 'European Medicines Agency (EMA)' },
-              { value: 'pmda', label: 'Japan PMDA' },
-              { value: 'health_canada', label: 'Health Canada' },
-              { value: 'tga', label: 'Australia TGA' },
-              { value: 'anvisa', label: 'Brazil ANVISA' },
-              { value: 'asean', label: 'ASEAN (ACTD format)' },
-              { value: 'who_pq', label: 'WHO Prequalification' },
+              ...agencyOptions(),
+              /* Not a national filing, so neither names a region: ASEAN is a
+                 DOSSIER FORMAT several authorities accept, and WHO
+                 prequalification is an assessment for UN procurement. Both are
+                 real targets for a stability package, and both are declared
+                 non-facts in programme-facts.ts for that reason. */
+              { value: 'asean', label: 'ASEAN — the ACTD dossier format, not one authority' },
+              { value: 'who_pq', label: 'WHO Prequalification — a UN procurement assessment, not a national filing' },
             ],
             allowOther: {},
             helpText: 'Different regulatory authorities may have specific stability data expectations beyond ICH Q1A(R2). Identify all target markets to ensure the stability data package is sufficient.',

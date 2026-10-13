@@ -56,6 +56,16 @@ import {
   type AuthoringPermissionDecision,
 } from '../services/authoring/authoring-permissions';
 import { sectionStructureIssues } from '../../shared/regulatory/section-code';
+import { resolveRequirements } from '../services/ind/ctd/requirements-resolver.js';
+import { resolveSectionBriefSource } from '../services/ind/ctd/section-brief.js';
+import { basisLabel, type RegulatoryBasis } from '../../shared/regulatory/regulatory-basis';
+import { claimDocRoleOf } from '../../shared/ana/clinical-claims-vocabulary';
+import { sectionReadableText } from '../services/authoring/authoring-read-render';
+import {
+  checkDocumentFigureConsistency,
+  type ConsistencySection,
+  type DocumentConsistencyCheck,
+} from '../services/authoring/document-figure-consistency';
 import { serverError } from '../lib/api-response';
 import {
   verifyLedger,
@@ -92,6 +102,15 @@ import {
   type CreateAuditTrailOptions,
 } from '../services/authoring/authoring-evidence';
 import { loadAuthoringRecord, resolveTurnRecordSources, textSha256, type TurnRecordSource } from '../services/authoring/authoring-record';
+import {
+  creditMachineClaims,
+  contributorsOf,
+  governedSaveRefusal,
+  machineClaimDisclosure,
+  machineClaimReport,
+  refusedForModel,
+  type GovernedClaimVerdict,
+} from '../services/authoring/governed-machine-claims';
 import { evidenceShown, fileFailedDraftTurn, openDraftTurn, type DraftTurn } from '../services/ana/turn-record-draft';
 import { sendAuditedExport, walkTenantChain } from '../services/audit/audited-export';
 import { canReadAuditTrail } from '../services/audit/audit-api-authority';
@@ -864,6 +883,28 @@ const createRevision = (
   origin: RevisionOrigin = 'human-edit',
   contributors: { id: string; name: string }[] = []
 ) => createRevisionOn(executor, { sectionId, content, updatedBy, tenantId, origin, contributors });
+
+/**
+ * The machine author a doc_revisions row recorded about itself, re-validated
+ * (round 15, SEC-A-7 door 3).
+ *
+ * `inputs.contributors` is written by createRevision from the save door's
+ * already-validated list, and it is re-checked here rather than trusted
+ * because it is in our own table: `machineContributors` is the one list of ids
+ * that may be written as a machine author, and a JSONB column is only as
+ * trustworthy as every writer that ever touched it. An unrecognised id yields
+ * none, so the filing records NULL — "origin not stated" — rather than a
+ * guess, which is the fabrication
+ * migrations/20260822_section_version_author_kind_unspecified.sql closed one
+ * layer up.
+ *
+ * Its own function so the revert handler stays inside the file's complexity
+ * limit.
+ */
+function restoredMachineAuthor(inputs: unknown) {
+  const contributors = machineContributors((inputs as { contributors?: unknown } | null)?.contributors);
+  return { contributors, draftSource: contributors.length > 0 ? contributors[0].id : null };
+}
 
 // ============= Token Operations =============
 router.post('/sections/:sectionId/tokens', async (req: Request, res: Response) => {
@@ -1865,17 +1906,22 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
   try {
     const { sectionId } = req.params;
     const { content, track_changes, title, code } = req.body;
-    /* Who authored the accepted suggestions this save carries in. The client
-       reads them off the marks before accepting strips them; the server keeps
-       only the ones it recognises as non-human, because a human co-author is
-       already named by created_by. */
-    const contributors = machineContributors(req.body?.acceptedAuthors);
-    /* And the accepted text itself. `contributors` says who drafted SOME of
-       this save; this says WHICH words, so the lineage gate can record the
-       machine's clauses as the machine's — accepted by this actor — instead
-       of as this actor's own assertion. Same closed vocabulary, same boundary:
-       an author the server does not name is dropped here. */
+    /* WHICH WORDS a machine author wrote, as the client claims it. Read off
+       the marks before accepting strips them; the server keeps only the ids it
+       names itself, and each entry carries the AnA turn record the words came
+       from so the claim can be CHECKED (round 15, SEC-A-7 door 1). Nothing is
+       believed here — `creditMachineClaims` below decides, once, for both
+       channels. */
     const acceptedMachine = acceptedMachineText(req.body?.acceptedMachineText);
+    /* And WHO the save says contributed. No longer a second, unchecked claim:
+       it is disclosed on the Part 11 row, and the contributors the revision
+       and the filing actually record are derived from the verdict on the words
+       (`contributorsOf`). Before round 15 this list alone set the revision's
+       origin to `ai-draft-accept`, wrote the machine into `inputs.contributors`
+       and became the filing's `draft_source` — with no words to check against
+       any record. `settleAcceptedContributions` in the editor sends no author
+       without its text, so the two channels agree for every current client. */
+    const claimedAuthors = machineContributors(req.body?.acceptedAuthors);
     const tenantId = getTenantId(req);
     const updatedByUser = getActorId(req);
     if (!updatedByUser) {
@@ -1911,11 +1957,20 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
      * every write — no new column, no new migration, nothing to keep in sync.
      *
      * OPT-IN, deliberately. A client that sends no `expectedUpdatedAt` keeps
-     * the old behaviour rather than being refused: several callers (the MDX
-     * dossier drawer among them) PATCH sections without having read a
-     * timestamp, and failing those closed would break saving to fix a race
-     * they cannot hit. The editor sends it; anything that does not is exactly
-     * as safe as it was yesterday and no less. */
+     * the old behaviour rather than being refused: a caller that PATCHes a
+     * section without having read a timestamp cannot hit the race, and failing
+     * it closed would break saving to fix nothing. The editor sends it;
+     * anything that does not is exactly as safe as it was yesterday and no
+     * less.
+     *
+     * This comment used to name "the MDX dossier drawer" as one of those
+     * callers. It is not a caller of this route at all: it PATCHes
+     * `/api/c2c/documents/:id/sections/:key` (mdx/hooks/useSectionSave.ts),
+     * the FILING side. Correcting it is not housekeeping — the stale line said
+     * the drawer saved through this door, which is seal-guarded, and so helped
+     * hide that the door it really uses was not (round 15, the exit-path
+     * verification). The other two client PATCHes here carry `track_changes`
+     * or `code`/`title` only. */
     const expectedUpdatedAt = req.body?.expectedUpdatedAt;
     if (typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim()) {
       const current = currentSection.rows[0]?.updated_at;
@@ -2093,6 +2148,58 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     // at all; any error rolls the whole thing back and the caller is told. A
     // refused save is recoverable; a document that quietly lost its provenance,
     // its filing commit, or its audit record is not.
+    /* ── THE GOVERNED-WRITE VERDICT, BEFORE THE TRANSACTION OPENS ───────────
+     * One verdict on every machine-text claim this save carries: the record
+     * must hold the words, and CLAUDE.md RULE 2 must admit every model that
+     * served the turn. Only a credited claim is attributed to the machine;
+     * everything else is saved as this person's own assertion, with the claim
+     * and its reason on the Part 11 row and on the response.
+     *
+     * Here rather than inside the transaction because the rows it reads are
+     * append-only — so nothing it sees can change under the write — and
+     * because a failed statement inside the BEGIN would abort the very write
+     * it is checking. Only on a content save: a rename carries no words.
+     *
+     * An unverifiable claim does not refuse the save; a VERIFIED one whose
+     * model RULE 2 does not admit does. governed-machine-claims.ts states why
+     * the two cases differ. */
+    const machineClaims: GovernedClaimVerdict =
+      content !== undefined
+        ? await creditMachineClaims(pool, tenantId, acceptedMachine)
+        : { credited: [], refused: [], recordOccurrences: () => 0 };
+
+    /* ── A VERIFIED CLAIM RULE 2 WILL NOT ADMIT STOPS THE SAVE ──────────────
+     * Not the attribution — the save. The server has checked that the record
+     * verifies whole, that the words are inside what AnA produced, and that a
+     * serving model is one the rule does not admit for regulatory drafting.
+     * Saving it anyway would write a named person as the author of words a
+     * model demonstrably wrote, into a §11.10(e) lineage span and into the
+     * filing itself. Refused before anything is written, and before the
+     * transaction even opens.
+     *
+     * An UNVERIFIABLE claim is not refused — see governed-machine-claims.ts
+     * for why the two cases differ, and why this refusal is only honest
+     * because the editor keeps the claim for the retry. */
+    const notAdmitted = refusedForModel(machineClaims);
+    if (notAdmitted) {
+      const refusal = governedSaveRefusal(notAdmitted);
+      logger.warn('Section save refused: a verified machine claim names a model RULE 2 does not admit', {
+        sectionId, tenantId, servedBy: refusal.servedBy, passages: refusal.passages,
+      });
+      return res.status(403).json({
+        success: false,
+        error: { code: refusal.code, message: refusal.message },
+        servedBy: refusal.servedBy,
+        turnRecordIds: refusal.turnRecordIds,
+      });
+    }
+
+    /* What the Part 11 row and the saver are each told about the claims.
+       Computed once: both are pure functions of the verdict, and calling them
+       inside the object literal that uses them read as two decisions. */
+    const claimDisclosure = machineClaimDisclosure(machineClaims, claimedAuthors);
+    const claimReport = machineClaimReport(machineClaims);
+
     const client = await pool.connect();
     let result: { rows: any[] };
     // Whether the text reached the filing, and when it did not, why. Reported
@@ -2101,6 +2208,52 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     let governedCommit: CommitSectionResult | null = null;
     try {
       await client.query('BEGIN');
+
+      result = await client.query(updateQuery, values);
+
+      // The lineage gate: record an author span per clause and assert coverage,
+      // in this transaction, so content and provenance commit together. Empty /
+      // undefined content (a metadata-only update) is a no-op inside the helper.
+      // req.params is typed `string | string[]`; document_id is the join key
+      // every later read depends on, so coerce rather than let an array
+      // stringify itself into one.
+      const lineage = await enforceAuthorLineage(
+        client,
+        tenantId,
+        { documentTable: 'authoring_sections', documentId: String(sectionId) },
+        content,
+        updatedByUser,
+        {
+          /* Only the claims a record vouched for. An unverifiable claim's
+             clause is not dropped — no accepted-machine text matches it, so
+             the gate records it as this person's own assertion, which is what
+             they did by saving it. */
+          acceptedMachineText: machineClaims.credited.map(({ authorId, text }) => ({ authorId, text })),
+          /* And no clause is credited more times than the crediting records
+             hold it (the batch-draft accept's rule, round 4, DUP). */
+          recordOccurrences: machineClaims.recordOccurrences,
+        },
+      );
+
+      /* ── WHO THE RECORD NAMES: WHAT THE GATE CREDITED, NOT WHAT WAS CLAIMED ──
+       * `clausesInAcceptedText` is the gate's own count, and its contract is
+       * explicit: "A caller that says a save accepted a machine's text says it
+       * only when this is above zero". A verified claim of ONE WORD credits no
+       * clause, and naming AnA on it would make the revision say
+       * `ai-draft-accept`, the filing record `draft_source = 'ana'` and the
+       * snapshot trigger record `author_kind = 'ana'` for a save in which the
+       * lineage credited the machine with nothing — the defect the sibling
+       * batch-draft door was corrected for in round 3, at the door that files
+       * into c2c_documents.
+       *
+       * This is why the lineage gate now runs BEFORE the revision here, as it
+       * already did at the revert (:2494) and at template-apply (:6142): what
+       * a save says about itself has to follow what it credited. The gate
+       * reads and writes span rows only, never the section row, so the order
+       * is free. One machine author exists in the vocabulary today
+       * (MACHINE_AUTHOR_IDS), so one count answers for it; a second id would
+       * need the count per author. */
+      const contributors = lineage.clausesInAcceptedText > 0 ? contributorsOf(machineClaims) : [];
 
       // A revision row means "this content, by this author, as of this time".
       // POST /sections already recorded (new content, author); this makes the
@@ -2120,23 +2273,6 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
           contributors,
         );
       }
-
-      result = await client.query(updateQuery, values);
-
-      // The lineage gate: record an author span per clause and assert coverage,
-      // in this transaction, so content and provenance commit together. Empty /
-      // undefined content (a metadata-only update) is a no-op inside the helper.
-      // req.params is typed `string | string[]`; document_id is the join key
-      // every later read depends on, so coerce rather than let an array
-      // stringify itself into one.
-      await enforceAuthorLineage(
-        client,
-        tenantId,
-        { documentTable: 'authoring_sections', documentId: String(sectionId) },
-        content,
-        updatedByUser,
-        { acceptedMachineText: acceptedMachine },
-      );
 
       // ── Commit the working copy into the filing ─────────────────────────────
       // c2c_documents is the system of record; this store is the editing layer
@@ -2172,7 +2308,15 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
           currentSection.rows[0].content ?? null,
           content ?? null,
           changeReason,
-          { titleChanged: title !== undefined },
+          {
+            titleChanged: title !== undefined,
+            /* §11.10(a)/(e): a claim that AnA wrote some of this text is part
+               of what changed, and until round 15 this row said nothing about
+               one having been made. Credited claims name their turn record;
+               refused ones carry the reason and, for a refused model, the
+               models the record named. Absent when the save claimed nothing. */
+            ...(claimDisclosure ? { machineText: claimDisclosure } : {}),
+          },
           client,
         );
       } else {
@@ -2255,6 +2399,10 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       // Whether the text reached the filing. Present on every content save:
       // an unbound save is legitimate, a silently unbound one is the drift.
       ...(governedCommit ? { filing: filingResponse(governedCommit) } : {}),
+      /* And what became of each machine-authorship claim. The saver has to be
+         told: without it they see an ordinary "Section saved" while the record
+         now says they asserted words they believed were attributed to AnA. */
+      ...(claimReport ? { machineText: claimReport } : {}),
     });
   } catch (error) {
     console.error('Error updating section:', error);
@@ -2354,9 +2502,16 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
       });
     }
 
-    // Get the revision
+    /* Get the revision — INCLUDING what it records about its own provenance
+       (round 15, SEC-A-7 door 3). `origin` and `inputs.contributors` are on the
+       append-only doc_revisions row, written by createRevision from the save
+       door's MACHINE_AUTHOR_IDS-validated list. This SELECT used to name
+       neither, so the one provenance fact the restored version carries about
+       itself was discarded at the moment it was restored, and the filing then
+       recorded NULL — "origin not stated" — over model prose. */
     const revResult = await pool.query(
-      'SELECT id, section_id, content, created_by, created_at, tenant_id FROM doc_revisions WHERE id = $1 AND section_id = $2 AND tenant_id = $3',
+      `SELECT id, section_id, content, created_by, created_at, tenant_id, origin, inputs
+         FROM doc_revisions WHERE id = $1 AND section_id = $2 AND tenant_id = $3`,
       [rev_id, sectionId, tenantId]
     );
 
@@ -2368,6 +2523,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
     }
 
     const revision = revResult.rows[0];
+    const restored = restoredMachineAuthor(revision.inputs);
 
     const currentSection = await pool.query(
       'SELECT content FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
@@ -2387,6 +2543,13 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
        UPDATE takes also serializes the ledger chain extension. */
     const client = await pool.connect();
     let result: { rows: any[] };
+    /* Whether the restored text reached the filing, and when it did not, why.
+       Not `| null` like the save's: a revert ALWAYS commits (the save does so
+       only when content changed), and the catch below rethrows, so reaching
+       the response means both this and `result` were assigned. Stating that
+       keeps the branch out of the response and the handler under the
+       complexity ratchet. */
+    let governedCommit: CommitSectionResult;
     try {
       await client.query('BEGIN');
       result = await client.query(
@@ -2408,7 +2571,10 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
       // path, and it replaces a pre-update createRevision that stored the
       // content being replaced under the reverter's name — the same
       // misattribution the edit path had.
-      await createRevision(sectionId, revision.content, revertedBy, tenantId, client, 'revert');
+      /* With the restored contributors, so the attribution survives a revert
+         OF this revert: without them it would be recorded once and lost on the
+         next restoration, which is the same erasure one step later. */
+      await createRevision(sectionId, revision.content, revertedBy, tenantId, client, 'revert', restored.contributors);
 
       /* AND THE FILING MOVES WITH IT.
        *
@@ -2432,13 +2598,26 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
        * revision, which is a complete and truthful answer to "why did this
        * change". A mechanism describing itself is not a person being
        * impersonated. */
-      await commitSectionToFiling({
+      /* The verdict is KEPT and reported, as the save (:2392) and the
+         AI-draft accept (:4328) report theirs. It was discarded here, so a
+         revert whose filing commit was refused answered a plain success while
+         the filing kept the pre-revert text — each store internally
+         consistent, nothing saying otherwise, which is the shape of the
+         defect this very block's header describes one layer up. Found by the
+         exit-path verification of round 15. */
+      governedCommit = await commitSectionToFiling({
         client,
         sectionId: String(sectionId),
         content: String(revision.content ?? ''),
         actorId: String(revertedBy),
         tenantId,
         reason: `Reverted to revision ${rev_id}`,
+        /* The restored revision's own machine author, so reverting TO
+           AI-drafted text does not erase 'ana' from the system of record. An
+           absent one still resolves to NULL — never a guessed 'human', which
+           is what 20260822_section_version_author_kind_unspecified.sql closed
+           one layer up. */
+        draftSource: restored.draftSource,
       });
 
       /* 2026-09-28 (GE-P-1, coverage-gap sweep): the audit record for this
@@ -2473,6 +2652,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
       section: result.rows[0],
       message: `Section reverted to revision ${rev_id}`,
       reverted_from: revision.created_at,
+      filing: filingResponse(governedCommit),
     });
   } catch (error) {
     console.error('Error reverting section:', error);
@@ -4177,6 +4357,180 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
   }
 });
 
+/* ── What the record says the open section must contain ──────────────────────
+   The scan's section-specific expectations came from `ctdRequiredElements`
+   below: a table of five CMC codes (3.2.S.1/.2/.3/.4/.7) declared inside the
+   handler. For every other code in the CTD — 2.5, 2.7.3, 2.7.4, 4.2.3, 3.2.P,
+   1.14.4.1, 5.3.5.x — the author was shown nothing at all about the section's
+   required content, while server/services/ind/ctd/authoring-guidance.ts has
+   carried `keyContentElements` for all 134 registered codes since the record
+   landed.
+
+   The record's elements are DESCRIPTIONS ("Product development rationale
+   linking unmet need, MOA, and program design (2.5.1)"), so substring-testing
+   content against them would flag essentially every element of every section
+   and bury the author in false deficiencies. A substring test cannot verify a
+   description, and this does not pretend it can: the elements are served as a
+   READ-ONLY statement of what the section must contain, explicitly NOT
+   verified by this scan, and they add no check and move no denominator.
+
+   The resolver answers, not a dictionary lookup, because the record carries
+   leaves and not parents: '4.2.3' and '3.2.P' have no entry of their own, and
+   resolveRequirements / resolveSectionBriefSource handle exact, ancestor and
+   parent. A code the record does not index comes back with the resolver's own
+   reason and reads as "not indexed" — never as "nothing required". */
+
+/** The record's statement about a section, or its honest absence. */
+type RecordRequirements =
+  | {
+      indexed: true;
+      /** Whose entry answered: the section's own, its containing section's, or its children. */
+      source: 'exact' | 'ancestor' | 'parent';
+      /** The code whose entry answered (the section's own code when `source` is 'exact'). */
+      answered_by: string;
+      title: string;
+      /** What the record says must be present. Empty only for a parent code, which has `contains`. */
+      elements: string[];
+      /**
+       * For a parent code: the registered sections it contains, each with its
+       * own requirements, capped at CONTAINS_CAP.
+       */
+      contains?: Array<{ code: string; title: string }>;
+      /** How many contained sections the cap withheld. Zero when all are listed. */
+      contains_omitted?: number;
+      /** Always false: a description cannot be verified by a keyword test. */
+      verified_by_this_check: false;
+      note: string;
+      /** basisLabel() — recall never reads as the regulator's own text. */
+      basis: string;
+    }
+  | { indexed: false; reason: string };
+
+/* The record carries no typed RegulatoryBasis for a CTD section yet —
+   requirements-resolver returns `basis: []` for them and says so in its own
+   RequirementAnswer doc — so the basis is stated as exactly what it is:
+   compiled recall, rendered through basisLabel, which never lets recall read as
+   checked regulator text.
+
+   The record meant here is server/services/ind/ctd/authoring-guidance.ts. That
+   path stays in this comment and in the step's -facts.md: `ref` is rendered
+   verbatim to a regulatory associate, and a repository path is not something
+   the reader of a regulatory statement can act on. */
+const CTD_RECORD_BASIS: RegulatoryBasis = {
+  ref: 'ICH M4 CTD content, as compiled in the platform record',
+  confidence: 'recall',
+  note: 'Compiled drafting guidance, not a verbatim regulator citation for this section.',
+};
+
+/* The panel is a compact note, so a parent code's listing is capped the way
+   the record's own renderer caps the same list — section-brief.ts
+   `LIST_CAPS.children` (12) — and the remainder is carried as a count so the
+   author is told what was withheld rather than shown a silently short list.
+   LIST_CAPS is module-private there; changing that is not this step's file. */
+const CONTAINS_CAP = 12;
+
+function recordRequirementsFor(code: unknown): RecordRequirements {
+  const requested = String(code ?? '').trim();
+  const answer = resolveRequirements({ document: requested });
+
+  if (answer.kind === 'not_indexed') return { indexed: false, reason: answer.reason };
+  if (answer.kind !== 'answer' || answer.source.kind !== 'ctd-section') {
+    return {
+      indexed: false,
+      reason:
+        `The platform's guidance indexes no CTD section entry for "${requested}". ` +
+        'It is not stated here; do not supply requirements from memory as if it were.',
+    };
+  }
+
+  const src = resolveSectionBriefSource(requested);
+  if (!src) {
+    return {
+      indexed: false,
+      reason:
+        `The platform's guidance indexes no CTD section entry for "${requested}". ` +
+        'It is not stated here; do not supply requirements from memory as if it were.',
+    };
+  }
+
+  const basis = basisLabel(CTD_RECORD_BASIS);
+
+  if (src.kind === 'parent') {
+    const children = src.children ?? [];
+    return {
+      indexed: true,
+      source: 'parent',
+      answered_by: src.requested,
+      /* The panel prefixes the code, so the title must not repeat it:
+         `answer.title` is already "4.2.3 — the sections it contains". */
+      title: 'the sections it contains',
+      elements: [],
+      contains: children.slice(0, CONTAINS_CAP).map((c) => ({ code: c.code, title: c.title })),
+      contains_omitted: Math.max(0, children.length - CONTAINS_CAP),
+      verified_by_this_check: false,
+      note:
+        `${src.requested} has no entry of its own in the record; the record carries the requirements of ` +
+        'each section it contains. This check does not verify them.',
+      basis,
+    };
+  }
+
+  const entry = src.entry!;
+  return {
+    indexed: true,
+    source: src.kind,
+    answered_by: entry.code,
+    title: entry.title,
+    elements: [...entry.keyContentElements],
+    verified_by_this_check: false,
+    note: `What the record states section ${entry.code} must contain. This check does not verify these elements.`,
+    basis,
+  };
+}
+
+/**
+ * Does the open document agree with itself? One engine run over every section of it
+ * (document-figure-consistency.ts): the same figure, in the same frame, stated twice in two
+ * sections with two different values — a synopsis against its own body, an overall paragraph
+ * against its per-study one. It needs no cited sources, so unlike the save-time check in
+ * section-claims-check.ts it reaches a document a person wrote, imported or edited by hand.
+ *
+ * The role is read from the open section's code. Both sides of a within-document pair carry the
+ * same role, so it cancels out of every verdict; reading it from the record keeps it a fact rather
+ * than a guess.
+ *
+ * Null when the read fails — a failed read is never an empty result, which here would read as
+ * "the document agrees with itself".
+ */
+async function documentFigureConsistency(docId: unknown, tenantId: unknown, sectionCode: unknown): Promise<DocumentConsistencyCheck | null> {
+  try {
+    const rows = await pool.query(
+      `SELECT code, title, content FROM authoring_sections
+        WHERE doc_id = $1 AND tenant_id = $2
+        ORDER BY order_index ASC, code ASC`,
+      [docId, tenantId],
+    );
+    const sections: ConsistencySection[] = rows.rows.map((r: { code: string | null; title: string | null; content: string | null }) => ({
+      code: String(r.code ?? ''),
+      title: String(r.title ?? ''),
+      text: sectionReadableText(r.content),
+    }));
+    return checkDocumentFigureConsistency(claimDocRoleOf({ ctdSection: String(sectionCode ?? '') }), sections);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The consistency field, present only when the sections were read. An absent field says nothing;
+ * an empty one would say "the document agrees with itself", which is the one thing a failed read
+ * must never say. A function rather than a ternary in the response literal: the handler is already
+ * at the branch-count ceiling, and a reader of the response should see one named thing here.
+ */
+function consistencyField(check: DocumentConsistencyCheck | null): { document_figure_consistency?: DocumentConsistencyCheck } {
+  return check ? { document_figure_consistency: check } : {};
+}
+
 // POST /api/authoring/sections/:sectionId/ai/deficiency-scan - Scan for deficiencies
 router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res: Response) => {
   try {
@@ -4201,6 +4555,8 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
     }
 
     const section = sectionResult.rows[0];
+    // One engine run over every section of the open document, before the heuristics below.
+    const documentConsistency = await documentFigureConsistency(section.doc_id, tenantId, section.code);
 
     // Perform deficiency analysis
     const deficiencies: Array<Record<string, unknown>> = [];
@@ -4260,8 +4616,19 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
             deficiencies.push({
               type: 'missing_keyword',
               severity: 'medium',
-              message: `Missing expected regulatory term: "${keyword}"`,
-              recommendation: `Include discussion of ${keyword} as required by ${region} guidelines`,
+              /* 2026-10-11: this recommended "Include discussion of <keyword>
+                 as required by ${region} guidelines" — a keyword-presence
+                 heuristic reported as a requirement of the agency, in the same
+                 response this handler frames as "not a compliance
+                 determination". The check cannot establish that any agency
+                 requires the word, only that the module's keyword profile
+                 expects to see the topic discussed, so that is all it now
+                 claims. The region is still reported on the response; it is no
+                 longer cited as the author of this expectation. */
+              message: `Expected term not found in the saved content: "${keyword}"`,
+              recommendation:
+                `The keyword profile for module ${moduleLabel} expects ${keyword} to be discussed. ` +
+                'This is a word-presence signal from that profile, not an agency requirement.',
               location: 'content',
             });
           }
@@ -4379,6 +4746,17 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
         checks_run: checksRun,
         checks_passed: checksPassed,
         ...(checksSkipped.length ? { checks_skipped: checksSkipped } : {}),
+        /* The record's own statement of what this section must contain, or the
+           resolver's reason when it indexes no entry for the code. Always
+           present: an omitted field reads as "nothing required", which is the
+           one thing this must never say. It is not a check and not counted as
+           one — see recordRequirementsFor above. */
+        record_requirements: recordRequirementsFor(section.code),
+        /* Whether the open DOCUMENT agrees with itself: the same figure stated
+           twice in two sections with two different values. Absent when the
+           sections could not be read — never an empty result, which would read
+           as "it agrees". Not a check and not counted as one. */
+        ...consistencyField(documentConsistency),
         status:
           qualityScore >= 80
             ? 'heuristic_ok'

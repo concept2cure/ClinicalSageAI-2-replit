@@ -1,0 +1,12 @@
+   ✓ no QC result recorded against B-001: the release is refused (409), whatever the request claims
+   ✓ QC records B-001's release assay and a second person reviews it
+   ✓ QA releases batch B-001 under a signature
+   ✓ released_by is the signer (JM Smith), not the name the request typed
+   ✓ a released batch's record is closed to an ordinary edit (409)
+   ✓ a released batch cannot be dispositioned again (409)
+   ✓ a batch cannot be created already 'released' (409)
+════ RESULT: 158 passed, 0 failed ════
+   ✓ the drug substance carries its recorded synthetic route
+── 3c. A biologic program is refused Module 3 composition, and told where to author it
+   ✓ a biologic program is refused 409 CMC_PRODUCT_CLASS_OUT_OF_SCOPE and composes nothing
+   ✓ §3.2.A.2 answers for the substance only, and certifies no raw material

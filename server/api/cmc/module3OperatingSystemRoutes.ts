@@ -4,6 +4,7 @@ import { getPool } from '../../db';
 import { summarizeSectionDiff } from '../../services/cmc-module3-compiler';
 import { renderComposedSectionMarkdown } from '../../services/module3Composer';
 import { compiledRecordOf, composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
+import { compositionRefusalBody, isCompositionOutOfScope } from '../../services/cmc/composition-scope';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { readContradictionRegisters } from '../../services/cmc/contradiction-registers';
@@ -180,6 +181,14 @@ router.post('/compile/:projectId', async (req, res) => {
     res.json({ success: true, compiledCount: compiled.length, sections: compiled, bridgedArtifacts, bridgeSkips });
   } catch (error) {
     await client.query('ROLLBACK');
+    /* Outside the composition scope this platform ships — a biologically
+       derived substance, a modality the record does not establish, or a
+       submission that files something other than a US IND
+       (services/cmc/composition-scope.ts). A business refusal, not a server
+       fault: 409 with the reason and the path that does author it. */
+    if (isCompositionOutOfScope(error)) {
+      return res.status(409).json(compositionRefusalBody(error.refusal));
+    }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
@@ -940,6 +949,11 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
     });
   } catch (error) {
     await client.query('ROLLBACK');
+    // Same boundary as the compile: a refresh re-composes, so it is refused on
+    // the same terms (services/cmc/composition-scope.ts).
+    if (isCompositionOutOfScope(error)) {
+      return res.status(409).json(compositionRefusalBody(error.refusal));
+    }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }

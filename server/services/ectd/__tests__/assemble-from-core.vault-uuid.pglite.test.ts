@@ -79,11 +79,14 @@ beforeAll(async () => {
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number)
     VALUES (100, ${ORG}, 'Clinical Overview', '<p>body</p>', '2.5');
 
+    -- The 5.3.5.1 leaf carries its study and STF file-tag: a file in a Module 4/5 study section
+    -- must be referenced by a Study Tagging File or FDA rejects the sequence (validation 1789),
+    -- and the packager refuses to build one it would reject. 2.5 is not a study section.
     INSERT INTO submission_leaves
-      (sequence_id, section_code, title, lifecycle_op, document_table, document_id, document_uuid, organization_id, created_by)
+      (sequence_id, section_code, title, lifecycle_op, document_table, document_id, document_uuid, study_id, stf_file_tag, organization_id, created_by)
     VALUES
-      (1, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 100, NULL, ${ORG}, ${USER}),
-      (1, 'm5.3.5.1', 'CSR 201', 'new', 'vault_documents', NULL, '${VAULT_DOC}', ${ORG}, ${USER});
+      (1, 'm2.5', 'Clinical Overview', 'new', 'coauthor_documents', 100, NULL, NULL, NULL, ${ORG}, ${USER}),
+      (1, 'm5.3.5.1', 'CSR 201', 'new', 'vault_documents', NULL, '${VAULT_DOC}', 'STUDY-201', 'study-report-body', ${ORG}, ${USER});
   `);
   // The real binary-availability predicate requires the existing disposition
   // ledger; apply its canonical constraints and guards to exercise that read.

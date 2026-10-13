@@ -88,7 +88,10 @@ const launchModules = [...new Set(apps.flatMap((a) => a.modules))];
 
 const findings = [];
 // Seven since 2026-09-30: Reporting & analytics joined (founder decision of 2026-09-26).
-if (apps.length !== 7) findings.push({ rule: 'shape', detail: `expected 7 launch apps, parsed ${apps.length}` });
+/* Eight since 2026-10-12, when CMC / Module 3 joined under decision P-28
+   (seven since 2026-09-30, Reporting & analytics). The count is pinned so the
+   catalog cannot grow or shrink without a decision being written down. */
+if (apps.length !== 8) findings.push({ rule: 'shape', detail: `expected 8 launch apps, parsed ${apps.length}` });
 
 // ── 2. Routable + registered ───────────────────────────────────────────────
 const viewsSrc = read(VIEWS);

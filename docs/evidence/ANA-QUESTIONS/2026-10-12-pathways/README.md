@@ -114,8 +114,43 @@ companion-diagnostic routes — not the plain device ones.
 - `APPLICATION_TYPES` in `types/submission-constants.ts` is still a fifth list
   with nine bare labels. It is used by surfaces outside the interview, so
   migrating it is its own change with its own callers to check.
-- **Withholding a position that cannot apply** — offering De Novo against a
-  clear predicate, or a 351(k) with no reference product — is a product
-  decision the founder has not yet made, and is deliberately not implemented:
-  the catalogue offers what the registry and frame allow, and the person
-  chooses.
+- **A position that cannot apply** — De Novo against a clear predicate, a
+  510(k) for a device just called Class III — was left open here as a product
+  decision. It was decided the same day, on the founder's instruction to take
+  it as subject-matter expert, and the answer is neither of the two this file
+  posed: the position is **marked and still offered**, with the reason, the
+  authority, and a record of the choice. See
+  `../2026-10-12-availability/README.md`, which also says why withholding was
+  rejected.
+
+---
+
+## Follow-up (2026-10-12, a later session): the consistency probe had to learn `allowOther`
+
+The full vitest tier found one failure on trunk after this work landed:
+
+```
+× tests/ana-intelligence/flow-registry-consistency.test.ts
+  > value-vocabulary alignment probe > flow: project_setup
+  → project_setup.therapeutic_area: predicate value "__other__" is not in the
+    field's option values [oncology, immunology, … medical_device]
+```
+
+The code was right and the probe was wrong. `OTHER_POSITION` carries its own
+invariant — *"No listed option may use it; an invariant test over every flow
+holds that"* (`shared/types/intelligence-questions.ts:51-55`) — so a field that
+declares `allowOther` can produce `__other__` **without** it being an option.
+`project_setup.therapeutic_area` declares `allowOther: {}` and raises an info
+issue on `__other__`; the probe only knew about `field.options` and read that
+predicate as a vocabulary mismatch.
+
+The probe now adds `OTHER_POSITION` to a field's producible set **only where
+that field declares `allowOther`**, so a closed list is still held. The loose
+version of this fix — adding it unconditionally — would have made `__other__`
+acceptable on every controlled field, which is what the probe exists to
+prevent, so that case is now a test of its own:
+
+> `still refuses the own-position value on a field whose list is closed`
+
+Measured: 130 → **131 passing, 0 failing**. Mutation: make the addition
+unconditional and the new case fails with `expected true to be false`.

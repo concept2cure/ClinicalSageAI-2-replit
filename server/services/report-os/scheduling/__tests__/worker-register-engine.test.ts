@@ -16,13 +16,27 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const computeInitialRun = vi.hoisted(() => vi.fn());
 const computeDomainRun = vi.hoisted(() => vi.fn());
+const computeRegionalRun = vi.hoisted(() => vi.fn());
+const computeRunForType = vi.hoisted(() => vi.fn());
 
 vi.mock('../../orchestrator', () => ({
   computeInitialRun: (...a: unknown[]) => computeInitialRun(...a),
 }));
+/* The ONE dispatch both the route and the sweep call. Spied so a case can assert
+   WHICH engine the sweep asked for; its real implementation is covered by
+   compute-run's own suite. The default below delegates to the engine mocks so
+   the existing cases still read as "the digest was not computed". */
+vi.mock('../../compute-run', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../compute-run')>();
+  return { ...real, computeRunForType: (...a: unknown[]) => computeRunForType(...a) };
+});
 vi.mock('../../report-engine', async (importOriginal) => {
   const real = await importOriginal<typeof import('../../report-engine')>();
-  return { ...real, computeDomainRun: (...a: unknown[]) => computeDomainRun(...a) };
+  return {
+    ...real,
+    computeDomainRun: (...a: unknown[]) => computeDomainRun(...a),
+    computeRegionalRun: (...a: unknown[]) => computeRegionalRun(...a),
+  };
 });
 vi.mock('../delivery', () => ({
   decideDelivery: () => ({ allowed: true, requiresESignature: false, watermark: false }),
@@ -50,8 +64,23 @@ const noBlockers = { criticalBlockers: [], summary: {} };
 beforeEach(() => {
   computeInitialRun.mockReset();
   computeDomainRun.mockReset();
+  computeRegionalRun.mockReset();
+  computeRunForType.mockReset();
   computeInitialRun.mockResolvedValue(noBlockers);
   computeDomainRun.mockResolvedValue(noBlockers);
+  computeRegionalRun.mockResolvedValue(noBlockers);
+  /* Route each engine to its own mock, exactly as the real dispatch does, so a
+     case that asserts "the digest was NOT computed" still means that. */
+  computeRunForType.mockImplementation(async (input: { engine: string; typeId: string; organizationId: number; scopeType: string; scopeId: string }) => {
+    if (input.engine === 'domain') {
+      return { computed: await computeDomainRun(input.typeId, input.organizationId, input.scopeType, input.scopeId) };
+    }
+    if (input.engine === 'regional') {
+      return { computed: await computeRegionalRun(input.typeId, input.organizationId, input.scopeType, input.scopeId) };
+    }
+    const computed = await computeInitialRun(input.organizationId, input.scopeType, input.scopeId, {});
+    return input.engine === 'lineage' ? { computed, lineageRendered: { sections: [] } } : { computed };
+  });
 });
 
 describe('a scheduled report runs its own engine', () => {
@@ -73,12 +102,60 @@ describe('a scheduled report runs its own engine', () => {
     expect(computeInitialRun).not.toHaveBeenCalled();
   });
 
+  it.each([
+    'usa_fda.nda_bla_filing_readiness',
+    'ema.maa_readiness_assessment',
+    'japan_pmda.jnda_shonin_readiness',
+  ])('a market assessment (%s) runs the regional engine, not the digest', async (typeId) => {
+    await generateAndDeliver(sub(typeId));
+    expect(computeRegionalRun).toHaveBeenCalledWith(typeId, 3, 'project', '11');
+    // The defect: the digest standing in for a market the program may not even
+    // be filing in. The regional engine refuses that case; the digest cannot.
+    expect(computeInitialRun).not.toHaveBeenCalled();
+  });
+
+  /* ── The engine nobody enumerated ────────────────────────────────────────
+     The sweep's dispatch was a ternary: domain, then regional, then everything
+     else to `computeInitialRun`. `lineage` is "everything else", so a
+     document-scoped Evidence & Provenance Trace subscription computed the
+     Executive Readiness Digest and stamped it with the trace's name — the j8
+     defect, surviving for the one engine the ternary did not name, through two
+     separate fixes to this very line (2026-10-11 domain, 2026-10-12 regional).
+     The dispatch now lives once (services/report-os/compute-run.ts) and matches
+     the union exhaustively, so a fifth engine stops the build. */
+  it('the evidence trace at DOCUMENT scope asks for the lineage engine, never the digest', async () => {
+    await generateAndDeliver(sub('provenance.evidence_trace_report', 'document'));
+    expect(computeRunForType).toHaveBeenCalledTimes(1);
+    expect(computeRunForType.mock.calls[0][0]).toMatchObject({
+      engine: 'lineage',
+      typeId: 'provenance.evidence_trace_report',
+      scopeType: 'document',
+    });
+  });
+
+  it('never passes the report type id as an explicitRegistryId — that was the j8 carrier', async () => {
+    await generateAndDeliver(sub('readiness.executive_digest'));
+    const asked = computeRunForType.mock.calls[0][0] as { explicitRegistryId?: string };
+    // `orchestrator.ts` DECLARES explicitRegistryId and never reads it, so
+    // passing the type as one looked like dispatch and was not.
+    expect(asked.explicitRegistryId).toBeUndefined();
+  });
+
+  it('a market assessment is not computed above one program, so a program scope throws', async () => {
+    await expect(generateAndDeliver(sub('ema.maa_readiness_assessment', 'program'))).rejects.toThrow(
+      /No engine computes/,
+    );
+    expect(computeRegionalRun).not.toHaveBeenCalled();
+    expect(computeInitialRun).not.toHaveBeenCalled();
+  });
+
   it('a type no engine computes throws, so the sweep fails the item instead of substituting the digest', async () => {
-    await expect(generateAndDeliver(sub('ema.maa_readiness_assessment'))).rejects.toThrow(
+    await expect(generateAndDeliver(sub('ema.rmp_psur_signal_alignment'))).rejects.toThrow(
       /No engine computes/,
     );
     expect(computeInitialRun).not.toHaveBeenCalled();
     expect(computeDomainRun).not.toHaveBeenCalled();
+    expect(computeRegionalRun).not.toHaveBeenCalled();
   });
 
   it('the evidence trace is not computed at project scope, so it throws there too', async () => {

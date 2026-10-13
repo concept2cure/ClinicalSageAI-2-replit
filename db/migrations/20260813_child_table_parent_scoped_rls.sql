@@ -108,6 +108,55 @@
 -- B's program and under no program at all. Nothing is removed from this file.
 -- Evidence docs/evidence/D3/2026-09-28-drafting-tasks/.
 --
+-- ── AMENDED IN PLACE 2026-10-12 (D3) ────────────────────────────────────────
+-- capa_records and q_submissions join the text-program-id class. Both were
+-- sitting in scripts/ci/unkeyed-request-tables-baseline.json as "unreviewed"
+-- and in no spec, so each was isolated only by its reading route's join. The
+-- note beside their entries records why adding them is inert for today's
+-- shared-pool readers and binding for request-scoped ones, measured rather
+-- than assumed. Nothing is removed from this file.
+-- Evidence docs/evidence/D3/2026-10-12-unkeyed-table-classification/.
+--
+-- ── AMENDED IN PLACE 2026-10-13 (D3) ────────────────────────────────────────
+-- capa_actions, q_sub_meetings, q_sub_questions and q_sub_timeline_entries
+-- join the CHAINED list — and they are here because yesterday's amendment put
+-- them there. Adding capa_records and q_submissions to `specs` above made
+-- those two tenant-keyed PARENTS, which is what the change was for; it also
+-- gave each of them children that are now "tenant-keyed table(s) [carrying] no
+-- RLS policy". install-fresh's own verifier caught it and failed the whole
+-- provision:
+--
+--   ❌ Install failed: 4 tenant-keyed table(s) carry no RLS policy — rows are
+--      readable across tenants once anything reads them:
+--      public.capa_actions (child of public.capa_records, row security off),
+--      public.q_sub_meetings, public.q_sub_questions,
+--      public.q_sub_timeline_entries (children of public.q_submissions)
+--
+-- That is the check doing its job, and the lesson is that policying a table
+-- MOVES the frontier rather than closing it. Fixing only those four proved it
+-- twice over: the next provision failed again, on
+--
+--   public.q_sub_commitments (child of public.q_sub_questions, row security off)
+--
+-- a table that was not a child of a tenant-keyed parent until the line above
+-- made q_sub_questions one. So the whole descendant tree was then walked at
+-- once, transitively through pg_constraint rather than one failure at a time:
+--
+--   depth 1  capa_actions            → capa_records     (capa_id)
+--   depth 1  q_sub_meetings          → q_submissions    (q_submission_id)
+--   depth 1  q_sub_questions         → q_submissions    (q_submission_id)
+--   depth 1  q_sub_timeline_entries  → q_submissions    (q_submission_id)
+--   depth 2  q_sub_commitments       → q_sub_questions  (q_sub_question_id)
+--
+-- and nothing lies below depth 2. All five are grandchildren or deeper: their
+-- parents carry no organization_id of their own and are themselves scoped
+-- through regulatory_programs, so they go in `chained`, which delegates to the
+-- parent's own policy instead of naming a tenant column. Keys are uuid → uuid
+-- throughout, so no text comparison is involved. Order is load-bearing within
+-- the list as well as between the two loops: `specs` runs before `chained`, and
+-- q_sub_commitments follows q_sub_questions. Nothing is removed from this file.
+-- Evidence docs/evidence/D3/2026-10-13-capa-qsub-grandchildren/.
+--
 -- Idempotent: guarded on pg_policies and pg_class, safe to re-run every deploy.
 
 BEGIN;
@@ -195,6 +244,31 @@ DECLARE
     -- 2026-09-28 (D3): generated drafts, same shape — see the header note.
     -- A task naming no program is visible to no tenant scope (fail closed).
     ['drafting_tasks',             'project_id',       'regulatory_programs',  'id',       'organization_id'],
+
+    -- 2026-10-12 (D3): the last two members of the text-program-id class,
+    -- found while clearing ci:unkeyed-request-tables:unreviewed to zero. Both
+    -- sat in that baseline unclassified; neither was in this spec, so their
+    -- isolation was the reading route's join and nothing else.
+    --
+    -- capa_records' one reader is already correct and was already repaired
+    -- once: routes/mdx-postmarket.ts joins regulatory_programs INNER and
+    -- filters on p.organization_id, after a LEFT JOIN with
+    -- `OR p.organization_id IS NULL` had returned every orphaned CAPA to every
+    -- tenant. q_submissions is read from more places (q-sub.service, the AnA
+    -- tools, tenant-export, pdev, the mdx handlers), each joining the
+    -- programme itself.
+    --
+    -- Adding them here is defence in depth, and measured to be safe rather
+    -- than assumed: those readers import the SHARED pool (server/db/runtime.ts
+    -- sets no session scope — applySessionScope is called only from
+    -- middleware/establishRequestTenantScope.ts and db/withTenantConnection.ts),
+    -- so `app.rls_enforce` is unset on their connections and this policy's
+    -- first arm admits every row — inert, not breaking. On a request-scoped
+    -- connection it binds, and a scoped connection with no organisation admits
+    -- NOTHING (verified on a deploy-shaped database: unset -> first arm true;
+    -- rls_enforce=on with no org -> org predicate NULL).
+    ['capa_records',               'program_id',       'regulatory_programs',  'id',       'organization_id'],
+    ['q_submissions',              'program_id',       'regulatory_programs',  'id',       'organization_id'],
 
     -- Children with a foreign key into a tenant-keyed parent that had row
     -- security OFF: the output of scripts/db/rls-coverage-check.sql's child rule
@@ -441,6 +515,17 @@ DECLARE
     ['c2c_document_section_evidence', 'section_id',         'c2c_document_sections',  'id'],
     ['c2c_document_section_versions', 'section_id',         'c2c_document_sections',  'id'],
     ['section_propagations',          'patch_id',           'section_patches',        'id'],
+    -- 2026-10-13 (D3): the generation below capa_records and q_submissions,
+    -- which `specs` made tenant-keyed parents the day before. Their own
+    -- parents carry no organization_id, so these delegate to the parent's
+    -- policy rather than naming a tenant column.
+    ['capa_actions',                  'capa_id',            'capa_records',           'id'],
+    ['q_sub_meetings',                'q_submission_id',    'q_submissions',          'id'],
+    ['q_sub_questions',               'q_submission_id',    'q_submissions',          'id'],
+    ['q_sub_timeline_entries',        'q_submission_id',    'q_submissions',          'id'],
+    -- Depth 2: a commitment hangs off a question, not off the submission. It
+    -- follows q_sub_questions so that policy exists when this one is reached.
+    ['q_sub_commitments',             'q_sub_question_id',  'q_sub_questions',        'id'],
     -- 2026-09-24 (ledger L203): children outside public.
     ['ai.risk_assessments',                          'dossier_id',   'global_dossier.dossier_instances',        'id'],
     ['audit.config_bundles',                         'program_id',   'core.programs',                           'id'],

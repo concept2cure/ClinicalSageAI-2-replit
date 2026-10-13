@@ -292,6 +292,14 @@ CREATE TABLE IF NOT EXISTS submission_leaves (
   -- assembler test with a missing-column error rather than a useful one.
   document_uuid   UUID,
   document_type   TEXT,
+  -- The study a leaf belongs to and the STF file-tag it is referenced under
+  -- (migrations/20261012_submission_leaf_stf_study_tagging.sql). FDA validation
+  -- 1789 refuses a Module 4/5 study file that no Study Tagging File references,
+  -- and the packager refuses the sequence; these are what satisfy it. The
+  -- Drizzle model selects them, so omitting them here fails every assembler test
+  -- with a missing-column error rather than a useful one.
+  study_id        TEXT,
+  stf_file_tag    TEXT,
   leaf_guid       TEXT,
   parent_leaf_id  INTEGER,
   checksum        TEXT,
@@ -546,6 +554,12 @@ CREATE TABLE IF NOT EXISTS regulatory_programs (
   name                   TEXT NOT NULL,
   code                   VARCHAR(50) NOT NULL,
   program_type           TEXT NOT NULL,
+  /* The product class the person records on a create (P-21, QA 2026-10-08).
+     NOT NULL on the real table (shared/schema/programs.ts:54) and never
+     derived, since deriving it recorded every IND as a biologic. Defaulted
+     here only so the suites that predate the column keep inserting without
+     it — the real column has no default, and nothing may read NULL from it. */
+  product_type           TEXT NOT NULL DEFAULT 'drug',
   primary_agency         TEXT NOT NULL DEFAULT 'FDA',
   product_name           TEXT NOT NULL,
   application_number     TEXT,

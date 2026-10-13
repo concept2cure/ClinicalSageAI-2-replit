@@ -77,8 +77,9 @@ import { FileToVaultDialog } from './FileToVaultDialog';
 import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramSummary, programHeadline, programName } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt } from './askAnaToDraft';
-import { describeFigureCheck, describeProvenance, type DocumentProvenance, type FigureCheckSummary } from './provenance';
+import { describeClaimsCheck, describeFigureCheck, describeProvenance, type ClaimsCheckSummary, type DocumentProvenance, type FigureCheckSummary } from './provenance';
 import { DraftFigureLine } from './DraftFigureLine';
+import { DraftClaimsLine } from './DraftClaimsLine';
 import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
@@ -587,9 +588,62 @@ interface ScanDeficiency {
   recommendation?: string | null;
   location?: string | null;
 }
+/**
+ * What the canonical record says the open section must contain, as the scan
+ * serves it (server/routes/authoring.router.ts, `recordRequirementsFor`).
+ *
+ * READ-ONLY. The record's elements are descriptions ("Product development
+ * rationale linking unmet need, MOA, and program design (2.5.1)"), which no
+ * keyword test can verify — so the scan does not test them and the panel says
+ * so. `indexed: false` carries the resolver's own reason and must read as "not
+ * indexed", never as an empty list and never as "nothing required".
+ */
+interface RecordRequirements {
+  indexed: boolean;
+  /** Whose entry answered: the section's own, its containing section's, or its children. */
+  source?: 'exact' | 'ancestor' | 'parent';
+  /** The code whose entry answered. */
+  answered_by?: string;
+  title?: string;
+  elements?: string[];
+  /** For a parent code: the sections it contains, each with its own requirements. */
+  contains?: Array<{ code?: string; title?: string }>;
+  /** How many contained sections the server's cap withheld, so the list is never silently short. */
+  contains_omitted?: number;
+  verified_by_this_check?: boolean;
+  note?: string;
+  /** basisLabel() from the server — recall never reads as the regulator's text. */
+  basis?: string;
+  /** Present when `indexed` is false: the resolver's own words. */
+  reason?: string;
+}
+
+/**
+ * Whether the open DOCUMENT agrees with itself: the same figure, in the same frame, stated twice in
+ * two sections with two different values (server: authoring/document-figure-consistency.ts). Absent
+ * when the sections could not be read — never an empty result, which would read as "it agrees".
+ */
+interface DocumentFigureConsistency {
+  verdict: 'conflicts_found' | 'no_conflict_among_compared' | 'nothing_compared';
+  compared: number;
+  conflicts: number;
+  comparisons?: Array<{
+    outcome: 'conflict' | 'consistent';
+    measure?: string;
+    arm?: string;
+    a?: { section?: string; values?: string[] };
+    b?: { section?: string; values?: string[] };
+  }>;
+  truncated?: boolean;
+}
+
 interface ScanResults {
   section_id: string;
   section_code?: string;
+  /** The record's statement of required content, or its honest absence. */
+  record_requirements?: RecordRequirements;
+  /** Whether the open document's own figures agree with each other, across its sections. */
+  document_figure_consistency?: DocumentFigureConsistency;
   quality_score?: number;
   status?: string;
   deficiencies: ScanDeficiency[];
@@ -812,6 +866,38 @@ export function filingCommitNote(filing: unknown): string {
     return ` The text is saved in Authoring but not in the filing: ${why}`;
   }
   return '';
+}
+
+/**
+ * What a section save's `machineText` field says, as a sentence appended to the
+ * save confirmation; '' when the save claimed nothing or everything it claimed
+ * was credited (AnA reasoning round 15, SEC-A-7 door 1).
+ *
+ * Without this the author sees an ordinary "Section saved" while the record
+ * now says they asserted words they believed were attributed to AnA. The
+ * server's own reason is shown as given — it is the reason the record keeps.
+ *
+ * A claim whose MODEL the governed-write rule refuses never reaches here: that
+ * save is refused outright, and the author reads the 403's own sentence.
+ */
+export function machineTextNote(machineText: unknown): string {
+  if (!machineText || typeof machineText !== 'object') return '';
+  const m = machineText as { refused?: unknown };
+  const refused = Array.isArray(m.refused) ? m.refused : [];
+  const reasons = [
+    ...new Set(
+      refused
+        .map((r) => (r as { why?: unknown })?.why)
+        .filter((why): why is string => typeof why === 'string' && why.trim().length > 0),
+    ),
+  ];
+  if (reasons.length === 0) return '';
+  const passages = refused.length === 1 ? 'One passage' : `${refused.length} passages`;
+  const was = refused.length === 1 ? 'was' : 'were';
+  return (
+    ` ${passages} you accepted from AnA ${was} recorded as your own words, because ` +
+    `${reasons.join('; ')}. The record says so.`
+  );
 }
 
 /** True when the server refuses every signature but the review signature. */
@@ -1304,6 +1390,7 @@ export function DocumentWorkbench({
   const [docProvenance, setDocProvenance] = useState<DocumentProvenance | null>(null);
   /* S5a: the save's check of the draft's figures against its cited sources. */
   const [docFigures, setDocFigures] = useState<FigureCheckSummary | null>(null);
+  const [docClaims, setDocClaims] = useState<ClaimsCheckSummary | null>(null);
   /** What this caller may do to the open document (GE-P-3); unknown until read. */
   const [docAccess, setDocAccess] = useState<DocumentAccess>(UNKNOWN_DOCUMENT_ACCESS);
   const assignRefusalId = useId();
@@ -1898,6 +1985,7 @@ export function DocumentWorkbench({
     provenanceDocRef.current = activeDocId;
     setDocProvenance(null);
     setDocFigures(null);
+    setDocClaims(null);
     setDocAccess(UNKNOWN_DOCUMENT_ACCESS);
     if (!activeDocId) return;
     const wanted = activeDocId;
@@ -1908,6 +1996,7 @@ export function DocumentWorkbench({
       if (!ok || !body?.document) return;
       setDocProvenance(describeProvenance(body.document.provenance));
       setDocFigures(describeFigureCheck(body.document.provenance));
+      setDocClaims(describeClaimsCheck(body.document.provenance));
       /* GE-P-3: the same read carries the caller's access. */
       setDocAccess(readDocumentAccess(body.access));
     });
@@ -2824,18 +2913,22 @@ export function DocumentWorkbench({
 
       setSaving(true);
       try {
-        /* Authors whose insertions this reviewer accepted since the last save.
-           Accepting a suggestion strips the mark that named its author, so
-           without this the revision would attribute an AnA draft entirely to
-           whoever pressed accept. Read-and-clear: an author counts once, for
-           the save that carried their text in. */
-        const acceptedAuthors = editorRef.current?.takeAcceptedAuthors?.() ?? [];
+        /* Authors whose insertions this reviewer accepted and no save has
+           carried in yet. Accepting a suggestion strips the mark that named
+           its author, so without this the revision would attribute an AnA
+           draft entirely to whoever pressed accept.
+           READ, not read-and-clear: the store is emptied by the save that
+           LANDS, below. It used to be emptied here, before the request — so
+           every refused save lost the attribution and the retry recorded AnA's
+           clauses as a human's. See `clearAcceptedContributions`. */
+        const acceptedAuthors = editorRef.current?.peekAcceptedAuthors?.() ?? [];
         /* And the accepted text itself, per insertion. The author list says
            WHO contributed to this save; this says WHICH words, so the lineage
            gate can record the machine's clauses as the machine's. The server
            keeps only machine authors it names — a colleague's accepted text is
-           simply the document. */
-        const acceptedMachineText = editorRef.current?.takeAcceptedInsertions?.() ?? [];
+           simply the document — and believes a claim only when the AnA turn
+           record it names holds the words. */
+        const acceptedMachineText = editorRef.current?.peekAcceptedInsertions?.() ?? [];
         /* The concurrency token. `updated_at` is the value THIS editor loaded;
            the server refuses with 409 SECTION_CHANGED if the row has moved
            since. Without it the PATCH is a blind last-write-wins, and two
@@ -2889,6 +2982,11 @@ export function DocumentWorkbench({
             s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s
           )
         );
+        /* THE SAVE LANDED, so the accepted contributions it carried in are
+           spent. Not before the request: a refused save must leave the claim
+           for the retry, or the attribution is lost and the next save records
+           AnA's clauses as this person's own. */
+        editorRef.current?.clearAcceptedContributions?.();
         // This save just persisted whatever content reflects any decisions
         // made since the section was last saved — the unsaved-work guard's
         // count belongs to what is still unsaved, not to what this save
@@ -2902,7 +3000,8 @@ export function DocumentWorkbench({
           (adopted && adopted.revision_count != null
             ? `Section saved — revision ${num(adopted.revision_count)} recorded (${activeSection.code}).`
             : `Section saved (${activeSection.code}) — open History to confirm the revision.`) +
-            filingCommitNote((json as { filing?: unknown } | null)?.filing)
+            filingCommitNote((json as { filing?: unknown } | null)?.filing) +
+            machineTextNote((json as { machineText?: unknown } | null)?.machineText)
         );
         // Keep the history and audit rails fresh if open — a save writes both.
         if (rail === 'history') void loadHistory(activeSection.id);
@@ -4373,6 +4472,7 @@ export function DocumentWorkbench({
                     </div>
                   )}
                   {docFigures && <DraftFigureLine check={docFigures} />}
+                  {docClaims && <DraftClaimsLine check={docClaims} />}
                   <div className="ed-mast-meta">
                     {/* "0 sections" printed over a failed or in-flight read,
                         directly above a body that said the read failed. */}
@@ -4580,6 +4680,7 @@ export function DocumentWorkbench({
                     </div>
                   )}
                   {docFigures && <DraftFigureLine check={docFigures} />}
+                  {docClaims && <DraftClaimsLine check={docClaims} />}
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
                     {num(activeSection.revision_count) > 0
@@ -4669,6 +4770,157 @@ export function DocumentWorkbench({
                             </span>
                           </div>
                         ))
+                    )}
+                    {/* ── What the record says this section must contain ──
+                        The scan's own expectations covered five CMC codes, so
+                        an author drafting 2.5 or 2.7.3 was shown nothing about
+                        required content while the record has carried it all
+                        along. This is the record's statement, read-only: the
+                        elements are descriptions, the scan does not test them,
+                        and the panel says so rather than implying a pass. A
+                        code the record does not index reads as the resolver's
+                        reason — never as an empty list, which would say
+                        "nothing required". Rendered only when the server sent
+                        it; honest silence otherwise. */}
+                    {check.record_requirements && (
+                      <div
+                        data-testid="section-check-record"
+                        style={{
+                          display: 'grid',
+                          gap: 4,
+                          marginTop: 2,
+                          paddingTop: 6,
+                          borderTop: '1px solid var(--border)',
+                          fontSize: 12,
+                        }}
+                      >
+                        {check.record_requirements.indexed === false ? (
+                          <span>
+                            <b style={{ fontWeight: 600 }}>Required content — not indexed.</b>{' '}
+                            {check.record_requirements.reason ??
+                              'The record has no entry for this section code.'}
+                          </span>
+                        ) : (
+                          <>
+                            <span>
+                              <b style={{ fontWeight: 600 }}>
+                                The record on {check.record_requirements.answered_by ?? activeSection.code}
+                                {check.record_requirements.title
+                                  ? ` — ${check.record_requirements.title}`
+                                  : ''}
+                              </b>
+                              {check.record_requirements.note ? ` ${check.record_requirements.note}` : ''}
+                            </span>
+                            {check.record_requirements.source === 'ancestor' && (
+                              <span style={{ opacity: 0.75 }}>
+                                These are the requirements of the containing section{' '}
+                                {check.record_requirements.answered_by};{' '}
+                                {check.section_code ?? activeSection.code} has no entry of its own in
+                                the record.
+                              </span>
+                            )}
+                            {(check.record_requirements.elements ?? []).length > 0 && (
+                              <>
+                                <span style={{ opacity: 0.75 }}>It must contain:</span>
+                                <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 2 }}>
+                                  {(check.record_requirements.elements ?? []).map((el, i) => (
+                                    <li key={i}>{el}</li>
+                                  ))}
+                                </ul>
+                              </>
+                            )}
+                            {(check.record_requirements.contains ?? []).length > 0 && (
+                              <>
+                                <span style={{ opacity: 0.75 }}>
+                                  The sections it contains, each with its own requirements:
+                                </span>
+                                <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 2 }}>
+                                  {(check.record_requirements.contains ?? []).map((c, i) => (
+                                    <li key={i}>
+                                      {c.code}
+                                      {c.title ? ` ${c.title}` : ''}
+                                    </li>
+                                  ))}
+                                </ul>
+                                {/* The server caps the listing; say what it
+                                    withheld rather than show a short list. */}
+                                {(check.record_requirements.contains_omitted ?? 0) > 0 && (
+                                  <span style={{ opacity: 0.75 }}>
+                                    and {check.record_requirements.contains_omitted} more.
+                                  </span>
+                                )}
+                              </>
+                            )}
+                            {check.record_requirements.basis && (
+                              <span style={{ opacity: 0.75 }}>
+                                Basis: {check.record_requirements.basis}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                    {/* Whether the whole document agrees with itself: the same figure, in the same
+                        frame, stated twice in two sections with two different values. Rendered only
+                        when the server sent it — a failed read of the sections is not "it agrees" —
+                        and it never says the figures are consistent, only that none of the pairs it
+                        compared disagree, with the count it compared beside it. */}
+                    {check.document_figure_consistency && (
+                      <div
+                        data-testid="section-check-consistency"
+                        style={{
+                          display: 'grid',
+                          gap: 4,
+                          marginTop: 2,
+                          paddingTop: 6,
+                          borderTop: '1px solid var(--border)',
+                          fontSize: 12,
+                        }}
+                      >
+                        {check.document_figure_consistency.conflicts > 0 ? (
+                          <>
+                            <span>
+                              <b style={{ fontWeight: 600 }}>
+                                {check.document_figure_consistency.conflicts} of{' '}
+                                {check.document_figure_consistency.compared} figure pair(s) in this
+                                document disagree with each other.
+                              </b>{' '}
+                              Each pair states the same thing twice, in two sections, with two
+                              different values.
+                            </span>
+                            <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 2 }}>
+                              {(check.document_figure_consistency.comparisons ?? [])
+                                .filter((c) => c.outcome === 'conflict')
+                                .map((c, i) => (
+                                  <li key={i}>
+                                    <strong>{(c.a?.values ?? []).join(', ')}</strong>
+                                    {c.a?.section ? ` in ${c.a.section}` : ''}
+                                    {' vs '}
+                                    <strong>{(c.b?.values ?? []).join(', ')}</strong>
+                                    {c.b?.section ? ` in ${c.b.section}` : ''}
+                                    {c.measure ? ` — ${c.measure}` : ''}
+                                    {c.arm ? ` (${c.arm})` : ''}
+                                  </li>
+                                ))}
+                            </ul>
+                            {check.document_figure_consistency.truncated && (
+                              <span style={{ opacity: 0.75 }}>
+                                More were found than the panel lists.
+                              </span>
+                            )}
+                          </>
+                        ) : check.document_figure_consistency.compared > 0 ? (
+                          <span>
+                            {check.document_figure_consistency.compared} figure pair(s) in this
+                            document were set against each other and none disagree.
+                          </span>
+                        ) : (
+                          <span>
+                            No figure in this document could be set against another in a different
+                            section, so nothing was compared.
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}

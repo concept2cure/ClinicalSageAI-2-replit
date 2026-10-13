@@ -90,6 +90,19 @@ interface CanvasReportType {
   label: string;
   family: string;
   allowedScopes: string[];
+  /**
+   * The declared scopes an engine actually computes this type over — a subset of
+   * `allowedScopes`, and empty for a type no engine computes.
+   *
+   * The two differ. A market filing assessment declares program, project and
+   * submission, and `regional/filing-readiness.ts` computes it over one program
+   * only (project scope); the evidence trace declares three and runs over a
+   * document. The catalog printed `allowedScopes` as "Runs over: program,
+   * project, submission", which is where the type MAY be declared, not where it
+   * runs — so a reader was told a run was available at a scope that answers
+   * REPORT_TYPE_NOT_COMPUTED.
+   */
+  computedScopes: string[];
   allowedClientSegments: string[];
   /** The real seed truthfulness rules, passed through untouched. */
   truthfulnessRules: Record<string, unknown>;
@@ -189,6 +202,15 @@ interface CanvasProgramChoice {
 interface CanvasOverview {
   organizationId: number;
   tier: Tier;
+  /**
+   * Whether `tier` was read, or assumed after a failed capability lookup.
+   *
+   * False means the canvas must not present `tier` as the organisation's plan:
+   * an enterprise customer whose lookup threw was shown "Plan: Standard" and a
+   * screen of locked tiles with no hint the plan had not been read
+   * (HS-1008-4). The locks stay — the gate fails closed — but the claim goes.
+   */
+  tierResolved: boolean;
   /** The segments the catalog was filtered to: the lead program's, else the organisation's. */
   segments: ReportSegment[];
   reportTypes: CanvasReportType[];
@@ -204,12 +226,15 @@ interface CanvasOverview {
   portfolio: CanvasPortfolio;
 }
 
-/** Fail-closed decision used only if the (never-throwing) entitlement gate rejects. */
+/** Fail-closed decision used only if the (never-throwing) entitlement gate rejects.
+ *  `tierResolved: false` because nothing was read: this decision is the absence
+ *  of an answer, and `standard` here is an assumption, not the org's plan. */
 const LOCKED_PORTFOLIO_DECISION: ReportEntitlementDecision = {
   entitled: false,
   feature: 'portfolio_rollup',
   requiredTier: 'enterprise',
   tier: 'standard',
+  tierResolved: false,
 };
 
 /** PURE: single-program lead context. filing/agency/pdufa are unsourced → null. */
@@ -323,6 +348,7 @@ function catalogFor(segments: ReportSegment[], persona: string | null, tier: Tie
       label: t.label,
       family: t.family,
       allowedScopes: t.allowedScopes,
+      computedScopes: t.allowedScopes.filter((s) => reportEngineFor(t.typeId, s) != null),
       allowedClientSegments: t.allowedClientSegments,
       truthfulnessRules: t.truthfulnessRules,
       entitled: decision.entitled,
@@ -453,6 +479,7 @@ export default function createInsightsCanvasRoutes(): Router {
       const data: CanvasOverview = {
         organizationId,
         tier,
+        tierResolved: gate.tierResolved,
         segments: catalogSegments,
         reportTypes,
         leadProgram,

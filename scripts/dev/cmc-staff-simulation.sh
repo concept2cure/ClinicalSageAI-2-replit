@@ -52,7 +52,16 @@ CMC_ENTITLED=$(cat "$OUT/nav.json" | JQ '(.data.entitlements // .entitlements //
 [ "$CODE" = 200 ] && ok "navigation verdicts served ($CODE); cmc entitled=$CMC_ENTITLED" || bad "navigation failed ($CODE)"
 
 step "2. Regulatory lead creates the program (one project: spine + anchor)"
-CODE=$(req program POST /api/c2c/projects '{"name":"BX-701 IND","productName":"BX-701","programType":"ind","primaryAgency":"FDA","priority":"high","indication":"Relapsed multiple myeloma"}')
+# productType is the person's own statement of the product class (P-21): an IND
+# covers drugs and biologics alike, so the create must say which, and the
+# composition boundary asks it first (services/cmc/composition-scope.ts).
+# applicationNumber is the number FDA assigned this IND. The eCTD assembly
+# refuses a package that cannot name its application from the record — "never a
+# placeholder" (P-27) — and the staffer compiling sequence 0001 has it. Recorded
+# as the bare number the backbone's <application-number> carries: the
+# identifier pattern (services/ectd/regulatory-identifiers.ts) admits no space,
+# so a prose "IND 161204" is not a usable identifier.
+CODE=$(req program POST /api/c2c/projects '{"name":"BX-701 IND","productName":"BX-701","programType":"ind","productType":"drug","applicationNumber":"161204","primaryAgency":"FDA","priority":"high","indication":"Relapsed multiple myeloma"}')
 PROGRAM=$(cat "$OUT/program.json" | JQ '.data.id // .id // empty')
 [ "$CODE" = 201 ] && [ -n "$PROGRAM" ] && ok "program $PROGRAM created" || { bad "program create failed ($CODE): $(head -c400 "$OUT/program.json")"; exit 1; }
 echo "   meta: $(cat "$OUT/program.json" | JQ '.meta // .data.meta // empty' | head -c 400)"
@@ -66,14 +75,59 @@ ANCHOR=$(cat "$OUT/program.json" | JQ '.meta.projectAnchorId // .data.meta.proje
   || bad "program created with NO PM-spine anchor: $(cat "$OUT/program.json" | JQ '.meta.projectAnchorSkipped // empty') - $(cat "$OUT/program.json" | JQ '.meta.projectAnchorDetail // empty' | head -c 220)"
 
 step "3. Process development registers the drug substance (feeds 3.2.S.1/S.2)"
-CODE=$(req ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-701\",\"inn\":\"belantezumab\",\"casNumber\":\"1234-56-7\",\"molecularFormula\":\"C6H8O6\",\"manufacturingProcess\":{\"manufacturer\":\"Acme Biologics\",\"route\":\"CHO cell culture\",\"site\":\"Basel\"},\"status\":\"development\",\"developmentPhase\":\"phase1\",\"projectId\":\"$PROGRAM\",\"modality\":\"biologic\",\"biologicalOrigin\":\"CHO cell culture, fed-batch\",\"cellLine\":\"CHO-K1; MCB lot MCB-2401, WCB lot WCB-2403\",\"sourceOrganism\":\"Cricetulus griseus (Chinese hamster ovary)\",\"viralSafetyEvaluation\":\"Two orthogonal clearance steps validated per ICH Q5A(R2): low-pH hold (>= 4.8 log10 X-MuLV) and 20 nm nanofiltration (>= 5.2 log10 MVM). In-process bioburden, mycoplasma and adventitious-agent testing at harvest.\",\"tseStatus\":\"Chemically defined, animal-component-free media throughout; no animal-derived raw material enters the process. EMA EMEA/410/01 rev. 3 risk assessment on file.\"}")
+# A SMALL MOLECULE, which is what this platform composes Module 3 for (P-28,
+# 2026-10-05). This program used to register a monoclonal antibody -
+# modality "biologic", route "CHO cell culture", INN "belantezumab" - and the
+# compile composed twenty-one small-molecule Module 3 sections for it, ICH Q3A
+# impurity reasoning and all. The composition boundary
+# (services/cmc/composition-scope.ts) now refuses that, and step 3c below
+# proves it on a program of its own, which is also where the biologic register
+# fields keep their coverage.
+CODE=$(req ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-701\",\"inn\":\"bexanistat\",\"casNumber\":\"1234-56-7\",\"molecularFormula\":\"C17H19N3O2\",\"molecularWeight\":\"297.36\",\"manufacturingProcess\":{\"manufacturer\":\"Acme Fine Chemicals\",\"route\":\"Four-step chemical synthesis from 2-aminopyridine; final step crystallisation from ethanol/water\",\"site\":\"Basel\"},\"status\":\"development\",\"developmentPhase\":\"phase1\",\"projectId\":\"$PROGRAM\",\"modality\":\"small_molecule\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug substance registered ($CODE)" || bad "drug substance failed ($CODE): $(head -c300 "$OUT/ds.json")"
 
-# §3.2.A.2 must now be composed from what the register holds, not from the
-# substance's name: the section's biologic branch used to assert a control
-# strategy, viral clearance and cell-bank characterisation over nothing.
-A2CHECK=$(cat "$OUT/ds.json" | jq -r '.data.viralSafetyEvaluation // empty' 2>/dev/null)
-[ -n "$A2CHECK" ] && ok "the drug substance carries its ICH Q5A(R2) record" || bad "the substance's viral safety evaluation did not persist"
+# The route is what §3.2.S.2.2 describes and what the modality rule reads
+# (services/cmc/substance-modality.ts): a recorded chemical synthesis with no
+# biological origin is what makes this program composable at all.
+DSROUTE=$(cat "$OUT/ds.json" | jq -r '.data.manufacturingProcess.route // .data.manufacturingRoute // empty' 2>/dev/null)
+echo "$DSROUTE" | grep -q "chemical synthesis" && ok "the drug substance carries its recorded synthetic route" \
+  || bad "the substance's manufacturing route did not persist: '$DSROUTE'"
+
+step "3c. A biologic program is refused Module 3 composition, and told where to author it"
+# The composition boundary, end to end (services/cmc/composition-scope.ts,
+# P-28 2026-10-05). This platform composes small-molecule Module 3 for a US
+# IND; ICH Q6B, Q5A(R2) and Q5C are not modelled, and composing anyway applied
+# Q3A impurity reasoning to a biologic. Until this step the simulation's own
+# program WAS a CHO cell-culture mAb and composed twenty-one sections for it.
+#
+# The biologic register fields keep their coverage here: §3.2.A.2's inputs are
+# recorded and asserted to persist, which is what the register owes them even
+# though the composer refuses the program.
+CODE=$(req bioprog POST /api/c2c/projects '{"name":"BX-902 IND","productName":"BX-902","programType":"ind","productType":"biologic","primaryAgency":"FDA","priority":"medium","indication":"Relapsed multiple myeloma"}')
+BIOPROG=$(cat "$OUT/bioprog.json" | JQ '.data.id // .id // empty')
+[ "$CODE" = 201 ] && [ -n "$BIOPROG" ] && ok "a second program $BIOPROG created for the biologic" \
+  || bad "biologic program create failed ($CODE): $(head -c300 "$OUT/bioprog.json")"
+
+CODE=$(req bio_ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-902\",\"inn\":\"belantezumab\",\"manufacturingProcess\":{\"manufacturer\":\"Acme Biologics\",\"route\":\"CHO cell culture\",\"site\":\"Basel\"},\"status\":\"development\",\"developmentPhase\":\"phase1\",\"projectId\":\"$BIOPROG\",\"modality\":\"biologic\",\"biologicalOrigin\":\"CHO cell culture, fed-batch\",\"cellLine\":\"CHO-K1; MCB lot MCB-2401, WCB lot WCB-2403\",\"sourceOrganism\":\"Cricetulus griseus (Chinese hamster ovary)\",\"viralSafetyEvaluation\":\"Two orthogonal clearance steps validated per ICH Q5A(R2): low-pH hold (>= 4.8 log10 X-MuLV) and 20 nm nanofiltration (>= 5.2 log10 MVM). In-process bioburden, mycoplasma and adventitious-agent testing at harvest.\",\"tseStatus\":\"Chemically defined, animal-component-free media throughout; no animal-derived raw material enters the process. EMA EMEA/410/01 rev. 3 risk assessment on file.\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "the biologic drug substance registered ($CODE)" \
+  || bad "biologic drug substance failed ($CODE): $(head -c300 "$OUT/bio_ds.json")"
+A2CHECK=$(cat "$OUT/bio_ds.json" | jq -r '.data.viralSafetyEvaluation // empty' 2>/dev/null)
+[ -n "$A2CHECK" ] && ok "the biologic substance carries its ICH Q5A(R2) record" \
+  || bad "the substance's viral safety evaluation did not persist"
+
+# The compile must refuse it, by code, and name the path that does author it.
+CODE=$(req bio_compile POST "/api/cmc/module3-os/compile/$BIOPROG" '{}')
+BIOCODE=$(cat "$OUT/bio_compile.json" | jq -r '.code // empty' 2>/dev/null)
+BIOERR=$(cat "$OUT/bio_compile.json" | jq -r '.error // empty' 2>/dev/null)
+BIOSECT=$(cat "$OUT/bio_compile.json" | jq -r '.compiledCount // 0' 2>/dev/null)
+if [ "$CODE" = 409 ] && [ "$BIOCODE" = "CMC_PRODUCT_CLASS_OUT_OF_SCOPE" ] && [ "${BIOSECT:-0}" = "0" ]; then
+  ok "a biologic program is refused 409 CMC_PRODUCT_CLASS_OUT_OF_SCOPE and composes nothing"
+else
+  bad "biologic compile: http=$CODE code=$BIOCODE compiled=$BIOSECT err=$(echo "$BIOERR" | head -c 200)"
+fi
+echo "$BIOERR" | grep -q "Q6B" && echo "$BIOERR" | grep -q "Document editor & authoring" \
+  && ok "the refusal names the guidelines it does not model and where to author it instead" \
+  || bad "the refusal does not name Q6B and the authoring path: $(echo "$BIOERR" | head -c 240)"
 
 step "3b. A read-only colleague reads the CMC registers and writes none of them"
 # The org admin adds a viewer through the members API (the product path); the
@@ -342,7 +396,10 @@ COMPLINK=$(cat "$OUT/comp.json" | JQ '.module3Linked // empty')
   || bad "comparability failed ($CODE, module3Linked=$COMPLINK): $(head -c250 "$OUT/comp.json")"
 
 step "9. Change manager proposes a governed change WITH project (marks 3.2 stale)"
-CODE=$(req change POST /api/cmc-changes "{\"title\":\"Bioreactor scale-up 500L→2000L\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"scale_up\",\"scaleChangeFactor\":\"within_10x\",\"touchesCriticalStep\":true,\"affects\":\"drug_substance\",\"cmcProjectId\":\"$PROGRAM\"}")
+# A small-molecule change, matching the program's substance: this used to be a
+# bioreactor scale-up with dosageFormFamily "biologic", which no longer
+# describes BX-701.
+CODE=$(req change POST /api/cmc-changes "{\"title\":\"Final-step crystallisation scale-up 50 kg→200 kg\",\"dosageFormFamily\":\"immediate_release_oral_solid\",\"changeCategory\":\"scale_up\",\"scaleChangeFactor\":\"within_10x\",\"touchesCriticalStep\":true,\"affects\":\"drug_substance\",\"cmcProjectId\":\"$PROGRAM\"}")
 WT=$(cat "$OUT/change.json" | JQ '.meta.module3WriteThrough // empty')
 [ "$CODE" = 201 ] && ok "governed change proposed; module3WriteThrough=$WT" || bad "change failed ($CODE): $(head -c300 "$OUT/change.json")"
 
@@ -570,16 +627,19 @@ A3COMPLETE=$(echo "$A3" | jq -r '.completeness // 0' 2>/dev/null)
 [ "${A3GEL:-0}" = "1" ] && [ "${A3FREE:-0}" = "0" ] && echo "$A3CERT" | grep -q "CEP" && [ "${A3COMPLETE:-0}" = "100" ] \
   && ok "§3.2.A.3 lists the animal-origin excipient once, with the certificate the register holds ($A3CERT)" \
   || bad "§3.2.A.3: gelatinRows=$A3GEL animalFreeClaim=$A3FREE cert='$A3CERT' completeness=$A3COMPLETE"
-# §3.2.A.2 is the appendix next door and the product is a CHO cell-culture mAb:
-# it must not file the chemical-substance branch, and it must never claim raw
-# materials it does not read.
+# §3.2.A.2 is the appendix next door. This substance records a chemical
+# synthesis and no biological origin, so the section says the question does not
+# apply to the SUBSTANCE - and it must still never certify the raw materials or
+# excipients it does not read. That sentence is the one §3.2.A.3 owns, and this
+# section claiming it was the defect.
 A2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.A.2")][0]' 2>/dev/null)
 A2NARR=$(echo "$A2" | jq -r '.narrativeDraft // ""' 2>/dev/null)
 A2CHEM=$(echo "$A2NARR" | grep -c "does not apply to the drug substance")
 A2RAW=$(echo "$A2NARR" | grep -c "no animal- or human-derived raw materials")
-[ "${A2CHEM:-1}" = "0" ] && [ "${A2RAW:-1}" = "0" ] \
-  && ok "§3.2.A.2 does not file a chemical-substance all-clear for a cell-culture product" \
-  || bad "§3.2.A.2: notApplicableClaim=$A2CHEM rawMaterialClaim=$A2RAW"
+A2SCOPED=$(echo "$A2NARR" | grep -c "statement about the SUBSTANCE")
+[ "${A2CHEM:-0}" -ge 1 ] && [ "${A2RAW:-1}" = "0" ] && [ "${A2SCOPED:-0}" -ge 1 ] \
+  && ok "§3.2.A.2 answers for the substance only, and certifies no raw material" \
+  || bad "§3.2.A.2: notApplicableClaim=$A2CHEM rawMaterialClaim=$A2RAW scopedToSubstance=$A2SCOPED"
 
 
 step "11g. §3.2.S.2 and §3.2.S.3 compose from the process and characterisation registers"
@@ -890,7 +950,7 @@ OPS=$(req lv3 GET "/api/submissions/sequences/$SEQ2/leaves" >/dev/null; cat "$OU
   || bad "amendment placement: seq=$SEQ2 code=$CODE ops=$OPS $(head -c300 "$OUT/place4.json")"
 
 step "22. Governed change marked sections stale → gate refuses again (fail closed end-to-end)"
-CODE=$(req change2 POST /api/cmc-changes "{\"title\":\"Filter membrane change\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"manufacturing_process\",\"processChangeKind\":\"minor_adjustment\",\"cmcProjectId\":\"$PROGRAM\"}")
+CODE=$(req change2 POST /api/cmc-changes "{\"title\":\"Filter membrane change\",\"dosageFormFamily\":\"immediate_release_oral_solid\",\"changeCategory\":\"manufacturing_process\",\"processChangeKind\":\"minor_adjustment\",\"cmcProjectId\":\"$PROGRAM\"}")
 WT2=$(cat "$OUT/change2.json" | JQ '.meta.module3WriteThrough // empty')
 CODE=$(req gate3 POST "/api/cmc/module3-os/guard/final-export/$PROGRAM" '{}')
 if [ "$WT2" = "recorded" ] && [ "$CODE" = 409 ]; then

@@ -1,0 +1,18 @@
+# 5 mutations, all red
+# driver: scratchpad/mutate21.py (apply, run the named test, restore)
+
+RED       a field gated on its own question is dropped at draw time again
+          test: server/services/ana/intelligence-questions/__tests__/same-question-gate.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/same-question-gate.test.ts > the engine > sends a field gated on its own question, with the gate intact 12ms | × server/services/ana/intelligence-questions/__tests__/same-question-gate.test.ts > the engine > leaves no required field unanswerable anywhere 51ms
+RED       every gate is left to the card, including ones an earlier question settled
+          test: server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the pathway question > still decides a gate that an EARLIER question answered 9ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the IVDR class question > does not ask a diagnostics programme its MDR class, which is the wrong regulation 2ms | × server/services/ana/intelligence-questions/__tests__/pathway-question-uses-the-catalogue.test.ts > the IVDR class question > does not ask a device programme its IVDR class either 1ms
+RED       the card draws a field whose gate does not hold
+          test: client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx
+          first failures: × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a field gated on an answer in the same question > is not drawn until the answer it depends on is given 15ms | × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a field gated on an answer in the same question > appears the moment it applies, and is not required while it is hidden 49ms
+RED       a hidden field is still demanded before the answer can be sent
+          test: client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx
+          first failures: × client/src/concept2cure/v2/__tests__/anaQuestionCard.test.tsx > a field gated on an answer in the same question > appears the moment it applies, and is not required while it is hidden 48ms
+RED       the shared evaluator stops coercing a yes/no answer, so the card and the server disagree
+          test: server/services/ana/intelligence-questions/__tests__/same-question-gate.test.ts
+          first failures: × server/services/ana/intelligence-questions/__tests__/same-question-gate.test.ts > the evaluator the card and the engine share > is one function, with the yes/no coercion a card needs 7ms

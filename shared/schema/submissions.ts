@@ -160,6 +160,17 @@ export const submissionLeaves = pgTable(
      *  and docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md, which rejects widening. */
     documentUuid: uuid('document_uuid'),
     documentType: text('document_type'), // classifier hint for pathway leaf→slot matching (e.g. 'protocol', 'cer')
+    /** The sponsor study this leaf belongs to, as the Study Tagging File will
+     *  carry it ("DPL-301"). FDA validation 1789 refuses a Module 4/5 study
+     *  file that is referenced by no STF, and the packager refuses the sequence
+     *  rather than ship one FDA will technically reject. NULL means the leaf
+     *  names no study — never a stand-in, and never the lifecycle operator,
+     *  which an earlier reader took for one. The exempt sections are 4.3, 5.2,
+     *  5.3.6 and 5.4. See migrations/20261012_submission_leaf_stf_study_tagging.sql. */
+    studyId: text('study_id'),
+    /** The FDA STF file-tag this leaf is referenced under ("study-report-body").
+     *  A leaf with a study id and no tag is in no STF, so 1789 still fires. */
+    stfFileTag: text('stf_file_tag'),
     leafGuid: text('leaf_guid'),
     parentLeafId: integer('parent_leaf_id'),
     /** MD5 of the leaf's RENDERED bytes — the eCTD index-md5 contract. */

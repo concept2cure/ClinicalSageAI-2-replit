@@ -9,7 +9,7 @@
  * of what the platform computes had no affordance at all.
  *
  * ── THE RULE THIS PANEL EXISTS TO KEEP ──────────────────────────────────────
- * A type with no engine is NEVER a control. 43 of the 61 declared types have
+ * A type with no engine is NEVER a control. 39 of the 61 declared types have
  * no provider (`server/services/report-os/report-engine.ts`), and running one
  * returned the readiness digest under the wrong title — the defect QA found on
  * 2026-10-08 (j8). They are listed by name, as not computed, and nothing in
@@ -65,7 +65,14 @@ function TypeCard({
     <div className="rl-card">
       <div className="rl-card-h">{type.label}</div>
       <div className="rl-card-meta">
-        {type.scopes.length ? `Runs over: ${type.scopes.join(', ')}` : 'Scope not declared'}
+        {/* Where it RUNS, not where it is declared. A type with no engine says
+            nothing about running; one whose engine covers fewer scopes than the
+            declaration says only the scopes it covers. */}
+        {type.computedScopes.length
+          ? `Runs over: ${type.computedScopes.join(', ')}`
+          : type.scopes.length
+            ? `Declared for: ${type.scopes.join(', ')}`
+            : 'Scope not declared'}
       </div>
       {type.entitled === false ? (
         <div className="rl-card-lock">

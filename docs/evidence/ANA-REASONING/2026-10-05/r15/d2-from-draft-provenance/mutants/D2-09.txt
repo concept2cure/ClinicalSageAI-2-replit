@@ -1,0 +1,8 @@
+mutant D2-09: the reason the turn did not resolve is dropped, so the record says only "unverified"
+verdict: KILLED
+Tests  2 failed | 9 passed (11)
+
+ × server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model 84ms
+ × server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a run named by more than one record is refused, not guessed at 105ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)

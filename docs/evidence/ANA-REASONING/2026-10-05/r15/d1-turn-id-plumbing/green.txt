@@ -1,0 +1,32 @@
+The three suites that pin this change, and the regression around them.
+
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+  client/src/concept2cure/v2/__tests__/aiDraftAttribution.test.ts \
+  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx \
+  server/services/authoring/__tests__/accepted-machine-text.test.ts
+ Test Files  3 passed (3)
+      Tests  69 passed (69)
+
+Regression over the editor family, the authoring services and the batch-draft
+accept lineage suite (the other consumer of acceptedMachineText):
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run \
+  client/src/concept2cure/v2/editor/__tests__/ \
+  server/services/authoring/__tests__/ \
+  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+ Test Files  47 passed (47)
+      Tests  783 passed (783)
+
+The batch-draft route is included deliberately: it is the OTHER caller of
+acceptedMachineText, and it already spread a per-REQUEST turnRecordId onto
+every entry (batch-draft-routes.ts:530). The per-entry field this change adds
+is set first and that spread still overrides it, so that door's behaviour is
+unchanged — and both doors still end at verifyMachineText.
+
+Lint, against origin/concept2cure-v2 (warnings/errors). No file gains one:
+client/src/concept2cure/v2/editor/suggestions.ts                                                     now=8/0      trunk=8/0
+server/services/authoring/revision-ledger.ts                                                         now=0/0      trunk=0/0
+client/src/concept2cure/v2/__tests__/aiDraftAttribution.test.ts                                      now=0/0      trunk=0/0
+client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx                                      now=0/0      trunk=0/0
+server/services/authoring/__tests__/accepted-machine-text.test.ts                                    now=0/0      trunk=0/0
+
+typecheck: npm run -s typecheck:fast -> exit 0

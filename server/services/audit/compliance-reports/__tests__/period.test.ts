@@ -64,6 +64,44 @@ describe('parseReportPeriod', () => {
     }
   });
 
+  /* HS-1008-6, honest-state review 2026-10-08. The as-of branch returned before
+     any comparison against `now`, so "access review as of 2027-01-01" answered
+     with TODAY's membership under a date a year away — and the client's note
+     about an as-of date only fires for PAST dates, so nothing anywhere
+     qualified it. A regulator reading that report has a dated statement of
+     access for a day that has not happened. */
+  it('refuses an as-of date that has not happened yet', () => {
+    const out = parseReportPeriod({ to: '2027-01-01' }, 'as-of', NOW);
+    expect(out.ok, 'a future as-of date was answered with today\'s state').toBe(false);
+    if (!out.ok) {
+      expect(out.message).toMatch(/has not happened yet/);
+      expect(out.message).toContain('2026-09-30');
+    }
+  });
+
+  it('refuses a range whose end has not happened yet', () => {
+    const out = parseReportPeriod({ from: '2026-09-01', to: '2026-12-31' }, 'range', NOW);
+    expect(out.ok).toBe(false);
+    if (!out.ok) expect(out.message).toMatch(/has not happened yet/);
+  });
+
+  /* Today is not the future, and it is the default. A boundary that refused it
+     would refuse every default request. */
+  it('accepts today, for both kinds, including as the default', () => {
+    expect(parseReportPeriod({ to: '2026-09-30' }, 'as-of', NOW).ok).toBe(true);
+    expect(parseReportPeriod({ from: '2026-09-01', to: '2026-09-30' }, 'range', NOW).ok).toBe(true);
+    expect(parseReportPeriod({}, 'as-of', NOW).ok).toBe(true);
+    expect(parseReportPeriod({}, 'range', NOW).ok).toBe(true);
+  });
+
+  /* The clock is read as a UTC calendar day, so any time on today's date is
+     today — a request at 15:42Z must not be refused for naming 2026-09-30. */
+  it('reads the clock as a calendar day, not an instant', () => {
+    for (const t of ['T00:00:00.000Z', 'T15:42:00.000Z', 'T23:59:59.999Z']) {
+      expect(parseReportPeriod({ to: '2026-09-30' }, 'as-of', new Date(`2026-09-30${t}`)).ok).toBe(true);
+    }
+  });
+
   it('an as-of report still refuses a malformed `to`', () => {
     expect(parseReportPeriod({ to: 'yesterday' }, 'as-of', NOW).ok).toBe(false);
   });
