@@ -108,7 +108,7 @@ export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams):
        FROM vault.documents d
        JOIN regulatory_programs prog ON prog.id = d.program_id AND prog.organization_id = $1
       WHERE ${where}
-      ORDER BY rank DESC, d.created_at DESC
+      ORDER BY rank DESC, d.created_at DESC, d.id
       LIMIT $${page.length - 1} OFFSET $${page.length}`,
     page,
   );

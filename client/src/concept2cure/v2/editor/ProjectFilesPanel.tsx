@@ -42,7 +42,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
-import { EmptyState } from '../dataConnect';
+import { EmptyState, ErrorState } from '../dataConnect';
 import { downloadBlob, safeFileName } from '../download';
 import { pdfViewerBlob } from './pdfBytes';
 import type { FireToast } from '../toast';
@@ -51,21 +51,13 @@ import type { ProjectSource } from './DocumentWorkbench';
 import { SectionActions, SelectedFileActions, VaultSourceImport } from './ProjectFileActions';
 import { DataRoomSourcesPanel } from './DataRoomSourcesPanel';
 import { IndDocumentLibrary } from './IndDocumentLibrary';
+import { useProjectVaultSearch, SEARCH_RESULTS_CHANGED, type SearchHit } from './projectVaultSearch';
 
 /** The read model's envelope, unwrapped — the fields this rail reads. */
 interface VaultRead {
   program?: string; tree: VaultFolder[]; documentCount?: number; pendingStore?: boolean;
   unavailable?: Array<{ branch: string; reason: string }>;
   uploadsWindow?: { shown: number; total: number; truncated: boolean };
-}
-
-interface SearchHit {
-  originalFileAvailable?: boolean;
-  disposition?: VaultDoc['disposition'];
-  current?: boolean;
-  version?: string | null;
-  id: string; title: string; fileName: string | null; documentType: string | null; size: string | null;
-  folderId: string | null; ctdSection: string | null; placementStatus: string | null; snippet: string | null;
 }
 
 export interface ProjectFilesPanelProps {
@@ -159,7 +151,12 @@ function flattenVaultDocs(nodes: Array<VaultDoc | VaultFolder>): VaultDoc[] {
  *  a selection survives the search box being typed into. */
 function findSelectedDoc(selectedId: string | null, treeDocs: VaultDoc[], hits: SearchHit[]): VaultDoc | null {
   if (!selectedId) return null;
-  return treeDocs.find(d => d.id === selectedId) ?? hits.map(hitToDoc).find(d => d.id === selectedId) ?? null;
+  const treeDoc = treeDocs.find(doc => doc.id === selectedId);
+  const hit = hits.find(row => row.id === selectedId);
+  if (!hit) return treeDoc ?? null;
+  // Search is a newer read than the browse tree. Keep its recorded availability
+  // authoritative while retaining the same file's checksum and filing metadata.
+  return { ...treeDoc, ...hitToDoc(hit), hash: treeDoc?.hash, filing: treeDoc?.filing };
 }
 
 /** The data-room source a vault upload IS — same bytes, checksum to content
@@ -185,25 +182,6 @@ async function readProjectVault(programId: string): Promise<VaultReadResult> {
     return { ok: true, vault: { ...json.data, tree: Array.isArray(json.data.tree) ? json.data.tree : [] } };
   } catch (e) {
     return { ok: false, message: redactInternals(e instanceof Error ? e.message : '', 'The vault could not be reached.') };
-  }
-}
-
-type VaultSearchResult = { ok: true; hits: SearchHit[]; total: number } | { ok: false; message: string };
-
-/** The search read — same contract as the tree read: results, or a reason. */
-async function searchProjectVault(programId: string, q: string): Promise<VaultSearchResult> {
-  try {
-    const url = `/api/c2c/project-vault/${encodeURIComponent(programId)}/search?q=${encodeURIComponent(q)}&limit=25`;
-    const res = await apiRequest('GET', url);
-    const json = (await res.json().catch(() => null)) as
-      | { success?: boolean; data?: { results?: SearchHit[]; total?: number }; message?: string } | null;
-    if (!res.ok || !json?.data) {
-      return { ok: false, message: serverMessage(json) ?? `The vault could not be searched (HTTP ${res.status}).` };
-    }
-    const hits = Array.isArray(json.data.results) ? json.data.results : [];
-    return { ok: true, hits, total: typeof json.data.total === 'number' ? json.data.total : 0 };
-  } catch (e) {
-    return { ok: false, message: redactInternals(e instanceof Error ? e.message : '', 'The vault could not be searched.') };
   }
 }
 
@@ -273,38 +251,6 @@ function useProjectVaultRead(programId: string | null) {
 
   useEffect(() => { void load(); }, [load]);
   return { state, vault, readError, load };
-}
-
-/** The debounced search. An empty box is the browse view (the server says so
- *  itself — EMPTY_QUERY — rather than "everything matched"). */
-function useProjectVaultSearch(programId: string | null, query: string) {
-  const [searchState, setSearchState] = useState<ReadState>('idle');
-  const [hits, setHits] = useState<SearchHit[]>([]);
-  const [hitsTotal, setHitsTotal] = useState(0);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [searchEpoch, setSearchEpoch] = useState(0);
-  const retrySearch = useCallback(() => setSearchEpoch(epoch => epoch + 1), []);
-
-  useEffect(() => {
-    const q = query.trim();
-    if (!programId || !q) {
-      setSearchState('idle'); setHits([]); setHitsTotal(0); setSearchError(null);
-      return;
-    }
-    let alive = true;
-    setSearchState('loading');
-    const t = setTimeout(async () => {
-      const result = await searchProjectVault(programId, q);
-      if (!alive) return;
-      if (!result.ok) { setSearchState('error'); setSearchError(result.message); return; }
-      setHits(result.hits);
-      setHitsTotal(result.total);
-      setSearchState('ready');
-    }, 250);
-    return () => { alive = false; clearTimeout(t); };
-  }, [query, programId, searchEpoch]);
-
-  return { searchState, hits, hitsTotal, searchError, retrySearch };
 }
 
 /** The viewer's object URL, owned in one place: released when the file
@@ -466,10 +412,12 @@ type RowsProps = Omit<TreeProps, 'nodes' | 'depth'>;
 function VaultSearchResults(props: RowsProps & {
   query: string; programName: string | null; searchState: ReadState;
   hits: SearchHit[]; hitsTotal: number; searchError: string | null; onRetry: () => void;
+  hasMore: boolean; pageBusy: boolean; pageError: string | null; loadMore: () => Promise<void>;
 }) {
-  const { query, programName, searchState, hits, hitsTotal, searchError, selectedId, onSelectDoc, onRetry } = props;
+  const { query, programName, searchState, hits, hitsTotal, searchError, selectedId, onSelectDoc, onRetry,
+    hasMore, pageBusy, pageError, loadMore } = props;
   return (
-    <div className="pf-list" role="region" aria-label="Search results">
+    <div className="pf-list" role="region" aria-label="Search results" aria-busy={searchState === 'loading' || pageBusy}>
       {searchState === 'loading' && hits.length === 0 ? (
         <div role="status" className="scaf-note" style={{ padding: 12 }}>Searching the vault…</div>
       ) : searchState === 'error' ? (
@@ -485,6 +433,14 @@ function VaultSearchResults(props: RowsProps & {
           {hits.map(h => (
             <VaultDocRow key={h.id} doc={hitToDoc(h)} depth={0} active={selectedId === h.id} onToggle={() => onSelectDoc(h.id)} />
           ))}
+          {pageError && <ErrorState icon={I.alertTriangle} title="More results could not be loaded"
+            message={pageError} retry={pageError === SEARCH_RESULTS_CHANGED ? onRetry : () => void loadMore()}
+            retryLabel={pageError === SEARCH_RESULTS_CHANGED ? 'Refresh search' : 'Try again'} busy={pageBusy} />}
+          {hasMore && !pageError && <div className="pf-search pf-actions">
+            <button type="button" className="btn ghost" onClick={() => void loadMore()} disabled={pageBusy}>
+              {pageBusy ? 'Loading more results…' : 'More results'}
+            </button>
+          </div>}
         </>
       )}
     </div>

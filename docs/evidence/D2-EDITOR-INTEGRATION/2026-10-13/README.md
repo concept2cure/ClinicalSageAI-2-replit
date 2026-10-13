@@ -79,6 +79,9 @@ material review finding remains within this change.
 
 ## Evidence and implementation contracts
 
+- [Source access and current AnA context follow-through](access-followthrough/README.md)
+  repairs remaining Vault paging, repeated Word headings, current-version
+  intake and saved-context scope defects in the same editor and conversation.
 - [UI consistency and canonical conversation follow-through](ui-consistency/README.md)
   applies the current [one AnA / one canvas decision](../../../design/ONE_ANA_ONE_CANVAS.md).
   It supersedes the private editor AnA pane placement described in the first

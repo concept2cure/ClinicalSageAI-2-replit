@@ -133,13 +133,14 @@ describe('unverified origin context fails closed and has recovery', () => {
     expect(shellChat.send).toHaveBeenCalledWith('Review the saved section.', []);
   });
 
-  it('invalidates a verified origin and its canonical canvas when the open project changes', async () => {
+  it('invalidates a verified origin and closes its retained canvas when the open project changes', async () => {
     const { shellChat, rerender } = mount();
     await screen.findByTestId('saved-canvas');
     window.C2C_PROJECT = { id: OTHER } as typeof window.C2C_PROJECT;
     rerender(<ConversationThread {...props} shellChat={shellChat} />);
     await screen.findByRole('alert');
-    expect(screen.queryByTestId('saved-canvas')).toBeNull();
+    expect(screen.queryByTestId('saved-canvas')).toBeTruthy();
+    expect(canvas.mock.calls.at(-1)?.[0]).toMatchObject({ docId: DOC, expanded: false });
     send();
     expect(shellChat.send).not.toHaveBeenCalled();
     expect(await readOriginDocument(origin, OTHER)).toMatchObject({ state: 'error' });

@@ -1,0 +1,422 @@
+[
+  {
+    "scenario": {
+      "width": 1440,
+      "theme": "light"
+    },
+    "errors": [],
+    "imports": [
+      {
+        "programId": "11111111-1111-4111-8111-111111111111",
+        "source": {
+          "kind": "vault",
+          "documentId": "bbbbbbbb-0000-4000-8000-000000000026"
+        },
+        "reason": "Review the later matching protocol."
+      }
+    ],
+    "stages": [
+      {
+        "stage": "later-page error",
+        "metrics": {
+          "overflow": false,
+          "targets": [
+            {
+              "label": "Vault",
+              "width": 52.890625,
+              "height": 27
+            },
+            {
+              "label": "Data room",
+              "width": 83.640625,
+              "height": 27
+            },
+            {
+              "label": "IND documents",
+              "width": 113.0625,
+              "height": 27
+            },
+            {
+              "label": "Try again",
+              "width": 81.625,
+              "height": 34
+            }
+          ]
+        },
+        "violations": []
+      },
+      {
+        "stage": "exact-source working copy",
+        "metrics": {
+          "overflow": false,
+          "targets": [
+            {
+              "label": "Vault",
+              "width": 52.890625,
+              "height": 27
+            },
+            {
+              "label": "Data room",
+              "width": 83.640625,
+              "height": 27
+            },
+            {
+              "label": "IND documents",
+              "width": 113.0625,
+              "height": 27
+            },
+            {
+              "label": "Close",
+              "width": 30,
+              "height": 30
+            },
+            {
+              "label": "Close",
+              "width": 235.5,
+              "height": 42
+            },
+            {
+              "label": "Open working copy",
+              "width": 233.5,
+              "height": 42
+            }
+          ]
+        },
+        "violations": []
+      },
+      {
+        "stage": "changed result set",
+        "metrics": {
+          "overflow": false,
+          "targets": [
+            {
+              "label": "Vault",
+              "width": 52.890625,
+              "height": 27
+            },
+            {
+              "label": "Data room",
+              "width": 83.640625,
+              "height": 27
+            },
+            {
+              "label": "IND documents",
+              "width": 113.0625,
+              "height": 27
+            },
+            {
+              "label": "Refresh search",
+              "width": 113.28125,
+              "height": 34
+            }
+          ]
+        },
+        "violations": []
+      },
+      {
+        "stage": "refreshed result set",
+        "metrics": {
+          "overflow": false,
+          "targets": [
+            {
+              "label": "Vault",
+              "width": 52.890625,
+              "height": 27
+            },
+            {
+              "label": "Data room",
+              "width": 83.640625,
+              "height": 27
+            },
+            {
+              "label": "IND documents",
+              "width": 113.0625,
+              "height": 27
+            }
+          ]
+        },
+        "violations": []
+      }
+    ]
+  },
+  {
+    "scenario": {
+      "width": 390,
+      "theme": "light"
+    },
+    "errors": [],
+    "imports": [
+      {
+        "programId": "11111111-1111-4111-8111-111111111111",
+        "source": {
+          "kind": "vault",
+          "documentId": "bbbbbbbb-0000-4000-8000-000000000026"
+        },
+        "reason": "Review the later matching protocol."
+      }
+    ],
+    "stages": [
+      {
+        "stage": "later-page error",
+        "metrics": {
+          "overflow": false,
+          "targets": [
+            {
+              "label": "Vault",
+              "width": 52.890625,
+              "height": 44
+            },
+            {
+              "label": "Data room",
+              "width": 83.640625,
+              "height": 44
+            },
+            {
+              "label": "IND documents",
+              "width": 113.0625,
+              "height": 44
+            },
+            {
+              "label": "Try again",
+              "width": 81.625,
+              "height": 44
+            }
+          ]
+        },
+        "violations": []
+      },
+      {
+        "stage": "exact-source working copy",
+        "metrics": {
+          "overflow": false,
+          "targets": [
+            {
+              "label": "Vault",
+              "width": 52.890625,
+              "height": 44
+            },
+            {
+              "label": "Data room",
+              "width": 83.640625,
+              "height": 44
+            },
+            {
+              "label": "IND documents",
+              "width": 113.0625,
+              "height": 44
+            },
+            {
+              "label": "Close",
+              "width": 44,
+              "height": 44
+            },
+            {
+              "label": "Close",
+              "width": 158.796875,
+              "height": 58
+            },
+            {
+              "label": "Open working copy",
+              "width": 156.796875,
+              "height": 58
+            }
+          ]
+        },
+        "violations": []
+      },
+      {
+        "stage": "changed result set",
+        "metrics": {
+          "overflow": false,
+          "targets": [
+            {
+              "label": "Vault",
+              "width": 52.890625,
+              "height": 44
+            },
+            {
+              "label": "Data room",
+              "width": 83.640625,
+              "height": 44
+            },
+            {
+              "label": "IND documents",
+              "width": 113.0625,
+              "height": 44
+            },
+            {
+              "label": "Refresh search",
+              "width": 113.28125,
+              "height": 44
+            }
+          ]
+        },
+        "violations": []
+      },
+      {
+        "stage": "refreshed result set",
+        "metrics": {
+          "overflow": false,
+          "targets": [
+            {
+              "label": "Vault",
+              "width": 52.890625,
+              "height": 44
+            },
+            {
+              "label": "Data room",
+              "width": 83.640625,
+              "height": 44
+            },
+            {
+              "label": "IND documents",
+              "width": 113.0625,
+              "height": 44
+            }
+          ]
+        },
+        "violations": []
+      }
+    ]
+  },
+  {
+    "scenario": {
+      "width": 390,
+      "theme": "dark"
+    },
+    "errors": [],
+    "imports": [
+      {
+        "programId": "11111111-1111-4111-8111-111111111111",
+        "source": {
+          "kind": "vault",
+          "documentId": "bbbbbbbb-0000-4000-8000-000000000026"
+        },
+        "reason": "Review the later matching protocol."
+      }
+    ],
+    "stages": [
+      {
+        "stage": "later-page error",
+        "metrics": {
+          "overflow": false,
+          "targets": [
+            {
+              "label": "Vault",
+              "width": 52.890625,
+              "height": 44
+            },
+            {
+              "label": "Data room",
+              "width": 83.640625,
+              "height": 44
+            },
+            {
+              "label": "IND documents",
+              "width": 113.0625,
+              "height": 44
+            },
+            {
+              "label": "Try again",
+              "width": 81.625,
+              "height": 44
+            }
+          ]
+        },
+        "violations": []
+      },
+      {
+        "stage": "exact-source working copy",
+        "metrics": {
+          "overflow": false,
+          "targets": [
+            {
+              "label": "Vault",
+              "width": 52.890625,
+              "height": 44
+            },
+            {
+              "label": "Data room",
+              "width": 83.640625,
+              "height": 44
+            },
+            {
+              "label": "IND documents",
+              "width": 113.0625,
+              "height": 44
+            },
+            {
+              "label": "Close",
+              "width": 44,
+              "height": 44
+            },
+            {
+              "label": "Close",
+              "width": 158.796875,
+              "height": 58
+            },
+            {
+              "label": "Open working copy",
+              "width": 156.796875,
+              "height": 58
+            }
+          ]
+        },
+        "violations": []
+      },
+      {
+        "stage": "changed result set",
+        "metrics": {
+          "overflow": false,
+          "targets": [
+            {
+              "label": "Vault",
+              "width": 52.890625,
+              "height": 44
+            },
+            {
+              "label": "Data room",
+              "width": 83.640625,
+              "height": 44
+            },
+            {
+              "label": "IND documents",
+              "width": 113.0625,
+              "height": 44
+            },
+            {
+              "label": "Refresh search",
+              "width": 113.28125,
+              "height": 44
+            }
+          ]
+        },
+        "violations": []
+      },
+      {
+        "stage": "refreshed result set",
+        "metrics": {
+          "overflow": false,
+          "targets": [
+            {
+              "label": "Vault",
+              "width": 52.890625,
+              "height": 44
+            },
+            {
+              "label": "Data room",
+              "width": 83.640625,
+              "height": 44
+            },
+            {
+              "label": "IND documents",
+              "width": 113.0625,
+              "height": 44
+            }
+          ]
+        },
+        "violations": []
+      }
+    ]
+  }
+]

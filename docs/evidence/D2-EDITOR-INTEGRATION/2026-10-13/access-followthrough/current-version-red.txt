@@ -1,0 +1,303 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:35:57.211Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T22:35:57.212Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-13T22:35:57.212Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > refuses a private project before original bytes, conversion or authoring evidence are read or written 61ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-13T22:36:00.409Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 78a43776-ef80-4808-baba-3239ec9a3b8f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit
+{
+  "timestamp": "2026-10-13T22:36:00.430Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 78a43776-ef80-4808-baba-3239ec9a3b8f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > creates the exact working copy using real verified bytes/native conversion, with source identity in every CREATE audit 444ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > reuses the exact actor’s draft without replacing edited section content 102ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > admits an explicitly assigned private-project member and refuses revoked access to their saved import 58ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > atomic source intake through the shipped authoring router > uses the current membership role rather than a previously issued member token 7ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence
+{
+  "timestamp": "2026-10-13T22:36:00.735Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download refused: content hash mismatch",
+  "context": {
+    "documentId": "440688af-6e43-48b2-9d4c-9e9bc776ee0c",
+    "recorded": "64b9b9484f29",
+    "actual": "9375701c5719"
+  }
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-13T22:36:00.826Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3ec90df1-8adc-4a81-bdb4-ca97319fd50f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > imports a captured data-room source through the real tenant-checked upload byte reader
+{
+  "timestamp": "2026-10-13T22:36:00.838Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3ec90df1-8adc-4a81-bdb4-ca97319fd50f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > rechecks a sharing revocation during conversion inside the real canonical creation transaction 63ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > refuses source/project mismatches and foreign tenants without creating anything 15ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > refuses changed stored bytes through the default Vault adapter, with no new authoring evidence 11ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > requires a stated reason and an editor role 5ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+CRITICAL: Failed to create audit trail: error: Injected audit failure
+    at pe.Le (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:4097716)
+    at Object.Module._PostgresMainLongJmp (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:3:196659)
+    at O.execProtocolRawSync (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:3:286371)
+    at O.execProtocolRaw (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:3:286638)
+    at O.execProtocolStream (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/index.js:3:287295)
+    at O.y (file:///workspace/ClinicalSageAI/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:2046) {
+  length: 146,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function editor_import_fail_audit() line 2 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '20d2f8ac-72bb-4e5e-9a0f-35406706c1bd',
+    '0f7f45e1-4467-4fa1-a013-0d5f104eef9e',
+    'CREATE',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '<table><tbody><tr><td><p>Assay</p></td><td><p>99.2 %</p></td></tr></tbody></table><p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==" alt=""></p>',
+    null,
+    'fb434e4a943c180f0ead454bc788e5333db4ba979f93ec40fb8999cb8b138e8c',
+    'Exercise the import rollback guard',
+    { provenance: [Object], drafted: true, section_code: '3.2.S.4.1' },
+    '::ffff:127.0.0.1',
+    'unknown',
+    '6d5434f8-c26a-4529-b1d8-80e6988359e0',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded
+{
+  "timestamp": "2026-10-13T22:36:00.909Z",
+  "level": "error",
+  "message": "[authoring-router] pulling a source into the document editor failed",
+  "context": {
+    "err": "Injected audit failure",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source access rechecks, refusal and data-room capture > imports a captured data-room source through the real tenant-checked upload byte reader 105ms
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > rolls back document, section, revision and origin evidence together when a CREATE audit cannot be recorded 87ms
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-13T22:36:01.009Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0c39b02d-9756-4405-8be4-b783b7c45e5e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-13T22:36:01.022Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0c39b02d-9756-4405-8be4-b783b7c45e5e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-13T22:36:01.033Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0c39b02d-9756-4405-8be4-b783b7c45e5e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse
+{
+  "timestamp": "2026-10-13T22:36:01.072Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 0c39b02d-9756-4405-8be4-b783b7c45e5e by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > source transaction evidence and the complete IND library > serves the complete canonical IND library through the same authenticated authoring router 12ms
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (false)
+{
+  "timestamp": "2026-10-13T22:36:01.162Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: stored file missing on disk",
+  "context": {
+    "documentId": "063a54c9-0b82-4be8-9f22-32bb5583c017",
+    "key": "uploads/org-1/editor-import-4df7a879-da45-45e0-94aa-c7fc4f53da2f/063a54c9-0b82-4be8-9f22-32bb5583c017.docx"
+  }
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (true)
+{
+  "timestamp": "2026-10-13T22:36:01.223Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b90eeed0-a84b-477a-839a-b0fae84061c1 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > continued source headings in the same authoring working copy > preserves repeated Word headings, content and source evidence through save, reopen and exact draft reuse 195ms
+ × server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (false) 28ms
+   → expected 'STORED_FILE_MISSING' to be 'SOURCE_CHANGED' // Object.is equality
+stderr | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (true)
+{
+  "timestamp": "2026-10-13T22:36:01.244Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault download: stored file missing on disk",
+  "context": {
+    "documentId": "6a84879c-6bdc-4ac6-ad1c-754b492a312d",
+    "key": "uploads/org-1/editor-import-4df7a879-da45-45e0-94aa-c7fc4f53da2f/6a84879c-6bdc-4ac6-ad1c-754b492a312d.docx"
+  }
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (false)
+{
+  "timestamp": "2026-10-13T22:36:01.297Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc c0bfe766-73a5-4b9a-a0d6-6cede2c62690 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (true)
+{
+  "timestamp": "2026-10-13T22:36:01.358Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 331ad4ae-7c65-4eaf-905b-8c33eec7b0d6 by a***@canvas.example",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (true) 76ms
+   → expected 'STORED_FILE_MISSING' to be 'SOURCE_CHANGED' // Object.is equality
+ × server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (false) 62ms
+   → expected { ok: true, …(1) } to match object { ok: false, status: 409, …(2) }
+(6 matching properties omitted from actual)
+ × server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (true) 92ms
+   → expected { ok: true, …(1) } to match object { ok: false, status: 409, …(2) }
+(6 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (false)
+ FAIL  server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > refuses an earlier version before byte access, including an existing working copy (true)
+AssertionError: expected 'STORED_FILE_MISSING' to be 'SOURCE_CHANGED' // Object.is equality
+
+Expected: "SOURCE_CHANGED"
+Received: "STORED_FILE_MISSING"
+
+ ❯ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts:396:35
+    394|       const response = await author(request(app).post('/api/authoring/…
+    395|       expect(response.status, JSON.stringify(response.body)).toBe(409);
+    396|       expect(response.body.error).toBe('SOURCE_CHANGED');
+       |                                   ^
+    397|       expect(response.body.message).toContain('current version');
+    398|       expect(response.body.data).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (false)
+ FAIL  server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts > intake keeps the exact currently eligible Vault version > rechecks a successor inserted during conversion before creation or reuse (true)
+AssertionError: expected { ok: true, …(1) } to match object { ok: false, status: 409, …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "SOURCE_CHANGED",
+-   "message": StringContaining "current version",
+-   "ok": false,
+-   "status": 409,
++   "ok": true,
+  }
+
+ ❯ server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts:426:21
+    424|       extractText: async () => { throw new Error('Unexpected plain-tex…
+    425|     });
+    426|     expect(outcome).toMatchObject({ ok: false, status: 409, code: 'SOU…
+       |                     ^
+    427|     expect(await importEvidenceCounts()).toEqual(before);
+    428|     expect(await fs.readFile(source.filePath)).toEqual(source.sourceBy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 13 passed (17)
+   Start at  22:35:52
+   Duration  8.92s (transform 3.34s, setup 82ms, import 706ms, tests 7.90s, environment 0ms)

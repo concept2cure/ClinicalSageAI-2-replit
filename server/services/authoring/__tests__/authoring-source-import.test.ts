@@ -24,25 +24,34 @@ function fixture() {
   let anchors = [{ id: 42, clientWorkspaceId: null }];
   let accessUnavailable = false;
   let revokeAtSave = false;
+  let currentVersion: boolean | undefined = true;
   const record = { id: SOURCE, title: 'Drug substance study', file_name: 'source.pdf', mime_type: 'application/pdf',
     content_hash: sha256, document_type: 'any-custom-registry-type', ctd_section: '3.2.S.4',
     storage_version_id: 'version', storage_provider: 'local', s3_key: null, file_upload_id: null as string | null };
   const statements: string[] = [];
+  const programRows = (params: unknown[]) => ({ rows: params[0] === PROGRAM && params[1] === 1 ? [{ id: PROGRAM }] : [] });
+  const sourceRows = (sql: string, params: unknown[]) => {
+    expect(sql).toContain('document_data_dispositions');
+    expect(params[1]).toBe(PROGRAM);
+    expect(params[2]).toBe(1);
+    const changed = changedAtSave && statements.some(s => s.includes('pg_advisory_xact_lock'));
+    return { rows: removed ? [] : [{ ...record, ...(changed ? { title: 'Changed source' } : {}) }] };
+  };
   const query = vi.fn(async (sql: string, params: unknown[] = []) => {
     statements.push(sql);
-    if (/FROM regulatory_programs/i.test(sql)) return { rows: params[0] === PROGRAM && params[1] === 1 ? [{ id: PROGRAM }] : [] };
+    if (/FROM regulatory_programs/i.test(sql)) return programRows(params);
     if (/FROM organization_users ou/i.test(sql)) return { rows: role == null ? [] : [{ role }] };
     if (/FROM projects\s+WHERE/i.test(sql)) return { rows: anchors };
     if (/FROM projects p/i.test(sql)) {
       if (accessUnavailable) throw new Error('Injected project policy read failure');
       return { rows: [{ id: 42, owner_id: 99, created_by_id: 99, settings: {}, visibility, members: [], review_assigned: false }] };
     }
-    if (/FROM vault.documents d/i.test(sql) || /FROM cre_evidence_sources s/i.test(sql)) {
-      expect(sql).toContain('document_data_dispositions');
-      expect(params[1]).toBe(PROGRAM);
-      expect(params[2]).toBe(1);
-      return { rows: removed ? [] : [{ ...record, ...(changedAtSave && statements.some(s => s.includes('pg_advisory_xact_lock')) ? { title: 'Changed source' } : {}) }] };
+    if (/AS current FROM vault.documents d/i.test(sql)) {
+      expect(params).toEqual([SOURCE, PROGRAM, 1]);
+      expect(sql).toContain('succ.document_code IS NOT DISTINCT FROM d.document_code');
+      return { rows: [{ current: currentVersion }] };
     }
+    if (/FROM vault.documents d/i.test(sql) || /FROM cre_evidence_sources s/i.test(sql)) return sourceRows(sql, params);
     if (/FROM authoring_documents d/i.test(sql)) return { rows: existing ? [existing] : [] };
     if (/FROM doc_permissions p/i.test(sql)) return { rows: [{ role: 'AUTHOR' }] };
     if (/FROM authoring_sections/i.test(sql)) return { rows: [{ id: 'section', content: '<p>Existing edits retained.</p>' }] };
@@ -63,6 +72,7 @@ function fixture() {
     setRole: (value: string | null) => { role = value; }, private: () => { visibility = 'private'; },
     unanchored: () => { anchors = []; }, ambiguous: () => { anchors = [...anchors, { id: 43, clientWorkspaceId: null }]; },
     unavailable: () => { accessUnavailable = true; }, revoke: () => { revokeAtSave = true; },
+    current: (value: boolean | undefined) => { currentVersion = value; },
     reuse: () => { existing = { id: DOC, title: 'Working copy with edits', status: 'draft', created_by: principal.id,
       provenance: { importSource: { kind: 'vault', id: SOURCE, programId: PROGRAM, sha256, warnings: ['Saved conversion warning'] } } }; } };
 }
@@ -116,7 +126,9 @@ describe('source → one authoring working copy', () => {
     expect(f.deps.extractText).toHaveBeenCalledOnce();
     expect(f.statements.some(sql => /FROM authoring_documents d/.test(sql))).toBe(false);
   });
+});
 
+describe('exact source intake, integrity, conversion and draft reuse', () => {
   it('refuses foreign projects before reading source bytes or writing', async () => {
     const f = fixture();
     const result = await importSourceDocument(f.ctx, principal, { ...body, programId: FOREIGN }, f.deps);
@@ -129,6 +141,20 @@ describe('source → one authoring working copy', () => {
     const f = fixture(); f.remove();
     expect(await importSourceDocument(f.ctx, principal, body, f.deps)).toMatchObject({ ok: false, status: 404, code: 'SOURCE_NOT_FOUND' });
     expect(f.deps.readVaultBytes).not.toHaveBeenCalled();
+  });
+
+  it.each([false, undefined])('refuses a superseded or unverified current version (%s) after locking its exact source row', async current => {
+    const f = fixture(); f.current(current);
+    expect(await importSourceDocument(f.ctx, principal, body, f.deps)).toMatchObject({
+      ok: false, status: 409, code: 'SOURCE_CHANGED', message: expect.stringContaining('current version'),
+    });
+    const sourceRead = f.statements.findIndex(sql => sql.includes('LIMIT 1 FOR SHARE OF d'));
+    const currentRead = f.statements.findIndex(sql => sql.includes('AS current FROM vault.documents d'));
+    expect(sourceRead).toBeGreaterThan(-1);
+    expect(currentRead).toBeGreaterThan(sourceRead);
+    expect(f.deps.readVaultBytes).not.toHaveBeenCalled();
+    expect(f.deps.extractText).not.toHaveBeenCalled();
+    expect(f.deps.create).not.toHaveBeenCalled();
   });
 
   it('refuses altered original bytes and records no authoring document', async () => {

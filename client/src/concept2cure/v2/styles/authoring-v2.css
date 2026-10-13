@@ -2359,6 +2359,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .pf-row[data-active] .pf-row-m {
+    color: var(--text-200);
+  }
   .pf-sel {
     border-top: 1px solid var(--border);
     padding: 10px 12px;

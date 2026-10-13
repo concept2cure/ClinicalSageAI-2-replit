@@ -73,6 +73,8 @@ const OWNED_PROPS: OwnedSurfaceViewProps = {
 
 const DOC = 'aaaaaaaa-0000-4000-8000-000000000002';
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
+const SECTION = 'cccccccc-0000-4000-8000-000000000001';
+let projectBeforeTest: typeof window.C2C_PROJECT;
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
 
 const USER: AnaChatMessage = { id: 'm1', role: 'user', text: 'Draft the **Module 2.5** excerpt.' } as AnaChatMessage;
@@ -101,6 +103,8 @@ const REHYDRATED: AnaChatMessage = {
 } as AnaChatMessage;
 
 beforeEach(() => {
+  projectBeforeTest = window.C2C_PROJECT;
+  window.C2C_PROJECT = { id: PID } as typeof window.C2C_PROJECT;
   (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = { id: 'thread-1' };
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
@@ -108,7 +112,7 @@ beforeEach(() => {
       return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview — C2C-101', module: 'M2', product_code: null, status: 'DRAFT', updated_at: null, section_count: 1, provenance: { source: 'ana', model: 'claude-fable-5-1', conversationId: 'thread-1' } } });
     }
     if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) {
-      return ok({ success: true, sections: [{ id: 'S1', doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 }] });
+      return ok({ success: true, sections: [{ id: SECTION, doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 }] });
     }
     if (method === 'GET' && url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'C2C-101', phase: 'planning' });
     return ok({ success: true });
@@ -116,6 +120,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  window.C2C_PROJECT = projectBeforeTest;
   delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
 });
 
@@ -452,9 +457,7 @@ describe('ConversationThread — a section not yet drafted is one ask away (2026
      and the insert both name that section. */
   it('opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section', async () => {
     chatSend.mockReset();
-    const previousProject = window.C2C_PROJECT;
-    window.C2C_PROJECT = { id: PID } as typeof window.C2C_PROJECT;
-    const [firstSection, requestedSection] = ['cccccccc-0000-4000-8000-000000000001', 'cccccccc-0000-4000-8000-000000000002'];
+    const [firstSection, requestedSection] = [SECTION, 'cccccccc-0000-4000-8000-000000000002'];
     const base = apiRequest.getMockImplementation()!;
     apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
       if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: [
@@ -464,25 +467,23 @@ describe('ConversationThread — a section not yet drafted is one ask away (2026
       return base(method, url, body);
     });
     const FOLLOWUP = { id: 'm5', role: 'assistant', text: 'Exposure was dose-proportional from 10 to 300 mg.', turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) } } as unknown as AnaChatMessage;
-    try {
-      chatMessages.current = [USER, DRAFTED, FOLLOWUP];
-      render(<ConversationThread {...OWNED_PROPS} />);
+    chatMessages.current = [USER, DRAFTED, FOLLOWUP];
+    render(<ConversationThread {...OWNED_PROPS} />);
 
-      (await screen.findByRole('button', { name: /2\.5\.2\s*Overview of Biopharmaceutics/ })).click();
-      (await screen.findByRole('button', { name: 'Ask AnA to draft 2.5.2' })).click();
+    (await screen.findByRole('button', { name: /2\.5\.2\s*Overview of Biopharmaceutics/ })).click();
+    (await screen.findByRole('button', { name: 'Ask AnA to draft 2.5.2' })).click();
 
-      const box = screen.getByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
-      await vi.waitFor(() =>
-        expect(box.value).toMatch(/^Draft the text for section 2\.5\.2 Overview of Biopharmaceutics of “Module 2\.5 Clinical Overview — C2C-101”/),
-      );
-      await vi.waitFor(() => expect(document.querySelector('.ct-canvas-pane [data-testid="dc-expanded"]')).toBeTruthy());
-      await screen.findByRole('button', { name: 'Insert into 2.5.2 as tracked suggestion' }, { timeout: 4000 });
+    const box = screen.getByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
+    await vi.waitFor(() =>
+      expect(box.value).toMatch(/^Draft the text for section 2\.5\.2 Overview of Biopharmaceutics of “Module 2\.5 Clinical Overview — C2C-101”/),
+    );
+    await vi.waitFor(() => expect(document.querySelector('.ct-canvas-pane [data-testid="dc-expanded"]')).toBeTruthy());
+    await screen.findByRole('button', { name: 'Insert into 2.5.2 as tracked suggestion' }, { timeout: 4000 });
 
-      await vi.waitFor(() => expect((screen.getByRole('button', { name: 'Send message to AnA' }) as HTMLButtonElement).disabled).toBe(false));
-      expect(chatSend).not.toHaveBeenCalled();
-      fireEvent.keyDown(box, { key: 'Enter' });
-      expect(chatSend.mock.calls[0]?.[2]?.authoringContext).toMatchObject({ projectId: PID, artifactId: DOC, sectionId: requestedSection, sectionCode: '2.5.2' });
-    } finally { window.C2C_PROJECT = previousProject; }
+    await vi.waitFor(() => expect((screen.getByRole('button', { name: 'Send message to AnA' }) as HTMLButtonElement).disabled).toBe(false));
+    expect(chatSend).not.toHaveBeenCalled();
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(chatSend.mock.calls[0]?.[2]?.authoringContext).toMatchObject({ projectId: PID, artifactId: DOC, sectionId: requestedSection, sectionCode: '2.5.2' });
   });
 });
 

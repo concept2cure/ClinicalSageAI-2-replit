@@ -47,7 +47,7 @@ import type { EditorBridge } from '../editor/DocumentWorkbench';
 import { AuthoringRemedies } from '../editor/AuthoringRemedies';
 import { parseRemedyAnswer } from '../editor/authoringRemedies';
 import type { AskOrigin } from '../editor/askAnaToDraft';
-import { readOriginDocument, originTurnContext, snapshotEditorOrigin, type OriginDocumentRead } from '../editor/authoringConversationOrigin';
+import { readOriginDocument, originTurnContext, editorScopeRefusal, snapshotEditorOrigin, type OriginDocumentRead } from '../editor/authoringConversationOrigin';
 import { isProgramId, openDraftAsDocument } from '../editor/draftToDocument';
 import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
@@ -207,6 +207,7 @@ interface InsertTarget {
   open: boolean;
   reopen: () => void;
   fireToast: FireToast;
+  refusal?: string;
 }
 
 /**
@@ -228,7 +229,7 @@ function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: Insert
   /* The governed-write rule (anaInsertGate.ts, round 11): an answer a model it
      does not admit wrote is not offered as an insert. The offer stays, disabled,
      with the reason beside it (GE-P-3); the bridge checks again. */
-  const refusal = bridge.insertRefusal ?? (!bridge.editable ? 'This document is read-only or frozen.' : anaInsertRefusal(turn.turnRecord, turn.unfinished === true));
+  const refusal = bridge.insertRefusal ?? target.refusal ?? (!bridge.editable ? 'This document is read-only or frozen.' : anaInsertRefusal(turn.turnRecord, turn.unfinished === true));
   const insert = () => {
     if (refusal) return;
     /* A suggestion lands only where the person can see it: a closed editor is
@@ -371,7 +372,8 @@ function TurnAnswer({ turn }: { turn: CtTurn }) {
 
 function TurnRemedies({ turn, target }: { turn: CtTurn; target?: InsertTarget }) {
   return <AuthoringRemedies text={turn.answer ?? ''} settled={turn.settled === true} record={turn.turnRecord} unfinished={turn.unfinished === true}
-    target={target ? { ...target.bridge, open: target.open, reopen: target.reopen, refusal: target.bridge.insertRefusal ?? undefined } : undefined} />;
+    target={target ? { ...target.bridge, open: target.open, reopen: target.reopen, refusal: target.bridge.insertRefusal ?? target.refusal ?? undefined,
+      ...(target.refusal ? { openSection: undefined } : {}) } : undefined} />;
 }
 
 function TurnSuggestions({ prompts, busy, onAsk }: { prompts?: string[]; busy?: boolean; onAsk: (text: string) => void }) {
@@ -1173,9 +1175,10 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     setEditor(prev => (bridge ? { bridge, open } : prev?.bridge.docId === docId ? null : prev));
   }, []);
   /* Only an editor on screen is named on turns (step 5). */
-  const editorBridge = editor?.open ? editor.bridge : null;
+  const editorRefusal = editor ? editorScopeRefusal(editor.bridge, shellProjectId) : null;
+  const editorBridge = editor?.open && !editorRefusal ? editor.bridge : null;
   const insertTarget = editor
-    ? { bridge: editor.bridge, open: editor.open, reopen: () => setExpandedDocId(editor.bridge.docId), fireToast }
+    ? { bridge: editor.bridge, open: editor.open, reopen: () => setExpandedDocId(editor.bridge.docId), fireToast, ...(editorRefusal ? { refusal: editorRefusal } : {}) }
     : undefined;
   /* While a document is open beside the conversation, every turn sent from
      here names it: the document, the section and its module, through the
@@ -1188,7 +1191,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
   const sendTurn = (text: string, files?: Parameters<typeof anaChat.send>[1]) => {
     /* The screen a handed-over question came from rides on the turn that
        sends it, once. */
-    const fromOrigin = originTurnContext(askOrigin, originDocumentRead, shellProjectId);
+    const fromOrigin = originTurnContext(askOrigin, originDocumentRead, shellProjectId, omittedOriginEditor ? null : editor?.bridge, editor?.open === true);
     if (fromOrigin) setAskOrigin(null);
     const opts = turnOpts || fromOrigin ? { ...(turnOpts ?? {}), ...(fromOrigin ?? {}) } : undefined;
     originOmissionSpentRef.current = true;
@@ -1366,11 +1369,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     const generation = originGenerationRef.current;
     setOriginDocumentRead({ state: 'loading' });
     const targetId = origin.authoringDocument.docId;
-    setListOpened(previous => {
-      const remaining = { ...previous };
-      delete remaining[targetId];
-      return remaining;
-    });
+    // Existing canvases retain their buffer during verification or a project
+    // switch. Their context and mutation offers remain scope checked above.
     setExpandedDocId(previous => previous === targetId ? null : previous);
     setReadyDoc(previous => previous?.docId === targetId ? null : previous);
     void readOriginDocument(origin, shellProjectId).then(read => {
@@ -1388,6 +1388,13 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
     });
     return () => { cancelled = true; };
   }, [shellProjectId, originRetry]);
+  const lastCanvasProject = useRef(shellProjectId);
+  useEffect(() => {
+    if (lastCanvasProject.current === shellProjectId) return;
+    lastCanvasProject.current = shellProjectId;
+    setExpandedDocId(null);
+    setReadyDoc(null);
+  }, [shellProjectId]);
   const cardDocIds = new Set(turns.map((t) => t.authoringDoc?.docId).filter((x): x is string => !!x));
   const openFromList = (doc: BuiltDocument) => {
     if (!cardDocIds.has(doc.id)) {

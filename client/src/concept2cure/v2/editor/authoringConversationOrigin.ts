@@ -31,15 +31,35 @@ export function originForSavedSection(document: { id: string; title: string }, s
 }
 
 /** Unverified editor identity never reaches the turn's authoring channel. */
-export function originTurnContext(origin: AskOrigin | null, read: OriginDocumentRead, projectId: string | number | null) {
+export function originTurnContext(origin: AskOrigin | null, read: OriginDocumentRead, projectId: string | number | null, bridge?: EditorBridge | null, bridgeOpen = true) {
   if (!origin) return null;
   if (origin.authoringDocument && (read.state !== 'ready' || read.document.programId !== projectId)) return null;
+  if (origin.authoringDocument && bridge && bridgeNamesOrigin(origin, bridge, bridgeOpen) && !editorScopeRefusal(bridge, projectId)) {
+    return { screenName: origin.surfaceId, authoringContext: bridge.authoringContext, moduleContext: bridge.moduleContext };
+  }
   const context = origin.authoringContext;
   const verifiedAuthoring = context?.projectId === projectId && (!context.artifactId || read.state === 'ready');
   return {
     moduleContext: origin.moduleContext ?? null, screenName: origin.surfaceId,
     ...(verifiedAuthoring ? { authoringContext: context } : {}),
   };
+}
+
+/** A hidden buffer can refresh its attached saved version, never its target. */
+function bridgeNamesOrigin(origin: AskOrigin, bridge: EditorBridge, open: boolean): boolean {
+  return open || (origin.authoringDocument?.docId === bridge.docId && origin.authoringDocument.sectionId === bridge.sectionId);
+}
+
+/** A retained canvas buffer does not grant access to the newly open project. */
+export function editorScopeRefusal(bridge: EditorBridge, projectId: string | number | null): string | null {
+  const context = bridge.authoringContext;
+  if (!isProgramId(projectId) || context?.projectId !== projectId) {
+    return 'Open this document’s project before asking AnA about it or applying changes.';
+  }
+  if (!isProgramId(bridge.docId) || !isProgramId(bridge.sectionId) || context.artifactId !== bridge.docId || context.sectionId !== bridge.sectionId) {
+    return 'The saved document and section could not be verified. Reopen the document before applying changes.';
+  }
+  return null;
 }
 
 /** Identity only. Labels and document content remain authoritative API reads. */
