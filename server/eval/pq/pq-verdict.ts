@@ -29,6 +29,13 @@
 import { RAG_EMPTY_CONTEXT_REFUSAL } from '../../services/rag-generation-request.js';
 
 import { verifyCanonicalPqClaim } from './verify-pq-record.js';
+import {
+  extractionCriteriaProblems,
+  isFloor,
+  isUnitScore,
+  ragCriteriaProblems,
+  shown,
+} from './pq-criteria';
 
 export type PqVerdict = 'PASS' | 'FAIL' | 'INCOMPLETE' | 'NOT_EXECUTED';
 
@@ -307,66 +314,30 @@ function extractionFindings(
     );
   }
 
+  /* A CRITERION THAT CANNOT BE APPLIED IS NOT A CRITERION (founder decision
+     P-31, 2026-10-13). This read `ext.criteria.minF1` and applied it only when
+     it happened to be a number, so a protocol whose extraction minimum was
+     missing, misspelt (`minFI`) or a string had NO extraction criterion and the
+     component contributed nothing to `missed` — the PQ PASSed on it. The rag
+     component has reported exactly this since the 2026-09-28 fail-closed work
+     (ragCriteriaProblems); extraction now does the same. */
+  incomplete.push(...extractionCriteriaProblems(ext.criteria));
+
   const missed: string[] = [];
   const counted = scored.filter((e) => e.servedModelVerified);
   const minF1 = ext.criteria.minF1;
-  if (typeof minF1 === 'number' && counted.length) {
+  if (isUnitScore(minF1) && counted.length) {
     const meanF1 = counted.reduce((a, e) => a + (e.f1 as number), 0) / counted.length;
     if (meanF1 < minF1) missed.push(`mean extraction F1 ${meanF1.toFixed(3)} is below ${minF1}`);
   }
   return { incomplete, missed };
 }
 
-/** A 0–1 score: finite, and in range. NaN never compares below a minimum, so it must never reach a mean. */
-const isUnitScore = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1;
-
-/** A value as a reason shows it: strings quoted, so "0.6" reads differently from 0.6. */
-const shown = (v: unknown): string => (typeof v === 'string' ? JSON.stringify(v) : String(v));
-
-/** A sample floor: a whole number of items, at least one. */
-const isFloor = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= 1;
-
 const hasError = (i: PqRagResult): boolean => typeof i.error === 'string' && i.error.length > 0;
 
 /** Whether an item carries any score at all. A declared control with nothing to judge carries none. */
 function ragItemScored(i: PqRagResult): boolean {
   return !hasError(i) && (i.hit !== null || i.faithfulness !== null);
-}
-
-/** The rag criteria this verdict applies. A key outside this list is not assessed, so it is INCOMPLETE. */
-const RAG_CRITERIA = ['minHitRate', 'minFaithfulness', 'minScoredItems'] as const;
-
-/**
- * Why the protocol's rag criteria cannot be applied as written. Each of these
- * used to be skipped in silence — a missing or string minimum was not checked,
- * and an unknown key (a misspelt floor) was not read — so rag PASSed on any
- * scored item. A criterion that cannot be applied is INCOMPLETE, never met.
- *
- * `minScoredItems` is the sample floor: the fewest distinct items the pinned
- * model verifiably answered on which EACH criterion must be measured. Generation
- * has one (minTasksPerDocType); without one here, one scored item out of a
- * 30-50 item gold set would qualify the component.
- */
-function ragCriteriaProblems(criteria: Record<string, unknown> | undefined): string[] {
-  const c: Record<string, unknown> = criteria && typeof criteria === 'object' ? criteria : {};
-  const out: string[] = [];
-  for (const key of Object.keys(c)) {
-    if (!(RAG_CRITERIA as readonly string[]).includes(key)) {
-      out.push(`rag criterion "${key}" is not one this verdict measures (${RAG_CRITERIA.join(', ')}), so it was not assessed`);
-    }
-  }
-  for (const key of ['minHitRate', 'minFaithfulness'] as const) {
-    if (!isUnitScore(c[key])) {
-      out.push(`rag criterion ${key} is ${key in c ? shown(c[key]) : 'missing'}, not a number between 0 and 1`);
-    }
-  }
-  const floor = c.minScoredItems;
-  if (floor === undefined) {
-    out.push('the protocol sets no rag sample floor (criteria.minScoredItems), so no number of scored items could qualify the component');
-  } else if (!isFloor(floor)) {
-    out.push(`rag criterion minScoredItems is ${shown(floor)}, not a positive whole number`);
-  }
-  return out;
 }
 
 type RawRagItem = Partial<Record<keyof PqRagResult, unknown>>;
@@ -617,11 +588,27 @@ function ragFindings(protocol: PqProtocol, rag: PqRagRecord | undefined): { inco
     validPin(judge) && i.servedProvider === generator.provider && servedModelMatches(i.servedModel, generator.pinnedVersion) &&
     (i.negativeControl || (i.judgeVerified === true && i.judgeServedProvider === judge.provider && servedModelMatches(i.judgeServedModel, judge.pinnedVersion) && !sameServingIdentity(i.servedModel, i.judgeServedModel))));
   const hit = ragCriterion('rag hit rate', c.criteria.minHitRate, floor, counted.filter((i) => !i.negativeControl), (i) => i.hit);
-  const faith = ragCriterion('rag faithfulness', c.criteria.minFaithfulness, floor, counted.filter((i) => !i.negativeControl), (i) => i.faithfulness);
+  const positives = counted.filter((i) => !i.negativeControl);
+  const faith = ragCriterion('rag faithfulness', c.criteria.minFaithfulness, floor, positives, (i) => i.faithfulness);
+  /* The per-item floor, beside the mean and not instead of it. Both apply: the
+     mean is the quality measure, this is the fabrication measure. Each failing
+     item is NAMED, because "faithfulness fell below the floor" sends a reader
+     to re-run the whole bank where a list of item ids sends them to the answers
+     that were unsupported. */
+  const unfaithful = isUnitScore(c.criteria.minItemFaithfulness)
+    ? positives.filter((i) => i.faithfulness !== null && i.faithfulness < c.criteria.minItemFaithfulness)
+    : [];
   const failedControls = rag.items.filter(i => i.negativeControl && i.negativeControlPassed === false);
   return {
     incomplete: [...ragAttributionProblems(rag), ...ragItemShortfalls(rag.items), ...criteriaProblems, ...hit.incomplete, ...faith.incomplete],
-    missed: [...hit.missed, ...faith.missed, ...failedControls.map(i => `rag negative control ${i.itemId} failed grounded refusal`)],
+    missed: [
+      ...hit.missed,
+      ...faith.missed,
+      ...(unfaithful.length > 0
+        ? [`rag faithfulness is below the per-item floor ${c.criteria.minItemFaithfulness} on ${unfaithful.length} item(s): ${unfaithful.map(i => `${i.itemId} ${i.faithfulness}`).join(', ')}`]
+        : []),
+      ...failedControls.map(i => `rag negative control ${i.itemId} failed grounded refusal`),
+    ],
   };
 }
 

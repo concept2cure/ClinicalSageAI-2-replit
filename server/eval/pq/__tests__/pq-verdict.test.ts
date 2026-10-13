@@ -8,6 +8,7 @@ import {
   computeVerdict,
   servedModelMatches,
   verifyPqClaim,
+  type PqExtractionResult,
   type PqGenerationResult,
   type PqProtocol,
   type PqRecord,
@@ -43,6 +44,85 @@ function task(id: string, over: Partial<PqGenerationResult> = {}): PqGenerationR
     ...over,
   };
 }
+
+describe('an extraction criterion that cannot be applied is not a criterion', () => {
+  /* FOUNDER DECISION P-31 (2026-10-13). The rag component reports every
+     criterion it cannot apply — a missing minimum, a misspelt key — because
+     "a criterion that cannot be applied is INCOMPLETE, never met"
+     (ragCriteriaProblems). Extraction never got the same treatment: it reads
+     `ext.criteria.minF1` and applies it only `if (typeof minF1 === 'number')`,
+     so a protocol whose extraction minimum is missing, misspelt or a string
+     has NO extraction criterion at all — and the component contributes
+     nothing to `missed`, so the PQ PASSes on it. Same fail-open shape, same
+     answer: say so rather than skip in silence. */
+  const withExtraction = (criteria: Record<string, unknown>): PqProtocol => {
+    const p = protocol();
+    p.components.extraction = {
+      required: true,
+      executable: true,
+      criteria: criteria as Record<string, number>,
+      criteriaSource: 'test',
+    };
+    return p;
+  };
+  const extracted = (f1: number): PqExtractionResult[] => [
+    { taskId: 'ext-0', docType: 'ind', servedModel: 'claude-opus-5', servedModelVerified: true, f1, precision: f1, recall: f1 },
+  ];
+  const why = (r: { reasons: string[] }) => r.reasons.join(' | ');
+
+  it('control — a usable minimum is applied: F1 below it is a miss', () => {
+    const r = computeVerdict(withExtraction({ minF1: 0.8 }), [task('a'), task('b')], extracted(0.5));
+    expect(r.verdict).toBe('FAIL');
+    expect(why(r)).toMatch(/mean extraction F1 0\.500 is below 0\.8/);
+  });
+
+  it('control — a usable minimum that is met passes', () => {
+    const r = computeVerdict(withExtraction({ minF1: 0.8 }), [task('a'), task('b')], extracted(0.9));
+    expect(r.verdict, why(r)).toBe('PASS');
+  });
+
+  it('a MISSING extraction minimum is INCOMPLETE, not a pass on no criterion', () => {
+    const r = computeVerdict(withExtraction({}), [task('a'), task('b')], extracted(0.1));
+    expect(r.verdict, 'extraction qualified a model against no criterion at all').not.toBe('PASS');
+    expect(why(r)).toMatch(/minF1/);
+  });
+
+  it('a MISSPELT extraction minimum is named, not silently skipped', () => {
+    /* The one a reviewer cannot see by reading the protocol: `minFI` with a
+       capital I reads as the real key and measures nothing. */
+    const r = computeVerdict(withExtraction({ minFI: 0.8 }), [task('a'), task('b')], extracted(0.1));
+    expect(r.verdict).not.toBe('PASS');
+    expect(why(r)).toMatch(/minFI/);
+  });
+
+  it('a minimum that is not a 0-1 number is named', () => {
+    const r = computeVerdict(withExtraction({ minF1: '0.8' }), [task('a'), task('b')], extracted(0.1));
+    expect(r.verdict).not.toBe('PASS');
+    expect(why(r)).toMatch(/minF1/);
+  });
+
+  it('a NaN minimum is named, not skipped — NaN never compares below anything', () => {
+    /* The hazard this file already names of the rag mean: "NaN never compares
+       below a minimum, so it must never reach a mean". A bare
+       `typeof minF1 === 'number'` admits NaN, and `0.1 < NaN` is false, so the
+       criterion silently measures nothing. Found by a mutant that reverted the
+       range check to a type check and survived every other case here. */
+    const r = computeVerdict(withExtraction({ minF1: Number.NaN }), [task('a'), task('b')], extracted(0.1));
+    expect(r.verdict, 'a NaN minimum qualified a model against nothing').not.toBe('PASS');
+    expect(why(r)).toMatch(/minF1/);
+  });
+
+  it('an out-of-range minimum is named rather than applied', () => {
+    /* `minF1: 1.5` under a type check would make EVERY mean a miss — a
+       criterion no model could meet, reported as the model's failure rather
+       than the protocol's. INCOMPLETE is the honest verdict: the protocol is
+       unusable, which is not the same as the model being unqualified. */
+    const r = computeVerdict(withExtraction({ minF1: 1.5 }), [task('a'), task('b')], extracted(0.95));
+    expect(r.verdict).toBe('INCOMPLETE');
+    expect(why(r)).toMatch(/minF1 is 1\.5/);
+    expect(why(r)).not.toMatch(/mean extraction F1/);
+  });
+});
 
 describe('computeVerdict', () => {
   it('control — approved protocol, enough tasks, every criterion met, every task on the pinned model → PASS', () => {

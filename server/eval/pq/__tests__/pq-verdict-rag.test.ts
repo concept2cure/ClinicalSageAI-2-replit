@@ -113,6 +113,99 @@ const passingRag = () => ragRun([item('q1'), item('q2'), item('q3')]);
 const verdictOf = (p: PqProtocol, rag?: PqRagRecord) => computeVerdict(p, passingGeneration(p), passingExtraction, rag);
 const why = (r: { reasons: string[] }) => r.reasons.join(' | ');
 
+describe('a mean is not a qualification: one unfaithful answer is the harm', () => {
+  /* FOUNDER DECISION P-31 (2026-10-13). `minFaithfulness` is applied as an
+     ARITHMETIC MEAN over the counted items (pq-verdict.ts ragCriterion:
+     `values.reduce((a, v) => a + v, 0) / values.length`). The judge is told
+     that 0 means the answer is "unsupported or contradicted"
+     (eval/rag/rag-metrics.ts judgeFaithfulness). So at the protocol's own
+     sample floor of 30, NINE items can score 0.0 — nine answers the judge
+     called unsupported or contradicted — and the mean still clears 0.70.
+     Thirty per cent of the bank can be fabrication and the model qualifies to
+     draft high-risk regulatory content.
+
+     That is also internally inconsistent: the generation component already
+     uses the right shape for a harm that is per-item, `maxForbiddenHits: 0`,
+     an absolute zero rather than an average.
+
+     So the rag component gains a per-item floor beside the mean. Both apply.
+     The value is set where the judge's own wording changes meaning: below 0.5
+     the judge considers the answer more unsupported than supported, which is a
+     fabrication signal and none is tolerated. Above it, partial-support noise
+     is a quality question, which is what the mean is for — and the individual
+     fabrication at RUN time is caught by the deterministic answer-grounding
+     engine, not by this protocol. */
+  const MEAN_FLOOR = REAL.components.rag?.criteria.minFaithfulness;
+  const ITEM_FLOOR = (REAL.components.rag?.criteria as { minItemFaithfulness?: number } | undefined)?.minItemFaithfulness;
+
+  it('every criterion the real protocol declares is one this verdict measures', () => {
+    /* The invariant behind RAG_CRITERIA. A criterion the verdict does not list
+       is reported as "not one this verdict measures", which is the right answer
+       for a misspelt floor and the WRONG answer for a real one — the component
+       then reads INCOMPLETE for a reason that is about the code, not the model.
+       Found by a mutant: dropping minItemFaithfulness from the list left the
+       floor enforced (so the fabrication case still failed) while adding a
+       spurious complaint, which no other case here would have noticed. */
+    const r = verdictOf(protocolCopy({ executable: true, floor: 30 }), passingRag());
+    expect(why(r)).not.toMatch(/not one this verdict measures/);
+  });
+
+  it('the protocol declares a per-item faithfulness floor at all', () => {
+    expect(MEAN_FLOOR, 'the mean floor is the one this case is set against').toBe(0.7);
+    expect(ITEM_FLOOR, 'pq-protocol.json declares no criteria.minItemFaithfulness').toBe(0.5);
+  });
+
+  it('refuses a run whose mean clears the floor on nine zero-scored items', () => {
+    /* The exact shape the mean admits: 21 perfect answers, 9 the judge scored
+       0.0. mean = 21/30 = 0.70, which is NOT below 0.70. */
+    const zeros = 9;
+    const items = [
+      ...Array.from({ length: 30 - zeros }, (_, i) => item(`ok-${i}`)),
+      ...Array.from({ length: zeros }, (_, i) => item(`unsupported-${i}`, { faithfulness: 0 })),
+    ];
+    const mean = items.reduce((a, i) => a + (i.faithfulness ?? 0), 0) / items.length;
+    expect(mean, 'the fixture must sit exactly at the mean floor, or it proves nothing').toBeCloseTo(0.7, 10);
+
+    const r = verdictOf(protocolCopy({ executable: true, floor: 30 }), ragRun(items));
+    /* FAIL, not merely "not PASS". The model missed something real, and
+       `incomplete` would mean "we could not tell" — which is also what a
+       verdict that simply stopped MEASURING this floor would report, so
+       asserting FAIL is what makes this case bite. */
+    expect(r.verdict, 'nine unsupported answers qualified a model for regulatory drafting').toBe('FAIL');
+    expect(why(r)).toMatch(/per-item floor 0\.5 on 9 item\(s\)/);
+  });
+
+  it('names the items that fell below the per-item floor, not just that one did', () => {
+    const items = [
+      ...Array.from({ length: 28 }, (_, i) => item(`ok-${i}`)),
+      item('contradicted-a', { faithfulness: 0 }),
+      item('contradicted-b', { faithfulness: 0.25 }),
+    ];
+    const r = verdictOf(protocolCopy({ executable: true, floor: 30 }), ragRun(items));
+    expect(r.verdict).toBe('FAIL');
+    /* The ids AND their scores: "faithfulness fell below the floor" sends a
+       reader to re-run the bank, where a list sends them to the answers that
+       were unsupported. */
+    expect(why(r)).toMatch(/contradicted-a 0/);
+    expect(why(r)).toMatch(/contradicted-b 0\.25/);
+  });
+
+  it('admits a run with no item below the floor (the negative control)', () => {
+    /* Partial support above the floor is what the MEAN is for, so a bank of
+       0.8s passes both: mean 0.8 >= 0.7, and no item below 0.5. Without this
+       case the floor could be a blanket refusal and the suite would not know. */
+    const items = Array.from({ length: 30 }, (_, i) => item(`partial-${i}`, { faithfulness: 0.8 }));
+    const r = verdictOf(protocolCopy({ executable: true, floor: 30 }), ragRun(items));
+    expect(r.verdict, why(r)).toBe('PASS');
+  });
+
+  it('an item exactly at the floor is admitted — the floor is a minimum, not an exclusive bound', () => {
+    const items = [item('at-floor', { faithfulness: 0.5 }), ...Array.from({ length: 29 }, (_, i) => item(`ok-${i}`))];
+    const r = verdictOf(protocolCopy({ executable: true, floor: 30 }), ragRun(items));
+    expect(r.verdict, why(r)).toBe('PASS');
+  });
+});
+
 describe('rag required AND executable — not run', () => {
   it('control — the copy with rag NOT executable is INCOMPLETE only because rag cannot run (today\'s rule)', () => {
     const p = protocolCopy({ executable: false });
