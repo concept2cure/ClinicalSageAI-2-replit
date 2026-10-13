@@ -37,20 +37,41 @@ const CTX: FlowEngineContext = { organizationId: 7, userId: 3, projectId: null }
 
 const definitionOf = (category: FlowCategory) => getFlowDefinition(category, CTX)!;
 
-const stateWith = (category: FlowCategory, answers: Record<string, unknown>): FlowState => ({
-  flowId: `${category}-under-test`,
-  flowCategory: category,
-  currentNodeId: 'x',
-  answers: { any_node: answers },
-  completedNodes: [],
-  issues: [],
-  startedAt: '2026-10-13T00:00:00.000Z',
-  complete: false,
-  sectionProgress: {},
-});
+/**
+ * The interview as it stands: the answers given, and the nodes the person has
+ * been THROUGH. A node that asks a mitigating question and has not been
+ * completed means the question has not been put yet, which is not a decline —
+ * so the nodes holding the answered fields are completed automatically, and
+ * `alsoReached` names a node the person passed through and left blank.
+ */
+const stateWith = (
+  category: FlowCategory,
+  answers: Record<string, unknown>,
+  alsoReached: string[] = [],
+): FlowState => {
+  const completed = new Set(alsoReached);
+  for (const node of definitionOf(category).nodes) {
+    if (node.fields.some(f => f.id in answers)) completed.add(node.id);
+  }
+  return {
+    flowId: `${category}-under-test`,
+    flowCategory: category,
+    currentNodeId: 'x',
+    answers: { any_node: answers },
+    completedNodes: [...completed],
+    issues: [],
+    startedAt: '2026-10-13T00:00:00.000Z',
+    complete: false,
+    sectionProgress: {},
+  };
+};
 
-const firedFor = (category: FlowCategory, answers: Record<string, unknown>): string[] =>
-  runCrossNodeAnalysis(stateWith(category, answers), definitionOf(category)).map(
+const firedFor = (
+  category: FlowCategory,
+  answers: Record<string, unknown>,
+  alsoReached: string[] = [],
+): string[] =>
+  runCrossNodeAnalysis(stateWith(category, answers, alsoReached), definitionOf(category)).map(
     (i: DetectedIssue) => i.checkId,
   );
 
@@ -63,20 +84,12 @@ const firedFor = (category: FlowCategory, answers: Record<string, unknown>): str
 const NOT_ASKED_YET: Readonly<Record<string, string>> = {
   xn_oncology_no_biomarker_strategy:
     'No flow asks for a biomarker strategy or a biomarker-enrichment plan. `companion_diagnostic` is asked, and where it is the rule works.',
-  xn_accelerated_approval_no_confirmatory:
-    'No flow asks whether a confirmatory trial is planned, or what post-marketing commitment covers it — the thing FDORA §3210 turns on.',
   xn_orphan_without_natural_history:
     'No flow asks whether natural-history data exists for the disease.',
   xn_global_trial_no_ethnic_bridging:
     'No flow asks about ethnic factors or a bridging strategy for a multi-regional trial (ICH E5/E17).',
-  xn_class_iii_device_no_clinical_data:
-    'No flow asks `clinical_data_available` under that id. The PMA and 510(k) interviews ask about clinical evidence in their own words, so the rule read a field neither of them has — and said CRITICAL about it.',
-  xn_biologic_no_immunogenicity:
-    'No flow asks for an immunogenicity assessment strategy, which every biologic owes (FDA 2019 guidance; ICH S6(R1)).',
   xn_high_risk_device_no_human_factors:
     'No flow asks whether human-factors validation was done (IEC 62366-1).',
-  xn_pediatric_without_safety_monitoring:
-    'No flow asks whether a DSMB or independent data monitoring is in place.',
   xn_phase3_no_interim:
     'No flow asks about a planned interim analysis, nor the enrolment the rule needs \u2014 so it was already silent, arithmetically.',
   xn_stability_insufficient_for_shelf_life:
@@ -134,6 +147,32 @@ describe('every cross-node rule', () => {
   });
 });
 
+describe('a question the person has not reached yet', () => {
+  it('is not a question they declined', () => {
+    /* The IND interview DOES ask whether an immunogenicity assessment is
+       planned — three nodes after the product type. Telling a sponsor their
+       biologic has no immunogenicity assessment the moment they say
+       "biologic" is the same insult in a smaller form. */
+    const asked = fieldsAskedBy(definitionOf('ind_submission'));
+    expect(asked.has('immunogenicity_assessment_planned'), 'the question exists').toBe(true);
+    expect(firedFor('ind_submission', { product_type: 'biologic' })).not.toContain(
+      'xn_biologic_no_immunogenicity',
+    );
+    /* And once they have been through that question and left it empty, the
+       finding is real. */
+    const node = definitionOf('ind_submission').nodes.find(n =>
+      n.fields.some(f => f.id === 'immunogenicity_assessment_planned'),
+    )!.id;
+    expect(firedFor('ind_submission', { product_type: 'biologic' }, [node])).toContain(
+      'xn_biologic_no_immunogenicity',
+    );
+    /* And silent once they say it is planned. */
+    expect(
+      firedFor('ind_submission', { product_type: 'biologic', immunogenicity_assessment_planned: true }),
+    ).not.toContain('xn_biologic_no_immunogenicity');
+  });
+});
+
 describe('the findings that were asserted at a sponsor who was never asked', () => {
   it('no longer fire on the trigger alone', () => {
     /* Each of these was an answer a real interview takes, and each used to
@@ -161,12 +200,20 @@ describe('the findings that were asserted at a sponsor who was never asked', () 
   it('still fire where the sponsor REFUSED the thing, which is an answer', () => {
     /* 'no' is not an absence: a sponsor who says there is no clinical evidence
        for a Class III device has told AnA something, and the finding stands. */
-    expect(firedFor('device_pma', { device_class: 'class_iii', clinical_data_available: 'no' })).toContain(
-      'xn_class_iii_device_no_clinical_data',
-    );
-    expect(firedFor('device_510k', { device_class: 'class_iii', human_factors_study: 'no' })).toContain(
-      'xn_high_risk_device_no_human_factors',
-    );
+    /* The PMA interview's own question. 'no' is a sponsor saying they ran no
+       clinical study, which is exactly the finding — and the justification
+       field beside it is the answer that silences it. */
+    expect(
+      firedFor('device_pma', { device_class: 'class_iii', clinical_study_conducted: false }),
+    ).toContain('xn_class_iii_device_no_clinical_data');
+    expect(
+      firedFor('device_pma', {
+        device_class: 'class_iii',
+        clinical_study_conducted: false,
+        clinical_no_study_justification: 'Equivalence to the predicate rests on bench and animal data.',
+      }),
+      'and it is silent once they justify it',
+    ).not.toContain('xn_class_iii_device_no_clinical_data');
   });
 
   it('still fire where the mitigating question IS asked and left blank', () => {
@@ -177,7 +224,12 @@ describe('the findings that were asserted at a sponsor who was never asked', () 
     const asked = fieldsAskedBy(definitionOf('nda_submission'));
     expect(asked.has('rems_required'), 'the trigger is asked there').toBe(true);
     expect(asked.has('rems_elements'), 'and so is the mitigation').toBe(true);
-    expect(firedFor('nda_submission', { rems_required: 'yes' })).toContain('xn_rems_without_etasu');
+    const remsNode = definitionOf('nda_submission').nodes.find(n =>
+      n.fields.some(f => f.id === 'rems_elements'),
+    )!.id;
+    expect(firedFor('nda_submission', { rems_required: 'yes' }, [remsNode])).toContain(
+      'xn_rems_without_etasu',
+    );
     expect(
       firedFor('nda_submission', { rems_required: 'yes', rems_elements: 'Prescriber certification' }),
       'and it is silent once they say what the elements are',
