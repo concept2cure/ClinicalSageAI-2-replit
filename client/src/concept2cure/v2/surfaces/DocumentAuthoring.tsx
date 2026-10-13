@@ -7,7 +7,7 @@
  * ── What lives here, what moved ──────────────────────────────────────────────
  * On 2026-09-21 the editing core of this surface — the section outline, the
  * canonical `RichSectionEditor` over the active section, and the side rail
- * (AnA, comments, history, sources, signatures, audit, exports, project files,
+ * (then AnA, comments, history, sources, signatures, audit, exports, project files,
  * review tasks) — moved, unchanged, to `../editor/DocumentWorkbench.tsx`
  * (docs/design/ANA_DOCUMENT_CANVAS.md). This file was 5,143 lines; it is now
  * the part that is genuinely the surface's:
@@ -28,6 +28,8 @@
  * by one editor, over one store, with one save path. There is no second
  * editor; `scripts/ci/check-canvas-path.mjs` fails the build if this file
  * stops mounting the workbench.
+ * All current AnA requests use the single ConversationThread and this same
+ * DocumentCanvas, preserving the saved version and unsaved-work decision.
  *
  * REAL WIRING (regulated GA product): the list reads the governed authoring
  * store at `/api/authoring` (server/routes/authoring.router.ts, table

@@ -3,6 +3,7 @@ import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types'
 import type { EditorBridge } from './DocumentWorkbench';
 import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal } from './anaInsertGate';
 import { parseRemedyAnswer, remedyRefusal, type AuthoringRemedy } from './authoringRemedies';
+import '../styles/redline.css';
 
 export interface RemedyTarget extends Pick<EditorBridge, 'propose' | 'editable' | 'sectionCode' | 'sectionLabels' | 'openSection'> {
   sectionId?: string;
@@ -26,7 +27,7 @@ function remedySectionLabel(remedy: AuthoringRemedy, target?: RemedyTarget): str
 function OpenRemedySection({ remedy, target }: { remedy: AuthoringRemedy; target?: RemedyTarget }) {
   const label = remedySectionLabel(remedy, target);
   if (!target?.sectionId || target.sectionId === remedy.sectionId || !label || !target.openSection) return null;
-  return <button type="button" className="btn ghost" style={{ marginTop: 8, marginLeft: 6 }} onClick={() => {
+  return <button type="button" className="btn ghost authoring-remedy-action" onClick={() => {
     if (target.open === false) target.reopen?.();
     target.openSection?.(remedy.sectionId);
   }}>Open section {label}</button>;
@@ -42,6 +43,7 @@ function RemedyCard({ remedy, target, record, unfinished }: {
   remedy: AuthoringRemedy; target?: RemedyTarget; record?: AnaTurnRecordStatus; unfinished: boolean;
 }) {
   const noteId = useId();
+  const headingId = useId();
   const [busy, setBusy] = useState(false);
   const [applied, setApplied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,16 +65,23 @@ function RemedyCard({ remedy, target, record, unfinished }: {
       setError('The fix could not be applied. Your document has not been saved.');
     } finally { setBusy(false); }
   };
-  return <article style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 10, marginTop: 8 }}>
-    <strong>{sectionLabel ? `Proposed fix · ${sectionLabel}` : 'Proposed fix for another section'}</strong>
-    <p style={{ margin: '8px 0' }}>{remedy.reason}</p>
-    <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><strong>Original: </strong><del>{remedy.quote}</del></div>
-    <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', marginTop: 6 }}><strong>Replacement: </strong>{remedy.replacement || '(delete this passage)'}</div>
-    <button type="button" className="btn ghost" onClick={() => void apply()} disabled={busy || applied || !!refusal} aria-describedby={noteId} style={{ marginTop: 8 }}>
-      {remedyApplyLabel(applied, busy)}
-    </button>
-    <OpenRemedySection remedy={remedy} target={target} />
-    <p id={noteId} role={error ? 'alert' : 'status'} style={{ margin: '6px 0 0', fontSize: 12 }}>
+  return <article className="authoring-remedy" aria-labelledby={headingId}>
+    <h3 id={headingId} className="authoring-remedy-heading">{sectionLabel ? `Proposed fix · ${sectionLabel}` : 'Proposed fix for another section'}</h3>
+    <p className="authoring-remedy-reason">{remedy.reason}</p>
+    <details className="authoring-remedy-changes">
+      <summary className="authoring-remedy-toggle">What changed</summary>
+      <div className="authoring-remedy-passages">
+        <p className="authoring-remedy-passage"><span className="authoring-remedy-label">Original: </span><del className="rdl-del">{remedy.quote}</del></p>
+        <p className="authoring-remedy-passage"><span className="authoring-remedy-label">Replacement: </span>{remedy.replacement ? <ins className="rdl-ins">{remedy.replacement}</ins> : '(delete this passage)'}</p>
+      </div>
+    </details>
+    <div className="authoring-remedy-actions">
+      <button type="button" className="btn ghost authoring-remedy-action" onClick={() => void apply()} disabled={busy || applied || !!refusal} aria-describedby={noteId}>
+        {remedyApplyLabel(applied, busy)}
+      </button>
+      <OpenRemedySection remedy={remedy} target={target} />
+    </div>
+    <p id={noteId} role={error ? 'alert' : 'status'} className="authoring-remedy-note">
       {remedyStatus(applied, error, refusal)}
     </p>
   </article>;
@@ -85,8 +94,8 @@ export function AuthoringRemedies({ text, settled, record, unfinished, target }:
   if (!settled) return null;
   const parsed = parseRemedyAnswer(text);
   if (!parsed.hasRemedies) return null;
-  return <section aria-label="AnA proposed fixes">
-    {parsed.errors.map((error, i) => <p key={i} role="alert">{error}</p>)}
+  return <section aria-label="AnA proposed fixes" className="authoring-remedies">
+    {parsed.errors.map((error, i) => <p key={i} role="alert" className="authoring-remedy-errors">{error}</p>)}
     {parsed.proposals.map((remedy, i) => <RemedyCard key={`${record?.status === 'recorded' ? record.id : ''}:${i}:${JSON.stringify(remedy)}`} remedy={remedy} target={target} record={record} unfinished={unfinished} />)}
   </section>;
 }

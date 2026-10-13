@@ -72,6 +72,9 @@ import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramRead, programHeadline, programLineFor } from './programSummary';
 import { describeProvenance, moduleWasAssumed, type DocumentProvenance } from './provenance';
 import { OpenedDocumentPending, StatusPill, ToDocumentsButton } from './CanvasDocumentList';
+import { useCanvasRegionFocus, useOriginSectionFocus } from './canvasFocus';
+import type { AskOrigin } from './askAnaToDraft';
+import { originForSavedSection } from './authoringConversationOrigin';
 
 /** GET /docs/:id → `document` (the columns this card reads; `created_by` is the author, never offered as its reviewer). */
 /* c2c_document_id: the filing this is the editing copy of, or null (F4). */
@@ -92,6 +95,7 @@ interface SectionRow {
   title: string;
   content: string | null;
   order_index: number | null;
+  updated_at?: string | null;
 }
 
 export interface DocumentCanvasProps {
@@ -108,7 +112,7 @@ export interface DocumentCanvasProps {
   onExpandedChange: (expanded: boolean) => void;
   onNav: (id: string) => void;
   /** Put a prompt in the thread's composer (the workbench's asks). */
-  onAsk: (text: string) => void;
+  onAsk: (text: string, savedOrigin?: AskOrigin) => void;
   fireToast: FireToast;
   liveDrive?: OwnedSurfaceViewProps['liveDrive'];
   /**
@@ -150,6 +154,10 @@ export interface DocumentCanvasProps {
    * The host says no when focus belongs elsewhere (the list row that opened it).
    */
   returnFocus?: boolean;
+  /** Exact saved section carried by an Authoring conversation handoff. */
+  focusSectionId?: string;
+  /** The first asynchronous origin expansion keeps focus in the composer. */
+  focusOnOpen?: boolean;
 }
 
 /** The stored document type (`product_code`), in words: `clinical_overview` → "Clinical overview". */
@@ -227,7 +235,7 @@ export function DocumentCanvas({
   paneEl = null,
   refreshKey = 0,
   onEditorBridge,
-  onShowList, listCount = null, cardless = false, returnFocus = true,
+  onShowList, listCount = null, cardless = false, returnFocus = true, focusSectionId, focusOnOpen = true,
 }: DocumentCanvasProps) {
   /* Beside the conversation the card stays in the thread, marked as the
      document that is open; in place it gives way to the editor. */
@@ -347,32 +355,10 @@ export function DocumentCanvas({
     if (expanded && !workbenchMounted) setWorkbenchMounted(true);
   }, [expanded, workbenchMounted]);
 
-  /* Focus follows the region. Opening moves it to the first control of what
-     opened — the way back — and closing returns it to the control that
-     opened it, so the keyboard never lands on a region that is now hidden.
-
-     On the FIRST expand the bar does not exist yet: the workbench mounts in
-     the render after `expanded` flips, so a focus call made on that first
-     pass reached a null ref and did nothing at all. The effect therefore
-     waits for the control, rather than firing once into an empty ref. */
-  /* A canvas opened from the list mounts already expanded, and must still
-     move focus into what opened: so it starts as "was closed". */
-  const wasExpanded = useRef(cardless ? false : expanded);
-  /* "← Documents" closes the editor and the list takes the focus, not this
-     card; so does a host that says focus belongs elsewhere (`returnFocus`). */
-  const toList = useRef(false);
-  useEffect(() => {
-    if (expanded) {
-      const back = backBtnRef.current;
-      if (!back) return;
-      if (!wasExpanded.current) back.focus({ preventScroll: true });
-      wasExpanded.current = true;
-      return;
-    }
-    if (wasExpanded.current && returnFocus && !toList.current) expandBtnRef.current?.focus({ preventScroll: true });
-    toList.current = false;
-    wasExpanded.current = false;
-  }, [expanded, workbenchMounted, doc, returnFocus]);
+  const toList = useCanvasRegionFocus({
+    expanded, cardless, returnFocus, focusOnOpen, mounted: workbenchMounted,
+    recordReady: doc !== null, back: backBtnRef, card: expandBtnRef,
+  });
   const showList = () => {
     toList.current = true;
     onShowList?.();
@@ -422,11 +408,12 @@ export function DocumentCanvas({
      to go into it, and lands in the composer for the person to send. The
      wording asks for the text in the conversation: the document exists, and
      a second one drafted from this ask would be a duplicate. */
-  const [focusSection, setFocusSection] = useState<{ id: string; nonce: number } | null>(null);
+  const [focusSection, setFocusSection] = useOriginSectionFocus(focusSectionId);
   const askToDraft = (sec: SectionRow, title: string) => {
+    if (!doc) return;
     setFocusSection(prev => ({ id: sec.id, nonce: (prev?.nonce ?? 0) + 1 }));
     onExpandedChange(true);
-    onAsk(`Draft the text for section ${sec.code} ${sec.title} of “${title}” here in the conversation, so I can insert it into the document.`);
+    onAsk(`Draft the text for section ${sec.code} ${sec.title} of “${title}” here in the conversation, so I can insert it into the document.`, originForSavedSection(doc, sec, programId));
   };
   /* The workbench reports its open section whether or not this canvas is
      expanded (it stays mounted, hidden), and so does this, saying which. An

@@ -1,21 +1,15 @@
 // @vitest-environment jsdom
 /**
- * "Draft with AnA" now has somewhere to land.
- *
- * The editor is registered `ownsConversation: true` (was `hideAna: true`)
- * because it cannot give the rail's column back — `.ed` is
- * `220px minmax(420px,1fr)` and gains a third 300px track whenever a rail mode
- * is open, a 940px floor that the shell's 380px rail pushes past 1376px. But it
- * kept calling the shell's `onAsk`, so "Draft with AnA", DocCanvas's drafting
- * and "Ask what changed" all pushed a question into a rail this screen never
- * renders — and `ask()` persisted `anaOpen`, so the question surfaced later on
- * some other surface entirely.
- *
- * These press the buttons and assert the answer arrives HERE.
+ * Authoring asks use the canonical ConversationThread composer and saved
+ * DocumentCanvas. The actual navigation carries the exact saved document and
+ * section; a prefilled request stays unsent until the person presses Enter.
+ * These preserve drafting, evidence, follow-up, answer visibility and focus
+ * capabilities while refusing a second editor conversation.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import type { Editor } from '@tiptap/core';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async importOriginal => ({
@@ -27,6 +21,7 @@ vi.mock('@/services/portal/authService', () => ({
 }));
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { CanonicalAuthoringFlow, setAuthoringFlowScope, clearAuthoringFlowScope, serveAuthoringStream, sendAuthoringPrefill, toolbarDraftButton, sentAuthoringTurns } from './canonicalAuthoringFlow';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload } as Response);
 
@@ -46,7 +41,7 @@ const DOCS = {
   success: true,
   documents: [
     {
-      id: 'D1',
+      id: 'dddddddd-0000-4000-8000-000000000001',
       title: 'Nonclinical Overview',
       module: 'M3',
       product_code: 'ABC',
@@ -60,8 +55,8 @@ const SECTIONS = {
   success: true,
   sections: [
     {
-      id: 'S1',
-      doc_id: 'D1',
+      id: 'aaaaaaaa-0000-4000-8000-000000000001',
+      doc_id: 'dddddddd-0000-4000-8000-000000000001',
       code: '3.2.S.1',
       title: 'General Information',
       content: 'The drug substance is a monoclonal antibody.',
@@ -81,38 +76,21 @@ const props = () => ({
   segment: 'biotech',
 });
 
-/** Every AnA turn the page actually sent, with the conversation that sent it. */
-function streamTurns(): Array<{ message?: string; screen?: string }> {
-  const calls = (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls;
-  return calls
-    .filter(c => String(c[0]).includes('/api/ana-ri/stream'))
-    .map(c => {
-      try {
-        const p = JSON.parse((c[1] as { body?: string })?.body ?? '{}') as {
-          message?: string;
-          context?: { screen?: string };
-        };
-        return { message: p.message, screen: p.context?.screen };
-      } catch {
-        return {};
-      }
-    });
-}
-
 beforeEach(() => {
+  setAuthoringFlowScope();
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-    if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
-    if (method === 'GET' && url.startsWith('/api/authoring/sections/S1/history'))
+    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
+    if (method === 'GET' && url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok(SECTIONS);
+    if (method === 'GET' && url.startsWith('/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000001/history'))
       return ok({ success: true, revisions: [] });
-    if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments'))
+    if (method === 'GET' && url.startsWith('/api/authoring/documents/dddddddd-0000-4000-8000-000000000001/comments'))
       return ok({ success: true, comments: [] });
+    if (url.startsWith('/api/c2c/documents/')) return { ...ok({ success: false }), ok: false, status: 404 };
     return ok({ success: true });
   });
-  // The pane streams over `fetch`; refusing the request keeps this offline. The
-  // user's turn is appended before the request goes out, which is the visible
-  // fact under test.
+  // Refuse the actual provider request in tests that inspect request context.
   vi.stubGlobal(
     'fetch',
     vi.fn(async () => ({ ok: false, status: 503, body: null, json: async () => ({}) }))
@@ -121,185 +99,117 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  clearAuthoringFlowScope();
   vi.unstubAllGlobals();
 });
 
-describe('DocumentAuthoring — the editor answers its own asks', () => {
-  it('"Draft with AnA" opens the pane and shows the request in it', async () => {
-    const p = props();
-    render(<DocumentAuthoring {...p} />);
+describe('DocumentAuthoring — asks arrive in the canonical conversation', () => {
+  it('Draft with AnA prefills the visible composer and sends saved section context only after Enter', async () => {
+    render(<CanonicalAuthoringFlow />);
     await screen.findAllByText('General Information');
-
-    // The pane ships OPEN. `ownsConversation: true` suppresses the shell's
-    // 32px AnA seam on this surface, so a closed local rail left the one
-    // screen where AnA and the author co-write as the only screen in the
-    // product with no AnA on it at all. ectd-coauthor renders its composer
-    // unconditionally and was never reported; this is parity with that.
-    expect(screen.getByLabelText(/AnA — document authoring/)).toBeTruthy();
-
-    // Two controls carry this name once a section is genuinely empty: this
-    // surface's toolbar button (the one under test — it prompts with the
-    // section number) and RichSectionEditor's empty-state CTA (which prompts
-    // from linked evidence). Name the one this test means instead of taking
-    // whichever the query reaches first; an unqualified getByRole threw
-    // "Found multiple elements" in CI the moment the second one appeared.
-    const toolbarDraft = screen
-      .getAllByRole('button', { name: /Draft with AnA/ })
-      .find(b => !b.closest('.rse-empty-cta'));
-    expect(toolbarDraft, 'the toolbar "Draft with AnA" button').toBeTruthy();
-    fireEvent.click(toolbarDraft!);
-
-    const pane = await screen.findByLabelText(/AnA — document authoring/);
-    await waitFor(() => expect(pane.textContent).toMatch(/Draft 3\.2\.S\.1 General Information/));
-    // Sent by THIS surface's conversation, not the shell's.
-    await waitFor(() =>
-      expect(
-        streamTurns().some(
-          t => t.screen === 'document-authoring' && /Draft 3\.2\.S\.1/.test(t.message ?? '')
-        )
-      ).toBe(true)
-    );
-    expect(p.onAsk).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText(/AnA — document authoring/)).toBeNull();
+    fireEvent.click(toolbarDraftButton());
+    const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
+    expect(composer.value).toMatch(/Draft 3\.2\.S\.1 General Information/);
+    expect(sentAuthoringTurns()).toHaveLength(0);
+    await sendAuthoringPrefill();
+    await waitFor(() => expect(sentAuthoringTurns()).toHaveLength(1));
+    expect(sentAuthoringTurns()[0].module_context).toMatchObject({ documentId: 'dddddddd-0000-4000-8000-000000000001', sectionId: 'aaaaaaaa-0000-4000-8000-000000000001', savedRecordOnly: true });
+    expect(sentAuthoringTurns()[0].authoring_context).toMatchObject({ artifactId: 'dddddddd-0000-4000-8000-000000000001', sectionId: 'aaaaaaaa-0000-4000-8000-000000000001' });
   });
 
-  it('an empty section shows BOTH draft controls, and the toolbar one still asks for the section', async () => {
-    // The ambiguity above is not hypothetical: once a section is genuinely
-    // empty, RichSectionEditor offers its own "Draft with AnA" beneath the
-    // toolbar's. Both are real controls with different prompts, so this pins
-    // which one the toolbar is — otherwise the disambiguation above is a line
-    // nothing would notice losing.
+  it('an empty section keeps both draft controls, and the toolbar asks for the exact section', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
-      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') {
-        return ok({ ...SECTIONS, sections: [{ ...SECTIONS.sections[0], content: '' }] });
-      }
-      if (method === 'GET' && url.startsWith('/api/authoring/sections/S1/history'))
-        return ok({ success: true, revisions: [] });
-      if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments'))
-        return ok({ success: true, comments: [] });
+      if (url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+      if (url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
+      if (url === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok({ sections: [{ ...SECTIONS.sections[0], content: '' }] });
+      if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };
       return ok({ success: true });
     });
-
-    render(<DocumentAuthoring {...props()} />);
+    render(<CanonicalAuthoringFlow />);
     await screen.findAllByText('General Information');
-
-    await waitFor(() =>
-      expect(screen.getAllByRole('button', { name: /Draft with AnA/ })).toHaveLength(2)
-    );
-
-    const toolbarDraft = screen
-      .getAllByRole('button', { name: /Draft with AnA/ })
-      .find(b => !b.closest('.rse-empty-cta'))!;
-    fireEvent.click(toolbarDraft);
-
-    await waitFor(() =>
-      expect(streamTurns().some(t => /Draft 3\.2\.S\.1/.test(t.message ?? ''))).toBe(true)
-    );
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /Draft with AnA/ })).toHaveLength(2));
+    fireEvent.click(toolbarDraftButton());
+    await sendAuthoringPrefill();
+    await waitFor(() => expect(sentAuthoringTurns()[0]?.message).toMatch(/Draft 3\.2\.S\.1/));
   });
 
-  it('the pane composer sends into the same conversation', async () => {
-    const p = props();
-    render(<DocumentAuthoring {...p} />);
+  it('the canonical composer sends the person’s edited question in the same saved document context', async () => {
+    render(<CanonicalAuthoringFlow />);
     await screen.findAllByText('General Information');
-
-    const box = await screen.findByPlaceholderText(/Ask about 3\.2\.S\.1/);
-    fireEvent.change(box, { target: { value: 'Is this claim supported by the linked evidence?' } });
-    // Exactly 'Send': the header's 'Send for review' is another act.
-    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
-
-    const pane = await screen.findByLabelText(/AnA — document authoring/);
+    fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
+    const pane = await sendAuthoringPrefill('Is this claim supported by the linked evidence?');
     await waitFor(() => expect(pane.textContent).toMatch(/Is this claim supported/));
-    expect(p.onAsk).not.toHaveBeenCalled();
+    expect(sentAuthoringTurns()[0].message).toBe('Is this claim supported by the linked evidence?');
+    expect(sentAuthoringTurns()[0].module_context).toMatchObject({ sectionCode: '3.2.S.1', savedRecordOnly: true });
   });
 
-  it('shows real work, evidence, and follow-up actions from AnA', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => ({
-        ok: true,
-        status: 200,
-        body: anaStream([
-          { type: 'orchestration', orchestration: { detectedIntent: { lens: 'audit' }, suggestedActions: ['Review the citation chain'] } },
-          { type: 'tool_use', name: 'check_dossier_consistency', label: 'Checking dossier consistency', round: 1 },
-          { type: 'tool_result', name: 'check_dossier_consistency', status: 'success', result: '{"verdict":"clean"}' },
-          {
-            type: 'grounding_strip',
-            evidence: { attempted: true, validated: true, source_count: 2, grounded_claim_count: 3, weak_or_ungrounded_claim_count: 0, missing_support_count: 0 },
-            check: {
-              engine: 'answer-check/2', basis: 'sources', claims: 2, checked: 2, found: 2,
-              notFound: [], unchecked: [], fromPerson: [], fromInput: [], sources: ['tool:check_dossier_consistency'], unreadable: [], verdicts: [],
-            },
-          },
-          { type: 'text', content: 'The citation chain is consistent.' },
-          { type: 'done', latencyMs: 420 },
-          { type: 'post_done', cleanedResponse: 'The citation chain is consistent.' },
-        ]),
-      }))
-    );
-
-    render(<DocumentAuthoring {...props()} />);
+  it('shows real work, evidence and follow-up actions in the canonical conversation', async () => {
+    serveAuthoringStream(() => anaStream([
+      { type: 'orchestration', orchestration: { detectedIntent: { lens: 'audit' }, suggestedActions: ['Review the citation chain'] } },
+      { type: 'tool_use', name: 'check_dossier_consistency', label: 'Checking dossier consistency', round: 1 },
+      { type: 'tool_result', name: 'check_dossier_consistency', status: 'success', result: '{"verdict":"clean"}' },
+      { type: 'grounding_strip', evidence: { attempted: true, validated: true, source_count: 2, grounded_claim_count: 3, weak_or_ungrounded_claim_count: 0, missing_support_count: 0 },
+        check: { engine: 'answer-check/2', basis: 'sources', claims: 2, checked: 2, found: 2, notFound: [], unchecked: [], fromPerson: [], fromInput: [], sources: ['tool:check_dossier_consistency'], unreadable: [], verdicts: [] } },
+      { type: 'text', content: 'The citation chain is consistent.' }, { type: 'done', latencyMs: 420 }, { type: 'post_done', cleanedResponse: 'The citation chain is consistent.' },
+    ]));
+    render(<CanonicalAuthoringFlow />);
     await screen.findAllByText('General Information');
-    const composer = await screen.findByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
-    fireEvent.change(composer, { target: { value: 'Check the citation chain.' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
-
-    const pane = await screen.findByLabelText(/AnA — document authoring/);
-    // Scoped to the conversation: the pane also mounts the live work dock
-    // above it, which names the same step, so a pane-wide query finds two.
-    const log = within(pane).getByRole('region', { name: 'AnA conversation' });
-    expect(await within(log).findByText('Checking dossier consistency')).toBeTruthy();
-    // The shared strip (AnaGrounding) — the pane's own copy of an evidence
-    // block is gone, so it reads the same here as in the rail: the engine's
-    // check first, AnA's labels as hers.
+    fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
+    const pane = await sendAuthoringPrefill('Check the citation chain.');
+    expect((await within(pane).findAllByText('Checking dossier consistency')).length).toBeGreaterThan(0);
     expect(await within(pane).findByText(/All 2 specific claims found in this turn's sources/)).toBeTruthy();
     expect(within(pane).getByText(/AnA's labels: 3 claims labelled/)).toBeTruthy();
     const followUp = await within(pane).findByRole('button', { name: /Review the citation chain/ });
     expect((followUp as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(followUp);
-    await waitFor(() => expect(streamTurns().some(t => t.message === 'Review the citation chain')).toBe(true));
+    await waitFor(() => expect(sentAuthoringTurns().some(t => t.message === 'Review the citation chain')).toBe(true));
   });
 
-  it('shows an honest empty pane rather than pretending a conversation exists', async () => {
-    render(<DocumentAuthoring {...props()} />);
+  it('keeps initial writing focus and a prefilled handoff starts no pretend conversation', async () => {
+    render(<CanonicalAuthoringFlow />);
     await screen.findAllByText('General Information');
-    const pane = await screen.findByLabelText(/AnA — document authoring/);
-    expect(pane.textContent).toMatch(/Ask AnA about this section/);
-    const convo = within(pane).getByRole('region', { name: 'AnA conversation' });
-    // Not a live region, and never marked busy: either one swallows the
-    // per-turn record's own announcement of what AnA is doing.
-    expect(convo.getAttribute('aria-live')).toBeNull();
-    expect(convo.hasAttribute('aria-busy')).toBe(false);
-    const composer = within(pane).getByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
-
-    // Shipping the pane open must NOT take the caret out of the document on
-    // first paint — the author came here to write, not to chat.
-    expect(document.activeElement).not.toBe(composer);
-
-    // A deliberate open still runs the whole focus contract: composer on open,
-    // trigger restored on Escape.
-    fireEvent.click(screen.getByRole('button', { name: /Close AnA panel/ }));
-    await waitFor(() => expect(screen.queryByLabelText(/AnA — document authoring/)).toBeNull());
+    expect(screen.queryByRole('textbox', { name: 'Reply to AnA' })).toBeNull();
+    expect(screen.queryByLabelText(/AnA — document authoring/)).toBeNull();
+    expect(sentAuthoringTurns()).toHaveLength(0);
     fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
-    const reopened = await screen.findByLabelText(/AnA — document authoring/);
-    const composer2 = within(reopened).getByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
-    await waitFor(() => expect(document.activeElement).toBe(composer2));
-    fireEvent.keyDown(reopened, { key: 'Escape' });
-    await waitFor(() => {
-      expect(screen.queryByLabelText(/AnA — document authoring/)).toBeNull();
-      expect(document.activeElement).toBe(screen.getByRole('button', { name: /^AnA/ }));
-    });
-    // Nothing is sent just by opening the pane.
-    expect(streamTurns()).toHaveLength(0);
+    const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
+    expect(composer.value).toBe('');
+    expect((screen.getByRole('button', { name: 'Send message to AnA' }) as HTMLButtonElement).disabled).toBe(true);
+    await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('monoclonal antibody'));
+    expect(sentAuthoringTurns()).toHaveLength(0);
+    expect(document.querySelector('.ct-user')).toBeNull();
+    expect(document.querySelector('.ct-ana')).toBeNull();
+    expect(document.querySelector('[aria-live="polite"].ct-scroll')).toBeNull();
+  });
+
+  it('holds the handoff behind unsaved-work disposition and sends only the saved record after leaving', async () => {
+    render(<CanonicalAuthoringFlow />);
+    await screen.findAllByText('General Information');
+    await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('monoclonal antibody'));
+    const editor = (document.querySelector('.tiptap') as unknown as { editor: Editor }).editor;
+    act(() => { editor.commands.insertContent('Unsaved local note. '); });
+    fireEvent.click(toolbarDraftButton());
+    await screen.findByRole('alertdialog', { name: 'Unsaved changes in 3.2.S.1' });
+    expect(screen.queryByTestId('canonical-conversation')).toBeNull();
+    expect(sentAuthoringTurns()).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(document.querySelector('.tiptap')?.textContent).toContain('Unsaved local note.');
+    fireEvent.click(toolbarDraftButton());
+    fireEvent.click(await screen.findByRole('button', { name: 'Leave without saving' }));
+    await sendAuthoringPrefill();
+    await waitFor(() => expect(sentAuthoringTurns()).toHaveLength(1));
+    expect(JSON.stringify(sentAuthoringTurns()[0])).not.toContain('Unsaved local note.');
+    expect(sentAuthoringTurns()[0].module_context).toMatchObject({ savedRecordOnly: true, sectionId: 'aaaaaaaa-0000-4000-8000-000000000001' });
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
   });
 });
 
-/* QA 2026-10-08, walk 2, j5 (a): after a turn the Progress card stood above
-   the transcript and the pane scrolled to its bottom, so only the suggestion
-   chips were on screen — not the answer. The work card is held to a share of
-   the pane (`ed-ana-work`), and a finished turn brings the START of the newest
-   answer into view. */
+/* QA 2026-10-08, walk 2, j5 (a): a finished turn must bring the START of the
+   newest answer into view instead of leaving only follow-ups visible. The
+   capability follows the conversation to its canonical scroll container. */
 describe('DocumentAuthoring — the answer is on screen after a turn', () => {
-  it('holds the work card to its share of the pane and shows the start of the newest answer', async () => {
+  it('shows the start of the newest canonical answer without moving the whole page', async () => {
     // jsdom lays nothing out: place the conversation at y=100 and every AnA
     // answer at y=500, and record where the conversation is scrolled to.
     const scrolledTo: Array<{ label: string | null; top: unknown }> = [];
@@ -309,39 +219,30 @@ describe('DocumentAuthoring — the answer is on screen after a turn', () => {
     const originalIntoView = Element.prototype.scrollIntoView;
     const intoView = vi.fn();
     Element.prototype.getBoundingClientRect = function (this: Element) {
-      const top = this.hasAttribute('data-ana-answer') ? 500 : this.getAttribute('aria-label') === 'AnA conversation' ? 100 : 0;
+      const top = this.classList.contains('ct-ana') ? 500 : this.classList.contains('ct-scroll') ? 100 : 0;
       return { top, bottom: top + 40, left: 0, right: 0, width: 0, height: 40, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
     };
     proto.scrollTo = function (this: Element, opts: { top?: number }) {
-      scrolledTo.push({ label: this.getAttribute('aria-label'), top: opts?.top });
+      scrolledTo.push({ label: this.classList.contains('ct-scroll') ? 'Canonical conversation' : this.getAttribute('aria-label'), top: opts?.top });
     };
     Element.prototype.scrollIntoView = intoView;
     try {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn(async () => ({
-          ok: true,
-          status: 200,
-          body: anaStream([
+      serveAuthoringStream(() => anaStream([
             { type: 'orchestration', orchestration: { suggestedActions: ['Rewrite Section', 'Create Strategy Note'] } },
             { type: 'text', content: 'Tightened: the rationale now leads with the unmet need.' },
             { type: 'done', latencyMs: 420 },
             { type: 'post_done', cleanedResponse: 'Tightened: the rationale now leads with the unmet need.' },
-          ]),
-        }))
-      );
-      render(<DocumentAuthoring {...props()} />);
+          ]));
+      render(<CanonicalAuthoringFlow />);
       await screen.findAllByText('General Information');
-      const pane = await screen.findByLabelText(/AnA — document authoring/);
-      expect(pane.querySelector('.ana-work-host')?.classList.contains('ed-ana-work')).toBe(true);
-
-      const composer = await screen.findByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
-      fireEvent.change(composer, { target: { value: 'Tighten this section for an FDA reviewer' } });
-      fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+      fireEvent.click(toolbarDraftButton());
+      await screen.findByRole('textbox', { name: 'Reply to AnA' });
+      (document.querySelector('.ct-scroll') as HTMLElement).style.setProperty('--space-2', '8px');
+      const pane = await sendAuthoringPrefill('Tighten this section for an FDA reviewer');
       await within(pane).findByText(/Tightened: the rationale/);
       // The conversation is scrolled so the answer's first line sits at its top
       // (500 - 100 - 8), and nothing else on the page is moved.
-      await waitFor(() => expect(scrolledTo).toContainEqual({ label: 'AnA conversation', top: 392 }));
+      await waitFor(() => expect(scrolledTo).toContainEqual({ label: 'Canonical conversation', top: 392 }));
       expect(intoView).not.toHaveBeenCalled();
     } finally {
       Element.prototype.getBoundingClientRect = originalRect;

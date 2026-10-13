@@ -5,7 +5,7 @@
  * The editing core that lived inside `surfaces/DocumentAuthoring.tsx` (5,143
  * lines on 2026-09-21), moved here so that ONE component renders the section
  * outline, the canonical `RichSectionEditor` for the active section, and the
- * side rail — AnA, comments, history, sources, signatures, audit, exports,
+ * side rail — comments, history, sources, signatures, audit, exports,
  * project files, review tasks — for a given document. Two hosts mount it:
  *
  *   · `surfaces/DocumentAuthoring.tsx` — the Authoring surface: it owns the
@@ -32,36 +32,23 @@
  * honest failed-load, never a fixture; writes awaited; a success toast only
  * after the server confirms; attribution from the server, never guessed), the
  * same unsaved-work guard, the same §11.10(d)/(e) reason-for-change funnel,
- * the same one save path. Every DocumentAuthoring test runs unchanged against
- * the surface, which now renders this.
+ * the same one save path. Existing editor tests exercise that surface core;
+ * the AnA destination tests exercise its canonical conversation handoff.
  *
- * ── Where the AnA pane goes when the host is a conversation ──────────────────
- * The surface keeps its own AnA rail (the shell draws no rail beside an
- * `ownsConversation` surface). The canvas host passes `onAsk` instead: every
- * ask from the workbench — Draft with AnA, "Ask what changed", the empty
- * state's "Ask AnA to draft" — goes to the conversation the person is already
- * in, and the pane is not drawn. One conversation on screen, never two.
+ * ── AnA's one conversation ────────────────────────────────────────────────
+ * Every ask goes to ConversationThread, whose DocumentCanvas mounts this
+ * same editor and shares its governed bridge. A standalone ask carries only
+ * saved record identity, after the unsaved-work guard. Embedded asks prefill
+ * the visible host composer. Neither sends until the person presses Enter.
+
  */
-import { AnaActionChips } from '../AnaActionChips';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
-import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
-import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
-import { AnaActivity, activityPropsFor } from '../AnaActivity';
-import { useHostSummary } from '../TurnSummary';
-import { RunPolicyDockNote } from '../RunPolicySwitch';
-import { AnaGrounding } from '../AnaGrounding';
-import { AnaOutputCards } from '../AnaOutputs';
-import { useAgentActivity } from '../useAgentActivity';
-import { useProgressDock } from '../workDock';
-import { shellProgramName } from '../shellProject';
-import { SignoffList } from '../SignoffList';
-import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AnaTurnRecordStatus } from '../../components/ana/useAnaChat.types';
-import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal, answerUnfinished } from './anaInsertGate';
+import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal } from './anaInsertGate';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
 import { apiRequest, serverMessage, ApiRequestError, redactInternals } from '@/lib/queryClient';
 import { AuthoringFilingBar } from '../surfaces/AuthoringFilingBar';
@@ -76,7 +63,7 @@ import { ReviewTasksPanel } from './ReviewTasksPanel';
 import { FileToVaultDialog } from './FileToVaultDialog';
 import { SendForReviewDialog } from './SendForReviewDialog';
 import { useProgramSummary, programHeadline, programName } from './programSummary';
-import { askAnaToDraftPrompt, openConversationWithPrompt } from './askAnaToDraft';
+import { askAnaToDraftPrompt, openConversationWithPrompt, originWithSavedVersion, prefillConversation, type AskOrigin, type SavedSectionVersion } from './askAnaToDraft';
 import { describeClaimsCheck, describeFigureCheck, describeProvenance, type ClaimsCheckSummary, type DocumentProvenance, type FigureCheckSummary } from './provenance';
 import { DraftFigureLine } from './DraftFigureLine';
 import { DraftClaimsLine } from './DraftClaimsLine';
@@ -84,8 +71,6 @@ import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from './RichSectionEditor';
-import { AuthoringRemedies } from './AuthoringRemedies';
-import { parseRemedyAnswer } from './authoringRemedies';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { ImportSourceNotice } from './ImportSourceNotice';
 import type {
@@ -127,8 +112,8 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { AuthoringSignatures } from '../surfaces/AuthoringSignatures';
 import { useDialog } from '../useDialog';
-import { AnaMarkdown } from '../AnaMarkdown';
 import { AuthoredHtml } from './AuthoredHtml';
+import { usePublishSurfaceContext } from '../surfaceContext';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
 
@@ -982,8 +967,10 @@ export interface EditorBridge {
   openSection?: (sectionId: string) => void;
   sectionCode: string;
   sectionTitle: string;
-  /** False while the document is sealed: open and readable, but nothing can be inserted. */
+  /** False for a sealed document or assembled Document view: readable, but no insert. */
   editable: boolean;
+  /** The real host's reason, including assembled Document view, when read-only. */
+  insertRefusal?: string | null;
   /** The document and section open, as this editor's own chat sends them; null with no project. */
   authoringContext: AuthoringContextPack | null;
   /** Saved evidence/import identity, shared by the editor's chat hosts. */
@@ -1130,8 +1117,8 @@ export interface DocumentWorkbenchProps {
   /** Pin the workbench to one document (the canvas). The tree lists only it
    *  and no document switch is offered. */
   pinnedDocId?: string | null;
-  /** Mounted inside a conversation: draws "Back to conversation", hides the
-   *  workbench's own AnA pane (the thread's composer is the conversation).
+  /** Mounted inside a conversation: draws "Back to conversation" and uses
+   *  that host's composer for every AnA request.
    *  `hostShowsBack` when the host's own chrome already carries the way back —
    *  the document canvas's bar does — so this component does not draw a
    *  second one into its crumb trail. `onBack` is still the one callback the
@@ -1153,7 +1140,7 @@ export interface DocumentWorkbenchProps {
    *  Only the Authoring surface is a navigation destination. */
   consumeDeepLinks?: boolean;
   /** Where an ask goes when the host owns the conversation. */
-  onAsk?: ((text: string) => void) | null;
+  onAsk?: ((text: string, savedOrigin?: AskOrigin) => void) | null;
 }
 
 function contextForWorkbench({ projectId, documentId, document, section, filing, sections }: {
@@ -1173,19 +1160,6 @@ function contextForWorkbench({ projectId, documentId, document, section, filing,
 
 /* ════ Document Authoring surface ════ */
 
-/** The REAL Part 11 sign-off prompts AnA returned for governed commands issued
- *  from the editor's pane, each resolving through GovernedActionSignoff
- *  (POST /api/ana-ri/governed-action) to the server's confirmation. */
-function AuthoringSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
-  return (
-    <SignoffList
-      signoffs={signoffs}
-      style={{ display: 'grid', gap: 8, marginTop: 8 }}
-      doneClassName="cmt-body"
-    />
-  );
-}
-
 /**
  * Why this editor cannot take an insert at all, whoever wrote the answer; null
  * when it can.
@@ -1195,61 +1169,17 @@ function AuthoringSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
  * reading and edits none of them. The sibling "Draft from sources" control
  * refuses both the same way, in these words. The offer used to be drawn live
  * in both states and fail on the click — the discovery-by-failure that the
- * disabled-with-a-reason pattern exists to replace. The conversation host has
- * never had the bug: it withdraws the offer when the bridge is not editable.
+ * disabled-with-a-reason pattern exists to replace. The canonical conversation
+ * keeps this host's refusal visible alongside its disabled offer.
  */
-function paneInsertRefusal(
-  docSealed: boolean,
-  viewMode: 'section' | 'document',
-  sectionCode: string,
-  turn: AnaChatMessage,
-): string | null {
+function editorInsertRefusal(docSealed: boolean, viewMode: 'section' | 'document', sectionCode: string): string | null {
   if (docSealed) return 'This document is frozen — its content cannot be edited, so nothing can be inserted into it.';
   if (viewMode === 'document') return `Document view assembles sections for reading. Switch to Section view to insert into ${sectionCode}.`;
-  return anaInsertRefusal(turn.turnRecord, answerUnfinished(turn));
-}
-
-/**
- * The pane's offer to put an AnA answer into the open section. AI output enters
- * the record ONLY as an attributed in-text suggestion, pending until a person
- * accepts or rejects each edit, and only when the governed-write rule admits
- * every model that wrote it (anaInsertGate.ts, round 11). A refused offer is
- * disabled, not hidden, with its reason as visible text it is described by
- * (GE-P-3).
- */
-function AnaInsertOffer({
-  sectionCode,
-  refusal,
-  onInsert,
-}: {
-  sectionCode: string;
-  refusal: string | null;
-  onInsert: () => void;
-}) {
-  // The reason's id, as every GE-P-3 sibling gets one (round 13).
-  const refusalId = `ana-insert-refusal-${useId()}`;
-  return (
-    <div style={{ marginTop: 6 }}>
-      <button
-        className="nda-open"
-        disabled={!!refusal}
-        aria-describedby={refusal ? refusalId : undefined}
-        onClick={refusal ? undefined : onInsert}
-      >
-        {I.penLine} Insert into {sectionCode} as tracked suggestion
-      </button>
-      {refusal && (
-        <span id={refusalId} style={{ display: 'block', marginTop: 4, fontSize: 12, color: 'var(--text-300)' }}>
-          {refusal}
-        </span>
-      )}
-    </div>
-  );
+  return null;
 }
 
 export function DocumentWorkbench({
   onNav,
-  liveDrive,
   docs,
   docsState,
   status,
@@ -1389,7 +1319,6 @@ export function DocumentWorkbench({
 
   // Right rail: AnA, revision history, comments, or the section's sources.
   const [rail, setRail] = useState<
-    | 'ana'
     | 'history'
     | 'comments'
     | 'sources'
@@ -1399,7 +1328,7 @@ export function DocumentWorkbench({
     | 'vault'
     | 'tasks'
     | null
-  >(embedded ? null : 'ana');
+  >(null);
   /* The two governed dialogs this workbench opens itself: filing the document
      into the project vault (POST /docs/:id/file-to-vault) and sending it for
      review (POST /documents/:id/request-review, then each reviewer's task,
@@ -1589,11 +1518,14 @@ export function DocumentWorkbench({
   type LeaveTarget =
     | { kind: 'section'; id: string; module?: string }
     | { kind: 'document'; id: string; module?: string }
-    | { kind: 'external-document'; id: string; module?: string };
+    | { kind: 'external-document'; id: string; module?: string }
+    | { kind: 'conversation'; prompt: string; module?: never };
   const [pendingLeave, setPendingLeave] = useState<LeaveTarget | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const oversightOriginRef = useRef<AskOrigin>({ surfaceId: 'document-authoring', label: 'Authoring' });
+  const confirmedSaveVersionRef = useRef<SavedSectionVersion | null>(null);
 
-  const applyNav = useCallback((target: LeaveTarget) => {
+  const applyNav = useCallback((target: LeaveTarget, savedVersion?: SavedSectionVersion | null) => {
     // The editor's dirty flag belongs to the mount that is going away; clear
     // it first so the guard cannot re-fire against the section just left.
     setEditorDirty(false);
@@ -1604,7 +1536,9 @@ export function DocumentWorkbench({
     // The create/export module follows where the author actually IS, so it
     // moves with the navigation and not with the click that proposed one.
     if (target.module) setModule(target.module);
-    if (target.kind === 'external-document') {
+    if (target.kind === 'conversation') {
+      prefillConversation(target.prompt, originWithSavedVersion(oversightOriginRef.current, savedVersion), onNav);
+    } else if (target.kind === 'external-document') {
       setEditorTarget({ docType: null, docId: target.id, programId });
       onNav('document-authoring');
     } else if (target.kind === 'section') setActiveSectionId(target.id);
@@ -1615,7 +1549,7 @@ export function DocumentWorkbench({
   const requestLeave = useCallback(
     (target: LeaveTarget): boolean => {
       const alreadyThere =
-        target.kind === 'section' ? target.id === activeSectionId : target.id === activeDocId;
+        target.kind === 'conversation' ? false : target.kind === 'section' ? target.id === activeSectionId : target.id === activeDocId;
       if (alreadyThere) return true;
       if (!dirty) {
         applyNav(target);
@@ -1667,10 +1601,11 @@ export function DocumentWorkbench({
     if (!target) return;
     setLeaving(true);
     try {
+      confirmedSaveVersionRef.current = null;
       const saved = await editorRef.current?.save();
       if (!saved) return; // stay put; the failure has already been reported
       setPendingLeave(null);
-      applyNav(target);
+      applyNav(target, confirmedSaveVersionRef.current);
     } finally {
       setLeaving(false);
     }
@@ -1685,28 +1620,18 @@ export function DocumentWorkbench({
     applyNav(target);
   }, [pendingLeave, applyNav]);
 
-  /* ── The editor's own conversation ──
-     Grounded on what is open: `authoringContext` is the contract the server's
-     orchestrator uses to resolve project / document / section instead of
-     guessing from the message text, so "tighten this" means this section. */
-  const [anaDraft, setAnaDraft] = useState('');
-  const anaScrollRef = useRef<HTMLDivElement>(null);
+  /* Saved context for AnA's one conversation: the server resolves the real
+     project, document and section without guessing from the request text. */
   const authoringContext = useMemo<AuthoringContextPack | null>(
     () => contextForWorkbench({ projectId: projectIdForOutline, documentId: activeDocId, document: activeDoc, section: activeSection, filing: filing.document, sections }),
     [projectIdForOutline, activeDocId, activeDoc, activeSection, filing.document, sections],
   );
-  /* Embedded in the conversation, this workbench draws no AnA rail of its
-     own, and that rail held the one control that put AnA's text into the
-     section ("Insert into … as tracked suggestion"). So it hands the host the
-     same door instead: the open section, and an insert through the editor's
-     `insertSuggestion`, which refuses honestly when the section cannot take
-     it (2026-10-01, the canvas → editor work). It hands over this editor's
-     own `authoringContext` too, so the host's turns name the document and
-     section the person has open, as this editor's own chat does. A sealed
-     document is still open, so it is still reported, as not editable. */
+  /* The conversation's canvas receives the editor's same governed suggestion
+     door and saved authoring context. A sealed document and assembled Document
+     view remain readable, with explicit reasons why they cannot take an insert. */
   /* AnA's text goes into the section only under the governed-write rule
-     (anaInsertGate.ts, round 11): this is the one door for the pane's insert
-     and the bridge's. A turn it admits is remembered, so a paste of that suggestion
+     (anaInsertGate.ts, round 11): this is the one suggestion door exposed by
+     the bridge. A turn it admits is remembered, so a paste of that suggestion
      keeps AnA's name (suggestions.ts, the paste door); any other pasted AnA
      suggestion becomes the pasting person's, still naming its turn. */
   const admittedAnaSources = useRef(new Set<string>());
@@ -1726,15 +1651,15 @@ export function DocumentWorkbench({
   );
   const insertAnaText = useCallback(
     (text: string, author: SuggestionAuthor, record: AnaTurnRecordStatus | undefined, unfinished = false): boolean => {
+      if (editorInsertRefusal(docSealed, viewMode, activeSection?.code ?? 'the section')) return false;
       if (author.id === ANA_SUGGESTION_AUTHOR_ID && anaInsertRefusal(record, unfinished)) return false;
       const ok = editorRef.current?.insertSuggestion(text, author) ?? false;
       if (ok && author.id === ANA_SUGGESTION_AUTHOR_ID && author.sourceRecord) admittedAnaSources.current.add(author.sourceRecord);
       return ok;
     },
-    [],
+    [docSealed, viewMode, activeSection?.code],
   );
   const admitsAnaSource = useCallback((id: string | null) => id !== null && admittedAnaSources.current.has(id), []);
-  const [localEditorBridge, setLocalEditorBridge] = useState<EditorBridge | null>(null);
   // Evidence/context reads can settle while a version hash is computing.
   // They update context, not the saved text that a proposal is anchored to.
   const authoringContextRef = useRef(authoringContext);
@@ -1745,7 +1670,6 @@ export function DocumentWorkbench({
   const onEditorBridge = embedded?.onEditorBridge;
   useEffect(() => {
     if (!activeSection || !activeDocId) {
-      setLocalEditorBridge(null);
       onEditorBridge?.(null);
       return undefined;
     }
@@ -1773,7 +1697,8 @@ export function DocumentWorkbench({
       },
       sectionCode: activeSection.code,
       sectionTitle: activeSection.title,
-      editable: !docSealed,
+      editable: !editorInsertRefusal(docSealed, viewMode, activeSection.code),
+      insertRefusal: editorInsertRefusal(docSealed, viewMode, activeSection.code),
       get authoringContext() { return authoringContextRef.current; },
       get moduleContext() { return editorModuleContextRef.current; },
       insert: (text, author, record, unfinished) => insertAnaText(text, author, record, unfinished),
@@ -1784,14 +1709,14 @@ export function DocumentWorkbench({
          the base: re-reading would not make a frozen document take it. The
          hash is WebCrypto's, so this is asynchronous — and the section is
          checked again after it, since a save can land while it runs. */
-      /* One governed replacement handler serves both the editor pane and
-         its conversation host. The model check precedes the version check. */
+      /* Every AnA replacement uses this governed bridge. The model check
+         precedes the version check. */
       propose: async (proposal, author, record, unfinished = false) => {
         const refusedModel = anaProposeRefusal(author, record, unfinished);
         if (refusedModel) return refusedModel;
         if (!live) return { ok: false, reason: 'stale' };
         if (proposal.sectionId !== loaded.id) return { ok: false, reason: 'wrong-section' };
-        if (docSealed) return { ok: false, reason: 'not-editable' };
+        if (docSealed || viewMode !== 'section') return { ok: false, reason: 'not-editable' };
         const refused = await baseRefusal(proposal, loaded);
         if (refused) return { ok: false, reason: refused };
         if (!live) return { ok: false, reason: 'stale' };
@@ -1800,13 +1725,12 @@ export function DocumentWorkbench({
         return result;
       },
     };
-    setLocalEditorBridge(bridge);
     onEditorBridge?.(bridge);
     return () => {
       live = false;
       onEditorBridge?.(null);
     };
-  }, [onEditorBridge, activeDocId, activeSection, docSealed, insertAnaText, anaProposeRefusal]);
+  }, [onEditorBridge, activeDocId, activeSection, docSealed, viewMode, insertAnaText, anaProposeRefusal]);
 
   /* With no project open there is no AuthoringContextPack to build (it requires
      a projectId), so the document/section identity still travels as module
@@ -1841,134 +1765,31 @@ export function DocumentWorkbench({
     return screenActions.length > 0 ? { ...base, screen_actions: screenActions } : base;
   }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title, activeSection?.updated_at, sources, sourcesState, docProvenance]);
   editorModuleContextRef.current = moduleContext;
-  const ana = useAnaChat({
-    screenName: 'document-authoring',
-    projectId: projectIdForOutline,
-    authoringContext,
-    moduleContext,
-    /* Live Drive rides the shell's bridge (SurfaceViewProps.liveDrive): this
-       dock's turns carry the same opt-in and feed the same shell-level
-       apply/take-over machine as the rail's turns. */
-    liveDrive: liveDrive?.on,
-    onDriveEvent: liveDrive?.onDriveEvent,
-    onArtifactSaved: liveDrive?.onWorkSaved,
+  usePublishSurfaceContext('document-authoring', embedded ? null : {
+    summary: activeDoc ? 'A saved authoring document is open.' : 'Authoring documents for the open project.',
+    facts: { ...moduleContext, authoringContext },
+    availableActions: ['Review section', 'Review document', 'Reconcile project evidence', 'Prepare targeted fixes'],
   });
-  /* AnA's progress panel for this pane: one shared show/hide memory with
-     every other host (workDock.ts), toggled by the chip in the pane header,
-     and the background queue read only while shown. */
-  const dock = useProgressDock();
-  /* A turn's Summary: the panel at that turn, or the sheet below 760px (S4). */
-  const summary = useHostSummary(ana.messages, dock, ana.isStreaming);
-  const anaWorkQueue = useAgentActivity(dock.open, ana.isStreaming);
-  const anaComposerRef = useRef<HTMLTextAreaElement>(null);
-  const anaReturnFocusRef = useRef<HTMLElement | null>(null);
-  const anaWasOpenRef = useRef(false);
-  /* The pane ships open, so the first paint is not an "open" the user asked
-     for: moving focus there would take the caret out of the document before
-     they have typed a word. Every later open still focuses the composer. */
-  const anaFirstPaintRef = useRef(true);
-
-  const rememberAnaTrigger = useCallback(() => {
-    const active = document.activeElement;
-    if (
-      active instanceof HTMLElement &&
-      !active.closest('[aria-label="AnA — document authoring"]')
-    ) {
-      anaReturnFocusRef.current = active;
-    }
-  }, []);
-
-  const openAna = useCallback(
-    (trigger?: HTMLElement | null) => {
-      if (trigger) {
-        anaReturnFocusRef.current = trigger;
-      } else {
-        rememberAnaTrigger();
-      }
-      setRail('ana');
-    },
-    [rememberAnaTrigger]
-  );
-
-  const closeAna = useCallback(() => {
-    setRail(null);
-  }, []);
-
-  /* Every ask on this surface goes here. It OPENS the pane first — the whole
-     defect was a question with no visible destination, so a silent send would
-     only move the silence. */
-  const askAna = useCallback(
-    (text: string) => {
-      const clean = (text ?? '').trim();
-      if (!clean) return;
-      /* A host that owns the conversation takes the ask; the pane is not
-         drawn there, so opening it would be a question with no destination —
-         the very defect this pane was built to end. */
-      if (onAsk) {
-        onAsk(clean);
-        return;
-      }
-      openAna();
-      void ana.send(clean);
-    },
-    [ana, openAna, onAsk]
-  );
-  /* "Ask AnA to draft" from an empty state: in a conversation host the
-     prompt lands in that composer; on the Authoring surface it opens a new
-     conversation seeded with the prompt, the same channel the Home composer
-     uses (window.C2C_CONVO → conversation-thread). */
+  oversightOriginRef.current = {
+    surfaceId: 'document-authoring', label: 'Authoring', moduleContext, authoringContext,
+    ...(activeDoc && programId ? { authoringDocument: {
+      docId: activeDoc.id, programId, ...(activeSection ? { sectionId: activeSection.id } : {}),
+    } } : {}),
+  };
+  /* Every editor ask uses the one conversation. Embedded hosts prefill it
+     in place; standalone asks wait for the same unsaved-work disposition. */
+  const askAna = useCallback((text: string) => {
+    const prompt = text.trim();
+    if (!prompt) return;
+    if (onAsk) onAsk(prompt, originWithSavedVersion(oversightOriginRef.current, confirmedSaveVersionRef.current));
+    else requestLeave({ kind: 'conversation', prompt });
+  }, [onAsk, requestLeave]);
   const askAnaToDraft = useCallback(() => {
-    const prompt = askAnaToDraftPrompt(programName(program));
-    if (onAsk) {
-      onAsk(prompt);
-      return;
-    }
-    openConversationWithPrompt(prompt, onNav);
-  }, [onAsk, onNav, program]);
+    askAna(askAnaToDraftPrompt(programName(program)));
+  }, [askAna, program]);
 
-  /* While AnA works the pane follows the bottom, where her work grows. When
-     the turn ends it shows the START of her answer: pinned to the bottom, a
-     long turn left only its suggestion chips on screen under the work card,
-     and the answer above them out of sight (QA 2026-10-08, walk 2, j5). */
-  const anaWasStreaming = useRef(false);
-  useEffect(() => {
-    if (rail !== 'ana') return;
-    const el = anaScrollRef.current;
-    const finished = anaWasStreaming.current && !ana.isStreaming;
-    anaWasStreaming.current = ana.isStreaming;
-    if (!el) return;
-    if (finished) {
-      const answers = el.querySelectorAll<HTMLElement>('[data-ana-answer]');
-      const newest = answers[answers.length - 1];
-      if (newest) {
-        /* This pane's scroller only: scrollIntoView also moved the page under
-           the app bar. */
-        const top = el.scrollTop + newest.getBoundingClientRect().top - el.getBoundingClientRect().top - 8;
-        if (typeof el.scrollTo === 'function') el.scrollTo({ top: Math.max(0, top) });
-        else el.scrollTop = Math.max(0, top);
-        return;
-      }
-    }
-    el.scrollTop = el.scrollHeight;
-  }, [rail, ana.messages.length, ana.isStreaming]);
-
-  useEffect(() => {
-    if (rail !== 'ana') return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      /* An Escape something inside already handled — the section rename, the
-         governed sign-off dialog in this rail — is not also a request to close
-         AnA (2026-09-28; it closed both). The composer does not handle Escape,
-         so Escape there still closes the rail. */
-      if (event.key !== 'Escape' || event.defaultPrevented) return;
-      event.preventDefault();
-      closeAna();
-    };
-    document.addEventListener('keydown', closeOnEscape);
-    return () => document.removeEventListener('keydown', closeOnEscape);
-  }, [closeAna, rail]);
-
-  /* 2026-09-28, coverage-gap sweep GA-4. Escape closed only the AnA rail
-     (above), and six rails had no close control, so the way out of History,
+  /* 2026-09-28, coverage-gap sweep GA-4: six record rails had no close control,
+     so the way out of History,
      Comments, Sources, Signatures, Audit or Exports was to find the toolbar
      toggle again. Every other rail now closes on Escape and from its own
      close button, and focus goes back to the toggle that opened it — the
@@ -1988,10 +1809,10 @@ export function DocumentWorkbench({
     if (rail !== null) return;
     const from = railReturnFocusRef.current;
     railReturnFocusRef.current = null;
-    if (from && from !== 'ana') railToggleRefs.current[from]?.focus({ preventScroll: true });
+    if (from) railToggleRefs.current[from]?.focus({ preventScroll: true });
   }, [rail]);
   useEffect(() => {
-    if (rail === null || rail === 'ana') return;
+    if (rail === null) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || event.defaultPrevented) return;
       if (escapeBelongsToInner(event.target)) return;
@@ -2007,21 +1828,6 @@ export function DocumentWorkbench({
     document.addEventListener('keydown', closeOnEscape);
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [closeRail, rail]);
-
-  useEffect(() => {
-    if (anaFirstPaintRef.current) {
-      anaFirstPaintRef.current = false;
-      anaWasOpenRef.current = rail === 'ana';
-      return;
-    }
-    if (rail === 'ana') {
-      anaComposerRef.current?.focus({ preventScroll: true });
-    } else if (anaWasOpenRef.current) {
-      anaReturnFocusRef.current?.focus({ preventScroll: true });
-      anaReturnFocusRef.current = null;
-    }
-    anaWasOpenRef.current = rail === 'ana';
-  }, [rail]);
 
   /* ── The document list is the host's ──
      The Authoring surface reads it (status filter, program scope) and the
@@ -3030,6 +2836,7 @@ export function DocumentWorkbench({
            `!res.ok` test here any more. */
         void json;
         const adopted = (json as { section?: AuthSection })?.section;
+        confirmedSaveVersionRef.current = { sectionId: activeSection.id, updatedAt: adopted?.updated_at ?? null };
         const persisted = adopted?.content ?? serialized;
         // Adopt the server row (revision counter, updated_at) into the tree.
         setSections(ss =>
@@ -4276,10 +4083,9 @@ export function DocumentWorkbench({
               <button
                 className="btn ghost"
                 style={{ height: 30 }}
-                onClick={event => (rail === 'ana' ? closeAna() : openAna(event.currentTarget))}
-                data-active={rail === 'ana' || undefined}
+                onClick={() => requestLeave({ kind: 'conversation', prompt: '' })}
               >
-                {I.sparkles} AnA{ana.messages.length > 0 ? ' ' + ana.messages.length : ''}
+                {I.sparkles} AnA
               </button>
             )}
             <button
@@ -4777,7 +4583,7 @@ export function DocumentWorkbench({
                       </b>
                       <span style={{ flex: 1 }} />
                       {dirty && (
-                        <span style={{ fontSize: 11, color: 'var(--warning,#b54708)' }}>
+                        <span style={{ fontSize: 11, color: 'var(--warning)' }}>
                           checked the last saved content — unsaved edits are not in it
                         </span>
                       )}
@@ -5173,272 +4979,6 @@ export function DocumentWorkbench({
           </div>
         </div>
       </section>
-
-      {/* ── Right: AnA — this surface's own conversation ──
-          The editor holds the AnA rail's column (see the header note), so this
-          is where an ask on this surface is answered. Real streamed turns from
-          /api/ana-ri/stream grounded on the open document and section; nothing
-          is composed locally, and a governed command renders its real §11.50
-          sign-off here rather than in a rail this screen does not draw. */}
-      {rail === 'ana' && !embedded && (
-        <aside className="ed-comments" aria-label="AnA — document authoring">
-          <div className="ed-comments-h ed-comments-h-row">
-            <span>
-              AnA
-              {activeSection
-                ? ` · ${activeSection.code}`
-                : activeDoc
-                ? ` · ${activeDoc.title}`
-                : ''}
-            </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <AnaProgressChip
-                ref={dock.chipRef}
-                messages={ana.messages}
-                streaming={ana.isStreaming}
-                open={dock.open}
-                onToggle={summary.toggleDock}
-                controls={dock.panelId}
-              />
-              <button
-                type="button"
-                className="ed-comments-close"
-                aria-label="Close AnA panel"
-                title="Close AnA panel"
-                onClick={closeAna}
-              >
-                {I.close}
-              </button>
-            </span>
-          </div>
-          {/* AnA's progress — the same panel the shell rail mounts — above the
-              conversation, so the work is seen before the words. Held to a
-              share of the pane and scrolled on its own (`ed-ana-work`): at
-              full height it left the conversation a strip that showed the
-              suggestion chips and not the answer (QA 2026-10-08, walk 2, j5). */}
-          {dock.open && (
-            <div className="ana-work-host ed-ana-work">
-              <AnaWorkPanel
-                id={dock.panelId}
-                turn={summary.panelTurn}
-                messages={ana.messages}
-                streaming={ana.isStreaming}
-                runStatus={ana.runStatus}
-                pendingSteers={ana.pendingSteers}
-                queue={anaWorkQueue}
-                context={{
-                  project: shellProgramName(),
-                  module: 'Document authoring',
-                  surface: activeSection
-                    ? `Section ${activeSection.code}`
-                    : activeDoc
-                      ? activeDoc.title
-                      : null,
-                }}
-              />
-            </div>
-          )}
-          {summary.sheet}
-          {/* A labelled region, NOT a live one. As a polite `log` marked busy
-              while streaming, it made the whole transcript a live region and
-              held every announcement inside it until the turn ended — the
-              per-turn record's own polite region (AnaActivity) included, so
-              "Searching the literature…" was never heard while it happened.
-              Status is announced by that narrow region alone, the same
-              arrangement as the rail (Shell.tsx). */}
-          <div
-            ref={anaScrollRef}
-            role="region"
-            aria-label="AnA conversation"
-            style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: 'auto',
-              padding: '10px 12px',
-              display: 'grid',
-              gap: 12,
-              alignContent: 'start',
-            }}
-          >
-            {ana.messages.length === 0 ? (
-              <EmptyState
-                icon={I.sparkles}
-                title="Ask AnA about this section"
-                hint={
-                  activeSection
-                    ? `Draft, tighten or cite ${activeSection.code}. AnA answers here, grounded on the saved document — it proposes; you accept and save, and every save records an auditable revision.`
-                    : 'Select a section, then ask AnA to draft, tighten or cite it. AnA answers here, grounded on the saved document.'
-                }
-              />
-            ) : (
-              ana.messages.map((m, i) =>
-                m.role === 'user' ? (
-                  <div key={i} className="cmt">
-                    <div className="cmt-meta">
-                      <b>You</b>
-                    </div>
-                    <div className="cmt-body">{m.text}</div>
-                  </div>
-                ) : (
-                  <div key={i} className="cmt" data-ana-answer="">
-                    <div className="cmt-meta">
-                      <b>AnA</b>
-                    </div>
-                    {/* Her work first — while she works, its live phase is the
-                        waiting state, so this pane no longer prints the same
-                        phase a second time under it — then the answer. */}
-                    <AnaActivity {...activityPropsFor(m)} onSummary={() => summary.openFor(m.id)} />
-                    {m.text && <AnaMarkdown text={parseRemedyAnswer(m.text).prose} />}
-                    <AuthoringRemedies text={m.text ?? ''} settled={!m.streaming} record={m.turnRecord} unfinished={answerUnfinished(m)} target={localEditorBridge ? { ...localEditorBridge, refusal: viewMode === 'document' ? 'Switch to Section view to apply a tracked fix.' : undefined } : undefined} />
-                    {/* The grounding verdict and her output — with the record
-                        above, the same three every host renders. This pane had
-                        its own copy of the record, which showed the raw tool
-                        payload and a raw lens code, and listed prompt-module
-                        ids as "Context used". */}
-                    <AnaGrounding evidence={m.evidence} />
-                    {Array.isArray(m.warnings) && m.warnings.length > 0 && (
-                      <div className="ana-msg-warnings" role="note">
-                        {m.warnings.map((w, wi) => (
-                          <div key={wi} className="ana-msg-warning">
-                            <span className="ana-msg-warning-ic" aria-hidden="true">{I.alertTriangle}</span>
-                            <span>{w}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <AnaOutputCards message={m} />
-                    {(m.suggestedActions ?? []).length > 0 && (
-                      <div className="ana-next-actions">
-                        <div className="ana-next-label">Next actions</div>
-                        <div className="ana-next-list">
-                          {(m.suggestedActions ?? []).map((action) => (
-                            <button
-                              key={action}
-                              type="button"
-                              className="ana-next-action"
-                              disabled={m.streaming}
-                              title={
-                                m.streaming ? 'Available after AnA finishes this response' : `Ask AnA: ${action}`
-                              }
-                              onClick={() => askAna(action)}
-                            >
-                              {I.arrowRight}
-                              <span>{action}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {/* AI output enters the record ONLY as an attributed
-                        in-text suggestion — struck-in green, pending until a
-                        human accepts or rejects each edit in the canvas.
-                        Never as settled text, and only under the governed-
-                        write rule (AnaInsertOffer, round 11). */}
-                    {!m.streaming && m.text && activeSection && !parseRemedyAnswer(m.text).hasRemedies && (
-                      <AnaInsertOffer
-                        sectionCode={activeSection.code}
-                        refusal={paneInsertRefusal(docSealed, viewMode, activeSection.code, m)}
-                        onInsert={() => {
-                          const ok = insertAnaText(
-                            m.text,
-                            {
-                              id: ANA_SUGGESTION_AUTHOR_ID,
-                              name: 'AnA (AI draft)',
-                              /* The turn that wrote this text, so accepting or
-                                 rejecting it later names that turn's record. */
-                              ...(m.turnRecord?.status === 'recorded' ? { sourceRecord: m.turnRecord.id } : {}),
-                            },
-                            m.turnRecord,
-                            answerUnfinished(m),
-                          );
-                          /* The section the text went into, by name: the pane
-                             offers every past answer to the section open now. */
-                          if (ok) {
-                            fireToast(
-                              `Inserted into ${activeSection.code} as tracked suggestions — review each edit in the editor, then save.`
-                            );
-                          } else {
-                            fireToast(
-                              /* The product's own words for these states: "source
-                                 mode" and "frozen", as the sibling citation insert
-                                 says them (ProjectFilesPanel.tsx). A frozen
-                                 document is refused above, so what is left here is
-                                 a section the suggestion door cannot edit. */
-                              `Couldn’t insert into ${activeSection.code} — the editor is not editable right now (source mode, or a frozen document).`,
-                              'error'
-                            );
-                          }
-                        }}
-                      />
-                    )}
-                    {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                        <AnaActionChips
-                          actions={m.executedActions}
-                          onNav={onNav}
-                          onStartDemo={liveDrive?.onStartDemo}
-                          inertClassName="rd-chip tone-ok"
-                        />
-                      </div>
-                    )}
-                    {Array.isArray(m.pendingSignoffs) && m.pendingSignoffs.length > 0 && (
-                      <AuthoringSignoffs signoffs={m.pendingSignoffs} />
-                    )}
-                  </div>
-                )
-              )
-            )}
-          </div>
-          <div style={{ padding: '10px 12px', borderTop: '1px solid var(--border)' }}>
-            <textarea
-              className="c2c-input"
-              ref={anaComposerRef}
-              aria-label={activeSection ? `Ask AnA about ${activeSection.code}` : 'Ask AnA'}
-              value={anaDraft}
-              onChange={e => setAnaDraft(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  const t = anaDraft.trim();
-                  if (!t || ana.isStreaming) return;
-                  setAnaDraft('');
-                  askAna(t);
-                }
-              }}
-              placeholder={activeSection ? `Ask about ${activeSection.code}…` : 'Ask AnA…'}
-              style={{ width: '100%', minHeight: 56, resize: 'vertical', fontSize: 13 }}
-            />
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 8,
-                marginTop: 6,
-              }}
-            >
-              <span style={{ fontSize: 11, opacity: 0.7 }}>
-                {I.lock} AnA proposes; you accept and save.
-              </span>
-              <button
-                className="btn primary"
-                style={{ height: 28 }}
-                disabled={!anaDraft.trim() || ana.isStreaming}
-                onClick={() => {
-                  const t = anaDraft.trim();
-                  if (!t) return;
-                  setAnaDraft('');
-                  askAna(t);
-                }}
-              >
-                {ana.isStreaming ? 'Answering…' : 'Send'}
-              </button>
-            </div>
-            {/* This dock's chat sends no run policy: Manual does not reach it (row 74). */}
-            <RunPolicyDockNote />
-          </div>
-        </aside>
-      )}
 
       {/* ── Right: history / comments rail ── */}
       {rail === 'history' && (
@@ -6158,7 +5698,7 @@ export function DocumentWorkbench({
                     focusedCommentId === c.id
                       ? {
                           background:
-                            'color-mix(in srgb, var(--accent-100,#2563eb) 7%, transparent)',
+                            'color-mix(in srgb, var(--accent-100) 7%, transparent)',
                         }
                       : undefined
                   }
@@ -6411,7 +5951,7 @@ export function DocumentWorkbench({
           sectionCode={activeSection.code}
           sectionTitle={activeSection.title}
           destination={
-            pendingLeave.kind !== 'section'
+            pendingLeave.kind === 'conversation' ? 'the AnA conversation' : pendingLeave.kind !== 'section'
               ? docs.find(d => d.id === pendingLeave.id)?.title ?? 'another document'
               : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'
           }

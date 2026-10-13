@@ -500,6 +500,7 @@ const RB = React.memo(function RB({
   shortcut,
   children,
   disabled,
+  visibleLabel,
 }: {
   onClick: () => void;
   active?: boolean;
@@ -508,13 +509,20 @@ const RB = React.memo(function RB({
   shortcut?: string;
   children: React.ReactNode;
   disabled?: boolean;
+  /** Text drawn by a formula/sample glyph, for voice-control label matching. */
+  visibleLabel?: string;
 }) {
   const label = shortcut ? `${title} (${shortcut})` : title;
+  // Visible word labels remain in the accessible name for voice control.
+  // Formula glyphs below are decorative and use the explicit command name.
+  const wordLabel = visibleLabel ?? (typeof children === 'string' ? children.trim() : '');
+  const accessibleLabel = wordLabel && !label.toLowerCase().includes(wordLabel.toLowerCase())
+    ? `${label} — ${wordLabel}` : label;
   return (
     <button
       type="button"
       title={label}
-      aria-label={label}
+      aria-label={accessibleLabel}
       aria-pressed={active === undefined ? undefined : active}
       disabled={disabled}
       /* Keeps the editor selection alive when focus moves to the button; the
@@ -2081,18 +2089,18 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             <RB title="Underline" shortcut="⌘U" active={!!editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
               <span style={{ textDecoration: 'underline' }}>U</span>
             </RB>
-            <RB title="Superscript" shortcut="⌘." active={!!editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
-              <span>
+            <RB title="Superscript" visibleLabel="x2" shortcut="⌘." active={!!editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
+              <span aria-hidden="true">
                 x<sup>2</sup>
               </span>
             </RB>
-            <RB title="Subscript" shortcut="⌘," active={!!editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
-              <span>
+            <RB title="Subscript" visibleLabel="x2" shortcut="⌘," active={!!editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
+              <span aria-hidden="true">
                 x<sub>2</sub>
               </span>
             </RB>
-            <RB title="Highlight" active={!!editor?.isActive('highlight')} onClick={() => editor?.chain().focus().toggleHighlight().run()}>
-              <span className="rse-hl-glyph">ab</span>
+            <RB title="Highlight" visibleLabel="ab" active={!!editor?.isActive('highlight')} onClick={() => editor?.chain().focus().toggleHighlight().run()}>
+              <span className="rse-hl-glyph" aria-hidden="true">ab</span>
             </RB>
             <span className="rse-sep" />
             <RB title="Bullet list" shortcut="⌘⇧8" active={!!editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>

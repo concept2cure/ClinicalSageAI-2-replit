@@ -60,6 +60,10 @@ interface VaultRead {
 }
 
 interface SearchHit {
+  originalFileAvailable?: boolean;
+  disposition?: VaultDoc['disposition'];
+  current?: boolean;
+  version?: string | null;
   id: string; title: string; fileName: string | null; documentType: string | null; size: string | null;
   folderId: string | null; ctdSection: string | null; placementStatus: string | null; snippet: string | null;
 }
@@ -101,8 +105,10 @@ interface ViewerState { doc: VaultDoc; url: string; hash: string | null }
 function hitToDoc(h: SearchHit): VaultDoc {
   return {
     id: h.id, num: h.ctdSection || '', title: h.title, type: h.documentType || '',
-    status: h.placementStatus || 'unfiled', pct: null, owner: '', ver: '', updated: '',
+    status: h.placementStatus || 'unfiled', pct: null, owner: '', updated: '',
     preview: (h.snippet || '').replace(/<\/?b>/g, ''), src: 'upload', docId: h.id, sizeLabel: h.size || undefined,
+    originalFileAvailable: h.originalFileAvailable, disposition: h.disposition,
+    earlierVersion: h.current === false, ver: h.version ? `v${h.version}` : '',
   };
 }
 
@@ -276,6 +282,8 @@ function useProjectVaultSearch(programId: string | null, query: string) {
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [hitsTotal, setHitsTotal] = useState(0);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchEpoch, setSearchEpoch] = useState(0);
+  const retrySearch = useCallback(() => setSearchEpoch(epoch => epoch + 1), []);
 
   useEffect(() => {
     const q = query.trim();
@@ -294,9 +302,9 @@ function useProjectVaultSearch(programId: string | null, query: string) {
       setSearchState('ready');
     }, 250);
     return () => { alive = false; clearTimeout(t); };
-  }, [query, programId]);
+  }, [query, programId, searchEpoch]);
 
-  return { searchState, hits, hitsTotal, searchError };
+  return { searchState, hits, hitsTotal, searchError, retrySearch };
 }
 
 /** The viewer's object URL, owned in one place: released when the file
@@ -625,10 +633,12 @@ function ProjectFilesForProgram({
   return (
     <>
       {header}
-      <div className="pf-actions" role="group" aria-label="Document sources">
-        <button className="btn ghost" aria-pressed={lane === 'vault'} onClick={() => setLane('vault')}>Vault</button>
-        <button className="btn ghost" aria-pressed={lane === 'data-room'} onClick={() => setLane('data-room')}>Data room / catalogue</button>
-        <button className="btn ghost" aria-pressed={lane === 'ind'} onClick={() => setLane('ind')}>IND documents</button>
+      <div className="pf-search">
+      <div className="cdl-scope" role="group" aria-label="Document sources">
+        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'vault'} onClick={() => setLane('vault')}>Vault</button>
+        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'data-room'} onClick={() => setLane('data-room')}>Data room</button>
+        <button type="button" className="cdl-scope-btn" aria-pressed={lane === 'ind'} onClick={() => setLane('ind')}>IND documents</button>
+      </div>
       </div>
       {lane === 'data-room' && <DataRoomSourcesPanel key={programId} programId={programId} onOpenDocument={onOpenDocument} onAsk={onAsk} />}
       {lane === 'ind' && <IndDocumentLibrary key={programId} programId={programId} onAsk={onAsk} onOpenDocument={onOpenDocument}
@@ -642,7 +652,7 @@ function ProjectFilesForProgram({
         />
       </div>
       {query.trim() ? (
-        <VaultSearchResults {...rows} {...search} query={query} programName={programName} onRetry={() => setQuery(q => q + '')} />
+        <VaultSearchResults {...rows} {...search} query={query} programName={programName} onRetry={search.retrySearch} />
       ) : (
         <VaultBrowseBody {...rows} state={state} vault={vault} readError={readError}
           programName={programName} onRetry={() => void load()} editorAttached={editorAttached} />

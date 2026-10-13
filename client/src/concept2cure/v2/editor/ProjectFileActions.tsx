@@ -2,7 +2,7 @@ import React from 'react';
 import { I } from '../icons';
 import type { VaultDoc } from '../fixtures/vault-data';
 import type { ProjectSource } from './DocumentWorkbench';
-import { SourceImportDialog } from './SourceImportDialog';
+import { SourceImportDialog, sourceImportUnavailableReason } from './SourceImportDialog';
 
 /** The two section actions — cite a source, refer to anything else — which
  *  the viewer pane and the selected row both offer, on the same rule. */
@@ -13,11 +13,11 @@ export function SectionActions(props: {
   const { sectionOpen, sectionCode, source, onCite, onInsertRef, citeTestId, refTestId } = props;
   if (!sectionOpen) return null;
   return source ? (
-    <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={onCite} data-testid={citeTestId}>
+    <button type="button" className="btn ghost" onClick={onCite} data-testid={citeTestId}>
       {I.quote} Cite in {sectionCode ? `§${sectionCode}` : 'this section'}
     </button>
   ) : (
-    <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={onInsertRef} data-testid={refTestId}>
+    <button type="button" className="btn ghost" onClick={onInsertRef} data-testid={refTestId}>
       {I.link} Insert reference
     </button>
   );
@@ -25,8 +25,8 @@ export function SectionActions(props: {
 
 function PullFileOffer({ doc, onPull }: { doc: VaultDoc; onPull: () => void }) {
   if (doc.src !== 'upload') return null;
-  const unavailable = ['remove_data', 'supersede'].includes(doc.disposition ?? '') || doc.originalFileAvailable === false;
-  return <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={onPull} disabled={unavailable}>
+  const reason = sourceImportUnavailableReason({ ...doc, isCurrent: doc.earlierVersion ? false : undefined });
+  return <button type="button" className="btn ghost" onClick={onPull} disabled={Boolean(reason)} title={reason ?? undefined}>
     {I.penLine} Work on document
   </button>;
 }
@@ -46,7 +46,7 @@ export function SelectedFileActions(props: {
       {doc.filing?.folderLabel && <div className="pf-sel-m">{doc.filing.folderLabel}</div>}
       <div className="pf-actions">
         {(doc.src === 'upload' || doc.docId) && (
-          <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} disabled={busy} onClick={onOpen}>
+          <button type="button" className="btn ghost" disabled={busy} onClick={onOpen}>
             {I.eye} {busy ? 'Opening…' : 'Open'}
           </button>
         )}
@@ -54,6 +54,9 @@ export function SelectedFileActions(props: {
         <SectionActions {...actions} citeTestId="pf-cite" refTestId="pf-insert-reference" />
         {editorAttached && !sectionOpen && <span className="pf-sel-m">Open an editable section to cite or refer to this file.</span>}
       </div>
+      {doc.disposition === 'remove_data' && <p className="pf-sel-m">Source data use has been withdrawn.</p>}
+      {doc.disposition === 'supersede' && <p className="pf-sel-m">This source has been superseded. Use its current version.</p>}
+      {doc.earlierVersion && <p className="pf-sel-m">This is an earlier source version. Use its current version to create a working copy.</p>}
       {doc.originalFileAvailable === false && <p className="pf-sel-m">The original file is unavailable. Use retained data-room text with AnA where data use is still permitted.</p>}
       {sectionOpen && !source && (
         <div className="pf-sel-m" data-testid="pf-not-citable">
