@@ -250,6 +250,24 @@ describe('the medicines route question', () => {
     expect(ind.caution, 'a US programme filing an IND is contradicted by nothing').toBeUndefined();
   });
 
+  it('marks the trial application for a combination product too, not only its marketing routes', () => {
+    /* A device-led combination runs an MDR clinical investigation under
+       Article 62, not a CTR trial through CTIS — so which application permits
+       the STUDY follows from the same centre determination as which one
+       permits the sale. The rule marked the four marketing routes, and the CTA
+       was added to the catalogue a day later, unmarked. */
+    const field = drawnSubmissionField('EU', 'combination_product');
+    const cta = field.options!.find(o => o.value === 'EU_CTA')!;
+    expect(cta.caution!.availability).toBe('needs_basis');
+    expect(cta.caution!.ruleId).toBe('combination_product_route_undecided');
+    expect(cta.caution!.reason, 'and it says why the trial application is included').toMatch(
+      /clinical investigation rather than a CTR trial/,
+    );
+    for (const value of ['EU_MAA', 'EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP']) {
+      expect(field.options!.find(o => o.value === value)!.caution, value).toBeDefined();
+    }
+  });
+
   it('marks the other regulator’s investigational filing rather than hiding it', () => {
     /* The regulator rule covers every position the catalogue annotates, so
        the CTA needed no rule of its own — but a rule that has only been

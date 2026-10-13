@@ -266,18 +266,28 @@ const CAUTION_RULES: readonly CautionRule[] = [
         routes, because the frame holds no European equivalent to narrow them
         — so a combination product was offered an Article 8(3) MAA, a
         conditional MA, a biosimilar application and a generic DCP with
-        nothing said (2026-10-12 review). ------------------------------- */
+        nothing said (2026-10-12 review).
+
+        The CTA is here for the same reason, and it was missed when the
+        investigational filings were added to the catalogue a day later: a
+        device-led combination runs an MDR clinical investigation under Article
+        62, not a CTR trial through CTIS, so which application permits the
+        study follows from the same determination as which one permits the
+        sale. --------------------------------------------------------- */
   {
     id: 'combination_product_route_undecided',
-    positions: ['EU_MAA', 'EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP'],
+    positions: ['EU_MAA', 'EU_CMA', 'EU_BIOSIMILAR_MAA', 'EU_GENERIC_DCP', 'EU_CTA'],
     availability: 'needs_basis',
     when: f => f.modality === 'combination',
     reason: () =>
       'You have said this is a drug-device combination. ' +
       `${MODALITY_FRAME.combination.centerBasis} Which route applies follows from that determination rather than ` +
       'from the product type, so the application has to say what the primary mode of action is and which ' +
-      'regulation governs it.',
-    authority: '21 CFR Part 3 (US); MDR (EU) 2017/745 Art 1(8)-(9) and Directive 2001/83/EC Art 1(2) for the EU division',
+      'regulation governs it — the trial application included, since a device-led combination runs an MDR ' +
+      'clinical investigation rather than a CTR trial.',
+    authority:
+      '21 CFR Part 3 (US); MDR (EU) 2017/745 Art 1(8)-(9) and Directive 2001/83/EC Art 1(2) for the EU division; ' +
+      'MDR Art 62 against Regulation (EU) 536/2014 for the trial application',
   },
 
   /* -- A biosimilar claim, or the absence of one -------------------------- */
