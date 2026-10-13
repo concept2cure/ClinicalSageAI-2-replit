@@ -37,7 +37,15 @@ import type { DetectedIssue, PositionCaution, QuestionField, QuestionNode, Quest
  * are read together: a sponsor who named EMA under "additional agencies" is
  * filing in the EU, and a route there is not a contradiction.
  */
-export const AGENCY_FIELDS: readonly string[] = ['primary_regulatory_agency', 'additional_agencies'];
+export const AGENCY_FIELDS: readonly string[] = [
+  'primary_regulatory_agency',
+  'additional_agencies',
+  /* The stability interview's own agency question. It held a second
+     hand-written list of six and nothing read it, so a stability programme
+     named its authorities and the platform learned no region from them
+     (2026-10-12 review). */
+  'zone_regulatory_authorities',
+];
 
 /** Answers that name a predicate device. A non-empty one means a predicate is named. */
 export const PREDICATE_FIELDS: readonly string[] = ['predicate_device', 'predicate_device_name', 'predicate_510k_number'];
@@ -149,6 +157,12 @@ export const DECLARED_NON_FACTS: Readonly<Record<string, Readonly<Record<string,
   additional_agencies: {
     who:
       'WHO prequalification is an assessment for UN procurement, not a national filing, so it names no region. The option itself says so.',
+  },
+  zone_regulatory_authorities: {
+    asean:
+      'ASEAN is a DOSSIER FORMAT (the ACTD) that several authorities accept, not an authority of its own, so it names no region. The option itself says so.',
+    who_pq:
+      'WHO prequalification is an assessment for UN procurement rather than a national filing, so it names no region — the same reason as the agency question\u2019s own WHO option.',
   },
   body_contact_type: {
     skin:
