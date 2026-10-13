@@ -43,8 +43,14 @@ describe('rosterKeyPattern', () => {
   it('does not throw on a key that would be an invalid pattern raw', () => {
     // Raw, a lone `(` is "Unterminated group" — the SyntaxError a widened W
     // would have produced at armRef's call site, on a legitimate document.
-    expect(() => new RegExp(rosterKeyPattern('drug ('))).not.toThrow();
-    expect(() => new RegExp('drug (')).toThrow();
+    //
+    // The key goes through a variable rather than being written inline: as a
+    // literal, `new RegExp('drug (')` is an ESLint `no-invalid-regexp` ERROR,
+    // and rightly so — a statically invalid pattern is a bug everywhere except
+    // in the one assertion that exists to show it throws.
+    const key = 'drug (';
+    expect(() => new RegExp(rosterKeyPattern(key))).not.toThrow();
+    expect(() => new RegExp(key)).toThrow();
   });
 
   it('keeps whitespace runs flexible, which is the behaviour it replaced', () => {
