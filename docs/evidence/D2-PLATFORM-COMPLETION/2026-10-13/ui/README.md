@@ -51,6 +51,29 @@ Focused ESLint: **zero errors**, ten existing size/complexity warnings in
 Logs have terminal colors removed, repository paths normalized and credential
 patterns redacted. No browser session credentials are included.
 
+## Incoming editor merge
+
+Claude's `30e80b571` source/editor integration and remote baseline `22c0c85b2`
+were reviewed with reporting commit `728f6364f`. The merged UI passed **18
+suites / 174 tests**, including existing source rails, exact document handoffs,
+anchored remedies, model/refusal gates, Pyramid persistence and reporting
+context/finalization/portfolio regressions. See
+[incoming-editor-tests.txt](incoming-editor-tests.txt) and the
+[source review and next bridge proposal](incoming-editor-review.md).
+
+Four added source-scope cases failed on incoming code and passed after a narrow
+repair. The dialog resets when source/program changes; the files rail clears
+old selections and ignores late reads, imports and downloads. The workbench's
+unsaved-work guard and new remedies are preserved. See
+[original failures](incoming-source-scope-red.txt),
+[repaired checks](incoming-source-scope-green.txt) and
+[focused lint](incoming-source-scope-lint.txt).
+
+Broader incoming-editor lint reports **zero errors / 24 existing warnings**;
+the two repaired production files and their new test have zero warnings. See
+[incoming-editor-lint.txt](incoming-editor-lint.txt). Protocol/CSR source import
+remains a documented next increment, pending implementation assignment.
+
 ## Live runtime checks
 
 The control tower separately reviewed the actual authenticated application with

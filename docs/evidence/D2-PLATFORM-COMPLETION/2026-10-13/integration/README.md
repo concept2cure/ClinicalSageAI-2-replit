@@ -58,6 +58,27 @@ need their originals for recovery; this change never invents lost content.
 Repository pre-push gates run on the commit before publication. Their final
 result is recorded in the following integration evidence increment.
 
+## Concurrent editor integration
+
+The first pre-push run passed every gate, then publication was rejected because
+Claude's source-intake/editor commits arrived concurrently. They were merged
+without conflict and preserved. Incoming filing/disposition/leaf/source-snapshot
+regressions passed **352 tests across 24 files**. Exact source intake and its
+machine/source reservation regressions passed **98 across eight** after closing
+a reproduced private-project byte-read bypass. Project/source-switch UI repairs
+passed **174 across 18 suites**; remedies and unsaved-work controls are retained.
+Merged whole-tree typecheck and the final production build passed.
+
+The warning ratchet then identified one net additional warning. History tests
+were grouped by access policy versus query semantics to remove the oversized
+test function; all **11 tests** still pass and that file has zero lint warnings.
+No lint baseline or safety gate was weakened.
+
+Direct protocol/CSR selectors are defined in the revised bridge contract and
+remain pending. Two pre-existing private-source paths (raw draft source
+verification and AnA's submission planner) are queued for the next increment;
+the new source intake checks access before reading and before writing.
+
 ## Explicit runtime limits
 
 `/healthz` succeeds. `/readyz` reports the absent AnA provider in this environment;

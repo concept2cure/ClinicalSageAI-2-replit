@@ -11,6 +11,8 @@
  * document with no record gets NO origin line rather than a guessed one.
  */
 
+import type { AuthoringImportOrigin } from '@shared/authoring/source-import';
+
 export type ProvenanceSource = 'ana' | 'seed' | 'import' | 'human';
 
 export interface DocumentProvenance {
@@ -22,6 +24,7 @@ export interface DocumentProvenance {
   turnId: string | null;
   authorName: string | null;
   note: string | null;
+  importSource?: AuthoringImportOrigin & { warnings: string[]; reason: string };
 }
 
 const str = (v: unknown): string | null => {
@@ -29,6 +32,17 @@ const str = (v: unknown): string | null => {
   const s = String(v).trim();
   return s.length > 0 ? s : null;
 };
+
+/** Only a complete, source-bound import record can identify an original. */
+function importOrigin(raw: unknown): DocumentProvenance['importSource'] {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const r = raw as Record<string, unknown>;
+  if ((r.kind !== 'vault' && r.kind !== 'data-room') || (r.conversion !== 'docx-structure' && r.conversion !== 'extracted-text')) return undefined;
+  if (!['id', 'programId', 'title', 'fileName', 'mimeType', 'reason'].every(key => typeof r[key] === 'string' && (r[key] as string).trim())) return undefined;
+  if (typeof r.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(r.sha256)) return undefined;
+  if (!Array.isArray(r.warnings) || !r.warnings.every(w => typeof w === 'string')) return undefined;
+  return r as unknown as NonNullable<DocumentProvenance['importSource']>;
+}
 
 /**
  * @param raw  The stored provenance JSON, or anything else (null → null).
@@ -78,14 +92,16 @@ export function describeProvenance(
     };
   }
   if (source === 'import') {
+    const original = importOrigin(r.importSource);
     return {
       source: 'import',
-      line: 'Imported' + (note ? ` · ${note}` : ''),
+      line: original ? `Working copy of “${original.title}” · ${original.kind === 'vault' ? 'Vault' : 'data room'} source ${original.id}` : 'Imported' + (note ? ` · ${note}` : ''),
       model: null,
       conversationId: null,
       turnId: null,
       authorName,
       note,
+      ...(original ? { importSource: original } : {}),
     };
   }
   if ((source === 'human' || source === 'author' || source === null) && authorName) {

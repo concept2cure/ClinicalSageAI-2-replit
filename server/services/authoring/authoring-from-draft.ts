@@ -24,6 +24,7 @@ import crypto from 'crypto';
 import { ANA_MACHINE_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
 import { servedModelsForTurnOrRun } from './authoring-record';
 import type { QualifiedServedModel } from '../ai-governance/approved-models';
+import type { AuthoringImportOrigin } from '../../../shared/authoring/source-import';
 import { columnState, type Queryable } from './authoring-evidence';
 import { sanitizeAuthoringSectionHtml, sanitizeMachineDraftSectionHtml } from './authoring-html-sanitizer';
 import {
@@ -46,6 +47,9 @@ export const PROVENANCE_SOURCES: readonly ProvenanceSource[] = ['ana', 'seed', '
 
 /** What `authoring_documents.provenance` holds (migrations/20260921_authoring_document_provenance.sql). */
 export interface DocumentProvenance {
+  /** Server-verified original for a source pulled into the one editor. HTTP
+   * draft provenance cannot supply this field. The original remains intact. */
+  importSource?: AuthoringImportOrigin & { warnings: string[]; reason: string };
   /** Declared references checked against current project records at save.
    * This is not claim-level support, generation proof, approval, or filing readiness. */
   projectSourceReferences?: Array<{
@@ -123,7 +127,7 @@ export interface DocumentProvenance {
   recordedAt: string;
 }
 
-export type ProvenanceInput = Omit<DocumentProvenance, 'recordedAt' | 'projectSourceReferences'>;
+export type ProvenanceInput = Omit<DocumentProvenance, 'recordedAt' | 'projectSourceReferences' | 'importSource'>;
 
 /* `model` is NOT here, and that is the point of round 15's change at this door:
    a caller cannot name the model that wrote the draft. It is dropped like any
@@ -352,6 +356,16 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
 export async function createDocumentFromDraft(
   ctx: CreateContext,
   input: CreateDocumentFromDraftInput,
+  options?: {
+    /** Internal only: the source importer checks identity and bytes, then
+     * reserves/rechecks the record inside the canonical creation transaction. */
+    verifiedImport?: {
+      origin: AuthoringImportOrigin;
+      warnings: string[];
+      reason: string;
+      reserve: (q: Queryable) => Promise<void>;
+    };
+  },
 ): Promise<CreateDocumentFromDraftOutcome> {
   // The project must be a live one this organization owns (LX-20 / PF-02): the
   // route checked only that programId looked like a UUID, so a draft could be
@@ -423,12 +437,22 @@ export async function createDocumentFromDraft(
       title: s.title,
       content: storedContent[i],
       orderIndex: i,
-      changeReason: CHANGE_REASON[provenance.source],
+      changeReason: options?.verifiedImport?.reason ?? CHANGE_REASON[provenance.source],
       metadata: { provenance, drafted: true },
       contributors,
       lineage: { machineDraft: isMachineDraft ? { authorId: ANA_MACHINE_AUTHOR_ID } : null },
     })),
-    client => verifySourcesInsideSave(client, ctx, input.programId, selectedSources, provenance),
+    async client => {
+      await verifySourcesInsideSave(client, ctx, input.programId, selectedSources, provenance);
+      if (options?.verifiedImport) {
+        if (provenance.source !== 'import') throw new Error('Verified import requires import provenance');
+        await options.verifiedImport.reserve(client);
+        provenance.importSource = {
+          ...options.verifiedImport.origin, warnings: [...options.verifiedImport.warnings],
+          reason: options.verifiedImport.reason,
+        };
+      }
+    },
   ).catch(err => {
     if (err instanceof DraftSourceVerificationError) return null;
     throw err;

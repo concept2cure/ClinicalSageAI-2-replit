@@ -84,6 +84,10 @@ import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from './RichSectionEditor';
+import { AuthoringRemedies } from './AuthoringRemedies';
+import { parseRemedyAnswer } from './authoringRemedies';
+import { AuthoringOversightActions } from './AuthoringOversightActions';
+import { ImportSourceNotice } from './ImportSourceNotice';
 import type {
   ProposeRefusal,
   ReplacementProposal,
@@ -108,6 +112,7 @@ import {
   describeEditorTarget,
   matchEditorTargetSection,
   peekEditorTarget,
+  setEditorTarget,
   type EditorTarget,
 } from '../editorTarget';
 import { consumeNavParams } from '../navParams';
@@ -971,12 +976,18 @@ export type { AuthDoc };
 /** What an embedding host may do with the open section (see `embedded.onEditorBridge`). */
 export interface EditorBridge {
   docId: string;
+  sectionId?: string;
+  /** Actual sections this document holds; opening one uses the unsaved-work guard. */
+  sectionLabels?: Record<string, string>;
+  openSection?: (sectionId: string) => void;
   sectionCode: string;
   sectionTitle: string;
   /** False while the document is sealed: open and readable, but nothing can be inserted. */
   editable: boolean;
   /** The document and section open, as this editor's own chat sends them; null with no project. */
   authoringContext: AuthoringContextPack | null;
+  /** Saved evidence/import identity, shared by the editor's chat hosts. */
+  moduleContext?: Record<string, unknown>;
   /**
    * Insert text as an attributed tracked suggestion; false when the section
    * cannot take it. AnA's text also needs the record status of the turn that
@@ -1143,6 +1154,21 @@ export interface DocumentWorkbenchProps {
   consumeDeepLinks?: boolean;
   /** Where an ask goes when the host owns the conversation. */
   onAsk?: ((text: string) => void) | null;
+}
+
+function contextForWorkbench({ projectId, documentId, document, section, filing, sections }: {
+  projectId: string | null; documentId: string | null; document: AuthDoc | null; section: AuthSection | null;
+  filing: { id: string; agency: string; doc_type: string } | null; sections: AuthSection[];
+}): AuthoringContextPack | null {
+  if (!projectId) return null;
+  return {
+    projectId, workflowStage: 'section-workspace', artifactId: documentId ?? undefined,
+    ...(document ? { artifactStatus: document.status, moduleCode: document.module ?? undefined } : {}),
+    ...(section ? { sectionCode: section.code, sectionTitle: section.title, sectionId: section.id,
+      sectionUpdatedAt: section.updated_at ?? undefined } : {}),
+    ...(filing ? { dossierId: filing.id, regulatorBody: filing.agency, submissionType: filing.doc_type } : {}),
+    linkedSectionCodes: sections.filter(s => s.id !== section?.id).map(s => s.code).filter(Boolean),
+  };
 }
 
 /* ════ Document Authoring surface ════ */
@@ -1562,7 +1588,8 @@ export function DocumentWorkbench({
      this device, or stay. */
   type LeaveTarget =
     | { kind: 'section'; id: string; module?: string }
-    | { kind: 'document'; id: string; module?: string };
+    | { kind: 'document'; id: string; module?: string }
+    | { kind: 'external-document'; id: string; module?: string };
   const [pendingLeave, setPendingLeave] = useState<LeaveTarget | null>(null);
   const [leaving, setLeaving] = useState(false);
 
@@ -1577,9 +1604,12 @@ export function DocumentWorkbench({
     // The create/export module follows where the author actually IS, so it
     // moves with the navigation and not with the click that proposed one.
     if (target.module) setModule(target.module);
-    if (target.kind === 'section') setActiveSectionId(target.id);
+    if (target.kind === 'external-document') {
+      setEditorTarget({ docType: null, docId: target.id, programId });
+      onNav('document-authoring');
+    } else if (target.kind === 'section') setActiveSectionId(target.id);
     else setActiveDocId(target.id);
-  }, []);
+  }, [programId, onNav]);
 
   /** Every in-surface navigation that unmounts the canvas goes through here. */
   const requestLeave = useCallback(
@@ -1598,6 +1628,24 @@ export function DocumentWorkbench({
     },
     [dirty, activeSectionId, activeDocId, applyNav]
   );
+  const requestLeaveRef = useRef(requestLeave);
+  requestLeaveRef.current = requestLeave;
+  const openProgramRef = useRef(programId);
+  openProgramRef.current = programId;
+
+  const openPulledDocument = useCallback(async (docId: string) => {
+    // A pinned canvas cannot switch documents; a narrowed list may exclude
+    // the new draft. Both use the same exact-id handoff after the leave guard.
+    if (pinnedDocId || status !== 'all') {
+      requestLeave({ kind: 'external-document', id: docId });
+      return;
+    }
+    await reloadDocs();
+    if (openProgramRef.current !== programId) return;
+    // The author can type while the list refreshes; consult the guard from
+    // the current render so those new unsaved changes are held as well.
+    requestLeaveRef.current({ kind: 'document', id: docId });
+  }, [pinnedDocId, status, reloadDocs, requestLeave, programId]);
 
   /* The host asking for a section (the conversation canvas: "Ask AnA to draft"
      opens the editor at it). Through requestLeave, so unsaved text in the open
@@ -1644,26 +1692,8 @@ export function DocumentWorkbench({
   const [anaDraft, setAnaDraft] = useState('');
   const anaScrollRef = useRef<HTMLDivElement>(null);
   const authoringContext = useMemo<AuthoringContextPack | null>(
-    () =>
-      projectIdForOutline
-        ? {
-            projectId: projectIdForOutline,
-            workflowStage: 'section-workspace',
-            artifactId: activeDocId ?? undefined,
-            artifactStatus: activeDoc?.status ?? undefined,
-            moduleCode: activeDoc?.module ?? undefined,
-            sectionCode: activeSection?.code ?? undefined,
-            sectionTitle: activeSection?.title ?? undefined,
-          }
-        : null,
-    [
-      projectIdForOutline,
-      activeDocId,
-      activeDoc?.status,
-      activeDoc?.module,
-      activeSection?.code,
-      activeSection?.title,
-    ]
+    () => contextForWorkbench({ projectId: projectIdForOutline, documentId: activeDocId, document: activeDoc, section: activeSection, filing: filing.document, sections }),
+    [projectIdForOutline, activeDocId, activeDoc, activeSection, filing.document, sections],
   );
   /* Embedded in the conversation, this workbench draws no AnA rail of its
      own, and that rail held the one control that put AnA's text into the
@@ -1676,8 +1706,7 @@ export function DocumentWorkbench({
      document is still open, so it is still reported, as not editable. */
   /* AnA's text goes into the section only under the governed-write rule
      (anaInsertGate.ts, round 11): this is the one door for the pane's insert
-     and the bridge's. (The bridge's propose is not gated yet: no production
-     caller.) A turn it admits is remembered, so a paste of that suggestion
+     and the bridge's. A turn it admits is remembered, so a paste of that suggestion
      keeps AnA's name (suggestions.ts, the paste door); any other pasted AnA
      suggestion becomes the pasting person's, still naming its turn. */
   const admittedAnaSources = useRef(new Set<string>());
@@ -1705,19 +1734,27 @@ export function DocumentWorkbench({
     [],
   );
   const admitsAnaSource = useCallback((id: string | null) => id !== null && admittedAnaSources.current.has(id), []);
+  const [localEditorBridge, setLocalEditorBridge] = useState<EditorBridge | null>(null);
+  // Evidence/context reads can settle while a version hash is computing.
+  // They update context, not the saved text that a proposal is anchored to.
+  const authoringContextRef = useRef(authoringContext);
+  authoringContextRef.current = authoringContext;
+  const editorModuleContextRef = useRef<Record<string, unknown>>({});
+  const editorSectionLabelsRef = useRef<Record<string, string>>({});
+  editorSectionLabelsRef.current = Object.fromEntries(sections.map(s => [s.id, `${s.code} ${s.title}`.trim()]));
   const onEditorBridge = embedded?.onEditorBridge;
   useEffect(() => {
-    if (!onEditorBridge) return undefined;
     if (!activeSection || !activeDocId) {
-      onEditorBridge(null);
+      setLocalEditorBridge(null);
+      onEditorBridge?.(null);
       return undefined;
     }
     /* The section as this editor loaded it. The row is replaced on every
        save (and a revert or a section switch replaces the editor), and each
        of those re-runs this effect, so a bridge whose effect has been
        cleaned up describes a section that may no longer be the record: it
-       refuses `stale`. (So does one rebuilt for another reason — a sealed
-       flag, a new authoring context — which costs the caller one re-read,
+       refuses `stale`. (So does one rebuilt for a sealed
+       flag — which costs the caller one re-read,
        never a redline on the wrong text.) */
     const content = activeSection.content ?? '';
     let sha: Promise<string | null> | null = null;
@@ -1727,12 +1764,18 @@ export function DocumentWorkbench({
       sha256: () => (sha ??= sha256Hex(content)),
     };
     let live = true;
-    onEditorBridge({
+    const bridge: EditorBridge = {
       docId: activeDocId,
+      sectionId: activeSection.id,
+      get sectionLabels() { return editorSectionLabelsRef.current; },
+      openSection: (id) => {
+        if (Object.hasOwn(editorSectionLabelsRef.current, id)) requestLeaveRef.current({ kind: 'section', id });
+      },
       sectionCode: activeSection.code,
       sectionTitle: activeSection.title,
       editable: !docSealed,
-      authoringContext,
+      get authoringContext() { return authoringContextRef.current; },
+      get moduleContext() { return editorModuleContextRef.current; },
       insert: (text, author, record, unfinished) => insertAnaText(text, author, record, unfinished),
       /* A proposal is anchored to text AnA read, in one section. It must name
          this section and the version of it AnA read; every base it gives is
@@ -1741,13 +1784,8 @@ export function DocumentWorkbench({
          the base: re-reading would not make a frozen document take it. The
          hash is WebCrypto's, so this is asynchronous — and the section is
          checked again after it, since a save can land while it runs. */
-      /* The governed-write rule first, before the section, the seal and the
-         base (round 14). It is the cheapest check — no WebCrypto, no await —
-         and the truest: a redline refused for a stale base when the real cause
-         is an unapproved model sends the person to re-read a section, which
-         cannot help. The door has no production caller yet, which is why the
-         check goes in now rather than being left to the caller that will be
-         written against it. */
+      /* One governed replacement handler serves both the editor pane and
+         its conversation host. The model check precedes the version check. */
       propose: async (proposal, author, record, unfinished = false) => {
         const refusedModel = anaProposeRefusal(author, record, unfinished);
         if (refusedModel) return refusedModel;
@@ -1757,14 +1795,18 @@ export function DocumentWorkbench({
         const refused = await baseRefusal(proposal, loaded);
         if (refused) return { ok: false, reason: refused };
         if (!live) return { ok: false, reason: 'stale' };
-        return editorRef.current?.proposeReplacement(proposal, author) ?? { ok: false, reason: 'not-editable' };
+        const result = editorRef.current?.proposeReplacement(proposal, author) ?? { ok: false as const, reason: 'not-editable' as const };
+        if (result.ok && author.id === ANA_SUGGESTION_AUTHOR_ID && author.sourceRecord) admittedAnaSources.current.add(author.sourceRecord);
+        return result;
       },
-    });
+    };
+    setLocalEditorBridge(bridge);
+    onEditorBridge?.(bridge);
     return () => {
       live = false;
-      onEditorBridge(null);
+      onEditorBridge?.(null);
     };
-  }, [onEditorBridge, activeDocId, activeSection, docSealed, authoringContext, insertAnaText, anaProposeRefusal]);
+  }, [onEditorBridge, activeDocId, activeSection, docSealed, insertAnaText, anaProposeRefusal]);
 
   /* With no project open there is no AuthoringContextPack to build (it requires
      a projectId), so the document/section identity still travels as module
@@ -1777,6 +1819,18 @@ export function DocumentWorkbench({
       sectionId: activeSectionId,
       sectionCode: activeSection?.code ?? null,
       sectionTitle: activeSection?.title ?? null,
+      sectionUpdatedAt: activeSection?.updated_at ?? null,
+      savedRecordOnly: true,
+      evidenceSourceIds: sources.flatMap(s => s.source ? [String(s.source.id)] : []),
+      evidenceSourcesRead: sourcesState,
+      ...(docProvenance?.importSource ? { importSource: {
+        kind: docProvenance.importSource.kind,
+        id: docProvenance.importSource.id,
+        programId: docProvenance.importSource.programId,
+        sha256: docProvenance.importSource.sha256,
+        conversion: docProvenance.importSource.conversion,
+        warnings: docProvenance.importSource.warnings,
+      } } : {}),
     };
     /* The screen's OPERABLE vocabulary from the shared surface-action registry
        (aliases applied), folded exactly as the shell folds it for railed
@@ -1785,7 +1839,8 @@ export function DocumentWorkbench({
        rather than sending an empty claim. */
     const screenActions = advertisedScreenActions('document-authoring');
     return screenActions.length > 0 ? { ...base, screen_actions: screenActions } : base;
-  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title]);
+  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title, activeSection?.updated_at, sources, sourcesState, docProvenance]);
+  editorModuleContextRef.current = moduleContext;
   const ana = useAnaChat({
     screenName: 'document-authoring',
     projectId: projectIdForOutline,
@@ -4429,6 +4484,7 @@ export function DocumentWorkbench({
             )}
           </div>
         </header>
+        <AuthoringOversightActions projectOpen={!!programId} sectionOpen={!!activeSection} documentOpen={!!activeDocId} dirty={dirty} onAsk={askAna} />
 
         {/* ── The deep-link's honest miss ──
             A workbench click named a section this canvas could not open. The
@@ -4471,6 +4527,7 @@ export function DocumentWorkbench({
                       {docProvenance.line}
                     </div>
                   )}
+                  <ImportSourceNotice source={docProvenance?.importSource} />
                   {docFigures && <DraftFigureLine check={docFigures} />}
                   {docClaims && <DraftClaimsLine check={docClaims} />}
                   <div className="ed-mast-meta">
@@ -4679,6 +4736,7 @@ export function DocumentWorkbench({
                       {docProvenance.line}
                     </div>
                   )}
+                  <ImportSourceNotice source={docProvenance?.importSource} />
                   {docFigures && <DraftFigureLine check={docFigures} />}
                   {docClaims && <DraftClaimsLine check={docClaims} />}
                   <div className="ed-mast-meta">
@@ -5230,7 +5288,8 @@ export function DocumentWorkbench({
                         waiting state, so this pane no longer prints the same
                         phase a second time under it — then the answer. */}
                     <AnaActivity {...activityPropsFor(m)} onSummary={() => summary.openFor(m.id)} />
-                    {m.text && <AnaMarkdown text={m.text} />}
+                    {m.text && <AnaMarkdown text={parseRemedyAnswer(m.text).prose} />}
+                    <AuthoringRemedies text={m.text ?? ''} settled={!m.streaming} record={m.turnRecord} unfinished={answerUnfinished(m)} target={localEditorBridge ? { ...localEditorBridge, refusal: viewMode === 'document' ? 'Switch to Section view to apply a tracked fix.' : undefined } : undefined} />
                     {/* The grounding verdict and her output — with the record
                         above, the same three every host renders. This pane had
                         its own copy of the record, which showed the raw tool
@@ -5275,7 +5334,7 @@ export function DocumentWorkbench({
                         human accepts or rejects each edit in the canvas.
                         Never as settled text, and only under the governed-
                         write rule (AnaInsertOffer, round 11). */}
-                    {!m.streaming && m.text && activeSection && (
+                    {!m.streaming && m.text && activeSection && !parseRemedyAnswer(m.text).hasRemedies && (
                       <AnaInsertOffer
                         sectionCode={activeSection.code}
                         refusal={paneInsertRefusal(docSealed, viewMode, activeSection.code, m)}
@@ -5970,6 +6029,8 @@ export function DocumentWorkbench({
             projectSources={projectSources}
             onCite={(sourceId) => editorRef.current?.insertCitation(sourceId) ?? false}
             onInsertReference={(text) => editorRef.current?.insertReference(text) ?? false}
+            onOpenDocument={(docId) => void openPulledDocument(docId)}
+            onAsk={askAna}
             onClose={closeRail}
             fireToast={fireToast}
           />
@@ -6350,7 +6411,7 @@ export function DocumentWorkbench({
           sectionCode={activeSection.code}
           sectionTitle={activeSection.title}
           destination={
-            pendingLeave.kind === 'document'
+            pendingLeave.kind !== 'section'
               ? docs.find(d => d.id === pendingLeave.id)?.title ?? 'another document'
               : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'
           }

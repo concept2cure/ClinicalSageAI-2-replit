@@ -44,6 +44,8 @@ import {
   type BuiltDocument, type ListFocus, type ListScope,
 } from '../editor/CanvasDocumentList';
 import type { EditorBridge } from '../editor/DocumentWorkbench';
+import { AuthoringRemedies } from '../editor/AuthoringRemedies';
+import { parseRemedyAnswer } from '../editor/authoringRemedies';
 import { isProgramId, openDraftAsDocument } from '../editor/draftToDocument';
 import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
@@ -217,6 +219,7 @@ function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: Insert
   // One id per offer, above the early returns (round 13: every turn without a record id shared one).
   const refusalId = `ct-insert-refusal-${React.useId()}`;
   if (!target?.bridge.editable || !turn.settled || !turn.answer?.trim()) return null;
+  if (parseRemedyAnswer(turn.answer).hasRemedies) return null;
   if (turn.authoringDoc?.docId === target.bridge.docId) return null;
   const { bridge, open, reopen, fireToast } = target;
   /* The governed-write rule (anaInsertGate.ts, round 11): an answer a model it
@@ -357,6 +360,15 @@ function TurnSteersAndPremortem({ turn }: { turn: CtTurn }) {
   );
 }
 
+function TurnAnswer({ turn }: { turn: CtTurn }) {
+  return turn.answer ? <AnaMarkdown text={parseRemedyAnswer(turn.answer).prose} className="ct-ana-text ana-md" /> : null;
+}
+
+function TurnRemedies({ turn, target }: { turn: CtTurn; target?: InsertTarget }) {
+  return <AuthoringRemedies text={turn.answer ?? ''} settled={turn.settled === true} record={turn.turnRecord} unfinished={turn.unfinished === true}
+    target={target ? { ...target.bridge, open: target.open, reopen: target.reopen } : undefined} />;
+}
+
 function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, onAnswer, busy, canvas, insertTarget, after }: AnaTurnProps) {
   const a = turn.activity;
   return (
@@ -413,7 +425,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, on
             reached the reader as `##`, `**` and `-`. AnaMarkdown is the ONE
             markdown renderer (marked → DOMPurify → React elements, no
             innerHTML); the person's own turn above stays as typed. */}
-        {turn.answer && <AnaMarkdown text={turn.answer} className="ct-ana-text ana-md" />}
+        <TurnAnswer turn={turn} />
         {/* What went wrong around the answer (a failed save, a timeout), as
             the rail shows it: this screen showed none (row 74, ADR-0015 §9). */}
         <AnaMessageWarnings warnings={turn.warnings} />
@@ -425,6 +437,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, onSummary, on
             the document canvas, whose drafted figures it does not check. */}
         {turn.settled && <AnaGrounding evidence={turn.evidence} />}
         <InsertIntoOpenSection turn={turn} target={insertTarget} />
+        <TurnRemedies turn={turn} target={insertTarget} />
         {/* The document canvas: the authoring document this turn drafted,
             read from the store and expandable into THE editor in place. */}
         {turn.authoringDoc && canvas && (
@@ -1150,7 +1163,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
      here names it: the document, the section and its module, through the
      same authoring context the editor's own chat sends (2026-10-01). The
      shell's chat this thread runs on was created without one. */
-  const turnOpts = editorBridge?.authoringContext ? { authoringContext: editorBridge.authoringContext } : undefined;
+  const turnOpts = editorBridge ? { authoringContext: editorBridge.authoringContext, moduleContext: editorBridge.moduleContext } : undefined;
   /* With nothing open a turn is sent exactly as before; the third argument
      only when there is a document to name. */
   const sendTurn = (text: string, files?: Parameters<typeof anaChat.send>[1]) => {

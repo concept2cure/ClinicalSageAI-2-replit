@@ -45,7 +45,7 @@ beforeAll(async () => {
     CREATE TABLE authoring_signatures (doc_id uuid, tenant_id integer, signer_email text,
       signer_name text, meaning text, reason text, method text, content_hash text,
       covered_freeze_version text, pin_verified boolean, signed_at timestamptz DEFAULT now());
-    CREATE TABLE authoring_export_history (id uuid DEFAULT gen_random_uuid(), document_id uuid,
+    CREATE TABLE IF NOT EXISTS authoring_export_history (id uuid DEFAULT gen_random_uuid(), document_id uuid,
       export_type text, doc_sha256 text, exported_by text, file_name text, file_size bigint,
       metadata jsonb, tenant_id integer, exported_at timestamptz DEFAULT now());
     CREATE TABLE test_filing_audit (id uuid DEFAULT gen_random_uuid(), tenant_id integer,
@@ -144,6 +144,26 @@ async function mutate(d: WorkingDraft, mutation: Mutation) {
 }
 
 describe('file-to-Vault records the same section snapshot it rendered', () => {
+  it('records imported source lineage on a different-byte Vault rendition and blocks withdrawing the original data', async () => {
+    const d = await workingDraft();
+    const origin = { kind: 'vault', id: d.f.vault, programId: d.f.program, sha256: 'a'.repeat(64),
+      title: 'Original source', fileName: 'source.pdf', mimeType: 'application/pdf', documentType: null,
+      sectionCode: '12', conversion: 'extracted-text' };
+    await d.f.pg.query('UPDATE authoring_documents SET provenance=$1 WHERE id=$2 AND tenant_id=$3',
+      [JSON.stringify({ source: 'import', moduleDefaulted: true, importSource: origin }), d.docId, d.f.org]);
+    admit(d);
+    expect(await file(d)).toMatchObject({ kind: 'filed', vaultDocumentId: d.admittedId });
+    const after = await facts(d);
+    expect(after.history[0].metadata?.importSource).toEqual(origin);
+    expect(after.vault.content_hash).not.toBe(origin.sha256);
+    const preview = await d.f.service.preview(d.f.scope);
+    expect(preview.dataWithdrawalBlockers?.join(' ')).toContain('filed editor rendition');
+    expect(preview.allowedChoices).toEqual(['keep_data']);
+    await expect(d.f.service.apply({ ...d.f.scope, choice: 'remove_data', reason: 'Withdraw the original source after filing', previewToken: preview.previewToken }))
+      .rejects.toMatchObject({ code: 'DISPOSITION_BLOCKED' });
+    expect(await d.f.records()).toEqual([]);
+  });
+
   it.each<Mutation>(['content', 'title', 'order', 'added section'])('refuses unchanged-status %s drift during ingestion and compensates admission', async mutation => {
     const d = await workingDraft();
     admit(d, () => mutate(d, mutation));

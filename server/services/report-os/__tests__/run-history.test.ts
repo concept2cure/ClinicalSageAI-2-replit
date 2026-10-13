@@ -114,6 +114,9 @@ describe('saved report history', () => {
         UPDATE report_runs SET scope_type='project',scope_id='11',dependency_summary='{"summary":{"scopeLabel":"Current program","computedScope":"project"}}' WHERE id=125`);
     }
   });
+});
+
+describe('saved report history query semantics', () => {
   it('searches and exposes the regional engine market metadata', async () => {
     const history = await listReportRunHistory(7, { search: 'PMDA' }, client);
     expect(history.data.map(row => row.id)).toEqual([2]);

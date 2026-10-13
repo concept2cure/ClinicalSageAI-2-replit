@@ -49,6 +49,7 @@ import { LOCKED_DOCUMENT_STATUSES } from './document-lock';
 import { columnState, writeAuthoringAuditTrail, type AuthoringAuditContext } from './authoring-evidence';
 import { renderAuthoringExport, logExport, sectionsDigest, type RenderedExport, type ExportSectionRow } from './authoring-export';
 import { SavedDraftSourceError, reserveSavedDraftSourceReferences } from './draft-source-references';
+import { savedImportSource } from './import-source-references';
 import type { AuthoringPool, AuthoringActor } from './authoring-documents';
 import { ingestVaultDocument } from '../vault/vault-ingest.service';
 import { placeVaultDocument, type VaultFilingRecord } from '../vault/vault-placement.service';
@@ -280,6 +281,9 @@ async function recordFiling(
       folderId: vault.folder.folderId,
       placementStatus: vault.folder.placementStatus,
       documentStatus: doc.status,
+      // The exact original dependency survives the new bytes' identity. This
+      // receipt is how withdrawal finds a source-derived Vault rendition.
+      ...(savedImportSource(doc) ? { importSource: savedImportSource(doc) } : {}),
     };
     await logExport(client, {
       docId,

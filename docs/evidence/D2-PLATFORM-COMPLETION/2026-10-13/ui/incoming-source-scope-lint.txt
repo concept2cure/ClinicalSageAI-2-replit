@@ -1,0 +1,1 @@
+Focused ESLint: zero errors and zero warnings in SourceImportDialog.tsx, ProjectFilesPanel.tsx and sourceImportScope.test.tsx.
