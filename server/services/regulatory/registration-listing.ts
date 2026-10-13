@@ -13,6 +13,8 @@
  *   - IVDR Art. 17 + Annex IV — EU Declaration of Conformity
  */
 
+import type { IvdrClass } from '../../../shared/regulatory/device-class.js';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // FDA establishment registration + device listing readiness
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,7 +67,7 @@ export interface EuRegistrationInput {
   isNonEuManufacturer: boolean;
   deviceRegisteredInEudamed: boolean;
   /** For Class B/C/D: notified-body certificate in place. */
-  riskClass: 'A' | 'B' | 'C' | 'D';
+  riskClass: IvdrClass;
   notifiedBodyCertificateInPlace: boolean;
 }
 
@@ -102,7 +104,7 @@ export interface DoCInput {
   srn?: string;
   productName: string;
   basicUdiDi: string;
-  riskClass: 'A' | 'B' | 'C' | 'D';
+  riskClass: IvdrClass;
   /** Notified body number (required for Class B/C/D). */
   notifiedBodyNumber?: string;
   /** Certificate number issued by the notified body. */

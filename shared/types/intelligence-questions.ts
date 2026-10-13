@@ -171,7 +171,7 @@ export interface QuestionField {
   /** Default value pre-filled from project context or prior answers. */
   defaultValue?: string | string[] | number | boolean;
   /** Condition that must be met for this field to be visible. */
-  visibleWhen?: FieldPredicate;
+  visibleWhen?: QuestionPredicate;
 }
 
 export interface FieldValidation {
@@ -190,6 +190,30 @@ export interface FieldPredicate {
   operator: 'eq' | 'neq' | 'in' | 'not_in' | 'gt' | 'lt' | 'contains' | 'exists';
   value: string | string[] | number | boolean;
 }
+
+/**
+ * Several predicates taken together — `anyOf` satisfied by one of them,
+ * `allOf` by every one.
+ *
+ * One field and one operator could not express a gate that two answers decide,
+ * and the notified-body question is one: it belongs to a device programme that
+ * stated an MDR class other than "no EU filing planned", AND to a diagnostics
+ * programme that stated an IVDR class — whose MDR question is hidden, so its
+ * answer is absent and `neq 'na'` read TRUE for every one of them. Writing the
+ * gate as one predicate meant either asking a US-only programme who its
+ * notified body is, or never asking a diagnostics programme at all (2026-10-12
+ * review, deferred there with that reason).
+ *
+ * A group with neither key, or an empty one, is NOT satisfied: a gate nobody
+ * wrote must not read as open.
+ */
+export interface PredicateGroup {
+  anyOf?: QuestionPredicate[];
+  allOf?: QuestionPredicate[];
+}
+
+/** A field's own predicate, or several taken together. */
+export type QuestionPredicate = FieldPredicate | PredicateGroup;
 
 export interface BranchRule {
   when: FieldPredicate;

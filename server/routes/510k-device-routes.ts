@@ -47,7 +47,11 @@ import { authMiddleware } from '../auth';
 import { requireEntitlement } from '../services/entitlements/require-entitlement';
 import auditService from '../services/auditService';
 import { requestDb } from '../db/requestDb';
-import { regulatoryPrograms, type PredicateDevice } from '../../shared/schema/programs';
+import { regulatoryPrograms } from '../../shared/schema/programs';
+import {
+  applyProgrammeProfilePatch,
+  deviceProfilePatchSchema,
+} from '../services/c2c/programme-profile-write';
 import {
   searchDeviceClassification,
   search510kClearances,
@@ -146,103 +150,12 @@ router.get('/profile', async (req, res) => {
  * than writing an empty string into the official form); otherwise the trimmed
  * string. `max` bounds the raw input before trimming.
  */
-const clearableText = (max: number) =>
-  z
-    .string()
-    .max(max)
-    .nullable()
-    .optional()
-    .transform((v) => {
-      if (v === undefined) return undefined;
-      const t = v === null ? '' : v.trim();
-      return t.length > 0 ? t : null;
-    });
-
-/**
- * The PREDICATE OF RECORD — regulatory_programs.predicate_devices.
- *
- * The official eSTAR's predicate submission number and trade name are filled
- * from `predicate_devices[0]` (estar-administrative-data.ts), so an entry here
- * is a claim of substantial equivalence the sponsor makes TO FDA — not a UI
- * comparison selection. Held to the same standard as the rest of this patch:
- *
- *   - id and name are REQUIRED, and whitespace is not a name;
- *   - a blank optional fact is DROPPED, never stored as '', because the eSTAR
- *     projection reports an absent fact blank and must never print an empty
- *     string into the official form as though it were an answer;
- *   - ids are distinct, so "which one is predicate [0]" has one answer;
- *   - the list is CLEARABLE (null / []), because a predicate the sponsor has
- *     withdrawn must leave the form blank rather than stand as a stale claim.
- */
-const MAX_PREDICATE_DEVICES = 10;
-
-/** An optional predicate fact: blank/whitespace/null ⇒ absent (key dropped). */
-const optionalPredicateText = (max: number) =>
-  z
-    .string()
-    .max(max)
-    .nullish()
-    .transform((v) => {
-      const t = (v ?? '').trim();
-      return t.length > 0 ? t : undefined;
-    });
-
-const predicateDeviceSchema = z
-  .object({
-    id: z.string().min(1).max(100).transform((v) => v.trim()),
-    name: z.string().min(1).max(500).transform((v) => v.trim()),
-    kNumber: optionalPredicateText(50),
-    manufacturer: optionalPredicateText(500),
-    clearanceDate: optionalPredicateText(50),
-    productCode: optionalPredicateText(50),
-  })
-  .refine((p) => p.id.length > 0 && p.name.length > 0, {
-    message: 'A predicate device needs an id and a name',
-  })
-  /* Built key by key so the stored JSON carries only facts the sponsor
-     actually supplied: `{manufacturer: undefined}` round-trips through the
-     json column as an explicit null, which the eSTAR would then have to tell
-     apart from a real one. */
-  .transform((p): PredicateDevice => {
-    const device: PredicateDevice = { id: p.id, name: p.name };
-    if (p.kNumber) device.kNumber = p.kNumber;
-    if (p.manufacturer) device.manufacturer = p.manufacturer;
-    if (p.clearanceDate) device.clearanceDate = p.clearanceDate;
-    if (p.productCode) device.productCode = p.productCode;
-    return device;
-  });
-
-const predicateDevicesPatch = z
-  .array(predicateDeviceSchema)
-  .max(MAX_PREDICATE_DEVICES)
-  .nullable()
-  .optional()
-  .transform((v) => (v === undefined ? undefined : (v ?? [])))
-  .refine(
-    (v) => v === undefined || new Set(v.map((p) => p.id.toUpperCase())).size === v.length,
-    { message: 'Each predicate device must be listed once' },
-  );
-
-const profilePatchSchema = z
-  .object({
-    productName: z.string().min(1).max(500).optional(),
-    deviceClass: z.enum(['I', 'II', 'III']).optional(),
-    regulatoryPath: z.enum(['510k', 'de_novo', 'pma']).optional(),
-    productCode: z.string().min(1).max(50).optional(),
-    intendedUse: z.string().max(10_000).optional(),
-    indication: z.string().max(10_000).optional(),
-    // The device-level eSTAR administrative facts (WO-8 Phase 3). Each may be
-    // cleared, because a fact the platform does not hold must be BLANK on the
-    // official form, never a stale value.
-    commonName: clearableText(500),
-    classificationName: clearableText(500),
-    regulationNumber: clearableText(50),
-    associatedProductCodes: clearableText(500),
-    indicationsForUseCitation: clearableText(1000),
-    // The claim of substantial equivalence itself (see predicateDevicesPatch).
-    predicateDevices: predicateDevicesPatch,
-  })
-  .refine((p) => Object.values(p).some((v) => v !== undefined), { message: 'At least one field is required' });
+/* The patch schema, the governed-column allowlist and the field-named audit
+   row now live in services/c2c/programme-profile-write.ts, so AnA's
+   project_setup commit writes a programme through the SAME path rather than a
+   second one it would have had to grow for itself. This endpoint keeps exactly
+   the fields it had: `deviceProfilePatchSchema` is the device subset of that
+   module's one shape (2026-10-12, task #15). */
 
 // The device-profile WRITE is a governed FDA-submission write: editor+ ROLE
 // first (requireEditorAccess), then the device_assembly_readiness capability
@@ -256,7 +169,7 @@ router.put('/profile', requireEditorAccess, requireEntitlement('device_assembly_
   if (actorId === null) return res.status(403).json({ error: 'Authenticated actor required' });
   const identParsed = identSchema.safeParse(req.query);
   if (!identParsed.success) return res.status(400).json({ error: 'ident is required' });
-  const patchParsed = profilePatchSchema.safeParse(req.body);
+  const patchParsed = deviceProfilePatchSchema.safeParse(req.body);
   if (!patchParsed.success) {
     return res.status(400).json({ error: 'Invalid profile patch', details: patchParsed.error.flatten() });
   }
@@ -265,38 +178,16 @@ router.put('/profile', requireEditorAccess, requireEntitlement('device_assembly_
     const program = await findProgram(req, orgId, identParsed.data.ident);
     if (!program) return res.status(404).json({ error: 'Program not found in your organization' });
 
-    // Only the fields the body named reach the UPDATE: an absent clearable
-    // field is `undefined` after parsing and must not be written as NULL.
-    const patch = Object.fromEntries(
-      Object.entries(patchParsed.data).filter(([, v]) => v !== undefined),
-    ) as Partial<typeof patchParsed.data>;
-    await requestDb(req)
-      .update(regulatoryPrograms)
-      .set({ ...patch, updatedAt: new Date() })
-      .where(
-        and(eq(regulatoryPrograms.id, program.id), eq(regulatoryPrograms.organizationId, orgId)),
-      );
-
-    // Audited like the sibling governed write (upsertEstarRegistration): the
-    // real actor and org from the session, the program as the resource, and the
-    // NAMES of the fields this patch changed — the device facts an inspector
-    // reads off the filed form.
-    // WHICH predicate was claimed travels with the entry. The field NAME alone
-    // answers "someone changed the predicate"; an inspector asking "equivalent
-    // to WHAT, and who said so" needs the identities, and a cleared list
-    // ([]) is itself the answer to "when did they withdraw the claim".
-    const details: Record<string, unknown> = { fields: Object.keys(patch) };
-    if (patch.predicateDevices) {
-      details.predicateDevices = patch.predicateDevices.map((p) => p.kNumber ?? p.id);
-    }
-    await auditService.logAction({
-      organizationId: orgId,
-      userId: actorId,
-      action: 'DEVICE_PROFILE_UPDATED',
-      resourceType: 'regulatory_program',
-      resourceId: program.id,
-      details,
-    });
+    // The write, the governed-column discipline (only the fields the body
+    // NAMED reach the UPDATE) and the field-named audit row are the service's,
+    // on this request's RLS client. Audited like the sibling governed write
+    // (upsertEstarRegistration): the real actor and org from the session, the
+    // program as the resource, and the names of the fields this patch changed —
+    // the device facts an inspector reads off the filed form.
+    await applyProgrammeProfilePatch(
+      { db: requestDb(req), audit: auditService },
+      { organizationId: orgId, programId: program.id, actorId, patch: patchParsed.data },
+    );
 
     const updated = await findProgram(req, orgId, program.id);
     return res.status(200).json({ profile: updated });

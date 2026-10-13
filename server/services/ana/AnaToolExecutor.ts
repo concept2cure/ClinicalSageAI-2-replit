@@ -236,6 +236,7 @@ import {
   workspaceFileName,
   workspacePathOrRefusal,
 } from './document-workspace.js';
+import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -8862,7 +8863,7 @@ registerToolHandler('classify_ivd_device', async (input, ctx) => {
   if (!deviceName) {
     return JSON.stringify({ error: 'device_name is required.' });
   }
-  if (!['A', 'B', 'C', 'D'].includes(ivdrClass)) {
+  if (!(IVDR_CLASSES as readonly string[]).includes(ivdrClass)) {
     return JSON.stringify({ error: 'ivdr_class must be A / B / C / D.' });
   }
   try {

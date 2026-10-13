@@ -161,9 +161,14 @@ this landed; these are the findings as reported, and each needs its own slice:
   on its own question, with the gate intact*. The cross-node check added in
   `2026-10-12-no-us-filing/` reads both agency fields, which is a second
   consumer that would fail if it stopped being drawn.
-- The launch-scope gate may refuse every flow these commits touch in
-  production, which would mean none of this reaches a user yet. That needs
-  checking before any claim about user-visible behaviour.
+- ~~The launch-scope gate may refuse every flow these commits touch in
+  production, which would mean none of this reaches a user yet.~~ **Checked,
+  and it did** — then fixed. `project_setup` commits to the programme record
+  (`2026-10-12-project-setup-commits/`, task #15) through the one governed
+  programme-profile write (`2026-10-12-programme-write/`), and
+  `COMMITTING_FLOW_CATEGORIES` now admits it. Its own projection then found the
+  next gap: the MDR and IVDR classes had no column
+  (`2026-10-12-eu-classes/`).
 
 **Regulatory content (eight more, from the SME lens)** — **all closed in
 `2026-10-12-citations/`**; re-verified line by line on 2026-10-12 and recorded
@@ -185,22 +190,43 @@ The general rule the batch adopted: a citation precise enough to be wrong is
 worse than one broad enough to be right. Paragraph-level citations were kept
 only where they had been checked.
 
-**Duplication**
-- the MDR class is still hand-written in two flows and normalised by three
-  readers; the IVDR class is still enumerated in about fourteen places and the
-  US class in about fifteen, after a commit titled *one vocabulary for all of
-  them* — which promoted one vocabulary and migrated two holders, not fourteen;
-- the option-value gate **structurally skips** every fact field whose options
-  come from a catalogue, which is exactly `ivdr_class`;
-- hiding the MDR class from a diagnostics programme made the `na` answer the
-  notified-body question depends on unreachable;
-- three uncanonical region lists remain inside other flows.
+**Duplication** — **closed**, and the criticism was fair: that commit promoted
+one module and migrated two holders out of fourteen.
+- ~~the MDR class hand-written in two flows and normalised by three readers;
+  the IVDR class in about fourteen places and the US class in about
+  fifteen~~ → `2026-10-12-one-vocabulary/`. Twenty-one files migrated onto
+  `shared/regulatory/device-class.ts`, including `ProgrammeFacts` itself, which
+  this batch wrote and which the new gate caught. The gate
+  (`ci:class-vocabulary`, in `.husky/pre-push`) refuses a literal enumeration
+  of a governed vocabulary; it is name-aware because `'A' | 'B' | 'C' | 'D'` is
+  also a cleanroom grade and an FDA meeting type, and its baseline is empty.
+- ~~the option-value gate structurally skips every fact field whose options come
+  from a catalogue~~ → closed in the offered-values slice: the gate resolves
+  `optionsFrom` per region and asserts the four IVDR classes are scanned.
+- ~~hiding the MDR class from a diagnostics programme made the `na` answer the
+  notified-body question depends on unreachable~~ → `2026-10-12-two-answer-gate/`.
+  The gate was deferred at review time because one field and one operator could
+  not express it; the predicate language now has `anyOf` / `allOf` in the one
+  evaluator the engine, the validator and the card share.
+- ~~three uncanonical region lists remain inside other flows~~ →
+  `2026-10-13-one-agency-list/`. Two were prose; the third omitted six of the
+  twelve agencies the platform configures and was read by nothing.
 
 **Honesty**
-- a drug-device combination product is offered four EU medicinal-product routes
-  unmarked, while the same product is honestly refused in the US;
-- the IVDR class option presents a recall-level paraphrase as checked Article
-  48 authority, discarding the `basis` the platform keeps for exactly that;
+- ~~a drug-device combination product is offered four EU medicinal-product
+  routes unmarked, while the same product is honestly refused in the US;~~
+  **repaired** in `ef6ec54d` — and re-checked on 2026-10-13, which found the
+  **CTA** I had added to the same list a day later standing unmarked beside the
+  four. A device-led combination runs an MDR clinical investigation under
+  Article 62 rather than a CTR trial through CTIS, so which application permits
+  the study follows from the same centre determination as which one permits the
+  sale. `combination_product_route_undecided` now names it
+  (`2026-10-13-one-agency-list/` commit).
+- ~~the IVDR class option presents a recall-level paraphrase as checked Article
+  48 authority, discarding the `basis` the platform keeps for exactly that;~~
+  **repaired** — `2026-10-12-two-answer-gate/`. The option's authority is
+  `basisLabel(route.basis)`, which renders "(recall — not checked against the
+  regulator's text)".
 - ~~`US_IND` is offered to nobody and the escape-hatch warning then says AnA
   holds nothing for it, which is false;~~ **repaired** —
   `2026-10-12-investigational/`. The finding's wording needed a correction of

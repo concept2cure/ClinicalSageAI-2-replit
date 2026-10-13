@@ -24,7 +24,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { evaluatePredicate } from '@shared/ana/question-predicate';
+import { evaluatePredicate, predicateFieldIds } from '@shared/ana/question-predicate';
 import type { FlowCategory, FlowEngineContext, FlowState, QuestionField } from '../types.js';
 import { advanceFlow } from '../engine.js';
 import { getAvailableFlows, getFlowDefinition } from '../flows/index.js';
@@ -93,7 +93,9 @@ describe('the engine', () => {
         const own = new Set(node.fields.map(f => f.id));
         for (const field of node.fields) {
           if (!field.required || !field.visibleWhen) continue;
-          if (!own.has(field.visibleWhen.field)) continue;
+          /* ANY leaf of a composite gate: the draw cannot settle it either
+             way, so the field must still be sent. */
+          if (!predicateFieldIds(field.visibleWhen).some(id => own.has(id))) continue;
           const drawn = advanceFlow(
             at(listed.category, node.id),
             node.id,

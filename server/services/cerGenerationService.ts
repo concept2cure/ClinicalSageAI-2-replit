@@ -30,6 +30,7 @@ import {
 import { eq, and, desc, sql } from 'drizzle-orm';
 import crypto from 'crypto';
 import auditService from './auditService';
+import { MDR_RULE_CLASSES } from '../../shared/regulatory/device-class.js';
 
 interface CerGenerationOptions {
   deviceId: number;
@@ -485,7 +486,7 @@ class CerGenerationService {
           templateType: 'full_cer',
           status: 'active',
           requiredFields: this.getRequiredFields(),
-          deviceClasses: ['I', 'IIa', 'IIb', 'III'],
+          deviceClasses: [...MDR_RULE_CLASSES],
           regulatoryFrameworks: ['MDR_2017_745', 'IVDR_2017_746'],
           createdBy,
           templateChecksum: this.calculateChecksum(this.getDefaultTemplateStructure()),

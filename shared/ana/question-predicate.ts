@@ -17,7 +17,7 @@
  * @module shared/ana/question-predicate
  */
 
-import type { FieldPredicate } from '../types/intelligence-questions.js';
+import type { FieldPredicate, QuestionPredicate } from '../types/intelligence-questions.js';
 
 function coerceForBooleanPredicate(actual: unknown): unknown {
   if (typeof actual === 'boolean') return actual;
@@ -81,9 +81,49 @@ const COMPARATORS: Readonly<Record<FieldPredicate['operator'], Comparator>> = {
   exists: actual => actual != null && actual !== '' && !(Array.isArray(actual) && actual.length === 0),
 };
 
-export function evaluatePredicate(pred: FieldPredicate, values: Record<string, unknown>): boolean {
+/** A group of predicates rather than one field's own. */
+function isGroup(pred: QuestionPredicate): pred is { anyOf?: QuestionPredicate[]; allOf?: QuestionPredicate[] } {
+  return !('field' in pred);
+}
+
+export function evaluatePredicate(pred: QuestionPredicate, values: Record<string, unknown>): boolean {
+  if (isGroup(pred)) {
+    /* A group with neither key, or an empty one, is NOT satisfied — `every`
+       over an empty list is true, and a gate nobody wrote must not read as
+       open. Both keys together means both must hold. */
+    const any = pred.anyOf;
+    const all = pred.allOf;
+    if (!any?.length && !all?.length) return false;
+    if (any?.length && !any.some(p => evaluatePredicate(p, values))) return false;
+    if (all?.length && !all.every(p => evaluatePredicate(p, values))) return false;
+    return true;
+  }
   /* An operator this module does not hold answers false: a predicate nobody
      can evaluate must not read as satisfied. */
-  const compare = COMPARATORS[pred.operator];
+  const compare = COMPARATORS[(pred as FieldPredicate).operator];
   return compare ? compare(values[pred.field], pred.value) : false;
+}
+
+/**
+ * Every field a predicate reads, flattened.
+ *
+ * The engine needs it to decide whether a gate names a field in the question's
+ * OWN node — in which case the field is SENT with its predicate and the card
+ * decides it, because the draw cannot know an answer the person has not typed
+ * yet. With a group, ANY leaf in the own node is enough: the gate cannot be
+ * settled server-side either way.
+ */
+export function predicateFieldIds(pred: QuestionPredicate): string[] {
+  return predicateLeaves(pred).map(leaf => leaf.field);
+}
+
+/**
+ * The single-field predicates inside one, flattened. A caller that needs the
+ * VALUES as well as the fields — the flow-registry vocabulary probe compares a
+ * predicate's values against the options a field offers — reads them here
+ * rather than off a group, which has neither.
+ */
+export function predicateLeaves(pred: QuestionPredicate): FieldPredicate[] {
+  if (!isGroup(pred)) return [pred as FieldPredicate];
+  return [...(pred.anyOf ?? []), ...(pred.allOf ?? [])].flatMap(predicateLeaves);
 }

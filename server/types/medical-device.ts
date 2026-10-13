@@ -3,13 +3,18 @@
  * Covers 510(k), PMA, CER, and device management types
  */
 
+import type { DeviceClass } from '../../shared/regulatory/device-class.js';
+
 // ============================================================================
 // Device Types
 // ============================================================================
 
 export interface DeviceData {
   deviceName: string;
-  deviceClass?: '1' | '2' | '3' | 'I' | 'II' | 'III';
+  /* The Roman classes are the governed vocabulary; '1' | '2' | '3' are the
+     Arabic spellings an openFDA payload uses, kept because this type models
+     what arrives rather than what the platform states. */
+  deviceClass?: DeviceClass | '1' | '2' | '3';
   productCode?: string;
   regulationNumber?: string;
   description?: string;

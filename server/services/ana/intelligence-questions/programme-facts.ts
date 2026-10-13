@@ -26,7 +26,7 @@
 
 import { regionsNamed } from '../../../../shared/regulatory/agency-positions.js';
 import { predicateStateOf } from '../../../../shared/regulatory/predicate-positions.js';
-import { euDeviceClassOf, IVDR_CLASSES } from '../../../../shared/regulatory/device-class.js';
+import { euDeviceClassOf, IVDR_CLASSES, type MdrRuleClass } from '../../../../shared/regulatory/device-class.js';
 import { modalityOf, statuteOf } from '../../../../shared/regulatory/product-modality.js';
 import { cautionFor, type ProgrammeFacts } from '../../../../shared/regulatory/pathway-cautions.js';
 import { ANNEX_VIII_FIELDS, CLASSIFICATION_RULE_FIELDS, annexViiiReading } from './annex-viii-classification.js';
@@ -37,7 +37,15 @@ import type { DetectedIssue, PositionCaution, QuestionField, QuestionNode, Quest
  * are read together: a sponsor who named EMA under "additional agencies" is
  * filing in the EU, and a route there is not a contradiction.
  */
-export const AGENCY_FIELDS: readonly string[] = ['primary_regulatory_agency', 'additional_agencies'];
+export const AGENCY_FIELDS: readonly string[] = [
+  'primary_regulatory_agency',
+  'additional_agencies',
+  /* The stability interview's own agency question. It held a second
+     hand-written list of six and nothing read it, so a stability programme
+     named its authorities and the platform learned no region from them
+     (2026-10-12 review). */
+  'zone_regulatory_authorities',
+];
 
 /** Answers that name a predicate device. A non-empty one means a predicate is named. */
 export const PREDICATE_FIELDS: readonly string[] = ['predicate_device', 'predicate_device_name', 'predicate_510k_number'];
@@ -97,7 +105,7 @@ const US_CLASS: Readonly<Record<string, 'I' | 'II' | 'III'>> = {
   iii: 'III',
 };
 
-const MDR_CLASS: Readonly<Record<string, 'I' | 'IIa' | 'IIb' | 'III'>> = {
+const MDR_CLASS: Readonly<Record<string, MdrRuleClass>> = {
   class_i: 'I',
   /* Is, Im and Ir ARE Class I devices under the MDR: the notified body is
      involved for the sterile, metrological or reprocessing aspects alone
@@ -149,6 +157,12 @@ export const DECLARED_NON_FACTS: Readonly<Record<string, Readonly<Record<string,
   additional_agencies: {
     who:
       'WHO prequalification is an assessment for UN procurement, not a national filing, so it names no region. The option itself says so.',
+  },
+  zone_regulatory_authorities: {
+    asean:
+      'ASEAN is a DOSSIER FORMAT (the ACTD) that several authorities accept, not an authority of its own, so it names no region. The option itself says so.',
+    who_pq:
+      'WHO prequalification is an assessment for UN procurement rather than a national filing, so it names no region — the same reason as the agency question\u2019s own WHO option.',
   },
   body_contact_type: {
     skin:
@@ -206,7 +220,7 @@ function stated(value: unknown): string[] {
  * because the fact it produces may be the DERIVED class, and the derivation
  * must not be judged against itself.
  */
-export function declaredMdrClass(flat: Record<string, unknown>): 'I' | 'IIa' | 'IIb' | 'III' | null {
+export function declaredMdrClass(flat: Record<string, unknown>): MdrRuleClass | null {
   const stated = firstStated(flat, EU_MDR_CLASS_FIELDS);
   return (stated ? MDR_CLASS[stated.toLowerCase()] : undefined) ?? null;
 }
@@ -220,7 +234,7 @@ export function declaredMdrClass(flat: Record<string, unknown>): 'I' | 'IIa' | '
  * A declared class is never overridden. It is the sponsor's position, and the
  * engine's disagreement with it is REPORTED rather than applied.
  */
-function mdrClassOnRecord(flat: Record<string, unknown>): 'I' | 'IIa' | 'IIb' | 'III' | undefined {
+function mdrClassOnRecord(flat: Record<string, unknown>): MdrRuleClass | undefined {
   return declaredMdrClass(flat) ?? annexViiiReading(flat)?.class ?? undefined;
 }
 

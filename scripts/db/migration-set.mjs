@@ -3245,6 +3245,18 @@ export const C2C_MIGRATION_FILES = [
   // sequence can satisfy FDA validation 1789 rather than be refused by it (D2).
   'migrations/20261012_submission_leaf_stf_study_tagging.sql',
 
+  // ── A European device programme can record its own class (2026-10-12) ─────
+  // eu_mdr_class and eu_ivdr_class on regulatory_programs. device_class is the
+  // US class and is printed on US forms, so until now a European programme
+  // could be configured in every respect except its classification — which
+  // AnA's interview asks, the Annex VIII engine derives, and the conformity
+  // routes are offered from. Additive, IF NOT EXISTS, no CHECK (the two
+  // vocabularies are shared/regulatory/device-class.ts's and the write
+  // validates against them). public + organization_id INTEGER, so it creates
+  // nothing the sweeps below must reach. Evidence
+  // docs/evidence/ANA-QUESTIONS/2026-10-12-eu-classes/.
+  'migrations/20261012b_regulatory_programs_eu_device_classes.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
