@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-13T22:17:15.807Z",
+  "generatedAt": "2026-10-13T22:56:06.540Z",
   "git": {
-    "sha": "0bf71a61ed809708af2347f0f23b70901e98d496",
+    "sha": "18df9a0b8dc88bc6b18e0a7e03b41c018032c089",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2276,12 +2276,12 @@
         "bytes": 117247
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "bytes": 116624
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "bytes": 116754
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 116113
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "bytes": 116624
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2526,12 +2526,12 @@
         "lines": 2302
       },
       {
-        "file": "server/routes/c2c/reviews.ts",
-        "lines": 2284
+        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "lines": 2289
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 2282
+        "file": "server/routes/c2c/reviews.ts",
+        "lines": 2284
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
