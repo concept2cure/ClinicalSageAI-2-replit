@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-13T04:38:15.281Z",
+  "generatedAt": "2026-10-13T16:50:04.202Z",
   "git": {
-    "sha": "4c7c2c206707c9946a3847cff5b7af158eb33983",
+    "sha": "5c4fb45f4cb3374f7128291ee7655c9462fe9fc8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2272,12 +2272,12 @@
         "bytes": 109447
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 109329
+        "file": "shared/regulatory/project-bootstrap.ts",
+        "bytes": 109421
       },
       {
-        "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 109184
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 109329
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
