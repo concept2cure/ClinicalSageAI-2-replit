@@ -276,10 +276,17 @@ const SCENARIOS = {
       }
       return '(no answer within 45 s)';
     };
+    /* waitIdle between drives, which `coverage` gets for free: its checks all
+       wait out the full watch window, so the previous turn has always finished
+       by the time the next ask is typed. Here the first check stops as soon as
+       the card appears, and an ask typed into a composer that is still
+       streaming is dropped — the next answer then never arrives and reads as a
+       screen that did not respond. The race was in the harness, not the bus. */
     const drive = async (ask_, until) => {
       const before = answers().length;
       await ask(page, ask_);
       await watchUrls(page, { timeout: 45000, until });
+      await waitIdle(page);
       return await nextAnswer(before);
     };
 
