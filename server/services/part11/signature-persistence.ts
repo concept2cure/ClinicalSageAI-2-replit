@@ -115,6 +115,18 @@ export const BINDING_BASIS = {
   /** sha256 over the certified financial-disclosure snapshot (21 CFR 54 Form 3454/3455). */
   FINANCIAL_DISCLOSURE_CONTENT: 'financial-disclosure-content-sha256',
   /**
+   * sha256 over the interim data snapshot an adaptive decision is taken on:
+   * the look number, information fraction, enrolment, summary statistics, test
+   * statistic, conditional and predictive power, and the boundary at that look.
+   *
+   * An IDMC does not approve "a decision"; it approves a decision ABOUT a
+   * specific interim look, so that look's data is what the signature binds
+   * (§11.70). Added 2026-10-13, when the adaptive decision stopped being a
+   * Drizzle insert that stamped `approved_by` from the session user with no
+   * ceremony at all.
+   */
+  INTERIM_SNAPSHOT_CONTENT: 'interim-snapshot-content-sha256',
+  /**
    * sha256 over the eCTD release package the submission orchestrator assembled:
    * leaf-manifest digest || validator-outcome digest || tenant-scoped submission
    * identity (see submission-package-orchestrator.computeBoundPayloadDigest).

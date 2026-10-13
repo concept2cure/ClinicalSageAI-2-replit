@@ -606,6 +606,149 @@ again without the truncation before anything was built on it. A reachability
 claim is only as good as the search behind it, and `head` on a grep whose
 output feeds a conclusion is not a search.
 
+## 2026-10-13 — the two stored capabilities
+
+Everything above is stateless: a figure is computed and nothing is kept. The
+two capabilities that *record* were the ones a sponsor could not reach.
+
+### 1. The interim decision was an ungoverned insert
+
+`POST /api/biostat/adaptive/:planId/decision` called
+`adaptiveTrialOperationsService.recordDecision`, which was a Drizzle insert
+that stamped `approved_by` from the session user and `approved_at` from the
+clock, then hand-built an `auditTrail: [auditEntry]` array inside its own
+return value. There was no signature meaning, no reason, no re-authentication,
+no `electronic_signatures` manifest and no hash-chained ledger row. The two
+columns named "approved" recorded an assertion nobody made.
+
+An interim decision stops a trial, resizes it, drops an arm or enriches a
+population, on unblinded data. It is the single most consequential act in the
+biostatistics surface, and it was the least governed one.
+
+It now runs the platform's one ceremony, `signGovernedAct`:
+
+| Piece | Where |
+|---|---|
+| `BINDING_BASIS.INTERIM_SNAPSHOT_CONTENT` | `server/services/part11/signature-persistence.ts` |
+| the `interim-snapshot` content binder | `server/services/part11/governed-target-binders.ts` |
+| `signAdaptiveDecision`, meanings `approval` / `responsibility` | `server/services/adaptive-decision-signature.ts` |
+| `writeDecisionOnSignedTransaction`, replacing `recordDecision` | `server/services/adaptive-trial-operations-service.ts` |
+| the route, running the ceremony and returning its refusals verbatim | `server/routes/biostatPlatform.ts` |
+
+The binder is CONTENT ONLY — `plan_id`, `look_number`,
+`information_fraction`, `enrolled_count`, `summary_statistics`,
+`test_statistic`, `conditional_power`, `predictive_power`, `boundary` — and
+deliberately not `snapshot_date`, `created_at` or `is_blinded`, so the
+signature re-derives later when no data changed. An IDMC does not approve "a
+decision"; it approves a decision *about a specific interim look*, so that
+look's data is what the signature binds (§11.70).
+
+`writeDecisionOnSignedTransaction` also closed a tenancy gap: the snapshot is
+now verified to belong to both the plan **and** the organization, through a
+`JOIN adaptive_trial_plans`, inside the ceremony's transaction.
+
+### 2. Five knowledge-graph routes, and one table nothing writes
+
+`/knowledge/query`, `/ingest-csr`, `/method-landscape/:indication`,
+`/endpoint-method-matrix` and `/trend/:concept` were mounted and reached by no
+client code. Building the UI surfaced four defects and one product finding.
+
+**The product finding, and it is the important one.**
+`method_regulatory_outcomes` is the single table all three precedent views
+aggregate, and it **has no writer anywhere in this repository** — searched
+across `server/`, `shared/`, `migrations/` and `scripts/`: three read sites
+(`biostat-knowledge-graph-service.ts` ×3, `estimand-engine-service.ts` ×1),
+zero inserts.
+
+It cannot be filled from a CSR either. `ingestFromCSR` holds the indication,
+the endpoints, the parsed statistical methods, the phase and the agency — but
+`accepted` is `NOT NULL` and **a CSR carries no agency-acceptance datum**.
+`csr_reports.status` is this platform's own document workflow
+(`draft` → `approved`); deriving `accepted` from it would assert that a
+regulator accepted a statistical method because a colleague approved a
+document, and `getMethodLandscape` then divides by it to publish a **success
+rate**. That is the figure a sponsor takes to a regulator.
+
+So the three views are structurally empty for every tenant and every
+indication, and the panel says that in those words:
+
+> Nothing in Concept2Cure records a regulatory outcome for a statistical
+> method yet, so this view is empty for every indication — this is not a
+> finding that no precedent exists. Ingesting a CSR builds the method graph
+> above, but a CSR does not state whether an agency accepted the method, and
+> that is the one datum these three views aggregate.
+
+"No precedent found for this indication" would be a claim about the regulatory
+record. The true claim is about us. **Recording real precedent needs a datum
+nothing currently captures, so it is a product decision for the founder, not a
+cleanup — filed here rather than invented.**
+
+**The four code defects, all fixed:**
+
+- **A fabricated confidence.** `queryGraph` returned
+  `confidence = Math.min(0.95, 0.5 + nodes.length * 0.05)` — the matched-row
+  count rescaled into `[0.1, 0.95]` so it would read as a probability. Nothing
+  calibrated it against anything. Removed; it now reports `matchedNodeCount`
+  and `matchedEdgeCount`, which are the integers it always had.
+- **A swallowed parser failure rendered as an empty graph.** The model call
+  that turns a question into search terms had a bare `catch` falling through to
+  `searchTerms: []`, which matches no node — so an outage was indistinguishable
+  from a graph holding no answer. It now falls back to the sponsor's own
+  wording and reports `parsedByModel: false` with the sentence the panel shows.
+- **A failed narration discarded the real rows.** The nodes and edges are
+  database rows; the prose is narration over them. A rejecting narration call
+  rejected the whole query. It now keeps the rows and sets
+  `answerUnavailableReason`. An empty reply no longer becomes the sentence
+  "No answer could be generated.", which read as a finding about the graph.
+- **Five routes advertised filters they dropped.** `nodeTypes`, `maxDepth`,
+  `limit`, `phase`, `agency`, `startYear`, `endYear`, `granularity`, `sections`
+  and `metadata` were destructured from the request and passed to nothing.
+  `agency` **is** supported by `getEndpointMethodMatrix` and is now passed
+  through; the rest are no longer read, so no route advertises a filter it
+  ignores, and the panel offers phase/agency only on the matrix, where they
+  work. An empty query is now a 422 refusal rather than a 500.
+
+### Where this lives in the UI
+
+Both are panels of the existing `BiostatWorkbench`, below the calculators that
+feed them — not new rail destinations (CLAUDE.md RULE 2):
+
+- `client/src/concept2cure/v2/surfaces/adaptiveMonitoring.tsx` + `…Api.tsx`
+- `client/src/concept2cure/v2/surfaces/biostatKnowledge.tsx` + `…Api.ts`
+- `client/src/concept2cure/v2/surfaces/biostatPanelWire.ts` — the one `Read`
+  shape and the one call, extracted when the second panel became the second
+  caller of what the first had kept private. Zero duplication: two panels
+  copying a fetch wrapper is how one of them ends up rendering a failure as an
+  empty result while the other does not.
+
+### Verification
+
+| Suite | Tests | Against the previous code |
+|---|---|---|
+| `server/services/__tests__/adaptive-decision-is-governed.test.ts` | 16 | 15 failed |
+| `server/services/__tests__/knowledge-graph-query-is-honest.test.ts` | 10 | 9 failed (the control passed) |
+| `client/src/concept2cure/v2/__tests__/adaptiveDecisionIsSigned.test.tsx` | 6 | — the panel did not exist |
+| `client/src/concept2cure/v2/__tests__/knowledgePrecedentEmptyIsHonest.test.tsx` | 9 | — the panel did not exist |
+
+The two UI suites test code written in the same change, so a pre-fix run was
+not available. They were instead verified by mutation — the product file broken
+on the exact case each test exists to catch, the test shown red, the break
+reverted:
+
+| Mutation | Tests that went red |
+|---|---|
+| `PRECEDENT_STORE_EMPTY` → "No precedent was found for this indication." | 3 |
+| `ReadFailure` returns null on a failure | 1 |
+| render "Confidence 0.85" beside the matched counts | 1 |
+| drop `meanings={['approval','responsibility']}` from the sign dialog | 1 (the dialog then offered 5 meanings where the server accepts 2) |
+| a null `is_blinded` reads "unblinded" | 1 |
+| remove the client-side plan-id refusal | 1 |
+
+`ci:sign-ceremony` passes. `server/services/part11/__tests__`: 122 pass.
+`npx tsc --noEmit`: 0 errors. ESLint: both new panels and both new wire
+modules are warning-free, and `BiostatWorkbench.tsx` carries the same five
+warnings as `origin/concept2cure-v2` — mounting the panels added none.
+
 ## Owed, and why
 
 - **No pre-dispatch statistical gate.** `ectd/dispatch-readiness.ts` is
@@ -662,6 +805,9 @@ output feeds a conclusion is not a search.
   governed decision. A binding interim decision needs a signing ceremony and an
   audit row, so it is deliberately not something the stateless route pretends
   to do. That surface is the next piece of biostatistics work.
+
+  **Closed 2026-10-13** — see "The two stored capabilities" below. The decision
+  now runs the Part 11 ceremony and the panel is mounted on the workbench.
 
   Everything else is reachable: **twenty-seven** calculators now cover all
   sixteen `/api/biostat` design-statistics engines (only `/region-rules/*`, a
