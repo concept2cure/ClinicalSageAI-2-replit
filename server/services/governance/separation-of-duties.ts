@@ -424,3 +424,37 @@ export async function assertSignerIsNotAuthor(
   }
   return { checked: true, reason: `Signer is not among the record's authors (${authorship.sources.join(', ')}).` };
 }
+
+/** What signing this record with an approval meaning would meet at the
+ *  separation-of-duties check, asked in advance. */
+export type SignerIndependence = 'independent' | 'author' | 'unresolved' | 'unverified';
+
+/**
+ * Would assertSignerIsNotAuthor let this user sign this record as review,
+ * approval or release?
+ *
+ * Asked of the enforcing check itself, so a screen that warns in advance (the
+ * Submission Center's Dispatch tab: a sequence's creator cannot sign its
+ * freeze or dispatch) cannot disagree with what the sign step will do. Before
+ * this the route re-derived the rule from resolveTargetAuthors — a second
+ * copy, which would have drifted the day the rule changed. The gateway's
+ * transmitIndependenceOf asks its own check the same way.
+ *
+ * A lookup failure is 'unverified', never 'independent': unknown is not
+ * permission, and the sign step still decides.
+ */
+export async function signerIndependenceOf(
+  target: string,
+  orgId: number,
+  signerId: number,
+): Promise<SignerIndependence> {
+  try {
+    await assertSignerIsNotAuthor(target, orgId, signerId, { command: 'sign', meaning: 'approval' });
+    return 'independent';
+  } catch (err) {
+    if (err instanceof SeparationOfDutiesError) return 'author';
+    if (err instanceof SeparationOfDutiesAuthorUnresolvedError) return 'unresolved';
+    return 'unverified';
+  }
+}
+

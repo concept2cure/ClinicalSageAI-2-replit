@@ -161,3 +161,36 @@ independent → 1 fail; id validation removed → 1 fail.
 transmit — now also marked as such in the picker. That file was changed at
 2026-10-11 22:07 UTC by another session, inside its 24-hour window until
 2026-10-12 22:07 UTC; the fix is one column (`created_by_id` = `ctx.userId`).
+
+## 2026-10-13 — the two items left open, closed once their windows passed
+
+**AnA-created packages record their creator** (`5252eac91`).
+`createSubmissionPackage` (`command-executor.ts`) inserted without
+`created_by_id`, so every package AnA created read "no creator recorded" and
+nobody could transmit it to the agency. It now records `ctx.userId`, as the HTTP
+route does. Tested on the real table (PGlite, the real `0002` migration) through
+the transmit's own check: the creator reads `author`, a colleague `independent`.
+Red first against the unfixed insert (`expected null to be 42`). ana-ri suites:
+81 files, 1,439 tests.
+
+**The Dispatch tab's signer check asks the enforcing function.** On 2026-10-05
+`GET /sequences/:seqId/dispatch-readiness` re-derived the author rule inline
+from `resolveTargetAuthors` — a second copy of the sign step's rule, untested at
+route level. It now calls `signerIndependenceOf`
+(`separation-of-duties.ts`), a dry-run of `assertSignerIsNotAuthor` with an
+approval meaning, beside the gateway's `transmitIndependenceOf`. The unused
+`sources` field is gone from both sides.
+
+New: `server/routes/__tests__/submissions-dispatch-readiness-signer.test.ts`
+(the route asks the check for this sequence, organization and user, and passes
+each state through), and five `signerIndependenceOf` cases in the SoD suite.
+
+Falsification, each reverted:
+- the route's previous inline code restored verbatim → 5 fail (it never asks
+  the enforcing check);
+- a failed lookup reported as independent → 1 fails;
+- the dry-run asking with an authorship meaning, so the check never runs →
+  4 fail.
+
+Route directory 435 files / 4,224 tests; governance and client dispatch
+suites 61 tests; `tsc` exit 0.
