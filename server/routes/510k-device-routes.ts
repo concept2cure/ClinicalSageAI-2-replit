@@ -45,13 +45,14 @@ import { and, eq } from 'drizzle-orm';
 
 import { authMiddleware } from '../auth';
 import { requireEntitlement } from '../services/entitlements/require-entitlement';
-import auditService from '../services/auditService';
 import { requestDb } from '../db/requestDb';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import {
   applyProgrammeProfilePatch,
   deviceProfilePatchSchema,
+  ProgrammeProfileWriteRefused,
 } from '../services/c2c/programme-profile-write';
+import { recordAuditRow, setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 import {
   searchDeviceClassification,
   search510kClearances,
@@ -184,14 +185,26 @@ router.put('/profile', requireEditorAccess, requireEntitlement('device_assembly_
     // (upsertEstarRegistration): the real actor and org from the session, the
     // program as the resource, and the names of the fields this patch changed —
     // the device facts an inspector reads off the filed form.
-    await applyProgrammeProfilePatch(
-      { db: requestDb(req), audit: auditService },
+    const written = await applyProgrammeProfilePatch(
+      { db: requestDb(req), audit: { logAction: recordAuditRow } },
       { organizationId: orgId, programId: program.id, actorId, patch: patchParsed.data },
     );
+    /* §11.10(e): the device facts changed and the audit row may not have
+       landed. `logAction` never rejects, so the only way to say something true
+       is to read its outcome — which this path discarded until 2026-10-13.
+       Reported in headers, as the sibling device writes do, because the body
+       is a `projects`-shaped row the list representation also returns. */
+    setAuditRowHeaders(res, written.audit);
 
     const updated = await findProgram(req, orgId, program.id);
     return res.status(200).json({ profile: updated });
   } catch (error: any) {
+    /* A refusal is not a server fault: the programme is gone from this
+       organization, or the patch named a column this write does not set. */
+    if (error instanceof ProgrammeProfileWriteRefused) {
+      const status = error.code === 'PROGRAMME_NOT_FOUND' ? 404 : 400;
+      return res.status(status).json({ error: error.code, message: error.message });
+    }
     logger.error('device profile update failure', { err: error?.message });
     return res.status(500).json({ error: 'DEVICE_PROFILE_UPDATE_FAILED' });
   }

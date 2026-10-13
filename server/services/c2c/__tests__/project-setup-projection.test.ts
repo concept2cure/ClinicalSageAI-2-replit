@@ -158,8 +158,22 @@ describe('what it says about the answers it cannot carry', () => {
   });
 
   it('says nothing about a field nobody answered', () => {
-    const out = projected({ r: { primary_regulatory_agency: 'US' } });
+    const out = projected({ p: { project_priority: 'high' } });
     expect(out.unprojected.map(u => u.fieldId)).toEqual([]);
+  });
+
+  it('says the PRIMARY agency was recorded as a target and not applied as primary', () => {
+    /* The write refuses `primaryAgency` — it keys the Module 1 backbone, the
+       validation profile and the gateway — and this projected the answer only
+       as a member of the target list. A programme answering "EMA is primary"
+       kept `primary_agency = 'FDA'` with nothing saying so, because the field
+       was on the projected list (2026-10-13 audit, DP-96). */
+    const out = projected({ r: { primary_regulatory_agency: 'EU' } });
+    expect(out.patch.targetAgencies, 'still recorded as a target').toEqual(['EMA']);
+    const said = out.unprojected.find(u => u.fieldId === 'primary_regulatory_agency');
+    expect(said?.reason, 'and the person is told what became of it').toMatch(
+      /Module 1 backbone.*set when the programme is created/s,
+    );
   });
 
   it('distinguishes a refused column from a column that does not exist', () => {

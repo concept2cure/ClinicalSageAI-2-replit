@@ -123,7 +123,21 @@ const BASELINE = path.join(ROOT, 'scripts/ci/discarded-audit-write-baseline.json
  *     failure at warn level, by a decision its header states: an audit outage
  *     must not lock every user out of sign-in.
  */
-const AUDIT_CALL = String.raw`(?:auditService\s*\.\s*logAction|recordAuditRow|logAuditEvent|logAuditEntry|auditTaskAction)`;
+/*
+ * The named writers, plus an INJECTED one.
+ *
+ * `deps.audit.logAction(` was invisible here, and that is not hypothetical: on
+ * 2026-10-13 the device-profile route's discarded write was extracted into
+ * services/c2c/programme-profile-write.ts as an injected dependency, the gate
+ * went on reporting "no new occurrences", and the route's baseline slot was
+ * left vacant for a new discard to occupy in silence. A gate that a refactor
+ * can walk out of measures the spelling, not the defect.
+ *
+ * `\w+\.audit\.logAction` matches the injected form without matching every
+ * `.logAction` in the tree — the dependency is named `audit` by the two
+ * modules that inject one, and a third would be caught by the same shape.
+ */
+const AUDIT_CALL = String.raw`(?:auditService\s*\.\s*logAction|\w+\s*\.\s*audit\s*\.\s*logAction|recordAuditRow|logAuditEvent|logAuditEntry|auditTaskAction)`;
 
 /** `void auditService.logAction(` / `void recordAuditRow(` — fire-and-forget. */
 const VOID_WRITE = new RegExp(String.raw`\bvoid\s+${AUDIT_CALL}\s*\(`, 'g');
@@ -320,6 +334,21 @@ if (process.argv.includes('--self-test')) {
       const audit = await auditService.logAction({ action: entry.action });
       if (!audit.persisted) log.error('audit row NOT persisted', { a: 1 });
     }`;
+  /* The INJECTED writer. This shape was invisible until 2026-10-13, and an
+     extraction walked a real discarded write out of this gate through it. */
+  const INJECTED = `
+    async function f(deps, entry) {
+      await deps.audit.logAction({ action: entry.action });
+    }`;
+  const INJECTED_REPORTED = `
+    async function f(deps, entry) {
+      const audit = await deps.audit.logAction({ action: entry.action });
+      return { ok: true, audit };
+    }`;
+  const INJECTED_MEMBER = `
+    async function f(entry) {
+      await this.audit.logAction({ action: entry.action });
+    }`;
   const TWO = `
     async function f(entry) {
       void auditService.logAction({ action: 'a' });
@@ -343,6 +372,12 @@ if (process.argv.includes('--self-test')) {
   say(scanSource(DISCARDED_TASK, '<t>').length === 1, 'a discarded auditTaskAction is flagged');
   say(scanSource(ENTRY_REPORTED, '<t>').length === 0, 'a logAuditEntry whose outcome is returned is not flagged');
   say(scanSource(DOCUMENTED, '<t>').length === 0, 'the defect quoted in a comment is not flagged');
+  say(scanSource(INJECTED, '<t>').length === 1, 'a discarded INJECTED deps.audit.logAction is flagged');
+  say(scanSource(INJECTED_MEMBER, '<t>').length === 1, 'and the this.audit.logAction form too');
+  say(
+    scanSource(INJECTED_REPORTED, '<t>').length === 0,
+    'an injected write whose outcome is returned is not flagged',
+  );
 
   // Case 4: the ratchet. A file baselined at 1 that now has 2 must fail.
   const baselineOne = { 'server/x.ts': 1 };

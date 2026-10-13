@@ -78,10 +78,11 @@
  * @module server/services/c2c/programme-profile-write
  */
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { regulatoryPrograms, type PredicateDevice } from '../../../shared/schema/programs.js';
+import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import type { RequestDb } from '../../db/requestDb.js';
 import { REGULATORY_PATHS } from '../../../shared/constants/domain/device-classification.js';
 import {
@@ -113,6 +114,22 @@ const optionalPredicateText = (max: number) =>
       const t = (v ?? '').trim();
       return t.length > 0 ? t : undefined;
     });
+
+/**
+ * Whether 'YYYY-MM-DD' names a day that exists.
+ *
+ * The shape was the only check, and `new Date('2026-02-30')` is 2 March: a day
+ * not on the calendar was stored silently as another one. `2026-13-45` matched
+ * the pattern too and then threw inside the writer — AFTER the interview
+ * session had moved to 'committing', which left the interview dead, because a
+ * `complete` session takes no further answers and every retry failed the same
+ * way (2026-10-13 audit). The only honest test is the round trip.
+ */
+export function isRealCalendarDay(day: string): boolean {
+  const parsed = new Date(`${day}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) return false;
+  return parsed.toISOString().slice(0, 10) === day;
+}
 
 const MAX_PREDICATE_DEVICES = 10;
 
@@ -207,8 +224,14 @@ const PROFILE_SHAPE = {
   /* 'YYYY-MM-DD', as the wizard's date input and the interview both give it;
      cleared by null, because a date that is no longer planned must not stand. */
   targetSubmissionDate: z
-      .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.null()])
-      .optional(),
+    .union([
+      z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .refine(isRealCalendarDay, { message: 'not a day on the calendar' }),
+      z.null(),
+    ])
+    .optional(),
   teamMembers: z.array(teamMemberSchema).max(50).optional(),
 } as const;
 
@@ -270,9 +293,19 @@ export const PROFILE_WRITE_REFUSALS: Readonly<Record<string, string>> = {
  * as under the explicit `organization_id` predicate below; a caller with no
  * request — the interview commit — passes the shared one.
  */
-export type ProfileWriteDb = Pick<RequestDb, 'update'>;
+export type ProfileWriteDb = Pick<RequestDb, 'update' | 'select'>;
 
-/** The audit service, as this write calls it. */
+/**
+ * The audit writer — and it RETURNS its outcome.
+ *
+ * `auditService.logAction` does not reject when a persistence attempt fails:
+ * an audit-trail outage must not break the action it records. So reading the
+ * result is the ONLY way to tell a recorded change from an unrecorded one, and
+ * this write discarded it — the programme changed, no §11.10(e) row was
+ * written, and the route answered 200 while the interview marked its session
+ * committed (2026-10-13 audit). `recordAuditRow` is the canonical wrapper that
+ * turns the call into an outcome, and both callers now pass it.
+ */
 export interface ProfileWriteAudit {
   logAction: (row: {
     organizationId: number;
@@ -281,7 +314,7 @@ export interface ProfileWriteAudit {
     resourceType: string;
     resourceId: string;
     details: Record<string, unknown>;
-  }) => Promise<unknown>;
+  }) => Promise<AuditRowOutcome>;
 }
 
 export interface ProgrammeProfileWriteParams {
@@ -299,6 +332,34 @@ export interface ProgrammeProfileWriteResult {
   fields: string[];
   /** The audit details recorded, so a caller can report what an inspector will read. */
   auditDetails: Record<string, unknown>;
+  /**
+   * Whether the §11.10(e) row landed. The change is already committed when
+   * this is known, so a lost row is not a reason to undo something the tenant
+   * can already see — it is a reason to SAY so, which both callers do.
+   */
+  audit: AuditRowOutcome;
+}
+
+/** This write refused to touch the programme, with the reason. */
+export class ProgrammeProfileWriteRefused extends Error {
+  constructor(
+    readonly code: 'PROGRAMME_NOT_FOUND' | 'FIELD_NOT_SETTABLE',
+    message: string,
+  ) {
+    super(message);
+    this.name = 'ProgrammeProfileWriteRefused';
+  }
+}
+
+/**
+ * The row's value for a patch field. `to_jsonb(row)` is keyed by COLUMN name
+ * (`device_class`), the patch by property name (`deviceClass`), so the mapping
+ * comes from the table definition rather than a second naming convention.
+ */
+function columnValueOf(snapshot: Record<string, unknown>, field: string): unknown {
+  const column = (regulatoryPrograms as unknown as Record<string, { name?: string }>)[field];
+  const name = column?.name ?? field;
+  return snapshot?.[name] ?? null;
 }
 
 /**
@@ -316,33 +377,87 @@ export async function applyProgrammeProfilePatch(
     Object.entries(params.patch).filter(([, v]) => v !== undefined),
   ) as Record<string, unknown>;
 
+  /* The allowlist, enforced HERE and not only at the callers' zod.
+     `applyProgrammeProfilePatch` spread every key of the patch into `.set()`,
+     and drizzle writes any real column it finds — `status`, `leadUserId`,
+     `organizationId`, `metadata`. The interview's writer also passed the
+     plan's body UNPARSED, so zod's stripping never applied to it. Nothing
+     could emit those keys today, which is the whole reason to close it now
+     rather than after something can (2026-10-13 audit). */
+  const settable = new Set(programmeProfileFields());
+  const forbidden = Object.keys(named).filter(key => !settable.has(key));
+  if (forbidden.length > 0) {
+    throw new ProgrammeProfileWriteRefused(
+      'FIELD_NOT_SETTABLE',
+      `Not a settable programme-profile column: ${forbidden.join(', ')}. ` +
+        `${Object.keys(PROFILE_WRITE_REFUSALS).includes(forbidden[0]!) ? PROFILE_WRITE_REFUSALS[forbidden[0]!] : ''}`.trim(),
+    );
+  }
+
   const values: Record<string, unknown> = { ...named, updatedAt: new Date() };
   /* The column is a timestamp; the patch carries the day, as both callers have
-     it. `null` clears a date that is no longer planned. */
+     it. `null` clears a date that is no longer planned, and the schema has
+     already refused a day that is not on the calendar. */
   if ('targetSubmissionDate' in named) {
     const day = named.targetSubmissionDate;
     values.targetSubmissionDate = typeof day === 'string' ? new Date(`${day}T00:00:00.000Z`) : null;
   }
 
-  await deps.db
-    .update(regulatoryPrograms)
-    .set(values)
-    .where(
-      and(
-        eq(regulatoryPrograms.id, params.programId),
-        eq(regulatoryPrograms.organizationId, params.organizationId),
-      ),
+  const scope = and(
+    eq(regulatoryPrograms.id, params.programId),
+    eq(regulatoryPrograms.organizationId, params.organizationId),
+    /* A programme its organization has deleted is not theirs to reconfigure.
+       The validator's `programInOrganization` filtered deleted rows, but only
+       there — a check-then-act the write itself did not repeat. */
+    isNull(regulatoryPrograms.deletedAt),
+  );
+
+  /* What the fields held BEFORE. §11.10(e) says previous entries shall not be
+     obscured, and `writeChainedAuditRow` stores `old_values = null`, so the
+     overwritten value was destroyed with nothing able to recover it. */
+  const [before] = await deps.db
+    .select({ snapshot: sql<Record<string, unknown>>`to_jsonb(${regulatoryPrograms})` })
+    .from(regulatoryPrograms)
+    .where(scope);
+  if (!before) {
+    throw new ProgrammeProfileWriteRefused(
+      'PROGRAMME_NOT_FOUND',
+      'No such programme in this organization, or it has been deleted.',
     );
+  }
+
+  /* `.returning()` so a zero-row UPDATE cannot pass for a change. Without it
+     an update that matched nothing — a row removed between the check and the
+     act, or filtered by RLS — wrote an audit row naming fields it had not
+     set. */
+  const updated = await deps.db.update(regulatoryPrograms).set(values).where(scope).returning({
+    id: regulatoryPrograms.id,
+  });
+  if (updated.length === 0) {
+    throw new ProgrammeProfileWriteRefused(
+      'PROGRAMME_NOT_FOUND',
+      'The programme was not updated: it is no longer in this organization, or it has been deleted.',
+    );
+  }
 
   /* WHICH predicate was claimed travels with the entry. The field NAME alone
      answers "someone changed the predicate"; an inspector asking "equivalent
      to WHAT, and who said so" needs the identities, and a cleared list ([]) is
      itself the answer to "when did they withdraw the claim". */
-  const auditDetails: Record<string, unknown> = { fields: Object.keys(named) };
+  const auditDetails: Record<string, unknown> = {
+    fields: Object.keys(named),
+    /* Before and after, per field the patch named — the question an inspector
+       actually asks. Only those fields, because a whole-row snapshot in every
+       audit row is a different decision with a storage cost. */
+    before: Object.fromEntries(
+      Object.keys(named).map(field => [field, columnValueOf(before.snapshot, field)]),
+    ),
+    after: Object.fromEntries(Object.keys(named).map(field => [field, named[field]])),
+  };
   const predicates = named.predicateDevices as PredicateDevice[] | undefined;
   if (predicates) auditDetails.predicateDevices = predicates.map(p => p.kNumber ?? p.id);
 
-  await deps.audit.logAction({
+  const audit = await deps.audit.logAction({
     organizationId: params.organizationId,
     userId: params.actorId,
     action: params.action ?? 'DEVICE_PROFILE_UPDATED',
@@ -351,5 +466,5 @@ export async function applyProgrammeProfilePatch(
     details: auditDetails,
   });
 
-  return { fields: Object.keys(named), auditDetails };
+  return { fields: Object.keys(named), auditDetails, audit };
 }

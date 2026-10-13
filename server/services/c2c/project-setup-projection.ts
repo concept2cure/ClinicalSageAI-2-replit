@@ -286,12 +286,24 @@ const projectPriority: Projector = (flat, patch, say) => {
  * is refused by the write — it keys the Module 1 backbone — so it is projected
  * only as a member of the target list it belongs in.
  */
-const projectAgencies: Projector = (flat, patch) => {
+const projectAgencies: Projector = (flat, patch, say) => {
   /* Through the fact reader, which already knows WHICH answers name an agency
      and reads them onto canonical regions — the same regions the route
      cautions mark against, so the record and the question cannot disagree. */
   const regions = programmeFactsFrom(flat).regions ?? [];
   if (regions.length > 0) patch.targetAgencies = regions.map(agencyFor);
+  /* The PRIMARY agency keys the Module 1 backbone, the validation profile and
+     the gateway, so the write refuses it — and this projected it only as a
+     member of the target list. A programme answering "EMA is primary" was left
+     with `primary_agency = 'FDA'` and `target_agencies = ['EMA']`, and nothing
+     said the primary answer had not been applied, because the field was on the
+     projected list (2026-10-13 audit, DP-96). */
+  if (text(flat.primary_regulatory_agency)) {
+    say(
+      'primary_regulatory_agency',
+      'Recorded among the target agencies. The PRIMARY agency keys the Module 1 backbone, the validation profile and the gateway, so it is set when the programme is created rather than reconfigured here — if it has changed, that is a change of programme identity.',
+    );
+  }
 };
 
 const projectTeam: Projector = (flat, patch) => {

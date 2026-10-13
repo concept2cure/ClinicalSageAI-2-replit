@@ -632,13 +632,14 @@ export const productionRegisterWriter: RegisterWriter = async (planEntry, scope)
      the plan's, so an interview cannot configure a programme it was not run
      for. */
   if (planEntry.register === 'programme_configuration') {
-    const [{ applyProgrammeProfilePatch }, { db }, audit] = await Promise.all([
-      import('../c2c/programme-profile-write.js'),
-      import('../../db.js'),
-      import('../auditService.js'),
-    ]);
-    await applyProgrammeProfilePatch(
-      { db, audit: audit.default },
+    const [{ applyProgrammeProfilePatch, programmeProfilePatchSchema }, { db }, { recordAuditRow }] =
+      await Promise.all([
+        import('../c2c/programme-profile-write.js'),
+        import('../../db.js'),
+        import('../audit/audit-write-outcome.js'),
+      ]);
+    const written = await applyProgrammeProfilePatch(
+      { db, audit: { logAction: recordAuditRow } },
       {
         organizationId: scope.organizationId,
         programId: scope.projectId,
@@ -646,11 +647,29 @@ export const productionRegisterWriter: RegisterWriter = async (planEntry, scope)
            who answered; a session without one is refused here rather than
            audited against an invented actor. */
         actorId: requireActor(scope),
-        patch: planEntry.body,
+        /* The PARSED patch, not the plan's raw body: the validator parsed it
+           and then discarded `parsed.data`, so zod's stripping of unknown keys
+           never applied to what was written. The write refuses a non-settable
+           column itself now, and this stops relying on that alone
+           (2026-10-13 audit). */
+        patch: programmeProfilePatchSchema.parse(planEntry.body),
         action: 'PROGRAMME_CONFIGURED_BY_INTERVIEW',
       },
     );
-    return { id: scope.projectId };
+    /* §11.10(e): the configuration landed and its audit row may not have. The
+       outcome leaves the writer so the commit's own refs say which — a lost
+       row is not a reason to undo a configuration the tenant can already see,
+       and it is a reason to say so. */
+    return {
+      id: scope.projectId,
+      ...(written.audit.persisted
+        ? {}
+        : {
+            module3Warning:
+              'The audit entry for this configuration could not be written. The configuration itself ' +
+              'completed, and this has been logged for follow-up.',
+          }),
+    };
   }
 
   const writes = await import('./register-writes.js');

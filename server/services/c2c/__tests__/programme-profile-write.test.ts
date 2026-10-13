@@ -20,8 +20,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { regulatoryPrograms } from '@shared/schema/programs';
+import type { AuditRowOutcome } from '../../audit/audit-write-outcome';
 import {
   PROFILE_WRITE_REFUSALS,
+  ProgrammeProfileWriteRefused,
+  isRealCalendarDay,
   type ProfileWriteDb,
   applyProgrammeProfilePatch,
   deviceProfilePatchSchema,
@@ -42,16 +45,29 @@ interface AuditRow {
 }
 
 const set = vi.fn<(values: Record<string, unknown>) => void>();
-const where = vi.fn<(predicate: unknown) => Promise<undefined>>(async () => undefined);
-const logAction = vi.fn<(row: AuditRow) => Promise<unknown>>(async () => ({ persisted: true }));
+const where = vi.fn<(predicate: unknown) => unknown>();
+const logAction = vi.fn<(row: AuditRow) => Promise<AuditRowOutcome>>(async () => ({
+  persisted: true,
+  chained: true,
+}));
+
+/** The row as it stood, keyed by COLUMN name, as `to_jsonb(row)` returns it. */
+let snapshot: Record<string, unknown> | undefined = { device_class: 'I', priority: 'medium' };
+/** What the UPDATE's `.returning()` yields — empty means it matched nothing. */
+let returned: Array<{ id: string }> = [{ id: PROGRAM }];
 
 const update = vi.fn((_table: unknown) => ({
   set: (values: Record<string, unknown>) => {
     set(values);
-    return { where };
+    return { where: (predicate: unknown) => { where(predicate); return { returning: async () => returned }; } };
   },
 }));
-const deps = () => ({ db: { update } as unknown as ProfileWriteDb, audit: { logAction } });
+const select = vi.fn((_fields: unknown) => ({
+  from: (_table: unknown) => ({
+    where: async (_predicate: unknown) => (snapshot ? [{ snapshot }] : []),
+  }),
+}));
+const deps = () => ({ db: { update, select } as unknown as ProfileWriteDb, audit: { logAction } });
 
 const write = (patch: Record<string, unknown>, action?: string) => {
   const parsed = programmeProfilePatchSchema.safeParse(patch);
@@ -73,6 +89,9 @@ beforeEach(() => {
   where.mockClear();
   logAction.mockClear();
   update.mockClear();
+  select.mockClear();
+  snapshot = { device_class: 'I', priority: 'medium' };
+  returned = [{ id: PROGRAM }];
 });
 
 describe('what it sets', () => {
@@ -177,6 +196,49 @@ describe('what the record says about it afterwards', () => {
   });
 });
 
+describe('what the §11.10(e) row says, and whether it landed', () => {
+  it('reports a lost audit row instead of answering as though it wrote one', async () => {
+    /* `logAction` does not reject when persistence fails, so the outcome is
+       the only way to tell a recorded change from an unrecorded one — and this
+       write discarded it (2026-10-13 audit). */
+    logAction.mockResolvedValueOnce({
+      persisted: false,
+      code: 'AUDIT_ROW_NOT_PERSISTED',
+      message: 'lost',
+    });
+    const result = await write({ priority: 'high' });
+    expect(result.audit.persisted, 'the caller is told').toBe(false);
+    expect(written().priority, 'and the change itself stands').toBe('high');
+  });
+
+  it('carries the value each field held BEFORE, which the chain does not', async () => {
+    /* §11.10(e): previous entries shall not be obscured, and
+       `writeChainedAuditRow` stores old_values = null. The overwritten value
+       was destroyed with nothing able to recover it. */
+    snapshot = { device_class: 'I', priority: 'low' };
+    await write({ deviceClass: 'III', priority: 'high' });
+    const details = audited().details as Record<string, Record<string, unknown>>;
+    expect(details.before).toEqual({ deviceClass: 'I', priority: 'low' });
+    expect(details.after).toEqual({ deviceClass: 'III', priority: 'high' });
+  });
+
+  it('refuses a programme this organization does not hold, before writing', async () => {
+    snapshot = undefined;
+    await expect(write({ priority: 'high' })).rejects.toThrow(ProgrammeProfileWriteRefused);
+    expect(set, 'nothing was written').not.toHaveBeenCalled();
+    expect(logAction, 'and no audit row claims otherwise').not.toHaveBeenCalled();
+  });
+
+  it('refuses a zero-row UPDATE rather than auditing a change that did not happen', async () => {
+    /* The row can go between the check and the act, or RLS can filter it. The
+       UPDATE had no `.returning()`, so an audit row named fields it had not
+       set. */
+    returned = [];
+    await expect(write({ priority: 'high' })).rejects.toThrow(/no longer in this organization/);
+    expect(logAction).not.toHaveBeenCalled();
+  });
+});
+
 describe('what it refuses', () => {
   it('refuses a patch that names nothing', () => {
     expect(programmeProfilePatchSchema.safeParse({}).success).toBe(false);
@@ -208,6 +270,31 @@ describe('what it refuses', () => {
     const columns = new Set(Object.keys(regulatoryPrograms));
     const unknown = programmeProfileFields().filter(f => !columns.has(f));
     expect(unknown, 'a settable field no column holds').toEqual([]);
+  });
+
+  it('refuses a column outside the allowlist in the WRITE, not only at the caller', async () => {
+    /* The function spread every key of the patch into `.set()`, and drizzle
+       writes any real column it finds. Nothing could emit `status` today,
+       which is the whole reason to close it before something can. */
+    await expect(
+      applyProgrammeProfilePatch(deps(), {
+        organizationId: ORG,
+        programId: PROGRAM,
+        actorId: 7,
+        patch: { status: 'approved' } as never,
+      }),
+    ).rejects.toThrow(/Not a settable programme-profile column: status/);
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  it('refuses a date that is not on the calendar', () => {
+    /* `new Date('2026-02-30')` is 2 March, and `2026-13-45` threw inside the
+       writer after the interview session had moved to committing. */
+    expect(isRealCalendarDay('2027-03-01')).toBe(true);
+    expect(isRealCalendarDay('2026-02-30')).toBe(false);
+    expect(isRealCalendarDay('2026-13-45')).toBe(false);
+    expect(programmeProfilePatchSchema.safeParse({ targetSubmissionDate: '2026-02-30' }).success).toBe(false);
+    expect(programmeProfilePatchSchema.safeParse({ targetSubmissionDate: '2027-03-01' }).success).toBe(true);
   });
 
   it('keeps the US class US, because the form it is printed on is US', () => {

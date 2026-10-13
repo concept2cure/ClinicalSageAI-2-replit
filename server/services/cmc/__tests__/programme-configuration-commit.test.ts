@@ -12,6 +12,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const H = vi.hoisted(() => ({
   applied: [] as Array<Record<string, unknown>>,
   isProgramme: true,
+  auditOutcome: { persisted: true, chained: true } as
+    | { persisted: true; chained: boolean }
+    | { persisted: false; code: 'AUDIT_ROW_NOT_PERSISTED'; message: string },
 }));
 
 vi.mock('../../c2c/programme-profile-write.js', async importOriginal => {
@@ -20,7 +23,11 @@ vi.mock('../../c2c/programme-profile-write.js', async importOriginal => {
     ...actual,
     applyProgrammeProfilePatch: async (_deps: unknown, params: Record<string, unknown>) => {
       H.applied.push(params);
-      return { fields: Object.keys(params.patch as object), auditDetails: {} };
+      return {
+        fields: Object.keys(params.patch as object),
+        auditDetails: {},
+        audit: H.auditOutcome,
+      };
     },
   };
 });
@@ -45,6 +52,7 @@ const SCOPE = { organizationId: 9, projectId: 'b1f0c9de-5a22-4f3e-9c10-2d6a7e4b8
 beforeEach(() => {
   H.applied = [];
   H.isProgramme = true;
+  H.auditOutcome = { persisted: true, chained: true };
 });
 
 describe('the writer', () => {
@@ -54,6 +62,26 @@ describe('the writer', () => {
     expect(H.applied[0]!.programId).toBe(SCOPE.projectId);
     expect(H.applied[0]!.organizationId).toBe(9);
     expect(result.id).toBe(SCOPE.projectId);
+  });
+
+  it('tells the commit when the audit row did not land', async () => {
+    /* The configuration stands — it is already committed — and the commit's
+       own ref says the §11.10(e) row is missing, rather than the session
+       reporting a clean commit (2026-10-13 audit). */
+    H.auditOutcome = { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'lost' };
+    const result = await productionRegisterWriter(ENTRY, SCOPE);
+    expect(result.module3Warning, 'the ref carries the warning').toMatch(/audit entry .* could not be written/);
+    expect(result.id, 'and the configuration itself landed').toBe(SCOPE.projectId);
+  });
+
+  it('passes the PARSED patch, so an unknown column cannot ride the plan body', async () => {
+    await productionRegisterWriter(
+      { ...ENTRY, body: { ...ENTRY.body, status: 'approved' } },
+      SCOPE,
+    );
+    expect(Object.keys(H.applied[0]!.patch as object), 'status stripped by the schema').not.toContain(
+      'status',
+    );
   });
 
   it('records its own action, so the interview’s write is not read as the device panel’s', async () => {
