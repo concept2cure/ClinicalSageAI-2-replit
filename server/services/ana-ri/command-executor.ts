@@ -1969,10 +1969,15 @@ export async function createSubmissionPackage(
       };
     }
     const result = await client.query(
+      /* created_by_id: who created the package, as the HTTP route records it
+         (submission-ops.ts). Separation of duties names it the package's
+         author at transmit (SINGLE_AUTHOR['submission-package']); without it
+         every package AnA created read "no creator recorded" and nobody could
+         transmit it to the agency. */
       `INSERT INTO c2c_submission_packages
          (package_id, org_id, project_id, package_family, title, description,
-          target_date, status, created_at, updated_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'active', NOW(), NOW())
+          target_date, status, created_by_id, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'active', $7, NOW(), NOW())
        RETURNING package_id, title, package_family, status`,
       [
         ctx.organizationId,
@@ -1981,6 +1986,7 @@ export async function createSubmissionPackage(
         params.title,
         params.description || '',
         params.targetDate || null,
+        ctx.userId,
       ]
     );
     const pkg = result.rows[0];
