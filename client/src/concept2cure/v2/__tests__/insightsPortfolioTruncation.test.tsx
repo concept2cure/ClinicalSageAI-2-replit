@@ -51,6 +51,7 @@ function overview(truncated: boolean, programCount: number) {
   return {
     data: {
       organizationId: 1,
+      dataScope: 'accessible_projects',
       tier: 'enterprise',
       segments: ['biotech'],
       leadProgram: {
@@ -104,6 +105,11 @@ async function openBoard(isTruncated: boolean, programCount: number) {
 }
 
 describe('the portfolio board and the server’s rollup cap', () => {
+  it('describes the accessible subset rather than every program in the organization', async () => {
+    await openBoard(false, 3);
+    expect(screen.getByTestId('rc-find-result').textContent).toMatch(/3 programs you can access/);
+    expect(document.querySelector('.ro-dash')?.textContent).toMatch(/This board covers programs you can access/);
+  });
   it('a complete rollup says nothing about a cap, and counts plainly', async () => {
     await openBoard(false, 3);
     expect(screen.queryByTestId('ro-port-truncated')).toBeNull();
@@ -117,7 +123,7 @@ describe('the portfolio board and the server’s rollup cap', () => {
     expect(note.textContent ?? '').toMatch(/more programs than this board shows/);
     // And it says what the average does NOT cover, since that is the figure
     // an executive reads as the organisation's position.
-    expect(note.textContent ?? '').toMatch(/not over your whole portfolio/);
+    expect(note.textContent ?? '').toMatch(/not over your whole returned portfolio/);
   });
 
   it('a capped rollup counts as "first N", never as the organisation’s total', async () => {

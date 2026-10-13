@@ -7,7 +7,7 @@
  * What is pinned here, per route:
  *   - POST /runs              → one chained row, `report_os.run_created`, after
  *     the run is written; when it cannot be written the answer is 503 saying
- *     the run exists and was not recorded — never a 201 that implies it was.
+ *     nothing was saved — never a 201 that implies it was recorded.
  *   - POST /runs/:id/finalize, the run's electronic signature: pinned in
  *     report-os-finalize-signature.test.ts, over the same doubles.
  *   - GET /runs/:id/export.pdf and GET /bundles/:bundleId/export.pdf (DP-50) →
@@ -30,6 +30,14 @@ import request from 'supertest';
 
 const h = await vi.hoisted(async () => (await import('./_report-os-route-harness')).createReportOsHarness());
 
+
+// These suites isolate audit/compute contracts; sharing itself is exercised
+// against SQL in run-history and scheduling project-access integration tests.
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [1, 2, 3, 7, 11, 12, 14, 17, 21, 41, 52, 99, 100, 101],
+  canAccessReportScope: async () => true,
+}));
 vi.mock('../../db', () => ({ db: h.db, pool: h.pool, getPool: () => h.pool, getDb: () => h.db, query: vi.fn(), transaction: vi.fn() }));
 vi.mock('../../auth', () => ({ authMiddleware: (_req: unknown, _res: unknown, next: () => void) => next() }));
 vi.mock('../../utils/authedOrgId', async (importOriginal) => ({
@@ -133,15 +141,16 @@ describe('POST /runs never computes a prediction (reporting review 2026-10-01)',
  * recorded, and a retry made a second. All four now share one transaction.
  */
 describe('POST /runs records the run on the audit chain, in the same transaction as the run', () => {
+  const CREATED_RUN = { ...RUN, scopeType: 'project', scopeId: '11' };
   const post = () =>
-    request(app).post('/api/report-os/runs').send({ scopeType: 'submission', scopeId: 'sub-1', reportTypeId: TYPE.typeId });
+    request(app).post('/api/report-os/runs').send({ scopeType: 'project', scopeId: '11', reportTypeId: TYPE.typeId });
   const INSERTS = [/^insert into "report_runs"/, /^insert into "report_snapshots"/];
 
   beforeEach(() => {
-    h.queued.select.push([TYPE]);
-    const snapshot = { id: 9, runId: RUN.id, organizationId: 7, scopeType: 'submission', scopeId: 'sub-1', snapshotVersion: 1, isLatest: true };
+    h.queued.select.push([TYPE], [{ id: 11, code: 'REPORT-11', name: 'Reporting project' }]);
+    const snapshot = { id: 9, runId: RUN.id, organizationId: 7, scopeType: 'project', scopeId: '11', snapshotVersion: 1, isLatest: true };
     h.respond.fn = (sql, arrayMode) =>
-      !arrayMode ? [] : /"report_runs"/.test(sql) ? [driverRow(reportRuns, RUN)] : /"report_snapshots"/.test(sql) ? [driverRow(reportSnapshots, snapshot)] : [];
+      !arrayMode ? [] : /"report_runs"/.test(sql) ? [driverRow(reportRuns, CREATED_RUN)] : /"report_snapshots"/.test(sql) ? [driverRow(reportSnapshots, snapshot)] : [];
   });
 
   it('writes the run, its snapshot and report_os.run_created on one tenant-stamped transaction, and answers 201', async () => {
@@ -154,7 +163,7 @@ describe('POST /runs records the run on the audit chain, in the same transaction
       action: 'report_os.run_created',
       resourceType: 'report_run',
       resourceId: '41',
-      details: { runUuid: RUN.runUuid, reportTypeId: TYPE.typeId, scopeType: 'submission', scopeId: 'sub-1', status: 'completed' },
+      details: { runUuid: RUN.runUuid, reportTypeId: TYPE.typeId, scopeType: 'project', scopeId: '11', status: 'completed' },
     });
     expect(h.statements.slice(0, 2)).toEqual(['BEGIN', tenantStampSql()]);
     INSERTS.forEach((re, i) => expect(h.statements[2 + i]).toMatch(re));
@@ -176,7 +185,7 @@ describe('POST /runs records the run on the audit chain, in the same transaction
   it('a failed insert is an error, not "not recorded": rolled back, nothing recorded', async () => {
     h.respond.fn = (sql) => {
       if (/insert into "report_snapshots"/.test(sql)) throw new Error('snapshot insert refused');
-      return /insert into "report_runs"/.test(sql) ? [driverRow(reportRuns, RUN)] : [];
+      return /insert into "report_runs"/.test(sql) ? [driverRow(reportRuns, CREATED_RUN)] : [];
     };
     const res = await post();
     expect(res.status).toBe(500);

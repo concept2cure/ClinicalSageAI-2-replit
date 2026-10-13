@@ -41,6 +41,9 @@ import {
   listSubscriptions,
   setEnabled,
 } from '../services/report-os/scheduling/subscription-service';
+import { ScheduleConfigurationError } from '../services/report-os/scheduling/configuration';
+import { isValidTimeZone } from '../services/report-os/scheduling/cadence';
+import { canAccessReportScope, type ReportProjectActor } from '../services/report-os/project-access';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
@@ -188,7 +191,8 @@ const reportScheduleSchema = z.object({
   minute: z.number().int().min(0).max(59).optional(),
   dayOfWeek: z.number().int().min(0).max(6).optional(),
   dayOfMonth: z.number().int().min(1).max(28).optional(),
-  timeZoneOffsetMinutes: z.number().int().optional(),
+  timeZone: z.string().max(100).refine(isValidTimeZone, 'Use a valid IANA timezone').optional(),
+  timeZoneOffsetMinutes: z.number().int().min(-840).max(840).optional(),
 });
 
 const createSubscriptionSchema = z.object({
@@ -197,7 +201,7 @@ const createSubscriptionSchema = z.object({
   scopeType: z.string().min(1),
   scopeId: z.string().min(1),
   schedule: reportScheduleSchema,
-  recipients: z.array(z.string().max(320)).optional(),
+  recipients: z.array(z.string().email().max(320)).max(100).optional(),
   format: z.enum(['pdf', 'in_app']).optional(),
   channel: z.enum(['platform', 'external']).optional(),
   persona: z.string().nullable().optional(),
@@ -334,8 +338,17 @@ router.post('/predictions/run', async (req: Request, res: Response) => {
 
     // The pre-mortem stores its result against the project and submission it
     // names; an id from another tenant reads as not found, before any model runs.
-    if (body.projectId != null && !(await projectsInOrg(organizationId, [body.projectId])).has(body.projectId)) {
-      return res.status(404).json({ error: 'Project not found' });
+    if (body.projectId != null) {
+      if (!(await projectsInOrg(organizationId, [body.projectId])).has(body.projectId)) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      const actor = subscriptionActor(req);
+      if (!actor) return res.status(403).json({ error: 'Authenticated report actor required' });
+      // The model records calibration against this project. Organization
+      // ownership alone cannot authorize IO for an explicitly private project.
+      if (!(await canAccessReportScope(organizationId, actor, { scopeType: 'project', scopeId: String(body.projectId) }))) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
     }
     if (body.submissionId != null) {
       const owned = body.projectId != null && (await submissionInProject(organizationId, body.projectId, body.submissionId));
@@ -382,14 +395,28 @@ router.post('/predictions/run', async (req: Request, res: Response) => {
 // Subscriptions — org-scoped CRUD over the subscription service.
 // ---------------------------------------------------------------------------
 
+/** The authenticator's current membership role takes precedence over the token.
+ * The subscription creator is evaluated separately at enablement/fire time. */
+function subscriptionActor(req: Request): ReportProjectActor | null {
+  const userId = authedUserId(req);
+  if (!Number.isSafeInteger(userId) || userId == null || userId < 1) return null;
+  return { userId, role: req.userRole ?? req.user?.role };
+}
+
 router.get('/subscriptions', async (req: Request, res: Response) => {
   try {
     const organizationId = authedOrgId(req);
     if (organizationId == null) {
       return res.status(403).json({ error: 'Tenant context required' });
     }
+    const actor = subscriptionActor(req);
+    if (!actor) return res.status(403).json({ error: 'Authenticated report actor required' });
     const rows = await listSubscriptions(organizationId);
-    return res.json({ data: rows });
+    const allowed = [];
+    for (const row of rows) {
+      if (await canAccessReportScope(organizationId, actor, row)) allowed.push(row);
+    }
+    return res.json({ data: allowed });
   } catch (error: any) {
     return serverError(res, logger, 'loading subscriptions', error);
   }
@@ -431,6 +458,7 @@ router.post('/subscriptions', async (req: Request, res: Response) => {
     });
     return res.status(201).json({ data: row });
   } catch (error: any) {
+    if (error instanceof ScheduleConfigurationError) return res.status(error.status).json({ error: error.message, code: error.code, ...(error.requiredTier ? { requiredTier: error.requiredTier } : {}) });
     return serverError(res, logger, 'saving subscriptions', error);
   }
 });
@@ -442,7 +470,7 @@ router.patch('/subscriptions/:id', async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Tenant context required' });
     }
     const id = Number(req.params.id);
-    if (!Number.isFinite(id) || id <= 0) {
+    if (!Number.isSafeInteger(id) || id <= 0) {
       return res.status(400).json({ error: 'Invalid subscription id' });
     }
     const parsed = setEnabledSchema.safeParse(req.body);
@@ -450,12 +478,21 @@ router.patch('/subscriptions/:id', async (req: Request, res: Response) => {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
 
-    const row = await setEnabled(id, organizationId, parsed.data.enabled);
+    const actor = subscriptionActor(req);
+    if (!actor) return res.status(403).json({ error: 'Authenticated report actor required' });
+    const existing = (await listSubscriptions(organizationId)).find(row => row.id === id);
+    // Both disabling and enabling are management actions over this scope. A
+    // valid stored creator cannot grant the managing caller project access.
+    if (!existing || !(await canAccessReportScope(organizationId, actor, existing))) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+    const row = await setEnabled(id, organizationId, parsed.data.enabled, actor.userId);
     if (!row) {
       return res.status(404).json({ error: 'Subscription not found' });
     }
     return res.json({ data: row });
   } catch (error: any) {
+    if (error instanceof ScheduleConfigurationError) return res.status(error.status).json({ error: error.message, code: error.code, ...(error.requiredTier ? { requiredTier: error.requiredTier } : {}) });
     return serverError(res, logger, 'updating subscriptions', error);
   }
 });

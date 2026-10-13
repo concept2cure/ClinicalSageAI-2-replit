@@ -45,7 +45,7 @@
 
 import { Router, Request, Response } from 'express';
 
-import { requestDb } from '../db/requestDb';
+import { requestDb, requestPgClient, MissingRequestDbContextError } from '../db/requestDb';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
 import { looksLikeProgramUuid } from '../lib/project-id';
@@ -56,32 +56,70 @@ import { PREDICTION_REPORT_TYPES } from '../services/report-os/prediction/report
 import {
   deriveOrgSegments,
   deriveProjectSegments,
+  segmentsForScope,
   filterTypesForSegment,
   type ReportSegment,
 } from '../services/report-os/segment';
-import { reportEngineFor } from '../services/report-os/report-engine';
+import { reportAvailability } from '../services/report-os/report-engine';
 import {
   requireReportEntitlement,
   decideReportEntitlement,
   type ReportEntitlementDecision,
 } from '../services/report-os/entitlement-map';
 import { fetchOrgPortfolioSummary } from '../services/report-os/portfolio/fetch';
-import type { ProgramMemberInsight, RiskLevel } from '../services/report-os/portfolio/types';
+import type { ProgramMemberInsight, RiskLevel, OrgPortfolioSummary } from '../services/report-os/portfolio/types';
 import type { FeatureKey, Tier } from '../services/entitlements/types';
+import { authedUserId } from '../utils/authedActor';
+import { getAccessibleReportProjectIds, type ReportProjectActor } from '../services/report-os/project-access';
+import { aggregateOrgPortfolio } from '../services/report-os/portfolio/aggregate';
 
 const logger = createScopedLogger('insights-canvas-routes');
 
 /**
  * The full governed report taxonomy (base + global-markets + prediction), read
- * from the in-memory seed rather than the reportTypeRegistry table so the
- * catalog renders even before taxonomy seeding (missing-table-safe). Same seed
- * the /api/report-os/taxonomy catalog and the report-os-insights router use.
+ * from the canonical seeds for discovery. Deployed registry declarations below
+ * authorize runs; missing definitions stay visible as explicitly unavailable.
  */
 const ALL_REPORT_TYPES: ReportTypeDefinition[] = [
   ...REPORT_TYPE_SEED,
   ...GLOBAL_REPORT_TYPE_SEED,
   ...PREDICTION_REPORT_TYPES,
 ];
+
+type CatalogDefinition = ReportTypeDefinition & { registered: boolean; enabled: boolean };
+
+/** Seeds retain discovery, while deployed declarations authorize actual runs. */
+async function deployedCatalog(req: Request): Promise<CatalogDefinition[]> {
+  const { rows } = await requestPgClient(req).query(`SELECT type_id, label, family, allowed_scopes,
+    allowed_personas, allowed_client_segments, governance_requirements, truthfulness_rules, enabled
+    FROM report_type_registry`);
+  const registry = new Map(rows.map(row => [row.type_id, row]));
+  const list = (value: unknown): string[] => {
+    if (!Array.isArray(value) || !value.every(item => typeof item === 'string')) throw new Error('Report registry has an invalid declaration list');
+    return value;
+  };
+  return ALL_REPORT_TYPES.map(seed => {
+    const row = registry.get(seed.typeId);
+    if (!row) return { ...seed, registered: false, enabled: false };
+    if (typeof row.label !== 'string' || typeof row.family !== 'string' || typeof row.enabled !== 'boolean' ||
+        !row.governance_requirements || typeof row.governance_requirements !== 'object' ||
+        !row.truthfulness_rules || typeof row.truthfulness_rules !== 'object') throw new Error('Report registry has an invalid declaration');
+    return { ...seed, registered: true, enabled: row.enabled, label: row.label, family: row.family,
+      allowedScopes: list(row.allowed_scopes) as ReportTypeDefinition['allowedScopes'],
+      allowedPersonas: list(row.allowed_personas), allowedClientSegments: list(row.allowed_client_segments),
+      governanceRequirements: row.governance_requirements as Record<string, unknown>, truthfulnessRules: row.truthfulness_rules as Record<string, unknown> };
+  });
+}
+
+class CatalogUnavailableError extends Error {}
+class OpenProgramUnavailableError extends Error {}
+
+function availableCatalog(result: PromiseSettledResult<CatalogDefinition[]>, organizationId: number): CatalogDefinition[] {
+  if (result.status === 'fulfilled') return result.value;
+  if (result.reason instanceof MissingRequestDbContextError) throw result.reason;
+  logger.error('report registry catalog read failed', { organizationId, error: String(result.reason) });
+  throw new CatalogUnavailableError('The report catalog could not be read. Try again in a moment.');
+}
 
 // ── Display shape (mirrors client/.../v2/surfaces/Insights.tsx InsightsCanvas) ──
 
@@ -104,14 +142,21 @@ interface CanvasReportType {
    */
   computedScopes: string[];
   allowedClientSegments: string[];
+  allowedPersonas: string[];
+  region: string | null;
+  computedScope: 'organization' | 'project' | 'document' | null;
+  availabilityReason: string | null;
+  availabilityState: 'available' | 'not-computed' | 'scope-required' | 'disabled' | 'unregistered';
+  runScopeType: 'project' | 'account' | null;
+  runScopeId: string | null;
   /** The real seed truthfulness rules, passed through untouched. */
   truthfulnessRules: Record<string, unknown>;
   entitled: boolean;
   feature: FeatureKey;
   requiredTier: Tier;
   /**
-   * Whether an engine computes this type over a program (project scope), so
-   * the canvas can run it (report-engine.ts). A type that is not runnable is
+   * Whether the current program or organization context permits a run.
+   * A type that is not runnable is
    * shown as not computed in this release, never run as the readiness digest
    * under its title (QA 2026-10-08, j8).
    */
@@ -146,6 +191,8 @@ interface CanvasLeadProgram {
 
 interface CanvasPortfolioProgram {
   projectId: number;
+  programId: string | null;
+  topBlockers: string[];
   code: string | null;
   label: string;
   indication: string | null;
@@ -201,6 +248,7 @@ interface CanvasProgramChoice {
 
 interface CanvasOverview {
   organizationId: number;
+  dataScope: 'accessible_projects';
   tier: Tier;
   /**
    * Whether `tier` was read, or assumed after a failed capability lookup.
@@ -269,6 +317,8 @@ function toLeadProgram(insight: ProgramMemberInsight): CanvasLeadProgram {
 function toPortfolioProgram(insight: ProgramMemberInsight): CanvasPortfolioProgram {
   return {
     projectId: insight.projectId,
+    programId: insight.programId ?? null,
+    topBlockers: insight.topBlockers ?? [],
     code: insight.code ?? null,
     label: insight.name,
     indication: insight.indication ?? null,
@@ -277,6 +327,36 @@ function toPortfolioProgram(insight: ProgramMemberInsight): CanvasPortfolioProgr
     status: insight.status,
     riskLevel: insight.riskLevel,
     criticalBlockerCount: insight.criticalBlockerCount,
+  };
+}
+
+function overviewActor(req: Request): ReportProjectActor | null {
+  const userId = authedUserId(req);
+  if (!userId || !Number.isSafeInteger(userId) || userId < 1) return null;
+  return { userId, role: req.userRole ?? req.user?.role };
+}
+
+function accessiblePortfolioSummary(organizationId: number, rawSummary: OrgPortfolioSummary | null, accessibleProjectIds: number[]): OrgPortfolioSummary | null {
+  const members = rawSummary?.attentionRanked.filter(member => accessibleProjectIds.includes(member.projectId)) ?? [];
+  return rawSummary && members.length ? aggregateOrgPortfolio(organizationId, members, rawSummary.truncated) : null;
+}
+
+function canvasPortfolio(gate: ReportEntitlementDecision, summary: OrgPortfolioSummary | null): CanvasPortfolio {
+  return {
+    entitled: gate.entitled,
+    requiredTier: gate.requiredTier,
+    summary: gate.entitled && summary ? {
+      programCount: summary.memberCount,
+      avgReadiness: summary.avgReadiness,
+      avgConfidence: summary.avgConfidence,
+      worstRisk: summary.worstRisk,
+      readyCount: summary.readyCount,
+      partialCount: summary.partialCount,
+      missingCount: summary.missingCount,
+      totalCriticalBlockers: summary.totalCriticalBlockers,
+      truncated: summary.truncated,
+    } : null,
+    programs: gate.entitled && summary ? summary.attentionRanked.map(toPortfolioProgram) : null,
   };
 }
 
@@ -316,6 +396,7 @@ async function pickLead(
   organizationId: number,
   programId: string | null,
   summary: { attentionRanked: ProgramMemberInsight[] } | null,
+  accessibleProjectIds: readonly number[],
 ): Promise<{ leadProgram: CanvasLeadProgram | null; openProgram: CanvasOpenProgram | null }> {
   const members = summary?.attentionRanked ?? [];
   if (!programId) return { leadProgram: null, openProgram: null };
@@ -325,6 +406,7 @@ async function pickLead(
     context: 'insights-canvas-overview',
     strict: true,
   });
+  if (anchored != null && !accessibleProjectIds.includes(anchored)) throw new OpenProgramUnavailableError('Program not found');
   const member = anchored == null ? null : members.find((m) => m.projectId === anchored) ?? null;
   return {
     leadProgram: member ? toLeadProgram(member) : null,
@@ -340,21 +422,45 @@ async function pickLead(
  * 2026-10-08, j8). Each type carries the org's entitlement verdict and whether
  * an engine computes it over a program (`runnable`, report-engine.ts).
  */
-function catalogFor(segments: ReportSegment[], persona: string | null, tier: Tier): CanvasReportType[] {
-  return filterTypesForSegment(ALL_REPORT_TYPES, segments, persona).map((t) => {
+function catalogAvailabilityState(type: CatalogDefinition, runnable: boolean, computedScopes: string[]): CanvasReportType['availabilityState'] {
+  if (!type.registered) return 'unregistered';
+  if (!type.enabled) return 'disabled';
+  if (runnable) return 'available';
+  return computedScopes.length ? 'scope-required' : 'not-computed';
+}
+
+function catalogFor(types: CatalogDefinition[], segments: ReportSegment[], persona: string | null, tier: Tier, context: { organizationId: number; lead: CanvasLeadProgram | null }): CanvasReportType[] {
+  const { organizationId, lead } = context;
+  return filterTypesForSegment(types, segments, persona).map((t) => {
     const decision = decideReportEntitlement(t.typeId, t.family, tier);
+    const project = reportAvailability(t.typeId, 'project', t.allowedScopes);
+    const account = reportAvailability(t.typeId, 'account', t.allowedScopes);
+    const runScopeType = lead && project.runnable ? 'project' : account.runnable ? 'account' : null;
+    const availability = runScopeType === 'account' ? account : project;
+    const registryReason = !t.registered ? 'This report is not in the deployed registry and cannot run yet.'
+      : !t.enabled ? 'This report is disabled in the report registry.' : null;
+    const runnable = registryReason == null && runScopeType != null && availability.runnable;
+    const computedScopes = t.allowedScopes.filter((s) => reportAvailability(t.typeId, s, t.allowedScopes).runnable);
+    const availabilityState = catalogAvailabilityState(t, runnable, computedScopes);
     return {
       typeId: t.typeId,
       label: t.label,
       family: t.family,
       allowedScopes: t.allowedScopes,
-      computedScopes: t.allowedScopes.filter((s) => reportEngineFor(t.typeId, s) != null),
+      computedScopes,
       allowedClientSegments: t.allowedClientSegments,
+      allowedPersonas: t.allowedPersonas,
+      region: typeof t.governanceRequirements.region === 'string' ? t.governanceRequirements.region : null,
+      computedScope: availability.computedScope,
+      availabilityReason: registryReason ?? (!runnable && project.runnable ? 'Open a program to run this project report.' : availability.availabilityReason),
+      availabilityState,
+      runScopeType,
+      runScopeId: runScopeType === 'account' ? String(organizationId) : runScopeType === 'project' ? lead!.scopeId : null,
       truthfulnessRules: t.truthfulnessRules,
       entitled: decision.entitled,
       feature: decision.feature,
       requiredTier: decision.requiredTier,
-      runnable: reportEngineFor(t.typeId, 'project') != null,
+      runnable,
     };
   });
 }
@@ -366,7 +472,7 @@ async function leadSegments(
   orgSegments: ReportSegment[],
 ): Promise<ReportSegment[]> {
   if (!leadProgram) return orgSegments;
-  return (await deriveProjectSegments(organizationId, leadProgram.projectId)) ?? orgSegments;
+  return segmentsForScope(await deriveProjectSegments(organizationId, leadProgram.projectId), orgSegments);
 }
 
 /** PURE: the programs a person can open the canvas on — anchored ones, by name (every plan). */
@@ -403,14 +509,18 @@ export default function createInsightsCanvasRoutes(): Router {
       if (programId === false) {
         return res.status(400).json({ success: false, error: { code: 'INVALID_PROGRAM_ID', message: 'programId must be a program id.' } });
       }
+      const actor = overviewActor(req);
+      if (!actor) return res.status(401).json({ success: false, error: 'Sign in to read reporting records.' });
+      const accessibleProjectIds = await getAccessibleReportProjectIds(organizationId, actor, requestPgClient(req));
 
       // Independent reads. The entitlement gate and segment derivation fail
       // closed internally (never throw). The portfolio compute can throw, and
       // a failed read is answered as one (below), never as an empty org.
-      const [gateResult, segmentsResult, portfolioResult] = await Promise.allSettled([
+      const [gateResult, segmentsResult, portfolioResult, catalogResult] = await Promise.allSettled([
         requireReportEntitlement(organizationId, 'portfolio.board_pack', 'portfolio'),
         deriveOrgSegments(organizationId),
-        fetchOrgPortfolioSummary(organizationId),
+        fetchOrgPortfolioSummary(organizationId, { accessibleProjectIds }),
+        deployedCatalog(req),
       ]);
 
       const gate: ReportEntitlementDecision =
@@ -441,40 +551,22 @@ export default function createInsightsCanvasRoutes(): Router {
           },
         });
       }
-      const summary = portfolioResult.value;
+      const summary = accessiblePortfolioSummary(organizationId, portfolioResult.value, accessibleProjectIds);
+      const types = availableCatalog(catalogResult, organizationId);
 
       // Lead program — a single program's OWN governed readiness, a base
       // capability shown on every tier (not the enterprise rollup): the open
       // program when one is named; none otherwise (pickLead).
-      const { leadProgram, openProgram } = await pickLead(req, organizationId, programId, summary);
+      const { leadProgram, openProgram } = await pickLead(req, organizationId, programId, summary, accessibleProjectIds);
 
       const catalogSegments = await leadSegments(organizationId, leadProgram, segments);
-      const reportTypes = catalogFor(catalogSegments, persona, tier);
+      const reportTypes = catalogFor(types, catalogSegments, persona, tier, { organizationId, lead: leadProgram });
       const programs = programChoices(summary);
 
       // Cross-program board rollup — the ENTERPRISE portfolio_rollup capability.
       // Populated only when entitled; otherwise an honest lock (null), mirroring
       // /api/report-os/portfolio/org.
-      const portfolio: CanvasPortfolio = {
-        entitled: gate.entitled,
-        requiredTier: gate.requiredTier,
-        summary:
-          gate.entitled && summary
-            ? {
-                programCount: summary.memberCount,
-                avgReadiness: summary.avgReadiness,
-                avgConfidence: summary.avgConfidence,
-                worstRisk: summary.worstRisk,
-                readyCount: summary.readyCount,
-                partialCount: summary.partialCount,
-                missingCount: summary.missingCount,
-                totalCriticalBlockers: summary.totalCriticalBlockers,
-                truncated: summary.truncated,
-              }
-            : null,
-        programs:
-          gate.entitled && summary ? summary.attentionRanked.map(toPortfolioProgram) : null,
-      };
+      const portfolio = canvasPortfolio(gate, summary);
 
       const data: CanvasOverview = {
         organizationId,
@@ -486,10 +578,15 @@ export default function createInsightsCanvasRoutes(): Router {
         openProgram,
         programs,
         portfolio,
+        dataScope: 'accessible_projects',
       };
 
       return res.json({ success: true, data });
     } catch (error) {
+      if (error instanceof OpenProgramUnavailableError) return res.status(404).json({ success: false, error: 'Program not found' });
+      if (error instanceof CatalogUnavailableError) {
+        return res.status(503).json({ success: false, error: { code: 'REPORT_CATALOG_UNAVAILABLE', message: 'The report catalog could not be read. Try again in a moment.' } });
+      }
       logger.error('insights-canvas overview error', {
         err: error instanceof Error ? error.message : String(error),
       });

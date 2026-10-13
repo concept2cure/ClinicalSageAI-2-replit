@@ -36,8 +36,8 @@
  *    program's recorded market, or the run is refused: an FDA NDA readiness
  *    assessment of a program recorded as an EU MAA is the j8 defect with one
  *    more step of indirection.
- * 2. Coverage it did not measure. A heading counts as covered only when a
- *    section or governed artifact of this program records a CTD code at or
+ * 2. Coverage it did not measure. A heading counts as covered only when current, non-empty
+ *    recorded section or artifact content of this program carries a CTD code at or
  *    under it. When NOTHING in the program records a Module 1 code, coverage is
  *    reported as not assessed — never as every heading missing. Absence of
  *    recorded codes is not absence of documents (CLAUDE.md: an error is never
@@ -209,11 +209,13 @@ async function readProgramContext(organizationId: number, projectId: number): Pr
 async function readRecordedCodes(organizationId: number, projectId: number): Promise<Set<string>> {
   const [sectionRows, artifactRows] = await Promise.all([
     pool.query(
-      `SELECT section_id, metadata FROM sections WHERE organization_id = $1 AND project_id = $2`,
+      `SELECT section_id, metadata FROM sections WHERE organization_id = $1 AND project_id = $2
+       AND status NOT IN ('archived', 'deleted', 'superseded', 'withdrawn') AND content ~ '[^[:space:]]'`,
       [organizationId, projectId],
     ),
     pool.query(
-      `SELECT ctd_section FROM concept2cure_artifacts WHERE organization_id = $1 AND project_id = $2 AND ctd_section IS NOT NULL`,
+      `SELECT ctd_section FROM concept2cure_artifacts WHERE organization_id = $1 AND project_id = $2 AND ctd_section IS NOT NULL
+       AND status NOT IN ('archived', 'deleted', 'superseded', 'withdrawn') AND content ~ '[^[:space:]]'`,
       [organizationId, projectId],
     ),
   ]);
@@ -448,7 +450,7 @@ function module1Observations(ctx: ProgramContext, a: Module1Assessment): Observa
        reporting every required heading as missing would turn an unrecorded
        program into a damning gap list. */
     const blocker =
-      'Module 1 coverage was not assessed: no section or governed document of this program records a CTD section code, ' +
+      'Module 1 coverage was not assessed: no section or governed document of this program records a CTD section code on current non-empty content, ' +
       `so nothing could be matched against the ${a.required.length} ${ctx.jurisdiction} Module 1 heading(s) ` +
       `a ${ctx.kind.toUpperCase()} requires.`;
     providers.push({ provider: 'module1_content', observedAt: now(), status: 'missing', blocker });
@@ -546,7 +548,7 @@ function regionalSummary(
   ctx: ProgramContext,
   a: Module1Assessment,
   market: MarketSupport | null,
-  scope: { scopeType: string; scopeId: string; recordedCodeCount: number },
+  scope: { scopeType: string; scopeId: string; recordedCodes: string[] },
 ): Record<string, unknown> {
   const spec = REGIONAL_MODULE1[ctx.jurisdiction].spec;
   return {
@@ -590,7 +592,9 @@ function regionalSummary(
         title: a.headingTitle.get(u.code) ?? null,
         condition: u.condition,
       })),
-      recordedCodeCount: scope.recordedCodeCount,
+      recordedCodeCount: scope.recordedCodes.length,
+      recordedCodes: scope.recordedCodes,
+      coverageBasis: 'Current non-empty recorded content placed at CTD codes. Content quality, approvals and the complete set of documents within each heading were not assessed.',
     },
   };
 }
@@ -645,6 +649,6 @@ export async function computeRegionalRun(
     confidence: null,
     blockers: phases.flatMap((o) => o.blockers),
     criticalBlockers: phases.flatMap((o) => o.criticalBlockers),
-    summary: regionalSummary(ctx, assessment, market, { scopeType, scopeId, recordedCodeCount: codes.size }),
+    summary: regionalSummary(ctx, assessment, market, { scopeType, scopeId, recordedCodes: [...codes].sort() }),
   };
 }

@@ -123,6 +123,12 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // there with `relation "submissions" does not exist` and no assertion below
   // ran. A real deploy applies the creator first and is unaffected.
   await safe(readMig('migrations/20260604_submission_core_canonical.sql'));
+  // The Part 11 port precedes this batch on real deployments. Its status
+  // widening needs the REAL orchestrator store port, which itself needs the
+  // canonical submissions store above. This fixture omitted both pre-batch
+  // files. Apply them in production order; never fake signature columns here.
+  await pg.exec(readMig('db/migrations/20260725_submission_orchestrator_store_port.sql'));
+  await pg.exec(readMig('db/migrations/20260725_esig_gate_columns_port.sql'));
   // report_type_registry comes from drizzle push (shared/schema/report-os.ts) on a
   // provisioned database, not from the journal this fixture replays. The registry
   // seed in the set (20260930_report_type_registry_seed.sql) refuses a database

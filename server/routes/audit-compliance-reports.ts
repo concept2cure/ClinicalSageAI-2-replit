@@ -60,6 +60,8 @@ import {
   type SignedReport,
 } from '../services/audit/compliance-reports/signed-report.js';
 import type { ReportDefinition, ReportPeriod } from '../services/audit/compliance-reports/types.js';
+import { exportSavedAuditCsv, exportSavedReportCsv, SavedReportExportError } from '../services/audit/compliance-reports/snapshot-export.js';
+import type { SignedAuditExport } from '../services/audit/signedAuditExport.js';
 import { authedOrgId, usableOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
 import { createComplianceReviewRoutes } from './audit-compliance-reviews.js';
@@ -149,19 +151,20 @@ function reportOr4xx(res: Response, reportId: string): ReportDefinition | null {
 
 interface CompletedRun {
   orgId: number;
-  def: ReportDefinition;
+  def: Pick<ReportDefinition, 'id' | 'title'>;
   signed: SignedReport;
+  action?: 'compliance.report_export';
 }
 
 /** Record the run on the chain, then send; refuse with nothing sent when the row cannot be written. */
-async function recordAndSend(pool: Pool, req: Request, res: Response, { orgId, def, signed }: CompletedRun) {
+async function recordAndSend(pool: Pool, req: Request, res: Response, { orgId, def, signed, action }: CompletedRun) {
   const { manifest } = signed;
   const actor = actorOf(req);
   try {
     await sendAuditedExport(pool, res, {
       tenantId: orgId,
       userId: actor.userId,
-      action: REPORT_RUN_ACTION,
+      action: action ?? REPORT_RUN_ACTION,
       resourceType: REPORT_RESOURCE_TYPE,
       resourceId: def.id,
       details: {
@@ -172,8 +175,9 @@ async function recordAndSend(pool: Pool, req: Request, res: Response, { orgId, d
         dataHash: manifest.dataHash,
         sections: manifest.sections,
         signingKeyId: manifest.signingKeyId,
+        ...(manifest.sourceExport ? { sourceExportId: manifest.sourceExport.exportId, sourceDataHash: manifest.sourceExport.dataHash } : {}),
         // The sentence the audit ledger shows for this row (it reads `description` first).
-        description: `Ran ${def.title} (${periodText(manifest.period)}, ${manifest.format}), export ${manifest.exportId}`,
+        description: `${action ? 'Exported saved' : 'Ran'} ${def.title} (${periodText(manifest.period)}, ${manifest.format}), export ${manifest.exportId}`,
       },
       ipAddress: req.ip,
       userAgent: req.get('user-agent') ?? undefined,
@@ -197,6 +201,24 @@ async function recordAndSend(pool: Pool, req: Request, res: Response, { orgId, d
     log.error('compliance report not recorded', { reportId: def.id, err: err instanceof Error ? err.message : String(err) });
     if (!res.headersSent) refuse(res, 503, 'REPORT_NOT_RECORDED', NOT_RECORDED_MESSAGE);
   }
+}
+
+/** Audit-trail copies keep the canonical audit manifest rather than inventing a compliance report. */
+async function recordAndSendAuditSnapshot(pool: Pool, req: Request, res: Response, orgId: number, signed: SignedAuditExport) {
+  const { manifest } = signed;
+  const actor = actorOf(req);
+  await sendAuditedExport(pool, res, {
+    tenantId: orgId, userId: actor.userId, action: 'compliance.report_export', resourceType: REPORT_RESOURCE_TYPE,
+    resourceId: FULL_AUDIT_TRAIL_ID, ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined,
+    details: {
+      exportId: manifest.exportId, reportId: FULL_AUDIT_TRAIL_ID, format: 'csv', dataHash: manifest.dataHash,
+      signingKeyId: manifest.signingKeyId, sourceExportId: manifest.sourceExport?.exportId, sourceDataHash: manifest.sourceExport?.dataHash,
+      description: `Exported saved audit trail as csv, export ${manifest.exportId}`,
+    },
+    filename: signed.filename.replace(/\.csv$/, '_signed.json'),
+    headers: { 'X-Report-Export-Id': manifest.exportId, 'X-Report-Data-Hash': manifest.dataHash }, refusalCode: 'REPORT_NOT_RECORDED',
+    body: { success: true, export: { ...signed, verification: { algorithm: 'HMAC-SHA256', signingKeyId: manifest.signingKeyId, instruction: VERIFY_INSTRUCTION } } },
+  });
 }
 
 /** Run the report and seal it; null after answering 500 (detail logged, never sent). */
@@ -234,6 +256,34 @@ export function createComplianceReportRoutes(pool: Pool): Router {
   router.get('/audit/reports', (req: Request, res: Response) => {
     if (sessionOrg(req, res) == null) return;
     res.json({ success: true, canRun: canReadAuditTrail(req), readers: AUDIT_REPORT_READERS, reports: reportSummaries() });
+  });
+
+  // A second format of the displayed report must use that sealed snapshot. A
+  // fresh GET remains an explicit new run and can contain changed source rows.
+  router.post('/audit/reports/convert', readerGate, runLimiter, async (req: Request, res: Response) => {
+    const orgId = sessionOrg(req, res);
+    if (orgId == null) return;
+    if (req.body?.format !== 'csv') return refuse(res, 400, 'BAD_FORMAT', 'A saved JSON report can be exported as csv.');
+    const signingKey = signingKeyOr503(res);
+    if (!signingKey) return;
+    try {
+      if (req.body?.export?.manifest?.kind !== 'compliance-report') {
+        const signed = exportSavedAuditCsv(req.body?.export, orgId, signingKey, actorOf(req));
+        await recordAndSendAuditSnapshot(pool, req, res, orgId, signed);
+        return;
+      }
+      const signed = exportSavedReportCsv(req.body?.export, orgId, signingKey);
+      // A retained, authentic snapshot stays exportable after its live catalog
+      // definition changes. Conversion authorizes the signed record, not a run.
+      const def = { id: signed.manifest.report.id, title: signed.manifest.report.title };
+      await recordAndSend(pool, req, res, { orgId, def, signed, action: 'compliance.report_export' });
+    } catch (err) {
+      if (err instanceof SavedReportExportError) return refuse(res, err.status, err.code, err.message);
+      // A connection failure in sendAuditedExport occurs before the audit row.
+      // Nothing is released unless recording succeeded, including audit copies.
+      log.error('saved report export refused', { err: err instanceof Error ? err.message : String(err) });
+      if (!res.headersSent) refuse(res, 503, 'REPORT_NOT_RECORDED', NOT_RECORDED_MESSAGE);
+    }
   });
 
   router.get('/audit/reports/:reportId', readerGate, runLimiter, async (req: Request, res: Response) => {

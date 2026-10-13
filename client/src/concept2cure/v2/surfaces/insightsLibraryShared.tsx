@@ -43,6 +43,14 @@ export interface LibraryReportType {
   runnable: boolean;
   entitled?: boolean;
   requiredTier?: string;
+  region?: string | null;
+  allowedPersonas?: string[];
+  /** The records actually counted, which can differ from the run's filing scope. */
+  computedScope?: string | null;
+  availabilityReason?: string | null;
+  availabilityState?: 'available' | 'not-computed' | 'scope-required' | 'disabled' | 'unregistered';
+  runScopeType?: string | null;
+  runScopeId?: string | null;
 }
 
 export function PanelHead({
@@ -81,11 +89,8 @@ export function StatusTag({ status }: { status: string }) {
 /**
  * What a schedule actually does, shown wherever one is created or listed.
  *
- * The sweep computes the report and applies the delivery gate, then only logs
- * it (`services/report-os/scheduling/worker-register.ts`). Promising a
- * delivered file would be a claim the platform does not keep, so this note is
- * not optional decoration — `insightsLibraryReachesBackend.test.tsx` fails
- * without it.
+ * The sweep persists a governed run and notifies its authorized recipients.
+ * Delivery does not finalize a report or grant permission to its recipients.
  */
 export function ScheduleTruthNote() {
   return (

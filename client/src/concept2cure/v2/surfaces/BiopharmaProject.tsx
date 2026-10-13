@@ -17,6 +17,7 @@ import { useLiveData, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
+import { shellProgramId, useShellProject } from '../shellProject';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import {
   APPLICABILITY_LABEL,
@@ -313,14 +314,25 @@ function RegulatoryPanel({
  * which is what keeps it on the SurfaceView arm that still carries `onAsk`. The
  * claim is gone; the phrasing is unchanged.
  */
-export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
+export function CsrWorkflow(props: SurfaceViewProps) {
+  const selected = useShellProject();
+  const programId = shellProgramId(selected);
+  const numericProject = selected && /^\d+$/.test(String(selected.id)) && Number.isSafeInteger(Number(selected.id)) && Number(selected.id) > 0 ? String(selected.id) : null;
+  const path = programId ? `/api/csr-workflow/board?programId=${encodeURIComponent(programId)}` : numericProject ? `/api/csr-workflow/board?projectId=${numericProject}` : selected ? null : '/api/csr-workflow/board';
+  if (!path) return <EmptyState icon={I.layers} title="Select a program for CSR work" hint="The selected context does not identify a program or project." />;
+  // Remount on scope changes: data and assistant context from the old program
+  // disappear before the next read, and old in-flight replies are discarded.
+  return <CsrWorkflowBoard key={path} {...props} boardPath={path} />;
+}
+
+function CsrWorkflowBoard({ onAsk, boardPath }: SurfaceViewProps & { boardPath: string }) {
   // Live ICH E3 CSR build board (GET /api/csr-workflow/board → { success,
   // data: { program, sections, ... } }). Fixture-free (GA real-data standard):
   // the route is org-scoped and honest — a null `program` means the org has no
   // CSR build job yet (the sections still come back as the real ICH E3 catalog,
   // not started), and any unreachable/failed read is an honest error. No
   // CSR_PROGRAM / CSR_SECTIONS stand-in, no "Sample data" pill.
-  const boardRes = useLiveData<CsrBoard>('/api/csr-workflow/board');
+  const boardRes = useLiveData<CsrBoard>(boardPath);
   const board = boardRes.data;
   const program: CsrProgram | null = board?.program ?? null;
   const sections: CsrSection[] = Array.isArray(board?.sections) ? board!.sections : [];
@@ -400,7 +412,7 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
     return {
       summary:
         (program
-          ? `CSR workflow for ${program.title} (${program.code}), ${program.readiness}% ready: `
+          ? `CSR workflow for ${program.title} (${program.code}), build progress ${program.readiness}%: `
           : 'CSR workflow with NO active CSR build job — the ICH E3 board below is the canonical section structure, not started: ') +
         `${sections.length} section(s), ${sections.filter((x) => x.blocker).length} blocked.` +
         (graphOn
@@ -412,7 +424,7 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
           : ''),
       facts: {
         buildJobStarted: Boolean(program),
-        program: program ? { title: program.title, code: program.code, readinessPercent: program.readiness } : null,
+        program: program ? { title: program.title, code: program.code, buildProgressPercent: program.readiness } : null,
         sections: sections.slice(0, 24).map((x) => ({ number: x.num, label: x.label, status: x.status, blocked: Boolean(x.blocker) })),
         evidenceGraphEnabled: graphOn,
         evidenceGraphUnavailable: graphOn && findingsRes.error ? 'the evidence-graph read failed' : null,
@@ -448,7 +460,7 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
           boardRes.loading
             ? 'Loading…'
             : program
-            ? `${program.title} · ${program.code} · ${program.readiness}% ready`
+            ? `${program.title} · ${program.code} · build progress ${program.readiness}%`
             : 'ICH E3 · no active CSR build job yet'
         }
         actions={

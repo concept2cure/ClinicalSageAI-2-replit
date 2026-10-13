@@ -14,6 +14,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createHash } from 'node:crypto';
+vi.mock('../../server/services/report-os/project-access', () => ({ canAccessReportProject: async () => true }));
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // IN-MEMORY DB STATE (shared across mocks via vi.hoisted)
@@ -155,7 +156,7 @@ vi.mock('../../server/db', () => {
     return true;
   }
 
-  type TableTag = 'csr_build_jobs' | 'csr_section_outputs';
+  type TableTag = 'csr_build_jobs' | 'csr_section_outputs' | 'projects' | 'organization_users';
 
   function tableOf(t: any): TableTag {
     // csr_section_outputs has these uniquely-identifying columns; check the
@@ -170,6 +171,8 @@ vi.mock('../../server/db', () => {
     }
     // Also try the drizzle-internal name (best-effort, varies by version).
     const sym = t?.[Symbol.for('drizzle:Name')] ?? t?._?.name ?? '';
+    if (String(sym) === 'projects') return 'projects';
+    if (String(sym) === 'organization_users') return 'organization_users';
     if (String(sym).includes('csr_section_outputs')) return 'csr_section_outputs';
     if (String(sym).includes('csr_build_jobs')) return 'csr_build_jobs';
     return 'csr_build_jobs';
@@ -182,7 +185,11 @@ vi.mock('../../server/db', () => {
       let limit: number | null = null;
       const exec = () => {
         const rows =
-          table === 'csr_build_jobs'
+          table === 'organization_users'
+            ? [{ userId: 7, organizationId: 100, role: 'member' }, { userId: 8, organizationId: 200, role: 'member' }].filter(r => evalPred(predicate, r))
+            : table === 'projects'
+            ? [{ id: 42, organizationId: 100, clientWorkspaceId: 1, status: 'active' }, { id: 43, organizationId: 200, clientWorkspaceId: 2, status: 'active' }].filter(r => evalPred(predicate, r))
+            : table === 'csr_build_jobs'
             ? state.jobs.filter((r) => evalPred(predicate, r))
             : state.sections.filter((r) => evalPred(predicate, r));
         return limit != null ? rows.slice(0, limit) : rows;
@@ -521,7 +528,7 @@ describe('getCSRSectionOutputs — cross-tenant isolation', () => {
       organizationId: 100,
       requestedBy: 7,
     });
-    const bEnq = await enqueueCSRBuildJob(makeReq({ organizationId: 200 }), {
+    const bEnq = await enqueueCSRBuildJob(makeReq({ organizationId: 200, projectId: 43, userId: 8 }), {
       organizationId: 200,
       requestedBy: 8,
     });

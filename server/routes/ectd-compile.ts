@@ -347,27 +347,22 @@ function refuseEmptyNamedSequence(res: Response, chosen: { spine: SubmissionSpin
  * Load the anchor's tracked sections. A program-spine anchor has NO
  * project_sections store (integer FK — see PROGRAM_SECTION_STORE_BLOCKER), so it
  * loads an honestly-empty set rather than someone else's rows or a fabricated
- * one. `swallow` preserves each route's existing table-missing behavior.
+ * one. An unavailable tracked-section read throws; it is not an empty project.
  */
 async function loadAnchorSections(
   anchor: CompileAnchor,
   orgId: number,
   columns: string,
-  opts: { orderBy?: string; swallow?: boolean } = {},
+  opts: { orderBy?: string } = {},
 ): Promise<any[]> {
   if (anchor.numericProjectId === null) return [];
-  try {
-    const result = await pool.query(
-      `SELECT ${columns}
+  const result = await pool.query(
+    `SELECT ${columns}
        FROM project_sections
        WHERE project_id = $1 AND organization_id = $2${opts.orderBy ? ` ORDER BY ${opts.orderBy}` : ''}`,
-      [anchor.numericProjectId, orgId],
-    );
-    return result.rows;
-  } catch (err) {
-    if (opts.swallow) return []; // table may not exist — honest empty
-    throw err;
-  }
+    [anchor.numericProjectId, orgId],
+  );
+  return result.rows;
 }
 
 /**
@@ -637,13 +632,13 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
       .map((def) => {
         const code = def.code;
         const moduleSections = sections.filter(
-          s => s.section_code?.startsWith(code.replace('m', '')) || s.module?.toLowerCase() === code
+          s => sectionMatches(s.section_code, code) || s.module?.toLowerCase() === code
         );
         const requiredSections = def.requiredSections;
         const completedRequired = requiredSections.filter(rs =>
           moduleSections.some(
             ms =>
-              ms.section_code?.startsWith(rs) && ['approved', 'locked', 'final'].includes(ms.status)
+              sectionMatches(ms.section_code, rs) && ['approved', 'locked', 'final'].includes(ms.status)
           )
         );
 
@@ -1286,15 +1281,15 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
   const { orgId, anchor, ident } = resolved;
 
   try {
-    // Get project sections (tenant-scoped — readiness is tenant data). A missing
-    // table returns empty readiness; a program-spine ident loads an honestly-
+    // Get project sections (tenant-scoped — readiness is tenant data). A failed
+    // read returns an error; a program-spine ident loads an honestly-
     // empty set (no linked section store — see PROGRAM_SECTION_STORE_BLOCKER).
     const sections = await loadAnchorSections(
       anchor,
       orgId,
       `section_code, title, status, module, required,
                 word_count, updated_at`,
-      { orderBy: 'section_code', swallow: true },
+      { orderBy: 'section_code' },
     );
 
     // Module-level readiness, against the program's own required set.
@@ -1323,7 +1318,7 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       const code = def.code;
       const digit = code.replace('m', '');
       const moduleSections = sections.filter(
-        s => s.section_code?.startsWith(digit) || s.module?.toLowerCase() === code
+        s => sectionMatches(s.section_code, digit) || s.module?.toLowerCase() === code
       );
       const totalRequired = def.requiredSections.length;
       const completedRequired = placedLeaves
@@ -1331,7 +1326,7 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
         : def.requiredSections.filter(rs =>
             moduleSections.some(
               ms =>
-                ms.section_code?.startsWith(rs) && ['approved', 'locked', 'final'].includes(ms.status)
+                sectionMatches(ms.section_code, rs) && ['approved', 'locked', 'final'].includes(ms.status)
             )
           ).length;
 
@@ -1501,7 +1496,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
         anchor,
         orgId,
         `section_code, title, status, content, word_count, module, required`,
-        { swallow: true },
+        {},
       );
       results = withAnchorFindings(runPreCompileValidation(sections, region, required), anchor);
     }
@@ -1757,7 +1752,7 @@ function runPreCompileValidation(
   // 1. Check for required sections
   const allRequired = required.modules.flatMap((m) => m.requiredSections);
   for (const reqCode of allRequired) {
-    const found = sections.find(s => s.section_code?.startsWith(reqCode));
+    const found = sections.find(s => sectionMatches(s.section_code, reqCode));
     if (!found) {
       results.push({
         rule: 'REQUIRED_SECTION_MISSING',
@@ -1802,7 +1797,7 @@ function runPreCompileValidation(
 
   // 3. FDA-specific checks
   if (region === 'FDA') {
-    const hasForms = sections.some(s => s.section_code?.startsWith('1.1'));
+    const hasForms = sections.some(s => sectionMatches(s.section_code, '1.1'));
     if (!hasForms) {
       results.push({
         rule: 'FDA_FORMS_MISSING',
@@ -1812,7 +1807,7 @@ function runPreCompileValidation(
         fix: 'Upload completed FDA forms to Module 1.1',
       });
     }
-    const hasCoverLetter = sections.some(s => s.section_code?.startsWith('1.2'));
+    const hasCoverLetter = sections.some(s => sectionMatches(s.section_code, '1.2'));
     if (!hasCoverLetter) {
       results.push({
         rule: 'FDA_COVER_LETTER_MISSING',
@@ -1831,7 +1826,7 @@ function runPreCompileValidation(
     '2.7.1': 1000, // Summary of current studies
   };
   for (const [code, minWords] of Object.entries(minWordCounts)) {
-    const section = sections.find(s => s.section_code?.startsWith(code));
+    const section = sections.find(s => sectionMatches(s.section_code, code));
     if (section && section.word_count && section.word_count < minWords) {
       results.push({
         rule: 'INSUFFICIENT_CONTENT',

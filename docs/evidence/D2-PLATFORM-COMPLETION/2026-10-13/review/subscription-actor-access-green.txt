@@ -1,0 +1,139 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/report-os-subscription-access.test.ts
+{
+  "timestamp": "2026-10-13T19:39:27.627Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:39:27.629Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-subscription-access.test.ts
+{
+  "timestamp": "2026-10-13T19:39:27.629Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > does not turn a failed sharing read into a successful empty register
+{
+  "timestamp": "2026-10-13T19:39:28.213Z",
+  "level": "error",
+  "message": "[report-os-insights] loading subscriptions failed",
+  "context": {
+    "err": "sharing read unavailable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+··········stderr | server/routes/__tests__/report-os-viewer-writes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts
+{
+  "timestamp": "2026-10-13T19:39:29.874Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-viewer-writes.test.ts
+{
+  "timestamp": "2026-10-13T19:39:30.217Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:39:30.217Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts
+{
+  "timestamp": "2026-10-13T19:39:30.217Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > patch /api/report-os/program-groups/1
+{
+  "timestamp": "2026-10-13T19:39:30.615Z",
+  "level": "error",
+  "message": "[report-os] updating program groups failed",
+  "context": {
+    "err": "__vite_ssr_import_2__.db.update is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-viewer-writes.test.ts > a member gets past the write gate > post /api/report-os/program-groups/1/snapshots
+{
+  "timestamp": "2026-10-13T19:39:30.618Z",
+  "level": "error",
+  "message": "[report-os] saving snapshots failed",
+  "context": {
+    "err": "__vite_ssr_import_2__.db.select is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+························stdout | server/routes/__tests__/report-os-insights.contract.test.ts
+{
+  "timestamp": "2026-10-13T19:39:31.511Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:39:31.513Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-insights.contract.test.ts
+{
+  "timestamp": "2026-10-13T19:39:31.513Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-insights.contract.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-insights.contract.test.ts
+{
+  "timestamp": "2026-10-13T19:39:31.614Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+·····
+
+ Test Files  3 passed (3)
+      Tests  39 passed (39)
+   Start at  19:39:25
+   Duration  6.05s (transform 2.42s, setup 107ms, import 5.27s, tests 188ms, environment 0ms)

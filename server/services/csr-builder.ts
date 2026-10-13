@@ -14,6 +14,7 @@ import { recordUsage, checkQuota } from './usage-metering.js';
 import { e3ParentNumber } from './ind/ctd/csr-e3-guidance.js';
 import { resolveRequirements } from './ind/ctd/requirements-resolver.js';
 import { acceptModelDraft } from './csr/unsupplied-statistics.js';
+import { resolveCsrBuildContext } from './csr/project-scope';
 
 // AI-powered drafting via the unified AI client (Claude primary)
 let ai: { complete: (messages: any, options?: any) => Promise<string> } | null = null;
@@ -297,6 +298,7 @@ async function reserveCSRBuilderQuota(request: CSRBuildRequest): Promise<void> {
  * Launch a CSR build job.
  */
 export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuildJob> {
+  await resolveCsrBuildContext(db, request, { organizationId: request.organizationId, projectId: request.projectId, requestedBy: request.userId });
   await reserveCSRBuilderQuota(request);
 
   // Initialize section structure
@@ -337,8 +339,9 @@ export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuild
  */
 export async function launchCSRBuildAsync(
   request: CSRBuildRequest,
-  ctx: { organizationId: number; projectId?: number; requestedBy?: number }
+  ctx: { organizationId: number; projectId?: number; programId?: string; clientWorkspaceId?: number; requestedBy?: number }
 ): Promise<{ jobId: number; status: 'queued' }> {
+  const scope = await resolveCsrBuildContext(db, request, ctx);
   // Quota + usage are reserved BEFORE enqueue so the async path can't bypass
   // billing. Throws the same upgrade-required error as launchCSRBuild on
   // quota failure — the HTTP response shape is identical at the route layer.
@@ -348,7 +351,7 @@ export async function launchCSRBuildAsync(
     './csr/csr-job-runner.js'
   );
 
-  const enqueued = await enqueueCSRBuildJob(request, ctx);
+  const enqueued = await enqueueCSRBuildJob({ ...request, projectId: scope.projectId }, scope);
 
   // Fire-and-forget worker. Errors are persisted on the job row by
   // runCSRBuildJob's own catch block; we still attach a .catch handler

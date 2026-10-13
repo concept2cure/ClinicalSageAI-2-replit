@@ -80,6 +80,16 @@ export function createReportOsHarness() {
 
 export type ReportOsHarness = ReturnType<typeof createReportOsHarness>;
 
+/** Inspect a bound insert column without relying on the table's ordinal order. */
+export function boundInsertColumn(sql: string, params: unknown[], column: string): unknown {
+  const insert = sql.match(/\(([^)]+)\) values \(([^)]+)\)/);
+  if (!insert) throw new Error('Expected a parameterized insert');
+  const columns = insert[1].split(',').map(value => value.trim().replaceAll('"', ''));
+  const binding = insert[2].split(',')[columns.indexOf(column)]?.trim();
+  if (!binding?.startsWith('$')) throw new Error(`Expected a bound value for ${column}`);
+  return params[Number(binding.slice(1)) - 1];
+}
+
 /** Empty queues and statement logs; every spy back to its passing default. */
 export function resetReportOsHarness(h: ReportOsHarness) {
   h.queued.select.length = h.queued.insert.length = h.queued.update.length = 0;

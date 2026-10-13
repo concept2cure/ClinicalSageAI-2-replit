@@ -66,6 +66,8 @@ RUN apt-get update && \
       libreoffice-common \
       libreoffice-writer \
       fonts-liberation \
+      fonts-noto-core \
+      fonts-noto-cjk \
       ghostscript \
       ocrmypdf \
       tesseract-ocr \

@@ -1,0 +1,176 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/report-os-subscription-access.test.ts
+{
+  "timestamp": "2026-10-13T19:38:51.748Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-13T19:38:51.749Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-subscription-access.test.ts
+{
+  "timestamp": "2026-10-13T19:38:51.750Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+xxxx··xxxx
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > omits private scope and recipient details from the organization register
+AssertionError: expected [ 1, 2, 3 ] to deeply equal [ 1, 3 ]
+
+- Expected
++ Received
+
+  [
+    1,
++   2,
+    3,
+  ]
+
+ ❯ server/routes/__tests__/report-os-subscription-access.test.ts:47:63
+     45|     const result = await request(app).get('/api/insights/subscriptions…
+     46|     expect(result.status).toBe(200);
+     47|     expect(result.body.data.map((r: { id: number }) => r.id)).toEqual(…
+       |                                                               ^
+     48|     expect(JSON.stringify(result.body)).not.toContain('private-recipie…
+     49|     expect(h.list).toHaveBeenCalledWith(7);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > retains an authorized viewer read without trusting a stale token admin role
+AssertionError: expected [ 1, 2, 3 ] to deeply equal [ 1, 3 ]
+
+- Expected
++ Received
+
+  [
+    1,
++   2,
+    3,
+  ]
+
+ ❯ server/routes/__tests__/report-os-subscription-access.test.ts:57:63
+     55|     const result = await request(app).get('/api/insights/subscriptions…
+     56|     expect(result.status).toBe(200);
+     57|     expect(result.body.data.map((r: { id: number }) => r.id)).toEqual(…
+       |                                                               ^
+     58|     expect(h.access).toHaveBeenCalledWith(7, { userId: 5, role: 'viewe…
+     59|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > refuses an inaccessible schedule before enablement=true or audit effects
+ FAIL  server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > refuses an inaccessible schedule before enablement=false or audit effects
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/report-os-subscription-access.test.ts:63:27
+     61|   it.each([true, false])('refuses an inaccessible schedule before enab…
+     62|     const result = await request(app).patch('/api/insights/subscriptio…
+     63|     expect(result.status).toBe(404);
+       |                           ^
+     64|     expect(result.body).toEqual({ error: 'Subscription not found' });
+     65|     expect(h.toggle).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > honors a project-access revocation on the next management request
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/report-os-subscription-access.test.ts:80:27
+     78|     h.allowed = ['7'];
+     79|     const result = await request(app).patch('/api/insights/subscriptio…
+     80|     expect(result.status).toBe(404);
+       |                           ^
+     81|     expect(h.toggle).not.toHaveBeenCalled();
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > does not turn a failed sharing read into a successful empty register
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/routes/__tests__/report-os-subscription-access.test.ts:87:27
+     85|     h.access.mockRejectedValue(new Error('sharing read unavailable'));
+     86|     const result = await request(app).get('/api/insights/subscriptions…
+     87|     expect(result.status).toBe(500);
+       |                           ^
+     88|     expect(result.body.data).toBeUndefined();
+     89|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > refuses a missing numeric principal before reading or toggling schedules
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/report-os-subscription-access.test.ts:94:27
+     92|     h.userId = null;
+     93|     const result = await request(app).get('/api/insights/subscriptions…
+     94|     expect(result.status).toBe(403);
+       |                           ^
+     95|     expect(h.list).not.toHaveBeenCalled();
+     96|     expect(h.toggle).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/routes/__tests__/report-os-subscription-access.test.ts > subscription management follows the current caller project access > does not call the enablement service for an unknown subscription
+AssertionError: expected 200 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 200
+
+ ❯ server/routes/__tests__/report-os-subscription-access.test.ts:101:27
+     99|   it('does not call the enablement service for an unknown subscription…
+    100|     const result = await request(app).patch('/api/insights/subscriptio…
+    101|     expect(result.status).toBe(404);
+       |                           ^
+    102|     expect(h.toggle).not.toHaveBeenCalled();
+    103|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 2 passed (10)
+   Start at  19:38:49
+   Duration  2.50s (transform 1.25s, setup 87ms, import 2.03s, tests 88ms, environment 0ms)

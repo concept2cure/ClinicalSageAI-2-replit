@@ -25,6 +25,7 @@ import type {
 import { reportScopeEnum } from '@shared/schema/report-os';
 import { resolveCapabilities } from '../../entitlements/resolver';
 import { decideReportEntitlement } from '../entitlement-map';
+import { reportAvailability } from '../report-engine';
 
 export interface CreateDefinitionInput {
   organizationId: number;
@@ -41,34 +42,40 @@ export interface CreateDefinitionInput {
 export interface PanelValidationIssue {
   index: number;
   reportTypeId: string;
-  reason: 'unknown_type' | 'not_entitled' | 'invalid_scope';
+  reason: 'unknown_type' | 'not_entitled' | 'invalid_scope' | 'not_computed';
   requiredTier?: string;
+  availabilityReason?: string;
+}
+
+export interface KnownReportType {
+  family: string | null;
+  allowedScopes: readonly string[];
 }
 
 const SCOPES = new Set<string>(reportScopeEnum);
 
 /**
- * Validate a canvas spec against known registry types + the org's tier.
- * Returns the list of issues (empty = valid). Pure given `knownTypes` (typeId →
- * family) and `tier`; the DB fetch is done by the caller so this stays testable.
+ * Validate registry scope applicability, entitlement and actual engine support.
+ * Returns the list of issues (empty = valid). Pure given registry metadata and
+ * tier; the DB fetch is done by the caller so this stays testable.
  */
 export function validatePanels(
   panels: ReportCanvasPanel[],
-  knownTypes: Map<string, string | null>,
+  knownTypes: ReadonlyMap<string, KnownReportType>,
   tier: Parameters<typeof decideReportEntitlement>[2],
 ): PanelValidationIssue[] {
   const issues: PanelValidationIssue[] = [];
   panels.forEach((panel, index) => {
-    const family = knownTypes.get(panel.reportTypeId);
-    if (family === undefined) {
+    const type = knownTypes.get(panel.reportTypeId);
+    if (type === undefined) {
       issues.push({ index, reportTypeId: panel.reportTypeId, reason: 'unknown_type' });
       return;
     }
     if (!SCOPES.has(panel.scopeType)) {
-      issues.push({ index, reportTypeId: panel.reportTypeId, reason: 'invalid_scope' });
+      issues.push({ index, reportTypeId: panel.reportTypeId, reason: 'invalid_scope', availabilityReason: 'This is not a supported report scope.' });
       return;
     }
-    const decision = decideReportEntitlement(panel.reportTypeId, family ?? undefined, tier);
+    const decision = decideReportEntitlement(panel.reportTypeId, type.family ?? undefined, tier);
     if (!decision.entitled) {
       issues.push({
         index,
@@ -76,21 +83,31 @@ export function validatePanels(
         reason: 'not_entitled',
         requiredTier: decision.requiredTier,
       });
+      return;
+    }
+    const availability = reportAvailability(panel.reportTypeId, panel.scopeType, type.allowedScopes);
+    if (!availability.runnable) {
+      issues.push({
+        index,
+        reportTypeId: panel.reportTypeId,
+        reason: type.allowedScopes.includes(panel.scopeType) && !availability.engine ? 'not_computed' : 'invalid_scope',
+        availabilityReason: availability.availabilityReason ?? 'This report cannot be computed over this scope.',
+      });
     }
   });
   return issues;
 }
 
-/** Fetch typeId → family for the given typeIds from the global registry. */
-async function fetchKnownTypes(typeIds: string[]): Promise<Map<string, string | null>> {
-  const known = new Map<string, string | null>();
+/** Fetch scope and entitlement metadata for the requested registry types. */
+async function fetchKnownTypes(typeIds: string[]): Promise<Map<string, KnownReportType>> {
+  const known = new Map<string, KnownReportType>();
   if (typeIds.length === 0) return known;
   const rows = await db
-    .select({ typeId: reportTypeRegistry.typeId, family: reportTypeRegistry.family })
+    .select({ typeId: reportTypeRegistry.typeId, family: reportTypeRegistry.family, allowedScopes: reportTypeRegistry.allowedScopes })
     .from(reportTypeRegistry);
   const want = new Set(typeIds);
   for (const r of rows) {
-    if (want.has(r.typeId)) known.set(r.typeId, r.family ?? null);
+    if (want.has(r.typeId)) known.set(r.typeId, { family: r.family ?? null, allowedScopes: r.allowedScopes ?? [] });
   }
   return known;
 }
@@ -104,7 +121,7 @@ export interface CreateDefinitionResult {
 /**
  * Create a canvas definition after validating every panel against the registry
  * + the org's entitlement tier. Returns `{ ok:false, issues }` if any panel is
- * unknown / not entitled / mis-scoped — never persists an ungoverned panel.
+ * unknown / not entitled / mis-scoped / uncomputed — never persists an ungoverned panel.
  */
 export async function createDefinition(input: CreateDefinitionInput): Promise<CreateDefinitionResult> {
   const panels = input.spec?.panels ?? [];
@@ -112,7 +129,7 @@ export async function createDefinition(input: CreateDefinitionInput): Promise<Cr
     return { ok: false, issues: [] };
   }
   const known = await fetchKnownTypes(panels.map((p) => p.reportTypeId));
-  const caps = await resolveCapabilities(input.organizationId).catch(() => ({ tier: 'standard' as const }));
+  const caps = await resolveCapabilities(input.organizationId);
   const issues = validatePanels(panels, known, caps.tier);
   if (issues.length > 0) {
     return { ok: false, issues };

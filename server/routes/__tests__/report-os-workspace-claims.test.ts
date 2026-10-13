@@ -13,6 +13,14 @@ import express from 'express';
 import request from 'supertest';
 
 const db = vi.hoisted(() => ({ select: vi.fn(), insert: vi.fn() }));
+
+// These suites isolate audit/compute contracts; sharing itself is exercised
+// against SQL in run-history and scheduling project-access integration tests.
+vi.mock('../../services/report-os/project-access', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/report-os/project-access')>()),
+  getAccessibleReportProjectIds: async () => [1, 2, 3, 7, 11, 12, 14, 17, 21, 41, 52, 99, 100, 101],
+  canAccessReportScope: async () => true,
+}));
 vi.mock('../../db', () => ({ db, pool: {}, getPool: () => ({}), getDb: () => db, query: vi.fn(), transaction: vi.fn() }));
 vi.mock('../../auth', () => ({
   authMiddleware: (req: any, _res: unknown, next: () => void) => {

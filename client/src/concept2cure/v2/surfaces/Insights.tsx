@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useSearch } from 'wouter';
 import { I } from '../icons';
 import { useLiveData, EmptyState, ErrorState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
@@ -107,6 +108,13 @@ interface ReportType {
   t: { allowPartial?: boolean; requireBlockers?: boolean; requireConfidence?: boolean; requireExplicitGaps?: boolean; forbidFinal?: boolean; requireDisclosure?: boolean };
   /** An engine computes it over a program; otherwise it is shown as not computed and never run. */
   runnable: boolean;
+  region?: string | null;
+  allowedPersonas?: string[];
+  computedScope?: string | null;
+  availabilityReason?: string | null;
+  availabilityState?: LibraryReportType['availabilityState'];
+  runScopeType?: string | null;
+  runScopeId?: string | null;
 }
 
 /** The overview's catalog row (server insights-canvas-routes.ts CanvasReportType). */
@@ -119,6 +127,13 @@ interface CanvasReportType {
   allowedClientSegments?: string[];
   truthfulnessRules?: Record<string, unknown>;
   runnable?: boolean;
+  region?: string | null;
+  allowedPersonas?: string[];
+  computedScope?: string | null;
+  availabilityReason?: string | null;
+  availabilityState?: LibraryReportType['availabilityState'];
+  runScopeType?: string | null;
+  runScopeId?: string | null;
 }
 
 /** The server catalog as the canvas reads it. A row without `runnable: true` is not run. */
@@ -136,6 +151,13 @@ function catalogFrom(rows: CanvasReportType[] | undefined): ReportType[] {
     segments: r.allowedClientSegments ?? [],
     t: (r.truthfulnessRules ?? {}) as ReportType['t'],
     runnable: r.runnable === true,
+    region: r.region,
+    allowedPersonas: r.allowedPersonas,
+    computedScope: r.computedScope,
+    availabilityReason: r.availabilityReason,
+    availabilityState: r.availabilityState,
+    runScopeType: r.runScopeType,
+    runScopeId: r.runScopeId,
   }));
 }
 
@@ -196,8 +218,11 @@ interface CanvasPortfolioProgram {
   status: string;
   riskLevel: string;
   criticalBlockerCount: number;
+  programId?: string | null;
+  topBlockers?: string[];
 }
 interface CanvasPortfolio {
+  dataScope?: string;
   entitled: boolean;
   requiredTier: string;
   summary: {
@@ -215,6 +240,7 @@ interface CanvasPortfolio {
 }
 interface CanvasOverview {
   organizationId: number;
+  dataScope?: string;
   tier: string;
   /** Whether `tier` was read, or assumed after a failed capability lookup
    *  (server entitlement-map.ts). Absent on a server that predates the flag,
@@ -358,7 +384,7 @@ function roPresetsForSeg(seg: string, types: ReportType[]): Preset[] {
 
 /** The program's catalog types no engine computes, by label, each once. */
 function roNotComputed(types: ReportType[]): string[] {
-  return [...new Set(types.filter((t) => !t.runnable).map((t) => t.label))];
+  return [...new Set(types.filter((t) => !t.runnable && !t.computedScopes.length).map((t) => t.label))];
 }
 
 /* ── Guardrail ──
@@ -447,9 +473,9 @@ function roMarketsIn(utterance: string): string[] {
 }
 
 /* ── Portfolio rollup (live, from overview.portfolio.programs) ── */
-interface PortfolioRow { code: string; indication: string | null; readiness: number | null }
+interface PortfolioRow extends Omit<CanvasPortfolioProgram, 'code'> { code: string }
 function roPortfolioFrom(programs: CanvasPortfolioProgram[]): PortfolioRow[] {
-  return programs.map(p => ({ code: programName(p), indication: p.indication, readiness: p.readiness }));
+  return programs.map(p => ({ ...p, code: programName(p) }));
 }
 
 /* ── Suggest for client (seeded by the live flagship program) ──
@@ -540,7 +566,7 @@ interface RenderedReport {
   scopeLabel?: string;
   generatedAt: string;
   status: string;
-  truthfulness: { allowedStatus: string; downgradedFrom: string; reasons: string[] };
+  truthfulness: { allowedStatus: string; downgradedFrom?: string; reasons: string[] };
   sections: ROSection[];
 }
 
@@ -643,6 +669,7 @@ interface DashboardData {
    * is a silent cap on a governed figure.
    */
   truncated?: boolean;
+  dataScope?: string;
 }
 
 /**
@@ -654,16 +681,20 @@ interface DashboardData {
  * that said "across your 100 programs" to an organisation with 150 would be a
  * silent cap on the figure an executive reads as their position.
  */
-function roPortfolioCovers(count: number, truncated: boolean): string {
+function portfolioScopeText(dataScope: string | undefined): string {
+  return dataScope === 'accessible_projects' ? 'programs you can access' : 'programs shown on this board';
+}
+function roPortfolioCovers(count: number, truncated: boolean, dataScope?: string): string {
+  const scopeText = count === 1 ? portfolioScopeText(dataScope).replace(/^programs/, 'program') : portfolioScopeText(dataScope);
   if (truncated) {
     /* NOT "the highest-ranked": fetchOrgPrograms selects `ORG_ROLLUP_CAP + 1`
        rows with no ORDER BY, and attentionRanked sorts only within whatever
        hundred came back. Calling them the top programmes would promise a
        selection the query does not make, and would read as "nothing worse than
        this exists". */
-    return `${count} of your organization's programs — there are more, and these are not a ranked selection.`;
+    return `${count} of the ${scopeText} — there are more, and these are not a ranked selection.`;
   }
-  return `Readiness across your ${count} program${count > 1 ? 's' : ''}.`;
+  return `Readiness across ${count} ${scopeText}.`;
 }
 
 /**
@@ -703,7 +734,7 @@ function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCt
     const rows = ctx.portfolio.programs ? roPortfolioFrom(ctx.portfolio.programs) : [];
     if (rows.length === 0) return { tool: name, text: `Your plan unlocks the portfolio rollup, but there are no governed programs to roll up yet. Once a program with a readiness run exists in your organization, its board view appears here.`, report: null, dashboard: null };
     const truncated = ctx.portfolio.summary?.truncated === true;
-    return { tool: name, text: `${roPortfolioCovers(rows.length, truncated)} The numbers are the governed readiness scores, ranked — not recomputed here.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: 'Board view across all programs', rows, truncated }, report: null };
+    return { tool: name, text: `${roPortfolioCovers(rows.length, truncated, ctx.portfolio.dataScope)} The numbers are the governed readiness scores, ranked — not recomputed here.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: portfolioScopeText(ctx.portfolio.dataScope), rows, truncated, dataScope: ctx.portfolio.dataScope }, report: null };
   }
   if (name === 'compare_regions') {
     const markets = roMarketsIn(utterance);
@@ -756,7 +787,7 @@ function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCt
     const alt = ctx.types.filter((t) => t.runnable).slice(0, 4);
     return {
       tool: 'generate_report',
-      text: `No engine computes the ${resolved.label} in this release, so it is not run, and no other report is shown under its name.${alt.length ? ` These run for ${p.code}:` : ''}`,
+      text: `${resolved.availabilityReason || `No engine computes the ${resolved.label} in this release, so it is not run.`} No other report is shown under its name.${alt.length ? ` These run for ${p.code}:` : ''}`,
       chips: alt.map(t => [t.label, `Generate the ${t.label} for ${p.code}`]),
       report: null,
       dashboard: null,
@@ -827,27 +858,8 @@ function ROChart({ chartType, spec }: { chartType: string; spec: Record<string, 
     );
   }
   if (chartType === 'forecast_band') {
-    /* `Number(s.anchor) || 60` invented an anchor, and the five points below
-       are a fixed shape drawn from it — a trajectory with no measurement behind
-       it, in a governed report (HS-1008-5). No anchor, no band. */
-    const anchor = roSpecNum(s.anchor);
-    if (anchor === null) return <ROChartNoData label={(s.label as string) || 'Trajectory'} />;
-    const a = Math.max(0, Math.min(100, anchor));
-    const pts: [number, number][] = [[0, a], [1, a + 3], [2, a - 2], [3, a + 6], [4, a + 2]];
-    const x = (i: number) => 14 + i * 62;
-    const y = (v: number) => 96 - (v / 100) * 80;
-    const line = pts.map((p, i) => `${x(i)},${y(p[1])}`).join(' ');
-    const band = `${pts.map((p, i) => `${x(i)},${y(p[1] + 8)}`).join(' ')} ${pts.map((_p, i) => `${x(pts.length - 1 - i)},${y(pts[pts.length - 1 - i][1] - 8)}`).join(' ')}`;
-    return (
-      <div className="ro-svgwrap">
-        <svg width="280" height="110" viewBox="0 0 280 110">
-          <polygon points={band} fill="color-mix(in srgb,var(--accent-100) 14%,transparent)" />
-          <polyline points={line} fill="none" stroke="var(--accent-200)" strokeWidth="2" strokeDasharray="3 3" />
-          {pts.map((p, i) => <circle key={i} cx={x(i)} cy={y(p[1])} r="2.5" fill="var(--accent-200)" />)}
-        </svg>
-        <div className="ro-svg-cap">{(s.label as string) || 'Trajectory'} — advisory band (model not validated)</div>
-      </div>
-    );
+    // An anchor is one observation, not a forecast trajectory or interval.
+    return <div className="ro-svg-cap">{(s.label as string) || 'Trajectory'} — no measured forecast series is recorded.</div>;
   }
   if (chartType === 'trend') {
     /* The fallback was the literal series [62, 66, 64, 70, 73]: a rising line
@@ -1026,7 +1038,7 @@ function ROReport({ report, onExport, onFinalize, seal, runId }: {
 /* ── RODashboard ── */
 /* `onAsk` is gone from here too — it was declared, threaded down from the
    canvas and never called once in the whole component. */
-function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void; canRun: boolean; scope: string; catalog: ReportType[] }) {
+function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog, onOpenProgram }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void; canRun: boolean; scope: string; catalog: ReportType[]; onOpenProgram?: (r: PortfolioRow) => void }) {
   if (!dashboard) return null;
 
   if (dashboard.kind === 'portfolio') {
@@ -1039,25 +1051,24 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope, catalog }: { dashb
       <div className="ro-dash">
         <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta">{/* A capped board says it is capped, here, beside the count it caps. */}<span>{dashboard.truncated ? `first ${rows.length} programs` : `${rows.length} programs`}</span>{avg == null ? <span className="ro-status">readiness not computed</span> : <span className="ro-status">avg readiness {avg}%{known.length < rows.length ? ` · ${rows.length - known.length} not computed` : ''}</span>}</div></div></div>
         <div className="ro-port-grid">
-          {rows.map((r, i) => (
-            <div key={i} className="ro-port-card">
-              {r.readiness == null
-                ? <div className="ro-port-ind" role="note">Readiness not computed</div>
-                : <ROChart chartType="readiness_ring" spec={{ value: r.readiness, label: '' }} />}
-              <div className="ro-port-b"><div className="ro-port-code">{r.code}</div><div className="ro-port-ind">{r.indication}</div></div>
-            </div>
-          ))}
+          {rows.map((r, i) => {
+            const content = <>{r.readiness == null
+              ? <div className="ro-port-ind" role="note">Readiness not computed</div>
+              : <ROChart chartType="readiness_ring" spec={{ value: r.readiness, label: '' }} />}
+              <div className="ro-port-b"><div className="ro-port-code">{r.code}</div><div className="ro-port-ind">{r.indication}</div><div className="ro-port-filing">{r.status || 'Status not recorded'}{r.riskLevel ? ` · ${r.riskLevel} risk` : ''}{typeof r.criticalBlockerCount === 'number' ? ` · ${r.criticalBlockerCount} critical blocker${r.criticalBlockerCount === 1 ? '' : 's'}` : ''}</div>{r.topBlockers?.map((blocker, n) => <div key={n} className="ro-port-ind">{blocker}</div>)}</div></>;
+            return r.programId && onOpenProgram ? <button key={r.programId} type="button" className="ro-port-card ro-port-open" aria-label={`Open ${r.code}`} onClick={() => onOpenProgram(r)}>{content}</button> : <div key={r.projectId ?? i} className="ro-port-card">{content}</div>;
+          })}
         </div>
-        <div className="ro-dash-note">{I.info} Readiness values are the governed scores per program, in the order the server ranked them. The average is taken here, over the programs that have one.</div>
+        <div className="ro-dash-note">{I.info} This board covers {portfolioScopeText(dashboard.dataScope)}. Readiness values are the governed scores per program, in the order the server ranked them. The average is taken here, over the programs that have one.</div>
         {/* The server read one row past its cap to detect this; saying nothing
             would present a hundred-program board as the whole portfolio and an
             average over it as the organisation's. */}
         {dashboard.truncated && (
           <div className="ro-dash-note" role="status" data-testid="ro-port-truncated">
-            {I.alertTriangle} Your organization has more programs than this board shows. The rollup is capped
+            {I.alertTriangle} The returned portfolio has more programs than this board shows. The rollup is capped
             at {rows.length}, and the server selects them without an ordering — so these are not the
             highest-risk or least-ready ones, and the average above is over them only, not over your whole
-            portfolio.
+            returned portfolio.
           </div>
         )}
       </div>
@@ -1207,13 +1218,29 @@ function runRefusalNote(label: string, status: unknown, payload: unknown): strin
    UUID) and the server resolves its project record with the same strict anchor
    resolver the overview used; the client carries no project id for it (QA
    2026-10-08, j8: every report ran over project 1). */
-async function requestRun(type: ReportType, program: ProgramCtx, programId: string | null): Promise<{ runId: number } | { note: string }> {
+function reportTarget(type: ReportType, program: ProgramCtx | null): { scope: string; scopeId: string; label: string } | null {
+  if (type.runScopeType && type.runScopeId) {
+    let label = 'Scoped records';
+    if (type.runScopeType === 'account') label = 'Organization records';
+    else if (type.runScopeType === 'document') label = 'Selected document';
+    else if (program) label = program.label;
+    return { scope: type.runScopeType, scopeId: type.runScopeId, label };
+  }
+  return program;
+}
+function targetNamesProgram(target: { scope: string; scopeId: string }, program: ProgramCtx | null, programId: string | null): boolean {
+  return Boolean(programId && program && target.scope === program.scope && target.scopeId === program.scopeId);
+}
+async function requestRun(type: ReportType, program: ProgramCtx | null, programId: string | null): Promise<{ runId: number } | { note: string }> {
+  const target = reportTarget(type, program);
+  if (!target) return { note: type.availabilityReason || 'Choose a program or document for this report.' };
+  const namesProgram = targetNamesProgram(target, program, programId);
   let res: Response;
   try {
     res = await apiRequest('POST', '/api/report-os/runs', {
       organizationId: Number(getOrgId()) || 0,
-      scopeType: program.scope,
-      ...(programId ? { programId } : { scopeId: program.scopeId }),
+      scopeType: target.scope,
+      ...(namesProgram ? { programId } : { scopeId: target.scopeId }),
       reportTypeId: type.typeId,
     });
   } catch (e) {
@@ -1230,26 +1257,14 @@ async function requestRun(type: ReportType, program: ProgramCtx, programId: stri
 }
 
 /** GET /runs/:id/rendered, adopted as the canvas's report; null when it did not come back. */
-async function fetchRenderedRun(runId: number, type: ReportType, program: ProgramCtx): Promise<RenderedReport | null> {
+async function fetchRenderedRun(runId: number, type: ReportType, program: ProgramCtx | null): Promise<RenderedReport | null> {
+  const target = reportTarget(type, program);
+  if (!target) return null;
   try {
     const res = await apiRequest('GET', `/api/report-os/runs/${runId}/rendered`);
     const rendered = (await res.json().catch(() => null))?.data;
-    if (!res.ok || !rendered || !Array.isArray(rendered.sections)) return null;
-    const status = typeof rendered.status === 'string' ? rendered.status : 'partial';
-    return {
-      reportTypeId: rendered.reportTypeId ?? type.typeId,
-      reportTypeLabel: type.label,
-      family: type.family,
-      scopeType: rendered.scopeType ?? program.scope,
-      scopeId: rendered.scopeId ?? program.scopeId,
-      scopeLabel: typeof rendered.scopeLabel === 'string' && rendered.scopeLabel ? rendered.scopeLabel : program.label,
-      generatedAt: rendered.generatedAt ?? new Date().toISOString(),
-      status,
-      truthfulness: (rendered.truthfulness && Array.isArray(rendered.truthfulness.reasons))
-        ? rendered.truthfulness
-        : { allowedStatus: status, downgradedFrom: 'final', reasons: [] },
-      sections: rendered.sections,
-    };
+    if (!res.ok || !rendered || !Array.isArray(rendered.sections) || typeof rendered.generatedAt !== 'string') return null;
+    return reportFromRenderedRow(rendered, { id: runId, runUuid: '', reportTypeId: type.typeId, reportTypeLabel: type.label, scopeType: target.scope, scopeId: target.scopeId, scopeLabel: target.label, status: 'partial', confidence: null, createdAt: rendered.generatedAt }, type);
   } catch {
     return null;
   }
@@ -1319,21 +1334,25 @@ function openRunRefusal(label: string, status: number, payload: unknown): string
 }
 
 /** The rendered payload mapped onto the canvas's report, keyed on the run row. */
+function storedScopeLabel(label: unknown, row: ReportRunRow): string {
+  return typeof label === 'string' && label ? label : row.scopeLabel || row.scopeId;
+}
+function storedTypeLabel(label: unknown, row: ReportRunRow, type: ReportType | undefined): string {
+  return typeof label === 'string' && label ? label : type?.label ?? row.reportTypeLabel;
+}
 function reportFromRenderedRow(
   rendered: Record<string, any>,
   row: ReportRunRow,
   type: ReportType | undefined,
 ): RenderedReport {
   const status = typeof rendered.status === 'string' ? rendered.status : row.status;
-  const scopeLabel = typeof rendered.scopeLabel === 'string' && rendered.scopeLabel
-    ? rendered.scopeLabel
-    : row.scopeId;
+  const scopeLabel = storedScopeLabel(rendered.scopeLabel, row);
   const truthfulness = rendered.truthfulness && Array.isArray(rendered.truthfulness.reasons)
     ? rendered.truthfulness
-    : { allowedStatus: status, downgradedFrom: 'final', reasons: [] };
+    : { allowedStatus: status, reasons: [] };
   return {
     reportTypeId: rendered.reportTypeId ?? row.reportTypeId,
-    reportTypeLabel: type?.label ?? row.reportTypeLabel,
+    reportTypeLabel: storedTypeLabel(rendered.reportTypeLabel, row, type),
     family: type?.family ?? '',
     scopeType: rendered.scopeType ?? row.scopeType,
     scopeId: rendered.scopeId ?? row.scopeId,
@@ -1491,6 +1510,8 @@ const RO_PRESET_SEGMENT: Record<string, string> = {
 };
 
 export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
+  const search = useSearch();
+  const tabsId = React.useId();
 
   // Live canvas bootstrap — the org's REAL subscription tier, flagship program
   // readiness (computeInitialRun) and portfolio rollup (server
@@ -1548,6 +1569,8 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   // The governed run id behind the displayed report (report-os run), or null for
   // a re-shown report with no run. Drives the real finalize/seal on export.
   const [reportRunId, setReportRunId] = useState<number | null>(null);
+  const displayedRun = useRef<number | null>(reportRunId);
+  displayedRun.current = reportRunId;
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, fireToast] = useToast();
@@ -1570,8 +1593,23 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   /* Runs chosen in Run history, waiting to be bundled. Held here so the choice
      survives moving between the Runs and Bundles panels. */
   const [bundlePicks, setBundlePicks] = useState<number[]>([]);
-
-  useEffect(() => { setFound(null); setRunNote(null); setReport(null); setReportRunId(null); setSeal(null); setDashboard(null); }, [seg]);
+  const contextKey = `${openProgramId ?? ''}|${data?.organizationId ?? ''}|${program?.scope ?? ''}|${program?.scopeId ?? ''}|${seg}`;
+  const activeContext = useRef(contextKey);
+  activeContext.current = contextKey;
+  const hasReportingContext = Boolean(data);
+  const hadReportingContext = useRef(hasReportingContext);
+  const requestSequence = useRef(0);
+  const linkedRead = useRef<string | null>(null);
+  useEffect(() => {
+    const initialized = hadReportingContext.current;
+    hadReportingContext.current = hasReportingContext;
+    if (!initialized) return; // The first bootstrap has no prior result to invalidate.
+    requestSequence.current += 1;
+    displayedRun.current = null;
+    setFound(null); setRunNote(null); setReport(null); setReportRunId(null); setSeal(null); setDashboard(null);
+    setQuery('');
+    setSigning(false); setBusy(false); setBundlePicks([]);
+  }, [contextKey, hasReportingContext]);
   /* The result sits just above the field; keep it in view as it changes. */
   useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [found, runNote, busy]);
 
@@ -1584,14 +1622,16 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      exported and finalized. Any failure surfaces as an honest message — nothing
      is fabricated, and an unentitled/unknown type is stated, never estimated. */
   const runReport = async (type: ReportType): Promise<void> => {
-    if (!program) return;
+    if (!program && !(type.runScopeType && type.runScopeId)) { setRunNote(type.availabilityReason || 'Choose a program or document for this report.'); return; }
+    const request = ++requestSequence.current;
+    const isCurrent = () => request === requestSequence.current && contextKey === activeContext.current;
     /* The result said "Running the …" when the run began. Once the run ends it
        says what happened, so it never reports as current a run that finished or
        never started. A run that produced no report drops the result's sentence
        and the alert says why: one statement, not "Running" beside "wasn't run". */
     const mine = foundSeq.current;
     const settle = (next: FoundResult | null) => { if (foundSeq.current === mine) setFound(next); };
-    const say = (text: string) => { settle(null); setRunNote(text); };
+    const say = (text: string) => { if (isCurrent()) { settle(null); setRunNote(text); } };
     setRunNote(null);
     if (!canWrite) {
       say(`"${type.label}" wasn't run. Running a report creates a governed record, which needs an editor role in this organization.`);
@@ -1599,18 +1639,22 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     }
     setBusy(true);
     setDashboard(null);
+    displayedRun.current = null;
+    setReport(null); setReportRunId(null); setSeal(null); setSigning(false);
     try {
       const started = await requestRun(type, program, runProgramId);
+      if (!isCurrent()) return;
       if ('note' in started) { say(started.note); return; }
       const adopted = await fetchRenderedRun(started.runId, type, program);
+      if (!isCurrent()) return;
       if (!adopted) { say("The run completed but its rendered document didn't come back — reload and retry."); return; }
       setReport(adopted);
       setReportRunId(started.runId);
       setSeal(null);
-      settle({ text: `The ${type.label} for ${program.code} ran against the governed record and is shown in the report canvas. Every value is computed from the governed record; none is originated here.` });
+      settle({ text: `The ${type.label} for ${adopted.scopeLabel || 'the stored scope'} ran against the governed record and is shown in the report canvas. Every value is computed from the governed record; none is originated here.` });
       pushCanvasTop();
     } finally {
-      setBusy(false);
+      if (isCurrent()) setBusy(false);
     }
   };
 
@@ -1624,7 +1668,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     // roRouteReply resolves intent, chips and the entitlement lock — all
     // deterministic. When it resolves a report type, generation goes to the REAL
     // backend via runReport, not to a client-built preview.
-    const reply = roRouteReply(text, tier, { program, portfolio: data.portfolio, types: catalog, report });
+    const reply = roRouteReply(text, tier, { program, portfolio: { ...data.portfolio, dataScope: data.dataScope }, types: catalog, report });
     setFound({ text: reply.text, chips: reply.chips, locked: reply.locked, nav: reply.nav });
     if (reply.reportType) {
       await runReport(reply.reportType);
@@ -1690,6 +1734,13 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
       runnable: t.runnable,
       entitled: d.entitled,
       requiredTier: tierLabel(d.requiredTier),
+      region: t.region,
+      allowedPersonas: t.allowedPersonas,
+      computedScope: t.computedScope,
+      availabilityReason: t.availabilityReason,
+      availabilityState: t.availabilityState,
+      runScopeType: t.runScopeType,
+      runScopeId: t.runScopeId,
     };
   });
 
@@ -1698,9 +1749,13 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      the previous report's signature beside another report's document would
      attribute a signature to a record nobody signed. */
   const openRunFromHistory = async (row: ReportRunRow) => {
+    const request = ++requestSequence.current;
     setBusy(true);
     setRunNote(null);
+    displayedRun.current = null;
+    setReport(null); setReportRunId(null); setSeal(null); setSigning(false);
     const result = await fetchRenderedRunRow(row, catalog);
+    if (request !== requestSequence.current || contextKey !== activeContext.current) return;
     setBusy(false);
     if ('note' in result) {
       setPaneView('report');
@@ -1733,12 +1788,58 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     const type = catalog.find((c) => c.typeId === t.typeId);
     if (!type) return;
     setPaneView('report');
-    void runReport(type);
+    void runReport({ ...type, ...t });
   };
+  const linkedRun = new URLSearchParams(search).get('reportRunId');
+  useEffect(() => {
+    if (!linkedRun) { linkedRead.current = null; return; }
+    if (overview.loading || !/^[1-9]\d*$/.test(linkedRun) || !Number.isSafeInteger(Number(linkedRun))) return;
+    if (linkedRead.current === linkedRun) return;
+    linkedRead.current = linkedRun;
+    const request = ++requestSequence.current;
+    const isCurrent = () => requestSequence.current === request && activeContext.current === contextKey;
+    displayedRun.current = null;
+    setReport(null); setReportRunId(null); setSeal(null); setDashboard(null); setSigning(false); setRunNote(null); setPaneView('report'); setBusy(true);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await apiRequest('GET', `/api/report-os/runs/${linkedRun}`);
+        const row = (await response.json().catch(() => null))?.data as ReportRunRow | undefined;
+        if (cancelled || !isCurrent()) return;
+        if (!response.ok || row?.id !== Number(linkedRun) || typeof row.scopeId !== 'string' || typeof row.scopeType !== 'string') {
+          setRunNote('The saved report could not be opened. Its record was not returned for your organization.'); setBusy(false); return;
+        }
+        await openRunFromHistory(row);
+      } catch (error) {
+        if (!cancelled && isCurrent()) { setRunNote(`The saved report could not be opened — ${error instanceof Error ? error.message : 'the server refused the read'}.`); setBusy(false); }
+      }
+    })();
+    return () => { cancelled = true; };
+    // Catalog and current context are captured by the request; the identity is the stored run id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overview.loading, contextKey, linkedRun]);
+
+  const openPortfolioProgram = (row: PortfolioRow) => {
+    if (!row.programId) return;
+    publishShellProject({ id: row.programId, title: row.label, code: row.code });
+    onNav?.('project-home');
+  };
+  const libraryTabs = <ReportingTabs value={paneView} id={tabsId} onChange={view => { setPaneView(view); pushCanvasTop(); }} />;
+  const libraryPane = paneView === 'catalog' ? <CatalogPanel key={contextKey} types={libraryCatalog} onRun={runFromCatalog} canRun={canWrite} busy={busy} programLabel={program?.code ?? null} projectId={data?.leadProgram?.projectId} />
+    : paneView === 'runs' ? <RunsPanel types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId, label: program.code } : null} onOpen={row => void openRunFromHistory(row)} onBundle={ids => { setBundlePicks(ids); setPaneView('bundles'); pushCanvasTop(); }} canBundle={canWrite} />
+    : paneView === 'schedules' ? <SchedulesPanel key={contextKey} types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId } : null} canWrite={canWrite} canSchedule={tierResolved && ['professional', 'enterprise'].includes(realTier)} onSaved={fireToast} />
+    : paneView === 'bundles' ? <BundlesPanel pendingRunIds={bundlePicks} canWrite={canWrite} onExport={(id, name) => void exportBundle(id, name)} onSaved={fireToast} onClearPending={() => setBundlePicks([])} /> : null;
+  const reportPane = report ? <ROReport report={report} onExport={exportRep} onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => setSigning(true) : undefined} seal={seal} runId={reportRunId} /> : null;
+  const visibleGeneration = requestSequence.current;
+  const sealForDisplayedRun = (sealed: ReportSeal) => {
+    if (activeContext.current === contextKey && displayedRun.current === reportRunId && requestSequence.current === visibleGeneration) onSealed(sealed);
+  };
+  const withoutProgram = (content: React.ReactNode) => <div className="rc"><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>{libraryTabs}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} />}</div></div>;
 
   // Four-state render: loading → honest error → honest empty (no flagship
   // program) → the live canvas. No fixture stand-in in any state.
-  if (overview.loading) {
+  const snapshotMatchesProgram = !openProgramId || !data?.openProgram || data.openProgram.programId === openProgramId;
+  if (overview.loading || !snapshotMatchesProgram) {
     return (
       <div className="rc">
         <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
@@ -1770,9 +1871,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const openState = data?.openProgram?.state;
   if (data && !program && (openState === 'unanchored' || openState === 'not-in-portfolio')) {
     const name = shellProgramName() ?? 'This program';
-    return (
-      <div className="rc">
-        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+    return withoutProgram(
           <EmptyState
             icon={I.barChart || I.fileText}
             title={`${name} has no readiness or reports here yet`}
@@ -1783,8 +1882,6 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             }
             action={{ label: 'Audit & compliance reports', onAct: () => onNav && onNav('compliance-reports') }}
           />
-        </div>
-      </div>
     );
   }
   /* No program open: ask which, from the organisation's programs. The flagship
@@ -1794,9 +1891,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      through the shell's one program channel, and the canvas then leads with it. */
   const choices = data?.programs ?? [];
   if (data && !program && !data.openProgram && choices.length > 0) {
-    return (
-      <div className="rc">
-        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+    return withoutProgram(
           <div className="rc-empty" data-testid="rc-program-picker">
             <h2 className="rc-empty-h">Which program is the report for?</h2>
             <p className="rc-empty-s">Governed reports and the readiness digest run over one program. Choose it here; it opens across the app, as it does from Projects.</p>
@@ -1817,14 +1912,10 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
               <button type="button" className="btn ghost" onClick={() => onNav && onNav('compliance-reports')}>Audit & compliance reports</button>
             </div>
           </div>
-        </div>
-      </div>
     );
   }
   if (!program || !data || !suggest) {
-    return (
-      <div className="rc">
-        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+    return withoutProgram(
           <EmptyState
             icon={I.barChart || I.fileText}
             title="No program readiness yet"
@@ -1833,8 +1924,6 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
                not a program, so they stay reachable before any program exists. */
             action={{ label: 'Audit & compliance reports', onAct: () => onNav && onNav('compliance-reports') }}
           />
-        </div>
-      </div>
     );
   }
   const p = program; // narrowed non-null past the guards above
@@ -1973,58 +2062,9 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
            this surface has always shown and remains the default, so a reader
            who never opens a tab sees exactly what they saw before. -- */}
       <div className="rc-canvas" ref={canvasRef}>
-        <div className="rl-tabs" role="tablist" aria-label="Reporting views">
-          {([{ id: 'report' as const, label: 'Report', icon: I.fileText }, ...LIBRARY_VIEWS]).map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              role="tab"
-              aria-selected={paneView === v.id}
-              className={'rl-tab' + (paneView === v.id ? ' on' : '')}
-              onClick={() => { setPaneView(v.id); pushCanvasTop(); }}
-            >
-              {v.icon} {v.label}
-            </button>
-          ))}
-        </div>
-
-        {paneView === 'catalog' ? (
-          <CatalogPanel
-            types={libraryCatalog}
-            onRun={runFromCatalog}
-            canRun={canWrite}
-            programLabel={p.code}
-          />
-        ) : paneView === 'runs' ? (
-          <RunsPanel
-            types={libraryCatalog}
-            onOpen={(row) => void openRunFromHistory(row)}
-            onBundle={(ids) => { setBundlePicks(ids); setPaneView('bundles'); pushCanvasTop(); }}
-            canBundle={canWrite}
-          />
-        ) : paneView === 'schedules' ? (
-          <SchedulesPanel
-            types={libraryCatalog}
-            scope={{ scopeType: p.scope, scopeId: p.scopeId }}
-            canWrite={canWrite}
-            onSaved={fireToast}
-          />
-        ) : paneView === 'bundles' ? (
-          <BundlesPanel
-            pendingRunIds={bundlePicks}
-            canWrite={canWrite}
-            onExport={(id, name) => void exportBundle(id, name)}
-            onSaved={fireToast}
-            onClearPending={() => setBundlePicks([])}
-          />
-        ) : report ? <ROReport
-            report={report}
-            onExport={exportRep}
-            onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => setSigning(true) : undefined}
-            seal={seal}
-            runId={reportRunId}
-          />
-          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} scope={p.scope} catalog={catalog} />
+        {libraryTabs}
+        <div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>
+        {libraryPane || reportPane || (dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} scope={p.scope} catalog={catalog} onOpenProgram={openPortfolioProgram} />
           : (
             <div className="rc-empty">
               {/* "AnA builds the report" and "a pack AnA suggests … based on
@@ -2055,12 +2095,26 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
                 </section>
               )}
             </div>
-          )}
+          ))}
+        </div>
       </div>
       {signing && report && reportRunId != null && (
-        <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={onSealed} />
+        <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} />
       )}
       <C2CToast msg={toast} />
     </div>
   );
+}
+
+function ReportingTabs({ id, value, onChange }: { id: string; value: 'report' | LibraryView; onChange: (view: 'report' | LibraryView) => void }) {
+  const views = [{ id: 'report' as const, label: 'Report', icon: I.fileText }, ...LIBRARY_VIEWS];
+  const move = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const positions: Record<string, number> = { ArrowRight: (index + 1) % views.length, ArrowLeft: (index + views.length - 1) % views.length, Home: 0, End: views.length - 1 };
+    const next = positions[event.key];
+    if (next == null) return;
+    event.preventDefault();
+    onChange(views[next].id);
+    document.getElementById(`${id}-${views[next].id}`)?.focus();
+  };
+  return <div className="rl-tabs" role="tablist" aria-label="Reporting views">{views.map((view, index) => <button key={view.id} id={`${id}-${view.id}`} type="button" role="tab" aria-selected={value === view.id} aria-controls={`${id}-panel`} tabIndex={value === view.id ? 0 : -1} className={'rl-tab' + (value === view.id ? ' on' : '')} onClick={() => onChange(view.id)} onKeyDown={event => move(event, index)}>{view.icon} {view.label}</button>)}</div>;
 }

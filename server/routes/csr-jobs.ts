@@ -39,6 +39,7 @@ import {
   getCSRSectionOutputs,
 } from '../services/csr/csr-job-runner.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { CsrScopeError, parseCsrScopeId, requireCsrJobAccess } from '../services/csr/project-scope';
 
 const log = createScopedLogger('csr-jobs');
 
@@ -134,17 +135,9 @@ router.post('/', async (req: Request, res: Response) => {
   // quota validation and will throw on a bad payload.
   const body = (req.body ?? {}) as Partial<CSRBuildRequest> & {
     projectId?: number;
+    programId?: string;
+    clientWorkspaceId?: number;
   };
-  const projectIdRaw = body.projectId;
-  // Match parseJobIdParam's discipline: positive integer or nothing.
-  // Zero, negatives, and floats are rejected as undefined rather than
-  // forwarded into the downstream service layer.
-  const projectId =
-    typeof projectIdRaw === 'number' &&
-    Number.isInteger(projectIdRaw) &&
-    projectIdRaw > 0
-      ? projectIdRaw
-      : undefined;
 
   // Pin the organizationId AND userId from the authenticated principal
   // so the downstream service layer cannot be tricked into using a
@@ -157,9 +150,13 @@ router.post('/', async (req: Request, res: Response) => {
   };
 
   try {
+    const projectId = parseCsrScopeId(body.projectId, 'projectId');
+    const clientWorkspaceId = parseCsrScopeId(body.clientWorkspaceId, 'clientWorkspaceId');
     const enqueued = await launchCSRBuildAsync(buildRequest, {
       organizationId,
       projectId,
+      ...(body.programId !== undefined ? { programId: body.programId } : {}),
+      ...(clientWorkspaceId !== undefined ? { clientWorkspaceId } : {}),
       requestedBy,
     });
     return res.status(202).json({
@@ -167,6 +164,7 @@ router.post('/', async (req: Request, res: Response) => {
       status: enqueued.status,
     });
   } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to enqueue CSR build job', {
       err: err instanceof Error ? err.message : String(err),
       organizationId,
@@ -191,6 +189,7 @@ router.get('/:jobId', async (req: Request, res: Response) => {
   }
 
   try {
+    if (!await requireCsrJobAccess(requireDb(), organizationId, jobId, resolveUserId(req))) return res.status(404).json({ error: 'Job not found' });
     const status = await getCSRBuildJobStatus(jobId, organizationId);
     if (status == null) {
       // Collapsed not-found vs cross-org case — see module header.
@@ -198,6 +197,7 @@ router.get('/:jobId', async (req: Request, res: Response) => {
     }
     return res.json(status);
   } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to read CSR build job status', {
       err: err instanceof Error ? err.message : String(err),
       organizationId,
@@ -223,6 +223,7 @@ router.get('/:jobId/sections', async (req: Request, res: Response) => {
   }
 
   try {
+    if (!await requireCsrJobAccess(requireDb(), organizationId, jobId, resolveUserId(req))) return res.status(404).json({ error: 'Job not found' });
     // Probe existence first so missing / cross-org jobs surface as 404
     // instead of an indistinguishable 200 { sections: [] }. Mirrors the
     // cancel handler and keeps the existence-vs-cross-org collapse
@@ -235,6 +236,7 @@ router.get('/:jobId/sections', async (req: Request, res: Response) => {
     const sections = await getCSRSectionOutputs(jobId, organizationId);
     return res.json({ sections });
   } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to read CSR section outputs', {
       err: err instanceof Error ? err.message : String(err),
       organizationId,
@@ -265,6 +267,7 @@ router.post('/:jobId/cancel', async (req: Request, res: Response) => {
     // as 404 so we don't leak job existence across tenants. The probe
     // also lets us return a precise 409.status payload when the row is
     // already terminal at probe time (common case, no race).
+    if (!await requireCsrJobAccess(requireDb(), organizationId, jobId, resolveUserId(req))) return res.status(404).json({ error: 'Job not found' });
     const status = await getCSRBuildJobStatus(jobId, organizationId);
     if (status == null) {
       return res.status(404).json({ error: 'Job not found' });
@@ -315,6 +318,7 @@ router.post('/:jobId/cancel', async (req: Request, res: Response) => {
 
     return res.status(204).send();
   } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to cancel CSR build job', {
       err: err instanceof Error ? err.message : String(err),
       organizationId,

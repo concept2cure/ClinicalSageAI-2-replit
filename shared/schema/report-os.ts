@@ -198,6 +198,8 @@ export interface ReportScheduleJson {
   minute?: number;
   dayOfWeek?: number;
   dayOfMonth?: number;
+  /** IANA timezone for local scheduling, including daylight saving. */
+  timeZone?: string;
   timeZoneOffsetMinutes?: number;
 }
 

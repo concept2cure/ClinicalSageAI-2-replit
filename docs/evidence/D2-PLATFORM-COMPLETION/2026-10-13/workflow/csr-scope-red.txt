@@ -1,0 +1,113 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ × server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses a foreign or missing project before storing a build job 23ms
+   → promise resolved "{ jobId: 1, status: 'queued' }" instead of rejecting
+ × server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses an archived project and malformed explicitly supplied project 9ms
+   → promise resolved "{ jobId: 1, status: 'queued' }" instead of rejecting
+ × server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > rejects a request/context mismatch instead of changing the target or tenant 7ms
+   → promise resolved "{ jobId: 1, status: 'queued' }" instead of rejecting
+ × server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > carries a real request project through when no separate context project was supplied 8ms
+   → expected [ { organization_id: 7, …(1) } ] to deeply equal [ { organization_id: 7, …(1) } ]
+ ✓ server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > keeps genuine organization-wide builds when no target was supplied 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses a foreign or missing project before storing a build job
+AssertionError: promise resolved "{ jobId: 1, status: 'queued' }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "jobId": 1,
++   "status": "queued",
+  }
+
+ ❯ server/services/csr/__tests__/csr-project-scope.pglite.test.ts:36:97
+     34|   it('refuses a foreign or missing project before storing a build job'…
+     35|     for (const projectId of [21, 999]) {
+     36|       await expect(enqueueCSRBuildJob(request, { organizationId: 7, pr…
+       |                                                                                                 ^
+     37|     }
+     38|     expect(await rows()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > refuses an archived project and malformed explicitly supplied project
+AssertionError: promise resolved "{ jobId: 1, status: 'queued' }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "jobId": 1,
++   "status": "queued",
+  }
+
+ ❯ server/services/csr/__tests__/csr-project-scope.pglite.test.ts:41:83
+     39|   });
+     40|   it('refuses an archived project and malformed explicitly supplied pr…
+     41|     await expect(enqueueCSRBuildJob(request, { organizationId: 7, proj…
+       |                                                                                   ^
+     42|     await expect(enqueueCSRBuildJob(request, { organizationId: 7, proj…
+     43|     expect(await rows()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > rejects a request/context mismatch instead of changing the target or tenant
+AssertionError: promise resolved "{ jobId: 1, status: 'queued' }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "jobId": 1,
++   "status": "queued",
+  }
+
+ ❯ server/services/csr/__tests__/csr-project-scope.pglite.test.ts:46:105
+     44|   });
+     45|   it('rejects a request/context mismatch instead of changing the targe…
+     46|     await expect(enqueueCSRBuildJob({ ...request, projectId: 12 }, { o…
+       |                                                                                                         ^
+     47|     await expect(enqueueCSRBuildJob({ ...request, organizationId: 8 },…
+     48|     expect(await rows()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/csr/__tests__/csr-project-scope.pglite.test.ts > CSR scope before persistence > carries a real request project through when no separate context project was supplied
+AssertionError: expected [ { organization_id: 7, …(1) } ] to deeply equal [ { organization_id: 7, …(1) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "organization_id": 7,
+-     "project_id": 11,
++     "project_id": null,
+    },
+  ]
+
+ ❯ server/services/csr/__tests__/csr-project-scope.pglite.test.ts:52:26
+     50|   it('carries a real request project through when no separate context …
+     51|     await enqueueCSRBuildJob({ ...request, projectId: 11 }, { organiza…
+     52|     expect(await rows()).toEqual([{ organization_id: 7, project_id: 11…
+       |                          ^
+     53|   });
+     54|   it('keeps genuine organization-wide builds when no target was suppli…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  18:49:49
+   Duration  5.29s (transform 1.14s, setup 81ms, import 2.10s, tests 2.61s, environment 0ms)

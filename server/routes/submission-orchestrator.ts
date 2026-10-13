@@ -41,6 +41,8 @@ import {
 } from '../services/ectd/ectd-validator-hardening.js';
 import { loadApprovedCmcSourcesForProject } from '../services/cmc/load-approved-cmc-sources-for-project.js';
 import { loadCsrInputsForProject } from '../services/csr/load-csr-inputs-for-project.js';
+import { CsrScopeError, resolveCsrScope } from '../services/csr/project-scope';
+import { db } from '../db.js';
 import { loadNonclinicalStudiesForProject } from '../services/preclinical/load-nonclinical-studies-for-project.js';
 import { pool } from '../db.js';
 import auditService from '../services/auditService.js';
@@ -461,6 +463,7 @@ router.post('/runs', async (req: Request, res: Response) => {
          (load-approved-cmc-sources-for-project.ts, GA plan item 1). The gate
          is not re-interpreted here: when it refuses, the run carries no
          Module 3 and the reason is recorded and returned. */
+      await resolveCsrScope(db, organizationId, { projectId: parsed.data.projectId }, { forWrite: false, actorUserId: Number((req as any).user?.id ?? (req as any).user?.userId) });
       const [governedCmc, nonclinicalStudies, csrInputs] = await Promise.all([
         parsed.data.cmcProjectId
           ? loadApprovedCmcSourcesForProject(
@@ -472,7 +475,7 @@ router.post('/runs', async (req: Request, res: Response) => {
         parsed.data.ctdProgramId
           ? loadNonclinicalStudiesForProject(organizationId, parsed.data.ctdProgramId)
           : Promise.resolve([]),
-        loadCsrInputsForProject(organizationId, parsed.data.projectId),
+        loadCsrInputsForProject(organizationId, parsed.data.projectId, { actorUserId: Number((req as any).user?.id ?? (req as any).user?.userId) }),
       ]);
       const cmcSources = governedCmc.sources;
       module3Refusal = governedCmc.gate === 'open' ? null : governedCmc.reason;
@@ -557,6 +560,7 @@ router.post('/runs', async (req: Request, res: Response) => {
       };
     }
   } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Input assembly failed', {
       err: err instanceof Error ? err.message : String(err),
       organizationId,

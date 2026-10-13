@@ -57,18 +57,45 @@ const DOMAIN_TYPES: ReadonlySet<string> = new Set(DOMAIN_REPORT_TYPE_IDS);
 
 /** The engine that computes `typeId` over `scopeType`, or null when none does. */
 export function reportEngineFor(typeId: string, scopeType: string): ReportEngine | null {
+  const availability = reportAvailability(typeId, scopeType);
+  return availability.runnable ? availability.engine : null;
+}
+
+export interface ReportAvailability {
+  engine: ReportEngine | null;
+  runnable: boolean;
+  computedScope: 'organization' | 'project' | 'document' | null;
+  availabilityReason: string | null;
+}
+
+function engineForType(typeId: string): ReportEngine | null {
   if (typeId === 'readiness.executive_digest') return 'readiness';
   if (DOMAIN_TYPES.has(typeId)) return 'domain';
-  if (typeId === 'provenance.evidence_trace_report' && scopeType === 'document') return 'lineage';
-  /* Project scope only, and refused here rather than inside the engine, so the
-     canvas shows the type as not computed for a submission or program scope
-     instead of starting a run that cannot finish (filing-readiness.ts states
-     why: only project scope is checked for this organization's ownership, and a
-     program is a group of markets, not one). */
-  if (Object.prototype.hasOwnProperty.call(REGIONAL_FILING_TYPES, typeId) && scopeType === 'project') {
+  if (typeId === 'provenance.evidence_trace_report') return 'lineage';
+  if (Object.prototype.hasOwnProperty.call(REGIONAL_FILING_TYPES, typeId)) {
     return 'regional';
   }
   return null;
+}
+
+/** Declared applicability and the engine's actual scope must both permit a run.
+ * Domain counts remain organization-wide unless a provider truly narrows them. */
+export function reportAvailability(typeId: string, scopeType: string, allowedScopes?: readonly string[]): ReportAvailability {
+  const engine = engineForType(typeId);
+  const computedScope = typeId === 'grants.portfolio_register' && scopeType === 'project' ? 'project'
+    : engine === 'domain' ? 'organization' : engine === 'lineage' ? 'document' : engine ? 'project' : null;
+  if (allowedScopes && !allowedScopes.includes(scopeType)) {
+    return { engine, computedScope, runnable: false, availabilityReason: `This report does not allow ${scopeType} scope.` };
+  }
+  if (!['account', 'program', 'project', 'submission', 'document'].includes(scopeType)) {
+    return { engine, computedScope, runnable: false, availabilityReason: 'This scope is unavailable until its ownership can be verified.' };
+  }
+  if (!engine) return { engine, computedScope, runnable: false, availabilityReason: 'No engine computes this report in this release.' };
+  if (((engine === 'readiness' || engine === 'regional') && scopeType !== 'project') ||
+      (engine === 'lineage' && scopeType !== 'document')) {
+    return { engine, computedScope, runnable: false, availabilityReason: `This engine computes ${computedScope} scope only.` };
+  }
+  return { engine, computedScope, runnable: true, availabilityReason: null };
 }
 
 export const REPORT_TYPE_NOT_COMPUTED = 'REPORT_TYPE_NOT_COMPUTED';
@@ -118,9 +145,10 @@ export async function computeDomainRun(
   organizationId: number,
   scopeType: string,
   scopeId: string,
+  options?: { clientWorkspaceId?: number | null },
 ): Promise<RunComputationResult> {
   const { computeDomainReport } = await import('./research-compliance-report-providers');
-  const domain = await computeDomainReport(typeId, organizationId);
+  const domain = await computeDomainReport(typeId, organizationId, { scopeType, scopeId, ...options });
   if (!domain) throw new Error(`No domain provider computes ${typeId}`);
   const blockers = domain.provider.status !== 'ready' && domain.provider.blocker ? [domain.provider.blocker] : [];
   return {
@@ -128,7 +156,7 @@ export async function computeDomainRun(
     confidence: null,
     blockers,
     criticalBlockers: [],
-    summary: { scopeType, scopeId, domain: domain.summary, domainScope: 'organization' },
+    summary: { scopeType, scopeId, domain: domain.summary, domainScope: domain.computedScope ?? 'organization', computedScope: domain.computedScope ?? 'organization', provenance: domain.provenance },
   };
 }
 

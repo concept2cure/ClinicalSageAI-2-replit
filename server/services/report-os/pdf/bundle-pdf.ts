@@ -12,8 +12,7 @@
  *
  * @module server/services/report-os/pdf/bundle-pdf
  */
-import { PDFDocument, StandardFonts } from 'pdf-lib';
-import { GREY, Writer, iso, stampExportIdentity, stampFooters } from './writer';
+import { GREY, Writer, iso } from './writer';
 
 export interface BundlePdfItem {
   runId: number;
@@ -45,11 +44,7 @@ function itemLine(i: BundlePdfItem): string {
 
 /** Build the bundle's PDF. */
 export async function buildBundlePdf(input: BundlePdfInput): Promise<{ bytes: Buffer; pages: number; replacedCharacters: number }> {
-  const pdf = await PDFDocument.create();
-  stampExportIdentity(pdf, { title: `Report bundle: ${input.bundle.name}`, exportId: input.exportId, exportedAt: input.exportedAt });
-  const regular = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const w = new Writer(pdf, regular, bold);
+  const w = new Writer({ title: `Report bundle: ${input.bundle.name}`, exportId: input.exportId, exportedAt: input.exportedAt });
 
   w.write(`Report bundle: ${input.bundle.name}`, { size: 16, bold: true, gap: 4 });
   w.write(`Bundle ${input.bundle.bundleId}`, { size: 9, color: GREY, gap: 8 });
@@ -60,9 +55,6 @@ export async function buildBundlePdf(input: BundlePdfInput): Promise<{ bytes: Bu
   w.write(`${final} of ${input.items.length} report(s) are final at export. Each report's own PDF carries its signature and seal.`, { size: 10, bold: final < input.items.length, gap: 8 });
   w.write(`Included reports (${input.items.length})`, { size: 11, bold: true, gap: 2 });
   for (const item of input.items) w.write(itemLine(item), { size: 9, indent: 8 });
-  if (w.replaced > 0) {
-    w.write(`${w.replaced} character(s) outside the PDF font's character set are shown as "?".`, { size: 8, color: GREY });
-  }
-  stampFooters(w, regular, (n, total) => `Bundle ${input.bundle.bundleId.slice(0, 8)} · Export ${input.exportId} · Exported ${input.exportedAt} (UTC) · Page ${n} of ${total}`);
-  return { bytes: Buffer.from(await pdf.save()), pages: w.pages.length, replacedCharacters: w.replaced };
+  w.stampPages((n, total) => `Bundle ${input.bundle.bundleId.slice(0, 8)} · Export ${input.exportId} · Exported ${input.exportedAt} (UTC) · Page ${n} of ${total}`);
+  return { bytes: await w.save(), pages: w.pages.length, replacedCharacters: w.replaced };
 }
