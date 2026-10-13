@@ -354,6 +354,13 @@ export const ALL_CHILD_TABLES = [
   // while clearing ci:unkeyed-request-tables:unreviewed to zero
   // (docs/evidence/D3/2026-10-12-unkeyed-table-classification/).
   'capa_records', 'q_submissions',
+  // Added 2026-10-13 (D3): the generation BELOW those two. Policying a table
+  // makes it a tenant-keyed parent, which makes its own children unprotected —
+  // install-fresh's verifier failed the whole provision on exactly that, twice,
+  // until the descendant tree was walked transitively instead of one failure at
+  // a time (docs/evidence/D3/2026-10-13-capa-qsub-grandchildren/).
+  'capa_actions', 'q_sub_meetings', 'q_sub_questions', 'q_sub_timeline_entries',
+  'q_sub_commitments',
   // Added 2026-09-24 (ledger L201): every child with a foreign key into a
   // tenant-keyed parent that had row security OFF, bar the four grandchildren
   // named in scripts/db/rls-coverage-check.sql's carve-out.

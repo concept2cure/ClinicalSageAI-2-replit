@@ -721,7 +721,8 @@ export type ProductType =
   | 'combination_product'
   | 'diagnostic'
   | 'samd';
-export type DeviceClass = 'I' | 'II' | 'III';
+import type { DeviceClass } from '../../../shared/regulatory/device-class.js';
+export type { DeviceClass };
 
 export interface ProductIdentifiers {
   ndc?: string;

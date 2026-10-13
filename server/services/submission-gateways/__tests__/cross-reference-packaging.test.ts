@@ -39,6 +39,7 @@ async function pkg(work: string, opts: {
          Tagging File or FDA rejects the sequence (validation 1789), and the packager refuses to
          build one it would reject. This fixture packages a 5.3.5.1 study report, so it carries
          them; without them it was modelling a sequence FDA would have thrown back. */
+      // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- a test: `src` is this test's own mkdtemp directory and the basename is a literal
       : { ctdSection: '5.3.5.1', operation: 'new', sourcePath: path.join(src, 'study.pdf'), fileName: 'study.pdf', title: 'Study Report',
           studyId: 'STUDY-001', stfFileTag: 'study-report-body' },
   ];

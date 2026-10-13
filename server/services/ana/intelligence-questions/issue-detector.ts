@@ -12,6 +12,22 @@
 
 import type { QuestionNode, DetectedIssue, FlowState, FlowDefinition } from './types.js';
 import { evaluatePredicate } from './engine.js';
+import {
+  askedAt,
+  contextFor,
+  fieldsAskedBy,
+  isBlank,
+  mentions,
+  numVal,
+  strVal,
+  type CrossNodeContext,
+  type MitigationState,
+} from './cross-node-context.js';
+
+/* Re-exported so every existing caller — and the gates — are unchanged. */
+export { fieldsAskedBy };
+export type { CrossNodeContext, MitigationState };
+import { programmeFactsFrom } from './programme-facts.js';
 
 /**
  * Evaluate all issue checks on a question node against the provided answers.
@@ -54,11 +70,26 @@ export function runCrossNodeAnalysis(
   const flat = flattenAnswers(state.answers);
   const existingIds = new Set(state.issues.map(i => i.checkId));
 
+  const asked = fieldsAskedBy(definition);
+  /* A question the person has not reached is not a question they declined, and
+     neither is one the card never DREW. The node must be completed AND the
+     field's own `visibleWhen` must have held — a mitigating field hidden by its
+     gate inside a completed node was indistinguishable from one left empty, so
+     a CRITICAL finding asserted the absence of something never shown
+     (2026-10-13 audit, F10). The gate is evaluated with the same shared
+     evaluator the engine, the validator and the card all use. */
+  const asksAt = askedAt(definition);
+  const completed = new Set(state.completedNodes);
+  const reached = (fieldId: string) => {
+    const where = asksAt.get(fieldId);
+    if (!where || !completed.has(where.node)) return false;
+    return where.gate ? evaluatePredicate(where.gate, flat) : true;
+  };
   for (const rule of CROSS_NODE_RULES) {
     if (existingIds.has(rule.id)) continue;
     if (rule.appliesTo && !rule.appliesTo.includes(definition.category)) continue;
 
-    const issue = rule.check(flat, state, definition);
+    const issue = rule.check(flat, state, definition, contextFor(rule, flat, asked, reached));
     if (issue && !existingIds.has(issue.checkId)) {
       issues.push(issue);
     }
@@ -112,44 +143,127 @@ function flattenAnswers(answers: Record<string, Record<string, unknown>>): Recor
   return flat;
 }
 
-function isBlank(val: unknown): boolean {
-  if (val === undefined || val === null) return true;
-  if (typeof val === 'string' && val.trim() === '') return true;
-  if (Array.isArray(val) && val.length === 0) return true;
-  return false;
-}
-
-function numVal(val: unknown): number | null {
-  if (val == null) return null;
-  const n = Number(val);
-  return Number.isFinite(n) ? n : null;
-}
-
-function strVal(val: unknown): string {
-  return typeof val === 'string' ? val.toLowerCase().trim() : '';
-}
 
 /* ─── Cross-node rule definitions ────────────────────────────────────── */
 
 interface CrossNodeRule {
   id: string;
   appliesTo?: string[];
+  /** The answers that TRIGGER the finding. Declared so a gate can hold they are asked. */
+  triggeredBy?: string[];
+  /** The answers whose absence the finding asserts. Same reason. */
+  mitigatedBy?: string[];
+  /**
+   * Mitigating fields where a NEGATIVE answer is an answer, not a refusal.
+   *
+   * "Did you run a clinical study?" — no, is the finding. "Is clinical data
+   * REQUIRED to address the differences?" — no, is the normal and usually
+   * correct 510(k) answer, and treating it as a refusal fired a CRITICAL
+   * finding that nothing the sponsor could do would silence, because
+   * answering no also skips the node holding the only other mitigating field
+   * (2026-10-13 audit, F11). The difference is in the question, so the rule
+   * names the fields rather than the engine guessing.
+   */
+  negativeIsAnswer?: string[];
   check: (
     flat: Record<string, unknown>,
     state: FlowState,
     definition: FlowDefinition,
+    ctx: CrossNodeContext,
   ) => DetectedIssue | null;
 }
 
+/**
+ * What each rule declares it needs, for the gate that holds a rule is either
+ * reachable from a question some flow asks or named as one AnA does not ask
+ * yet (`__tests__/cross-node-rules-can-fire.test.ts`). The checks themselves
+ * are not exposed — only what they read.
+ */
+export function crossNodeRuleFields(): Array<{
+  id: string;
+  appliesTo?: string[];
+  triggeredBy?: string[];
+  mitigatedBy?: string[];
+}> {
+  return CROSS_NODE_RULES.map(r => ({
+    id: r.id,
+    appliesTo: r.appliesTo,
+    triggeredBy: r.triggeredBy,
+    mitigatedBy: r.mitigatedBy,
+  }));
+}
+
+
+
 const CROSS_NODE_RULES: CrossNodeRule[] = [
+  /* The two answers about the US cannot both be true. The agencies are read
+     through the same fact reader every other rule uses, so this agrees with
+     the routes the person was offered rather than re-reading the agency
+     answers in a second vocabulary. */
+  {
+    id: 'xn_no_us_filing_while_naming_fda',
+    appliesTo: ['project_setup'],
+    /* Two answers that cannot both be true. It asserts no ABSENCE — both
+       halves are things the person stated — so it declares no mitigation. */
+    triggeredBy: ['device_class', 'primary_regulatory_agency', 'additional_agencies'],
+    check(flat) {
+      if (strVal(flat['device_class']) !== 'no_us_filing') return null;
+      const regions = programmeFactsFrom(flat).regions ?? [];
+      if (!regions.includes('US')) return null;
+      return {
+        checkId: 'xn_no_us_filing_while_naming_fda',
+        severity: 'warning',
+        title: 'You have named FDA and said no US filing is planned',
+        message:
+          'The classification question records no US filing, and FDA is among the agencies for this project. One of ' +
+          'the two is out of date: either the US is in scope and the device has a class — AnA can work the ' +
+          'classification regulation through with you — or it is not, and FDA should come off the list so she stops ' +
+          'configuring the Module 1 backbone, the validation profile and the gateway for it.',
+        reference: '21 CFR 860 (classification); 21 CFR 807, 814 (premarket submission)',
+        questionId: '_cross_node',
+        triggerValues: {
+          device_class: flat['device_class'],
+          primary_regulatory_agency: flat['primary_regulatory_agency'],
+          additional_agencies: flat['additional_agencies'],
+        },
+      };
+    },
+  },
   {
     id: 'xn_pediatric_without_safety_monitoring',
     appliesTo: ['protocol_development', 'ind_submission'],
-    check(flat) {
-      const pop = strVal(flat['target_population'] ?? flat['study_population']);
-      const hasDSMB = strVal(flat['has_dsmb'] ?? flat['dsmb']) === 'yes' ||
-                      strVal(flat['data_monitoring']) === 'yes';
-      if ((pop.includes('pediatric') || pop.includes('paediatric') || pop.includes('children')) && !hasDSMB) {
+    /* `includes_vulnerable_populations` is protocol_development's own
+       question, a multi_select offering 'pediatric'. The rule read
+       `target_population`, which no applicable flow asks, so a CRITICAL
+       paediatric-safety finding could never fire (2026-10-13 audit, F2). */
+    triggeredBy: ['target_population', 'study_population', 'includes_vulnerable_populations'],
+    /* `data_safety_monitoring` is the IND interview's own question, and it
+       offers 'not_defined' — a sponsor saying there is no monitoring body,
+       which is an answer and not a mitigation. */
+    /* `dsmb_required` and its three companions are protocol_development's own
+       DSMB node; `data_safety_monitoring` is the IND interview's question, and
+       it offers 'not_defined' — a sponsor saying there is no monitoring body,
+       which is an answer and not a mitigation.
+       KNOWN VALUE GAP: `ind_submission`'s `study_population` offers only
+       healthy_volunteers | patients | both, so the paediatric trigger cannot
+       come from there. The rule is live in protocol_development, and in the
+       IND only if that question gains a paediatric option (2026-10-13 audit,
+       F2/F21; task #19). */
+    mitigatedBy: [
+      'has_dsmb',
+      'dsmb',
+      'data_monitoring',
+      'data_safety_monitoring',
+      'safety_monitoring_plan_detail',
+      'dsmb_required',
+      'dsmb_charter_available',
+      'dsmb_membership',
+    ],
+    check(flat, _state, _definition, ctx) {
+      const paediatric =
+        mentions(flat['includes_vulnerable_populations'], 'pediatric', 'paediatric') ||
+        mentions(flat['target_population'] ?? flat['study_population'], 'pediatric', 'paediatric', 'children');
+      if (paediatric && ctx.mitigationAbsent()) {
         return {
           checkId: 'xn_pediatric_without_safety_monitoring',
           severity: 'critical',
@@ -166,11 +280,13 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_phase3_no_interim',
     appliesTo: ['protocol_development'],
-    check(flat) {
+    triggeredBy: ['study_phase', 'trial_phase', 'sample_size', 'target_enrollment'],
+    mitigatedBy: ['interim_analysis', 'planned_interim'],
+    check(flat, _state, _definition, ctx) {
       const phase = strVal(flat['study_phase'] ?? flat['trial_phase']);
       const interim = strVal(flat['interim_analysis'] ?? flat['planned_interim']);
       const enrollment = numVal(flat['sample_size'] ?? flat['target_enrollment']);
-      if (phase.includes('3') && enrollment !== null && enrollment > 200 && !interim.includes('yes') && isBlank(flat['interim_analysis'])) {
+      if (phase.includes('3') && enrollment !== null && enrollment > 200 && !interim.includes('yes') && ctx.mitigationAbsent()) {
         return {
           checkId: 'xn_phase3_no_interim',
           severity: 'warning',
@@ -187,10 +303,12 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_oncology_no_biomarker_strategy',
     appliesTo: ['protocol_development', 'ind_submission', 'nda_submission'],
-    check(flat) {
+    triggeredBy: ['therapeutic_area', 'indication'],
+    mitigatedBy: ['biomarker_strategy', 'companion_diagnostic', 'biomarker_enrichment'],
+    check(flat, _state, _definition, ctx) {
       const area = strVal(flat['therapeutic_area'] ?? flat['indication']);
       const biomarker = strVal(flat['biomarker_strategy'] ?? flat['companion_diagnostic']);
-      if (area.includes('oncology') && isBlank(biomarker) && isBlank(flat['biomarker_enrichment'])) {
+      if (area.includes('oncology') && isBlank(biomarker) && ctx.mitigationAbsent()) {
         return {
           checkId: 'xn_oncology_no_biomarker_strategy',
           severity: 'warning',
@@ -207,10 +325,26 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_accelerated_approval_no_confirmatory',
     appliesTo: ['nda_submission', 'bla_submission'],
-    check(flat) {
-      const pathway = strVal(flat['regulatory_pathway'] ?? flat['approval_pathway']);
-      const confirmatory = strVal(flat['confirmatory_trial'] ?? flat['post_marketing_commitment']);
-      if (pathway.includes('accelerated') && isBlank(confirmatory)) {
+    /* `accelerated_approval_basis` is the BLA interview's own question — the
+       surrogate endpoint the accelerated claim rests on. The rule read two ids
+       neither applicable flow asks, so a CRITICAL finding about the
+       confirmatory trial FDORA §3210 requires could never fire (F1). */
+    triggeredBy: ['regulatory_pathway', 'approval_pathway', 'accelerated_approval_basis'],
+    /* The BLA interview asks both of the last two in its post-marketing plan. */
+    mitigatedBy: [
+      'confirmatory_trial',
+      'post_marketing_commitment',
+      'confirmatory_study_needed',
+      'confirmatory_study_protocol',
+    ],
+    check(flat, _state, _definition, ctx) {
+      /* Either the pathway answer names it (a multi_select in the one flow
+         that asks it) or the BLA stated the basis the accelerated claim rests
+         on. Both are the sponsor saying they are on that route. */
+      const accelerated =
+        mentions(flat['regulatory_pathway'] ?? flat['approval_pathway'], 'accelerated') ||
+        strVal(flat['accelerated_approval_basis']) !== '';
+      if (accelerated && ctx.mitigationAbsent()) {
         return {
           checkId: 'xn_accelerated_approval_no_confirmatory',
           severity: 'critical',
@@ -227,10 +361,11 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_orphan_without_natural_history',
     appliesTo: ['protocol_development', 'ind_submission', 'nda_submission', 'bla_submission'],
-    check(flat) {
+    triggeredBy: ['expedited_designations', 'special_designations'],
+    mitigatedBy: ['natural_history', 'disease_natural_history'],
+    check(flat, _state, _definition, ctx) {
       const designations = strVal(flat['expedited_designations'] ?? flat['special_designations'] ?? '');
-      const naturalHistory = strVal(flat['natural_history'] ?? flat['disease_natural_history']);
-      if (designations.includes('orphan') && isBlank(naturalHistory)) {
+      if (designations.includes('orphan') && ctx.mitigationAbsent()) {
         return {
           checkId: 'xn_orphan_without_natural_history',
           severity: 'warning',
@@ -247,10 +382,12 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_global_trial_no_ethnic_bridging',
     appliesTo: ['protocol_development', 'ind_submission'],
-    check(flat) {
+    triggeredBy: ['countries', 'target_countries'],
+    mitigatedBy: ['ethnic_bridging', 'ethnicity_factors'],
+    check(flat, _state, _definition, ctx) {
       const countries = flat['countries'] ?? flat['target_countries'];
       const ethnicBridging = strVal(flat['ethnic_bridging'] ?? flat['ethnicity_factors']);
-      if (Array.isArray(countries) && countries.length > 3 && isBlank(ethnicBridging)) {
+      if (Array.isArray(countries) && countries.length > 3 && isBlank(ethnicBridging) && ctx.mitigationAbsent()) {
         const hasAsian = countries.some((c: unknown) => {
           const s = strVal(c);
           return s.includes('japan') || s.includes('china') || s.includes('korea') || s.includes('taiwan');
@@ -273,18 +410,51 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_class_iii_device_no_clinical_data',
     appliesTo: ['device_pma', 'device_510k'],
-    check(flat) {
+    triggeredBy: ['device_class', 'classification'],
+    /* The last four are what the PMA and 510(k) interviews actually ask, in
+       their own words. The rule was written against two ids neither of them
+       has, so it fired at every Class III programme and never read the answer
+       the sponsor had given (2026-10-13). */
+    mitigatedBy: [
+      'clinical_data_available',
+      'clinical_evidence',
+      'clinical_study_conducted',
+      'clinical_no_study_justification',
+      'clinical_data_required',
+      'clinical_study_type',
+    ],
+    /* "Clinical Data Required to Address Differences" — no, is the normal
+       510(k) answer: performance and bench testing establish substantial
+       equivalence. It is also the answer that skips the clinical-evidence
+       node, so treating it as a refusal left a CRITICAL finding nothing could
+       silence. */
+    negativeIsAnswer: ['clinical_data_required'],
+    check(flat, _state, definition, ctx) {
       const deviceClass = strVal(flat['device_class'] ?? flat['classification']);
-      const clinicalData = strVal(flat['clinical_data_available'] ?? flat['clinical_evidence']);
-      if (deviceClass.includes('iii') && (isBlank(clinicalData) || clinicalData === 'no' || clinicalData === 'none')) {
+      if (deviceClass.includes('iii') && ctx.mitigationAbsent()) {
         return {
           checkId: 'xn_class_iii_device_no_clinical_data',
           severity: 'critical',
           title: 'Class III Device Without Clinical Evidence',
-          message: 'Class III devices require valid scientific evidence of safety and effectiveness, which typically includes clinical data from well-controlled investigations.',
-          reference: '21 CFR 814.20(b)(6); FDA PMA Guidance',
+          message:
+            definition.category === 'device_510k'
+              ? 'A Class III device is a premarket approval route unless it is a preamendments type FDA has not yet called for PMA, so a 510(k) for one needs the basis for that first — and a Class III device needs valid scientific evidence of safety and effectiveness either way.'
+              : 'Class III devices require valid scientific evidence of safety and effectiveness, which typically includes clinical data from well-controlled investigations.',
+          /* The 814 citation is the PMA's. A 510(k) interview reaching this
+             finding is being told something about its ROUTE first, so it is
+             cited to the statute that decides the route (2026-10-13 audit). */
+          reference:
+            definition.category === 'device_510k'
+              ? 'FD&C Act 515(b); 21 CFR 807.81(b); 21 CFR 814.20(b)(6)'
+              : '21 CFR 814.20(b)(6); FDA PMA Guidance',
           questionId: '_cross_node',
-          triggerValues: { device_class: flat['device_class'], clinical_data_available: flat['clinical_data_available'] },
+          /* What the record says it judged: the class, and the clinical answer
+             each device interview actually gives. */
+          triggerValues: {
+            device_class: flat['device_class'],
+            clinical_study_conducted: flat['clinical_study_conducted'],
+            clinical_data_required: flat['clinical_data_required'],
+          },
         };
       }
       return null;
@@ -293,13 +463,23 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_biologic_no_immunogenicity',
     appliesTo: ['bla_submission', 'ind_submission'],
-    check(flat) {
+    triggeredBy: ['product_type', 'molecule_type'],
+    /* `immunogenicity_assessment_planned` (IND) and
+       `immunogenicity_risk_factors` (BLA) are the questions those interviews
+       ask. The risk factors ARE the assessment FDA's 2019 guidance asks for —
+       it is risk-based — so a sponsor who has enumerated them has answered. */
+    mitigatedBy: [
+      'immunogenicity_assessment',
+      'immunogenicity_strategy',
+      'immunogenicity_assessment_planned',
+      'immunogenicity_risk_factors',
+    ],
+    check(flat, _state, _definition, ctx) {
       const productType = strVal(flat['product_type'] ?? flat['molecule_type']);
-      const immunogenicity = strVal(flat['immunogenicity_assessment'] ?? flat['immunogenicity_strategy']);
       const isBiologic = productType.includes('biologic') || productType.includes('antibod') ||
                          productType.includes('protein') || productType.includes('cell') ||
                          productType.includes('gene');
-      if (isBiologic && isBlank(immunogenicity)) {
+      if (isBiologic && ctx.mitigationAbsent()) {
         return {
           checkId: 'xn_biologic_no_immunogenicity',
           severity: 'critical',
@@ -316,10 +496,11 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_rems_without_etasu',
     appliesTo: ['nda_submission', 'bla_submission', 'labeling'],
-    check(flat) {
+    triggeredBy: ['rems_required', 'rems'],
+    mitigatedBy: ['etasu', 'rems_elements'],
+    check(flat, _state, _definition, ctx) {
       const hasRems = strVal(flat['rems_required'] ?? flat['rems']) === 'yes';
-      const etasu = strVal(flat['etasu'] ?? flat['rems_elements']);
-      if (hasRems && isBlank(etasu)) {
+      if (hasRems && ctx.mitigationAbsent()) {
         return {
           checkId: 'xn_rems_without_etasu',
           severity: 'warning',
@@ -336,6 +517,10 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_stability_insufficient_for_shelf_life',
     appliesTo: ['stability_study', 'cmc_specification', 'nda_submission', 'bla_submission'],
+    /* Both numbers are facts the finding RESTS on rather than facts whose
+       absence it asserts: with either missing the arithmetic has no answer, so
+       the rule already stays silent. */
+    triggeredBy: ['proposed_shelf_life', 'shelf_life_months', 'long_term_data_months', 'stability_data_months'],
     check(flat) {
       const shelfLife = numVal(flat['proposed_shelf_life'] ?? flat['shelf_life_months']);
       const dataMonths = numVal(flat['long_term_data_months'] ?? flat['stability_data_months']);
@@ -356,11 +541,14 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_high_risk_device_no_human_factors',
     appliesTo: ['device_510k', 'device_pma'],
-    check(flat) {
+    triggeredBy: ['risk_level', 'device_class'],
+    mitigatedBy: ['human_factors_study', 'hfe_study'],
+    check(flat, _state, _definition, ctx) {
       const riskLevel = strVal(flat['risk_level'] ?? flat['device_class']);
       const humanFactors = strVal(flat['human_factors_study'] ?? flat['hfe_study']);
       const isHighRisk = riskLevel.includes('iii') || riskLevel.includes('high') || riskLevel.includes('life-sustaining');
-      if (isHighRisk && (isBlank(humanFactors) || humanFactors === 'no')) {
+      const declined = humanFactors === 'no';
+      if (isHighRisk && (declined || ctx.mitigationAbsent())) {
         return {
           checkId: 'xn_high_risk_device_no_human_factors',
           severity: 'warning',
@@ -395,10 +583,11 @@ const CROSS_NODE_RULES: CrossNodeRule[] = [
   {
     id: 'xn_iso_14971_no_post_production',
     appliesTo: ['risk_management', 'device_510k', 'device_pma'],
-    check(flat) {
+    triggeredBy: ['risk_management_process', 'rm_standard'],
+    mitigatedBy: ['post_production_monitoring', 'post_market_surveillance'],
+    check(flat, _state, _definition, ctx) {
       const rmProcess = strVal(flat['risk_management_process'] ?? flat['rm_standard']);
-      const postProd = strVal(flat['post_production_monitoring'] ?? flat['post_market_surveillance']);
-      if (rmProcess.includes('14971') && isBlank(postProd)) {
+      if (rmProcess.includes('14971') && ctx.mitigationAbsent()) {
         return {
           checkId: 'xn_iso_14971_no_post_production',
           severity: 'warning',

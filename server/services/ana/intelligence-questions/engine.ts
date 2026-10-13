@@ -20,7 +20,7 @@ import type {
   IntelligenceFlowCompleteEvent,
 } from './types.js';
 import { OTHER_POSITION, otherFieldId } from '../../../../shared/types/intelligence-questions.js';
-import { evaluatePredicate } from '../../../../shared/ana/question-predicate.js';
+import { evaluatePredicate, predicateFieldIds } from '../../../../shared/ana/question-predicate.js';
 import type { FlowEngineContext, FlowStepResult } from './types.js';
 import { getFlowDefinition } from './flows/index.js';
 import { runIssueChecks, runCrossNodeAnalysis } from './issue-detector.js';
@@ -163,14 +163,22 @@ export function advanceFlow(
   ];
   const allIssues = [...state.issues, ...newIssues];
 
-  // Run cross-node analysis with the updated state
-  const crossNodeState: FlowState = { ...state, answers: updatedAnswers, issues: allIssues };
+  // Mark node complete
+  const completedNodes = [...state.completedNodes, nodeId];
+
+  /* Run cross-node analysis with the updated state — INCLUDING the node just
+     answered. The detector decides whether a mitigating question has been put
+     to the person from `completedNodes`, and this ran five lines before that
+     list was extended: a rule whose trigger and mitigation live in the SAME
+     node read 'pending' at the moment the answer arrived, and fired one
+     question later. Where that node is terminal — `rems_evaluation` is the
+     last node of `bla_submission` — no later question existed, so the finding
+     never arrived at all. A sponsor who said a REMS was required and named no
+     elements was told nothing (2026-10-13 audit). */
+  const crossNodeState: FlowState = { ...state, answers: updatedAnswers, issues: allIssues, completedNodes };
   const crossNodeIssues = runCrossNodeAnalysis(crossNodeState, definition);
   allIssues.push(...crossNodeIssues);
   newIssues.push(...crossNodeIssues);
-
-  // Mark node complete
-  const completedNodes = [...state.completedNodes, nodeId];
 
   // Update section progress
   const sectionProgress = { ...state.sectionProgress };
@@ -433,7 +441,9 @@ function buildQuestionEvent(
   const ownFieldIds = new Set(node.fields.map(f => f.id));
   const visibleFields = node.fields.filter(f => {
     if (!f.visibleWhen) return true;
-    if (ownFieldIds.has(f.visibleWhen.field)) return true;
+    /* ANY field of a composite gate in this node is enough: the draw cannot
+       settle it either way, so the field is sent with its predicate. */
+    if (predicateFieldIds(f.visibleWhen).some(id => ownFieldIds.has(id))) return true;
     return evaluatePredicate(f.visibleWhen, allAnswerValues);
   });
 

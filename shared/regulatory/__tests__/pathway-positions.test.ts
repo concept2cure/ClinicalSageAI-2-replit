@@ -31,6 +31,13 @@ import {
   positionFor,
 } from '../pathway-positions.js';
 
+/**
+ * The filing that permits the study rather than the sale, per region and
+ * domain. Named here because the gate below is the one that was missing: the
+ * catalogue held US_IND all along and offered it to almost nobody.
+ */
+const INVESTIGATIONAL = ['US_IND', 'EU_CTA', 'US_IDE', 'EU_CLIN_INVESTIGATION', 'EU_PERF_STUDY'];
+
 describe('the positions are the registry’s own filings', () => {
   it('annotates no filing the registry does not hold', () => {
     const orphans = annotatedPositionIds().filter(id => !getApplicationType(id));
@@ -50,9 +57,20 @@ describe('the positions are the registry’s own filings', () => {
     expect(positionFor('NOT_A_FILING')).toBeNull();
   });
 
-  it('covers every US and EU route to market in the segments it claims', () => {
+  it('covers every US and EU filing a programme can be at the stage of, in the segments it claims', () => {
     const claimed = new Set(['pharma_biotech', 'medical_devices', 'diagnostics_ivd']);
-    const routeFamilies = new Set(['marketing_authorization', 'device_clearance', 'device_approval', 'companion_diagnostic']);
+    /* `clinical_trial` is here because a programme's STAGE is a position too:
+       the catalogue annotated US_IND from the first day and left the EU CTA,
+       the MDR clinical investigation and the IVDR performance study out, so a
+       European programme before authorisation had nothing to say in the
+       question that asks which application it is making (2026-10-12 review). */
+    const routeFamilies = new Set([
+      'marketing_authorization',
+      'device_clearance',
+      'device_approval',
+      'companion_diagnostic',
+      'clinical_trial',
+    ]);
     /* Documents that live INSIDE a route rather than being one. Each is named,
        because an unexplained exclusion is how a route goes missing. */
     const notARoute = new Set([
@@ -75,7 +93,7 @@ describe('the positions are the registry’s own filings', () => {
         !notARoute.has(e.id) &&
         !annotated.has(e.id),
     ).map(e => `${e.id} (${e.displayName})`);
-    expect(missing, 'a route to market with no position: it would reach a person as a bare label').toEqual([]);
+    expect(missing, 'a filing with no position: it would reach a person as a bare label').toEqual([]);
   });
 });
 
@@ -84,8 +102,13 @@ describe('the bridge to the modality frame', () => {
     const unresolved = governedFramePathways().filter(pathway => {
       // Resolution is observable: some modality offering it must yield a position.
       const modality = MODALITIES.find(m => MODALITY_FRAME[m].pathways.some(p => p.pathway === pathway))!;
-      const positions = pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality });
-      return positions.length !== MODALITY_FRAME[modality].pathways.length;
+      /* The frame's pathways are routes TO MARKET; the draw also offers the
+         region's positions that are not, so the subset to count is the
+         marketing one. */
+      const routes = pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality }).filter(
+        p => p.marketingRoute,
+      );
+      return routes.length !== MODALITY_FRAME[modality].pathways.length;
     });
     expect(unresolved, 'a frame pathway with no registry filing behind it').toEqual([]);
   });
@@ -93,22 +116,101 @@ describe('the bridge to the modality frame', () => {
   it('offers a modality only what the frame allows it, in the frame’s order', () => {
     expect(pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality: 'biosimilar' }).map(p => p.value)).toEqual([
       'US_351K',
+      /* The frame's routes, then the position that is not one. */
+      'US_IND',
     ]);
     expect(pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality: 'small_molecule' }).map(p => p.value)).toEqual([
       'US_NDA',
       'US_505B2',
       'US_ANDA',
+      'US_IND',
     ]);
-    expect(pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality: 'mab' }).map(p => p.value)).toEqual(['US_BLA']);
+    expect(pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality: 'mab' }).map(p => p.value)).toEqual([
+      'US_BLA',
+      'US_IND',
+    ]);
   });
 
-  it('every modality in the frame resolves to as many positions as the frame holds', () => {
+  it('every modality in the frame resolves to as many ROUTES as the frame holds', () => {
     for (const modality of MODALITIES) {
-      expect(
-        pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality }).length,
-        modality,
-      ).toBe(MODALITY_FRAME[modality].pathways.length);
+      const drawn = pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality });
+      expect(drawn.filter(p => p.marketingRoute).length, modality).toBe(MODALITY_FRAME[modality].pathways.length);
     }
+  });
+});
+
+describe('the stage a programme is actually at', () => {
+  /* ── The position that was offered to nobody ───────────────────────────────
+   * The frame holds ROUTES TO MARKET. The draw narrowed a medicines programme
+   * to the frame's routes and stopped there, so every programme that stated a
+   * product type naming a modality — most of them — was offered no
+   * investigational filing in the one question that asks which application it
+   * is making. A monoclonal antibody in phase 1 could say `US_BLA` or nothing.
+   *
+   * The review that found it said US_IND was "offered to nobody", which is not
+   * quite right and the difference matters: a programme whose product type
+   * states only a statute ("Biologic (BLA)") carries no modality, took the
+   * unnarrowed list, and WAS offered it. That is why nothing noticed.
+   */
+  it('offers a medicines programme the investigational filing beside the frame\u2019s routes', () => {
+    for (const modality of MODALITIES) {
+      const drawn = pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality }).map(p => p.value);
+      if (MODALITY_FRAME[modality].pathways.length === 0) continue;
+      expect(drawn, modality).toContain('US_IND');
+      /* After the routes, not among them: a person reads the routes to market
+         first, as the catalogue's order says. */
+      expect(drawn[drawn.length - 1], modality).toBe('US_IND');
+    }
+  });
+
+  it('offers none of them where the frame has no view of the product at all', () => {
+    /* A combination product's route follows from the centre determination, so
+       offering the drug side's IND would assert half of a determination that
+       has not been made. The caller says why in the frame's own words. */
+    const combination = MODALITIES.filter(m => MODALITY_FRAME[m].pathways.length === 0);
+    expect(combination.length, 'a modality the frame holds no pathways for').toBeGreaterThan(0);
+    for (const modality of combination) {
+      expect(pathwayPositionsFor({ domain: 'pharma_biotech', region: 'US', modality }), modality).toEqual([]);
+    }
+  });
+
+  it('holds an investigational filing for every region and domain pair it claims', () => {
+    const pairs: Array<[Parameters<typeof pathwayPositionsFor>[0]['domain'], 'US' | 'EU']> = [
+      ['pharma_biotech', 'US'],
+      ['pharma_biotech', 'EU'],
+      ['medical_devices', 'US'],
+      ['medical_devices', 'EU'],
+      ['diagnostics_ivd', 'US'],
+      ['diagnostics_ivd', 'EU'],
+    ];
+    const without = pairs.filter(([domain, region]) => {
+      const drawn = pathwayPositionsFor({ domain, region }).map(p => p.value);
+      return !drawn.some(id => INVESTIGATIONAL.includes(id));
+    });
+    expect(without, 'a pair whose programmes cannot say they are at the study stage').toEqual([]);
+  });
+
+  it('says what each one permits, and that it is not a route to market', () => {
+    for (const id of INVESTIGATIONAL) {
+      const position = positionFor(id)!;
+      expect(position, id).not.toBeNull();
+      expect(position.marketingRoute, id).toBe(false);
+      expect(position.commits, id).toMatch(/not to (market|place)|Permission/);
+    }
+    expect(positionFor('EU_CTA')!.commits, 'one application, two parts').toMatch(/CTIS/);
+    expect(positionFor('EU_CTA')!.authority).toMatch(/536\/2014/);
+    expect(positionFor('EU_CLIN_INVESTIGATION')!.authority).toMatch(/Art 62/);
+    expect(positionFor('EU_PERF_STUDY')!.authority).toMatch(/Art 58/);
+    /* An IVD study is often exempt from Part 812 outright, which is worth more
+       to a sponsor than the filing itself. */
+    expect(positionFor('US_IDE')!.commits).toMatch(/exempt/i);
+    expect(positionFor('US_IDE')!.authority).toMatch(/812\.2\(c\)\(3\)/);
+  });
+
+  it('reads as not a route to market in the option a person sees', () => {
+    const eu = pathwayOptions({ domain: 'pharma_biotech', region: 'EU' });
+    expect(eu.find(o => o.value === 'EU_CTA')!.label).toMatch(/not a route to market/);
+    expect(eu.find(o => o.value === 'EU_MAA')!.label).not.toMatch(/not a route to market/);
   });
 });
 
@@ -224,6 +326,9 @@ describe('what every position must carry', () => {
       'EU_MDR_CLASS_IIA',
       'EU_MDR_CLASS_IIB',
       'EU_MDR_CLASS_III',
+      /* Not a class route: the authorisation to run the investigation that a
+         Class III or implantable route then rests on. */
+      'EU_CLIN_INVESTIGATION',
     ]);
     expect(positionFor('EU_MDR_CLASS_I')!.commits).toMatch(/declare conformity yourself/i);
     expect(positionFor('EU_MDR_CLASS_III')!.authority).toMatch(/Art 54/);
@@ -238,6 +343,9 @@ describe('what every position must carry', () => {
       'EU_CMA',
       'EU_BIOSIMILAR_MAA',
       'EU_GENERIC_DCP',
+      /* And the CTA, which is not a route to market and is the filing a
+         European programme before authorisation is actually making. */
+      'EU_CTA',
     ]);
     expect(positionFor('EU_CMA')!.commits).toMatch(/specific obligations/i);
   });

@@ -117,6 +117,46 @@
 -- than assumed. Nothing is removed from this file.
 -- Evidence docs/evidence/D3/2026-10-12-unkeyed-table-classification/.
 --
+-- ── AMENDED IN PLACE 2026-10-13 (D3) ────────────────────────────────────────
+-- capa_actions, q_sub_meetings, q_sub_questions and q_sub_timeline_entries
+-- join the CHAINED list — and they are here because yesterday's amendment put
+-- them there. Adding capa_records and q_submissions to `specs` above made
+-- those two tenant-keyed PARENTS, which is what the change was for; it also
+-- gave each of them children that are now "tenant-keyed table(s) [carrying] no
+-- RLS policy". install-fresh's own verifier caught it and failed the whole
+-- provision:
+--
+--   ❌ Install failed: 4 tenant-keyed table(s) carry no RLS policy — rows are
+--      readable across tenants once anything reads them:
+--      public.capa_actions (child of public.capa_records, row security off),
+--      public.q_sub_meetings, public.q_sub_questions,
+--      public.q_sub_timeline_entries (children of public.q_submissions)
+--
+-- That is the check doing its job, and the lesson is that policying a table
+-- MOVES the frontier rather than closing it. Fixing only those four proved it
+-- twice over: the next provision failed again, on
+--
+--   public.q_sub_commitments (child of public.q_sub_questions, row security off)
+--
+-- a table that was not a child of a tenant-keyed parent until the line above
+-- made q_sub_questions one. So the whole descendant tree was then walked at
+-- once, transitively through pg_constraint rather than one failure at a time:
+--
+--   depth 1  capa_actions            → capa_records     (capa_id)
+--   depth 1  q_sub_meetings          → q_submissions    (q_submission_id)
+--   depth 1  q_sub_questions         → q_submissions    (q_submission_id)
+--   depth 1  q_sub_timeline_entries  → q_submissions    (q_submission_id)
+--   depth 2  q_sub_commitments       → q_sub_questions  (q_sub_question_id)
+--
+-- and nothing lies below depth 2. All five are grandchildren or deeper: their
+-- parents carry no organization_id of their own and are themselves scoped
+-- through regulatory_programs, so they go in `chained`, which delegates to the
+-- parent's own policy instead of naming a tenant column. Keys are uuid → uuid
+-- throughout, so no text comparison is involved. Order is load-bearing within
+-- the list as well as between the two loops: `specs` runs before `chained`, and
+-- q_sub_commitments follows q_sub_questions. Nothing is removed from this file.
+-- Evidence docs/evidence/D3/2026-10-13-capa-qsub-grandchildren/.
+--
 -- Idempotent: guarded on pg_policies and pg_class, safe to re-run every deploy.
 
 BEGIN;
@@ -475,6 +515,17 @@ DECLARE
     ['c2c_document_section_evidence', 'section_id',         'c2c_document_sections',  'id'],
     ['c2c_document_section_versions', 'section_id',         'c2c_document_sections',  'id'],
     ['section_propagations',          'patch_id',           'section_patches',        'id'],
+    -- 2026-10-13 (D3): the generation below capa_records and q_submissions,
+    -- which `specs` made tenant-keyed parents the day before. Their own
+    -- parents carry no organization_id, so these delegate to the parent's
+    -- policy rather than naming a tenant column.
+    ['capa_actions',                  'capa_id',            'capa_records',           'id'],
+    ['q_sub_meetings',                'q_submission_id',    'q_submissions',          'id'],
+    ['q_sub_questions',               'q_submission_id',    'q_submissions',          'id'],
+    ['q_sub_timeline_entries',        'q_submission_id',    'q_submissions',          'id'],
+    -- Depth 2: a commitment hangs off a question, not off the submission. It
+    -- follows q_sub_questions so that policy exists when this one is reached.
+    ['q_sub_commitments',             'q_sub_question_id',  'q_sub_questions',        'id'],
     -- 2026-09-24 (ledger L203): children outside public.
     ['ai.risk_assessments',                          'dossier_id',   'global_dossier.dossier_instances',        'id'],
     ['audit.config_bundles',                         'program_id',   'core.programs',                           'id'],

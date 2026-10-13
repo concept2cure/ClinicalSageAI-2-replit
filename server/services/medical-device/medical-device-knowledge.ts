@@ -78,6 +78,8 @@ import {
   statusAsOf,
   type RegulatoryFact,
 } from '../regulatory-currency/currency-registry.js';
+import type { IvdrClass, MdrDeclaredClass } from '../../../shared/regulatory/device-class.js';
+import type { DeviceClass } from '../../../shared/regulatory/device-class.js';
 
 export type { Citation } from './medical-device-knowledge-data.js';
 
@@ -86,13 +88,18 @@ export type { Citation } from './medical-device-knowledge-data.js';
 // ════════════════════════════════════════════════════════════════════════════
 
 /** US device risk class per 21 CFR 860.3. */
-export type USDeviceClass = 'I' | 'II' | 'III' | 'unclassified';
+/** The US classes, plus the absence of a classification. */
+export type USDeviceClass = DeviceClass | 'unclassified';
 
-/** EU MDR device class per Regulation (EU) 2017/745, Annex VIII. */
-export type EUMDRClass = 'I' | 'Is' | 'Im' | 'Ir' | 'IIa' | 'IIb' | 'III';
+/**
+ * EU MDR device class per Regulation (EU) 2017/745, Annex VIII — the seven a
+ * sponsor DECLARES, from the one module that holds both European vocabularies
+ * and says why each has the shape it has.
+ */
+export type EUMDRClass = MdrDeclaredClass;
 
 /** EU IVDR device class per Regulation (EU) 2017/746, Annex VIII. */
-export type EUIVDRClass = 'A' | 'B' | 'C' | 'D';
+export type EUIVDRClass = IvdrClass;
 
 /** US premarket pathway. */
 export type USPathway =

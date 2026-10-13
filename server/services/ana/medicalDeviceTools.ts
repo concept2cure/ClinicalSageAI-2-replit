@@ -18,6 +18,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { IVDR_CLASSES } from '../../../shared/regulatory/device-class.js';
 
 const DETERMINISTIC_NOTE =
   'Deterministic — identical input always yields identical output. No LLM, no network. ' +
@@ -215,7 +216,7 @@ export const SELECT_DEVICE_PATHWAY: AnaTool = {
       },
       euIvdrClass: {
         type: 'string',
-        enum: ['A', 'B', 'C', 'D'],
+        enum: [...IVDR_CLASSES],
         description: 'EU IVDR class for conformity routing (provide for IVD EU products).',
       },
       sterile: {
@@ -454,7 +455,7 @@ export const PLAN_DEVICE_SUBMISSION: AnaTool = {
       },
       euIvdrClass: {
         type: 'string',
-        enum: ['A', 'B', 'C', 'D'],
+        enum: [...IVDR_CLASSES],
         description: 'EU IVDR class for technical-documentation scoping.',
       },
       preSubmissionDone: {
