@@ -1,5 +1,25 @@
 import type { BaseTask, SubmissionPyramid } from './types.js';
 import { buildPhase } from './types.js';
+import { soleModule1Placement, type DocumentRole } from '../../../shared/regulatory/regional-module1.js';
+
+type Binding = NonNullable<BaseTask['documentBindings']>[number];
+
+/**
+ * A Module 1 binding, from the FDA record rather than from a number written here.
+ *
+ * The bindings in this file stated their own codes and had the cover letter at 1.1 (which is Forms)
+ * and FDA Form 1571 at 1.2 (which is the Cover Letter) — the swapped pair found across ten files on
+ * 2026-10-13. Empty when the record holds no single node for the role: a task with no placement is
+ * honest, a task pointing at the wrong heading is not.
+ */
+function m1Binding(
+  role: DocumentRole,
+  rest: Omit<Binding, 'ctdSection' | 'sectionTitle'> = { ectdLifecycleOp: 'new' },
+  title?: string,
+): Binding[] {
+  const p = soleModule1Placement(role, 'US', 'ind');
+  return p ? [{ ...rest, ctdSection: p.code, sectionTitle: title ?? p.title }] : [];
+}
 
 /**
  * IND Annual Report Pyramid
@@ -360,7 +380,7 @@ export function buildIndAnnualReportPyramid(): SubmissionPyramid {
       timeline: { typicalStartWeek: 4, typicalDurationWeeks: 2 },
       deliverables: ['General investigational plan update narrative'],
       documentBindings: [
-        { ctdSection: '1.3', sectionTitle: 'General Investigational Plan — Annual Update', ectdLifecycleOp: 'append' },
+        ...m1Binding('general_investigational_plan', { ectdLifecycleOp: 'append' }, 'General Investigational Plan — Annual Update'),
       ],
     },
   ], phase1.completeId);
@@ -518,8 +538,10 @@ export function buildIndAnnualReportPyramid(): SubmissionPyramid {
       timeline: { typicalStartWeek: 7, typicalDurationWeeks: 1 },
       deliverables: ['Compiled eCTD sequence', 'eCTD validation report (no errors)'],
       documentBindings: [
-        { ctdSection: '1.1', sectionTitle: 'Cover Letter — Annual Report', ectdLifecycleOp: 'new', artifactTypes: ['cover_letter'] },
-        { ctdSection: '1.2', sectionTitle: 'Administrative — Annual Report', ectdLifecycleOp: 'append', artifactTypes: ['annual_report'] },
+        ...m1Binding('cover_letter', { ectdLifecycleOp: 'new', artifactTypes: ['cover_letter'] }, 'Cover Letter — Annual Report'),
+        /* The annual report itself is 1.13 Annual Report (21 CFR 312.33), not an administrative
+           heading: 1.2 is the Cover Letter. */
+        { ctdSection: '1.13', sectionTitle: 'Annual Report', ectdLifecycleOp: 'append', artifactTypes: ['annual_report'] },
       ],
     },
     {
