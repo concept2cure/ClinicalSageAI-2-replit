@@ -48,6 +48,9 @@ import { pdfViewerBlob } from './pdfBytes';
 import type { FireToast } from '../toast';
 import { isVaultDoc, vaultStatus, vaultFileIconKey, type VaultDoc, type VaultFolder } from '../fixtures/vault-data';
 import type { ProjectSource } from './DocumentWorkbench';
+import { SectionActions, SelectedFileActions, VaultSourceImport } from './ProjectFileActions';
+import { DataRoomSourcesPanel } from './DataRoomSourcesPanel';
+import { IndDocumentLibrary } from './IndDocumentLibrary';
 
 /** The read model's envelope, unwrapped — the fields this rail reads. */
 interface VaultRead {
@@ -79,6 +82,10 @@ export interface ProjectFilesPanelProps {
   onCite?: (sourceId: string) => boolean;
   /** Insert plain reference text through the editor. False when nothing was inserted. */
   onInsertReference?: (text: string) => boolean;
+  /** The host guards unsaved work before opening the returned exact document. */
+  onOpenDocument?: (docId: string) => void;
+  /** Uses the host's existing conversation for IND preparation and source study. */
+  onAsk?: (text: string) => void;
 }
 
 const NO_SOURCES: ProjectSource[] = [];
@@ -523,25 +530,6 @@ function VaultBrowseBody(props: RowsProps & {
   );
 }
 
-/** The two section actions — cite a source, refer to anything else — which
- *  the viewer pane and the selected row both offer, on the same rule. */
-function SectionActions(props: {
-  sectionOpen: boolean; sectionCode: string | null; source: ProjectSource | null;
-  onCite: () => void; onInsertRef: () => void; citeTestId?: string; refTestId?: string;
-}) {
-  const { sectionOpen, sectionCode, source, onCite, onInsertRef, citeTestId, refTestId } = props;
-  if (!sectionOpen) return null;
-  return source ? (
-    <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={onCite} data-testid={citeTestId}>
-      {I.quote} Cite in {sectionCode ? `§${sectionCode}` : 'this section'}
-    </button>
-  ) : (
-    <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={onInsertRef} data-testid={refTestId}>
-      {I.link} Insert reference
-    </button>
-  );
-}
-
 /** The PDF pane: the served hash it was verified against, the document, and
  *  the same two section actions a row offers.
  *
@@ -575,40 +563,9 @@ function PdfViewerPane(props: {
   );
 }
 
-/** The selected row's footer: what the file is, what can be done with it, and
- *  why a file that is not a data-room source cannot be cited. */
-function SelectedFileActions(props: {
-  doc: VaultDoc; sectionOpen: boolean; sectionCode: string | null; source: ProjectSource | null;
-  busy: boolean; onOpen: () => void; onCite: () => void; onInsertRef: () => void; editorAttached: boolean;
-}) {
-  const { doc, busy, onOpen, editorAttached, ...actions } = props;
-  const { sectionOpen, source } = props;
-  return (
-    <div className="pf-sel" data-testid="pf-selected">
-      <div className="pf-sel-t">{doc.title}</div>
-      {doc.hash && <div className="pf-sel-m" title={`SHA-256 ${doc.hash}`}>SHA-256 {doc.hash.slice(0, 12)}…</div>}
-      {doc.filing?.folderLabel && <div className="pf-sel-m">{doc.filing.folderLabel}</div>}
-      <div className="pf-actions">
-        {(doc.src === 'upload' || doc.docId) && (
-          <button type="button" className="btn ghost" style={{ height: 28, fontSize: 12 }} disabled={busy} onClick={onOpen}>
-            {I.eye} {busy ? 'Opening…' : 'Open'}
-          </button>
-        )}
-        <SectionActions {...actions} citeTestId="pf-cite" refTestId="pf-insert-reference" />
-        {editorAttached && !sectionOpen && <span className="pf-sel-m">Open an editable section to cite or refer to this file.</span>}
-      </div>
-      {sectionOpen && !source && (
-        <div className="pf-sel-m" data-testid="pf-not-citable">
-          Not a data-room source, so it cannot be cited — a citation claims a source the reference list resolves. Add the file to the project’s data room to cite it; a reference inserts as text.
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function ProjectFilesPanel({
   programId, programName, sectionOpen = false, sectionCode = null, projectSources = NO_SOURCES,
-  onCite, onInsertReference, onClose, fireToast,
+  onCite, onInsertReference, onOpenDocument, onAsk, onClose, fireToast,
 }: ProjectFilesPanelProps) {
   const editorAttached = Boolean(onCite && onInsertReference);
   const { state, vault, readError, load } = useProjectVaultRead(programId);
@@ -617,6 +574,8 @@ export function ProjectFilesPanel({
   const { viewer, showPdf, closeViewer } = useVaultPdfViewer();
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [lane, setLane] = useState<'vault' | 'data-room' | 'ind'>('vault');
+  const [pullDoc, setPullDoc] = useState<VaultDoc | null>(null);
 
   const sourceFor = useCallback((doc: VaultDoc) => matchingProjectSource(doc, projectSources), [projectSources]);
   const allDocs = useMemo(() => flattenVaultDocs(vault?.tree ?? []), [vault]);
@@ -653,6 +612,15 @@ export function ProjectFilesPanel({
   return (
     <>
       {header}
+      <div className="pf-actions" role="group" aria-label="Document sources">
+        <button className="btn ghost" aria-pressed={lane === 'vault'} onClick={() => setLane('vault')}>Vault</button>
+        <button className="btn ghost" aria-pressed={lane === 'data-room'} onClick={() => setLane('data-room')}>Data room / catalogue</button>
+        <button className="btn ghost" aria-pressed={lane === 'ind'} onClick={() => setLane('ind')}>IND documents</button>
+      </div>
+      {lane === 'data-room' && <DataRoomSourcesPanel key={programId} programId={programId} onOpenDocument={onOpenDocument} onAsk={onAsk} />}
+      {lane === 'ind' && <IndDocumentLibrary key={programId} programId={programId} onAsk={onAsk} onOpenDocument={onOpenDocument}
+        onFindSources={text => { setQuery(text); setLane('vault'); }} />}
+      {lane === 'vault' && <>
       <div className="pf-search">
         <label className="sr-only" htmlFor="pf-search-input">Search the project vault</label>
         <input
@@ -669,8 +637,11 @@ export function ProjectFilesPanel({
       {selected && (
         <SelectedFileActions doc={selected} sectionOpen={sectionOpen} sectionCode={sectionCode} source={sourceFor(selected)}
           busy={opening === selected.id} onOpen={() => void openDoc(selected)} editorAttached={editorAttached}
+          onPull={() => setPullDoc(selected)}
           onCite={() => cite(selected)} onInsertRef={() => insertRef(selected)} />
       )}
+      </>}
+      <VaultSourceImport doc={pullDoc} programId={programId} onClose={() => setPullDoc(null)} onOpenDocument={onOpenDocument} />
     </>
   );
 }

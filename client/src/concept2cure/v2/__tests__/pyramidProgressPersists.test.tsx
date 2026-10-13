@@ -34,6 +34,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { PyramidShell } from '../surfaces/Pyramid';
+import { clearEditorTarget, peekEditorTarget } from '../editorTarget';
 
 // The shell reads none of SurfaceViewProps; typing it by what this file
 // supplies keeps the test from churning on unrelated registry changes, and is
@@ -85,10 +86,29 @@ const ringPct = () =>
     .map(t => t.textContent ?? '')
     .find(t => /^\d+%$/.test(t)) ?? null;
 
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); clearEditorTarget(); delete window.C2C_PROJECT; });
 beforeEach(() => { apiRequest.mockReset(); });
 
 describe('PyramidShell — a task status is the org\'s record, not a local override', () => {
+  it('opens an IND task binding in the one editor without changing task progress', async () => {
+    routeReads({});
+    const programId = '11111111-1111-4111-8111-111111111111';
+    window.C2C_PROJECT = { id: programId, title: 'IND program' };
+    const onNav = vi.fn();
+    render(<Surface onNav={onNav} onAsk={vi.fn()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Investigational New Drug/ }));
+    const task = await waitFor(() => {
+      const row = Array.from(document.querySelectorAll<HTMLButtonElement>('.py-next-row')).find(b => b.textContent?.includes('Assemble tox reports'));
+      if (!row) throw new Error('task not rendered');
+      return row;
+    });
+    fireEvent.click(task);
+    fireEvent.click(await screen.findByRole('button', { name: 'Open M4.2.3 in document editor' }));
+    expect(peekEditorTarget()).toMatchObject({ sectionCode: 'M4.2.3', programId });
+    expect(onNav).toHaveBeenCalledWith('document-authoring');
+    expect(apiRequest.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+  });
+
   it('renders the status the org has RECORDED, not the structure\'s initial todo', async () => {
     // The engine's structure carries status 'todo' on both tasks. The org's
     // record says one is done. The board must show the record.

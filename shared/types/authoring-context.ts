@@ -73,6 +73,9 @@ export interface AuthoringContextPack {
   moduleCode?: string;
   sectionCode?: string;
   sectionTitle?: string;
+  /** Exact saved section/version named by the editor; tools re-read before fixing. */
+  sectionId?: string;
+  sectionUpdatedAt?: string;
 
   /** Regulatory metadata */
   regulatorBody?: string;

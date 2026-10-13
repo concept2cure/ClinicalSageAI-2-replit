@@ -43,6 +43,7 @@ import {
   type EditorTargetDocType,
 } from '../editorTarget';
 import { readShellProject } from '../shellProject';
+import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
 import '../styles/project-home-v2.css';
 
 /* ── GET /api/c2c/project-vault/:id display contract ──
@@ -775,6 +776,7 @@ export function Vault(props: SurfaceViewProps) {
 function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   const available = useSurfaceAvailable();
   const projectId = currentProjectId();
+  const [pullDoc, setPullDoc] = useState<VaultDoc | null>(null);
   const vaultPath = projectId
     ? '/api/c2c/project-vault/' + encodeURIComponent(projectId)
     : null;
@@ -2100,6 +2102,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
                 )}
 
                 <div className="vd-d-actions">
+                  {sel.src === 'upload' && sel.docId && projectId && <button className="sp-primary"
+                    style={{ padding: '8px 12px' }} disabled={sel.disposition === 'remove_data' || sel.disposition === 'supersede' || sel.originalFileAvailable === false}
+                    onClick={() => setPullDoc(sel)}>{I.penLine} Work on document</button>}
                   {sel.src !== 'upload' && (
                     <button
                       className="sp-primary"
@@ -2160,6 +2165,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           )}
         </>
       )}
+      {projectId && pullDoc?.docId && <SourceImportDialog programId={projectId}
+        source={{ kind: 'vault', documentId: pullDoc.docId }} title={pullDoc.title}
+        onClose={() => setPullDoc(null)} onOpenDocument={docId => openImportedDocument(docId, projectId, onNav)} />}
     </div>
   );
 }

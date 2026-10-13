@@ -3,6 +3,7 @@ import type { DraftSource } from '../ana/draft-project-sources.js';
 import type { Queryable } from '../vault/document-catalog.service.js';
 import { sourceAvailabilityPresentation } from '../vault/document-catalog-eligibility.js';
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
+import { savedImportSource, verifySavedImportSource } from './import-source-references';
 
 export type DraftSourceReference = Pick<DraftSource, 'documentId' | 'contentHash' | 'span'>;
 export type VerifiedDraftSourceReference = Omit<DraftSource, 'text'>;
@@ -94,9 +95,11 @@ function savedSourceSelection(doc: { provenance?: unknown; client_program_id?: u
   if (provenance == null) return null; // Legacy/manual records carry no selected-source receipt.
   if (typeof provenance !== 'object' || Array.isArray(provenance)) throw new Error('Invalid saved provenance');
   const groups = (provenance as Record<string, unknown>).projectSourceReferences;
-  if (groups === undefined) return null;
+  const imported = savedImportSource(doc);
+  if (groups === undefined && !imported) return null;
+  if (groups === undefined && imported) return { programId: imported.programId.toLowerCase(), groups: [] };
   if (!Array.isArray(groups) || groups.length > 200) throw new Error('Invalid saved source groups');
-  if (groups.length === 0) return null;
+  if (groups.length === 0 && !imported) return null;
   if (typeof doc.client_program_id !== 'string' || !UUID.test(doc.client_program_id)) throw new Error('Saved source project missing');
   return { programId: doc.client_program_id.toLowerCase(), groups };
 }
@@ -121,6 +124,7 @@ export async function verifySavedDraftSourceReferences(
     for (const group of selected.groups) {
       await verifyDraftSourceReferences(savedGroupReferences(group, selected.programId), q, organizationId, selected.programId);
     }
+    await verifySavedImportSource(doc, q, organizationId);
   } catch {
     throw new SavedDraftSourceError();
   }
@@ -136,7 +140,10 @@ export async function reserveSavedDraftSourceReferences(
     const selected = savedSourceSelection(doc);
     if (!selected) return;
     await lockDocumentDispositionProgram(q, organizationId, selected.programId);
-    await q.query('LOCK TABLE vault.documents, vault.document_catalog IN SHARE MODE');
+    // Existing excerpt receipts reserve check-in inserts through their canonical
+    // table lock. Exact imported origins reserve just their recorded source row
+    // through verifySavedImportSource's FOR SHARE, avoiding a new global lock.
+    if (selected.groups.length) await q.query('LOCK TABLE vault.documents, vault.document_catalog IN SHARE MODE');
     await verifySavedDraftSourceReferences(doc, q, organizationId);
   } catch {
     throw new SavedDraftSourceError();

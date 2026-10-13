@@ -18,6 +18,7 @@
  * use it (`vi.mock` is hoisted per file and cannot be shared).
  */
 import React from 'react';
+import type { Editor } from '@tiptap/core';
 import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
@@ -215,15 +216,17 @@ describe('EditorBridge.propose — the governed-write rule, as insert applies it
     expect(document.querySelector('.dcv-workbench del[data-author-id="user-7"]')?.textContent).toBe('18 months');
   });
 
-  it('does not admit the turn for later paste re-attribution, unlike insert', async () => {
-    /* insert registers an admitted turn in `admittedAnaSources` so a copy of
-       that suggestion keeps AnA's name. A redline is not an answer the person
-       chose to insert, so it stays unadmitted and a copy of it is
-       re-attributed to the pasting person (keeping its turn). Fails closed. */
+  it('a successfully applied fix admits its turn for paste attribution, as insert does', async () => {
     const bridge = await openBridge();
     await expect(bridge().propose({ ...PROPOSAL, baseSha256: STORED_SHA }, ANA, recorded([QUALIFIED])))
       .resolves.toEqual({ ok: true });
     const ins = document.querySelector('.dcv-workbench ins[data-author-id="ana"]');
     expect(ins?.getAttribute('data-source-record')).toBe(TURN);
+    const editor = (document.querySelector('.tiptap') as unknown as { editor: Editor }).editor;
+    editor.commands.focus('end');
+    editor.view.pasteHTML(`<p>${ins!.outerHTML}</p>`, new Event('paste') as unknown as Parameters<Editor['view']['pasteHTML']>[1]);
+    const pasted = Array.from(document.querySelectorAll('.tiptap ins')).filter(el => el.textContent === '24 months');
+    expect(pasted).toHaveLength(2);
+    expect(pasted.every(el => el.getAttribute('data-author-id') === 'ana' && el.getAttribute('data-source-record') === TURN)).toBe(true);
   });
 });

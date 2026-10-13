@@ -15,6 +15,8 @@ import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DocumentDisposition } from './DocumentDisposition';
 import { useProjectThreads } from './projectThreads';
 import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
+import { SourceCatalogLine, SourceSnippet, type SourceCatalog } from '../editor/SourceCatalogLine';
+import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
 import { StatusPill, rowsOf, updatedWords, useDocumentList, type BuiltDocument, type ListRead } from '../editor/CanvasDocumentList';
 import { clearEditorTarget, setEditorTarget } from '../editorTarget';
 import type { ReviewItem } from '../fixtures/review-data';
@@ -226,8 +228,8 @@ function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string
    and PDF viewer, and the same honest states (a failed read is an error with a
    retry, not an empty vault). Filing, uploads and version history stay in the
    Vault, which the header opens. */
-function ProjectEvidence({ pid, name, onNav, available }: {
-  pid: string; name: string | null; onNav: (id: string) => void; available: (id: string) => boolean;
+function ProjectEvidence({ pid, name, onNav, onAsk, available }: {
+  pid: string; name: string | null; onNav: (id: string) => void; onAsk: (text: string) => void; available: (id: string) => boolean;
 }) {
   const [toast, fireToast] = useToast();
   return (
@@ -240,7 +242,8 @@ function ProjectEvidence({ pid, name, onNav, available }: {
           </button>
         )}
       </div>
-      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} />
+      <ProjectFilesPanel programId={pid} programName={name} fireToast={fireToast} onAsk={onAsk}
+        onOpenDocument={docId => openImportedDocument(docId, pid, onNav)} />
       <C2CToast msg={toast} />
     </section>
   );
@@ -331,20 +334,6 @@ interface SourceRow {
   snippet?: string | null;
   /** What the catalog found the source IS, by rule (S3). Absent on a server that predates it. */
   catalog?: SourceCatalog | null;
-}
-
-/** The deterministic catalog facts of a source; a null field was not found, never guessed. */
-interface SourceCatalog {
-  studyRef: number | null;
-  trialRegistryIdentifier: string | null;
-  protocolNumber: string | null;
-  documentDate: string | null;
-  dataCutDate: string | null;
-  dataset: {
-    format: string | null;
-    tableCount: number;
-    tables: Array<{ name: string; standard: string | null; domain: string | null; rowCount: number; columnCount: number }>;
-  } | null;
 }
 
 /** One page of the project's Data Room, as GET /:id/sources answers it. */
@@ -467,51 +456,19 @@ function sourcePinTitle(s: SourceRow): string {
     : 'This source has no readable text, so it cannot ground a draft';
 }
 
-/**
- * What the catalog found a source is: protocol, registry id, data cut-off, and
- * for a table or define.xml its CDISC standard, domain and size. Facts only;
- * a fact not found is left out, never filled in.
- */
-function catalogFacts(c: SourceCatalog | null | undefined): string[] {
-  if (!c) return [];
-  const facts: string[] = [];
-  if (c.protocolNumber) facts.push(`Protocol ${c.protocolNumber}`);
-  if (c.trialRegistryIdentifier) facts.push(c.trialRegistryIdentifier);
-  if (c.dataCutDate) facts.push(`data cut-off ${c.dataCutDate}`);
-  else if (c.documentDate) facts.push(`dated ${c.documentDate}`);
-  const t = c.dataset?.tables[0];
-  if (t) {
-    const kind = t.standard ? `${t.standard}${t.domain ? ` ${t.domain}` : ''}` : 'table';
-    facts.push(c.dataset!.format === 'define-xml'
-      ? `define.xml · ${c.dataset!.tableCount} dataset${c.dataset!.tableCount === 1 ? '' : 's'}`
-      : `${kind} · ${t.columnCount} columns · ${t.rowCount} rows`);
-  }
-  return facts;
-}
-
-function SourceCatalogLine({ catalog }: { catalog?: SourceCatalog | null }) {
-  const facts = catalogFacts(catalog);
-  if (facts.length === 0) return null;
-  return (
-    <span className="sec-sub" style={{ display: 'block', fontSize: 11.5 }} data-testid="source-catalog">
-      {facts.join(' · ')}
-    </span>
-  );
-}
-
-/** Where a search matched in the text read from the file; nothing outside a search. */
-function SourceSnippet({ show, text }: { show: boolean; text?: string | null }) {
-  if (!show || !text) return null;
-  return (
-    <span className="sec-sub" style={{ display: 'block', fontSize: 11.5 }}>
-      &hellip;{text.replace(/<\/?b>/g, '')}&hellip;
-    </span>
-  );
+function SourceWorkButton({ source, projectId, onPull }: { source: SourceRow; projectId: string | null; onPull: (s: SourceRow) => void }) {
+  if (!projectId) return null;
+  const unavailable = source.dataEligible === false || source.isCurrent === false || source.originalFileAvailable === false;
+  return <button className="btn ghost" disabled={unavailable} onClick={() => onPull(source)}
+    aria-label={`Work on ${source.title || `source ${source.id}`} in editor`}>
+    {I.penLine} Work on document
+  </button>;
 }
 
 function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {
   const available = useSurfaceAvailable();
   const [reloadKey, setReloadKey] = useState(0);
+  const [pullSource, setPullSource] = useState<SourceRow | null>(null);
   const [q, setQ] = useState('');
   // The search the server runs: settled after the person stops typing, and a
   // new search starts from the first page.
@@ -783,6 +740,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                     >
                       {rs.label}
                     </span>
+                    <SourceWorkButton source={s} projectId={pid} onPull={setPullSource} />
                     {pid && (!s.disposition || s.disposition === 'keep_data') && <div style={{ flexBasis: '100%' }}><DocumentDisposition
                       key={`${s.id}-${reloadKey}`} projectId={pid} targetType="captured_source" targetId={String(s.id)}
                       title={s.title || `Source ${s.id}`} existingChoice={s.disposition} onChanged={() => setReloadKey(k => k + 1)}
@@ -814,6 +772,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
       {/* The caller's chat files with no project yet (PF-07): one audited adopt
           brings a file into this Data Room, and the list reloads. */}
       {pid && <ConversationFilesAdopt pid={pid} onAdopted={() => setReloadKey((k) => k + 1)} />}
+      {pid && pullSource && <SourceImportDialog programId={pid}
+        source={{ kind: 'data-room', sourceId: pullSource.id }} title={pullSource.title || `Source ${pullSource.id}`}
+        onClose={() => setPullSource(null)} onOpenDocument={docId => openImportedDocument(docId, pid, onNav)} />}
+
 
       <div className="cm-pushbar" style={{ marginTop: 12 }}>
         {available('source-tracer') && (
@@ -2006,7 +1968,7 @@ export function ProjectHome({ onNav, onAsk }: SurfaceViewProps) {
               room sat under Author. */}
           {stage === 'evidence' && pid && (
             <div className="pj-stagebody">
-              <ProjectEvidence pid={pid} name={title} onNav={onNav} available={available} />
+              <ProjectEvidence pid={pid} name={title} onNav={onNav} onAsk={ask} available={available} />
               <DataRoom pid={pid} onNav={onNav} onAsk={ask} />
             </div>
           )}

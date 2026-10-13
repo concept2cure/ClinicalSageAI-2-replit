@@ -9,7 +9,7 @@ import crypto from 'crypto';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { isUuid } from '../middleware/uuidParam';
-import { enforceOrgMembership, GOVERNED_WRITE_ROLES } from '../middleware/orgMembership';
+import { enforceOrgMembership, GOVERNED_WRITE_ROLES, requireEditorAccess } from '../middleware/orgMembership';
 import { expandRoleClaims, roleClaimsSatisfy } from '../middleware/auth';
 import { getTenantScope } from '../db/tenantStore';
 import { vaultWriteRefusal } from '../services/vault/vault-write-authority';
@@ -88,6 +88,8 @@ import {
 // rows through the SAME code. The handlers here are the HTTP mapping they
 // always were.
 import { createDocument, createSection } from '../services/authoring/authoring-documents';
+import { importSourceDocument } from '../services/authoring/authoring-source-import';
+import { buildIndDocumentCatalog } from '../services/authoring/ind-document-catalog';
 import { requireGovernedReason, optionalGovernedReason } from './governed-reason';
 import {
   createDocumentFromDraft,
@@ -1549,6 +1551,27 @@ router.post('/docs/from-draft', async (req: Request, res: Response) => {
     console.error('Error creating document from draft:', error);
     return serverError(res, logger, 'saving docs', error);
   }
+});
+
+// Exact source → a working copy in the SAME editor, with verified provenance.
+// The original is retained; one atomic creator writes all authoring evidence.
+router.post('/import/source', requireEditorAccess, async (req: Request, res: Response) => {
+  try {
+    const tenantId = authedOrgId(req);
+    const actorId = getActorId(req);
+    const principal = authoringPrincipalFromRequest(req);
+    if (tenantId == null) return res.status(403).json({ success: false, error: 'TENANT_REQUIRED', message: 'Tenant context required.' });
+    if (!actorId || !principal) return res.status(401).json({ success: false, error: 'AUTHENTICATION_REQUIRED', message: 'Authentication required.' });
+    const result = await importSourceDocument(createContext(req, tenantId, actorId), principal, req.body);
+    if (!result.ok) return res.status(result.status).json({ success: false, error: result.code, message: result.message });
+    return res.status(result.data.reused ? 200 : 201).json({ success: true, data: result.data });
+  } catch (error) {
+    return serverError(res, logger, 'pulling a source into the document editor', error);
+  }
+});
+
+router.get('/ind-document-catalog', (_req: Request, res: Response) => {
+  res.json({ success: true, data: buildIndDocumentCatalog() });
 });
 
 /* ── What the caller may do to this document, as the server will decide it ──

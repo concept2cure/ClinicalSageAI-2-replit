@@ -66,6 +66,7 @@ import { servedModelsOf, type ServedModel } from '../ana/turn-record-models';
 import { loadTurnRecord, verifyStoredTurnRecord, type StoredTurnRecord } from '../ana/turn-record-verify';
 import { comparableText, occurrencesIn } from '../clinical-regulatory-evidence/machine-attribution';
 import { ANA_MACHINE_AUTHOR_ID } from './revision-ledger';
+import { parseRemedyAnswer } from '../../../shared/authoring/remedies';
 
 /** Why a claim was not believed. */
 export type MachineClaimReason =
@@ -157,13 +158,25 @@ interface ReadRecord {
 }
 
 /** AnA's own words in a verified record: the answer, streamed and stored, and each draft. */
+function decodedRemedyOutputs(text: string): string[] {
+  const spans = parseRemedyAnswer(text).proposals.flatMap(fix => [fix.quote, fix.replacement]).filter(Boolean);
+  return spans.flatMap(value => [comparableText(value), comparableText(value, { markdown: true })]);
+}
+
 function outputsOf(stored: StoredTurnRecord): { outputs: string[]; servedBy: ServedModel[] } {
   const body = JSON.parse(stored.recordText) as TurnRecordBody;
   const refs = [body.answer?.streamed, body.answer?.stored, ...(body.outputs?.drafts ?? []).map((d) => d.content)];
   const outputs: string[] = [];
   for (const ref of refs) {
     const text = ref ? stored.texts.get(ref.sha256) : undefined;
-    if (typeof text === 'string') outputs.push(comparableText(text), comparableText(text, { markdown: true }));
+    if (typeof text === 'string') {
+      outputs.push(comparableText(text), comparableText(text, { markdown: true }));
+      // Exact strings AnA wrote inside the explicit remedy JSON, decoded so
+      // escaped quotes/newlines survive attribution. Only the strict shared
+      // contract is read, and only after the immutable record verified whole.
+      // Metadata, arbitrary JSON and incomplete fixes confer no new claim.
+      outputs.push(...decodedRemedyOutputs(text));
+    }
   }
   return { outputs, servedBy: servedModelsOf(body.model) };
 }

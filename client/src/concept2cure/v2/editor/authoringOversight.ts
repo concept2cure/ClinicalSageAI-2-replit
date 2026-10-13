@@ -1,0 +1,15 @@
+export type OversightAction = 'section' | 'document' | 'evidence' | 'fixes';
+
+const SAVED_READ = 'Work on the saved records in the open project; unsaved editor changes are not included. Use list_authoring_outline and read_authoring_section to read the relevant saved text, following every nextCursor and nextOffset needed. Distinguish pending tracked suggestions from accepted document text. Read project Vault and data catalogue evidence with list_project_documents, search_project_documents and read_project_document; follow paging and report anything missing, unread, unavailable or unsupported. Never describe unread evidence as verified.';
+const REMEDY = 'For each actionable fix, first read that saved section with read_authoring_section. Return at most six separate fenced blocks labelled authoring-remedy, each containing one JSON object with sectionId (the actual UUID), baseSha256 (the stored sha256 returned by the reader) and/or baseUpdatedAt (its updatedAt), quote (an exact passage in one paragraph or table cell), replacement (the proposed text, or an empty string to delete), and reason. Include prefix and suffix if needed to distinguish repeated quotes. Do not invent a base version, quote, number or source. Explain evidence gaps separately instead of inventing replacements. These are proposals for tracked changes: do not save, accept, approve or file them.';
+
+/** Fixed instructions; stored names/titles remain in fenced screen context. */
+export function oversightPrompt(action: OversightAction): string {
+  const request: Record<OversightAction, string> = {
+    section: 'Review the section open in the editor for completeness, scientific writing, citations, unsupported claims and contradictions. Run critique_draft on the text you actually read and identify remedies by severity and location.',
+    document: 'Review every section of the document open in the editor. Run critique_document on the complete saved document, check cross-section consistency and requirements, and identify remedies by severity and section. Say which portions you read if you cannot finish the full document.',
+    evidence: 'Reconcile this project\'s saved documents against its data catalogue, data room and Vault and the full IND pyramid, including every phase and its deliverables. Read get_document_section_requirements with document="ind_pyramid", starting offset=0; follow every nextOffset until null to read the full canonical catalogue. Respect each entry\'s aiDraftable and authoringMode limits for official forms, datasets and signed records. Report document/evidence gaps, conflicting values, provenance and filing gaps by module and section. Separate required deliverables from the documents actually present; do not claim readiness or compliance from inventory alone.',
+    fixes: 'Prepare targeted fixes for the section open in the editor using the saved document and linked project evidence. Run critique_draft and the applicable deterministic consistency checks before proposing changes, and explain what each fix remedies.',
+  };
+  return `${request[action]}\n\n${SAVED_READ}\n\n${REMEDY}`;
+}
