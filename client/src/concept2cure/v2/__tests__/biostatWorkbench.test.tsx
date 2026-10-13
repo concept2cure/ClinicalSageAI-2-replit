@@ -23,7 +23,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -103,9 +103,12 @@ describe('BiostatWorkbench — real statistical engine', () => {
   // model's score. The form sends the engine's inputs; the card renders its verdict.
   it('sends the engine its inputs and renders the deterministic verdict', async () => {
     render(<BiostatWorkbench {...props()} />);
-    fill(/^Indication$/, 'NSCLC');
-    fill(/^Effect size/, '0.5');
-    fireEvent.click(screen.getByRole('button', { name: /Assess defensibility/ }));
+    // The knowledge panel also has an Indication field; this request belongs
+    // to the existing reviewer-risk assessment card.
+    const assessment = within(screen.getByText('Statistical defensibility').closest<HTMLElement>('.pj-card')!);
+    fireEvent.change(assessment.getByLabelText(/^Indication$/), { target: { value: 'NSCLC' } });
+    fireEvent.change(assessment.getByLabelText(/^Effect size/), { target: { value: '0.5' } });
+    fireEvent.click(assessment.getByRole('button', { name: /Assess defensibility/ }));
 
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => c[1] === '/api/statistical-defensibility/assess');

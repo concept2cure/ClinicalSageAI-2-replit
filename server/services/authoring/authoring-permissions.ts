@@ -1,5 +1,5 @@
 import type { Request } from 'express';
-import type { Pool } from 'pg';
+import type { RequestSqlClient } from '../../db/requestDb';
 
 export const AUTHORING_PERMISSION_ROLES = [
   'OWNER',
@@ -54,7 +54,7 @@ export interface AuthoringPermissionDecision {
   matchedRoles?: AuthoringPermissionRole[];
 }
 
-export interface AuthoringPermissionRow {
+export interface AuthoringPermissionRow extends Record<string, unknown> {
   id: string;
   doc_id: string;
   section_id: string | null;
@@ -138,7 +138,7 @@ export function documentStatusAllowsAction(
 }
 
 export async function resolveAuthoringDocumentScope(
-  pool: Pool,
+  pool: RequestSqlClient,
   tenantId: number,
   docId: string,
 ): Promise<AuthoringObjectScope | null> {
@@ -161,7 +161,7 @@ export async function resolveAuthoringDocumentScope(
 }
 
 export async function resolveAuthoringSectionScope(
-  pool: Pool,
+  pool: RequestSqlClient,
   tenantId: number,
   sectionId: string,
 ): Promise<AuthoringObjectScope | null> {
@@ -192,7 +192,7 @@ export async function resolveAuthoringSectionScope(
 }
 
 export async function decideAuthoringPermission(input: {
-  pool: Pool;
+  pool: RequestSqlClient;
   principal: AuthoringPrincipal | null;
   scope: AuthoringObjectScope | null;
   action: AuthoringPermissionAction;
@@ -245,7 +245,7 @@ export async function decideAuthoringPermission(input: {
 }
 
 export async function listAuthoringPermissions(
-  pool: Pool,
+  pool: RequestSqlClient,
   tenantId: number,
   docId: string,
 ): Promise<AuthoringPermissionRow[]> {
@@ -263,7 +263,7 @@ export async function listAuthoringPermissions(
 }
 
 export async function grantAuthoringPermission(input: {
-  pool: Pool;
+  pool: RequestSqlClient;
   tenantId: number;
   docId: string;
   sectionId?: string | null;
@@ -339,7 +339,7 @@ export async function grantAuthoringPermission(input: {
 }
 
 export async function revokeAuthoringPermission(input: {
-  pool: Pool;
+  pool: RequestSqlClient;
   tenantId: number;
   docId: string;
   permissionId: string;

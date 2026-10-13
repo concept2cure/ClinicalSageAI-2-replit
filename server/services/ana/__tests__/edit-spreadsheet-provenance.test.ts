@@ -94,7 +94,7 @@ describe('confirmed edit_spreadsheet — canonical derivation handoff', () => {
     }));
 
     expect(h.resolveSignerOrgRole).toHaveBeenCalledWith(41, 7);
-    expect(h.load).toHaveBeenCalledExactlyOnceWith(UPLOAD.fileId, 7);
+    expect(h.load).toHaveBeenCalledExactlyOnceWith(UPLOAD.fileId, 7, { userId: 41 });
     expect(h.apply).toHaveBeenCalledExactlyOnceWith(ORIGINAL, UPLOAD.fileName, normalized, { createMissingSheets: true }, 'text/csv');
     expect(h.save).toHaveBeenCalledExactlyOnceWith({
       buffer: DERIVED, fileName: 'curated assay.xlsx', mimeType: MIME_XLSX,

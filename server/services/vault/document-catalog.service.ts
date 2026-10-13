@@ -62,7 +62,7 @@ export * from './document-catalog-core.js';
 
 /** Minimal query surface so the ingest transaction's client and the pool both fit. */
 export interface Queryable {
-  query(text: string, values?: unknown[]): Promise<{ rows: any[]; rowCount: number | null }>;
+  query(text: string, values?: unknown[]): Promise<{ rows: any[]; rowCount?: number | null }>;
 }
 
 /**

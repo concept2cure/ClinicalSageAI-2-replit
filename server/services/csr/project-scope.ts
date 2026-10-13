@@ -15,11 +15,21 @@ export class CsrScopeError extends Error {
 
 export interface CsrScopeInput { projectId?: unknown; programId?: unknown; clientWorkspaceId?: unknown }
 export interface CsrScope { projectId?: number; programId?: string; clientWorkspaceId?: number }
+export interface CsrScopeExecutor {
+  query: (text: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
+}
 
 /** Read membership now, on the same connection used for the project policy.
  * A queued job must not inherit the creator's old session role after revocation. */
-export async function readCsrProjectActor(database: Pick<RequestDb, 'select'>, organizationId: number, userId: number | undefined): Promise<ReportProjectActor> {
+export async function readCsrProjectActor(database: Pick<RequestDb, 'select'> | CsrScopeExecutor, organizationId: number, userId: number | undefined): Promise<ReportProjectActor> {
   if (!Number.isSafeInteger(userId) || !userId || userId <= 0) throw new CsrScopeError('CSR_PROJECT_ACCESS_DENIED', 403, 'Current project access could not be established for the CSR actor.');
+  if (!('select' in database)) {
+    const { rows } = await database.query(`SELECT ou.role FROM organization_users ou
+      JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.organization_id
+      WHERE ou.organization_id = $1 AND ou.user_id = $2 AND u.status = 'active' AND o.status = 'active'`, [organizationId, userId]);
+    if (rows.length !== 1 || typeof rows[0].role !== 'string' || !rows[0].role.trim()) throw new CsrScopeError('CSR_PROJECT_ACCESS_DENIED', 403, 'The CSR actor is no longer an active member of this organization.');
+    return { userId, role: rows[0].role.trim().toLowerCase() };
+  }
   const [member] = await database.select({ role: organizationUsers.role }).from(organizationUsers).where(and(eq(organizationUsers.organizationId, organizationId), eq(organizationUsers.userId, userId))).limit(1);
   if (!member?.role) throw new CsrScopeError('CSR_PROJECT_ACCESS_DENIED', 403, 'The CSR actor is no longer a member of this organization.');
   return { userId, role: String(member.role).trim().toLowerCase() };
@@ -86,8 +96,17 @@ export async function resolveCsrBuildContext(
 }
 
 /** Saved output/status/cancellation reads enforce the current project policy too. */
-export async function requireCsrJobAccess(database: Pick<RequestDb, 'select' | 'execute'>, organizationId: number, jobId: number, userId: number | undefined): Promise<boolean> {
-  await readCsrProjectActor(database, organizationId, userId);
+export async function requireCsrJobAccess(database: Pick<RequestDb, 'select' | 'execute'> | CsrScopeExecutor, organizationId: number, jobId: number, userId: number | undefined): Promise<boolean> {
+  const actor = await readCsrProjectActor(database, organizationId, userId);
+  if (!('select' in database)) {
+    const { rows } = await database.query('SELECT project_id FROM csr_build_jobs WHERE id = $1 AND organization_id = $2', [jobId, organizationId]);
+    if (rows.length !== 1) return false;
+    const projectId = rows[0].project_id == null ? undefined : parseCsrScopeId(rows[0].project_id, 'projectId');
+    if (projectId !== undefined && !await canAccessReportProject(organizationId, actor, projectId, database)) {
+      throw new CsrScopeError('CSR_PROJECT_ACCESS_DENIED', 403, 'The CSR actor does not have access to this project.');
+    }
+    return true;
+  }
   const [job] = await database.select({ projectId: csrBuildJobs.projectId }).from(csrBuildJobs).where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, organizationId))).limit(1);
   if (!job) return false;
   if (job.projectId != null) await resolveCsrScope(database, organizationId, { projectId: job.projectId }, { forWrite: false, actorUserId: userId });

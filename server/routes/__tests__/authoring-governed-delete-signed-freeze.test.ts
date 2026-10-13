@@ -75,8 +75,15 @@ vi.mock('../../services/part11/reverify-signer-deps', () => ({
 }));
 vi.mock('../../middleware/orgMembership', () => ({
   enforceOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireEditorAccess: (_req: unknown, _res: unknown, next: () => void) => next(),
   invalidateOrgMembershipCache: () => undefined,
   GOVERNED_WRITE_ROLES: new Set(['admin', 'manager', 'member', 'owner', 'super_admin']),
+}));
+vi.mock('../../services/authoring/authoring-image-import', () => ({
+  saveAuthoringImage: vi.fn(async (_ctx, input) => {
+    expect(input.documentId).toBe(DOC);
+    return h.saveDerivedUpload(input.file);
+  }),
 }));
 vi.mock('../../services/ana/uploaded-file-access.js', () => ({
   saveDerivedUpload: (...a: unknown[]) => h.saveDerivedUpload(...a),
@@ -146,6 +153,11 @@ beforeEach(() => {
     if (/^SELECT[\s\S]*FROM authoring_signatures/i.test(s)) {
       return hasSignature ? { rowCount: 1, rows: [{ '?column?': 1 }] } : { rowCount: 0, rows: [] };
     }
+    if (/FROM authoring_sections/i.test(s)) {
+      return { rowCount: 1, rows: [{ id: 'S1', code: '2.5', title: 'T', content: 'body' }] };
+    }
+    if (/FROM authoring_audit_trail/i.test(s) && /operation_type='CREATE'/.test(s)) return { rowCount: 0, rows: [] };
+    if (/COUNT\(\*\)::text AS n FROM authoring_comments/i.test(s)) return { rowCount: 1, rows: [{ n: '0' }] };
     if (/SELECT code, content FROM authoring_sections/i.test(s)) {
       return { rowCount: 1, rows: [{ code: '2.5', content: 'body' }] };
     }
@@ -379,6 +391,7 @@ describe('IAM-14 — POST /images and POST /import/docx run assertUploadSafe', (
     request(makeApp())
       .post(`/api/authoring/${route}`)
       .set('Authorization', await bearer())
+      .field('documentId', DOC)
       .attach('file', bytes, { filename: name, contentType: type });
 
   it('a PNG named and declared as a PNG is stored', async () => {

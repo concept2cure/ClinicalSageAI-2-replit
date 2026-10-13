@@ -39,7 +39,7 @@
 import type { AnaTool } from '../ai-gateway/types';
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { RegisterFn } from './document-tools-shared.js';
-import { resolveOpenProgram } from '../c2c/program-access';
+import { admitAnaProjectScope, AnaProjectScopeError } from './project-scope-admission';
 import { createScopedLogger } from '../../utils/logger';
 import { RESULT_BUDGET } from './agentic-loop.js';
 import { buildIndDocumentCatalog } from '../authoring/ind-document-catalog';
@@ -417,10 +417,20 @@ async function submissionPlan(poolOf: PoolSource, input: Record<string, unknown>
   if (!ctx?.organizationId) {
     return JSON.stringify({ ...base, standing: null, standing_note: 'No organization in context, so no project standing.' });
   }
+  if (ctx.projectId == null && !ctx.projectRef) {
+    return JSON.stringify({ ...base, standing: null, standing_note: 'No project is open, so no standing. Open a project to see where it stands.' });
+  }
   try {
     const pool = await poolOf();
-    const programId = await resolveOpenProgram(pool, {
-      organizationId: ctx.organizationId, projectId: ctx.projectId ?? null, projectRef: ctx.projectRef ?? null,
+    const q = { async query(sql: string, params?: unknown[]) {
+      const { rows } = await pool.query(sql, params);
+      const records = rows.filter((row): row is Record<string, unknown> => !!row && typeof row === 'object' && !Array.isArray(row));
+      if (records.length !== rows.length) throw new Error('Invalid source access verification result');
+      return { rows: records };
+    } };
+    const { programId } = await admitAnaProjectScope(q, {
+      organizationId: ctx.organizationId, userId: ctx.userId,
+      projectId: ctx.projectId ?? null, projectRef: ctx.projectRef ?? null,
     });
     if (!programId) {
       return JSON.stringify({ ...base, standing: null, standing_note: 'No project is open, so no standing. Open a project to see where it stands.' });
@@ -432,6 +442,9 @@ async function submissionPlan(poolOf: PoolSource, input: Record<string, unknown>
     }
     return JSON.stringify({ ...base, standing: compactStanding(verdict, truncated) });
   } catch (err) {
+    if (err instanceof AnaProjectScopeError) {
+      return JSON.stringify({ ...base, standing: null, error: err.message, code: err.code });
+    }
     // The driver's message names tables; it goes to the log. The model is told
     // the read failed, never that the steps are missing.
     logger.error('plan_submission_from_database_lock failed', { err: err instanceof Error ? err.message : String(err) });

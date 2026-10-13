@@ -639,7 +639,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
       // shared helper enforces both the organization column and the
       // storage-path prefix. See uploaded-file-access.ts.
       const { loadUploadedFileMetadata } = await import('../ana/uploaded-file-access.js');
-      const attachedFiles = await loadUploadedFileMetadata(fileIds, numericOrgId);
+      const attachedFiles = await loadUploadedFileMetadata(fileIds, numericOrgId, { userId: Number(userId) });
       if (attachedFiles.length > 0) {
         const fileContext = attachedFiles
           .map(f => `- ${f.fileName} (${f.mimeType}) [ID: ${f.fileId}]`)

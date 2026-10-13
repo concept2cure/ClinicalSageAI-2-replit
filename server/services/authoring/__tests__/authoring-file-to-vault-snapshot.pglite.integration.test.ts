@@ -2,6 +2,7 @@
  * PDF bytes and audit-chain persistence are explicit seams; no live lock or
  * external storage/scanner qualification is claimed. */
 import { createHash, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createDispositionHarness, type DispositionFixture, type DispositionHarness,
@@ -37,6 +38,7 @@ let pool: AuthoringPool;
 
 beforeAll(async () => {
   harness = await createDispositionHarness();
+  await harness.pg.exec(readFileSync(new URL('../../../../db/migrations/20260725_authoring_audit_trail.sql',import.meta.url),'utf8'));
   await harness.pg.exec(`
     ALTER TABLE authoring_documents ADD COLUMN title text, ADD COLUMN module text,
       ADD COLUMN version text, ADD COLUMN created_by text, ADD COLUMN created_at timestamptz DEFAULT now();

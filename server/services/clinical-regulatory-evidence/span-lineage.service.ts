@@ -1329,6 +1329,8 @@ export interface DocumentAttributionSummary {
     provenanceKind: string;
     usage: string;
     sourceTitle: string | null;
+    /** Retained machine compositor identity, distinct from original authorship or qualification. */
+    machineAuthorId: string | null;
     /** 'changed' when the cited source moved after it was cited. */
     stale: boolean;
   }>;
@@ -1459,6 +1461,7 @@ export async function summarizeDocumentAttribution(
           provenanceKind: String(sp.provenanceKind),
           usage: String(sp.usage),
           sourceTitle: sp.sourceTitle ?? null,
+          machineAuthorId: sp.machineAuthorId ?? null,
           stale: sp.state === 'changed',
         };
       })

@@ -20,6 +20,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
+import ts from 'typescript';
 import { documentSectionRequirements } from '../../server/services/ana/regulatory-knowledge-tools';
 import {
   CTD_AUTHORING_GUIDANCE,
@@ -157,9 +158,26 @@ describe('resolveRequirements — the one dispatch', () => {
   it('is the only dispatch: the tool delegates and keeps no copy of the rule', () => {
     const tool = source('server/services/ana/regulatory-knowledge-tools.ts');
     expect(tool).toContain('resolveRequirements(');
-    for (const copy of ['CSR_ALIASES', 'renderE3Brief', 'renderSectionBrief', 'renderLifecycleBrief', 'normalizeCtdCode', 'listLifecycleIds']) {
+    for (const copy of ['CSR_ALIASES', 'renderE3Brief', 'renderSectionBrief', 'renderLifecycleBrief', 'listLifecycleIds']) {
       expect(tool, `regulatory-knowledge-tools.ts still carries ${copy}`).not.toContain(copy);
     }
+    const parsed = ts.createSourceFile('regulatory-knowledge-tools.ts',tool,ts.ScriptTarget.Latest,true);
+    const callers: string[] = [];
+    const dispatches: string[] = [];
+    function visit(node: ts.Node, owner = '<outside>') {
+      const caller = ts.isFunctionDeclaration(node) ? node.name?.text ?? '<anonymous>' : owner;
+      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+        if (node.expression.text==='normalizeCtdCode') callers.push(caller);
+        if (node.expression.text==='resolveRequirements') dispatches.push(caller);
+      }
+      ts.forEachChild(node,child => visit(child,caller));
+    }
+    visit(parsed);
+    // Static IND placement filters may normalize canonical codes, but they
+    // must not duplicate the clinical document-requirements dispatch.
+    expect(callers.length).toBeGreaterThan(0);
+    expect(callers.every(caller => ['indFilter','indCodeWithin'].includes(caller))).toBe(true);
+    expect(dispatches).toEqual(['documentSectionRequirements']);
   });
 
   it('imports the brief renderers and is imported by none of them', () => {

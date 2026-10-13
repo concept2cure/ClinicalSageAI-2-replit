@@ -36,7 +36,7 @@ beforeAll(async () => {
     CREATE TABLE concept2cure_artifacts(id int PRIMARY KEY, artifact_id text, organization_id int, project_id int);
     CREATE TABLE concept2cure_review_assignments(artifact_id int, organization_id int, reviewer_id int, status text);
     CREATE TABLE report_program_groups(id int PRIMARY KEY, organization_id int, client_workspace_id int, status text);
-    CREATE TABLE report_program_group_projects(program_group_id int, project_id int);
+    CREATE TABLE report_program_group_projects(program_group_id int, project_id int, organization_id int NOT NULL);
     CREATE TABLE report_type_registry(type_id text PRIMARY KEY, label text, family text, allowed_scopes json, allowed_client_segments json, enabled boolean);
     INSERT INTO organizations VALUES (7,'active'),(8,'active');
     INSERT INTO users VALUES (5,'member@example.com','active'),(6,'shared@example.com','active'),(8,'viewer@example.com','active'),(9,'recipient@example.com','active'),(10,'manager@example.com','active'),(20,'foreign@example.com','active'),(99,'owner@example.com','active');
@@ -50,7 +50,7 @@ beforeAll(async () => {
     INSERT INTO concept2cure_artifacts VALUES (120,'artifact-12',7,12);
     INSERT INTO concept2cure_review_assignments VALUES (120,7,8,'pending');
     INSERT INTO report_program_groups VALUES (1,7,71,'active');
-    INSERT INTO report_program_group_projects VALUES (1,11),(1,12);
+    INSERT INTO report_program_group_projects VALUES (1,11,7),(1,12,7);
     INSERT INTO report_type_registry VALUES
       ('readiness.executive_digest','Readiness','readiness','["project"]','[]',true),
       ('fcoi.disclosure_register','FCOI','fcoi','["account","program","project"]','[]',true);

@@ -11,6 +11,7 @@
  */
 
 import type { PdevSignatureFacet } from '../protocol-development/protocol-signature-manifestation';
+import { buildSoaMatrix, type SoaAssessment, type SoaCell, type SoaMatrix } from '../protocol-soa/protocol-soa-logic';
 
 export const FDAAA_801 = 'FDAAA 801 / 42 CFR Part 11 — ClinicalTrials.gov registration data elements';
 
@@ -26,11 +27,13 @@ export interface ExportDoc {
   status?: string | null;
   /** The finalization signature as the signature row records it. Absent means not read. */
   finalization?: PdevSignatureFacet;
+  soa?: { assessments: SoaAssessment[]; cells: ExportSoaCell[] };
 }
 export interface ExportSection { sectionKey: string; title: string; content?: string | null; orderIndex?: number }
 export interface ExportObjective { objectiveType: string; objective: string; endpoint?: string | null; timepoint?: string | null }
 export interface ExportCriterion { kind: string; criterion: string }
-export interface ExportVisit { visitName: string; timepoint?: string | null; procedures?: string[] | null }
+export interface ExportVisit { id?: number; visitName: string; timepoint?: string | null; procedures?: string[] | null; orderIndex?: number }
+export interface ExportSoaCell extends SoaCell { notes?: string | null }
 
 export interface AssembledProtocol {
   title: string;
@@ -42,6 +45,7 @@ export interface AssembledProtocol {
   eligibility: { inclusion: string[]; exclusion: string[] };
   schedule: ExportVisit[];
   sections: Array<{ sectionKey: string; title: string; content: string | null }>;
+  soa?: { matrix: SoaMatrix; cells: ExportSoaCell[] };
 }
 
 /** Assemble the document parts into an ordered export model. Pure. */
@@ -52,6 +56,7 @@ export function assembleProtocolExport(
   eligibility: ExportCriterion[],
   visits: ExportVisit[],
 ): AssembledProtocol {
+  if (doc.soa && visits.some(v => !Number.isSafeInteger(v.id) || !v.id || v.id < 1)) throw new Error('A recorded visit identity is required for protocol matrix composition.');
   return {
     title: doc.title,
     header: { protocolNumber: doc.protocolNumber ?? null, kind: doc.protocolKind ?? null, designType: doc.designType ?? null, phase: doc.phase ?? null, version: doc.version ?? null },
@@ -67,6 +72,7 @@ export function assembleProtocolExport(
     sections: [...sections]
       .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
       .map((s) => ({ sectionKey: s.sectionKey, title: s.title, content: s.content ?? null })),
+    ...(doc.soa ? { soa: { matrix: buildSoaMatrix(doc.soa.assessments, visits.map(v => ({ id: v.id!, visitName: v.visitName, timepoint: v.timepoint, orderIndex: v.orderIndex })), doc.soa.cells), cells: doc.soa.cells } } : {}),
   };
 }
 
@@ -109,13 +115,13 @@ function signatureBlockLines(status: string | null, f: PdevSignatureFacet): stri
 }
 
 /** Render an assembled protocol to Markdown. Pure, deterministic. */
-export function renderProtocolMarkdown(p: AssembledProtocol): string {
+export function renderProtocolMarkdown(p: AssembledProtocol, options: { contentOnly?: boolean } = {}): string {
   const lines: string[] = [];
   lines.push(`# ${p.title}`);
   const h = p.header;
   const meta = [h.protocolNumber && `Protocol ${h.protocolNumber}`, h.version && `v${h.version}`, h.phase, h.designType].filter(Boolean).join(' · ');
   if (meta) lines.push(`_${meta}_`);
-  lines.push(...signatureBlockLines(p.status, p.finalization));
+  if (!options.contentOnly) lines.push(...signatureBlockLines(p.status, p.finalization));
   if (p.synopsis) { lines.push('', '## Synopsis', p.synopsis); }
   if (p.objectives.length) {
     lines.push('', '## Objectives & Endpoints');
@@ -130,8 +136,48 @@ export function renderProtocolMarkdown(p: AssembledProtocol): string {
     lines.push('', '## Schedule of Assessments');
     for (const v of p.schedule) lines.push(`- **${v.visitName}**${v.timepoint ? ` (${v.timepoint})` : ''}${v.procedures && v.procedures.length ? `: ${v.procedures.join(', ')}` : ''}`);
   }
+  if (p.soa) lines.push('', '## Schedule of Activities Matrix', renderProtocolSoaMarkdown(p.soa));
   for (const s of p.sections) { lines.push('', `## ${s.title}`, s.content ?? '_[to be completed]_'); }
   return lines.join('\n');
+}
+
+/** The exact retained matrix: a missing cell is not a scheduled assessment. */
+export function renderProtocolSoaMarkdown(soa: NonNullable<AssembledProtocol['soa']>): string {
+  const { matrix, cells } = soa;
+  if (!matrix.columns.length || !matrix.rows.length) return '_The source does not record a complete assessment-by-visit matrix._';
+  const escape = (value: string) => value.replaceAll('|', '\\|').replaceAll('\n', '<br>');
+  const lines = [
+    `| Assessment | Category | ${matrix.columns.map(v => escape(`${v.visitName}${v.timepoint ? ` (${v.timepoint})` : ''}`)).join(' | ')} |`,
+    `| --- | --- | ${matrix.columns.map(() => '---').join(' | ')} |`,
+  ];
+  for (const row of matrix.rows) {
+    const values = row.cells.map(cell => {
+      if (!cell.present) return 'Not scheduled';
+      const note = cells.find(c => c.assessmentId === row.assessmentId && c.visitId === cell.visitId)?.notes;
+      return `${cell.required ? 'Required' : 'Optional'}${note ? `: ${escape(note)}` : ''}`;
+    });
+    lines.push(`| ${escape(row.name)} | ${escape(row.category)} | ${values.join(' | ')} |`);
+  }
+  return lines.join('\n');
+}
+
+/** Canonical content composition for an unbound working copy. Source signing
+ * and status manifestations are deliberately excluded from copied prose. */
+export function protocolAuthoringSections(p: AssembledProtocol): Array<{ code: string; title: string; content: string }> {
+  const h = p.header;
+  const header = [p.title, h.protocolNumber && `Protocol ${h.protocolNumber}`, h.version && `Version ${h.version}`, h.kind && `Kind: ${h.kind}`, h.phase, h.designType].filter(Boolean).join('\n');
+  const objectives = p.objectives.map(o => `- **${o.objectiveType}:** ${o.objective}${o.endpoint ? ` — _Endpoint:_ ${o.endpoint}` : ''}${o.timepoint ? ` (${o.timepoint})` : ''}`).join('\n');
+  const eligibility = [...p.eligibility.inclusion.map(c => `- Inclusion: ${c}`), ...p.eligibility.exclusion.map(c => `- Exclusion: ${c}`)].join('\n');
+  const schedule = p.schedule.map(v => `- **${v.visitName}**${v.timepoint ? ` (${v.timepoint})` : ''}${v.procedures?.length ? `: ${v.procedures.join(', ')}` : ''}`).join('\n');
+  return [
+    {code:'protocol.header',title:'Protocol identification',content:header},
+    {code:'protocol.synopsis',title:'Synopsis',content:p.synopsis ?? ''},
+    {code:'protocol.objectives',title:'Objectives and endpoints',content:objectives},
+    {code:'protocol.eligibility',title:'Eligibility criteria',content:eligibility},
+    {code:'protocol.schedule',title:'Schedule of assessments',content:schedule},
+    {code:'protocol.soa',title:'Schedule of activities matrix',content:p.soa ? renderProtocolSoaMarkdown(p.soa) : ''},
+    ...p.sections.map(s => ({code:s.sectionKey,title:s.title,content:s.content ?? ''})),
+  ];
 }
 
 // ─── ClinicalTrials.gov PRS registration draft ───────────────────────────────

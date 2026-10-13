@@ -25,15 +25,19 @@ function ownedProjectId(value: unknown): number {
 }
 
 async function ownedProgram(input: OwnedReportScopeInput, client: RequestSqlClient): Promise<OwnedReportScope> {
+  const groupSql = input.clientWorkspaceId == null
+    ? `SELECT id FROM report_program_groups WHERE id::text = $1 AND organization_id = $2 AND status = 'active'`
+    : `SELECT id FROM report_program_groups WHERE id::text = $1 AND organization_id = $2 AND status = 'active' AND client_workspace_id = $3`;
+  const groupParams = [input.scopeId, input.organizationId, ...(input.clientWorkspaceId == null ? [] : [input.clientWorkspaceId])];
   const group = await client.query(
-    `SELECT id FROM report_program_groups WHERE id::text = $1 AND organization_id = $2 AND status = 'active'
-     AND ($3::int IS NULL OR client_workspace_id = $3)`, [input.scopeId, input.organizationId, input.clientWorkspaceId ?? null],
+    groupSql, groupParams,
   );
   if (!group.rows.length) throw missing();
   const projects = await client.query(
     `SELECT gp.project_id, p.organization_id, p.client_workspace_id, p.status
-     FROM report_program_group_projects gp LEFT JOIN projects p ON p.id = gp.project_id AND p.organization_id = $2
-     WHERE gp.program_group_id::text = $1`, [input.scopeId, input.organizationId],
+     FROM report_program_group_projects gp JOIN report_program_groups g ON g.id = gp.program_group_id AND g.organization_id = gp.organization_id
+     LEFT JOIN projects p ON p.id = gp.project_id AND p.organization_id = gp.organization_id
+     WHERE gp.program_group_id::text = $1 AND gp.organization_id = $2 AND g.organization_id = $2`, [input.scopeId, input.organizationId],
   );
   if (projects.rows.some(row => row.organization_id !== input.organizationId || row.status === 'archived' ||
       (input.clientWorkspaceId != null && row.client_workspace_id !== input.clientWorkspaceId))) throw missing();
@@ -48,8 +52,11 @@ async function ownedProject(input: OwnedReportScopeInput, client: RequestSqlClie
     if (proof.id !== projectId || proof.organizationId !== input.organizationId ||
         (input.clientWorkspaceId != null && proof.clientWorkspaceId !== input.clientWorkspaceId)) throw missing();
   } else {
-    const project = await client.query(`SELECT id FROM projects WHERE id = $1 AND organization_id = $2 AND status <> 'archived'
-      AND ($3::int IS NULL OR client_workspace_id = $3)`, [projectId, input.organizationId, input.clientWorkspaceId ?? null]);
+    const projectSql = input.clientWorkspaceId == null
+      ? `SELECT id FROM projects WHERE id = $1 AND organization_id = $2 AND status <> 'archived'`
+      : `SELECT id FROM projects WHERE id = $1 AND organization_id = $2 AND status <> 'archived' AND client_workspace_id = $3`;
+    const project = await client.query(projectSql,
+      [projectId, input.organizationId, ...(input.clientWorkspaceId == null ? [] : [input.clientWorkspaceId])]);
     if (!project.rows.length) throw missing();
   }
   return { projectId };
@@ -57,14 +64,21 @@ async function ownedProject(input: OwnedReportScopeInput, client: RequestSqlClie
 
 async function ownedLinkedRecord(input: OwnedReportScopeInput, client: RequestSqlClient): Promise<OwnedReportScope> {
   const document = input.scopeType === 'document';
-  const statement = document
-    ? `SELECT s.project_id FROM concept2cure_artifacts s JOIN projects p ON p.id = s.project_id
+  const statements = document ? [
+    `SELECT s.project_id FROM concept2cure_artifacts s JOIN projects p ON p.id = s.project_id
+       WHERE s.artifact_id = $1 AND s.organization_id = $2 AND p.organization_id = $2 AND p.status <> 'archived'`,
+    `SELECT s.project_id FROM concept2cure_artifacts s JOIN projects p ON p.id = s.project_id
        WHERE s.artifact_id = $1 AND s.organization_id = $2 AND p.organization_id = $2
-       AND p.status <> 'archived' AND ($3::int IS NULL OR p.client_workspace_id = $3)`
-    : `SELECT s.project_id FROM c2c_submissions s JOIN projects p ON p.id = s.project_id
+       AND p.status <> 'archived' AND p.client_workspace_id = $3`,
+  ] as const : [
+    `SELECT s.project_id FROM c2c_submissions s JOIN projects p ON p.id = s.project_id
+       WHERE s.id::text = $1 AND s.organization_id = $2 AND p.organization_id = $2 AND p.status <> 'archived'`,
+    `SELECT s.project_id FROM c2c_submissions s JOIN projects p ON p.id = s.project_id
        WHERE s.id::text = $1 AND s.organization_id = $2 AND p.organization_id = $2
-       AND p.status <> 'archived' AND ($3::int IS NULL OR p.client_workspace_id = $3)`;
-  const record = await client.query(statement, [input.scopeId, input.organizationId, input.clientWorkspaceId ?? null]);
+       AND p.status <> 'archived' AND p.client_workspace_id = $3`,
+  ] as const;
+  const statement = statements[input.clientWorkspaceId == null ? 0 : 1];
+  const record = await client.query(statement, [input.scopeId, input.organizationId, ...(input.clientWorkspaceId == null ? [] : [input.clientWorkspaceId])]);
   if (!record.rows.length) throw missing();
   return { projectId: ownedProjectId(record.rows[0].project_id) };
 }

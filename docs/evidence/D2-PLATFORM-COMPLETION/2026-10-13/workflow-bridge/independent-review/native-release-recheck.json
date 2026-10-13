@@ -1,0 +1,37 @@
+{
+  "branch": "concept2cure-v2",
+  "baseHead": "e198f24a5758accf206fb2bf5f784fb5636b328c",
+  "runStartUtc": "2026-10-13T21:59:50Z",
+  "suite": "tests/db/workflow-import-governance.dbtest.ts",
+  "result": {
+    "testsPassed": 19,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "exitCode": 0,
+    "durationSeconds": 16.4
+  },
+  "databaseRole": "app_service",
+  "roleAssertions": [
+    "NOSUPERUSER",
+    "NOBYPASSRLS",
+    "protocol_documents forced RLS",
+    "canonical runtime pool role equals restricted login"
+  ],
+  "lint": {
+    "errors": 0,
+    "warnings": 0,
+    "exitCode": 0
+  },
+  "auditHmac": "Existing non-production development fallback was used; this run does not qualify production audit-chain integrity or signing secrets.",
+  "scopeLimit": "This suite exercises workflow governance and working DOCX controls. It does not directly test binary image access or successful coauthor/Vault storage transport; those require separate QA.",
+  "sha256": {
+    "tests/db/workflow-import-governance.dbtest.ts": "05f23eb65f244c7f6e061648285605a15670d33f8ba1cdb9a551face4aade6f8",
+    "server/services/authoring/document-lock.ts": "a276aed08a0b2d0e8938a9479bd02fc4cd4a18a8f72c1d83becaceeec44621ca",
+    "server/services/authoring/workflow-import-governance.ts": "824b5d533b86d5802a78100d35e889fa7901cfd49ef67b74df419289647f6786",
+    "server/services/authoring/workflow-source-import.ts": "1c95e844e5debc6208028efce691d470fa09fae7c1950154ec7d683486257053",
+    "server/services/authoring/authoring-source-import.ts": "3db366f86e212d08c39bd4238caedfc35be827dbe397f29f5f69f706bf48e5aa",
+    "server/services/authoring/authoring-image-import.ts": "e1757d854de0d1c5cfa58980b8f6e658bad06de04bd4578eaaba6a53904fb29f",
+    "server/services/authoring/import-source-references.ts": "e4253c782708317088db8ca820de2685c7c097c9bd3923f44cb5a43b6de3cff9",
+    "server/services/coauthor/coauthor-snapshot.ts": "730f54426707ff5236ec325973caee4b07b4851cfc8ba59da38aa14a958b544c"
+  }
+}

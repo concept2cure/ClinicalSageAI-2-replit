@@ -1,0 +1,17 @@
+{
+  "branch": "concept2cure-v2",
+  "baseHead": "e198f24a5758accf206fb2bf5f784fb5636b328c",
+  "sourceState": "shared working tree, not yet committed",
+  "node": "22",
+  "focusedTests": "51 passed / 3 files",
+  "scope": "caller-supplied module QC; full dossier not assessed",
+  "sha256": {
+    "server/services/authoring/ctd-authoring-readiness.ts": "2ca53f436335c5fa6162c2a1aaadfa16987fa91600bd1f8aa15b2b95ac2a6591",
+    "server/services/authoring/ctd-readiness-renderer.ts": "dda1b91c3eabd0bf5c51ebe1a65cc1707f70fa24c44b14bfbae1f741dcf792b5",
+    "server/routes/authoring-pdf.routes.ts": "8c2e65337805a35261d46c36c76e3ef90e0fe26df2cf736b6b26cca07302b19c",
+    "server/services/authoring/__tests__/ctd-authoring-readiness.test.ts": "ced9cf75b10c8c7044d13f806d1490d9b4e5bd8d60e5b3beb4cfd50d4de1c756",
+    "server/services/authoring/__tests__/ctd-readiness-renderer.test.ts": "9a456d11398b9c91fc6bcfa94bfe86d036972d990149e5fdc39a16c2735e75b0",
+    "server/routes/__tests__/authoring-pdf-ctd-supplied-qc.test.ts": "0a0ed7936696941048f87b7a58de2de9ddf1270d6261b50d61957cc67cc7a958",
+    "docs/design/CTD_SUPPLIED_QC_SCOPE_2026-10-13.md": "8e4db5ed975dd4d51566ac5c77cf661950e95156d68b8432edf3b6e53b8f796d"
+  }
+}

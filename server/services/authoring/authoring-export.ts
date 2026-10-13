@@ -17,6 +17,16 @@ import crypto from 'crypto';
 import type { Queryable } from './authoring-evidence';
 import { describeSignatureMethod } from '../../../shared/part11/signature-method';
 import { verifySavedDraftSourceReferences } from './draft-source-references';
+import type { AuthoringActor } from './authoring-documents';
+import { assertWorkflowImportRelease, verifyWorkflowImportWorkingCopy } from './workflow-import-governance';
+
+/** §11.70: one recomputable digest for both signature writes and release reads. */
+export function computeAuthoringSignatureDigest(input: {
+  signerEmail: string; meaning: string; contentHash: string; coveredContentHash: string | null;
+}): string {
+  return crypto.createHash('sha256').update(['authoring-sig-v1', input.signerEmail, input.meaning,
+    input.contentHash, input.coveredContentHash ?? ''].join('|')).digest('hex');
+}
 
 export type ExportFormat = 'docx' | 'pdf' | 'xml';
 export const EXPORT_FORMATS: readonly ExportFormat[] = ['docx', 'pdf', 'xml'];
@@ -29,6 +39,7 @@ export interface ExportDocRow {
   created_at?: unknown;
   provenance?: unknown;
   client_program_id?: string | null;
+  created_by?: unknown;
 }
 
 export interface ExportSectionRow {
@@ -62,6 +73,7 @@ export interface RenderExportArgs {
   doc: ExportDocRow;
   sections: ExportSectionRow[];
   format: ExportFormat;
+  actor?: AuthoringActor;
   /**
    * A statement rendered before the content — e.g. that this is a working
    * draft and not a sealed record. Absent on the export route.
@@ -240,7 +252,8 @@ async function prepareShared(args: RenderExportArgs) {
 
   const { resolveAuthoringImages } = await import('../../export/authoring-images.js');
   const exportImages = binary
-    ? await resolveAuthoringImages(sections.map((s) => s.content), tenantId)
+    ? await resolveAuthoringImages(sections.map((s) => s.content), tenantId,
+      args.actor ? { userId: Number(args.actor.id) } : undefined)
     : new Map();
 
   const { crossReferenceLookupFor, crossReferenceAnchorId } = await import('@shared/authoring/cross-references');
@@ -564,7 +577,22 @@ async function renderPdf(
 /** Render one authoring document in one format. Throws on a renderer failure. */
 export async function renderAuthoringExport(args: RenderExportArgs): Promise<RenderedExport> {
   if (args.workingCopy && args.format === 'xml') throw new Error('A working copy is rendered as DOCX or PDF only');
-  await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId);
+  await verifySavedDraftSourceReferences(args.doc, args.executor, args.tenantId, args.actor);
+  if (!args.workingCopy) await assertWorkflowImportRelease(args.executor, {
+    organizationId: args.tenantId, doc: args.doc, sections: args.sections, actor: args.actor,
+  });
+  else {
+    const workflow = await verifyWorkflowImportWorkingCopy(args.executor, {
+      organizationId: args.tenantId, doc: args.doc, sections: args.sections, actor: args.actor,
+    });
+    if (workflow) args = { ...args,
+      workingCopy: { banner: `${args.workingCopy.banner} · workflow qualification not established` },
+      notice: `Workflow review copy — NOT FINAL. Original authorship remains as recorded. ` +
+        `Model qualification and scientific source support are not established by this import. ` +
+        `${workflow.knownMachineRemains ? 'Stored machine content remains on release hold. ' : 'Human review and explicit adoption are required before release. '}` +
+        `Retained source ${workflow.origin.kind} ${workflow.origin.id}, fingerprint ${workflow.origin.fingerprint}.`,
+    };
+  }
   const shared = await prepareShared(args);
   const out: { content: Buffer; fileName: string; contentType: string; rendering?: ExportRendering } =
     args.format === 'xml'

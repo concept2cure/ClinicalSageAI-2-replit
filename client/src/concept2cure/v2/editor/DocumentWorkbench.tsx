@@ -88,6 +88,7 @@ import { AuthoringRemedies } from './AuthoringRemedies';
 import { parseRemedyAnswer } from './authoringRemedies';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { ImportSourceNotice } from './ImportSourceNotice';
+import { isWorkflowImportOrigin } from '@shared/authoring/source-import';
 import type {
   ProposeRefusal,
   ReplacementProposal,
@@ -1154,6 +1155,9 @@ export interface DocumentWorkbenchProps {
   consumeDeepLinks?: boolean;
   /** Where an ask goes when the host owns the conversation. */
   onAsk?: ((text: string) => void) | null;
+  /** Keep the open buffer until the existing leave decision accepts a new scope. */
+  pendingProgramSwitch?: { id: string; label: string; onContinue: () => void; onCancel: () => void } | null;
+  programSwitchHeld?: boolean;
 }
 
 function contextForWorkbench({ projectId, documentId, document, section, filing, sections }: {
@@ -1261,6 +1265,8 @@ export function DocumentWorkbench({
   surfaceActionId = null,
   consumeDeepLinks = false,
   onAsk = null,
+  pendingProgramSwitch = null,
+  programSwitchHeld = false,
 }: DocumentWorkbenchProps) {
   // `module` is no longer a filter the user drives — the filing outline is. It
   // survives only as the value AuthoringCreateExport needs when creating a new
@@ -1561,6 +1567,7 @@ export function DocumentWorkbench({
   }, [consumeDeepLinks]);
 
   const activeDoc = docs.find(d => d.id === activeDocId) ?? null;
+  const unboundDraft = !!activeDoc && activeDoc.module === null && !activeDoc.c2c_document_id;
   const activeSection = sections.find(s => s.id === activeSectionId) ?? null;
   const docSealed =
     activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
@@ -1588,10 +1595,15 @@ export function DocumentWorkbench({
      this device, or stay. */
   type LeaveTarget =
     | { kind: 'section'; id: string; module?: string }
-    | { kind: 'document'; id: string; module?: string }
-    | { kind: 'external-document'; id: string; module?: string };
+    | { kind: 'document'; id: string; sectionId?: string; module?: string }
+    | { kind: 'external-document'; id: string; module?: string }
+    | { kind: 'program'; id: string; label: string; onContinue: () => void; onCancel: () => void; module?: string };
   const [pendingLeave, setPendingLeave] = useState<LeaveTarget | null>(null);
+  const pendingLeaveRef = useRef(pendingLeave);
+  pendingLeaveRef.current = pendingLeave;
   const [leaving, setLeaving] = useState(false);
+  const navigationSequence = useRef(0);
+  const sectionLoaderRef = useRef<((id: string) => Promise<void>) | null>(null);
 
   const applyNav = useCallback((target: LeaveTarget) => {
     // The editor's dirty flag belongs to the mount that is going away; clear
@@ -1604,18 +1616,25 @@ export function DocumentWorkbench({
     // The create/export module follows where the author actually IS, so it
     // moves with the navigation and not with the click that proposed one.
     if (target.module) setModule(target.module);
-    if (target.kind === 'external-document') {
+    if (target.kind === 'program') target.onContinue();
+    else if (target.kind === 'external-document') {
       setEditorTarget({ docType: null, docId: target.id, programId });
       onNav('document-authoring');
     } else if (target.kind === 'section') setActiveSectionId(target.id);
-    else setActiveDocId(target.id);
-  }, [programId, onNav]);
+    else {
+      if (target.sectionId) targetSectionRef.current = { docId: target.id, sectionId: target.sectionId };
+      if (target.id === activeDocId && target.sectionId) void sectionLoaderRef.current?.(target.id);
+      else setActiveDocId(target.id);
+    }
+  }, [programId, onNav, activeDocId]);
 
   /** Every in-surface navigation that unmounts the canvas goes through here. */
   const requestLeave = useCallback(
     (target: LeaveTarget): boolean => {
+      navigationSequence.current += 1;
       const alreadyThere =
-        target.kind === 'section' ? target.id === activeSectionId : target.id === activeDocId;
+        target.kind === 'section' ? target.id === activeSectionId : target.kind === 'document'
+          && target.id === activeDocId && (!target.sectionId || target.sectionId === activeSectionId);
       if (alreadyThere) return true;
       if (!dirty) {
         applyNav(target);
@@ -1630,6 +1649,10 @@ export function DocumentWorkbench({
   );
   const requestLeaveRef = useRef(requestLeave);
   requestLeaveRef.current = requestLeave;
+  useEffect(() => {
+    if (pendingProgramSwitch) requestLeaveRef.current({ kind: 'program', ...pendingProgramSwitch });
+    else setPendingLeave(previous => previous?.kind === 'program' ? null : previous);
+  }, [pendingProgramSwitch]);
   const openProgramRef = useRef(programId);
   openProgramRef.current = programId;
 
@@ -1669,6 +1692,7 @@ export function DocumentWorkbench({
     try {
       const saved = await editorRef.current?.save();
       if (!saved) return; // stay put; the failure has already been reported
+      if (pendingLeaveRef.current !== target) return;
       setPendingLeave(null);
       applyNav(target);
     } finally {
@@ -1827,7 +1851,10 @@ export function DocumentWorkbench({
         kind: docProvenance.importSource.kind,
         id: docProvenance.importSource.id,
         programId: docProvenance.importSource.programId,
-        sha256: docProvenance.importSource.sha256,
+        ...(isWorkflowImportOrigin(docProvenance.importSource)
+          ? { fingerprint: docProvenance.importSource.fingerprint, selection: docProvenance.importSource.selection,
+            sectionOrigins: docProvenance.importSource.sectionOrigins, gaps: docProvenance.importSource.gaps }
+          : { sha256: docProvenance.importSource.sha256 }),
         conversion: docProvenance.importSource.conversion,
         warnings: docProvenance.importSource.warnings,
       } } : {}),
@@ -1923,8 +1950,9 @@ export function DocumentWorkbench({
       onAsk(prompt);
       return;
     }
+    if (programSwitchHeld) { fireToast('Finish the project switch before opening a conversation.', 'error'); return; }
     openConversationWithPrompt(prompt, onNav);
-  }, [onAsk, onNav, program]);
+  }, [onAsk, onNav, program, programSwitchHeld, fireToast]);
 
   /* While AnA works the pane follows the bottom, where her work grows. When
      the turn ends it shows the START of her answer: pinned to the bottom, a
@@ -2104,6 +2132,7 @@ export function DocumentWorkbench({
       return cur && list.some(s => s.id === cur) ? cur : list[0]?.id ?? null;
     });
   }, []);
+  sectionLoaderRef.current = loadSections;
 
   useEffect(() => {
     if (!activeDocId) {
@@ -2154,10 +2183,28 @@ export function DocumentWorkbench({
     };
   }, []);
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
+  const openExactDocumentSection = useCallback(async (docId: string, code: string) => {
+    const sequence = navigationSequence.current;
+    const reply = await readJson<{ sections?: AuthSection[] }>(`/api/authoring/docs/${encodeURIComponent(docId)}/sections`);
+    if (!aliveRef.current || openProgramRef.current !== programId || navigationSequence.current !== sequence) return;
+    const matches = (reply.body?.sections ?? []).filter(s => s.code.toLowerCase() === code.toLowerCase());
+    if (!reply.ok || matches.length !== 1) {
+      setTargetNotice(`The linked document's section ${code} could not be resolved uniquely. Nothing else was opened.`);
+      return;
+    }
+    setTargetNotice(null);
+    requestLeaveRef.current({ kind: 'document', id: docId, sectionId: matches[0].id });
+    setTreeScrollNonce(n => n + 1);
+  }, [programId]);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
     if (!sectionOpenTarget || docsState === 'loading') return;
     const t = sectionOpenTarget;
+    if (t.programId && t.programId !== projectIdForOutline) {
+      targetAttemptedRef.current = true;
+      setTargetNotice(`Couldn’t open the linked document — it belongs to ${t.programTitle ?? 'a different program'}. Open that program and retry.`);
+      return;
+    }
     if (docsState === 'error') {
       /* A failed docs read must NOT spend the one attempt: the ref stays
          unlatched, so when the list does load (a retry, a status-filter
@@ -2183,6 +2230,10 @@ export function DocumentWorkbench({
       targetAttemptedRef.current = true;
       const linked = docs.find((d) => d.id === t.docId);
       if (linked) {
+        if (t.sectionCode) {
+          void openExactDocumentSection(linked.id, t.sectionCode);
+          return;
+        }
         // A docs-error notice posted moments ago must not outlive the open.
         setTargetNotice(null);
         /* Through the unsaved-work gate, not a bare setActiveDocId: a doc
@@ -2283,6 +2334,8 @@ export function DocumentWorkbench({
     loadSections,
     requestLeave,
     fireToast,
+    programId,
+    openExactDocumentSection,
   ]);
 
   /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──
@@ -3118,9 +3171,15 @@ export function DocumentWorkbench({
      inserts the returned REFERENCE; section HTML never carries image bytes,
      so the revision ledger stays lean and the device cache stays inside its
      quota. Thrown reasons surface in the editor's own notice bar. */
+  const imageContextRef = useRef('');
+  imageContextRef.current = programSwitchHeld ? 'scope-switch-held' : `${activeDocId}:${activeSectionId}:${contentEpoch}:${programId}`;
   const uploadSectionImage = useCallback(async (file: File) => {
+    if (!activeDocId || !activeSectionId || docSealed || programSwitchHeld) throw new Error('Open an editable document in the current project before uploading an image.');
+    const context = `${activeDocId}:${activeSectionId}:${contentEpoch}:${programId}`;
+    const sequence = navigationSequence.current;
     const form = new FormData();
     form.append('file', file);
+    form.append('documentId', activeDocId);
     const token = getAuthToken();
     const res = await fetch('/api/authoring/images', {
       method: 'POST',
@@ -3132,6 +3191,9 @@ export function DocumentWorkbench({
       image?: { id?: unknown; url?: unknown };
       error?: unknown;
     } | null;
+    if (!aliveRef.current || sequence !== navigationSequence.current || context !== imageContextRef.current) {
+      throw new Error('The editor context changed. This image was not inserted.');
+    }
     if (!res.ok || typeof json?.image?.url !== 'string') {
       // The envelope's error goes through the canonical reader, which drops an
       // enum token or internal text before it reaches the thrown message a toast
@@ -3139,7 +3201,7 @@ export function DocumentWorkbench({
       throw new Error(serverMessage(json) ?? `the image store returned HTTP ${res.status}`);
     }
     return { id: String(json.image.id), url: json.image.url };
-  }, []);
+  }, [activeDocId, activeSectionId, docSealed, programSwitchHeld, contentEpoch, programId]);
 
   /* ── Track changes: the store's own column drives the suggestion engine ──
      The server column is flipped FIRST; the editor enables suggestion capture
@@ -3767,7 +3829,7 @@ export function DocumentWorkbench({
   // What the filing outline was built FROM, in the words the filer sees.
   // Null only when there is no governed document, in which case there is no
   // outline to qualify either.
-  const provenance = filing.document
+  const provenance = !unboundDraft && filing.document
     ? describeRulePackProvenance(filing.document.provenance)
     : null;
 
@@ -3777,10 +3839,10 @@ export function DocumentWorkbench({
       <aside className="ed-tree">
         <div className="ed-tree-h">
           <div className="ed-tree-t">
-            {filing.document ? filing.document.title : pinnedDocId ? (activeDoc?.title ?? 'Document') : 'Document tree'}
+            {unboundDraft ? activeDoc?.title : filing.document ? filing.document.title : pinnedDocId ? (activeDoc?.title ?? 'Document') : 'Document tree'}
           </div>
           <div className="ed-tree-m">
-            {filing.document
+            {unboundDraft ? 'Saved draft sections · unbound' : filing.document
               ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${
                   filing.flat.length
                 } sections`
@@ -3794,14 +3856,15 @@ export function DocumentWorkbench({
           {/* A failed outline read used to degrade this pane, silently, to the
               flat document list — indistinguishable from a project with no
               rule pack. The failure and the wait are now said. */}
-          {filing.loading && (
+          {!unboundDraft && filing.loading && (
             <div role="status" className="scaf-note" style={{ padding: '4px 0' }}>Reading the governed filing outline…</div>
           )}
-          {filing.error && (
+          {!unboundDraft && filing.error && (
             <div className="scaf-note" role="alert" style={{ padding: '4px 0' }}>
               The governed filing outline could not be read — what is listed below is the document list, not the filing outline.
             </div>
           )}
+          {unboundDraft && <p className="scaf-note">Unbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.</p>}
           {onStatusChange && (
             <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
               {/* The Module select is gone. It defaulted every filing type to
@@ -3848,7 +3911,7 @@ export function DocumentWorkbench({
             Derived from (doc_type × agency) via c2c_rule_packs, so a BLA shows
             its 71 nested sections and a 510(k) shows A/B/C/D/E. Nodes bind to
             the authored section that holds the text by code. */}
-        {filing.tree.length > 0 && (
+        {!unboundDraft && filing.tree.length > 0 && (
           <div
             className="ed-tree-scroll"
             style={{ flex: '0 0 auto', maxHeight: '46%', borderBottom: '1px solid var(--border)' }}
@@ -4087,7 +4150,7 @@ export function DocumentWorkbench({
                 className="ed-back"
                 onClick={() => {
                   if (embedded) embedded.onBack();
-                  else if (returnTo) openConversationWithPrompt(null, onNav, returnTo.conversationId);
+                  else if (returnTo && !programSwitchHeld) openConversationWithPrompt(null, onNav, returnTo.conversationId);
                 }}
                 data-testid="workbench-back"
               >
@@ -4102,7 +4165,7 @@ export function DocumentWorkbench({
                 <span className="sep" aria-hidden="true">›</span>
               </>
             )}
-            <span className="sep-first">{activeDoc?.module ?? 'eCTD'}</span>
+            <span className="sep-first">{activeDoc?.module ?? (activeDoc ? (activeDoc.c2c_document_id ? 'Unassigned module' : 'Unbound draft') : 'eCTD')}</span>
             <span className="sep" aria-hidden="true">›</span>
             <span className="doc-title" title={activeDoc?.title ?? undefined}>
               {activeDoc?.title ?? 'No document'}
@@ -4181,6 +4244,7 @@ export function DocumentWorkbench({
             </button>
             {activeDoc && (
               <AuthoringFilingBar
+                key={activeDoc.id}
                 docId={activeDoc.id}
                 docTitle={activeDoc.title}
                 docStatus={activeDoc.status}
@@ -4195,6 +4259,8 @@ export function DocumentWorkbench({
                    control stays open for that one meaning (QA 2026-10-08, j4). */
                 esignRefusal={esignReviewOnly(docAccess) ? null : actRefusal(docAccess.esign)}
                 reviewOnly={esignReviewOnly(docAccess)}
+                workflowOrigin={docProvenance?.importSource && isWorkflowImportOrigin(docProvenance.importSource) ? docProvenance.importSource : undefined}
+                docRevision={`${activeDoc.updated_at ?? ''}:${contentEpoch}:${sections.map(s => s.updated_at ?? '').join('|')}`}
               />
             )}
             {/* The authoring → filing seam: place the OPEN document into an
@@ -4520,7 +4586,7 @@ export function DocumentWorkbench({
                  save records. Click a section to go and edit it. */
               <div className="ed-full" aria-label={`${activeDoc.title} — full document`}>
                 <div className="ed-full-mast">
-                  <div className="ed-mast-num">{activeDoc.module}</div>
+                  <div className="ed-mast-num">{activeDoc.module ?? (activeDoc.c2c_document_id ? 'Unassigned module' : 'Unbound draft')}</div>
                   <h1 className="ed-mast-t">{activeDoc.title}</h1>
                   {docProvenance && (
                     <div className="ed-provline" data-source={docProvenance.source} data-testid="doc-provenance">
@@ -6411,7 +6477,7 @@ export function DocumentWorkbench({
           sectionCode={activeSection.code}
           sectionTitle={activeSection.title}
           destination={
-            pendingLeave.kind !== 'section'
+            pendingLeave.kind === 'program' ? pendingLeave.label : pendingLeave.kind !== 'section'
               ? docs.find(d => d.id === pendingLeave.id)?.title ?? 'another document'
               : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'
           }
@@ -6419,7 +6485,7 @@ export function DocumentWorkbench({
           pendingDecisionCount={pendingDecisionCountRef.current}
           onSave={() => void saveAndLeave()}
           onLeave={leaveUnsaved}
-          onCancel={() => setPendingLeave(null)}
+          onCancel={() => { if (pendingLeave.kind === 'program') pendingLeave.onCancel(); setPendingLeave(null); }}
         />
       )}
 

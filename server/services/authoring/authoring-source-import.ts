@@ -6,19 +6,17 @@
  */
 import { createHash } from 'node:crypto';
 import type { Pool } from 'pg';
-import type { AuthoringImportOrigin, AuthoringImportSource, AuthoringSourceImportData } from '../../../shared/authoring/source-import';
+import type { AuthoringImportOrigin, AuthoringSourceImportData, AuthoringSourceImportPreviewData, BinaryImportOrigin, BinaryImportSource, WorkflowImportSource } from '../../../shared/authoring/source-import';
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { isInlineFigureImage } from '../../../shared/authoring/figure-refs';
 import { requireGovernedReason } from '../../routes/governed-reason';
-import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
-import { programInOrganization } from '../c2c/program-access';
-import { readProgramAnchorRow } from '../c2c/program-project-anchor';
-import { canAccessReportProject } from '../report-os/project-access';
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
 import { capturedBinaryAvailableSql, capturedDataEligibleSql, vaultBinaryAvailableSql, vaultDataEligibleSql } from '../document-data-disposition/eligibility';
 import { decideAuthoringPermission, type AuthoringPrincipal } from './authoring-permissions';
 import { createDocumentFromDraft, type CreateDocumentFromDraftInput } from './authoring-from-draft';
 import type { CreateContext } from './authoring-documents';
+import { authorizeAuthoringProgram, AuthoringProgramAccessError } from './authoring-program-access';
+import { materializeWorkflowSource, WorkflowSourceImportError, type MaterializedWorkflowSource } from './workflow-source-import';
 import type { Queryable } from './authoring-evidence';
 import type { DocxImportResult } from '../../import/docx-to-authoring';
 import type { ExtractedDocumentText, classifyDocumentFormat } from '../ocr/extractDocumentText';
@@ -29,9 +27,9 @@ const MAX_BYTES = 25 * 1024 * 1024;
 const MAX_CHARS = 2_000_000;
 const MAX_SECTIONS = 200;
 
-export interface SourceImportInput { programId: string; source: AuthoringImportSource; reason: string }
+export interface SourceImportInput { programId: string; source: BinaryImportSource; reason: string }
 export type SourceImportRefusal = { ok: false; status: number; code: string; message: string };
-export type SourceImportOutcome = SourceImportRefusal | { ok: true; data: AuthoringSourceImportData };
+export type SourceImportOutcome = SourceImportRefusal | { ok: true; data: AuthoringSourceImportData | AuthoringSourceImportPreviewData };
 type SourceRecord = {
   id: string; title: string | null; file_name: string | null; mime_type: string | null;
   content_hash: string | null; document_type: string | null; ctd_section: string | null;
@@ -43,7 +41,7 @@ type OriginalSourceFile = Awaited<ReturnType<SourceImportDeps['readUpload']>> & 
 type ConvertedSource = { sections: CreateDocumentFromDraftInput['sections']; warnings: string[] };
 interface ImportReservation {
   ctx: CreateContext; principal: AuthoringPrincipal; input: SourceImportInput;
-  record: SourceRecord; origin: AuthoringImportOrigin;
+  record: SourceRecord; origin: BinaryImportOrigin;
 }
 interface ImportWork extends ImportReservation {
   deps: SourceImportDeps; converted: ConvertedSource;
@@ -84,40 +82,12 @@ export function parseSourceImportInput(raw: unknown): SourceImportInput | Source
   return refused(400, 'SOURCE_REQUIRED', 'Choose an exact Vault document or data-room source from this project.');
 }
 
-/** Program ownership is tenancy, not a grant to another team's private
- * project. Check the live actor and canonical sharing policy before reading
- * the source, and repeat on the creation transaction before any writes. */
 async function authorizedImportPrincipal(q: Queryable, ctx: CreateContext, principal: AuthoringPrincipal, input: SourceImportInput): Promise<AuthoringPrincipal> {
-  const actorId = ctx.actor.id;
-  if (typeof actorId !== 'string' || !/^[1-9]\d*$/.test(actorId) || !Number.isSafeInteger(Number(actorId))
-    || Number(actorId) > 2_147_483_647 || principal.id !== actorId) {
-    return abort(403, 'IMPORT_ACTOR_REQUIRED', 'A verified organization member is required to import this source.');
-  }
   try {
-    if (!(await programInOrganization(q, input.programId, ctx.tenantId))) return abort(404, 'PROJECT_NOT_FOUND', 'Project not found.');
-    const membership = await q.query(
-      `SELECT ou.role FROM organization_users ou
-        JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.organization_id
-       WHERE ou.user_id = $1 AND ou.organization_id = $2 AND u.status = 'active' AND o.status = 'active'
-       FOR SHARE OF ou, u, o`,
-      [Number(actorId), ctx.tenantId],
-    );
-    const role = membership.rows.length === 1 && typeof membership.rows[0].role === 'string'
-      ? membership.rows[0].role.trim().toLowerCase() : null;
-    if (!role || !GOVERNED_WRITE_ROLES.has(role)) return abort(403, 'IMPORT_WRITE_PERMISSION_DENIED', 'Your current organization role cannot import a working copy.');
-    const anchor = await readProgramAnchorRow(q, {
-      programId: input.programId, orgId: ctx.tenantId, context: 'authoring-source-import', requireUnique: true,
-    });
-    if (!anchor) return abort(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This program needs one verified project relationship before sources can be imported.');
-    if (!(await canAccessReportProject(ctx.tenantId, { userId: Number(actorId), role }, anchor.id, q))) {
-      return abort(403, 'PROJECT_PERMISSION_DENIED', 'You cannot import sources from this project with your current access.');
-    }
-    // Reuse authorization also uses the fresh role, never a stale token's
-    // administrator claim. The actor identity has already been matched above.
-    return { ...principal, roles: [role.toUpperCase()] };
+    return (await authorizeAuthoringProgram(q, { tenantId: ctx.tenantId, actor: ctx.actor, principal, programId: input.programId })).principal;
   } catch (error) {
-    if (error instanceof SourceImportError) throw error;
-    return abort(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was imported.');
+    if (error instanceof AuthoringProgramAccessError) return abort(error.status, error.code, error.message);
+    throw error;
   }
 }
 
@@ -184,7 +154,7 @@ async function defaultDeps(): Promise<SourceImportDeps> {
 
 const escaped = (text: string): string => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-async function convert(bytes: Buffer, origin: AuthoringImportOrigin, deps: SourceImportDeps): Promise<ConvertedSource> {
+async function convert(bytes: Buffer, origin: BinaryImportOrigin, deps: SourceImportDeps): Promise<ConvertedSource> {
   if (deps.classify(origin.mimeType, origin.fileName) === 'docx') {
     const parsed = await deps.importDocx(bytes);
     if (!parsed.sections.length || !parsed.sections.some(s => s.html.trim() || s.title.trim())) {
@@ -273,7 +243,7 @@ async function originalSourceFile(ctx: CreateContext, input: SourceImportInput, 
   return { ...file, sha256 };
 }
 
-function sourceOrigin(input: SourceImportInput, record: SourceRecord, file: OriginalSourceFile, deps: SourceImportDeps): AuthoringImportOrigin {
+function sourceOrigin(input: SourceImportInput, record: SourceRecord, file: OriginalSourceFile, deps: SourceImportDeps): BinaryImportOrigin {
   const fileName = file.fileName || record.file_name || record.title || 'Source document';
   const mimeType = file.mimeType || record.mime_type || 'application/octet-stream';
   return { kind: input.source.kind, id: String(record.id), programId: input.programId,
@@ -282,13 +252,13 @@ function sourceOrigin(input: SourceImportInput, record: SourceRecord, file: Orig
     conversion: deps.classify(mimeType, fileName) === 'docx' ? 'docx-structure' : 'extracted-text' };
 }
 
-function importedDraft(input: SourceImportInput, origin: AuthoringImportOrigin, converted: ConvertedSource): CreateDocumentFromDraftInput {
+function importedDraft(input: SourceImportInput, origin: BinaryImportOrigin, converted: ConvertedSource): CreateDocumentFromDraftInput {
   const ctdCode = normalizeCtdCode(origin.sectionCode) || converted.sections.map(s => normalizeCtdCode(s.code)).find(Boolean);
   return { programId: input.programId, title: origin.title, module: ctdCode ? `M${ctdCode[0]}` : null,
     documentType: origin.documentType, sections: converted.sections, provenance: { source: 'import', note: input.reason } };
 }
 
-async function existingWorkingCopy(work: ImportWork, document: Record<string, unknown>): Promise<SourceImportOutcome> {
+async function existingWorkingCopy(work: { ctx: CreateContext; origin: AuthoringImportOrigin; converted: ConvertedSource }, document: Record<string, unknown>): Promise<SourceImportOutcome> {
   const sections = await work.ctx.pool.query('SELECT * FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at', [document.id, work.ctx.tenantId]);
   const savedOrigin = (document.provenance as { importSource?: AuthoringImportOrigin & { warnings?: string[] } } | undefined)?.importSource;
   return { ok: true, data: { doc: document as AuthoringSourceImportData['doc'], sections: sections.rows,
@@ -310,10 +280,119 @@ async function saveWorkingCopy(work: ImportWork): Promise<SourceImportOutcome> {
   }
 }
 
-export async function importSourceDocument(ctx: CreateContext, principal: AuthoringPrincipal, raw: unknown, suppliedDeps?: SourceImportDeps): Promise<SourceImportOutcome> {
-  const input = parseSourceImportInput(raw);
-  if ('ok' in input) return input;
+interface WorkflowInput { programId: string; source: WorkflowImportSource; previewOnly: boolean; expectedFingerprint?: string; reason?: string; associationReason?: string }
+
+function workflowSelector(selected: Record<string, unknown>): WorkflowImportSource {
+  const validId = (value: unknown) => Number.isSafeInteger(value) && Number(value) > 0 && Number(value) <= 2_147_483_647;
+  if (selected.kind === 'protocol' && validId(selected.documentId)) return { kind: 'protocol', documentId: Number(selected.documentId) };
+  if (selected.kind !== 'csr' || !validId(selected.jobId)) return abort(400, 'SOURCE_REQUIRED', 'Choose an exact saved protocol or CSR output.');
+  const selection = selected.sectionNumbers;
+  if (selection === undefined) return { kind: 'csr', jobId: Number(selected.jobId) };
+  if (!Array.isArray(selection) || !selection.length || selection.length > MAX_SECTIONS
+    || selection.some(v => typeof v !== 'string' || !/^\d+(?:\.\d+)*$/.test(v))) return abort(400, 'SOURCE_REQUIRED', 'Choose valid saved CSR section numbers.');
+  return { kind: 'csr', jobId: Number(selected.jobId), sectionNumbers: [...new Set(selection as string[])].sort() };
+}
+
+function workflowReason(value: unknown, code: string): string {
+  const checked = requireGovernedReason(value);
+  if (!checked.ok) return abort(400, code, checked.error);
+  return checked.reason;
+}
+
+function parseWorkflowInput(raw: Record<string, unknown>): WorkflowInput | SourceImportRefusal {
+  const programId = str(raw.programId);
+  if (!programId || !UUID.test(programId)) return refused(400, 'PROJECT_REQUIRED', 'A valid open project is required.');
+  const source = workflowSelector(raw.source as Record<string, unknown>);
+  const previewOnly = raw.previewOnly === true;
+  const reason = previewOnly ? undefined : workflowReason(raw.reason, 'REASON_REQUIRED');
+  const associationReason = raw.associationReason === undefined ? undefined : workflowReason(raw.associationReason, 'ASSOCIATION_REASON_REQUIRED');
+  const expectedFingerprint = str(raw.expectedFingerprint);
+  if (!previewOnly && (!expectedFingerprint || !HASH.test(expectedFingerprint))) return refused(400, 'SOURCE_PREVIEW_REQUIRED', 'Preview this exact saved source before creating its working copy.');
+  return { programId: programId.toLowerCase(), source, previewOnly, reason, associationReason, expectedFingerprint: expectedFingerprint?.toLowerCase() };
+}
+
+async function coherentWorkflowSnapshot(ctx: CreateContext, principal: AuthoringPrincipal, input: WorkflowInput) {
+  const client = await ctx.pool.connect();
+  let discardConnection: Error | undefined;
   try {
+    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+    const target = await authorizeAuthoringProgram(client, { tenantId: ctx.tenantId, actor: ctx.actor, principal, programId: input.programId });
+    const materialized = await materializeWorkflowSource({ organizationId: ctx.tenantId, userId: Number(ctx.actor.id),
+      target: { programId: input.programId, projectId: target.projectId }, source: input.source, associationReason: input.associationReason }, client);
+    await client.query('COMMIT');
+    return { target, materialized };
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => { discardConnection = new Error('Workflow snapshot rollback failed'); });
+    throw error;
+  } finally { client.release(discardConnection); }
+}
+
+async function reserveWorkflow(q: Queryable, ctx: CreateContext, principal: AuthoringPrincipal, input: WorkflowInput, original: MaterializedWorkflowSource): Promise<void> {
+  const target = await authorizeAuthoringProgram(q, { tenantId: ctx.tenantId, actor: ctx.actor, principal, programId: input.programId });
+  const current = await materializeWorkflowSource({ organizationId: ctx.tenantId, userId: Number(ctx.actor.id),
+    target: { programId: input.programId, projectId: target.projectId }, source: input.source, associationReason: input.associationReason }, q);
+  if (current.fingerprint !== original.fingerprint || current.fingerprint !== input.expectedFingerprint) abort(409, 'SOURCE_CHANGED', 'The saved workflow source changed. Preview it again. Nothing was imported.');
+  const key = `${ctx.tenantId}:${input.programId}:${original.origin.kind}:${original.origin.id}:${original.fingerprint}:${ctx.actor.id}`;
+  await q.query('SELECT pg_advisory_xact_lock(hashtext($1))', [key]);
+  const existing = await q.query(`SELECT d.* FROM authoring_documents d
+    WHERE d.tenant_id=$1 AND d.client_program_id=$2 AND d.created_by=$3 AND upper(d.status)='DRAFT'
+      AND d.provenance->'importSource'->>'kind'=$4 AND d.provenance->'importSource'->>'id'=$5
+      AND d.provenance->'importSource'->>'fingerprint'=$6 ORDER BY d.created_at LIMIT 1`,
+    [ctx.tenantId, input.programId, ctx.actor.id, original.origin.kind, original.origin.id, original.fingerprint]);
+  if (existing.rows[0]) {
+    const document = existing.rows[0];
+    const permission = await decideAuthoringPermission({ pool: q as Pool, principal: target.principal,
+      scope: { tenantId: ctx.tenantId, docId: document.id, sectionId: null, documentStatus: document.status, createdBy: document.created_by }, action: 'edit' });
+    if (!permission.allowed) abort(403, 'WORKING_COPY_PERMISSION_DENIED', 'Your current permissions cannot edit the existing working copy.');
+    throw new ExistingImport(document);
+  }
+}
+
+async function createWorkflowCopy(ctx: CreateContext, principal: AuthoringPrincipal, input: WorkflowInput, materialized: MaterializedWorkflowSource): Promise<SourceImportOutcome> {
+  try {
+    const outcome = await createDocumentFromDraft(ctx, { programId: input.programId, title: materialized.origin.title, module: null, documentType: null,
+      sections: materialized.sections, provenance: { source: 'import', note: input.reason } }, { verifiedImport: {
+        origin: materialized.origin, warnings: [...materialized.warnings, ...materialized.gaps], reason: input.reason!, forceUnbound: true,
+        reserve: q => reserveWorkflow(q, ctx, principal, input, materialized),
+      } });
+    if (outcome.kind === 'refused') return refused(outcome.status, outcome.code ?? 'SOURCE_IMPORT_REFUSED', outcome.error);
+    if (typeof outcome.document.id !== 'string' || typeof outcome.document.title !== 'string') throw new Error('Working copy identity unavailable');
+    return { ok: true, data: { doc: { ...outcome.document, id: outcome.document.id, title: outcome.document.title, provenance: outcome.provenance },
+      sections: outcome.sections, origin: materialized.origin, warnings: [...materialized.warnings, ...materialized.gaps], reused: false } };
+  } catch (error) {
+    if (error instanceof ExistingImport) return existingWorkingCopy({ ctx, origin: materialized.origin, converted: { sections: materialized.sections, warnings: [...materialized.warnings, ...materialized.gaps] } }, error.document);
+    throw error;
+  }
+}
+
+async function importWorkflow(ctx: CreateContext, principal: AuthoringPrincipal, input: WorkflowInput): Promise<SourceImportOutcome> {
+  const { target, materialized } = await coherentWorkflowSnapshot(ctx, principal, input);
+  if (input.previewOnly) return { ok: true, data: { preview: true, origin: materialized.origin, fingerprint: materialized.fingerprint,
+    sections: materialized.sections.map(s => ({ code: s.code, title: s.title, contentSha256: createHash('sha256').update(s.content).digest('hex') })),
+    gaps: materialized.gaps, warnings: materialized.warnings, target: { programId: input.programId, projectId: target.projectId }, association: materialized.association } };
+  if (materialized.association.required && !input.associationReason) return refused(400, 'ASSOCIATION_REASON_REQUIRED', 'State why this organization-scoped source belongs in the selected program.');
+  if (materialized.fingerprint !== input.expectedFingerprint) return refused(409, 'SOURCE_CHANGED', 'The workflow source changed. Preview it again. Nothing was imported.');
+  if (!materialized.sections.length || materialized.sections.length > MAX_SECTIONS || materialized.sections.reduce((n, s) => n + s.content.length, 0) > MAX_CHARS) return refused(409, 'SOURCE_SIZE_REFUSED', 'The saved workflow output is empty or exceeds the editor limits.');
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try { return await createWorkflowCopy(ctx, target.principal, input, materialized); }
+    catch (error) {
+      if ((error as { code?: string }).code !== '40001') throw error;
+      if (attempt) return refused(409, 'IMPORT_RETRY_REQUIRED', 'The source or working copy changed concurrently. Retry the import. Nothing was overwritten.');
+    }
+  }
+  throw new Error('Workflow import retry exhausted');
+}
+
+export async function importSourceDocument(ctx: CreateContext, principal: AuthoringPrincipal, raw: unknown, suppliedDeps?: SourceImportDeps): Promise<SourceImportOutcome> {
+  const body = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+  const source = body.source && typeof body.source === 'object' ? body.source as Record<string, unknown> : {};
+  try {
+    if (source.kind === 'protocol' || source.kind === 'csr') {
+      const input = parseWorkflowInput(body);
+      return 'ok' in input ? input : await importWorkflow(ctx, principal, input);
+    }
+    const input = parseSourceImportInput(raw);
+    if ('ok' in input) return input;
     const currentPrincipal = await authorizedImportPrincipal(ctx.pool, ctx, principal, input);
     const record = await verifiedSourceRecord(ctx, input);
     const deps = suppliedDeps ?? await defaultDeps();
@@ -323,6 +402,7 @@ export async function importSourceDocument(ctx: CreateContext, principal: Author
     return await saveWorkingCopy({ ctx, principal: currentPrincipal, input, record, origin, converted, deps });
   } catch (error) {
     if (error instanceof SourceImportError) return error.refusal;
+    if (error instanceof AuthoringProgramAccessError || error instanceof WorkflowSourceImportError) return refused(error.status, error.code, error.message);
     throw error;
   }
 }

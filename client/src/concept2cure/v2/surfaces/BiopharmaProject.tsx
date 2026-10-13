@@ -18,6 +18,8 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { shellProgramId, useShellProject } from '../shellProject';
+import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
+import type { WorkflowImportSource } from '@shared/authoring/source-import';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import {
   APPLICABILITY_LABEL,
@@ -297,22 +299,9 @@ function RegulatoryPanel({
 /**
  * CSR workflow — the ICH E3 build board.
  *
- * `onAsk` here is the house pattern, not misfiled navigation. "Open CSR §11 in
- * the editor" reads like a sentence because it IS one: the request goes to ANA,
- * which opens the section with the surrounding context, rather than to `onNav`,
- * which would only change the URL. `RegulatoryWorkspace` below (line ~500) does
- * the same thing with the same phrasing on its own row buttons.
- *
- * What was wrong was the registration. This surface used to claim the rail's
- * column — the flag then spelled `hideAna`, now `ownsConversation` — so
- * the shell drew no rail, every one of these asks went into a column this
- * screen never rendered, and `ask()` persisted `anaOpen` on the way past, so
- * the question reappeared, answered, on the next surface that did draw a rail.
- * `RegulatoryWorkspace`, the actual 3-pane substrate in this same file, never
- * claimed it. A board capped at 1100px had no business doing so either.
- * `csr-workflow` is registered `{ component: CsrWorkflow, full: true }` now,
- * which is what keeps it on the SurfaceView arm that still carries `onAsk`. The
- * claim is gone; the phrasing is unchanged.
+ * A saved CSR job opens a preview of its persisted E3 output in the common
+ * authoring intake. The draft action retains the existing AnA conversation.
+ * `csr-workflow` remains a full surface with the shell's visible AnA rail.
  */
 export function CsrWorkflow(props: SurfaceViewProps) {
   const selected = useShellProject();
@@ -322,10 +311,10 @@ export function CsrWorkflow(props: SurfaceViewProps) {
   if (!path) return <EmptyState icon={I.layers} title="Select a program for CSR work" hint="The selected context does not identify a program or project." />;
   // Remount on scope changes: data and assistant context from the old program
   // disappear before the next read, and old in-flight replies are discarded.
-  return <CsrWorkflowBoard key={path} {...props} boardPath={path} />;
+  return <CsrWorkflowBoard key={path} {...props} boardPath={path} targetProgramId={programId} targetProgramName={selected?.title} />;
 }
 
-function CsrWorkflowBoard({ onAsk, boardPath }: SurfaceViewProps & { boardPath: string }) {
+function CsrWorkflowBoard({ onAsk, onNav, boardPath, targetProgramId, targetProgramName }: SurfaceViewProps & { boardPath: string; targetProgramId: string | null; targetProgramName?: string }) {
   // Live ICH E3 CSR build board (GET /api/csr-workflow/board → { success,
   // data: { program, sections, ... } }). Fixture-free (GA real-data standard):
   // the route is org-scoped and honest — a null `program` means the org has no
@@ -336,6 +325,9 @@ function CsrWorkflowBoard({ onAsk, boardPath }: SurfaceViewProps & { boardPath: 
   const board = boardRes.data;
   const program: CsrProgram | null = board?.program ?? null;
   const sections: CsrSection[] = Array.isArray(board?.sections) ? board!.sections : [];
+  const jobId = Number(board?.meta?.jobId);
+  const canImport = !!targetProgramId && Number.isSafeInteger(jobId) && jobId > 0;
+  const [importSource, setImportSource] = useState<WorkflowImportSource | null>(null);
 
   /* ── Clinical-Regulatory Intelligence Graph (flag-gated) ──
      Read as a SEPARATE fetch from the CSR board rather than widening the board
@@ -518,7 +510,10 @@ function CsrWorkflowBoard({ onAsk, boardPath }: SurfaceViewProps & { boardPath: 
               className="ct-row"
               style={{ gridTemplateColumns: cols }}
               data-blocker={s.blocker || undefined}
-              onClick={() => onAsk(`Open CSR §${s.num} in the editor`)}
+              title={canImport ? 'Preview saved output for this ICH E3 section' : 'Ask AnA to open this section'}
+              onClick={() => canImport
+                ? setImportSource({ kind: 'csr', jobId, sectionNumbers: [s.num] })
+                : onAsk(`Open CSR §${s.num} in the editor`)}
             >
               <div className="mono" style={{ color: 'var(--accent-200)' }}>{s.num}</div>
               <div className="vn">
@@ -572,6 +567,9 @@ function CsrWorkflowBoard({ onAsk, boardPath }: SurfaceViewProps & { boardPath: 
           </div>
         </>
       )}
+      {targetProgramId && importSource && <SourceImportDialog programId={targetProgramId} programName={targetProgramName} source={importSource}
+        title={program?.title || 'Saved CSR output'} onClose={() => setImportSource(null)}
+        onOpenDocument={(docId, code) => openImportedDocument(docId, targetProgramId, onNav, code)} />}
     </div>
   );
 }

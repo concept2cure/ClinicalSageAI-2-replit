@@ -43,7 +43,13 @@ const h = vi.hoisted(() => {
     onPrefetch: null as (() => void) | null,
   };
   const pool = {
-    query: async () => ({ rows: [], rowCount: 0 }),
+    query: async (sql: string, params?: unknown[]) => {
+      if (/SELECT id, regulatory_program_id FROM projects/.test(sql)) return { rows: [{ id: params?.[0], regulatory_program_id: null }], rowCount: 1 };
+      if (/FROM organization_users/.test(sql)) return { rows: [{ role: 'member' }], rowCount: 1 };
+      if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) return { rows: [{ id: params?.[2],
+        owner_id: 3, created_by_id: 3, settings: {}, visibility: 'org_public', members: [], review_assigned: false }], rowCount: 1 };
+      return { rows: [], rowCount: 0 };
+    },
     connect: async () => {
       throw new Error('no dedicated client in this test');
     },

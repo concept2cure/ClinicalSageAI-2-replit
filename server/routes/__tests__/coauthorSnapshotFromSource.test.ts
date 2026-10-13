@@ -110,7 +110,7 @@ vi.mock('../../auth', () => ({
 }));
 
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import request from 'supertest';
@@ -276,7 +276,25 @@ beforeAll(async () => {
       entity_id TEXT, user_id INTEGER, user_name TEXT, user_role TEXT, ip_address TEXT,
       timestamp TIMESTAMPTZ, reason TEXT, metadata JSONB, regulatory_significant BOOLEAN,
       gxp_relevant BOOLEAN, created_at TIMESTAMPTZ);
+    ALTER TABLE authoring_documents ADD COLUMN provenance JSONB, ADD COLUMN client_program_id UUID;
+    ALTER TABLE organizations ADD COLUMN status TEXT NOT NULL DEFAULT 'active';
+    CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL);
+    CREATE TABLE organization_users (organization_id INTEGER, user_id INTEGER, role TEXT);
+    CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id INTEGER, regulatory_program_id UUID,
+      client_workspace_id INTEGER, owner_id INTEGER, created_by_id INTEGER, settings JSONB DEFAULT '{}');
+    CREATE TABLE project_visibility_settings (project_id INTEGER, organization_id INTEGER, visibility TEXT);
+    CREATE TABLE project_members (project_id INTEGER, organization_id INTEGER, user_id INTEGER, role TEXT, status TEXT);
+    CREATE TABLE concept2cure_artifacts (id INTEGER, organization_id INTEGER, project_id INTEGER);
+    CREATE TABLE concept2cure_review_assignments (artifact_id INTEGER, organization_id INTEGER, reviewer_id INTEGER, status TEXT);
+    CREATE SCHEMA vault;
+    CREATE TABLE vault.documents (id UUID PRIMARY KEY, organization_id INTEGER, program_id UUID,
+      content_hash TEXT, deleted_at TIMESTAMPTZ);
+    CREATE TABLE document_data_dispositions (organization_id INTEGER, program_id UUID, vault_document_id UUID,
+      linked_ids JSONB, source_sha256 TEXT, choice TEXT);
+    INSERT INTO users VALUES (3,'active'),(9,'active');
+    INSERT INTO organization_users VALUES (${ORG},3,'member'),(${ORG},9,'member');
   `);
+  await h.pglite.exec(readFileSync(path.resolve(__dirname, '../../../db/migrations/20260725_authoring_audit_trail.sql'), 'utf8'));
   // The real alias map, not a copy of its DDL.
   await h.pglite.exec(
     readFileSync(path.resolve(__dirname, '../../../migrations/20260814d_document_alias_map.sql'), 'utf8'),
@@ -350,6 +368,88 @@ describe('POST /api/coauthor/documents takes the text from the source, not the r
       .send({ title: 'Scratch', content: '<p>mine</p>', status: 'approved' });
     expect(res.status).toBe(201);
     expect(await row(res.body.document.id)).toMatchObject({ status: 'draft', content: '<p>mine</p>' });
+  });
+});
+
+describe('a saved binary import retains current source access when copied into coauthor filing', () => {
+  async function imported() {
+    const docId = randomUUID();
+    const programId = randomUUID();
+    const originalId = randomUUID();
+    const hash = 'a'.repeat(64);
+    await h.pglite.query(`INSERT INTO regulatory_programs
+      (id,organization_id,name,code,program_type,product_name) VALUES ($1,$2,'Private study',$3,'IND','Study drug')`,
+    [programId, ORG, programId]);
+    const projectId = (await h.pglite.query<{ id: number }>(`INSERT INTO projects
+      (organization_id,regulatory_program_id,owner_id,created_by_id) VALUES ($1,$2,9,9) RETURNING id`, [ORG,programId])).rows[0].id;
+    await h.pglite.query("INSERT INTO project_visibility_settings VALUES ($1,$2,'private')", [projectId,ORG]);
+    await h.pglite.query('INSERT INTO vault.documents VALUES ($1,$2,$3,$4,NULL)', [originalId,ORG,programId,hash]);
+    await source(docId,'DRAFT',[['12','Results','Private imported study findings.']]);
+    await h.pglite.query('UPDATE authoring_documents SET client_program_id=$2,provenance=$3::jsonb WHERE id=$1',
+    [docId,programId,JSON.stringify({ source: 'import', importSource: { kind: 'vault', id: originalId, programId, sha256: hash } })]);
+    return { docId,projectId,originalId };
+  }
+  async function grant(projectId: number) {
+    await h.pglite.query("INSERT INTO project_members VALUES ($1,$2,3,'use','active')", [projectId,ORG]);
+  }
+  async function assertRefusalBeforeBody(docId: string) {
+    let assembled = false;
+    holder.onLoad = async () => { assembled = true; };
+    const response = await place(docId);
+    expect(response.status,JSON.stringify(response.body)).toBe(409);
+    expect(response.body.error).toBe('SOURCE_REFERENCES_UNAVAILABLE');
+    expect(response.body.document).toBeUndefined();
+    expect(assembled).toBe(false);
+    expect(await rowsFor(docId)).toEqual([]);
+    expect((await h.pglite.query('SELECT 1 FROM c2c_document_aliases WHERE canonical_id=$1',[docId])).rows).toEqual([]);
+  }
+  it('refuses a same-organization saved import before assembling private text or creating a filing copy',async () => {
+    const { docId } = await imported();
+    await assertRefusalBeforeBody(docId);
+  });
+  it('allows the exact saved source for a currently assigned project member',async () => {
+    const { docId,projectId } = await imported();
+    await grant(projectId);
+    const response = await place(docId);
+    expect(response.status,JSON.stringify(response.body)).toBe(201);
+    expect(response.body.document).toMatchObject({ status: 'draft',content: '## 12 — Results\n\nPrivate imported study findings.' });
+  });
+  it('refuses a revoked project member before reading the previously accessible body',async () => {
+    const { docId,projectId } = await imported();
+    await grant(projectId);
+    await h.pglite.query("UPDATE project_members SET status='revoked' WHERE project_id=$1", [projectId]);
+    await assertRefusalBeforeBody(docId);
+  });
+  it('refuses an assigned member whose original binary source version changed',async () => {
+    const { docId,projectId,originalId } = await imported();
+    await grant(projectId);
+    await h.pglite.query('UPDATE vault.documents SET content_hash=$2 WHERE id=$1', [originalId,'b'.repeat(64)]);
+    await assertRefusalBeforeBody(docId);
+  });
+  it('refuses an assigned member whose organization membership was removed',async () => {
+    const { docId,projectId } = await imported();
+    await grant(projectId);
+    await h.pglite.query('DELETE FROM organization_users WHERE organization_id=$1 AND user_id=3',[ORG]);
+    try { await assertRefusalBeforeBody(docId); }
+    finally { await h.pglite.query("INSERT INTO organization_users VALUES ($1,3,'member')",[ORG]); }
+  });
+  it('leaves an existing filing copy and its trail unchanged after source-project access is revoked',async () => {
+    const { docId,projectId } = await imported();
+    await grant(projectId);
+    const first = await place(docId);
+    expect(first.status,JSON.stringify(first.body)).toBe(201);
+    const before = await row(first.body.document.id);
+    const auditBefore = await auditFor(first.body.document.id);
+    await h.pglite.query("UPDATE project_members SET status='revoked' WHERE project_id=$1",[projectId]);
+    let assembled = false;
+    holder.onLoad = async () => { assembled = true; };
+    const response = await place(docId);
+    expect(response.status,JSON.stringify(response.body)).toBe(409);
+    expect(response.body.error).toBe('SOURCE_REFERENCES_UNAVAILABLE');
+    expect(response.body.document).toBeUndefined();
+    expect(assembled).toBe(false);
+    expect(await row(first.body.document.id)).toEqual(before);
+    expect(await auditFor(first.body.document.id)).toEqual(auditBefore);
   });
 });
 

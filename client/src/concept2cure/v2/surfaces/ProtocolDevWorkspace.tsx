@@ -32,6 +32,8 @@ import { StudyDesignTab } from './ProtocolDevDesign';
 import { DerivationTab } from './ProtocolDevDerivation';
 import { ComplianceTab } from './ProtocolDevCompliance';
 import { IrbPackageTab } from './IrbPackage';
+import { shellProgramId, useShellProject } from '../shellProject';
+import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
 
 const Ic = PG.Ic;
 type Row = Record<string, unknown>;
@@ -118,9 +120,11 @@ interface HeaderProps {
   onAsk: (msg: string) => void;
   onExport: () => void;
   onEditCover: () => void;
+  onOpenDraft: () => void;
+  handoffBlocked: boolean;
 }
 
-function ProtocolHeader({ doc, canWrite, exporting, refreshing, onAsk, onExport, onEditCover }: HeaderProps) {
+function ProtocolHeader({ doc, canWrite, exporting, refreshing, onAsk, onExport, onEditCover, onOpenDraft, handoffBlocked }: HeaderProps) {
   const sponsor = str(doc.sponsor);
   const pi = str(doc.pi) || str(doc.principalInvestigator);
   return (
@@ -158,6 +162,7 @@ function ProtocolHeader({ doc, canWrite, exporting, refreshing, onAsk, onExport,
           Ask AnA
         </PG.Btn>
         <PG.Btn icon="fileText" variant="outline" onClick={onExport}>{exporting ? 'Exporting…' : 'Export'}</PG.Btn>
+        <PG.Btn icon="penLine" variant="outline" disabled={handoffBlocked} onClick={onOpenDraft}>Open saved draft in editor</PG.Btn>
       </div>
     </div>
   );
@@ -230,6 +235,7 @@ interface BodyProps {
   /** Re-read the record after a confirmed write, with no toast of its own —
    *  the pane that wrote says what it wrote. */
   onRefresh: () => void;
+  onPendingChange: (pending: boolean) => void;
 }
 
 /**
@@ -293,7 +299,7 @@ function TabBody(props: BodyProps) {
         /* Keyed on the section: switching section replaces the pane rather
            than re-using it, so a stated reason, a chosen status and an unsaved
            draft can never carry from one part of the record to another. */
-        ? <ProtocolSectionPane key={str(sec.id)} doc={doc as never} sec={sec as never} canWrite={canWrite} onAsk={onAsk} onSaved={onSaved} />
+        ? <ProtocolSectionPane key={str(sec.id)} doc={doc as never} sec={sec as never} canWrite={canWrite} onAsk={onAsk} onSaved={onSaved} onPendingChange={props.onPendingChange} />
         : <div className="pd-pane"><div className="pg-empty">This protocol has no sections yet.</div></div>;
   }
 }
@@ -352,6 +358,10 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
   const [activeSec, setActiveSec] = useState(str(doc.openSection));
   const [exporting, setExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [sourcePending, setSourcePending] = useState(false);
+  const project = useShellProject();
+  const programId = shellProgramId(project);
   const [reg, setReg] = useState<RegisterKind | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
   const [signing, setSigning] = useState<ProtocolSigning | null>(null);
@@ -360,6 +370,7 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
   // The write routers key on the numeric protocol_documents id.
   const numericDocId = Number(doc.id);
   const canWrite = Number.isInteger(numericDocId) && numericDocId > 0;
+  useEffect(() => { setImportOpen(false); }, [numericDocId, programId]);
   const sections = asRows(doc.sections);
   const sec = sections.find((s) => s.id === activeSec) ?? sections[0];
   const onSec = (s: Row) => { setActiveSec(str(s.id)); setTab(str(s.tab) || 'document'); };
@@ -402,13 +413,14 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
 
   return (
     <div className="pd-wrap">
-      <ProtocolHeader
+      <ProtocolHeaderState
         doc={doc} canWrite={canWrite} exporting={exporting} refreshing={refreshing} onAsk={onAsk}
         onExport={() => setExportOpen(true)} onEditCover={() => openForm('cover-page', {
           defaults: { sponsor: str(doc.sponsor), principalInvestigator: str(doc.pi) || str(doc.principalInvestigator) },
         })}
+        handoffBlocked={protocolHandoffBlocked({ canWrite, programId, pending: sourcePending, dialogs: [form, reg, signing] })}
+        onOpenDraft={() => setImportOpen(true)} sourcePending={sourcePending} programId={programId} reloadError={reloadError}
       />
-      {reloadError && <StaleNotice />}
       <TabStrip tab={tab} onTab={setTab} />
       <div className="pd-grid">
         <Outline doc={doc} activeSec={activeSec} onSec={onSec} onFinalize={openFinalize} />
@@ -420,9 +432,12 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
             onError={(m) => fireToast(m, 'error')}
             onToast={(m) => fireToast(m)}
             onRefresh={() => onChanged?.()}
+            onPendingChange={setSourcePending}
           />
         </div>
       </div>
+      <ProtocolSourceIntake open={importOpen} programId={programId} programName={project?.title} documentId={numericDocId}
+        title={str(doc.title)} pending={sourcePending} onClose={() => setImportOpen(false)} onNav={onNav} />
       {exportOpen && (
         <C2CForm
           config={{
@@ -567,4 +582,25 @@ function openSectionAction(
   if (activeSec === s.id) return { ok: true, detail: `Already on section ${str(s.num)} — ${str(s.title)}` };
   onSec(s);
   return { ok: true, detail: `Opened section ${str(s.num)} — ${str(s.title)}` };
+}
+
+function protocolHandoffBlocked({ canWrite, programId, pending, dialogs }: { canWrite: boolean; programId: string | null; pending: boolean; dialogs: unknown[] }) {
+  return !canWrite || !programId || pending || dialogs.some(Boolean);
+}
+function ProtocolHeaderState(props: HeaderProps & { sourcePending: boolean; programId: string | null; reloadError?: string }) {
+  return <>
+    <ProtocolHeader {...props} />
+    {props.sourcePending && <p className="scaf-note">Save the protocol editor's pending changes before opening a saved working copy.</p>}
+    {!props.programId && <p className="scaf-note">Select a target program to open this saved protocol in Document authoring.</p>}
+    {props.reloadError && <StaleNotice />}
+  </>;
+}
+function ProtocolSourceIntake({ open, programId, programName, documentId, title, pending, onClose, onNav }: {
+  open: boolean; programId: string | null; programName?: string; documentId: number; title: string;
+  pending: boolean; onClose: () => void; onNav: (id: string) => void;
+}) {
+  if (!open || !programId) return null;
+  return <SourceImportDialog programId={programId} programName={programName} source={{ kind: 'protocol', documentId }}
+    title={title} openBlocked={pending} onClose={onClose}
+    onOpenDocument={(docId, code) => { if (!pending) openImportedDocument(docId, programId, onNav, code); }} />;
 }

@@ -1,0 +1,25 @@
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+   337:8   warning  Function 'describeAuditMetadata' has a complexity of 39. Maximum allowed is 15                                                      complexity
+   788:1   warning  File has too many lines (4929). Maximum allowed is 500                                                                              max-lines
+  1254:8   warning  Function 'DocumentWorkbench' has too many lines (4091). Maximum allowed is 100                                                      max-lines-per-function
+  1254:8   warning  Function 'DocumentWorkbench' has a complexity of 334. Maximum allowed is 15                                                         complexity
+  2164:26  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  2199:16  warning  Arrow function has a complexity of 22. Maximum allowed is 15                                                                        complexity
+  2947:50  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                                                                  complexity
+  3003:55  warning  Async arrow function has a complexity of 34. Maximum allowed is 15                                                                  complexity
+  3165:5   warning  React Hook useCallback has missing dependencies: 'activeDocId' and 'loadAudit'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  3532:43  warning  Async arrow function has a complexity of 16. Maximum allowed is 15                                                                  complexity
+  3816:7   warning  'queueMicrotask' is not defined                                                                                                     no-undef
+  5340:39  warning  Arrow function has a complexity of 20. Maximum allowed is 15                                                                        complexity
+  6216:28  warning  Arrow function has too many lines (210). Maximum allowed is 100                                                                     max-lines-per-function
+  6216:28  warning  Arrow function has a complexity of 24. Maximum allowed is 15                                                                        complexity
+
+/workspace/ClinicalSageAI-2-replit/client/src/concept2cure/v2/editor/RichSectionEditor.tsx
+   534:3   warning  Function 'RichSectionEditor' has too many lines (1789). Maximum allowed is 100  max-lines-per-function
+   534:3   warning  Function 'RichSectionEditor' has a complexity of 176. Maximum allowed is 15     complexity
+   989:1   warning  File has too many lines (2036). Maximum allowed is 500                          max-lines
+  1008:19  warning  The value assigned to 'drift' is not used in subsequent statements              no-useless-assignment
+
+✖ 18 problems (0 errors, 18 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.

@@ -293,10 +293,11 @@ describe('posture and controls (every refusal below is read against these)', () 
     expect(rows[0]).toMatchObject({ role: runtimeRole, rolsuper: false, rolbypassrls: false, rls: 'on' });
   });
 
-  it('the catalog yields API prefixes for all seven launch apps, none on the public allowlist', async () => {
+  it('the catalog yields API prefixes for all eight launch apps, including CMC, none on the public allowlist', async () => {
     const { isPublicApiPath } = await import('../public-api-allowlist');
     const apps = launchPrefixes();
-    expect(apps.map((a) => a.app)).toEqual(['projects', 'vault', 'authoring', 'submission-center', 'submission-readiness', 'qms', 'reporting']);
+    expect(apps.map((a) => a.app)).toEqual(['projects', 'vault', 'authoring', 'submission-center', 'submission-readiness', 'qms', 'cmc', 'reporting']);
+    expect(apps.find((entry) => entry.app === 'cmc')?.prefixes).toContain('/api/cmc/drug-substances');
     for (const a of apps) expect(a.prefixes.length, a.app).toBeGreaterThan(0);
     expect(apps.flatMap((a) => a.prefixes).filter((p) => isPublicApiPath(`${p}/p02b-probe`))).toEqual([]);
   });

@@ -23,7 +23,7 @@ function handlers(pool?: KnowledgeQueryable): Record<string, Handler> {
 }
 
 const PROGRAM = '11111111-2222-4333-8444-555555555555';
-const CTX = { organizationId: 7, projectRef: PROGRAM };
+const CTX = { organizationId: 7, userId: 3, projectRef: PROGRAM };
 
 /** A pool that owns PROGRAM for org 7 and answers the Vault read with `rows`. */
 type VaultRow = { ctd_section: string | null; placement_status: string; document_title: string; folder_id?: string | null; evidence_kind?: string | null };
@@ -34,6 +34,10 @@ function fakePool(rows: VaultRow[], opts: { fail?: boolean } = {}) {
     async query(sql, params) {
       calls.push({ sql, params });
       if (/FROM regulatory_programs WHERE id = \$1/.test(sql)) return { rows: params?.[0] === PROGRAM && params?.[1] === 7 ? [{ id: PROGRAM }] : [] };
+      if (/FROM organization_users/.test(sql)) return { rows: [{ role: 'member' }] };
+      if (/WHERE regulatory_program_id = \$1/.test(sql)) return { rows: [{ id: 42, clientWorkspaceId: null }] };
+      if (/FROM projects p LEFT JOIN project_visibility_settings/.test(sql)) return { rows: [{ id: 42, owner_id: 3, created_by_id: 3,
+        settings: {}, visibility: 'private', members: [], review_assigned: false }] };
       if (/FROM vault\.documents/.test(sql)) {
         if (opts.fail) throw new Error('relation "vault.documents" does not exist');
         return { rows };

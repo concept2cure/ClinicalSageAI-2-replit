@@ -30,7 +30,7 @@ import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-ga
 import { grantAuthoringPermission } from './authoring-permissions';
 import { describeRefusedFigures, refusedFigures, refusedKind } from './authoring-html-sanitizer';
 import { isSectionCodeConflict, placeNewSection, sectionCodeExists } from './section-placement';
-import { LOCKED_DOCUMENT_STATUSES } from './document-lock';
+import { LOCKED_DOCUMENT_STATUSES, reserveWritableDocument, DocumentWriteReservationError } from './document-lock';
 import {
   bindingColumnState,
   createRevision,
@@ -46,7 +46,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 /** The pool as these functions need it: queries, and a client for a transaction. */
 export type AuthoringPool = Pool;
 
-type TxClient = Queryable & { release: () => void };
+type TxClient = Queryable & { release: (error?: Error) => void };
 
 /** The verified principal creating the record. */
 export interface AuthoringActor {
@@ -230,7 +230,7 @@ export async function resolveBinding(
 export interface DocumentRowSpec {
   docId: string;
   title: string;
-  module: string;
+  module: string | null;
   productCode: string | null;
   locale: string;
   templateId: string | null;
@@ -238,6 +238,8 @@ export interface DocumentRowSpec {
   binding: Binding;
   /** Set only by the from-draft path; the column is referenced only then. */
   provenance?: Record<string, unknown>;
+  /** Internal source imports compose and validate one coherent MVCC snapshot. */
+  isolation?: 'serializable';
 }
 
 /** One section to seed into a new document, inside its create transaction. */
@@ -253,6 +255,10 @@ export interface SectionSeed {
   contributors?: { id: string; name: string }[];
   /** Enlist the lineage gate — the from-draft path, where content is prose. */
   lineage?: { machineDraft: { authorId: string } | null };
+}
+
+function verifiedGenesisReceipt(spec: DocumentRowSpec): Record<string, unknown> | undefined {
+  return spec.provenance?.importSource as Record<string, unknown> | undefined;
 }
 
 /**
@@ -318,8 +324,9 @@ export async function insertDocumentTx(
 ): Promise<{ document: Record<string, unknown>; binding: Binding }> {
   const { pool, tenantId, actor } = ctx;
   const client: TxClient = await pool.connect();
+  let discardConnection: Error | undefined;
   try {
-    await client.query('BEGIN');
+    await client.query(spec.isolation === 'serializable' ? 'BEGIN ISOLATION LEVEL SERIALIZABLE' : 'BEGIN');
     // Source eligibility must be checked/locked before any regulated write,
     // and before provenance is serialized into the INSERT arguments.
     await beforeInsert?.(client);
@@ -375,6 +382,8 @@ export async function insertDocumentTx(
         tenantId,
         origin: 'genesis',
         contributors: s.contributors ?? [],
+        // beforeInsert has already verified/reserved this internal receipt.
+        verifiedImport: verifiedGenesisReceipt(spec),
       });
       await writeAuthoringAuditTrail(ctx.audit, {
         docId: spec.docId,
@@ -390,10 +399,10 @@ export async function insertDocumentTx(
     await client.query('COMMIT');
     return { document, binding };
   } catch (txErr) {
-    await client.query('ROLLBACK').catch(() => {});
+    await client.query('ROLLBACK').catch(() => { discardConnection = new Error('Authoring transaction rollback failed'); });
     throw txErr;
   } finally {
-    client.release();
+    client.release(discardConnection);
   }
 }
 
@@ -645,6 +654,8 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
   let result: { rows: any[] };
   try {
     await client.query('BEGIN');
+    // Canonical parent reservation coordinates all child writers with sealing.
+    await reserveWritableDocument(client, String(doc_id), tenantId);
     /* Where the new section goes (relative: a document someone has reordered
        keeps that order), and whether its code is already taken — refused as a
        conflict before anything moves (QA 2026-10-08, j4; section-placement.ts). */
@@ -672,6 +683,7 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
+    if (err instanceof DocumentWriteReservationError) return { kind: 'refused', status: err.status, code: err.code, error: err.message };
     // A concurrent create of the same code passes the check above and loses at
     // the unique index: still a conflict, not a lineage failure.
     if (isSectionCodeConflict(err)) return sectionCodeExists(String(code));

@@ -8,6 +8,7 @@ import {
   json,
   boolean,
   uniqueIndex,
+  foreignKey,
   index,
   uuid,
 } from 'drizzle-orm/pg-core';
@@ -36,6 +37,7 @@ export const reportProgramGroups = pgTable(
   table => ({
     orgIdx: index('report_program_groups_org_idx').on(table.organizationId),
     statusIdx: index('report_program_groups_status_idx').on(table.status),
+    tenantIdentity: uniqueIndex('report_program_groups_id_org_uq').on(table.id, table.organizationId),
   })
 );
 
@@ -43,6 +45,7 @@ export const reportProgramGroupProjects = pgTable(
   'report_program_group_projects',
   {
     id: serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
     programGroupId: integer('program_group_id').notNull().references(() => reportProgramGroups.id, { onDelete: 'cascade' }),
     projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
     addedBy: integer('added_by').references(() => users.id, { onDelete: 'set null' }),
@@ -52,6 +55,12 @@ export const reportProgramGroupProjects = pgTable(
     uniq: uniqueIndex('report_program_group_projects_unique_idx').on(table.programGroupId, table.projectId),
     groupIdx: index('report_program_group_projects_group_idx').on(table.programGroupId),
     projectIdx: index('report_program_group_projects_project_idx').on(table.projectId),
+    groupTenant: foreignKey({ name: 'report_program_group_projects_group_same_org_fk',
+      columns: [table.programGroupId, table.organizationId],
+      foreignColumns: [reportProgramGroups.id, reportProgramGroups.organizationId] }).onDelete('cascade'),
+    projectTenant: foreignKey({ name: 'report_program_group_projects_project_same_org_fk',
+      columns: [table.projectId, table.organizationId],
+      foreignColumns: [projects.id, projects.organizationId] }).onDelete('cascade'),
   })
 );
 

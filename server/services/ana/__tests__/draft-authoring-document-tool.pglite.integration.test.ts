@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
-import { PREREQ, VAULT_DDL, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG, OTHER_ORG, AUTHOR, M25_SECTIONS } from '../../../routes/__tests__/_authoring-canvas-fixture';
+import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG, OTHER_ORG, AUTHOR, M25_SECTIONS } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import { DRAFT_AUTHORING_DOCUMENT_NO_PROJECT } from '../../authoring/authoring-draft-tool';
 import { approvedToolHandler } from './support/approved-tool-handler';
 import { createDocumentDispositionService } from '../../document-data-disposition/service';
@@ -94,6 +94,7 @@ beforeAll(async () => {
       'migrations/20261008e_document_catalog_attribution.sql',
       'migrations/20261006_document_data_dispositions.sql',
     ],
+    testOnlySql: AUTHORING_ACCESS_DDL,
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
@@ -147,7 +148,20 @@ describe('draft_authoring_document — durable project source references', () =>
     const audit = await jdb.pool.query('SELECT metadata FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2', [out.authoringDocId, ORG]);
     const auditRow = audit.rows[0] as { metadata: { provenance: { projectSourceReferences: unknown } } };
     expect(auditRow.metadata.provenance.projectSourceReferences).toEqual(out.projectSourceReferences);
-    expect(JSON.stringify(out.projectSourceReferences)).not.toContain(SOURCE_TEXT);
+    const references = out.projectSourceReferences[0];
+    // The source receipts retain identities and spans, not a second prose copy.
+    expect(JSON.stringify(references.sources)).not.toContain(SOURCE_TEXT);
+    expect(references.sources[0]).not.toHaveProperty('text');
+    // The source-claim checker separately retains bounded quoted diagnostics,
+    // with the verified source/version/span and an explicit non-verdict.
+    expect(references.claims.verdict).toBe('nothing_compared');
+    const sourceDiagnostics = references.claims.notCompared.filter((diagnostic: { source?: unknown }) => diagnostic.source);
+    expect(sourceDiagnostics).toHaveLength(2);
+    for (const diagnostic of sourceDiagnostics) {
+      expect(diagnostic).toMatchObject({ reason:'figure_not_read',source:{documentId:SOURCE_ID,
+        contentHash:'a'.repeat(64),start:0,end:SOURCE_TEXT.length} });
+      expect(diagnostic.why).toContain(SOURCE_TEXT);
+    }
   });
 
   it('checks each figure of the section against the cited source: found with where, or unverified and said (S5a)', async () => {
@@ -309,11 +323,11 @@ describe('draft_authoring_document', () => {
     // a row of this organization naming another organization's program. The
     // anchor is checked like any other project reference, never trusted.
     await jdb.pool.query(
-      `INSERT INTO projects (id, organization_id, name, regulatory_program_id) VALUES (43, $1, 'foreign anchor', $2)`,
+      `INSERT INTO projects (id, organization_id, name, regulatory_program_id) VALUES (44, $1, 'foreign anchor', $2)`,
       [ORG, OTHER_PROGRAM],
     );
     const before = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
-    const out = JSON.parse(await handler({ ...input, title: 'Foreign anchor draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectId: 43 }));
+    const out = JSON.parse(await handler({ ...input, title: 'Foreign anchor draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), humanConfirmed: true, projectId: 44 }));
     expect(out).toEqual({ error: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT });
     const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
     expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);

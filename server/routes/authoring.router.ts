@@ -78,6 +78,7 @@ import {
 import {
   checkSectionWritable,
   checkDocumentWritable,
+  reserveWritableSection, reserveWritableDocument, DocumentWriteReservationError,
   LOCKED_DOCUMENT_STATUSES as LOCKED_STATUSES,
 } from '../services/authoring/document-lock';
 // The document/section creators, the Part 11 evidence writers and the export
@@ -120,6 +121,7 @@ import {
   renderAuthoringExport,
   logExport,
   computeDocHash as computeDocHashOn,
+  computeAuthoringSignatureDigest as computeSignatureDigest,
   sectionsDigest,
   readSignaturesForExport,
   anySignatureCovers,
@@ -127,6 +129,8 @@ import {
   type ExportFormat,
 } from '../services/authoring/authoring-export';
 import { SavedDraftSourceError, withSavedDraftSourceReservation } from '../services/authoring/draft-source-references';
+import { assertWorkflowImportRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
+import { AnaProjectScopeError } from '../services/ana/project-scope-admission';
 import { withExtendingRoles } from '../../shared/constants/org-roles';
 import {
   fileAuthoringDocumentToVault,
@@ -565,9 +569,10 @@ const getActorEmail = (req: Request): string | null => {
  */
 const currentFrozenSnapshot = async (
   docId: string | string[] | undefined,
-  tenantId: number
+  tenantId: number,
+  executor: Queryable = pool,
 ): Promise<{ version: string; contentHash: string } | null> => {
-  const r = await pool.query(
+  const r = await executor.query(
     `SELECT version, content_hash FROM frozen_documents
       WHERE document_id = $1 AND tenant_id = $2
       ORDER BY frozen_at DESC LIMIT 1`,
@@ -591,27 +596,6 @@ const currentFrozenSnapshot = async (
  * The `authoring-sig-v1` prefix keeps a future scheme change distinguishable
  * instead of silently incompatible.
  */
-const AUTHORING_SIGNATURE_DIGEST_VERSION = 'authoring-sig-v1';
-
-const computeSignatureDigest = (input: {
-  signerEmail: string;
-  meaning: string;
-  contentHash: string;
-  coveredContentHash: string | null;
-}): string =>
-  crypto
-    .createHash('sha256')
-    .update(
-      [
-        AUTHORING_SIGNATURE_DIGEST_VERSION,
-        input.signerEmail,
-        input.meaning,
-        input.contentHash,
-        input.coveredContentHash ?? '',
-      ].join('|')
-    )
-    .digest('hex');
-
 // Helper function to compute document hash for signatures. The digest itself
 // is services/authoring/authoring-export.ts computeDocHash, so the vault filing
 // records the same doc_sha256 the export route does.
@@ -1564,7 +1548,7 @@ router.post('/import/source', requireEditorAccess, async (req: Request, res: Res
     if (!actorId || !principal) return res.status(401).json({ success: false, error: 'AUTHENTICATION_REQUIRED', message: 'Authentication required.' });
     const result = await importSourceDocument(createContext(req, tenantId, actorId), principal, req.body);
     if (!result.ok) return res.status(result.status).json({ success: false, error: result.code, message: result.message });
-    return res.status(result.data.reused ? 200 : 201).json({ success: true, data: result.data });
+    return res.status('preview' in result.data || result.data.reused ? 200 : 201).json({ success: true, data: result.data });
   } catch (error) {
     return serverError(res, logger, 'pulling a source into the document editor', error);
   }
@@ -2231,6 +2215,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     let governedCommit: CommitSectionResult | null = null;
     try {
       await client.query('BEGIN');
+      await reserveWritableSection(client, String(sectionId), tenantId);
 
       result = await client.query(updateQuery, values);
 
@@ -2396,6 +2381,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
+      if (workflowGovernanceReply(err, res)) return;
       logger.error('Section save refused — content and lineage rolled back together', {
         sectionId,
         tenantId,
@@ -2428,6 +2414,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       ...(claimReport ? { machineText: claimReport } : {}),
     });
   } catch (error) {
+    if (workflowGovernanceReply(error, res)) return;
     console.error('Error updating section:', error);
     return serverError(res, logger, 'updating sections', error);
   }
@@ -2575,6 +2562,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
     let governedCommit: CommitSectionResult;
     try {
       await client.query('BEGIN');
+      await reserveWritableSection(client, String(sectionId), tenantId);
       result = await client.query(
         `UPDATE authoring_sections
          SET content = $1, updated_at = NOW()
@@ -2679,7 +2667,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
     });
   } catch (error) {
     console.error('Error reverting section:', error);
-    return serverError(res, logger, 'saving revert', error);
+    return authoringWriterFailure(error, res, 'saving revert');
   }
 });
 
@@ -3644,7 +3632,6 @@ router.post('/documents/:id/review', async (req: Request, res: Response) => {
 
 // POST /api/authoring/documents/:id/request-review - Request review from users
 /** The pool the permission helpers take; a transaction client answers the same queries. */
-type PermissionPool = Parameters<typeof decideAuthoringPermission>[0]['pool'];
 /** Whether each requested reviewer was granted review access, and why not. */
 type ReviewGrantOutcome =
   | { reviewerId: string; granted: true; permissionId: string }
@@ -3673,7 +3660,7 @@ async function grantRequestedReviewers(args: {
 }): Promise<ReviewGrantOutcome[]> {
   const { client, req, docId, tenantId, scope, principal, reviews, reason } = args;
   const manage = scope && principal
-    ? await decideAuthoringPermission({ pool: client as unknown as PermissionPool, principal, scope, action: 'manage_permissions' })
+    ? await decideAuthoringPermission({ pool: client, principal, scope, action: 'manage_permissions' })
     : null;
   if (!manage?.allowed || !principal) {
     return reviews.map((r) => ({
@@ -3688,7 +3675,7 @@ async function grantRequestedReviewers(args: {
   for (const review of reviews) {
     const reviewerId = String(review.reviewer_id);
     const permission = await grantAuthoringPermission({
-      pool: client as unknown as PermissionPool,
+      pool: client,
       tenantId,
       docId,
       principalId: reviewerId,
@@ -3746,7 +3733,7 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
       if (!(await peerReviewDocument(client, id, tenantId, true))) return null;
       /* QA 2026-10-08 (j4): the author could be named as her own reviewer. The
          Vault states the rule (a different person reviews); so does this. */
-      const scope = await resolveAuthoringDocumentScope(client as unknown as PermissionPool, tenantId, String(id));
+      const scope = await resolveAuthoringDocumentScope(client, tenantId, String(id));
       const author = String(scope?.createdBy ?? '').trim();
       const self = reviewers.find((r) => author !== '' && String(r.id).trim() === author);
       if (self) return { refused: 'REVIEWER_IS_AUTHOR' as const };
@@ -4216,6 +4203,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     let governedCommit: CommitSectionResult | null = null;
     try {
       await client.query('BEGIN');
+      await reserveWritableSection(client, String(sectionId), tenantId);
 
       const candidate = await consumeDraftCandidate(tenantId, String(sectionId), draftId, client);
       if (!candidate) {
@@ -4346,6 +4334,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
+      if (workflowGovernanceReply(err, res)) return;
       logger.error('AI draft accept refused — content and lineage rolled back together', {
         sectionId,
         tenantId,
@@ -4375,6 +4364,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       ...(governedCommit ? { filing: filingResponse(governedCommit) } : {}),
     });
   } catch (error) {
+    if (workflowGovernanceReply(error, res)) return;
     console.error('Error accepting AI draft:', error);
     return serverError(res, logger, 'saving accept', error);
   }
@@ -4994,8 +4984,9 @@ async function freezeCensus(
   docId: string | string[] | undefined,
   tenantId: number,
   sections: ReadonlyArray<{ content: string | null }>,
+  executor: Queryable = pool,
 ): Promise<{ openCommentCount: number; pendingEdits: number }> {
-  const openComments = await pool.query<{ n: string }>(
+  const openComments = await executor.query(
     `SELECT COUNT(*)::text AS n FROM authoring_comments
       WHERE doc_id = $1 AND tenant_id = $2 AND status = 'open'`,
     [docId, tenantId]
@@ -5038,6 +5029,48 @@ function notSettledRefusal(openCommentCount: number, pendingEdits: number) {
   };
 }
 
+async function lockedSigningContent(client: Queryable, req: Request, docId: string, tenantId: number) {
+  const document = await client.query(
+    "SELECT d.*, to_jsonb(d)->'provenance' AS provenance, to_jsonb(d)->>'client_program_id' AS client_program_id FROM authoring_documents d WHERE d.id=$1 AND d.tenant_id=$2 FOR UPDATE",
+    [docId, tenantId],
+  );
+  if (!document.rows[0]) throw new WorkflowImportGovernanceError(404, 'DOCUMENT_NOT_FOUND', 'Document not found');
+  const sections = await client.query(
+    'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id=$1 AND tenant_id=$2 ORDER BY order_index, created_at, id',
+    [docId, tenantId],
+  );
+  return { organizationId: tenantId, doc: document.rows[0], sections: sections.rows,
+    actor: { id: String(getActorId(req) ?? ''), email: getActorEmail(req) } };
+}
+
+async function adoptionForSigning(client: Queryable, req: Request, current: Awaited<ReturnType<typeof lockedSigningContent>>, meaning: string) {
+  const explicit = req.body?.adoptWorkflowSource === true;
+  if (explicit && meaning !== 'REVIEWER') throw new WorkflowImportGovernanceError(400, 'WORKFLOW_ADOPTION_MEANING', 'Workflow adoption requires REVIEWER meaning.');
+  if (meaning === 'REVIEWER') return prepareWorkflowImportAdoption(client, { ...current, explicit });
+  await assertWorkflowImportRelease(client, current);
+  return null;
+}
+
+function workflowGovernanceReply(error: unknown, res: Response): boolean {
+  if (error instanceof DocumentWriteReservationError) {
+    res.status(error.status).json({ success:false,code:error.code,error:error.code,message:error.message });
+    return true;
+  }
+  if ((error as { code?: unknown } | null)?.code === '40001') {
+    res.status(409).json({ success:false,code:'DOCUMENT_CHANGED_DURING_GOVERNANCE',error:'DOCUMENT_CHANGED_DURING_GOVERNANCE',
+      message:'The document or its source changed while this action waited. Nothing was committed. Refresh the current record and retry the signing ceremony.' });
+    return true;
+  }
+  if (!(error instanceof WorkflowImportGovernanceError)) return false;
+  res.status(error.status).json({ success: false, code: error.code, error: error.code, message: error.message });
+  return true;
+}
+
+function authoringWriterFailure(error: unknown, res: Response, operation: string) {
+  if (workflowGovernanceReply(error, res)) return;
+  return serverError(res, logger, operation, error);
+}
+
 // POST /api/authoring/docs/:docId/freeze - Freeze document with immutable snapshot, signed
 router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
   try {
@@ -5067,83 +5100,63 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
       });
     }
 
-    // Get current document content
-    const docResult = await pool.query(
-      'SELECT id, title, module, product_code, locale, status, created_at, updated_at, created_by, template_id, submitted_at, current_workflow_id, approved_at, frozen_at, locked_at, locked_by, tenant_id, version FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
-      [docId, tenantId]
-    );
-
-    if (((docResult.rowCount ?? 0) === 0)) {
-      return res.status(404).json({ error: 'Document not found' });
-    }
-
-    const doc = docResult.rows[0];
-
-    // Check if already frozen. Case-insensitive on purpose: the store holds
-    // mixed-case statuses, and an idempotency guard that only recognises one
-    // casing lets the same document be frozen twice.
-    if (['FROZEN', 'APPROVED'].includes(String(doc.status ?? '').toUpperCase())) {
-      return res.status(400).json({ error: 'Document is already frozen' });
-    }
-
-    // Get all sections
-    const sectionsResult = await pool.query(
-      // 2026-09-23 (W5/D7, co-author final pass): the seal's section order is the editor's
-      // (order_index, created_at; id makes it total), the order the filing copy assembles in.
-      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id',
-      [docId, tenantId]
-    );
-
-    const { openCommentCount, pendingEdits } = await freezeCensus(docId, tenantId, sectionsResult.rows);
-    const acknowledged = req.body?.acknowledgeUnresolved === true;
-    if ((openCommentCount > 0 || pendingEdits > 0) && !acknowledged) {
-      return res.status(409).json(notSettledRefusal(openCommentCount, pendingEdits));
-    }
-
-    /* What was sealed over is part of why it was sealed, so it goes into the
-       reason the frozen record carries rather than only into the audit row. */
-    const acknowledgedNote =
-      acknowledged && (openCommentCount > 0 || pendingEdits > 0)
-        ? ` [Sealed with ${openCommentCount} unresolved comment(s) and ` +
-          `${pendingEdits} undecided tracked change(s), acknowledged by ${email}.]`
-        : '';
-
-    // §11.200(a)(1): the signer re-verified by the platform ceremony, LAST —
-    // after every refusal above — so a code is spent only on a freeze that is
-    // otherwise ready to seal.
-    const signer = await reverifyAuthoringSigner(req, res);
-    if (!signer) return;
-    const signerName = await resolveSignerName(email);
-    const docHash = await computeDocHash(docId, tenantId);
-
-    // Create frozen content snapshot
-    const frozenContent = JSON.stringify({
-      document: doc,
-      sections: sectionsResult.rows,
-      frozenAt: new Date().toISOString(),
-    });
-
-    const contentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
-    const versionNumber = version || `v${doc.version || '1.0'}.frozen`;
-    // §11.70: the signature names the snapshot it seals, inside a recomputable digest.
-    const signatureId = crypto.randomUUID();
-    const signatureDigest = computeSignatureDigest({
-      signerEmail: email,
-      meaning,
-      contentHash: docHash,
-      coveredContentHash: contentHash,
-    });
-
-    // Frozen-snapshot insert + status flip + signature + audit are ONE atomic unit. Run as
-    // separate pool commits, a failure after the snapshot but before the status
-    // update left a frozen_documents row for a document still marked editable
-    // (or the reverse), and a failure before the audit left a freeze with no
-    // trail. A single BEGIN/COMMIT makes the three land together or roll back
-    // together.
     const client = await pool.connect();
+    let committed = false;
     try {
-      await client.query('BEGIN');
+      await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+      const current = await lockedSigningContent(client, req, String(docId), tenantId);
+      const doc = current.doc;
+      if (['FROZEN', 'APPROVED'].includes(String(doc.status ?? '').toUpperCase())) {
+        return res.status(400).json({ error: 'Document is already frozen' });
+      }
+      await assertWorkflowImportRelease(client, current);
+      const sectionsResult = { rows: current.sections };
+      const { openCommentCount, pendingEdits } = await freezeCensus(docId, tenantId, sectionsResult.rows, client);
+      const acknowledged = req.body?.acknowledgeUnresolved === true;
+      if ((openCommentCount > 0 || pendingEdits > 0) && !acknowledged) {
+        return res.status(409).json(notSettledRefusal(openCommentCount, pendingEdits));
+      }
 
+      /* What was sealed over is part of why it was sealed, so it goes into the
+         reason the frozen record carries rather than only into the audit row. */
+      const acknowledgedNote =
+        acknowledged && (openCommentCount > 0 || pendingEdits > 0)
+          ? ` [Sealed with ${openCommentCount} unresolved comment(s) and ` +
+            `${pendingEdits} undecided tracked change(s), acknowledged by ${email}.]`
+          : '';
+
+      // §11.200(a)(1): the signer re-verified by the platform ceremony, LAST —
+      // after every refusal above — so a code is spent only on a freeze that is
+      // otherwise ready to seal.
+      const signer = await reverifyAuthoringSigner(req, res);
+      if (!signer) return;
+      const signerName = await resolveSignerName(email);
+      const docHash = sectionsDigest(sectionsResult.rows);
+
+      // Create frozen content snapshot
+      const frozenContent = JSON.stringify({
+        document: doc,
+        sections: sectionsResult.rows,
+        frozenAt: new Date().toISOString(),
+      });
+
+      const contentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
+      const versionNumber = version || `v${doc.version || '1.0'}.frozen`;
+      // §11.70: the signature names the snapshot it seals, inside a recomputable digest.
+      const signatureId = crypto.randomUUID();
+      const signatureDigest = computeSignatureDigest({
+        signerEmail: email,
+        meaning,
+        contentHash: docHash,
+        coveredContentHash: contentHash,
+      });
+
+      // Frozen-snapshot insert + status flip + signature + audit are ONE atomic unit. Run as
+      // separate pool commits, a failure after the snapshot but before the status
+      // update left a frozen_documents row for a document still marked editable
+      // (or the reverse), and a failure before the audit left a freeze with no
+      // trail. A single BEGIN/COMMIT makes the three land together or roll back
+      // together.
       // Store frozen snapshot
       await client.query(
         `INSERT INTO frozen_documents
@@ -5217,22 +5230,22 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
       });
 
       await client.query('COMMIT');
-    } catch (txError) {
-      try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
-      throw txError;
+      committed = true;
+      res.json({
+        success: true,
+        contentHash,
+        version: versionNumber,
+        signatureId,
+        documentHash: docHash,
+        frozenAt: new Date().toISOString(),
+      });
     } finally {
+      if (!committed) await client.query('ROLLBACK').catch(() => {});
       client.release();
     }
 
-    res.json({
-      success: true,
-      contentHash,
-      version: versionNumber,
-      signatureId,
-      documentHash: docHash,
-      frozenAt: new Date().toISOString(),
-    });
   } catch (error) {
+    if (workflowGovernanceReply(error, res)) return;
     console.error('Error freezing document:', error);
     res.status(500).json({ error: 'Failed to freeze document' });
   }
@@ -5342,48 +5355,23 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
 
     // §11.70 — a signature must be linked to the record it signs. Without this
     // an unknown or cross-tenant docId produced a signature bound to sha256("").
-    if (!(await documentExistsForTenant(docId, tenantId))) {
-      return res.status(404).json({ error: 'Document not found' });
-    }
+    if (!await documentExistsForTenant(docId, tenantId)) return res.status(404).json({ error: 'Document not found' });
 
     // §11.50(a)(1) printed name, from the user record — never `req.user.name`,
     // which this router never populates, and never the email in its place.
     const name = await resolveSignerName(email);
 
-    // §11.200(a)(1): the signer re-verified, last, so a refusal costs nothing
-    // and a code is spent only on a signature that is otherwise ready.
-    const signer = await reverifyAuthoringSigner(req, res);
-    if (!signer) return;
-
-    // Compute document hash
-    const docHash = await computeDocHash(docId, tenantId);
-
-    // Create electronic signature record
-    const signatureId = crypto.randomUUID();
-    // Writes authoring_signatures, NOT electronic_signatures. The latter is the
-    // Part 11 table for the integer-keyed legacy document system: its
-    // document_id is `INTEGER REFERENCES documents(id)` where this loop has UUID
-    // doc ids, and it carries seven NOT NULL columns this insert never supplied.
-    // The two are different concepts that collided on a name, so the authoring
-    // loop now has its own store — the same one GET /docs/:docId/signatures has
-    // always read. See ledger C-11 residual 1.
-    // §11.70 signature/record link: bind this signature to the snapshot in force
-    // at signing time, and cover that binding in a recomputable digest. An
-    // APPROVER signature is the exception: the approval writes its own snapshot
-    // (below), and that is the record it attests to.
-    let covered = meaning === 'APPROVER' ? null : await currentFrozenSnapshot(docId, tenantId);
-
-    // Signature insert + audit + (on APPROVER) status flip and auto-freeze are
-    // ONE atomic unit. Run as separate pool commits, an approval signature could
-    // be recorded while the status flip or the auto-freeze that must accompany
-    // it failed — leaving a signed-but-not-approved, or approved-but-not-frozen,
-    // document. A single BEGIN/COMMIT makes the whole signing act land together
-    // or roll back together.
     const client = await pool.connect();
-    let signatureDigest = '';
-    let filingApproval: ApproveBoundSectionsResult | null = null;
+    let committed = false;
     try {
-      await client.query('BEGIN');
+      await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+      const current = await lockedSigningContent(client, req, String(docId), tenantId);
+      const workflowSourceAdoption = await adoptionForSigning(client, req, current, meaning);
+      const signer = await reverifyAuthoringSigner(req, res);
+      if (!signer) return;
+      const docHash = sectionsDigest(current.sections);
+      const signatureId = crypto.randomUUID();
+      let covered = meaning === 'APPROVER' ? null : await currentFrozenSnapshot(docId, tenantId, client);
 
       // On APPROVER the approval and its snapshot come FIRST, so the signature
       // can name the snapshot it creates (approveAndSnapshotForSignature).
@@ -5397,7 +5385,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         covered = await approveAndSnapshotForSignature({ client, docId: String(docId), tenantId, email, docHash });
       }
 
-      signatureDigest = computeSignatureDigest({
+      const signatureDigest = computeSignatureDigest({
         signerEmail: email,
         meaning,
         contentHash: docHash,
@@ -5420,7 +5408,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       // Spine F1: the approval signature approves the filing sections it
       // covers, in this transaction, recorded through recordGovernedAction.
       // Only APPROVER means approval; AUTHOR and REVIEWER move no section.
-      filingApproval = await filingApprovalForSignature(client, req, {
+      const filingApproval = await filingApprovalForSignature(client, req, {
         approves: meaning === 'APPROVER', docId: String(docId), tenantId, signatureId, meaning, reason: intent, via: 'e-sign',
       });
 
@@ -5431,6 +5419,7 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         documentHash: docHash,
         coveredFreezeVersion: covered?.version ?? null,
         timestamp: new Date().toISOString(),
+        ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}),
       }, client,
       // This handler writes its own richer chained row below.
       { chainedRowWrittenByCaller: true });
@@ -5459,30 +5448,31 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         // signatureId: §11.70's link from this audit row to the signature it
         // records — what the audit-trail ledger joins on to show the row as
         // signed, with the signer's meaning (#24).
-        details: { meaning, intent, documentHash: docHash, signer: email, signatureId, covers: covered },
+        details: { meaning, intent, documentHash: docHash, signer: email, signatureId, covers: covered, ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
       });
 
       await client.query('COMMIT');
-    } catch (txError) {
-      try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
-      throw txError;
+      committed = true;
+      res.json({
+        success: true,
+        signatureId,
+        documentHash: docHash,
+        digest: signatureDigest,
+        // The frozen snapshot this signature attests to (§11.70), or null.
+        covers: covered,
+        workflowSourceAdoption,
+        signedAt: new Date().toISOString(),
+        // Spine F1: what the approval did to the filing's sections; null for a
+        // signature that does not mean approval.
+        filingApproval: filingApprovalReply(filingApproval),
+      });
     } finally {
+      if (!committed) await client.query('ROLLBACK').catch(() => {});
       client.release();
     }
 
-    res.json({
-      success: true,
-      signatureId,
-      documentHash: docHash,
-      digest: signatureDigest,
-      // The frozen snapshot this signature attests to (§11.70), or null.
-      covers: covered,
-      signedAt: new Date().toISOString(),
-      // Spine F1: what the approval did to the filing's sections; null for a
-      // signature that does not mean approval.
-      filingApproval: filingApprovalReply(filingApproval),
-    });
   } catch (error) {
+    if (workflowGovernanceReply(error, res)) return;
     console.error('Error creating electronic signature:', error);
     res.status(500).json({ error: 'Failed to create electronic signature' });
   }
@@ -6183,17 +6173,7 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
        document — its seal then no longer matched and it could never be filed
        or re-sealed again. The document row is locked for the transaction, so
        a freeze or approval cannot land between this check and the writes. */
-    await txClient.query(
-      'SELECT id FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE',
-      [req.params.docId, tenantId]
-    );
-    const lock = await checkDocumentWritable(txClient, String(req.params.docId), tenantId);
-    if (!lock.writable) {
-      await txClient.query('ROLLBACK');
-      return lock.code === 'DOCUMENT_FROZEN'
-        ? res.status(403).json({ error: 'DOCUMENT_FROZEN', message: lock.reason })
-        : res.status(404).json({ error: 'Document not found' });
-    }
+    await reserveWritableDocument(txClient, String(req.params.docId), tenantId);
     // Apply template sections
     for (const section of template.sections || []) {
       const existing = existingMap.get(section.code);
@@ -6285,6 +6265,7 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
 
     res.json({ ok: true, upserts });
   } catch (error) {
+    if (workflowGovernanceReply(error, res)) return;
     console.error('POST /docs/:id/apply-template', error);
     res.status(500).json({ error: 'Failed to apply template' });
   }
@@ -6545,6 +6526,7 @@ function exportFailureVerdict(recordConfirmed: boolean, recordAttempted: boolean
 }
 
 function sendExportFailure(error: unknown, res: Response, recordConfirmed: boolean, recordAttempted: boolean): void {
+  if (workflowGovernanceReply(error, res)) return;
   if (error instanceof SavedDraftSourceError) {
     res.status(409).json({ error: 'Saved source references require review', code: error.code, message: error.message });
     return;
@@ -6665,6 +6647,9 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     // Source-linked renditions reserve current versions before their EXPORT
     // event and keep them stable through rendering and receipt commit.
     const rendered = await withSavedDraftSourceReservation(doc, pool, tenantId, async executor => {
+      const current = await lockedSigningContent(executor, req, String(docId), tenantId);
+      if (sectionsDigest(current.sections) !== fileHash) throw new WorkflowImportGovernanceError(409, 'DOCUMENT_CHANGED_DURING_EXPORT', 'The content changed before export; review the current document and retry.');
+      await assertWorkflowImportRelease(executor, current);
       await createAuditTrail(req, docId, null, 'EXPORT', null, null, null, { format, exportId, options }, executor);
 
       /* The rendering — the §11.50(b) manifest, figures, cross-references,
@@ -6678,6 +6663,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
         sections: sectionsResult.rows,
         format,
         signatures: exportSignatures,
+        actor: { id: String(getActorId(req) ?? ''), email: exportedBy },
       });
 
       /* §11.10(b): the record carries a hash of the SOURCE section rows
@@ -6698,7 +6684,7 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
         tenantId,
       });
       return output;
-    });
+    }, { id: String(getActorId(req) ?? ''), email: exportedBy });
     recordConfirmed = true;
 
     res.setHeader('Content-Type', rendered.contentType);
@@ -6765,7 +6751,9 @@ router.post('/docs/:docId/working-copy', async (req: Request, res: Response) => 
         sections: sectionsResult.rows,
         format: format as ExportFormat,
         workingCopy: { banner },
+        actor: { id: String(getActorId(req) ?? ''), email: downloadedBy },
       }),
+      { id: String(getActorId(req) ?? ''), email: downloadedBy },
     );
     /* Recorded before anything leaves, inside a transaction so a failed write
        throws (a standalone audit write is best-effort outside production). */
@@ -6860,6 +6848,7 @@ router.post('/docs/:docId/file-to-vault', async (req: Request, res: Response) =>
       },
     });
   } catch (error) {
+    if (workflowGovernanceReply(error, res)) return;
     console.error('File-to-vault error:', error);
     return serverError(res, logger, 'filing to vault', error, { docId: req.params.docId });
   }
@@ -7293,6 +7282,18 @@ async function approveAndFreezeDocument(args: {
  * the caller's transaction client, so a signature and the step it approves land
  * together or not at all.
  */
+async function workflowApprovalMayRelease(client: Queryable, current: Awaited<ReturnType<typeof lockedSigningContent>>, meaning: string): Promise<boolean> {
+  try {
+    await assertWorkflowImportRelease(client, current);
+    return true;
+  } catch (error) {
+    // The review signature records review while release remains held.
+    if (meaning === 'REVIEWER' && error instanceof WorkflowImportGovernanceError
+      && ['WORKFLOW_HUMAN_ADOPTION_REQUIRED', 'WORKFLOW_MODEL_QUALIFICATION_REQUIRED'].includes(error.code)) return false;
+    throw error;
+  }
+}
+
 async function advanceWorkflowForSignature(args: {
   client: Queryable;
   req: Request;
@@ -7302,6 +7303,7 @@ async function advanceWorkflowForSignature(args: {
   meaning: string;
   reason: string;
   contentHash: string;
+  current: Awaited<ReturnType<typeof lockedSigningContent>>;
 }): Promise<boolean> {
   const { client, req, docId, tenantId, signerEmail, meaning, reason, contentHash } = args;
   // Update workflow step if applicable. Roles come from the VERIFIED token
@@ -7353,6 +7355,7 @@ async function advanceWorkflowForSignature(args: {
     const pendingCount = Number(stepCounts.rows[0]?.pending ?? 0);
 
     if (totalSteps > 0 && pendingCount === 0) {
+      if (!await workflowApprovalMayRelease(client, args.current, meaning)) return false;
       await approveAndFreezeDocument({ client, docId, tenantId, signerEmail, contentHash });
       // Spine F1: true only when this signature cleared the last pending step.
       // A signature after the workflow was complete decided no step, so it is
@@ -7373,23 +7376,6 @@ async function advanceWorkflowForSignature(args: {
  * signature/record link, C-11 residual 2), which is why the three are computed
  * in one place rather than assembled at each signing path.
  */
-async function computeSignatureBinding(
-  docId: string,
-  tenantId: number,
-  signerEmail: string,
-  meaning: string,
-) {
-  const contentHash = await computeDocHash(docId, tenantId);
-  const covered = await currentFrozenSnapshot(docId, tenantId);
-  const signatureDigest = computeSignatureDigest({
-    signerEmail,
-    meaning,
-    contentHash,
-    coveredContentHash: covered?.contentHash ?? null,
-  });
-  return { contentHash, covered, signatureDigest };
-}
-
 // ============= SIGN Operations =============
 
 // POST /api/authoring/docs/:docId/sign - Sign document (21 CFR Part 11)
@@ -7439,32 +7425,19 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    // §11.200(a)(1): the signer re-verified by the platform ceremony, last.
-    const signer = await reverifyAuthoringSigner(req, res);
-    if (!signer) return;
-
-    const { contentHash, covered, signatureDigest } = await computeSignatureBinding(
-      String(docId),
-      tenantId,
-      signerEmail,
-      meaning,
-    );
-
-    // Store signature
-    const signatureId = crypto.randomUUID();
-
-    // Signature insert + workflow-step approval + (when the last step clears)
-    // document approval + audit are ONE atomic unit. Run as separate pool
-    // commits, a signature could be stored while the workflow step it approves,
-    // or the document-status flip the final approval triggers, failed — a
-    // signed step still marked PENDING, or every step approved with the document
-    // left un-approved. A single BEGIN/COMMIT makes the whole signing act land
-    // together or roll back together; the pending-step count is read on the same
-    // client so it sees this transaction's own step update.
-    let filingApproval: ApproveBoundSectionsResult | null = null;
     const client = await pool.connect();
+    let committed = false;
     try {
-      await client.query('BEGIN');
+      await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+      const current = await lockedSigningContent(client, req, String(docId), tenantId);
+      const workflowSourceAdoption = await adoptionForSigning(client, req, current, meaning);
+      const signer = await reverifyAuthoringSigner(req, res);
+      if (!signer) return;
+      const contentHash = sectionsDigest(current.sections);
+      const covered = await currentFrozenSnapshot(docId, tenantId, client);
+      const signatureDigest = computeSignatureDigest({ signerEmail, meaning, contentHash, coveredContentHash: covered?.contentHash ?? null });
+      const signatureId = crypto.randomUUID();
+      let filingApproval: ApproveBoundSectionsResult | null = null;
 
       // `method`: the factors the ceremony verified, as /e-sign records them.
       await client.query(
@@ -7497,6 +7470,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         meaning,
         reason,
         contentHash,
+        current,
       });
 
       // Spine F1: only the signature that approves the document — the one that
@@ -7518,7 +7492,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         null,
         null,
         typeof reason === 'string' && reason.trim() ? reason.trim() : null,
-        { signatureId, meaning, reason, contentHash },
+        { signatureId, meaning, reason, contentHash, ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
         client,
         { chainedRowWrittenByCaller: true }
       );
@@ -7544,26 +7518,27 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         resourceId: String(docId ?? ''),
         ipAddress: (req.ip ?? undefined) as string | undefined,
         userAgent: req.headers['user-agent'] as string | undefined,
-        details: { signatureId, meaning, reason, contentHash, signer: signerEmail },
+        details: { signatureId, meaning, reason, contentHash, signer: signerEmail, ...(workflowSourceAdoption ? { workflowSourceAdoption } : {}) },
       });
 
       await client.query('COMMIT');
-    } catch (txError) {
-      try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
-      throw txError;
+      committed = true;
+      res.json({
+        success: true,
+        message: 'Document signed successfully',
+        signatureId,
+        workflowSourceAdoption,
+        digest: signatureDigest,
+        // Spine F1: what the approval did to the filing's sections, or null.
+        filingApproval: filingApprovalReply(filingApproval),
+      });
     } finally {
+      if (!committed) await client.query('ROLLBACK').catch(() => {});
       client.release();
     }
 
-    res.json({
-      success: true,
-      message: 'Document signed successfully',
-      signatureId,
-      digest: signatureDigest,
-      // Spine F1: what the approval did to the filing's sections, or null.
-      filingApproval: filingApprovalReply(filingApproval),
-    });
   } catch (error) {
+    if (workflowGovernanceReply(error, res)) return;
     console.error('Sign error:', error);
     return serverError(res, logger, 'signing docs', error);
   }
@@ -8292,6 +8267,14 @@ router.get('/documents/:id/tracked-change-decisions', async (req: Request, res: 
  * partially applied), the renumbering commits in one transaction, and the
  * audit trail records the new order under the actor.
  */
+async function assertCurrentSectionPermutation(client: Queryable, docId: string, tenantId: number, ids: string[]): Promise<void> {
+  const current = await client.query('SELECT id FROM authoring_sections WHERE doc_id=$1 AND tenant_id=$2', [docId,tenantId]);
+  const expected = new Set(current.rows.map((row: { id:string }) => String(row.id)));
+  if (new Set(ids).size !== ids.length || ids.length !== expected.size || !ids.every(id => expected.has(id))) {
+    throw new WorkflowImportGovernanceError(409,'DOCUMENT_CHANGED_DURING_REORDER','The current sections changed before reordering. Reload the document and retry. Nothing was reordered.');
+  }
+}
+
 router.post('/docs/:docId/sections/reorder', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
@@ -8351,6 +8334,8 @@ router.post('/docs/:docId/sections/reorder', async (req: Request, res: Response)
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      await reserveWritableDocument(client, String(docId), tenantId);
+      await assertCurrentSectionPermutation(client, String(docId), tenantId, ids);
       for (let i = 0; i < ids.length; i++) {
         await client.query(
           `UPDATE authoring_sections SET order_index = $1, updated_at = NOW()
@@ -8369,6 +8354,7 @@ router.post('/docs/:docId/sections/reorder', async (req: Request, res: Response)
 
     return res.json({ success: true, order: ids });
   } catch (error) {
+    if (workflowGovernanceReply(error, res)) return;
     logger.error('section reorder failed', { error });
     return res.status(500).json({
       success: false,
@@ -8484,7 +8470,6 @@ router.post(
          Re-enter the exact scope this request was granted — the same repair
          vault-ingest documents. */
       const { runWithTenantScope } = await import('../db/tenantStore');
-      const rawUserId = Number((req.user as { id?: unknown; userId?: unknown })?.id ?? (req.user as { userId?: unknown })?.userId);
       const saved = await runWithTenantScope(
         {
           tenantId: String(tenantId),
@@ -8494,14 +8479,10 @@ router.post(
           caller: 'server/routes/authoring.router.ts:images',
         },
         async () => {
-          const { saveDerivedUpload } = await import('../services/ana/uploaded-file-access.js');
-          return saveDerivedUpload({
-            buffer: file.buffer!,
-            fileName: file.originalname || 'figure',
-            mimeType: file.mimetype || 'application/octet-stream',
-            organizationId: tenantId,
-            userId: Number.isFinite(rawUserId) ? rawUserId : null,
-          });
+          const { saveAuthoringImage } = await import('../services/authoring/authoring-image-import');
+          return saveAuthoringImage({ pool, tenantId, actor: { id: actorId, email: getActorEmail(req) },
+            principal: authoringPrincipalFromRequest(req) }, { documentId: req.body?.documentId,
+            file: { buffer: file.buffer!, mimetype: file.mimetype, originalname: file.originalname } });
         }
       );
 
@@ -8515,6 +8496,7 @@ router.post(
         },
       });
     } catch (error) {
+      if (error instanceof AnaProjectScopeError) return res.status(error.status).json({ success:false,code:error.code,error:error.message });
       logger.error('authoring image upload failed', { error });
       return res.status(500).json({ success: false, error: 'Failed to store the image. Nothing was saved.' });
     }
@@ -8528,20 +8510,20 @@ router.get('/images/:id', async (req: Request, res: Response) => {
     const { AUTHORING_IMAGE_MIMES } = await import('../export/authoring-images.js');
     // Throws for an unknown id, a foreign tenant's id, or bytes gone from
     // disk — all collapse to the same 404 below, confirming nothing.
-    const file = await loadUploadedFile(String(req.params.id), tenantId);
+    const file = await loadUploadedFile(String(req.params.id), tenantId, { userId: Number(getActorId(req)) });
     if (!AUTHORING_IMAGE_MIMES.has(file.mimeType)) {
       // This endpoint serves figures, not arbitrary tenant uploads.
       return res.status(404).json({ success: false, error: 'Image not found' });
     }
-    // The store is append-only from the editor's side (nothing rewrites an
-    // upload's bytes), so the reference can be cached hard — per user, since
-    // the fetch rides the caller's Authorization header.
+    // Bytes are stable, but project/object grants and source dispositions are
+    // current decisions. A year-long fresh cache would bypass their recheck.
     res.setHeader('Content-Type', file.mimeType);
     res.setHeader('Content-Length', String(file.buffer.length));
-    res.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+    res.setHeader('Cache-Control', 'private, no-store');
     res.setHeader('ETag', `"${file.fileId}"`);
     return res.end(file.buffer);
-  } catch {
+  } catch (error) {
+    if (error instanceof AnaProjectScopeError) return res.status(error.status).json({ success: false, code: error.code, error: error.message });
     return res.status(404).json({ success: false, error: 'Image not found' });
   }
 });

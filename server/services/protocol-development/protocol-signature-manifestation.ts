@@ -56,11 +56,11 @@ export const dispositionTarget = (assignmentId: number | string): string => `pro
  * as revoked. A missing table stays on this facet: reaching the route's 42P01
  * branch would blank the whole workspace.
  */
-export async function readSignatureFacets(orgId: number, targets: string[]): Promise<(target: string) => PdevSignatureFacet> {
+export async function readSignatureFacets(orgId: number, targets: string[], executor: { query: (text: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> } = pool): Promise<(target: string) => PdevSignatureFacet> {
   if (targets.length === 0) return () => ({ state: 'none' });
   let rows: Array<Record<string, unknown>>;
   try {
-    rows = (await pool.query(
+    rows = (await executor.query(
       `SELECT signed_target, signer_name, signed_at, signature_meaning, signature_purpose,
               is_valid, superseded_by, verification_status,
               signature_manifest->'act'->>'recordedOnBehalfOf' AS recorded_on_behalf_of

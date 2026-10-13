@@ -7,26 +7,29 @@
  * with its provenance, every section with sanitized HTML content, a genesis
  * revision and a CREATE audit row per section, and span lineage per section —
  * a model's draft recorded as the machine's, requested by the actor; a seed or
- * an import recorded as the actor's own.
+ * file import recorded as the actor's own. A verified workflow import records
+ * its deterministic compositor and retains the original machine/template/unknown
+ * origin separately; asking for a copy does not assert its words.
  *
- * Provenance is honest: `source` says who produced it; `model` is present only
- * when the caller reported one; NULL on the row keeps meaning "a person
- * authored this through the editor".
+ * Provenance records the operation and server evidence. Model names come from
+ * retained records, never caller assertions; workflow origins retain an
+ * unknown original model without relabeling it as the importing person's work.
  */
 
-import { programInOrganization } from '../c2c/program-access';
+import { authorizeAuthoringProgram, AuthoringProgramAccessError } from './authoring-program-access';
 import { parseDraftSourceReferences, verifyDraftSourceReferences, type DraftSourceReference, type VerifiedDraftSourceReference } from './draft-source-references';
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
 import { checkSectionFigures, type CitedExcerpt, type SectionFigureCheck } from './draft-figure-check';
 import { checkSectionClaims, type ClaimsExcerpt, type SectionClaimsCheck } from './section-claims-check';
 import { sectionReadableText } from './authoring-read-render';
 import crypto from 'crypto';
-import { ANA_MACHINE_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
+import { ANA_MACHINE_AUTHOR_ID, WORKFLOW_IMPORT_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
 import { servedModelsForTurnOrRun } from './authoring-record';
 import type { QualifiedServedModel } from '../ai-governance/approved-models';
-import type { AuthoringImportOrigin } from '../../../shared/authoring/source-import';
+import { isWorkflowImportOrigin, type AuthoringImportOrigin, type WorkflowImportOrigin } from '../../../shared/authoring/source-import';
 import { columnState, type Queryable } from './authoring-evidence';
 import { sanitizeAuthoringSectionHtml, sanitizeMachineDraftSectionHtml } from './authoring-html-sanitizer';
+import { workflowCopySectionContent } from './workflow-copy-content';
 import {
   grantCreatorOwnership,
   insertDocumentTx,
@@ -34,6 +37,8 @@ import {
   type Binding,
   type CreateContext,
   type Refusal,
+  type SectionSeed,
+  type DocumentRowSpec,
 } from './authoring-documents';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -353,25 +358,59 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
   }
 }
 
+export interface CreateDocumentFromDraftOptions {
+  /** Internal verified source receipt; public provenance parsing drops it. */
+  verifiedImport?: { origin: AuthoringImportOrigin; warnings: string[]; reason: string; reserve: (q: Queryable) => Promise<void>; forceUnbound?: true };
+}
+
+function workflowOriginFor(options?: CreateDocumentFromDraftOptions): WorkflowImportOrigin | null {
+  const origin = options?.verifiedImport?.origin;
+  return origin && isWorkflowImportOrigin(origin) ? origin : null;
+}
+
+function storedDraftContents(input: CreateDocumentFromDraftInput, provenance: DocumentProvenance, workflowImport: WorkflowImportOrigin | null): string[] {
+  if (workflowImport) return input.sections.map(s => workflowCopySectionContent(s.content));
+  const sanitize = provenance.source === 'ana' ? sanitizeMachineDraftSectionHtml : sanitizeAuthoringSectionHtml;
+  return input.sections.map(s => sanitize(s.content));
+}
+
+function draftedSectionSeeds(input: CreateDocumentFromDraftInput, contents: string[], provenance: DocumentProvenance,
+  options: CreateDocumentFromDraftOptions | undefined, workflowImport: WorkflowImportOrigin | null): SectionSeed[] {
+  const machine = provenance.source === 'ana' || workflowImport != null;
+  const authorId = workflowImport ? WORKFLOW_IMPORT_AUTHOR_ID : ANA_MACHINE_AUTHOR_ID;
+  const contributors = machine ? [{ id: authorId, name: MACHINE_AUTHOR_IDS[authorId] }] : [];
+  return input.sections.map((section, i) => ({
+    code: section.code, title: section.title, content: contents[i], orderIndex: i,
+    changeReason: options?.verifiedImport?.reason ?? CHANGE_REASON[provenance.source],
+    metadata: { provenance, drafted: true, ...(workflowImport ? { workflowSourceOrigin: workflowImport.sectionOrigins.find(origin => origin.code === section.code) ?? null } : {}) },
+    contributors, lineage: { machineDraft: machine ? { authorId } : null },
+  }));
+}
+
+function draftRowSpec(docId: string, input: CreateDocumentFromDraftInput, binding: Binding, provenance: DocumentProvenance,
+  workflowImport: WorkflowImportOrigin | null): DocumentRowSpec {
+  return { docId, title: input.title, module: workflowImport ? null : input.module ?? 'M2', productCode: input.documentType ?? null,
+    locale: 'en-US', templateId: null, clientProgramId: input.programId, binding,
+    provenance: provenance as unknown as Record<string, unknown>, ...(workflowImport ? { isolation: 'serializable' as const } : {}) };
+}
+
+function draftProvenance(value: ProvenanceInput, input: CreateDocumentFromDraftInput, workflowImport: WorkflowImportOrigin | null): DocumentProvenance {
+  return { ...value, ...(input.module || workflowImport ? {} : { moduleDefaulted: true }), recordedAt: new Date().toISOString() };
+}
+
 export async function createDocumentFromDraft(
   ctx: CreateContext,
   input: CreateDocumentFromDraftInput,
-  options?: {
-    /** Internal only: the source importer checks identity and bytes, then
-     * reserves/rechecks the record inside the canonical creation transaction. */
-    verifiedImport?: {
-      origin: AuthoringImportOrigin;
-      warnings: string[];
-      reason: string;
-      reserve: (q: Queryable) => Promise<void>;
-    };
-  },
+  options?: CreateDocumentFromDraftOptions,
 ): Promise<CreateDocumentFromDraftOutcome> {
   // The project must be a live one this organization owns (LX-20 / PF-02): the
   // route checked only that programId looked like a UUID, so a draft could be
   // filed in another organization's project. 404, as POST /docs answers.
-  if (!(await programInOrganization(ctx.pool, input.programId, ctx.tenantId))) {
-    return { kind: 'refused', status: 404, error: 'Project not found' };
+  try {
+    await authorizeAuthoringProgram(ctx.pool, { tenantId: ctx.tenantId, actor: ctx.actor, programId: input.programId });
+  } catch (error) {
+    if (error instanceof AuthoringProgramAccessError) return { kind: 'refused', status: error.status, code: error.code, error: error.message };
+    throw error;
   }
   const provenanceState = await columnState(ctx.pool, 'provenance');
   if (provenanceState !== 'present') {
@@ -386,21 +425,17 @@ export async function createDocumentFromDraft(
   }
   const parsedProvenance = parseProvenance(input.provenance);
   if (!parsedProvenance.ok) return { kind: 'refused', status: 400, error: parsedProvenance.error };
-  const provenance: DocumentProvenance = {
-    ...parsedProvenance.value,
-    ...(input.module ? {} : { moduleDefaulted: true }),
-    recordedAt: new Date().toISOString(),
-  };
-  const isMachineDraft = provenance.source === 'ana';
+  const workflowImport = workflowOriginFor(options);
+  const provenance = draftProvenance(parsedProvenance.value, input, workflowImport);
   /* What the governed-write rule says of this prose, read from the turn record
      the draft names — before `insertDocumentTx` opens its transaction, so a
      missing store or a malformed reference cannot abort the write it is being
      checked for. A seed or an import is a person's act and carries no verdict. */
-  if (isMachineDraft) Object.assign(provenance, await governedWriteOf(ctx.pool, ctx.tenantId, provenance.turnId));
+  if (provenance.source === 'ana') Object.assign(provenance, await governedWriteOf(ctx.pool, ctx.tenantId, provenance.turnId));
+  if (workflowImport) Object.assign(provenance, { governedWrite: 'unverified', governedWriteWhy: 'Workflow source authorship and model qualification are retained as recorded; this import is not human adoption.' });
   // A machine draft keeps no image: a model's image is never an uploaded
   // figure (item 18, 2026-10-05). An import or seed keeps its figures.
-  const storedContent = input.sections.map(s =>
-    isMachineDraft ? sanitizeMachineDraftSectionHtml(s.content) : sanitizeAuthoringSectionHtml(s.content));
+  const storedContent = storedDraftContents(input, provenance, workflowImport);
   let selectedSources: SelectedDraftSources;
   try {
     // Parse even for typed callers; actual source reads occur only inside BEGIN.
@@ -414,35 +449,16 @@ export async function createDocumentFromDraft(
   // The same binding rule as POST /docs: the project's filing keeps one editing
   // copy; every further document is created in the project unbound, with the
   // reason stated — so AnA can draft several documents into one program.
-  const resolvedBinding = await resolveBinding(ctx.pool, ctx.tenantId, input.programId);
-  const contributors = isMachineDraft
-    ? [{ id: ANA_MACHINE_AUTHOR_ID, name: MACHINE_AUTHOR_IDS[ANA_MACHINE_AUTHOR_ID] }]
-    : [];
+  const resolvedBinding = options?.verifiedImport?.forceUnbound
+    ? { documentId: null, reason: 'Workflow working copy; filing requires an explicit governed action.' }
+    : await resolveBinding(ctx.pool, ctx.tenantId, input.programId);
 
   const inserted = await insertDocumentTx(
     ctx,
-    {
-      docId,
-      title: input.title,
-      module: input.module ?? 'M2',
-      productCode: input.documentType ?? null,
-      locale: 'en-US',
-      templateId: null,
-      clientProgramId: input.programId,
-      binding: resolvedBinding,
-      provenance: provenance as unknown as Record<string, unknown>,
-    },
-    input.sections.map((s, i) => ({
-      code: s.code,
-      title: s.title,
-      content: storedContent[i],
-      orderIndex: i,
-      changeReason: options?.verifiedImport?.reason ?? CHANGE_REASON[provenance.source],
-      metadata: { provenance, drafted: true },
-      contributors,
-      lineage: { machineDraft: isMachineDraft ? { authorId: ANA_MACHINE_AUTHOR_ID } : null },
-    })),
+    draftRowSpec(docId, input, resolvedBinding, provenance, workflowImport),
+    draftedSectionSeeds(input, storedContent, provenance, options, workflowImport),
     async client => {
+      await authorizeAuthoringProgram(client, { tenantId: ctx.tenantId, actor: ctx.actor, programId: input.programId });
       await verifySourcesInsideSave(client, ctx, input.programId, selectedSources, provenance);
       if (options?.verifiedImport) {
         if (provenance.source !== 'import') throw new Error('Verified import requires import provenance');
@@ -455,9 +471,11 @@ export async function createDocumentFromDraft(
     },
   ).catch(err => {
     if (err instanceof DraftSourceVerificationError) return null;
+    if (err instanceof AuthoringProgramAccessError) return err;
     throw err;
   });
   if (!inserted) return SOURCE_VERIFICATION_REFUSAL;
+  if (inserted instanceof AuthoringProgramAccessError) return { kind: 'refused', status: inserted.status, code: inserted.code, error: inserted.message };
   const { document, binding } = inserted;
   await grantCreatorOwnership(ctx, docId);
 

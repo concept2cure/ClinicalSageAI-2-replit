@@ -76,6 +76,8 @@ import { ensureGateway, normalizeBody } from './shared.js';
 import { sha256, stableStringify } from './provenance.js';
 import { verifyClaim, type VerifierFlag } from './verifier.js';
 import { evidencePromptBlock, type RetrievalStatus } from './retrieval-evidence-block';
+import { admitAnaProjectScope, AnaProjectScopeError } from '../../services/ana/project-scope-admission';
+import { assertAnaUploadAccess } from '../../services/ana/source-context-admission';
 
 // ── Retrieval + generation tuning (externalized for runtime changes) ────────
 const RETRIEVAL_TOP_K = parseInt(process.env.ANA_RETRIEVAL_TOP_K ?? '5', 10);
@@ -96,7 +98,7 @@ const INCONTEXT_INJECTION_ENABLED =
 export const sendMessageHandler = async (req: Request, res: Response) => {
   normalizeBody(req);
   try {
-    const { message, thread_id, file_id, system_prompt, project_id, preferred_provider, selected_tools, tool_context } = req.body;
+    const { message, thread_id, file_id, system_prompt, project_id: rawProjectId, preferred_provider, selected_tools, tool_context } = req.body;
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({
@@ -110,7 +112,15 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     const rawUserId = (req as any).userId || (req as any).user?.id;
     const userId: number | string = rawUserId ?? 'anonymous';
     const numericOrgId = orgId ? (typeof orgId === 'string' ? Number(orgId) : orgId) : null;
-    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) || 0 : userId;
+    const numericUserId = typeof userId === 'string' ? Number(userId) : userId;
+    const project_id = rawProjectId ?? req.body.context?.projectId ?? req.body.project_context?.projectId;
+    // Check the explicit scope and attachment before any thread, source or
+    // model work. An unreadable access decision never becomes org-wide chat.
+    const admittedProject = await admitAnaProjectScope(getPool(), { organizationId: numericOrgId,
+      userId: numericUserId, projectRef: project_id });
+    await assertAnaUploadAccess(getPool(), { organizationId: numericOrgId, userId: numericUserId,
+      fileIds: file_id == null || file_id === '' ? [] : [file_id] });
+
     // The org's UUID tenant key, from the same session scope. Both uses below —
     // Data Room retrieval and AnA's document tools — used to fall back to the
     // client's x-org-uuid header, and with neither ran the search across every
@@ -295,13 +305,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // anything else as none. Each step below used to parseInt on its own, and
     // parseInt('7abb1c22-…') is 7, a valid, wrong project of the same
     // organization (services/c2c/project-ref.ts).
-    const turnProjectId =
-      numericOrgId && project_id
-        ? await (await import('../../services/c2c/project-ref.js')).integerProjectForRef(
-            async () => (await import('../../db.js')).db,
-            { ref: project_id, orgId: numericOrgId, context: 'chat.send-message' },
-          )
-        : null;
+    const turnProjectId = admittedProject.projectId;
 
     // ── STEP 4: RETRIEVE (org-scoped + project-scoped when available) ───
     let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
@@ -1348,6 +1352,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       turnRecord,
     });
   } catch (error: any) {
+    if (error instanceof AnaProjectScopeError) return res.status(error.status).json({ error: error.message, code: error.code });
     console.error('[AnA] Chat error:', error);
 
     // Rule 6: no raw error.message leak

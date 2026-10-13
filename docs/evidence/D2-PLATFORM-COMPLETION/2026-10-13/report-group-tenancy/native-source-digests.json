@@ -1,0 +1,23 @@
+{
+  "recorded_at_utc": "2026-10-13T22:53:15.386043+00:00",
+  "runner": "Node 22; vitest.db.config.ts; native PostgreSQL",
+  "result": {
+    "files": 2,
+    "tests": 27,
+    "skipped": 0,
+    "test_lint_errors": 0,
+    "test_lint_warnings": 0
+  },
+  "sources": {
+    "migrations/0014_report_os_foundation.sql": "0e790f2128d27660b84dfbea3c758cda1db96018e636f5306e3bc24865dbc011",
+    "shared/schema/report-os.ts": "61f904e4b025402e829286563df3ec83525503efc2f9b94bdb0c3eecdba86217",
+    "server/routes/report-os.ts": "bab42b779fdbb07c09d9495f2f4043eac690f76a2a65f9dbdb48ada83ba5c62c",
+    "tests/db/report-program-group-tenancy.dbtest.ts": "ffedcbb04aef05ac4e810c78437e487ed02d3a8e9c8f0343895d874e2c0a56e7",
+    "tests/db/report-os-tenant-from-session.dbtest.ts": "e367b6f2673c28e6b16a9012ea8604795cb3a9db061fa35d4fee99e7e371057e",
+    "db/migrations/20260813_child_table_parent_scoped_rls.sql": "8b3bff9d1f3876840ef78198034a427dab6f2f4254ed2b213d9b1f07d123a235",
+    "db/migrations/20260801_tenant_isolation_sweep.sql": "8bd0a6e2df8ce113d5b8aaa3201310a219702019776d09e5a509c75171aa1419",
+    "vitest.db.config.ts": "15ce1db161acd73245a29a5c4320ea055d17ca9b356f5cedeb2bf3ad2f75b49d",
+    "server/services/report-os/portfolio/fetch.ts": "c62ac79706222d7390633222a7a34ce450cdd7bb748c0b672f911df4c6df6fcd",
+    "server/services/report-os/scope-ownership.ts": "c3646eb7e3df8a75e98d5222f8f98652df3e270563993ee169778260db4edb97"
+  }
+}

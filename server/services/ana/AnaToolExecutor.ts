@@ -1716,7 +1716,7 @@ registerToolHandler('search_large_document', async (input, ctx) => {
     const { extractDocumentText } = await import('../ocr/extractDocumentText.js');
     const { searchWithinText, extractHeadingOutline } = await import('./document-search-core.js');
 
-    const file = await loadUploadedFile(fileId, ctx?.organizationId);
+    const file = await loadUploadedFile(fileId, ctx?.organizationId, { userId: ctx?.userId });
     const extracted = await extractDocumentText(file.buffer, file.mimeType, file.fileName);
     const text = extracted.text ?? '';
     if (!text.trim()) {
@@ -1770,6 +1770,10 @@ registerToolHandler('remember_document_in_project', async (input, ctx) => {
   const userId = ctx.userId ?? 0;
 
   try {
+    const { getPool } = await import('../../db.js');
+    const { admitAnaProjectScope } = await import('./project-scope-admission.js');
+    await admitAnaProjectScope(getPool(), { organizationId: ctx.organizationId, userId,
+      projectId: ctx.projectId, projectRef: ctx.projectRef });
     const { loadUploadedFile } = await import('./uploaded-file-access.js');
     const { getProjectIntelligence, ingestProjectDocument } = await import(
       '../client-intelligence-memory.js'
@@ -1784,7 +1788,7 @@ registerToolHandler('remember_document_in_project', async (input, ctx) => {
       });
     }
 
-    const file = await loadUploadedFile(fileId, ctx.organizationId);
+    const file = await loadUploadedFile(fileId, ctx.organizationId, { userId: ctx.userId });
     const result = await ingestProjectDocument(
       profile.id,
       ctx.projectId,
@@ -4899,7 +4903,7 @@ const isWorkbookFile = (mime: string, name: string) =>
 registerToolHandler('inspect_uploaded_document', async (input, ctx) => {
   try {
     const { loadUploadedFile } = await import('./uploaded-file-access.js');
-    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId, { userId: ctx?.userId });
     const base = { fileId: file.fileId, fileName: file.fileName, mimeType: file.mimeType, fileSize: file.fileSize };
 
     if (isPdfFile(file.mimeType, file.fileName)) {
@@ -4950,7 +4954,7 @@ registerToolHandler('inspect_uploaded_document', async (input, ctx) => {
 registerToolHandler('read_uploaded_document', async (input, ctx) => {
   try {
     const { loadUploadedFile } = await import('./uploaded-file-access.js');
-    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId, { userId: ctx?.userId });
     const languages = Array.isArray(input.languages)
       ? input.languages.filter((l): l is string => typeof l === 'string')
       : undefined;
@@ -5048,7 +5052,7 @@ registerToolHandler('read_uploaded_document', async (input, ctx) => {
 registerToolHandler('ocr_document_pages', async (input, ctx) => {
   try {
     const { loadUploadedFile } = await import('./uploaded-file-access.js');
-    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId, { userId: ctx?.userId });
     const { ocrService } = await import('../ocr/index.js');
     const languages = Array.isArray(input.languages)
       ? input.languages.filter((l): l is string => typeof l === 'string')
@@ -5133,7 +5137,7 @@ registerToolHandler('ocr_document_pages', async (input, ctx) => {
 registerToolHandler('read_spreadsheet', async (input, ctx) => {
   try {
     const { loadUploadedFile } = await import('./uploaded-file-access.js');
-    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId);
+    const file = await loadUploadedFile(String(input.file_id ?? ''), ctx?.organizationId, { userId: ctx?.userId });
     if (!isWorkbookFile(file.mimeType, file.fileName)) {
       return JSON.stringify({
         error: `read_spreadsheet supports .xlsx and .csv; "${file.fileName}" (${file.mimeType}) is neither. Use read_uploaded_document instead.`,
@@ -5164,7 +5168,7 @@ registerToolHandler('edit_spreadsheet', async (input, ctx) => {
   try {
     const { organizationId, userId, projectRef, projectId } = ctx ?? {};
     const { loadUploadedFile, saveDerivedUpload, sha256Hex } = await import('./uploaded-file-access.js');
-    const file = await loadUploadedFile(String(input.file_id ?? ''), organizationId);
+    const file = await loadUploadedFile(String(input.file_id ?? ''), organizationId, { userId: ctx?.userId });
     if (!isWorkbookFile(file.mimeType, file.fileName)) {
       return JSON.stringify({
         error: `edit_spreadsheet supports .xlsx and .csv; "${file.fileName}" (${file.mimeType}) is neither.`,

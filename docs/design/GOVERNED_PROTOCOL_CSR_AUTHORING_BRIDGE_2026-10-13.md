@@ -1,8 +1,8 @@
 # Stored protocol and CSR output → governed authoring draft
 
 Revised after incoming editor integration `30e80b571` (remote merge
-`22c0c85b2`). This is the next bounded workflow increment, pending the control
-tower's implementation trigger. It extends the new canonical verified source
+`22c0c85b2`). The control tower authorized this bounded workflow increment after verified
+publication `a64d422ac14c5eb177734c18f4224e0517bc50b4`. It extends the new canonical verified source
 intake, `/api/authoring/import/source`, and its existing dialog and receipts.
 `/api/authoring/docs/from-draft` remains the internal document creation engine;
 it is not a second public workflow-selector endpoint.
@@ -207,6 +207,51 @@ preview/create cancellation, failure recovery and the existing unsaved-work guar
 Binary import, machine-claim, source reservation/export, object authorization and
 protocol signing regressions remain green.
 
-The workflow bridge remains unimplemented. Incoming canonical source intake and
-its narrow project-access repair are the current implementation, not proof that
-protocol or CSR selectors have shipped.
+## Implementation and qualification boundary
+
+The authorized worktree implementation extends the canonical intake and retains
+`origin.selection` and `origin.gaps` alongside the version fingerprint. A separate
+`associationReason` is required to create an organization-scoped source copy;
+preview remains read-only and excludes that reason from the source fingerprint.
+`authorizeAuthoringProgram` is shared by intake and direct from-draft, checking
+current actor, membership, anchor and project permission before source text and
+again before writes. Direct from-draft no longer inherits private-project access
+from tenant ownership alone.
+
+Preview/materialization uses one REPEATABLE READ snapshot. Canonical workflow
+creation uses an internal SERIALIZABLE transaction, retains the existing advisory
+reservation, and retries a serialization conflict once on a fresh transaction
+with fresh access/source checks. A second conflict returns a safe retry refusal.
+The receipt records a coherent source as of that snapshot, not a claim that the
+source cannot change before commit. Later governed use compares its fingerprint
+with a coherent new source snapshot. There are no global source-table SHARE locks.
+
+`workflowCopySectionContent` uses the already installed deterministic Markdown
+parser and the canonical authoring sanitizer to preserve actual tables, headings
+and lists. Scientific less-than/tag-shaped text is escaped faithfully. HTML
+sources retain supported structure; copied figures without a verified upload
+receipt become named gaps. Original source hashes describe the stored source;
+genesis and lineage hashes describe the sanitized new copy.
+
+The registered `workflow_import` identity names this copy's deterministic
+compositor. It does not claim an original AI provider or model. Original
+machine/template/unknown authorship stays in the receipt and CREATE audit metadata;
+initial spans have no human asserter and copies are always unbound drafts.
+Workflow copies preserve nullable `module:null` as unassigned, without the
+legacy M2 default or an inferred filing location. The general direct from-draft
+default is unchanged. Genesis revision inputs retain the verified import receipt,
+including raw source hashes/model unknownness; revision content hashes separately
+cover the sanitized copy.
+
+The approved release policy requires a current full-document REVIEWER signature
+on an approved canonical assignment and explicit adoption for template/unknown
+content. Unknown origin remains disclosed. Known machine source content without
+retained canonical generation/qualification proof stays held even after such a
+review: a model name, fingerprint, warning, or signature cannot mint missing PQ.
+Actual human rewriting may remove the applicable current copied clauses, with
+canonical current lineage and assertions deciding the hold; historical origins
+are retained. Review signatures may record that work while a qualification hold
+remains. Freeze, author/approver signing, controlled renditions and filing do not
+lift that missing proof. Existing uncontrolled working-copy export remains a
+clearly watermarked working copy. Publication and deployment are separate gates;
+worktree tests alone do not claim that this increment has shipped.

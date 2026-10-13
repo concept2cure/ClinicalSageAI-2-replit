@@ -144,6 +144,9 @@ export interface EsignModalProps {
    * Defaults to all five.
    */
   meanings?: ReadonlyArray<EsigMeaning>;
+  /** Optional governed context for the selected meaning, inside this ceremony. */
+  renderMeaningDetails?: (meaning: EsigMeaning, committing: boolean) => React.ReactNode;
+  onMeaningChange?: (meaning: EsigMeaning) => void;
   /** Identity shown as the signer. Server is the source of truth at /sign. */
   signer?: EsignSigner;
   /** Require a TOTP second factor (set when the signer is MFA-enrolled). */
@@ -187,6 +190,8 @@ export function EsignModal({
   targetMeta,
   defaultMeaning,
   meanings,
+  renderMeaningDetails,
+  onMeaningChange,
   signer,
   requireMfa = false,
   onClose,
@@ -512,7 +517,7 @@ export function EsignModal({
                     role="radio"
                     aria-checked={meaning === m.id}
                     data-active={meaning === m.id || undefined}
-                    onClick={() => setMeaning(m.id)}
+                    onClick={() => { setMeaning(m.id); onMeaningChange?.(m.id); }}
                     disabled={committing}
                   >
                     {m.label}
@@ -521,6 +526,7 @@ export function EsignModal({
               </div>
               <span className="es-field-hint">{meaningObj.desc}</span>
             </fieldset>
+            {renderMeaningDetails?.(meaning, committing)}
 
             <div className="es-field">
               <label className="es-field-lbl" htmlFor={reasonId}>

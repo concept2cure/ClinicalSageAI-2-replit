@@ -232,6 +232,8 @@ import {
 } from '../../services/ana/step-presentation.js';
 import type { GatewayServerToolUse } from '../../services/ai-gateway/types.js';
 import { resolveOrgId, resolveUserId } from '../../types/auth-request.js';
+import { admitAnaProjectScope, AnaProjectScopeError, type AdmittedAnaProjectScope } from '../../services/ana/project-scope-admission';
+import { admitAnaSelectedSources, assertAnaUploadAccess } from '../../services/ana/source-context-admission';
 import { clientIpOf } from '../../utils/client-ip';
 
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
@@ -361,49 +363,31 @@ export const APPROVAL_TIMEOUT_WHY = 'nobody decided in time';
 type SettledApproval = { ok: boolean; result: unknown; why?: string; heldBack?: boolean };
 
 /**
- * How long a turn waits to learn which project row it is in: the deadline every
- * other optional pre-gateway read has (the route prefetch's 3 s, the enrichment
- * budget's 3 s). The lookup is awaited before the prefetch, so without one a
- * slow database held the whole turn (up to the pool's 5 s connect plus 30 s
- * statement timeout) before any context read started.
+ * Mandatory project admission is bounded before any source context starts.
+ * A permission read that exceeds this deadline refuses the turn.
  */
 export const TURN_PROJECT_DEADLINE_MS = 3000;
 const TURN_PROJECT_TIMED_OUT = new Error('project lookup deadline exceeded');
 
 /**
- * The project row this turn is in (ana-14): an integer projects.id as itself, a
- * program UUID through its linked projects row (lowest id, org-scoped), and
- * anything else no project. Resolved once and handed to every reader keyed on
- * projects.id.
- *
- * Strict and bounded (strictProjectRowForRef, TURN_PROJECT_DEADLINE_MS): a
- * lookup that fails or runs out of time is 'unresolved', with why, and context
- * enrichment reports it to the person. It is never "no linked project": that
- * reads as "nothing recorded", and the readers then told the model a project
- * had no safety, CMC or CSR data when nobody had looked.
+ * Resolve and authorize the explicit project once for this turn. No scope
+ * remains valid for an organization conversation; an explicit malformed,
+ * unanchored or unreadable scope is refused before context and tool work.
  */
-async function resolveTurnProject(ref: unknown, orgId: unknown): Promise<TurnProject> {
-  if (ref === null || ref === undefined || ref === '') return { status: 'none' };
+async function admitTurnProject(ref: unknown, organizationId: unknown, userId: unknown): Promise<AdmittedAnaProjectScope> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    const id = await Promise.race([
-      (async () => {
-        const { strictProjectRowForRef } = await import('../../services/c2c/program-project-anchor.js');
-        return strictProjectRowForRef(async () => (await import('../../db.js')).db, {
-          ref,
-          orgId: Number(orgId),
-          context: 'ana-ri.stream',
-        });
-      })(),
+    return await Promise.race([
+      admitAnaProjectScope(getPool(), { projectRef: ref, organizationId, userId }),
       new Promise<never>((_resolve, reject) => {
         timer = setTimeout(() => reject(TURN_PROJECT_TIMED_OUT), TURN_PROJECT_DEADLINE_MS);
       }),
     ]);
-    return id === null ? { status: 'none' } : { status: 'linked', id };
-  } catch (err) {
-    const reason: EnrichmentUnavailableReason = err === TURN_PROJECT_TIMED_OUT ? 'timeout' : 'error';
-    console.warn('[AnA RI Stream] Project not resolved:', reason, err instanceof Error ? err.message : String(err));
-    return { status: 'unresolved', reason };
+  } catch (error) {
+    if (error === TURN_PROJECT_TIMED_OUT) {
+      throw new AnaProjectScopeError(503, 'ANA_PROJECT_ACCESS_UNAVAILABLE', 'Current project access took too long to verify. AnA has not read its sources.');
+    }
+    throw error;
   } finally {
     clearTimeout(timer);
   }
@@ -811,6 +795,20 @@ export function mountStreamRoute(router: Router): void {
         throw guardErr;
       }
 
+      // Mandatory admission precedes the direct intelligence handler, every
+      // source-context reader, run creation and the first model request.
+      const requestedProjectRef = project_id ?? req.body.context?.projectId ?? project_context?.projectId;
+      let admittedProject: AdmittedAnaProjectScope;
+      try {
+        admittedProject = await admitTurnProject(requestedProjectRef, guardOrgId, guardUserId);
+        await admitAnaSelectedSources(getPool(), { organizationId: guardOrgId, userId: guardUserId, sourceIds: req.body.source_ids ?? [] });
+        await assertAnaUploadAccess(getPool(), { organizationId: guardOrgId, userId: guardUserId, fileIds: req.body.file_ids ?? [] });
+      } catch (error) {
+        if (error instanceof AnaProjectScopeError) return sendError(res, error.status, error.message, null, error.code);
+        throw error;
+      }
+      const streamProjectId = admittedProject.programId ?? admittedProject.projectId ?? undefined;
+
       const gw = ensureGateway();
       const deterministicMode = gw?.isDeterministic?.() || false;
       if (!gw || (!deterministicMode && gw.getEnabledProviders().length === 0)) {
@@ -1028,13 +1026,12 @@ export function mountStreamRoute(router: Router): void {
           const payload = JSON.parse(message.slice(INTELLIGENCE_ANSWER_PREFIX.length));
           const handler = getToolHandler('answer_intelligence_question');
           if (!handler) throw new Error('answer_intelligence_question handler not registered');
-          const streamProjectId = project_id || resolveProjectIdFromBody(req.body);
           const fastStart = Date.now();
           const resultStr = await handler(payload, {
             organizationId: orgId,
             userId: userId || null,
-            projectId: streamProjectId ? Number(streamProjectId) || null : null,
-            projectRef: streamProjectId ? String(streamProjectId) : null,
+            projectId: admittedProject.projectId,
+            projectRef: admittedProject.projectRef,
           });
           let parsed: any = null;
           try {
@@ -1140,15 +1137,10 @@ export function mountStreamRoute(router: Router): void {
       // Shared builder parity: keep authoring-context serialization identical across chat/stream.
       const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
 
-      const streamProjectId = project_id || resolveProjectIdFromBody(req.body);
-      /* The integer projects.id this turn's project is, resolved once and handed
-         to every reader keyed on it: the project prefetch and relational
-         overlay, memory, enrichment, the session bootstrap, the tool-run log and
-         the relational reflection. The v2 app sends the program UUID, and each
-         of them used to take Number(uuid), which is NaN (ana-14). Started here,
-         awaited before the first reader needs it, and bounded
-         (TURN_PROJECT_DEADLINE_MS). */
-      const streamProjectPromise = resolveTurnProject(streamProjectId, orgId);
+      /* The verified integer projects.id is shared with every context reader;
+         the program UUID remains available to program-keyed readers. */
+      const streamProjectPromise: Promise<TurnProject> = Promise.resolve(admittedProject.projectId == null
+        ? { status: 'none' } : { status: 'linked', id: admittedProject.projectId });
       const streamAuthoringContext =
         authoring_context && typeof authoring_context === 'object'
           ? ({ ...authoring_context } as Record<string, unknown>)
@@ -1603,7 +1595,8 @@ export function mountStreamRoute(router: Router): void {
           );
           const attachedFiles = await loadUploadedFileMetadata(
             streamFileIds,
-            orgId != null ? Number(orgId) : null
+            orgId != null ? Number(orgId) : null,
+            { userId: guardUserId },
           );
           if (attachedFiles.length < streamFileIds.length) {
             console.warn(
@@ -1644,7 +1637,7 @@ export function mountStreamRoute(router: Router): void {
                 // Recheck the disposition at the byte read too: the preview may
                 // have been confirmed after the earlier metadata lookup.
                 const { loadUploadedFile } = await import('../../services/ana/uploaded-file-access.js');
-                const buf = (await loadUploadedFile(f.fileId, Number(orgId))).buffer;
+                const buf = (await loadUploadedFile(f.fileId, Number(orgId), { userId: guardUserId })).buffer;
                 if (!buf || buf.length === 0 || buf.length > MAX_DOC_BYTES) continue;
                 messages.push({
                   role: 'user' as const,

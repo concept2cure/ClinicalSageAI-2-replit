@@ -24,7 +24,7 @@ beforeAll(async () => {
     CREATE TABLE concept2cure_review_assignments(artifact_id int, organization_id int, reviewer_id int, status text);
     CREATE TABLE c2c_submissions(id text, organization_id int, project_id int);
     CREATE TABLE report_program_groups(id int, organization_id int);
-    CREATE TABLE report_program_group_projects(program_group_id int, project_id int);
+    CREATE TABLE report_program_group_projects(program_group_id int, project_id int, organization_id int NOT NULL);
     INSERT INTO projects VALUES(11,7,10,10,'{}'),(12,7,10,10,'{}');
     INSERT INTO project_visibility_settings VALUES(11,7,'private'),(12,7,'org_public');
     CREATE TABLE report_runs (
@@ -89,7 +89,7 @@ describe('saved report history', () => {
     expect(await getAccessibleReportProjectIds(7, actor, client)).toEqual([12]);
   });
   it('keeps historical program access bound to recorded members when current membership changes', async () => {
-    await database.exec("INSERT INTO report_program_groups VALUES(1,7); INSERT INTO report_program_group_projects VALUES(1,12)");
+    await database.exec("INSERT INTO report_program_groups VALUES(1,7); INSERT INTO report_program_group_projects VALUES(1,12,7)");
     const actor = { userId: 20, role: 'member' };
     const saved = { scopeType: 'program', scopeId: '1', dependencySummary: { summary: { accessProjectIds: [11,12] } } };
     const publicSaved = { ...saved, dependencySummary: { summary: { accessProjectIds: [12] } } };
@@ -97,7 +97,7 @@ describe('saved report history', () => {
       // Removing the private member from a live group cannot reveal old output.
       expect(await canAccessReportScope(7, actor, { scopeType: 'program', scopeId: '1' }, client)).toBe(true);
       expect(await canAccessReportScope(7, actor, saved, client)).toBe(false);
-      await database.exec("INSERT INTO report_program_group_projects VALUES(1,11)");
+      await database.exec("INSERT INTO report_program_group_projects VALUES(1,11,7)");
       // Adding it later cannot withdraw access to output computed only on public project12.
       expect(await canAccessReportScope(7, actor, publicSaved, client)).toBe(true);
       expect(await canAccessReportScope(7, actor, { ...saved, dependencySummary: {} }, client)).toBe(false);

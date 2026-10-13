@@ -1207,7 +1207,9 @@ jobs:
         # backbones for real. Its suite skipIf's when the binary is absent —
         # installing it here is what makes CI actually run that conformance
         # evidence rather than silently skipping it.
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client libxml2-utils
+        # Match the production PDF runtime; missing Noto fonts must not
+        # turn actual governed export tests into a skipped or mocked pass.
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client fonts-noto-core fonts-noto-cjk libxml2-utils
 
       - name: Setup Python (document runtime)
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -1297,7 +1299,9 @@ jobs:
         run: npm ci
 
       - name: Install Postgres client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+        # Match the production PDF runtime; missing Noto fonts must not
+        # turn actual governed export tests into a skipped or mocked pass.
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client fonts-noto-core fonts-noto-cjk
 
       - name: Apply GCC migrations
         run: |
@@ -1454,7 +1458,9 @@ jobs:
           echo "::error::npm ci failed after 3 attempts"; exit 1
 
       - name: Install Postgres client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+        # Match the production PDF runtime; missing Noto fonts must not
+        # turn actual governed export tests into a skipped or mocked pass.
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client fonts-noto-core fonts-noto-cjk
 
       - name: Apply GCC migrations
         run: |

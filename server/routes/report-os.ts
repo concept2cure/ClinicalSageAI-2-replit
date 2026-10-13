@@ -1297,6 +1297,7 @@ router.post('/program-groups', async (req: Request, res: Response) => {
     if (uniqueProjectIds.length > 0) {
       await db.insert(reportProgramGroupProjects).values(
         uniqueProjectIds.map(projectId => ({
+          organizationId: orgId,
           programGroupId: group.id,
           projectId,
           addedBy: createdBy,
@@ -1355,10 +1356,11 @@ router.patch('/program-groups/:id', async (req: Request, res: Response) => {
     if (uniqueProjectIds) {
       await db
         .delete(reportProgramGroupProjects)
-        .where(eq(reportProgramGroupProjects.programGroupId, id));
+        .where(and(eq(reportProgramGroupProjects.programGroupId, id), eq(reportProgramGroupProjects.organizationId, orgId)));
       if (uniqueProjectIds.length > 0) {
         await db.insert(reportProgramGroupProjects).values(
           uniqueProjectIds.map(projectId => ({
+            organizationId: orgId,
             programGroupId: id,
             projectId,
             addedBy: updatedBy,

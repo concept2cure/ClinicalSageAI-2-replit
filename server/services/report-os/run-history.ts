@@ -135,7 +135,8 @@ export async function listReportRunHistory(
           ELSE ${allowLegacy}::boolean AND EXISTS(SELECT 1 FROM report_program_groups g
             WHERE g.id::text = r.scope_id AND g.organization_id = r.organization_id
             AND NOT EXISTS(SELECT 1 FROM report_program_group_projects gp
-              WHERE gp.program_group_id = g.id AND NOT(gp.project_id = ANY(${permitted}::int[])))) END)
+              WHERE gp.program_group_id = g.id AND gp.organization_id = g.organization_id
+                AND NOT(gp.project_id = ANY(${permitted}::int[])))) END)
     )`);
   }
   for (const [key, sqlColumn] of [

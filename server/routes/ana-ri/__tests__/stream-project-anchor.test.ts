@@ -8,22 +8,22 @@
  * bootstrap dropped it. The route now resolves the integer once and hands it
  * to each.
  *
- * The resolution is strict and bounded. A lookup that fails, or does not
- * finish in TURN_PROJECT_DEADLINE_MS, is 'unresolved' and reaches enrichment
- * as that (which reports it), never as "no linked project"; and the turn does
- * not wait on it past the deadline.
+ * Admission is mandatory and bounded. An explicit unanchored project, a
+ * failed access lookup or TURN_PROJECT_DEADLINE_MS timeout refuses the turn
+ * before source context starts. Optional enrichment still reports its own
+ * unavailable sources honestly after admission.
  *
  * And the person is told which context a reply is missing, and why, in plain
  * words; not "Some project context could not be loaded" on every turn, and
  * never a raw source key.
  *
  * Driven through the real route (support/stream-route-harness.ts). The
- * resolver it uses (program-project-anchor.ts strictProjectRowForRef) is
- * replaced, and so is the non-strict one (project-ref.ts integerProjectForRef)
- * by the same mock, so a route that resolves through either is held to the
- * same cases.
+ * admission resolver is replaced to isolate propagation and deadlines.
+ * Canonical live SQL permission is covered separately by the admission and
+ * stream-project-private-access suites.
  */
 import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
+import httpRequest from 'supertest';
 
 const io = vi.hoisted(() => ({
   resolve: vi.fn(),
@@ -50,6 +50,19 @@ vi.mock('../../../services/ana-ri/chat-context-builder.js', async importOriginal
   ...(await harnessModule()).mocks.chatContextBuilder(await importOriginal<Record<string, unknown>>()),
   prefetchRouteIntelligenceContext: io.prefetch,
 }));
+// This suite isolates scope propagation/deadlines. Canonical SQL permission
+// decisions are exercised separately in stream-project-private-access.
+vi.mock('../../../services/ana/project-scope-admission', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../../services/ana/project-scope-admission')>();
+  return { ...actual, admitAnaProjectScope: async (_q: unknown, input: { projectRef: unknown; organizationId: unknown }) => {
+    let id: number | null;
+    try { id = await io.resolve(_q, { ref: input.projectRef, orgId: input.organizationId }); }
+    catch { throw new actual.AnaProjectScopeError(503, 'ANA_PROJECT_ACCESS_UNAVAILABLE', 'Project access unavailable'); }
+    if (id == null) throw new actual.AnaProjectScopeError(409, 'ANA_PROJECT_ANCHOR_UNRESOLVED', 'Project relationship unavailable');
+    return { projectId: id, programId: typeof input.projectRef === 'string' ? input.projectRef : null,
+      projectRef: String(input.projectRef) };
+  } };
+});
 vi.mock('../../../services/c2c/project-ref.js', () => ({ integerProjectForRef: io.resolve }));
 vi.mock('../../../services/c2c/program-project-anchor.js', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -110,43 +123,39 @@ describe('a program UUID reaches the project readers as its linked project id', 
     expect(io.reflect).toHaveBeenCalledWith(expect.objectContaining({ projectId: 42 }));
   });
 
-  it('a program with no linked project reads no project: memory gets no project id, nothing NaN', async () => {
+  it('an explicit program without a verified relationship is refused before context', async () => {
     io.resolve.mockResolvedValue(null);
-    await streamTurn(app, { message: 'Review the project', project_id: PROGRAM });
-
-    expect(io.memory.mock.calls[0][0].projectId).toBeUndefined();
-    expect(io.prefetch).toHaveBeenCalledWith(expect.objectContaining({ projectIdNumber: null }));
-    expect(io.enrich).toHaveBeenCalledWith(expect.objectContaining({ project: { status: 'none' } }));
-    expect(io.reflect).toHaveBeenCalledWith(expect.objectContaining({ projectId: null }));
+    const response = await httpRequest(app).post('/api/ana-ri/stream').send({ message: 'Review the project', project_id: PROGRAM });
+    expect(response.status).toBe(409);
+    expect(response.body.error.code).toBe('ANA_PROJECT_ANCHOR_UNRESOLVED');
+    expect(io.memory).not.toHaveBeenCalled();
+    expect(io.prefetch).not.toHaveBeenCalled();
+    expect(io.enrich).not.toHaveBeenCalled();
+    expect(h.state.gatewayCalls).toBe(0);
   });
 });
 
 describe('a lookup that could not tell is not "no linked project"', () => {
-  it('a failed lookup reaches enrichment as unresolved (error), so it is reported; no reader gets a project', async () => {
-    io.resolve.mockImplementation(async () => {
-      throw Object.assign(new Error('terminating connection due to administrator command'), { code: '57P01' });
-    });
-    await streamTurn(app, { message: '/safety', project_id: PROGRAM });
-
-    expect(io.enrich).toHaveBeenCalledWith(expect.objectContaining({ project: { status: 'unresolved', reason: 'error' } }));
-    expect(io.prefetch).toHaveBeenCalledWith(expect.objectContaining({ projectIdNumber: null }));
-    expect(io.memory.mock.calls[0][0].projectId).toBeUndefined();
+  it('a failed access lookup refuses the turn, without source context', async () => {
+    io.resolve.mockRejectedValue(new Error('terminating connection due to administrator command'));
+    const response = await httpRequest(app).post('/api/ana-ri/stream').send({ message: '/safety', project_id: PROGRAM });
+    expect(response.status).toBe(503);
+    expect(response.body.error.code).toBe('ANA_PROJECT_ACCESS_UNAVAILABLE');
+    expect(io.enrich).not.toHaveBeenCalled();
+    expect(io.prefetch).not.toHaveBeenCalled();
+    expect(io.memory).not.toHaveBeenCalled();
   });
 
-  it('a stalled lookup holds the turn no longer than the deadline, and reaches enrichment as unresolved (timeout)', async () => {
+  it('an access lookup deadline refuses the turn without starting optional readers', async () => {
     io.resolve.mockImplementation(() => new Promise<never>(() => {}));
-    let prefetchAt = 0;
-    io.prefetch.mockImplementation(async () => {
-      prefetchAt = Date.now();
-      return { unavailableSources: [], contextAvailabilityBlock: '' };
-    });
     const started = Date.now();
-    await streamTurn(app, { message: 'Review the project', project_id: PROGRAM });
-
-    expect(io.prefetch).toHaveBeenCalledTimes(1);
-    expect(prefetchAt - started).toBeLessThan(TURN_PROJECT_DEADLINE_MS + 1500);
-    expect(io.prefetch).toHaveBeenCalledWith(expect.objectContaining({ projectIdNumber: null }));
-    expect(io.enrich).toHaveBeenCalledWith(expect.objectContaining({ project: { status: 'unresolved', reason: 'timeout' } }));
+    const response = await httpRequest(app).post('/api/ana-ri/stream').send({ message: 'Review the project', project_id: PROGRAM });
+    expect(response.status).toBe(503);
+    expect(response.body.error.code).toBe('ANA_PROJECT_ACCESS_UNAVAILABLE');
+    expect(Date.now() - started).toBeLessThan(TURN_PROJECT_DEADLINE_MS + 1500);
+    expect(io.prefetch).not.toHaveBeenCalled();
+    expect(io.enrich).not.toHaveBeenCalled();
+    expect(io.memory).not.toHaveBeenCalled();
   }, 15_000);
 });
 

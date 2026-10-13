@@ -4,6 +4,8 @@ import type { Queryable } from '../vault/document-catalog.service.js';
 import { sourceAvailabilityPresentation } from '../vault/document-catalog-eligibility.js';
 import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
 import { savedImportSource, verifySavedImportSource } from './import-source-references';
+import type { AuthoringActor } from './authoring-documents';
+import { isWorkflowImportOrigin } from '../../../shared/authoring/source-import';
 
 export type DraftSourceReference = Pick<DraftSource, 'documentId' | 'contentHash' | 'span'>;
 export type VerifiedDraftSourceReference = Omit<DraftSource, 'text'>;
@@ -117,6 +119,7 @@ function savedGroupReferences(value: unknown, programId: string): DraftSourceRef
 
 export async function verifySavedDraftSourceReferences(
   doc: { provenance?: unknown; client_program_id?: unknown }, q: Queryable, organizationId: number,
+  actor?: AuthoringActor,
 ): Promise<void> {
   try {
     const selected = savedSourceSelection(doc);
@@ -124,7 +127,7 @@ export async function verifySavedDraftSourceReferences(
     for (const group of selected.groups) {
       await verifyDraftSourceReferences(savedGroupReferences(group, selected.programId), q, organizationId, selected.programId);
     }
-    await verifySavedImportSource(doc, q, organizationId);
+    await verifySavedImportSource(doc, q, organizationId, actor);
   } catch {
     throw new SavedDraftSourceError();
   }
@@ -135,6 +138,7 @@ export async function verifySavedDraftSourceReferences(
  * until the new rendition's receipt commits; no source data is changed. */
 export async function reserveSavedDraftSourceReferences(
   doc: { provenance?: unknown; client_program_id?: unknown }, q: Queryable, organizationId: number,
+  actor?: AuthoringActor,
 ): Promise<void> {
   try {
     const selected = savedSourceSelection(doc);
@@ -144,7 +148,7 @@ export async function reserveSavedDraftSourceReferences(
     // table lock. Exact imported origins reserve just their recorded source row
     // through verifySavedImportSource's FOR SHARE, avoiding a new global lock.
     if (selected.groups.length) await q.query('LOCK TABLE vault.documents, vault.document_catalog IN SHARE MODE');
-    await verifySavedDraftSourceReferences(doc, q, organizationId);
+    await verifySavedDraftSourceReferences(doc, q, organizationId, actor);
   } catch {
     throw new SavedDraftSourceError();
   }
@@ -156,14 +160,16 @@ export async function withSavedDraftSourceReservation<T>(
   doc: { provenance?: unknown; client_program_id?: unknown },
   pool: Queryable & { connect(): Promise<Queryable & { release(): void }> },
   organizationId: number, work: (q: Queryable) => Promise<T>,
+  actor?: AuthoringActor,
 ): Promise<T> {
   let selected: ReturnType<typeof savedSourceSelection>;
   try { selected = savedSourceSelection(doc); } catch { throw new SavedDraftSourceError(); }
   if (!selected) return work(pool);
   const q = await pool.connect();
   try {
-    await q.query('BEGIN');
-    await reserveSavedDraftSourceReferences(doc, q, organizationId);
+    const imported = savedImportSource(doc);
+    await q.query(imported && isWorkflowImportOrigin(imported) ? 'BEGIN ISOLATION LEVEL REPEATABLE READ' : 'BEGIN');
+    await reserveSavedDraftSourceReferences(doc, q, organizationId, actor);
     const result = await work(q);
     await q.query('COMMIT');
     return result;

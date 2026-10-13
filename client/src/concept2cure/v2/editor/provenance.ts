@@ -11,7 +11,8 @@
  * document with no record gets NO origin line rather than a guessed one.
  */
 
-import type { AuthoringImportOrigin } from '@shared/authoring/source-import';
+import { isWorkflowImportOrigin, type AuthoringImportOrigin, type WorkflowImportOrigin, type WorkflowSectionOrigin } from '@shared/authoring/source-import';
+import { workflowOriginMatches } from '../authoringHandoff';
 
 export type ProvenanceSource = 'ana' | 'seed' | 'import' | 'human';
 
@@ -33,15 +34,35 @@ const str = (v: unknown): string | null => {
   return s.length > 0 ? s : null;
 };
 
+function workflowImportedOrigin(r: Record<string, unknown>): DocumentProvenance['importSource'] {
+  const origin = r as unknown as WorkflowImportOrigin;
+  if (!workflowOriginMatches(origin, String(r.programId ?? ''), origin.selection)
+    || typeof r.reason !== 'string' || !r.reason.trim() || !Array.isArray(r.warnings)
+    || !r.warnings.every(w => typeof w === 'string')) return undefined;
+  return r as unknown as NonNullable<DocumentProvenance['importSource']>;
+}
+
 /** Only a complete, source-bound import record can identify an original. */
 function importOrigin(raw: unknown): DocumentProvenance['importSource'] {
   if (!raw || typeof raw !== 'object') return undefined;
   const r = raw as Record<string, unknown>;
+  if (r.kind === 'protocol' || r.kind === 'csr') return workflowImportedOrigin(r);
   if ((r.kind !== 'vault' && r.kind !== 'data-room') || (r.conversion !== 'docx-structure' && r.conversion !== 'extracted-text')) return undefined;
   if (!['id', 'programId', 'title', 'fileName', 'mimeType', 'reason'].every(key => typeof r[key] === 'string' && (r[key] as string).trim())) return undefined;
   if (typeof r.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(r.sha256)) return undefined;
   if (!Array.isArray(r.warnings) || !r.warnings.every(w => typeof w === 'string')) return undefined;
   return r as unknown as NonNullable<DocumentProvenance['importSource']>;
+}
+
+export function workflowOriginLine(section: WorkflowSectionOrigin): string {
+  const origin = section.originalAuthorship === 'unknown' ? 'Original authorship not recorded' : `${section.originalAuthorship} origin`;
+  return `${origin} · ${section.model ? `recorded model name ${section.model}; qualification evidence not recorded` : 'model not recorded'}`;
+}
+
+function importedLine(original: DocumentProvenance['importSource'], note: string | null): string {
+  if (!original) return 'Imported' + (note ? ` · ${note}` : '');
+  const kind = isWorkflowImportOrigin(original) ? (original.kind === 'csr' ? 'CSR' : 'protocol') : original.kind === 'vault' ? 'Vault' : 'data room';
+  return `Working copy of “${original.title}” · ${kind} source ${original.id}`;
 }
 
 /**
@@ -95,7 +116,7 @@ export function describeProvenance(
     const original = importOrigin(r.importSource);
     return {
       source: 'import',
-      line: original ? `Working copy of “${original.title}” · ${original.kind === 'vault' ? 'Vault' : 'data room'} source ${original.id}` : 'Imported' + (note ? ` · ${note}` : ''),
+      line: importedLine(original, note),
       model: null,
       conversationId: null,
       turnId: null,

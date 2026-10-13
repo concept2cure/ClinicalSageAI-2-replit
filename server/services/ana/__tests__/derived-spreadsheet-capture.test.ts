@@ -13,6 +13,10 @@ vi.mock('../../clinical-regulatory-evidence/evidence-spine.service.js', () => ({
 vi.mock('../../auditService', () => ({ writeChainedAuditRow: h.audit }));
 vi.mock('../../c2c/program-access.js', () => ({ resolveOpenProgram: h.resolveProgram }));
 vi.mock('../../document-data-disposition/program-lock.js', () => ({ lockDocumentDispositionProgram: h.lockProgram }));
+// Permission is a seam in these capture/rollback unit tests; actual persisted
+// project/source access is exercised by source-context-admission.pglite.test.
+vi.mock('../source-context-admission', () => ({ assertAnaUploadAccess: async () => undefined }));
+vi.mock('../project-scope-admission', () => ({ admitAnaProjectScope: async () => undefined }));
 
 import { saveDerivedUpload, sha256Hex } from '../uploaded-file-access';
 

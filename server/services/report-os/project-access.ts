@@ -71,7 +71,7 @@ async function canAccessProgramScope(organizationId: number, actor: ReportProjec
     if (!hasOrganizationProjectManagementRole(actor.role)) return false;
   }
   const { rows } = await client.query(`SELECT gp.project_id FROM report_program_groups g
-    LEFT JOIN report_program_group_projects gp ON gp.program_group_id = g.id
+    LEFT JOIN report_program_group_projects gp ON gp.program_group_id = g.id AND gp.organization_id = g.organization_id
     WHERE g.id::text = $1 AND g.organization_id = $2`, [scope.scopeId, organizationId]);
   return rows.length > 0 && rows.every(row => row.project_id == null || allowed.has(positiveId(row.project_id)));
 }

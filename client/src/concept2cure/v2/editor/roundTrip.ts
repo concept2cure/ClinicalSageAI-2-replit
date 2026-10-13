@@ -1,6 +1,7 @@
 import { getSchema, type JSONContent, type Extensions } from '@tiptap/core';
 import { EditorState } from '@tiptap/pm/state';
 import { fixTables, tableEditing } from '@tiptap/pm/tables';
+import { DOMSerializer, type Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { looksLikeHtml } from '@shared/authoring/plain-text-html';
 
 /**
@@ -30,6 +31,26 @@ import { looksLikeHtml } from '@shared/authoring/plain-text-html';
    (its comment says why the allowlist is what it is, and what a narrow one
    did to the record). Re-exported for this module's importers. */
 export { looksLikeHtml };
+
+/**
+ * Serialize the editor record without making live browser image requests.
+ * TipTap's HTML helper creates the fragment in the active document before
+ * adopting it into an inert container. A governed img src can therefore start
+ * a native request without the bearer header, even though it is only being
+ * serialized. Creating every serializer node in the inert document preserves
+ * the exact stored references without displaying or fetching them.
+ */
+export function serializeHtmlDocument(doc: ProseMirrorNode): string {
+  const inert = document.implementation.createHTMLDocument('');
+  const container = inert.createElement('div');
+  container.appendChild(DOMSerializer.fromSchema(doc.type.schema).serializeFragment(doc.content, { document: inert }));
+  return container.innerHTML;
+}
+
+/** The same serializer for the fidelity-checked stored parse at editor boot. */
+export function serializeHeldHtml(json: JSONContent, extensions: Extensions): string {
+  return serializeHtmlDocument(getSchema(extensions).nodeFromJSON(json));
+}
 
 /** Block-level tags whose boundaries read as line breaks in extracted text. */
 const BLOCK_TAGS = new Set([

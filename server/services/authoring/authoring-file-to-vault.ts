@@ -48,7 +48,8 @@ import { createScopedLogger } from '../../utils/logger';
 import { LOCKED_DOCUMENT_STATUSES } from './document-lock';
 import { columnState, writeAuthoringAuditTrail, type AuthoringAuditContext } from './authoring-evidence';
 import { renderAuthoringExport, logExport, sectionsDigest, type RenderedExport, type ExportSectionRow } from './authoring-export';
-import { SavedDraftSourceError, reserveSavedDraftSourceReferences } from './draft-source-references';
+import { SavedDraftSourceError, reserveSavedDraftSourceReferences, withSavedDraftSourceReservation } from './draft-source-references';
+import { assertWorkflowImportRelease, WorkflowImportGovernanceError } from './workflow-import-governance';
 import { savedImportSource } from './import-source-references';
 import type { AuthoringPool, AuthoringActor } from './authoring-documents';
 import { ingestVaultDocument } from '../vault/vault-ingest.service';
@@ -150,7 +151,9 @@ async function readDocumentForFiling(
     // rather than chosen; read it only where the column exists.
     const hasProvenance = (await columnState(pool, 'provenance')) === 'present';
     const r = await client.query(
-      `SELECT id, title, module, status, locked_at, client_program_id, version, created_by, created_at${hasProvenance ? ', provenance' : ''}
+      `SELECT id, title, module, to_jsonb(authoring_documents)->>'locale' AS locale,
+         to_jsonb(authoring_documents)->>'product_code' AS product_code,
+         status, locked_at, client_program_id, version, created_by, created_at${hasProvenance ? ', provenance' : ''}
          FROM authoring_documents WHERE id = $1 AND tenant_id = $2
          FOR UPDATE NOWAIT`,
       [docId, tenantId],
@@ -249,9 +252,9 @@ async function recordFiling(
   const { rendered, sections } = snapshot;
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
+    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
     // Same order as withdrawal and source-linked save: program before row locks.
-    await reserveSavedDraftSourceReferences(doc, client, tenantId);
+    await reserveSavedDraftSourceReferences(doc, client, tenantId, actor);
     const again = await client.query(
       `SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2 FOR UPDATE NOWAIT`,
       [docId, tenantId],
@@ -271,6 +274,8 @@ async function recordFiling(
     if (sectionRenderState(currentSections.rows) !== sectionRenderState(sections)) {
       throw Object.assign(new Error('document sections changed during filing'), { code: DOCUMENT_CHANGED_DURING_FILING });
     }
+    await assertWorkflowImportRelease(client, { organizationId: tenantId, doc,
+      sections: currentSections.rows, actor });
     const details = {
       format: args.format,
       exportId: vault.exportId,
@@ -427,14 +432,15 @@ async function ingestAndFile(
 async function renderForVaultFiling(args: FileToVaultArgs, doc: DocRow, sections: ExportSectionRow[]): Promise<RenderedExport | FileToVaultOutcome> {
   const sealed = LOCKED_DOCUMENT_STATUSES.has(String(doc.status ?? '').toUpperCase());
   try {
-    return await renderAuthoringExport({
-      executor: args.pool, tenantId: args.tenantId, doc, sections, format: args.format,
+    return await withSavedDraftSourceReservation(doc, args.pool, args.tenantId, executor => renderAuthoringExport({
+      executor, tenantId: args.tenantId, doc, sections, format: args.format, actor: args.actor,
       notice: sealed ? null
         : `WORKING DRAFT — not a sealed 21 CFR Part 11 record (status: ${doc.status ?? 'unknown'}). ` +
           'No frozen snapshot or signature manifest certifies this content.',
-    });
+    }), args.actor);
   } catch (err) {
     if (err instanceof SavedDraftSourceError) return refuse(409, err.code, err.message);
+    if (err instanceof WorkflowImportGovernanceError) return refuse(err.status, err.code, err.message);
     throw err;
   }
 }

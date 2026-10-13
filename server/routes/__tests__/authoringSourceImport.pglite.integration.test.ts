@@ -162,6 +162,9 @@ describe('atomic source intake through the shipped authoring router', () => {
     expect((await db.pglite.query<CountRow>('SELECT count(*)::int AS n FROM authoring_documents WHERE tenant_id=$1', [ORG])).rows[0].n).toBe(1);
   });
 
+});
+
+describe('current source project and membership access', () => {
   it('admits an explicitly assigned private-project member and refuses revoked access to their saved import', async () => {
     await db.pool.query("UPDATE project_visibility_settings SET visibility='private' WHERE project_id=42");
     await db.pool.query("INSERT INTO project_members VALUES (42,$1,$2,'use','active')", [ORG, Number(AUTHOR.id)]);
@@ -189,6 +192,44 @@ describe('atomic source intake through the shipped authoring router', () => {
     } finally { await db.pool.query("UPDATE organization_users SET role='member' WHERE organization_id=$1 AND user_id=$2", [ORG, Number(AUTHOR.id)]); }
   });
 
+  it('keeps document ownership separate from current saved-binary source access after project revocation', async () => {
+    const [{ withSavedDraftSourceReservation }, { decideAuthoringPermission }] = await Promise.all([
+      import('../../services/authoring/draft-source-references'), import('../../services/authoring/authoring-permissions'),
+    ]);
+    const current = await author(request(app).post('/api/authoring/import/source')).send(body());
+    expect([200, 201]).toContain(current.status);
+    const saved = current.body.data.doc;
+    const principal = { id: AUTHOR.id, email: AUTHOR.email, roles: ['MEMBER'] };
+    const actor = { id: AUTHOR.id, email: AUTHOR.email };
+    const ownsCopy = () => decideAuthoringPermission({ pool: db.pool as unknown as Pool, principal,
+      scope: { tenantId: ORG, docId: saved.id, sectionId: null, documentStatus: saved.status, createdBy: saved.created_by }, action: 'export' });
+    let byteReads = 0;
+    const produce = vi.fn(async () => { byteReads++; return fs.readFile(sourcePath); });
+    await db.pool.query("UPDATE project_visibility_settings SET visibility='private' WHERE project_id=42");
+    await db.pool.query("INSERT INTO project_members VALUES (42,$1,$2,'use','active')", [ORG, Number(AUTHOR.id)]);
+    try {
+      expect((await ownsCopy()).allowed).toBe(true);
+      await expect(withSavedDraftSourceReservation(saved, db.pool, ORG, produce, actor)).resolves.toEqual(bytes);
+      expect(byteReads).toBe(1);
+      await db.pool.query("UPDATE project_members SET status='revoked' WHERE project_id=42 AND user_id=$1", [Number(AUTHOR.id)]);
+      expect((await ownsCopy()).allowed).toBe(true); // retained canonical object grant
+      const reads = vi.spyOn(db.pglite, 'query');
+      produce.mockClear();
+      try {
+        await expect(withSavedDraftSourceReservation(saved, db.pool, ORG, produce, actor)).rejects.toMatchObject({ code: 'SOURCE_REFERENCES_UNAVAILABLE' });
+        expect(produce).not.toHaveBeenCalled();
+        expect(byteReads).toBe(1);
+        expect(reads.mock.calls.some(([sql]) => typeof sql === 'string' && /FROM vault.documents d/.test(sql))).toBe(false);
+      } finally { reads.mockRestore(); }
+    } finally {
+      await db.pool.query('DELETE FROM project_members WHERE project_id=42 AND user_id=$1', [Number(AUTHOR.id)]);
+      await db.pool.query("UPDATE project_visibility_settings SET visibility='org_public' WHERE project_id=42");
+    }
+  });
+
+});
+
+describe('source transaction, integrity and format guards', () => {
   it('rechecks a sharing revocation during conversion inside the real canonical creation transaction', async () => {
     const [{ importSourceDocument }, { createDocumentFromDraft }, { importDocx }] = await Promise.all([
       import('../../services/authoring/authoring-source-import'), import('../../services/authoring/authoring-from-draft'),

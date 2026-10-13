@@ -21,7 +21,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { ApiRequestError } from '@/lib/queryClient';
 
 const apiRequest = vi.hoisted(() => vi.fn());
@@ -52,6 +52,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { publishShellProject } from '../shellProject';
 import { collectSuggestions } from '../editor/suggestions';
 import type { Editor } from '@tiptap/core';
 import { deviceDraftKey } from '@/lib/deviceDraftCache';
@@ -201,6 +202,7 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.useRealTimers();
+  delete window.C2C_PROJECT;
 });
 
 describe('the tab cannot be closed over unsaved work', () => {
@@ -485,5 +487,52 @@ describe('the guard names decisions already recorded, not just unsaved text', ()
     // The save closed out the earlier decision; this dirty state is from the
     // unrelated edit alone.
     expect(within(guard).queryByText(/tracked-change decision/i)).toBeNull();
+  });
+});
+
+const PROGRAM_A = '11111111-1111-4111-8111-111111111111';
+const PROGRAM_B = '22222222-2222-4222-8222-222222222222';
+const PROGRAM_C = '33333333-3333-4333-8333-333333333333';
+function heldResponse() { let resolve!: (value: Response) => void; const promise = new Promise<Response>(done => { resolve = done; }); return { promise, resolve }; }
+function scopeReads(id: string) { return apiRequest.mock.calls.filter(c => c[0] === 'GET' && String(c[1]).includes(`programId=${id}`)); }
+
+describe('program switches preserve the current authoring decision', () => {
+  it('retains dirty content when a program switch is cancelled, without reading the new scope', async () => {
+    publishShellProject({ id: PROGRAM_A, title: 'Program A' }); await renderDirty();
+    await act(async () => { publishShellProject({ id: PROGRAM_B, title: 'Program B' }); });
+    const guard = await screen.findByRole('alertdialog'); expect(guard.textContent).toContain('Program B');
+    expect(canvasText()).toBe('Half-written sentence that'); expect(scopeReads(PROGRAM_B)).toHaveLength(0);
+    fireEvent.click(within(guard).getByRole('button', { name: /^Cancel$/ }));
+    expect(canvasText()).toBe('Half-written sentence that'); expect(contentPatches()).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Switch to selected project' })).toBeTruthy();
+  });
+
+  it('ignores a prior program list that finishes after the new scoped list', async () => {
+    const pending = heldResponse(); const baseline = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, body?: unknown) => {
+      if (url.includes(`programId=${PROGRAM_A}`)) return pending.promise;
+      if (url.includes(`programId=${PROGRAM_B}`)) return Promise.resolve(ok({ documents: [{ ...DOCS.documents[0], id: 'B1', title: 'Program B draft' }] }));
+      if (url === '/api/authoring/docs/B1/sections') return Promise.resolve(ok({ sections: [{ ...SECTIONS.sections[0], id: 'BS1', doc_id: 'B1', content: 'Program B stored text.' }] }));
+      return baseline(method, url, body);
+    });
+    publishShellProject({ id: PROGRAM_A }); render(<DocumentAuthoring {...props()} />);
+    await act(async () => { publishShellProject({ id: PROGRAM_B }); });
+    await waitFor(() => expect(canvasText()).toBe('Program B stored text.'));
+    await act(async () => { pending.resolve(ok(DOCS)); await pending.promise; });
+    expect(canvasText()).toBe('Program B stored text.'); expect(screen.queryByText('Nonclinical Overview')).toBeNull();
+  });
+
+  it('a save for an older switch cannot clear a newer pending program decision', async () => {
+    const pending = heldResponse(); const baseline = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, body?: unknown) => method === 'PATCH' && url.endsWith('/S1') ? pending.promise : baseline(method, url, body));
+    publishShellProject({ id: PROGRAM_A, title: 'Program A' }); await renderDirty();
+    await act(async () => { publishShellProject({ id: PROGRAM_B, title: 'Program B' }); });
+    const guard = await screen.findByRole('alertdialog'); fireEvent.click(within(guard).getByRole('button', { name: /Save and continue/ }));
+    await waitFor(() => expect(contentPatches()).toHaveLength(1));
+    await act(async () => { publishShellProject({ id: PROGRAM_C, title: 'Program C' }); });
+    await act(async () => { pending.resolve(ok({ section: { ...SECTIONS.sections[0], content: '<p>Half-written sentence that</p>' } })); await pending.promise; });
+    const latest = await screen.findByRole('alertdialog'); expect(latest.textContent).toContain('Program C'); expect(scopeReads(PROGRAM_B)).toHaveLength(0);
+    fireEvent.click(within(latest).getByRole('button', { name: /Leave without saving/ }));
+    await waitFor(() => expect(scopeReads(PROGRAM_C).length).toBeGreaterThan(0));
   });
 });

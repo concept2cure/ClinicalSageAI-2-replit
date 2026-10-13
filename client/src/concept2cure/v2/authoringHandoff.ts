@@ -139,3 +139,96 @@ export async function saveToAuthoring(h: AuthoringHandoff): Promise<AuthoringHan
     };
   }
 }
+
+export type { WorkflowImportSource } from '@shared/authoring/source-import';
+import type { AuthoringSourceImportData, AuthoringSourceImportPreviewData, WorkflowImportOrigin, WorkflowImportSource } from '@shared/authoring/source-import';
+import { redactInternals, serverMessage } from '@/lib/queryClient';
+
+export function isWorkflowSource(source: unknown): source is WorkflowImportSource {
+  if (!source || typeof source !== 'object') return false;
+  const kind = (source as { kind?: unknown }).kind;
+  return kind === 'protocol' || kind === 'csr';
+}
+
+/** Stable selection identity; ordering does not change a CSR selection. */
+export function workflowSourceKey(source: WorkflowImportSource): string {
+  if (source.kind === 'protocol') return `protocol:${source.documentId}`;
+  if (source.sectionNumbers !== undefined && (!Array.isArray(source.sectionNumbers) || !source.sectionNumbers.every(s => typeof s === 'string'))) return 'invalid-selection';
+  return `csr:${source.jobId}:${[...new Set(source.sectionNumbers?.map(s => s.trim()) ?? [])].sort().join(',')}`;
+}
+const importHash = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{64}$/i.test(value);
+const stringList = (value: unknown): value is string[] => Array.isArray(value) && value.every(s => typeof s === 'string');
+function validSectionOrigin(section: WorkflowImportOrigin['sectionOrigins'][number]): boolean {
+  return !!section && typeof section.code === 'string' && importHash(section.contentSha256)
+    && typeof section.sourceRowId === 'string' && ['machine', 'template', 'unknown'].includes(section.originalAuthorship)
+    && ['unrecorded', 'recorded-name-only'].includes(section.modelEvidence) && (section.model === null || typeof section.model === 'string');
+}
+function validWorkflowMetadata(origin: WorkflowImportOrigin): boolean {
+  return (origin.version === null || typeof origin.version === 'string')
+    && !!origin.sourceScope && ['organization', 'program', 'project'].includes(origin.sourceScope.level)
+    && !!origin.association && ['recorded', 'explicit'].includes(origin.association.mode)
+    && (origin.association.reason === null || typeof origin.association.reason === 'string');
+}
+function matchingWorkflowTarget(origin: WorkflowImportOrigin, programId: string, source: WorkflowImportSource): boolean {
+  return origin.kind === source.kind && origin.programId === programId && importHash(origin.fingerprint);
+}
+export function workflowOriginMatches(origin: WorkflowImportOrigin | undefined, programId: string, source: WorkflowImportSource | undefined): boolean {
+  if (!origin || !isWorkflowSource(source) || !matchingWorkflowTarget(origin, programId, source)) return false;
+  const id = source.kind === 'protocol' ? source.documentId : source.jobId;
+  if (String(origin.id) !== String(id) || !isWorkflowSource(origin.selection) || origin.selection.kind !== source.kind) return false;
+  if (workflowSourceKey(origin.selection) !== workflowSourceKey(source)) return false;
+  return typeof origin.title === 'string' && Array.isArray(origin.sectionOrigins) && origin.sectionOrigins.length > 0
+    && origin.sectionOrigins.every(validSectionOrigin) && stringList(origin.gaps) && validWorkflowMetadata(origin);
+}
+function validPreviewSections(sections: AuthoringSourceImportPreviewData['sections']): boolean {
+  return Array.isArray(sections) && sections.length > 0 && sections.every(s => !!s && typeof s.code === 'string'
+    && !!s.code.trim() && typeof s.title === 'string' && importHash(s.contentSha256));
+}
+function matchingPreviewScope(data: AuthoringSourceImportPreviewData, programId: string): boolean {
+  return data.fingerprint === data.origin.fingerprint && data.target?.programId === programId
+    && data.association?.targetProgramId === programId && typeof data.association.required === 'boolean';
+}
+export function readWorkflowPreview(body: unknown, programId: string, source: WorkflowImportSource): AuthoringSourceImportPreviewData | null {
+  const envelope = body as { success?: boolean; data?: AuthoringSourceImportPreviewData } | null;
+  const data = envelope?.data;
+  if (envelope?.success !== true || !data || data.preview !== true || !workflowOriginMatches(data.origin, programId, source)) return null;
+  if (!matchingPreviewScope(data, programId) || !validPreviewSections(data.sections) || !stringList(data.gaps) || !stringList(data.warnings)) return null;
+  return data;
+}
+function validSavedCopy(data: AuthoringSourceImportData | undefined, programId: string): data is AuthoringSourceImportData {
+  if (!data || typeof data.doc?.id !== 'string' || !data.doc.id.trim() || typeof data.doc.title !== 'string') return false;
+  if (data.doc.client_program_id !== undefined && data.doc.client_program_id !== programId) return false;
+  return typeof data.reused === 'boolean' && stringList(data.warnings) && Array.isArray(data.sections) && data.sections.length > 0;
+}
+function savedSectionsMatch(data: AuthoringSourceImportData, preview: AuthoringSourceImportPreviewData): boolean {
+  const codes = new Set(preview.sections.map(s => s.code));
+  const savedCodes = new Set(data.sections.map(s => s?.code));
+  return savedCodes.size === codes.size && data.sections.every(s => !!s && typeof s.id === 'string' && typeof s.code === 'string' && codes.has(s.code));
+}
+export function readWorkflowImportResult(body: unknown, programId: string, source: WorkflowImportSource, preview: AuthoringSourceImportPreviewData): AuthoringSourceImportData | null {
+  const envelope = body as { success?: boolean; data?: AuthoringSourceImportData } | null;
+  const data = envelope?.data;
+  if (envelope?.success !== true || !validSavedCopy(data, programId) || !isWorkflowSource(data.origin)) return null;
+  if (!workflowOriginMatches(data.origin as WorkflowImportOrigin, programId, source)) return null;
+  if ((data.origin as WorkflowImportOrigin).fingerprint !== preview.fingerprint || !savedSectionsMatch(data, preview)) return null;
+  return data;
+}
+
+type IntakeReply<T> = { ok: true; data: T } | { ok: false; message: string };
+async function requestWorkflowIntake<T>(payload: Record<string, unknown>, read: (body: unknown) => T | null): Promise<IntakeReply<T>> {
+  try {
+    const res = await apiRequest('POST', '/api/authoring/import/source', payload);
+    const body = await res.json().catch(() => null);
+    const data = res.ok ? read(body) : null;
+    return data ? { ok: true, data } : { ok: false, message: serverMessage(body) ?? 'The server did not confirm this source and target. Reload the preview before retrying.' };
+  } catch (e) {
+    return { ok: false, message: redactInternals(e instanceof Error ? e.message : '', 'The source intake could not be reached. Nothing was opened.') };
+  }
+}
+export function previewWorkflowImport(programId: string, source: WorkflowImportSource) {
+  return requestWorkflowIntake({ programId, source, previewOnly: true }, body => readWorkflowPreview(body, programId, source));
+}
+export function createWorkflowImport(programId: string, source: WorkflowImportSource, preview: AuthoringSourceImportPreviewData, reason: string, associationReason?: string) {
+  return requestWorkflowIntake({ programId, source, expectedFingerprint: preview.fingerprint, reason,
+    ...(associationReason ? { associationReason } : {}) }, body => readWorkflowImportResult(body, programId, source, preview));
+}

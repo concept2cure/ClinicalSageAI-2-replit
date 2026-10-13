@@ -103,6 +103,8 @@ import {
 } from './coauthor-audit.js';
 import { filingCopyPins, pinnedCopyAccepts, pinnedCopyRefusal, retakeChanges } from './filing-copy-pins.js';
 import { snapshotStatusFor } from '../../../shared/regulatory/filing-copy-status.js';
+import { assertWorkflowImportRelease, WorkflowImportGovernanceError } from '../authoring/workflow-import-governance';
+import { SavedDraftSourceError, verifySavedDraftSourceReferences } from '../authoring/draft-source-references';
 
 type CoauthorRow = typeof coauthorDocuments.$inferSelect;
 
@@ -110,14 +112,14 @@ type CoauthorRow = typeof coauthorDocuments.$inferSelect;
    the placement dialog that states it before placing (FILING_SPINE.md F17). */
 export { snapshotStatusFor } from '../../../shared/regulatory/filing-copy-status.js';
 
-type SnapshotRefusal = { ok: false; httpStatus: 404 | 409 | 422; body: Record<string, unknown> };
+type SnapshotRefusal = { ok: false; httpStatus: 400 | 403 | 404 | 409 | 422 | 503; body: Record<string, unknown> };
 
 export type SnapshotOutcome =
   /** `written`: whether this placement wrote the copy (created, updated or re-created). */
   | { ok: true; created: boolean; written: boolean; document: CoauthorRow; aliasRecorded: boolean }
   | SnapshotRefusal;
 
-const refuse = (httpStatus: 404 | 409 | 422, error: string, message: string): SnapshotRefusal => ({
+const refuse = (httpStatus: SnapshotRefusal['httpStatus'], error: string, message: string): SnapshotRefusal => ({
   ok: false,
   httpStatus,
   body: { error, message },
@@ -304,7 +306,7 @@ async function checkAgainstSeal(
  */
 async function readSourceForFiling(
   q: DrizzleQueryable,
-  args: { sourceId: string; organizationId: number; readState: string; status: ReturnType<typeof snapshotStatusFor> },
+  args: { sourceId: string; organizationId: number; readState: string; status: ReturnType<typeof snapshotStatusFor>; actor: CoauthorAuditActor },
 ): Promise<{ ok: true; body: AuthoringDocumentSnapshot; seal: Seal | null } | SnapshotRefusal> {
   const { sourceId, organizationId, readState, status } = args;
   /* The source is locked for the rest of the placement, and must still be in
@@ -325,6 +327,19 @@ async function readSourceForFiling(
     );
   }
 
+  const details = await q.query(`SELECT d.*, to_jsonb(d)->'provenance' AS provenance,
+    to_jsonb(d)->>'client_program_id' AS client_program_id FROM authoring_documents d
+    WHERE d.id=$1 AND d.tenant_id=$2`, [sourceId, organizationId]);
+  const currentActor = { id: String(args.actor.userId ?? ''), email: null };
+  try {
+    // A grant to the retained copy cannot replace current access to its exact
+    // private binary source. Refuse before the assembler reads saved prose.
+    await verifySavedDraftSourceReferences(details.rows[0], q, organizationId, currentActor);
+  } catch (error) {
+    if (error instanceof SavedDraftSourceError) return refuse(409, error.code, error.message);
+    throw error;
+  }
+
   /* 2026-09-23 (repair 2): the sections are read here, on the placement's
      transaction, for two rules. Some section must carry text — the rule
      AuthoringPlaceIntoFiling applies; this replaced a test of the assembled
@@ -342,6 +357,14 @@ async function readSourceForFiling(
     );
   }
   const live: SectionRow[] = body.sections ?? [];
+  try {
+    await assertWorkflowImportRelease(q, { organizationId, doc: { ...details.rows[0], id: sourceId },
+      sections: live.map(section => ({ id: String(section.id), code: String(section.code), title: section.title, content: section.content == null ? null : String(section.content) })),
+      actor: currentActor });
+  } catch (error) {
+    if (error instanceof WorkflowImportGovernanceError) return refuse(error.status, error.code, error.message);
+    throw error;
+  }
   if (!live.some((sec) => String(sec.content ?? '').trim() !== '')) {
     return refuse(
       422,
@@ -478,7 +501,7 @@ export async function takeAuthoringSnapshot(args: {
 
   return db.transaction(async (tx): Promise<SnapshotOutcome> => {
     const q = queryableFromDrizzle(tx);
-    const source = await readSourceForFiling(q, { sourceId, organizationId, readState, status });
+    const source = await readSourceForFiling(q, { sourceId, organizationId, readState, status, actor });
     if (!source.ok) return source;
     const { body, seal } = source;
     const provenance = {
@@ -546,5 +569,5 @@ export async function takeAuthoringSnapshot(args: {
       document,
       aliasRecorded: !(!alias.recorded && alias.reason === 'relation_absent'),
     };
-  });
+  }, { isolationLevel: 'repeatable read' });
 }

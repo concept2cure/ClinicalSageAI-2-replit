@@ -1,0 +1,3723 @@
+[
+  {
+    "url": "http://127.0.0.1:5000/api/authoring/images/file_1791929751823_ngzjr1",
+    "type": "Fetch",
+    "authenticated": true,
+    "initiator": {
+      "type": "script",
+      "stack": {
+        "callFrames": [
+          {
+            "functionName": "apiRequest",
+            "scriptId": "43",
+            "url": "http://127.0.0.1:5000/src/lib/queryClient.ts",
+            "lineNumber": 195,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "resolveImageSrc",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 16,
+            "columnNumber": 20
+          },
+          {
+            "functionName": "authenticatedImageNodeView",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 43,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 115,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "nodeview",
+            "scriptId": "379",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-QHUQMD25.js?v=08f732e0",
+            "lineNumber": 4755,
+            "columnNumber": 15
+          },
+          {
+            "functionName": "create",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1183,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "addNode",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1791,
+            "columnNumber": 28
+          },
+          {
+            "functionName": "",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1274,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "iterDeco",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1887,
+            "columnNumber": 6
+          },
+          {
+            "functionName": "updateChildren",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1261,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "docViewDesc",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1375,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "EditorView",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 4850,
+            "columnNumber": 19
+          },
+          {
+            "functionName": "createView",
+            "scriptId": "379",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-QHUQMD25.js?v=08f732e0",
+            "lineNumber": 5814,
+            "columnNumber": 22
+          },
+          {
+            "functionName": "mount",
+            "scriptId": "379",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-QHUQMD25.js?v=08f732e0",
+            "lineNumber": 5576,
+            "columnNumber": 9
+          },
+          {
+            "functionName": "Editor",
+            "scriptId": "379",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-QHUQMD25.js?v=08f732e0",
+            "lineNumber": 5569,
+            "columnNumber": 35
+          },
+          {
+            "functionName": "createEditor",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 1002,
+            "columnNumber": 11
+          },
+          {
+            "functionName": "getInitialEditor",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 937,
+            "columnNumber": 36
+          },
+          {
+            "functionName": "EditorInstanceManager2",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 912,
+            "columnNumber": 24
+          },
+          {
+            "functionName": "",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 1111,
+            "columnNumber": 61
+          },
+          {
+            "functionName": "mountStateImpl",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 6110,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "mountState",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 6131,
+            "columnNumber": 23
+          },
+          {
+            "functionName": "useState",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 18735,
+            "columnNumber": 19
+          },
+          {
+            "functionName": "exports.useState",
+            "scriptId": "30",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-OFFQOIRY.js?v=08f732e0",
+            "lineNumber": 958,
+            "columnNumber": 35
+          },
+          {
+            "functionName": "useEditor",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 1111,
+            "columnNumber": 54
+          },
+          {
+            "functionName": "RichSectionEditor2",
+            "scriptId": "285",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/RichSectionEditor.tsx?t=1791932023074",
+            "lineNumber": 437,
+            "columnNumber": 21
+          },
+          {
+            "functionName": "react_stack_bottom_frame",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 18508,
+            "columnNumber": 19
+          },
+          {
+            "functionName": "renderWithHooks",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 5653,
+            "columnNumber": 23
+          },
+          {
+            "functionName": "updateForwardRef",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 7197,
+            "columnNumber": 20
+          },
+          {
+            "functionName": "beginWork",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 8734,
+            "columnNumber": 19
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 996,
+            "columnNumber": 71
+          },
+          {
+            "functionName": "performUnitOfWork",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12560,
+            "columnNumber": 97
+          },
+          {
+            "functionName": "workLoopSync",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12423,
+            "columnNumber": 42
+          },
+          {
+            "functionName": "renderRootSync",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12407,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "performWorkOnRoot",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 11765,
+            "columnNumber": 188
+          },
+          {
+            "functionName": "performWorkOnRootViaSchedulerTask",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13504,
+            "columnNumber": 8
+          },
+          {
+            "functionName": "performWorkUntilDeadline",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 35,
+            "columnNumber": 49
+          }
+        ]
+      }
+    }
+  },
+  {
+    "url": "http://127.0.0.1:5000/api/authoring/images/file_1791929751823_ngzjr1",
+    "type": "Fetch",
+    "authenticated": true,
+    "initiator": {
+      "type": "script",
+      "stack": {
+        "callFrames": [
+          {
+            "functionName": "apiRequest",
+            "scriptId": "43",
+            "url": "http://127.0.0.1:5000/src/lib/queryClient.ts",
+            "lineNumber": 195,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "resolveImageSrc",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 16,
+            "columnNumber": 20
+          },
+          {
+            "functionName": "authenticatedImageNodeView",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 43,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 115,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "nodeview",
+            "scriptId": "379",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-QHUQMD25.js?v=08f732e0",
+            "lineNumber": 4755,
+            "columnNumber": 15
+          },
+          {
+            "functionName": "create",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1183,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "addNode",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1791,
+            "columnNumber": 28
+          },
+          {
+            "functionName": "",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1274,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "iterDeco",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1887,
+            "columnNumber": 6
+          },
+          {
+            "functionName": "updateChildren",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1261,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "docViewDesc",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1375,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "EditorView",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 4850,
+            "columnNumber": 19
+          },
+          {
+            "functionName": "createView",
+            "scriptId": "379",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-QHUQMD25.js?v=08f732e0",
+            "lineNumber": 5814,
+            "columnNumber": 22
+          },
+          {
+            "functionName": "mount",
+            "scriptId": "379",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-QHUQMD25.js?v=08f732e0",
+            "lineNumber": 5576,
+            "columnNumber": 9
+          },
+          {
+            "functionName": "Editor",
+            "scriptId": "379",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-QHUQMD25.js?v=08f732e0",
+            "lineNumber": 5569,
+            "columnNumber": 35
+          },
+          {
+            "functionName": "createEditor",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 1002,
+            "columnNumber": 11
+          },
+          {
+            "functionName": "getInitialEditor",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 937,
+            "columnNumber": 36
+          },
+          {
+            "functionName": "EditorInstanceManager2",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 912,
+            "columnNumber": 24
+          },
+          {
+            "functionName": "",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 1111,
+            "columnNumber": 61
+          },
+          {
+            "functionName": "mountStateImpl",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 6114,
+            "columnNumber": 14
+          },
+          {
+            "functionName": "mountState",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 6131,
+            "columnNumber": 23
+          },
+          {
+            "functionName": "useState",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 18735,
+            "columnNumber": 19
+          },
+          {
+            "functionName": "exports.useState",
+            "scriptId": "30",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-OFFQOIRY.js?v=08f732e0",
+            "lineNumber": 958,
+            "columnNumber": 35
+          },
+          {
+            "functionName": "useEditor",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 1111,
+            "columnNumber": 54
+          },
+          {
+            "functionName": "RichSectionEditor2",
+            "scriptId": "285",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/RichSectionEditor.tsx?t=1791932023074",
+            "lineNumber": 437,
+            "columnNumber": 21
+          },
+          {
+            "functionName": "react_stack_bottom_frame",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 18508,
+            "columnNumber": 19
+          },
+          {
+            "functionName": "renderWithHooks",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 5653,
+            "columnNumber": 23
+          },
+          {
+            "functionName": "updateForwardRef",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 7197,
+            "columnNumber": 20
+          },
+          {
+            "functionName": "beginWork",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 8734,
+            "columnNumber": 19
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 996,
+            "columnNumber": 71
+          },
+          {
+            "functionName": "performUnitOfWork",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12560,
+            "columnNumber": 97
+          },
+          {
+            "functionName": "workLoopSync",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12423,
+            "columnNumber": 42
+          },
+          {
+            "functionName": "renderRootSync",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12407,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "performWorkOnRoot",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 11765,
+            "columnNumber": 188
+          },
+          {
+            "functionName": "performWorkOnRootViaSchedulerTask",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13504,
+            "columnNumber": 8
+          },
+          {
+            "functionName": "performWorkUntilDeadline",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 35,
+            "columnNumber": 49
+          }
+        ]
+      }
+    }
+  },
+  {
+    "url": "http://127.0.0.1:5000/api/authoring/images/file_1791929751823_ngzjr1",
+    "type": "Fetch",
+    "authenticated": true,
+    "initiator": {
+      "type": "script",
+      "stack": {
+        "callFrames": [
+          {
+            "functionName": "apiRequest",
+            "scriptId": "43",
+            "url": "http://127.0.0.1:5000/src/lib/queryClient.ts",
+            "lineNumber": 195,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "resolveImageSrc",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 16,
+            "columnNumber": 20
+          },
+          {
+            "functionName": "authenticatedImageNodeView",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 43,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 115,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "nodeview",
+            "scriptId": "379",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-QHUQMD25.js?v=08f732e0",
+            "lineNumber": 4755,
+            "columnNumber": 15
+          },
+          {
+            "functionName": "create",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1183,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "addNode",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1791,
+            "columnNumber": 28
+          },
+          {
+            "functionName": "",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1274,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "iterDeco",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1948,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "updateChildren",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1261,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "docViewDesc",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1375,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "updateStateInner",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 4950,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "update",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 4890,
+            "columnNumber": 9
+          },
+          {
+            "functionName": "setProps",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 4904,
+            "columnNumber": 9
+          },
+          {
+            "functionName": "createNodeViews",
+            "scriptId": "379",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-QHUQMD25.js?v=08f732e0",
+            "lineNumber": 5838,
+            "columnNumber": 14
+          },
+          {
+            "functionName": "init",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 782,
+            "columnNumber": 13
+          },
+          {
+            "functionName": "componentDidMount",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 768,
+            "columnNumber": 9
+          },
+          {
+            "functionName": "react_stack_bottom_frame",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 18526,
+            "columnNumber": 21
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 996,
+            "columnNumber": 71
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9915,
+            "columnNumber": 71
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9991,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9991,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9991,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9991,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9991,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9991,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9991,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9991,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9991,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10065,
+            "columnNumber": 19
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10043,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9906,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9991,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9991,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9991,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10065,
+            "columnNumber": 19
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10043,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10065,
+            "columnNumber": 19
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10043,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9906,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9906,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9902,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9906,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10073,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10791,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "commitLayoutEffectOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9962,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "flushLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12923,
+            "columnNumber": 119
+          },
+          {
+            "functionName": "commitRoot",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12802,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "commitRootWhenReady",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12015,
+            "columnNumber": 8
+          },
+          {
+            "functionName": "performWorkOnRoot",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 11949,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "performWorkOnRootViaSchedulerTask",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13504,
+            "columnNumber": 8
+          },
+          {
+            "functionName": "performWorkUntilDeadline",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 35,
+            "columnNumber": 49
+          }
+        ]
+      }
+    }
+  },
+  {
+    "url": "http://127.0.0.1:5000/api/authoring/images/file_1791929751823_ngzjr1",
+    "type": "Fetch",
+    "authenticated": true,
+    "initiator": {
+      "type": "script",
+      "stack": {
+        "callFrames": [
+          {
+            "functionName": "apiRequest",
+            "scriptId": "43",
+            "url": "http://127.0.0.1:5000/src/lib/queryClient.ts",
+            "lineNumber": 195,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "resolveImageSrc",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 16,
+            "columnNumber": 20
+          },
+          {
+            "functionName": "authenticatedImageNodeView",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 43,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "create",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1183,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "addNode",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1791,
+            "columnNumber": 28
+          },
+          {
+            "functionName": "",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1274,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "iterDeco",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1948,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "updateChildren",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1261,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "docViewDesc",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1375,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "updateStateInner",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 4950,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "update",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 4890,
+            "columnNumber": 9
+          },
+          {
+            "functionName": "setProps",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 4904,
+            "columnNumber": 9
+          },
+          {
+            "functionName": "componentWillUnmount",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 791,
+            "columnNumber": 41
+          },
+          {
+            "functionName": "react_stack_bottom_frame",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 18555,
+            "columnNumber": 21
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 996,
+            "columnNumber": 71
+          },
+          {
+            "functionName": "safelyCallComponentWillUnmount",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 9543,
+            "columnNumber": 55
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10810,
+            "columnNumber": 67
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10826,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10835,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10835,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10835,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10835,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10826,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10835,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10826,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10826,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10805,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseDisappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10851,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "disappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10826,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "doubleInvokeEffectsOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13338,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 996,
+            "columnNumber": 71
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13311,
+            "columnNumber": 77
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 998,
+            "columnNumber": 14
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13325,
+            "columnNumber": 49
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 998,
+            "columnNumber": 14
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13325,
+            "columnNumber": 49
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 998,
+            "columnNumber": 14
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13325,
+            "columnNumber": 49
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "commitDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13346,
+            "columnNumber": 8
+          },
+          {
+            "functionName": "flushPassiveEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13156,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "flushPendingEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13087,
+            "columnNumber": 15
+          },
+          {
+            "functionName": "performSyncWorkOnRoot",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13513,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "flushSyncWorkAcrossRoots_impl",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13413,
+            "columnNumber": 121
+          },
+          {
+            "functionName": "flushSpawnedWork",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13066,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "commitRoot",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12803,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "commitRootWhenReady",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12015,
+            "columnNumber": 8
+          },
+          {
+            "functionName": "performWorkOnRoot",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 11949,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "performWorkOnRootViaSchedulerTask",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13504,
+            "columnNumber": 8
+          },
+          {
+            "functionName": "performWorkUntilDeadline",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 35,
+            "columnNumber": 49
+          }
+        ]
+      }
+    }
+  },
+  {
+    "url": "http://127.0.0.1:5000/api/authoring/images/file_1791929751823_ngzjr1",
+    "type": "Fetch",
+    "authenticated": true,
+    "initiator": {
+      "type": "script",
+      "stack": {
+        "callFrames": [
+          {
+            "functionName": "apiRequest",
+            "scriptId": "43",
+            "url": "http://127.0.0.1:5000/src/lib/queryClient.ts",
+            "lineNumber": 195,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "resolveImageSrc",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 16,
+            "columnNumber": 20
+          },
+          {
+            "functionName": "authenticatedImageNodeView",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 43,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "",
+            "scriptId": "353",
+            "url": "http://127.0.0.1:5000/src/concept2cure/v2/editor/imageNode.ts?t=1791932023074",
+            "lineNumber": 115,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "nodeview",
+            "scriptId": "379",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-QHUQMD25.js?v=08f732e0",
+            "lineNumber": 4755,
+            "columnNumber": 15
+          },
+          {
+            "functionName": "create",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1183,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "addNode",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1791,
+            "columnNumber": 28
+          },
+          {
+            "functionName": "",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1274,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "iterDeco",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1948,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "updateChildren",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1261,
+            "columnNumber": 4
+          },
+          {
+            "functionName": "docViewDesc",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 1375,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "updateStateInner",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 4950,
+            "columnNumber": 25
+          },
+          {
+            "functionName": "update",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 4890,
+            "columnNumber": 9
+          },
+          {
+            "functionName": "setProps",
+            "scriptId": "375",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-K6ADYMWS.js?v=08f732e0",
+            "lineNumber": 4904,
+            "columnNumber": 9
+          },
+          {
+            "functionName": "createNodeViews",
+            "scriptId": "379",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/chunk-QHUQMD25.js?v=08f732e0",
+            "lineNumber": 5838,
+            "columnNumber": 14
+          },
+          {
+            "functionName": "init",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 782,
+            "columnNumber": 13
+          },
+          {
+            "functionName": "componentDidMount",
+            "scriptId": "337",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/@tiptap_react.js?v=08f732e0",
+            "lineNumber": 768,
+            "columnNumber": 9
+          },
+          {
+            "functionName": "react_stack_bottom_frame",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 18526,
+            "columnNumber": 21
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 996,
+            "columnNumber": 71
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10873,
+            "columnNumber": 64
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10964,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10900,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10964,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10964,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10964,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10964,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10900,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10964,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10900,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10900,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10859,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "recursivelyTraverseReappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10985,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "reappearLayoutEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 10900,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "doubleInvokeEffectsOnFiber",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13338,
+            "columnNumber": 73
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 996,
+            "columnNumber": 71
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13311,
+            "columnNumber": 77
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 998,
+            "columnNumber": 14
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13325,
+            "columnNumber": 49
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 998,
+            "columnNumber": 14
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13325,
+            "columnNumber": 49
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "runWithFiberInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 998,
+            "columnNumber": 14
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13325,
+            "columnNumber": 49
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "recursivelyTraverseAndDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13316,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "commitDoubleInvokeEffectsInDEV",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13346,
+            "columnNumber": 8
+          },
+          {
+            "functionName": "flushPassiveEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13156,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "flushPendingEffects",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13087,
+            "columnNumber": 15
+          },
+          {
+            "functionName": "performSyncWorkOnRoot",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13513,
+            "columnNumber": 12
+          },
+          {
+            "functionName": "flushSyncWorkAcrossRoots_impl",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13413,
+            "columnNumber": 121
+          },
+          {
+            "functionName": "flushSpawnedWork",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13066,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "commitRoot",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12803,
+            "columnNumber": 10
+          },
+          {
+            "functionName": "commitRootWhenReady",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 12015,
+            "columnNumber": 8
+          },
+          {
+            "functionName": "performWorkOnRoot",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 11949,
+            "columnNumber": 16
+          },
+          {
+            "functionName": "performWorkOnRootViaSchedulerTask",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 13504,
+            "columnNumber": 8
+          },
+          {
+            "functionName": "performWorkUntilDeadline",
+            "scriptId": "20",
+            "url": "http://127.0.0.1:5000/@fs/workspace/ClinicalSageAI-2-replit/node_modules/.vite/deps/react-dom_client.js?v=08f732e0",
+            "lineNumber": 35,
+            "columnNumber": 49
+          }
+        ]
+      }
+    }
+  }
+]

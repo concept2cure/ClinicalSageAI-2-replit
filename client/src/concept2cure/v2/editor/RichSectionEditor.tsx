@@ -66,7 +66,7 @@ import { authService } from '@/services/portal/authService';
 import { Mapping } from '@tiptap/pm/transform';
 import type { Transaction } from '@tiptap/pm/state';
 import * as Y from 'yjs';
-import { structuralSignatureFromDom, structuralSignatureFromDoc, signatureDrift, docToPlainText } from './roundTrip';
+import { structuralSignatureFromDom, structuralSignatureFromDoc, signatureDrift, docToPlainText, serializeHtmlDocument, serializeHeldHtml } from './roundTrip';
 
 import {
   DataOriginsMenu,
@@ -391,7 +391,7 @@ function wordsOf(text: string): number {
  *  `onCreate` (which fires during editor construction) can use it without
  *  touching component bindings that are not initialized yet. */
 function serializeEditor(
-  ed: { getHTML: () => string; getText: (o?: any) => string },
+  ed: { state: { doc: PMNode }; getText: (o?: any) => string },
   format: 'html' | 'text',
 ): string {
   return format === 'text'
@@ -401,7 +401,7 @@ function serializeEditor(
         // plain text silently loses its single newlines.
         textSerializers: { hardBreak: () => '\n' },
       })
-    : ed.getHTML();
+    : serializeHtmlDocument(ed.state.doc);
 }
 
 /**
@@ -615,7 +615,6 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const [findInfo, setFindInfo] = useState({ count: 0, active: -1 });
     const findInputRef = useRef<HTMLInputElement>(null);
     const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const lastSavedRef = useRef<string>(value ?? '');
     const editorHostRef = useRef<HTMLDivElement>(null);
     /** Content a debounced autosave has been armed for but not yet written.
      *  Held so an unmount inside the debounce window flushes it instead of
@@ -887,10 +886,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           if (back !== stored.replace(/\r\n/g, '\n')) {
             return { mode: 'source' as const, html: null, verdict: null };
           }
+          return { mode: 'rich' as const, html, verdict: null, baseline: back };
         } catch {
           return { mode: 'source' as const, html: null, verdict: null };
         }
-        return { mode: 'rich' as const, html, verdict: null };
       }
       const html = looksLikeHtml(stored) ? stored : plainTextToHtml(stored);
       // The fidelity gate below compares TEXT, so markup that carries no text
@@ -920,13 +919,19 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             ? { ...base, lossy: true, structuralDrift: ['tables' as const] }
             : base;
         if (verdict.lossy) return { mode: 'source' as const, html: null, verdict };
-        return { mode: 'rich' as const, html, verdict };
+        return { mode: 'rich' as const, html, verdict, baseline: serializeHeldHtml(held.doc, extensions) };
       } catch {
         // A parse that throws proves the content is not representable.
         return { mode: 'source' as const, html: null, verdict: null };
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // The editor can emit a plugin update while mounting, before its delayed
+    // onCreate callback. Establish its parsed serialization before construction
+    // so hydration cannot be cached or reported as the author's unsaved edit.
+    // This baseline comes from the stored content and never from a live buffer.
+    const lastSavedRef = useRef<string>(boot.mode === 'rich' && !collabRuntime ? boot.baseline : value ?? '');
 
     /* ── Source mode state (raw stored string, same save path) ── */
     const [sourceText, setSourceText] = useState<string>(value ?? '');
@@ -1046,8 +1051,14 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         // With Yjs, content comes from the synced doc (seeded below), never
         // from props — passing it here would duplicate on every join.
         ...(collabRuntime ? {} : { content: boot.html ?? '' }),
-        onUpdate: ({ editor: ed }) => {
+        onUpdate: ({ editor: ed, transaction }) => {
           const serialized = serialize(ed);
+          // StarterKit's trailing-node plugin can append the empty cursor
+          // paragraph to a table on a metadata-only mount transaction. That
+          // is hydration, not writing. A real content transaction never takes
+          // this branch, even if it occurs before the delayed create event.
+          const hydrationOnly = !ed.isInitialized && !transaction.docChanged && boot.mode === 'rich' && !collabRuntime;
+          if (hydrationOnly) lastSavedRef.current = serialized;
           const isDirty = serialized !== lastSavedRef.current;
           setDirty(isDirty);
           /* Never leave 'saving' from a keystroke: editing back to the baseline
@@ -1067,7 +1078,8 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
              must not repaint the section. */
           liveDocRef.current = ed.state.doc;
           setCaptionOrder(captionOrderKey(ed.state.doc));
-          cacheDraft(serialized);
+          // Do not delete an earlier genuine crash draft during hydration.
+          if (!hydrationOnly) cacheDraft(serialized);
           if (autosaveMs != null && isDirty) {
             if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
             pendingAutosaveRef.current = serialized;
@@ -1075,14 +1087,6 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           }
         },
         onCreate: ({ editor: ed }) => {
-          // The clean baseline is this editor's OWN serialization of the
-          // parsed content, not the stored string: legacy plain text parses
-          // to equivalent HTML that would otherwise read as "unsaved changes"
-          // on a canvas nobody has touched. The record itself is only ever
-          // rewritten by a real edit followed by a real save.
-          if (boot.mode === 'rich' && !collabRuntime) {
-            lastSavedRef.current = serializeEditor(ed, format);
-          }
           setWords(wordsOf(ed.getText()));
           setDocEmpty(ed.isEmpty);
           setSuggestions(collectSuggestions(ed.state.doc));
@@ -1193,12 +1197,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       if (!storageKey) return;
       try {
         const cached = localStorage.getItem(cacheKeyFor(storageKey));
-        if (cached != null && cached !== (value ?? '')) setRestoreOffer(cached);
+        setRestoreOffer(cached != null && cached !== (value ?? '') && cached !== lastSavedRef.current ? cached : null);
       } catch {
         /* unreadable storage — nothing to offer */
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storageKey]);
+    }, [storageKey, editorReady]);
 
     const restoreCached = useCallback(() => {
       if (restoreOffer == null) return;
@@ -1934,7 +1938,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           return true;
         } catch (e) {
           setImgNotice(
-            'The image was not uploaded — ' +
+            'The image was not inserted — ' +
               redactInternals(e instanceof Error ? e.message : '', 'the image store refused it') +
               '. Nothing was inserted.',
           );
