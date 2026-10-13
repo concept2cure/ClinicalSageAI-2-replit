@@ -114,6 +114,16 @@ export function evaluatePredicate(pred: QuestionPredicate, values: Record<string
  * settled server-side either way.
  */
 export function predicateFieldIds(pred: QuestionPredicate): string[] {
-  if (!isGroup(pred)) return [pred.field];
-  return [...(pred.anyOf ?? []), ...(pred.allOf ?? [])].flatMap(predicateFieldIds);
+  return predicateLeaves(pred).map(leaf => leaf.field);
+}
+
+/**
+ * The single-field predicates inside one, flattened. A caller that needs the
+ * VALUES as well as the fields — the flow-registry vocabulary probe compares a
+ * predicate's values against the options a field offers — reads them here
+ * rather than off a group, which has neither.
+ */
+export function predicateLeaves(pred: QuestionPredicate): FieldPredicate[] {
+  if (!isGroup(pred)) return [pred as FieldPredicate];
+  return [...(pred.anyOf ?? []), ...(pred.allOf ?? [])].flatMap(predicateLeaves);
 }
