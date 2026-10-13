@@ -52,6 +52,8 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import type { FireToast } from '../toast';
 import { saveToAuthoring } from '../authoringHandoff';
+import { AdaptiveMonitoringPanel } from './adaptiveMonitoring';
+import { BiostatKnowledgePanel } from './biostatKnowledge';
 import { engineResultToHtml, engineResultTableColumns, engineResultCellText, type EngineResultTable } from '../engineResultHtml';
 
 /** A dimension of the engine's judgment (ana-biostats JudgmentDimension). */
@@ -761,6 +763,14 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
           a leftover value under a key the next engine also uses would be sent
           silently. */}
       <CalculatorPanel key={active.id} calc={active} fireToast={fireToast} />
+
+      {/* The two stored-state capabilities. Everything above is stateless: a
+          figure is computed and nothing is kept. These two record — an interim
+          look and the decision signed on it, and the method graph built from
+          the sponsor's own CSRs — so they sit below the engines that feed them.
+          Panels of this workbench, not rail destinations (CLAUDE.md RULE 2). */}
+      <AdaptiveMonitoringPanel />
+      <BiostatKnowledgePanel />
 
       <C2CToast msg={toast} />
     </div>

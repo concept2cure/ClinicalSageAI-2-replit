@@ -31,6 +31,11 @@ import {
 } from '../services/biostatistics-judgment';
 import type { StudyDesignInput, StakeholderRole, StatisticalArtifactType } from '../services/biostatistics-judgment';
 import { clientError, serverError } from '../lib/api-response';
+import {
+  AdaptiveDecisionRefusal,
+  signAdaptiveDecision,
+  signerIpAddress,
+} from '../services/adaptive-decision-signature';
 import { createScopedLogger } from '../utils/logger';
 
 const collaborativeSapService = new CollaborativeSapService();
@@ -787,22 +792,75 @@ router.post('/adaptive/:planId/ssr/:snapshotId', authMiddleware, async (req: Req
  * POST /api/biostat/adaptive/:planId/decision
  * Record an adaptation decision.
  */
+/**
+ * POST /api/biostat/adaptive/:planId/decision
+ *
+ * Sign an interim decision. A GOVERNED, SIGNED act since 2026-10-13: it runs
+ * the platform's one ceremony (services/adaptive-decision-signature.ts →
+ * part11/governed-signature-ceremony.ts), which re-authenticates the signer,
+ * checks their signing authority and separation of duties, writes the decision
+ * on its own transaction, and records the ledger pair and the
+ * electronic_signatures manifest bound to the interim look's data.
+ *
+ * Until then it was a Drizzle insert that set `approved_by` from the session's
+ * user id and `approved_at` from the wall clock, verifying nothing — the defect
+ * POST /api/biostat/sap/:id/sign was removed for on 2026-10-08. An interim
+ * decision stops a trial, resizes it, drops an arm or enriches a population,
+ * on unblinded data; a regulator asks who decided and on what.
+ *
+ * Body: { snapshotId, adaptationType, decision, rationale, meaning,
+ *         reauth: { password, totp? }, parameters? }
+ */
 router.post('/adaptive/:planId/decision', authMiddleware, async (req: Request, res: Response) => {
+  const orgId = resolveOrganizationId(req);
+  const userId = resolveUserId(req);
+  const planId = Number(req.params.planId);
+  if (!Number.isInteger(planId) || planId <= 0) {
+    return clientError(res, 400, 'An adaptive plan id must be a positive integer.');
+  }
+  const snapshotId = Number(req.body?.snapshotId);
+  if (!Number.isInteger(snapshotId) || snapshotId <= 0) {
+    return clientError(res, 400, 'A decision is taken on an interim look: snapshotId must be a positive integer.');
+  }
+
   try {
-    const orgId = resolveOrganizationId(req);
-    const userId = resolveUserId(req);
-    const planId = Number(req.params.planId);
-    const { snapshotId, adaptationType, decision, rationale, parameters } = req.body;
-
-    const result = await adaptiveTrialOperationsService.recordDecision(
-      { planId, snapshotId, adaptationType, decision, rationale, parameters },
+    const signed = await signAdaptiveDecision({
       orgId,
-      userId
-    );
-
-    res.json({ success: true, data: result });
+      userId,
+      /* The SNAPSHOT is the target: an IDMC approves a decision about a
+         specific look, so that look's data is what the signature binds. */
+      target: `interim-snapshot:${snapshotId}`,
+      reason: typeof req.body?.rationale === 'string' ? req.body.rationale : '',
+      meaning: req.body?.meaning,
+      reauth: req.body?.reauth,
+      ipAddress: signerIpAddress(req),
+      // The role as the canonical ceremony call sites read it; the gate
+      // itself re-reads it from the membership row, never from this.
+      role: String((req as any).userRole ?? (req as any).user?.role ?? ''),
+      write: (client) =>
+        adaptiveTrialOperationsService.writeDecisionOnSignedTransaction(
+          client,
+          {
+            planId,
+            snapshotId,
+            adaptationType: req.body?.adaptationType,
+            decision: req.body?.decision,
+            rationale: req.body?.rationale,
+            parameters: req.body?.parameters,
+          },
+          orgId,
+          userId,
+        ),
+    });
+    return res.json({ success: true, data: signed });
   } catch (error: any) {
-    return serverError(res, logger, 'saving decision', error);
+    /* The ceremony's refusals are the signer's own answer — "re-enter your
+       password", "you cannot sign your own work", "your role may not sign" —
+       and must reach them verbatim rather than as a 500. */
+    if (error instanceof AdaptiveDecisionRefusal) {
+      return clientError(res, error.status as 400, error.code, { message: error.message });
+    }
+    return serverError(res, logger, 'signing the interim decision', error);
   }
 });
 
@@ -868,18 +926,42 @@ router.use(biostatDesignStatsRouter);
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * A knowledge-graph refusal is the caller's own answer, not a fault.
+ *
+ * `queryGraph` refuses an empty question with a `ComputationRefusal`, which
+ * `serverError` would have logged and returned as a 500 — telling the sponsor
+ * the server broke when the server declined. 422 carries the sentence and the
+ * field, matching the mapper the AnA biostatistics routes use.
+ */
+function knowledgeError(res: Response, where: string, error: unknown): Response {
+  const e = error as { name?: unknown; code?: unknown; field?: unknown; message?: unknown };
+  if (e?.name === 'ComputationRefusal') {
+    return clientError(res, 422, String(e.message), {
+      refusal: true,
+      code: typeof e.code === 'string' ? e.code : 'missing_input',
+      ...(typeof e.field === 'string' ? { field: e.field } : {}),
+    });
+  }
+  return serverError(res, logger, where, error);
+}
+
+/**
  * POST /api/biostat/knowledge/query
  * Query the biostatistics knowledge graph.
  */
 router.post('/knowledge/query', authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
-    const { query, nodeTypes, maxDepth, limit } = req.body;
+    /* `nodeTypes`, `maxDepth` and `limit` were destructured here and passed to
+       nothing — queryGraph takes a question and an org. A request that set them
+       was answered as though they had been honoured. They are not read now, so
+       the route no longer advertises filters it drops (2026-10-13). */
+    const { query } = req.body ?? {};
 
-    const result = await biostatKnowledgeGraphService.queryGraph(query, orgId);
+    const result = await biostatKnowledgeGraphService.queryGraph(String(query ?? ''), orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'querying knowledge', error);
+    return knowledgeError(res, 'querying knowledge', error);
   }
 });
 
@@ -891,12 +973,15 @@ router.get('/knowledge/method-landscape/:indication', authMiddleware, async (req
   try {
     const orgId = resolveOrganizationId(req);
     const indication = String(req.params.indication);
-    const { phase, agency } = req.query;
+    /* `phase` and `agency` were destructured from the query string and passed
+       to nothing: getMethodLandscape aggregates across both. A UI that offered
+       either filter would silently not filter, so neither is read (2026-10-13).
+       Adding them means adding them to the service first. */
 
     const result = await biostatKnowledgeGraphService.getMethodLandscape(indication, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'loading method landscape', error);
+    return knowledgeError(res, 'loading method landscape', error);
   }
 });
 
@@ -907,16 +992,20 @@ router.get('/knowledge/method-landscape/:indication', authMiddleware, async (req
 router.get('/knowledge/endpoint-method-matrix', authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
-    const { indication, phase } = req.query;
+    const { indication, phase, agency } = req.query;
 
+    /* `agency` is passed through from 2026-10-13. The service has filtered on
+       it since it was written; this route read it off the query string and
+       dropped it, so an agency-scoped matrix silently spanned every agency. */
     const filters = {
-      indication: indication as string | undefined,
-      phase: phase as string | undefined,
+      indication: typeof indication === 'string' && indication.trim() ? indication.trim() : undefined,
+      phase: typeof phase === 'string' && phase.trim() ? phase.trim() : undefined,
+      agency: typeof agency === 'string' && agency.trim() ? agency.trim() : undefined,
     };
     const result = await biostatKnowledgeGraphService.getEndpointMethodMatrix(orgId, filters);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'loading endpoint method matrix', error);
+    return knowledgeError(res, 'loading endpoint method matrix', error);
   }
 });
 
@@ -927,13 +1016,19 @@ router.get('/knowledge/endpoint-method-matrix', authMiddleware, async (req: Requ
 router.post('/knowledge/ingest-csr', authMiddleware, async (req: Request, res: Response) => {
   try {
     const orgId = resolveOrganizationId(req);
-    const userId = resolveUserId(req);
-    const { csrId, sections, metadata } = req.body;
+    /* `sections` and `metadata` were destructured and passed to nothing:
+       ingestFromCSR reads the CSR and its details from the database, not from
+       the request. A caller that sent either was answered as though it had
+       been used. `userId` was resolved and unused (2026-10-13). */
+    const csrId = Number((req.body ?? {}).csrId);
+    if (!Number.isInteger(csrId) || csrId <= 0) {
+      return clientError(res, 400, 'A CSR id must be a positive integer.');
+    }
 
     const result = await biostatKnowledgeGraphService.ingestFromCSR(csrId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'saving ingest CSR', error);
+    return knowledgeError(res, 'ingesting the CSR', error);
   }
 });
 
@@ -945,12 +1040,14 @@ router.get('/knowledge/trend/:concept', authMiddleware, async (req: Request, res
   try {
     const orgId = resolveOrganizationId(req);
     const concept = String(req.params.concept);
-    const { startYear, endYear, granularity } = req.query;
+    /* `startYear`, `endYear` and `granularity` were destructured and passed to
+       nothing: getMethodTrend aggregates every recorded year. Not read, so the
+       route no longer advertises a window it ignores (2026-10-13). */
 
     const result = await biostatKnowledgeGraphService.getMethodTrend(concept, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    return serverError(res, logger, 'loading trend', error);
+    return knowledgeError(res, 'loading trend', error);
   }
 });
 
