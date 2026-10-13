@@ -193,6 +193,15 @@ export function violationsFor(nodes: readonly TreeNode[]): string[] {
     // A node naming documents FDA files under different headings is a
     // container for them; it may sit at an ancestor of each one's heading.
     const naming = new Set(matched.filter((r) => r.under !== null).map((r) => headingsOf(r).join('|')));
+    /* A node that NAMES the child heading in its own title is a container for it, even when only
+       one rule matches. `{ code: '1.3', title: 'Administrative Information (1.3.1 contact/sponsor;
+       1.3.4 financial certification)' }` is right: 1.3 IS Administrative Information, and the
+       title is listing what sits beneath it, with the codes written out. Reading that as "financial
+       disclosure files under 1.3.4, not 1.3" is reading the title as a claim about the node's own
+       content, which it is not. Without this, the only way to state a container honestly would be
+       to stop naming its children. */
+    const namesItsChild = (rule: PlacementRule): boolean =>
+      headingsOf(rule).some((h) => h.startsWith(`${code}.`) && new RegExp(`(?<![0-9.])${h.replace(/\./g, '\\.')}(?![0-9])`).test(n.title));
     const container = naming.size > 1;
     for (const rule of matched) {
       if (rule.under === null) {
@@ -200,7 +209,7 @@ export function violationsFor(nodes: readonly TreeNode[]): string[] {
         continue;
       }
       const headings = headingsOf(rule);
-      if (!headings.some((h) => sitsUnder(code, h, rule.ancestorOk === true || container))) {
+      if (!headings.some((h) => sitsUnder(code, h, rule.ancestorOk === true || container || namesItsChild(rule)))) {
         out.push(`${n.code} "${n.title}" — ${rule.label} files under ${headings.join(' or ')}`);
       }
     }

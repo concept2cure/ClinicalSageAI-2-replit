@@ -161,8 +161,11 @@ const SEED_TEMPLATES: SeedTemplate[] = [
       { sectionCode: '1.1', sectionTitle: 'Forms (FDA 356h)', ordering: 100, required: true, criticality: 'blocking' },
       { sectionCode: '1.2', sectionTitle: 'Cover letter', ordering: 200, required: true, criticality: 'blocking' },
       { sectionCode: '1.3', sectionTitle: 'Administrative information', ordering: 300, required: true, criticality: 'blocking' },
-      { sectionCode: '1.12', sectionTitle: 'Patent information / certifications', ordering: 400, required: true, criticality: 'blocking', contentGuidance: 'Patent certifications for ANDA / 505(b)(2); optional but recommended for NDA.' },
-      { sectionCode: '1.14', sectionTitle: 'Environmental assessment', ordering: 500, required: true, criticality: 'important', requiredElements: ['categorical exclusion claim OR environmental assessment'] },
+      /* Patent information and certification are 1.3.5; US 1.12 is OTHER CORRESPONDENCE. The
+         environmental assessment is 1.12.14, a child of that correspondence heading, not 1.14,
+         which is LABELING (shared/regulatory/regional-module1.ts). */
+      { sectionCode: '1.3.5', sectionTitle: 'Patent information / certifications', ordering: 400, required: true, criticality: 'blocking', contentGuidance: 'Patent certifications for ANDA / 505(b)(2); optional but recommended for NDA.' },
+      { sectionCode: '1.12.14', sectionTitle: 'Environmental assessment', ordering: 500, required: true, criticality: 'important', requiredElements: ['categorical exclusion claim OR environmental assessment'] },
     ],
   },
   {

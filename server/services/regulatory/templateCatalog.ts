@@ -39,7 +39,8 @@ export interface CatalogTemplateEntry {
 // ─── Template Definitions ─────────────────────────────────────────────────────
 
 const CTD_TEMPLATES: CatalogTemplateEntry[] = [
-  { id: 'cover_letter', title: 'Cover Letter', description: 'Regulatory submission cover letter', sectionCode: '1.1', format: 'narrative', aiDraftable: true, category: 'administrative' },
+  // FDA regional Module 1: the cover letter is 1.2; 1.1 is Forms.
+  { id: 'cover_letter', title: 'Cover Letter', description: 'Regulatory submission cover letter', sectionCode: '1.2', format: 'narrative', aiDraftable: true, category: 'administrative' },
   { id: 'quality_overall_summary', title: 'Quality Overall Summary', description: 'Module 2.3 QOS per ICH M4Q', sectionCode: '2.3', format: 'narrative', aiDraftable: true, category: 'quality' },
   { id: 'nonclinical_overview', title: 'Nonclinical Overview', description: 'Module 2.4 nonclinical overview per ICH M4S', sectionCode: '2.4', format: 'narrative', aiDraftable: true, category: 'nonclinical' },
   { id: 'clinical_overview', title: 'Clinical Overview', description: 'Module 2.5 clinical overview per ICH M4E', sectionCode: '2.5', format: 'narrative', aiDraftable: true, category: 'clinical' },
