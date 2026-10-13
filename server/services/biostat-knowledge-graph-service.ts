@@ -11,6 +11,7 @@ import {
 } from '../../shared/schema';
 import { eq, and, like } from 'drizzle-orm';
 import { ai } from '../lib/unified-ai-client';
+import { ComputationRefusal } from './ana-biostats/computation-engine';
 
 // --- Types ---
 
@@ -87,11 +88,31 @@ interface IngestResult {
   indication: string | null;
 }
 
+/**
+ * What a graph query found, and how much of it the model touched.
+ *
+ * There is deliberately no `confidence`. Until 2026-10-13 this carried
+ * `confidence = Math.min(0.95, 0.5 + nodes.length * 0.05)` — the matched-row
+ * count rescaled into [0.1, 0.95] so it would read as a probability. Nothing
+ * calibrated it against anything. CLAUDE.md RULE 2: a figure comes from a
+ * deterministic engine, and "how many rows matched" is already that figure,
+ * reported below as the integer it is.
+ */
 interface GraphQueryResult {
-  answer: string;
+  /** The model's prose over the rows, or null when it could not be obtained. */
+  answer: string | null;
+  /** Always true: the prose narrates the rows, it does not derive anything. */
+  answerIsNarration: true;
+  /** Why there is no prose. Null when there is. */
+  answerUnavailableReason: string | null;
   nodes: GraphNode[];
   edges: GraphEdge[];
-  confidence: number;
+  matchedNodeCount: number;
+  matchedEdgeCount: number;
+  /** False when the model that turns a question into search terms did not run. */
+  parsedByModel: boolean;
+  /** How the search terms were obtained, when not by the model. Null when by it. */
+  parseNote: string | null;
 }
 
 // --- Service ---
@@ -273,6 +294,12 @@ export class BiostatKnowledgeGraphService {
    * Translates the query into node/edge lookups and returns results.
    */
   async queryGraph(query: string, organizationId: number): Promise<GraphQueryResult> {
+    const asked = typeof query === 'string' ? query.trim() : '';
+    if (asked.length === 0) {
+      // Refused before a model is paid to read nothing.
+      throw new ComputationRefusal('missing_input', 'Ask the knowledge graph a question.', 'query');
+    }
+
     // Step 1: Use AI to extract search terms and intent
     const extractionMessages = [
       {
@@ -284,7 +311,7 @@ Return JSON with these fields:
 - edgeTypes: array of edge types relevant to the query
 - intent: one of "find_methods", "find_endpoints", "find_relationships", "find_trends", "general"`,
       },
-      { role: 'user' as const, content: query },
+      { role: 'user' as const, content: asked },
     ];
 
     let parsed: {
@@ -293,14 +320,30 @@ Return JSON with these fields:
       edgeTypes: EdgeType[];
       intent: string;
     };
+    let parsedByModel = true;
+    let parseNote: string | null = null;
     try {
       const extractionRaw = await ai.complete(extractionMessages, {
         jsonMode: true,
         temperature: 0.1,
       });
       parsed = JSON.parse(extractionRaw || '{}');
+      if (!Array.isArray(parsed?.searchTerms) || parsed.searchTerms.length === 0) {
+        // A reply with no search terms matches nothing, which is the same
+        // outcome as no reply at all. Treat it as one.
+        throw new Error('no search terms');
+      }
     } catch {
-      parsed = { nodeTypes: [], searchTerms: [], edgeTypes: [], intent: 'general' };
+      /* The query parser is the ONLY model call on the search path, and until
+         2026-10-13 its failure fell through to `searchTerms: []` — which
+         matches no node, so an outage was indistinguishable from a graph that
+         held no answer. The sponsor's own words are a worse query expansion
+         and an honest one; the caller is told which it got. */
+      parsed = { nodeTypes: [], searchTerms: [asked], edgeTypes: [], intent: 'general' };
+      parsedByModel = false;
+      parseNote =
+        'The question was not parsed into search terms — that model did not answer. ' +
+        'The graph was searched on your wording as typed, so a narrower result than usual is expected.';
     }
 
     // Step 2: Search for matching nodes
@@ -388,7 +431,7 @@ Return JSON with these fields:
       },
       {
         role: 'user' as const,
-        content: `Question: ${query}\n\nKnowledge Graph Nodes:\n${JSON.stringify(
+        content: `Question: ${asked}\n\nKnowledge Graph Nodes:\n${JSON.stringify(
           uniqueNodes.map(n => ({ type: n.nodeType, name: n.name, props: n.properties })),
           null,
           2
@@ -400,17 +443,37 @@ Return JSON with these fields:
       },
     ];
 
-    const answer =
-      (await ai.complete(synthesisMessages, { temperature: 0.3 })) ||
-      'No answer could be generated.';
-    const confidence =
-      uniqueNodes.length > 0 ? Math.min(0.95, 0.5 + uniqueNodes.length * 0.05) : 0.1;
+    /* The nodes and edges above are database rows. The prose is narration over
+       them. So a narration failure loses the prose and NOTHING else — before
+       2026-10-13 it rejected the whole call and the sponsor lost the rows too,
+       and an empty reply became the sentence "No answer could be generated.",
+       which reads as a finding about the graph rather than about the model. */
+    let answer: string | null = null;
+    let answerUnavailableReason: string | null = null;
+    try {
+      const narration = await ai.complete(synthesisMessages, { temperature: 0.3 });
+      if (typeof narration === 'string' && narration.trim().length > 0) {
+        answer = narration;
+      } else {
+        answerUnavailableReason =
+          'The model returned no summary. The matched nodes and edges below are the result.';
+      }
+    } catch {
+      answerUnavailableReason =
+        'The summary could not be generated — that model did not answer. ' +
+        'The matched nodes and edges below are unaffected: they are database rows.';
+    }
 
     return {
       answer,
+      answerIsNarration: true,
+      answerUnavailableReason,
       nodes: uniqueNodes as unknown as GraphNode[],
       edges: uniqueEdges as unknown as GraphEdge[],
-      confidence,
+      matchedNodeCount: uniqueNodes.length,
+      matchedEdgeCount: uniqueEdges.length,
+      parsedByModel,
+      parseNote,
     };
   }
 
