@@ -69,6 +69,7 @@ const codeOf = line => {
 
 const literalPattern = values => {
   const q = values.map(v => `['"\`]${v}['"\`]`).join('\\s*(?:,|\\|)\\s*');
+  // nosemgrep: detect-non-literal-regexp -- `values` are this script's own class-vocabulary constants, not input; a build-time lint script with no request path
   return new RegExp(q);
 };
 

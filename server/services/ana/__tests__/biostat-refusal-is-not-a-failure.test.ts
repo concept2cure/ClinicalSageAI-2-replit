@@ -94,6 +94,7 @@ describe('compute_sample_size', () => {
 
       expect(out.status).toBe('computed');
       expect(out.sampleSize.perGroup).toBe(64);
+      // nosemgrep: detect-non-literal-regexp -- a test: endpointType is one of the literal endpoint types in the table above
       expect(out.method).toMatch(new RegExp(`continuous approximation for a ${endpointType} endpoint`, 'i'));
       expect(out.method).toMatch(/indicative/i);
 
