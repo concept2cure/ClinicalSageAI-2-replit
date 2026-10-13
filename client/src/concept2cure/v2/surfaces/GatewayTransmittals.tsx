@@ -45,6 +45,7 @@ import { assessmentState, hasAnswer, type AssessmentState } from '../assessmentS
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { listedChoices, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig, C2CFormField } from '../C2CForm';
 import { apiRequest, ApiRequestError, serverMessage, redactInternals } from '@/lib/queryClient';
@@ -386,6 +387,41 @@ function transmitConflictMessage(raw: any): string {
       ?? `${held.sequence ? `sequence ${held.sequence}` : 'this sequence'} is already on file as a different bundle.`);
   }
   return `Not transmitted — transmittal #${held?.transmittalId ?? '?'} is already active (${held?.status ?? 'in flight'}). Roll it back first.`;
+}
+
+/**
+ * How a refusal names the transmittals on screen: the log number exactly as the
+ * `#` column renders it, with the Gateway ref beside it when the row has one.
+ * AnA cannot see this table, so a miss that lists these turns a dead end into a
+ * retry with a real number (listedChoices, surfaceActions.ts).
+ */
+function transmittalChoices(rows: ReadonlyArray<Transmittal>): string[] {
+  return rows.map((t) => `#${t.id}${t.transmission_id ? ` · ${t.transmission_id}` : ''}`);
+}
+
+/**
+ * The transmittal a name picks out of the log on screen — log number first
+ * ("#12" or "12"), then an exact gateway reference, then a unique containment
+ * on the reference. Resolved the way SubmissionCenter resolves a package, and
+ * against `rows` only: this is the person's own table, not a lookup over
+ * anything they cannot see. A miss returns the candidates it did match so the
+ * caller can say how many, and never guesses between them.
+ */
+function resolveTransmittal(
+  rows: ReadonlyArray<Transmittal>,
+  raw: string,
+): { match: Transmittal } | { hits: Transmittal[] } {
+  const wanted = raw.trim().replace(/^#/, '').trim();
+  const lower = wanted.toLowerCase();
+  const byNumber = rows.find((t) => String(t.id) === wanted);
+  if (byNumber) return { match: byNumber };
+  // Only a non-empty name matches a reference: a row whose Gateway ref column
+  // reads '—' holds null, and an empty name would otherwise equal it and pick
+  // that row — a bare "#" would silently resolve to whichever row has no ref.
+  const byRef = lower ? rows.find((t) => (t.transmission_id ?? '').toLowerCase() === lower) : undefined;
+  if (byRef) return { match: byRef };
+  const hits = lower ? rows.filter((t) => (t.transmission_id ?? '').toLowerCase().includes(lower)) : [];
+  return hits.length === 1 ? { match: hits[0] } : { hits };
 }
 
 export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
@@ -848,6 +884,11 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         rollbackRetractsAtAgency: false,
       },
       availableActions: [
+        // The two operations she can take here, named so her per-turn context
+        // does not keep saying this screen is explain-only. Everything else on
+        // it is a governed act a person signs.
+        "Show a logged transmittal's gateway status, by its log number (\"#12\") or its gateway reference",
+        'Reload the refusal findings, once an assembly or a transmit has been refused on this screen',
         'Explain which gateways can actually transmit and what the others are missing',
         'Explain why a transmittal failed, from its error class',
         'Explain what a rollback does and does not undo at the agency',
@@ -855,6 +896,103 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     }),
     [state, gateways, configuredGateways.length, rows],
   );
+  /* AnA's hands on this screen (wave 7). This is the last screen before bytes
+     leave for an agency, and she had no action here at all: she could walk in
+     and then do nothing. Only the two READ-ONLY reveals are hers, and each
+     drives the SAME function the control beside the table drives — the row's
+     Status button (checkStatus) and the refusal card's Reload findings button
+     (reloadFindings). The five governed acts on this screen — transmit,
+     rollback, technical rejection, record identifiers, assemble — are §11
+     signed or reason-recorded ceremonies and stay a person's own click; AnA
+     proposes them in conversation. Both handlers fire an async request and are
+     themselves synchronous, so each detail says what was STARTED. The card and
+     the toast carry the server's answer; a detail that claimed one would be
+     reporting a result the handler never saw. */
+  useSurfaceActionHandlers('gateway-transmittals', {
+    'submission-gateway.show-status': (params) => {
+      const raw = (params.transmittal ?? '').trim();
+      const logged = () => listedChoices(transmittalChoices(rows), 'Transmittals logged');
+      if (!raw) {
+        return {
+          ok: false,
+          reason: 'Name a transmittal to show — its log number as listed (e.g. "#12") or its gateway reference.' + logged(),
+        };
+      }
+      if (state === 'loading') return { ok: false, reason: 'The transmittal log is still loading.', retry: true };
+      if (state === 'error') {
+        // Never reported as an empty log: this is the table an operator reads to
+        // confirm what has or has not already been sent to an agency.
+        return {
+          ok: false,
+          reason:
+            'The dispatch layer did not respond, so no transmittals are listed to show a status for. ' +
+            'That is not the same as this organization having none.',
+        };
+      }
+      if (rows.length === 0) {
+        return { ok: false, reason: 'No transmittals have been logged for this organization yet, so there is none to show a status for.' };
+      }
+      const found = resolveTransmittal(rows, raw);
+      if (!('match' in found)) {
+        return {
+          ok: false,
+          reason:
+            found.hits.length > 1
+              ? `"${raw}" matches ${found.hits.length} transmittals — name one exactly.` +
+                listedChoices(transmittalChoices(found.hits), 'Matched')
+              : `No transmittal "${raw}" in this log.` + logged(),
+        };
+      }
+      const t = found.match;
+      // The card for this row is already on screen, and the Status control
+      // re-reads the whole screen on success; say so rather than re-polling the
+      // agency for what the person is looking at.
+      if (statusView?.id === t.id) return { ok: true, detail: `Already showing the gateway status for transmittal #${t.id}` };
+      void checkStatus(t.id);
+      return {
+        ok: true,
+        detail:
+          `Showing the gateway status for transmittal #${t.id} — the card appears below when the gateway ` +
+          'answers, and a gateway that refuses reports its reason instead.',
+      };
+    },
+    'submission-gateway.reload-findings': () => {
+      // No retry on either refusal. Neither `refusal` nor `lastPackageId` is
+      // ever populated by this screen's own load, so holding the directive for
+      // the ready signal would hold it until the TTL and report "not ready"
+      // instead of the honest reason it already has.
+      if (!refusal) {
+        return {
+          ok: false,
+          reason:
+            'No refusal findings are showing, so there is nothing to reload. The findings card appears only ' +
+            'after an assembly or a transmit was refused, and the Reload findings control lives on it.',
+        };
+      }
+      if (!lastPackageId) {
+        return {
+          ok: false,
+          reason:
+            'No submission package has been worked on this screen yet, so there is no stored bundle whose ' +
+            'findings could be re-checked. Recording identifiers, assembling a bundle and transmitting are ' +
+            'governed acts a person performs; the findings card follows one of them.',
+        };
+      }
+      void reloadFindings();
+      // Never a finding count and never "clear": reloadFindings writes the
+      // verdict — including its own "Preflight could not be run" — into the card.
+      return {
+        ok: true,
+        detail: `Re-running preflight for package ${lastPackageId} — the findings card updates with what it reports.`,
+      };
+    },
+  });
+  /* The ready signal for the hold above. Gated on the read SETTLING and nothing
+     else: a failed read must reach a held action as the handler's own refusal,
+     not as a twenty-second timeout (surfaceReadySignal.test.ts). */
+  useEffect(() => {
+    if (state !== 'loading') notifySurfaceActionReady('gateway-transmittals');
+  }, [state]);
   usePublishSurfaceContext('gateway-transmittals', anaContext);
 
   return (

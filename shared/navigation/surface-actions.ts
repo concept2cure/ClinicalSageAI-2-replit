@@ -1421,10 +1421,14 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
   //
   // An entry lands here only once its screen's handler does. A registered
   // action with no handler is a dead end: AnA is told she can do it, tries,
-  // and the bus refuses. The remaining screens — eCTD Compile, the submission
-  // gateway, compliance reports, the reporting canvas, the identity console
-  // and both onboarding screens — are surveyed and specified, and land with
-  // their handlers (docs/evidence/W1/2026-09-28-ana-drive/ui-coverage.txt).
+  // and the bus refuses — so she reports a capability the product does not
+  // have. That is now a gate, not a convention: launchSurfaceOperability.test.ts
+  // refuses an action with no handler, a handler no action names, and a
+  // launch-catalog screen with a view and no action unless it carries a written
+  // reason. The screens still owed — compliance reports, the reporting canvas,
+  // the identity console and both onboarding screens — are surveyed and
+  // specified, and land with their handlers
+  // (docs/evidence/W1/2026-09-28-ana-drive/ui-coverage.txt).
   {
     id: 'audit-trail.filter-entries',
     surfaceId: 'audit-trail',
@@ -1529,6 +1533,101 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
           'as the header\'s "Admin controls" button and a locked card\'s "Admin controls" button); ' +
           '\'off\' hides them and restores the Open / upgrade buttons.',
         enum: ['on', 'off'],
+      },
+    ],
+  },
+  {
+    id: 'submission-gateway.show-status',
+    surfaceId: 'submission-gateway',
+    label: 'Show a transmittal\'s gateway status',
+    description:
+      'On Submission Gateway Transmittals, open the gateway-status card for one logged transmittal — ' +
+      'the same read the row\'s Status control performs. Name the transmittal by its log number as ' +
+      'shown ("#12" or "12") or by its gateway reference; resolved against the real transmittal log, ' +
+      'with the logged numbers named back on a miss so the next attempt uses a real one. The card ' +
+      'itself states whether the agency was polled or the last recorded state is being shown; it ' +
+      'changes nothing at the agency and nothing on file.',
+    params: [
+      {
+        name: 'transmittal',
+        required: true,
+        description:
+          'The transmittal to show, by its log number as the table renders it ("#12" or "12") or by ' +
+          'its gateway reference string from the Gateway ref column.',
+      },
+    ],
+  },
+  {
+    id: 'submission-gateway.reload-findings',
+    surfaceId: 'submission-gateway',
+    label: 'Reload the refusal findings',
+    description:
+      'On Submission Gateway Transmittals, re-run the package preflight behind the refusal card and ' +
+      'show what it reports now — the same read the card\'s \'Reload findings\' control performs, for ' +
+      'the package the screen last worked on. Use it when a refused assembly or a refused transmit is ' +
+      'on screen and the person asks whether the blockers still stand. Preflight is a read plus a ' +
+      'derived cache of its own run (server/routes/submission-ops.ts:3341-3347), not a governed ' +
+      'transition; it assembles nothing and transmits nothing. Refused honestly when no refusal card ' +
+      'is showing, because that is the only state in which a person has this control.',
+  },
+  {
+    id: 'ectd-compile.set-region',
+    surfaceId: 'ectd-compile',
+    label: 'Switch the compile region',
+    description:
+      'On eCTD Compile & Export, switch the Region menu between US · FDA and EU · EMA — the region ' +
+      'the next Validate or Compile is run for. A selector only: nothing is sent until a person ' +
+      'clicks Validate or Compile. A sequence that already records its own region has no Region menu ' +
+      'at all, and the refusal names the recorded region and sequence.',
+    params: [
+      {
+        name: 'region',
+        required: true,
+        description:
+          'The region to select, as the Region menu\'s values: "FDA" (shown "US · FDA") or "EMA" ' +
+          '(shown "EU · EMA"). From REGIONS at EctdCompile.tsx:827.',
+        enum: ['FDA', 'EMA'],
+      },
+    ],
+  },
+  {
+    id: 'ectd-compile.set-submission-type',
+    surfaceId: 'ectd-compile',
+    label: 'Switch the submission type',
+    description:
+      'On eCTD Compile & Export, switch the Submission menu between "initial" and "amendment" — the ' +
+      'type the next compile is run as. The same menu a person uses; a selector only, nothing is sent ' +
+      'until a person clicks Compile.',
+    params: [
+      {
+        name: 'submissionType',
+        required: true,
+        description:
+          'The submission type to select, as the Submission menu lists it. From SUB_TYPES at ' +
+          'EctdCompile.tsx:828.',
+        enum: ['initial', 'amendment'],
+      },
+    ],
+  },
+  {
+    id: 'ectd-compile.load-run',
+    surfaceId: 'ectd-compile',
+    label: 'Load an orchestrator run',
+    description:
+      'On eCTD Compile & Export, load an orchestrator run by its run id — the same thing the Load run ' +
+      'button does: fills the Orchestrator run box and reads that run\'s 11 pipeline steps, its ' +
+      'release-signature state and its audit trail. A read; nothing is assembled, signed or ' +
+      'dispatched. This screen lists no run ids, so an id the organisation cannot see comes back as ' +
+      'the panel\'s own honest miss ("No run with that id is visible to your organization"), not as a ' +
+      'result.',
+    params: [
+      {
+        name: 'run',
+        required: true,
+        description:
+          'The orchestrator run id, as pasted into the Orchestrator run box. Free text — this screen ' +
+          'lists no run ids, so there is no set to choose from; the id comes from the Orchestration ' +
+          'board or from the run that built the package.',
       },
     ],
   },

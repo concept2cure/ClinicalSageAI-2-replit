@@ -261,6 +261,73 @@ const SCENARIOS = {
     record('audit trail: a kind the screen does not have is refused, not guessed',
       /not|no |unknown|refus/i.test(bogus.said) && !/applied|filtered to holodeck/i.test(bogus.said), bogus.said.slice(0, 160));
   },
+  // The second half of wave 7: the project-scoped screens. Same drive, but a
+  // program has to be open first — the bus lands on "Open a program" otherwise
+  // and the handler's own `ident == null` refusal is what AnA would get.
+  async coverage2(page) {
+    if (!process.env.DATABASE_URL) { record('coverage2 needs DATABASE_URL', false, 'set it to read the saved answers'); return; }
+    const answers = () =>
+      (psql("select replace(content, chr(10), ' ') from chat_messages where content like '%Act result:%' order by id")
+        .match(/Act result:[^\n]*/g) ?? []);
+    const nextAnswer = async before => {
+      for (const t = Date.now(); Date.now() - t < 45000; await sleep(1000)) {
+        const all = answers();
+        if (all.length > before) return all[all.length - 1];
+      }
+      return '(no answer within 45 s)';
+    };
+    const drive = async (ask_, until) => {
+      const before = answers().length;
+      await ask(page, ask_);
+      await watchUrls(page, { timeout: 45000, until });
+      return await nextAnswer(before);
+    };
+
+    await goHome(page);
+    await ask(page, 'open program BX-301');
+    await watchUrls(page, { until: s => s.some(q => q.endsWith('/project-home')) });
+    await waitIdle(page);
+
+    // eCTD Compile was not even REACHABLE before this wave: no navigation
+    // target resolved to it, so AnA could not get to a shipped Submission
+    // Center screen at all. Both menus are selectors — nothing is sent until a
+    // person clicks Validate or Compile.
+    const subSel = '#ectd-subtype';
+    const typeSaid = await drive('act ectd-compile.set-submission-type submissionType=amendment', async () =>
+      (await page.locator(subSel).inputValue().catch(() => '')) === 'amendment');
+    const subValue = await page.locator(subSel).inputValue().catch(() => '');
+    await page.screenshot({ path: `${SP}/e2e-coverage2-ectd-subtype.png` });
+    record('eCTD compile: AnA switches the submission type the next compile is run as',
+      subValue === 'amendment', `menu: ${JSON.stringify(subValue)} — ${typeSaid.slice(0, 120)}`);
+
+    // A region the menu does not offer is refused by the registry before the
+    // bus is involved, naming the legal pair.
+    const regionSaid = await drive('act ectd-compile.set-region region=MARS', async () => false);
+    record('eCTD compile: a region the menu does not offer is refused, naming the pair',
+      /FDA/.test(regionSaid) && /EMA/.test(regionSaid) && !/Selected region MARS/i.test(regionSaid), regionSaid.slice(0, 160));
+
+    // The gateway transmittal log: a read of one row's agency status. The
+    // governed acts on that screen (transmit, rollback, technical rejection)
+    // stay a person's own click, so they are not registered at all.
+    // Read from the SCREEN, not from what AnA was told: this protocol reports a
+    // screen's own words back only when the action was refused (the deferred
+    // outcome), so a successful apply answers "Screen: no report" and the proof
+    // it worked is the card a person is looking at.
+    const logged = psql("select id from submission_transmittals order by id limit 1") || '1';
+    const card = `text=Gateway status · transmittal #${logged}`;
+    const statusSaid = await drive(`act submission-gateway.show-status transmittal=#${logged}`, async () =>
+      (await page.locator(card).count().catch(() => 0)) > 0);
+    const cardShown = (await page.locator(card).count().catch(() => 0)) > 0;
+    await page.screenshot({ path: `${SP}/e2e-coverage2-gateway-status.png` });
+    record('gateway transmittals: AnA opens one transmittal\'s gateway status',
+      cardShown, `card for #${logged}: ${cardShown ? 'on screen' : 'not shown'} — ${statusSaid.slice(0, 110)}`);
+
+    // A number that is not in the log must be refused with the numbers that
+    // are — never answered as though the transmittal existed.
+    const missSaid = await drive('act submission-gateway.show-status transmittal=#99999', async () => false);
+    record('gateway transmittals: a transmittal not in the log is refused, listing the logged numbers',
+      /99999/.test(missSaid) && /(Transmittals logged|No transmittal)/i.test(missSaid), missSaid.slice(0, 170));
+  },
   async vaultSearch(page) {
     await goHome(page);
     await ask(page, 'search the vault for stability');
@@ -433,7 +500,7 @@ const SCENARIOS = {
 };
 
 const want = process.argv.slice(2);
-const names = want.length ? want : ['biostat', 'vault', 'openProgram', 'heldAction', 'coverage', 'vaultSearch', 'askFromScreen', 'demo', 'salesDemo', 'chipsWhenOff'];
+const names = want.length ? want : ['biostat', 'vault', 'openProgram', 'heldAction', 'coverage', 'coverage2', 'vaultSearch', 'askFromScreen', 'demo', 'salesDemo', 'chipsWhenOff'];
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await ctx.newPage();
